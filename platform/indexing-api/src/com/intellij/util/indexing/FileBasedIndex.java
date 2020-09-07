@@ -220,6 +220,50 @@ public abstract class FileBasedIndex {
     throw new UnsupportedOperationException();
   }
 
+  @ApiStatus.Experimental
+  public static class AllKeysQuery<K, V> {
+    @NotNull
+    private final ID<K, V> indexId;
+    @NotNull
+    private final Collection<? extends K> dataKeys;
+    @Nullable
+    private final Condition<? super V> valueChecker;
+
+    public AllKeysQuery(@NotNull ID<K, V> id,
+                        @NotNull Collection<? extends K> keys,
+                        @Nullable Condition<? super V> checker) {
+      indexId = id;
+      dataKeys = keys;
+      valueChecker = checker;
+    }
+
+    @NotNull
+    public ID<K, V> getIndexId() {
+      return indexId;
+    }
+
+    @NotNull
+    public Collection<? extends K> getDataKeys() {
+      return dataKeys;
+    }
+
+    @Nullable
+    public Condition<? super V> getValueChecker() {
+      return valueChecker;
+    }
+  }
+
+  /**
+   * Analogue of {@link FileBasedIndex#processFilesContainingAllKeys(ID, Collection, GlobalSearchScope, Condition, Processor)}
+   * which optimized to perform several queries for different indexes.
+   */
+  @ApiStatus.Experimental
+  public boolean processFilesContainingAllKeys(@NotNull Collection<AllKeysQuery<?, ?>> queries,
+                                               @NotNull GlobalSearchScope filter,
+                                               @NotNull Processor<? super VirtualFile> processor) {
+    throw new UnsupportedOperationException();
+  }
+
   @FunctionalInterface
   public interface ValueProcessor<V> {
     /**

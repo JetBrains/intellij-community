@@ -91,7 +91,7 @@ internal class TargetEnvironmentDetailsConfigurable(private val project: Project
       val newRuntime = it.type?.createDefaultConfig() ?: return@Consumer
       config.runtimes.addConfig(newRuntime)
       forceRefreshUI()
-    }, false)
+    })
   }
 
   private fun allConfigurables() = sequenceOf(targetConfigurable) + runtimeConfigurables.asSequence()

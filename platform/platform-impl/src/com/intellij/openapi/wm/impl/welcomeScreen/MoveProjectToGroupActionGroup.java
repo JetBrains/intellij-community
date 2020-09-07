@@ -16,7 +16,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-final class MoveProjectToGroupActionGroup extends DefaultActionGroup implements DumbAware {
+public final class MoveProjectToGroupActionGroup extends DefaultActionGroup implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
     removeAll();

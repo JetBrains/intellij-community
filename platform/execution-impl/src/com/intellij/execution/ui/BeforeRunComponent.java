@@ -58,7 +58,7 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget {
     panel.setPreferredSize(myDropFirst.getPreferredSize());
     add(panel);
     myDropFirst.setVisible(false);
-    JBEmptyBorder border = JBUI.Borders.empty(0, 0, 0, 5);
+    JBEmptyBorder border = JBUI.Borders.emptyRight(5);
     myAddButton = new InplaceButton(ExecutionBundle.message("run.configuration.before.run.add.task"), AllIcons.General.Add, e -> showPopup());
     myAddPanel = new JPanel();
     myAddPanel.setBorder(border);
@@ -113,7 +113,7 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget {
     }
     ListPopup
       popup = JBPopupFactory
-      .getInstance().createActionGroupPopup(ExecutionBundle.message("add.new.run.configuration.action2.name"), group,
+      .getInstance().createActionGroupPopup(ExecutionBundle.message("add.new.before.run.task.name"), group,
                                             DataManager.getInstance().getDataContext(myAddButton), false, false, false, null,
                                             -1, Conditions.alwaysTrue());
     popup.showUnderneathOf(myAddButton);

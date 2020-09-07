@@ -24,10 +24,12 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -35,7 +37,7 @@ import com.intellij.unscramble.AnalyzeStacktraceUtil;
 import com.intellij.unscramble.ThreadDumpConsoleFactory;
 import com.intellij.unscramble.ThreadDumpParser;
 import com.intellij.unscramble.ThreadState;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -54,8 +56,11 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -188,7 +193,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
   private abstract static class ProxyBasedAction extends AnAction {
     protected final ProcessHandler myProcessHandler;
 
-    protected ProxyBasedAction(String text, String description, Icon icon, ProcessHandler processHandler) {
+    protected ProxyBasedAction(@NlsActions.ActionText String text, @NlsActions.ActionDescription String description, Icon icon, ProcessHandler processHandler) {
       super(text, description, icon);
       myProcessHandler = processHandler;
     }
@@ -222,6 +227,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
 
   protected static final class ControlBreakAction extends ProxyBasedAction {
     private final GlobalSearchScope mySearchScope;
+    private final ExecutorService myExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Thread Dumper", 1);
 
     public ControlBreakAction(final ProcessHandler processHandler, GlobalSearchScope searchScope) {
       super(ExecutionBundle.message("run.configuration.dump.threads.action.name"), null, AllIcons.Actions.Dump, processHandler);
@@ -242,37 +248,49 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
       }
       RunnerContentUi runnerContentUi = event.getData(RunnerContentUi.KEY);
       if (Registry.is("execution.dump.threads.using.attach") && myProcessHandler instanceof BaseProcessHandler && runnerContentUi != null) {
-        // try vm attach first
-        VirtualMachine vm = null;
-        try {
-          String pid = String.valueOf(OSProcessUtil.getProcessID(((BaseProcessHandler<?>)myProcessHandler).getProcess()));
-          if (!JavaDebuggerAttachUtil.getAttachedPids(project).contains(pid)) {
-            vm = JavaDebuggerAttachUtil.attachVirtualMachine(pid);
-            InputStream inputStream = (InputStream)vm.getClass().getMethod("remoteDataDump", Object[].class)
-              .invoke(vm, new Object[]{ArrayUtilRt.EMPTY_OBJECT_ARRAY});
-            String text = StreamUtil.readText(inputStream, StandardCharsets.UTF_8);
-            List<ThreadState> threads = ThreadDumpParser.parse(text);
-            DebuggerUtilsEx.addThreadDump(project, threads, runnerContentUi.getRunnerLayoutUi(), mySearchScope);
-            return;
-          }
-        }
-        catch (AttachNotSupportedException e) {
-          LOG.debug(e);
-        }
-        catch (Exception e) {
-          LOG.warn(e);
-        }
-        finally {
-          if (vm != null) {
+        String pid = String.valueOf(OSProcessUtil.getProcessID(((BaseProcessHandler<?>)myProcessHandler).getProcess()));
+        if (!JavaDebuggerAttachUtil.getAttachedPids(project).contains(pid)) {
+          myExecutor.execute(() -> {
+            VirtualMachine vm = null;
             try {
-              vm.detach();
+              vm = JavaDebuggerAttachUtil.attachVirtualMachine(pid);
+              InputStream inputStream = (InputStream)vm.getClass()
+                .getMethod("remoteDataDump", Object[].class)
+                .invoke(vm, new Object[]{ArrayUtil.EMPTY_OBJECT_ARRAY});
+              String text;
+              try (Reader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
+                text = StreamUtil.readText(reader);
+              }
+              List<ThreadState> threads = ThreadDumpParser.parse(text);
+              ApplicationManager.getApplication().invokeLater(
+                () -> DebuggerUtilsEx.addThreadDump(project, threads, runnerContentUi.getRunnerLayoutUi(), mySearchScope),
+                ModalityState.NON_MODAL);
             }
-            catch (IOException ignored) {
+            catch (AttachNotSupportedException e) {
+              LOG.debug(e);
+              dumpWithBreak(proxy, project);
             }
-          }
+            catch (Exception e) {
+              LOG.warn(e);
+              dumpWithBreak(proxy, project);
+            }
+            finally {
+              if (vm != null) {
+                try {
+                  vm.detach();
+                }
+                catch (IOException ignored) {
+                }
+              }
+            }
+          });
+          return;
         }
       }
+      dumpWithBreak(proxy, project);
+    }
 
+    private void dumpWithBreak(ProcessProxy proxy, Project project) {
       boolean wise = Boolean.getBoolean(ourWiseThreadDumpProperty);
       WiseDumpThreadsListener wiseListener = wise ? new WiseDumpThreadsListener(project, myProcessHandler) : null;
 
@@ -409,7 +427,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
 
   private static void showThreadDump(String out, List<ThreadState> states, Project project) {
     AnalyzeStacktraceUtil.ConsoleFactory factory = states.size() > 1 ? new ThreadDumpConsoleFactory(project, states) : null;
-    String title = "Dump " + DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
+    String title = JavaCompilerBundle.message("tab.title.thread.dump", DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis()));
     ApplicationManager.getApplication().invokeLater(
       () -> AnalyzeStacktraceUtil.addConsole(project, factory, title, out), ModalityState.NON_MODAL);
   }

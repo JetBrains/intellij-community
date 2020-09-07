@@ -55,10 +55,10 @@ public class CreateModuleFromSourcesMode extends CreateFromSourcesMode {
     final String path = myPathPanel.getText().trim();
     final File file = new File(path);
     if (!file.exists()) {
-      throw new ConfigurationException("File '" + path + "' doesn't exist");
+      throw new ConfigurationException(JavaUiBundle.message("create.module.from.sources.dialog.message.file.not.exist", path));
     }
     if (!file.isDirectory()) {
-      throw new ConfigurationException("'" + path + "' is not a directory");
+      throw new ConfigurationException(JavaUiBundle.message("create.module.from.sources.dialog.message.not.directory", path));
     }
     return super.validate();
   }

@@ -67,7 +67,7 @@ public class PyRedeclarationInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyFunction(final PyFunction node) {
+    public void visitPyFunction(final @NotNull PyFunction node) {
       if (!PyKnownDecoratorUtil.hasUnknownDecorator(node, myTypeEvalContext) &&
           !PyKnownDecoratorUtil.hasRedeclarationDecorator(node, myTypeEvalContext)) {
         processElement(node);
@@ -75,7 +75,7 @@ public class PyRedeclarationInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyTargetExpression(final PyTargetExpression node) {
+    public void visitPyTargetExpression(final @NotNull PyTargetExpression node) {
       if (node.isQualified() || PyNames.UNDERSCORE.equals(node.getText()) || isTypeDeclarationTarget(node)) return;
       final ScopeOwner owner = ScopeUtil.getScopeOwner(node);
       if (owner instanceof PyFile || owner instanceof PyClass) {
@@ -84,7 +84,7 @@ public class PyRedeclarationInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyClass(final PyClass node) {
+    public void visitPyClass(final @NotNull PyClass node) {
       if (!isDecorated(node)) {
         processElement(node);
       }

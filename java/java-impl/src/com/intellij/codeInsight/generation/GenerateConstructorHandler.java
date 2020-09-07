@@ -212,7 +212,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
 
   @Override
   protected String getNothingFoundMessage() {
-    return "Constructor already exists";
+    return JavaBundle.message("generate.constructor.already.exists");
   }
 
   public static PsiMethod generateConstructorPrototype(PsiClass aClass,

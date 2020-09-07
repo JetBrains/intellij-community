@@ -17,6 +17,7 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -29,7 +30,6 @@ import com.intellij.openapi.vcs.checkin.BeforeCheckinDialogHandler;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SplitterWithSecondHideable;
 import com.intellij.ui.components.JBLabel;
@@ -195,8 +195,8 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
       affectedVcses.addAll(ChangesUtil.getAffectedVcses(list.getChanges(), project));
     }
     if (showVcsCommit) {
-      List<VirtualFile> unversionedFiles = ChangeListManagerImpl.getInstanceImpl(project).getUnversionedFiles();
-      affectedVcses.addAll(ChangesUtil.getAffectedVcsesForFiles(unversionedFiles, project));
+      List<FilePath> unversionedFiles = ChangeListManager.getInstance(project).getUnversionedFilesPaths();
+      affectedVcses.addAll(ChangesUtil.getAffectedVcsesForFilePaths(unversionedFiles, project));
     }
 
 
@@ -347,7 +347,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
       }
     };
     // TODO: there are no reason to use such heavy interface for a simple task.
-    return new SplitterWithSecondHideable(true, "Diff", rootPane, listener) {
+    return new SplitterWithSecondHideable(true, message("changes.diff.separator"), rootPane, listener) {
       @Override
       protected RefreshablePanel createDetails() {
         JPanel panel = JBUI.Panels.simplePanel(myDiffDetails.getComponent());
@@ -427,7 +427,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
       if (updateException != null) {
         String[] messages = updateException.getMessages();
         if (!isEmpty(messages)) {
-          String message = "Warning: not all local changes may be shown due to an error: " + messages[0];
+          String message = message("changes.warning.not.all.local.changes.may.be.shown.due.to.an.error", messages[0]);
           String htmlMessage = buildHtml(getCssFontDeclaration(getLabelFont()), getHtmlBody(escapeXmlEntities(message)));
 
           myWarningLabel.setText(htmlMessage);
@@ -446,7 +446,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   private final class CommitAction extends AbstractAction implements OptionAction {
     private Action @NotNull [] myOptions = new Action[0];
 
-    private CommitAction(String okActionText) {
+    private CommitAction(@NlsContexts.Button String okActionText) {
       super(okActionText);
       putValue(DEFAULT_ACTION, Boolean.TRUE);
     }
@@ -689,11 +689,10 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
 
   @Override
   public boolean confirmCommitWithEmptyMessage() {
-    return Messages.YES == Messages.showYesNoDialog(
-      message("confirmation.text.check.in.with.empty.comment"),
-      message("confirmation.title.check.in.with.empty.comment"),
-      Messages.getWarningIcon()
-    );
+    return MessageDialogBuilder
+      .yesNo(message("confirmation.title.check.in.with.empty.comment"), message("confirmation.text.check.in.with.empty.comment"))
+      .icon(Messages.getWarningIcon())
+      .ask(myProject);
   }
 
   @Override

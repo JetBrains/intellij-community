@@ -7,6 +7,7 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.WriteExternalException;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.DebugAwareConfiguration;
@@ -34,7 +35,7 @@ public abstract class RestRunConfiguration extends AbstractPythonRunConfiguratio
     super(project, factory);
   }
 
-  public String getInputFile() {
+  public @NlsSafe String getInputFile() {
     return myInputFile;
   }
 
@@ -42,7 +43,7 @@ public abstract class RestRunConfiguration extends AbstractPythonRunConfiguratio
     myInputFile = inputFile;
   }
 
-  public String getOutputFile() {
+  public @NlsSafe String getOutputFile() {
     return myOutputFile;
   }
 
@@ -58,7 +59,7 @@ public abstract class RestRunConfiguration extends AbstractPythonRunConfiguratio
     return myParams;
   }
 
-  public String getTask() {
+  public @NlsSafe String getTask() {
     return myTask;
   }
 

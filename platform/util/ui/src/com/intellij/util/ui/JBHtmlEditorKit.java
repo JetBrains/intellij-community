@@ -195,9 +195,9 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
   }
 
   public static class JBHtmlFactory extends HTMLFactory {
-    private Function<String, Icon> myAdditionalIconResolver;
+    private Function<? super String, ? extends Icon> myAdditionalIconResolver;
 
-    public void setAdditionalIconResolver(Function<String, Icon> resolver) {
+    public void setAdditionalIconResolver(Function<? super String, ? extends Icon> resolver) {
       myAdditionalIconResolver = resolver;
     }
 

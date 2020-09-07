@@ -9,8 +9,8 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import org.jetbrains.annotations.CalledInAwt
-import org.jetbrains.annotations.CalledInBackground
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GHRepositoryPath
@@ -35,7 +35,7 @@ internal class GHPRDataContextRepository(private val project: Project) {
 
   private val repositories = mutableMapOf<GHRepositoryCoordinates, LazyCancellableBackgroundProcessValue<GHPRDataContext>>()
 
-  @CalledInAwt
+  @RequiresEdt
   fun acquireContext(repository: GHRepositoryCoordinates, remote: GitRemoteUrlCoordinates,
                      account: GithubAccount, requestExecutor: GithubApiRequestExecutor): CompletableFuture<GHPRDataContext> {
 
@@ -67,12 +67,12 @@ internal class GHPRDataContextRepository(private val project: Project) {
     }.value
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun clearContext(repository: GHRepositoryCoordinates) {
     repositories.remove(repository)?.drop()
   }
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   @Throws(IOException::class)
   private fun loadContext(indicator: ProgressIndicator,
                           account: GithubAccount,
@@ -151,7 +151,7 @@ internal class GHPRDataContextRepository(private val project: Project) {
                            dataProviderRepository, securityService, repoDataService, avatarIconsProviderFactory, filesManager)
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun findContext(repositoryCoordinates: GHRepositoryCoordinates): GHPRDataContext? = repositories[repositoryCoordinates]?.lastLoadedValue
 
   companion object {

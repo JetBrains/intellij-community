@@ -7,6 +7,7 @@ import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -38,7 +39,7 @@ final class SystemOptionsTopHitProvider implements OptionsTopHitProvider.Applica
     return "system";
   }
 
-  static BooleanOptionDescription option(@Nls String option, String getter, String setter) {
+  static BooleanOptionDescription option(@Nls String option, @NonNls String getter, @NonNls String setter) {
     return new PublicMethodBasedOptionDescription(option, "preferences.general", getter, setter) {
       @NotNull
       @Override

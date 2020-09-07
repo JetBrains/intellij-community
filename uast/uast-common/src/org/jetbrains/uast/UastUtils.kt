@@ -19,6 +19,8 @@
 package org.jetbrains.uast
 
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi.*
@@ -232,10 +234,11 @@ tailrec fun UElement.isLastElementInControlFlow(scopeElement: UElement? = null):
   }
 
 fun UNamedExpression.getAnnotationMethod(): PsiMethod? {
-  if (sourcePsi == null) return null
   val annotation : UAnnotation? = getParentOfType(UAnnotation::class.java, true)
   val fqn = annotation?.qualifiedName ?: return null
-  val psiClass = JavaPsiFacade.getInstance(sourcePsi!!.project).findClass(fqn, sourcePsi!!.resolveScope)
+  val annotationSrc = annotation.sourcePsi
+  if (annotationSrc == null) return null
+  val psiClass = JavaPsiFacade.getInstance(annotationSrc.project).findClass(fqn, annotationSrc.resolveScope)
   if (psiClass != null && psiClass.isAnnotationType) {
     return ArrayUtil.getFirstElement(psiClass.findMethodsByName(this.name ?: "value", false))
   }

@@ -3,6 +3,7 @@ package com.intellij.featureStatistics.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.featureStatistics.*;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.TipUIUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -155,15 +156,12 @@ public final class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
     if (stats.dayCount > 0 && stats.sparedCharacters > 0) {
       String total = formatCharacterCount(stats.sparedCharacters, true);
       String perDay = formatCharacterCount(stats.sparedCharacters / stats.dayCount, false);
-      labelText += "<br>Code completion has saved you from typing at least " + total + " since " + DateFormatUtil.formatDate(stats.startDate) +
-                   " (~" + perDay + " per working day)";
+      labelText += "<br>" + IdeBundle.message("label.text.code.completion.saved", total, DateFormatUtil.formatDate(stats.startDate), perDay);
     }
 
     CumulativeStatistics fstats = ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getFixesStats();
     if (fstats.dayCount > 0 && fstats.invocations > 0) {
-      labelText +=
-        "<br>Quick fixes have saved you from " + fstats.invocations + " possible bugs since " + DateFormatUtil.formatDate(fstats.startDate) +
-        " (~" + fstats.invocations / fstats.dayCount + " per working day)";
+      labelText += "<br>" + IdeBundle.message("label.text.quick.fixes.saved", fstats.invocations,DateFormatUtil.formatDate(fstats.startDate),fstats.invocations / fstats.dayCount);
     }
 
     controlsPanel.add(new JLabel(XmlStringUtil.wrapInHtml(labelText)), BorderLayout.NORTH);
@@ -181,12 +179,12 @@ public final class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
     table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
-        Collection selection = table.getSelection();
+        Collection<FeatureDescriptor> selection = table.getSelection();
         if (selection.isEmpty()) {
           browser.setText("");
         }
         else {
-          TipUIUtil.openTipInBrowser(TipUIUtil.getTip((FeatureDescriptor)selection.iterator().next()), browser);
+          TipUIUtil.openTipInBrowser(TipUIUtil.getTip(selection.iterator().next()), browser);
         }
       }
     });
@@ -201,7 +199,7 @@ public final class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
                count > 1024 ? oneDigit.format((double)count / 1024) + "K" :
                String.valueOf(count);
     if (full) {
-      return result + " characters";
+      return IdeBundle.message("label.text.character.count", result);
     }
     return result;
   }

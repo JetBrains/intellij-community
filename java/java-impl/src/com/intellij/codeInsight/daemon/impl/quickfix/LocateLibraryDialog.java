@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBRadioButton;
@@ -50,7 +51,8 @@ public class LocateLibraryDialog extends DialogWrapper {
     myUseBundledRadioButton.setText(QuickFixBundle.message("add.library.use.bundled.library.radio.button", presentableName,
                                                            ApplicationNamesInfo.getInstance().getFullProductName()));
     myCopyLibraryFilesRadioButton.setText(QuickFixBundle.message("add.library.copy.files.to.radio.button", presentableName));
-    myCopyToDir.setText(new File(new File(module.getModuleFilePath()).getParent(), "lib").getAbsolutePath());
+    @NlsSafe String path = new File(new File(module.getModuleFilePath()).getParent(), "lib").getAbsolutePath();
+    myCopyToDir.setText(path);
     myCopyToDir.addBrowseFolderListener(QuickFixBundle.message("add.library.title.choose.folder"),
                                         QuickFixBundle.message("add.library.description.choose.folder"), myProject,
                                         FileChooserDescriptorFactory.createSingleFolderDescriptor());

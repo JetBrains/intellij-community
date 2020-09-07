@@ -21,6 +21,7 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
 import icons.XsltDebuggerIcons;
+import org.intellij.plugins.xsltDebugger.XsltDebuggerBundle;
 import org.intellij.plugins.xsltDebugger.rt.engine.OutputEventQueue;
 
 import javax.swing.*;
@@ -40,7 +41,7 @@ class GeneratedStructureRenderer extends ColoredTreeCellRenderer {
     } else if (o instanceof String) {
       // "..." node
       append((String)o, SimpleTextAttributes.SYNTHETIC_ATTRIBUTES);
-      setToolTipText("Element is not finished yet");
+      setToolTipText(XsltDebuggerBundle.message("tooltip.element.is.not.finished.yet"));
     } else if (o instanceof OutputEventQueue.NodeEvent) {
       final OutputEventQueue.NodeEvent event = (OutputEventQueue.NodeEvent)o;
       final OutputEventQueue.NodeEvent.QName qname = event.getQName();

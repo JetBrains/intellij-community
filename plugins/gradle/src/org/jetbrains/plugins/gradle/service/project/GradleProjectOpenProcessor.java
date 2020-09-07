@@ -197,7 +197,7 @@ public final class GradleProjectOpenProcessor extends ProjectOpenProcessor {
     private final AbstractExternalModuleBuilder<GradleProjectSettings> myBuilder;
 
     GradleAbstractWizard(WizardContext wizardContext, GradleProjectSettings gradleProjectSettings) {
-      super("Open Gradle Project", (Project)null);
+      super(GradleBundle.message("dialog.title.open.gradle.project"), (Project)null);
       myBuilder = new AbstractExternalModuleBuilder<GradleProjectSettings>(GradleConstants.SYSTEM_ID, gradleProjectSettings) {
         @Override
         protected void setupModule(Module module) throws ConfigurationException {

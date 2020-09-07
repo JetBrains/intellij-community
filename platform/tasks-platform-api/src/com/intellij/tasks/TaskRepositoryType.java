@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.tasks.config.TaskRepositoryEditor;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +45,7 @@ public abstract class TaskRepositoryType<T extends TaskRepository> implements Ta
   public abstract Icon getIcon();
 
   @Nullable
-  public String getAdvertiser() { return null; }
+  public @Nls String getAdvertiser() { return null; }
 
   @NotNull
   public abstract TaskRepositoryEditor createEditor(T repository, Project project, Consumer<T> changeListener);

@@ -22,6 +22,9 @@ public interface ExtensionsArea  {
   @TestOnly
   void registerExtensionPoint(@NonNls @NotNull String extensionPointName, @NotNull String extensionPointBeanClass, @NotNull ExtensionPoint.Kind kind);
 
+  @TestOnly
+  void registerDynamicExtensionPoint(@NonNls @NotNull String extensionPointName, @NotNull String extensionPointBeanClass, @NotNull ExtensionPoint.Kind kind);
+
   void unregisterExtensionPoint(@NonNls @NotNull String extensionPointName);
 
   boolean hasExtensionPoint(@NonNls @NotNull String extensionPointName);

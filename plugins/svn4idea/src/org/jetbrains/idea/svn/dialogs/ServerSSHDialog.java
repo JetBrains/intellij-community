@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +16,7 @@ import java.awt.*;
 
 public class ServerSSHDialog extends DialogWrapper {
   private AcceptResult myResult;
-  private final String myFingerprints;
+  private final @NlsSafe @NotNull String myFingerprints;
   private JCheckBox myJCheckBox;
   private final boolean myStore;
   private final String myHost;
@@ -25,7 +26,7 @@ public class ServerSSHDialog extends DialogWrapper {
                          boolean store,
                          @NotNull final String host,
                          @Nullable final String algorithm,
-                         @NotNull String fingerprints) {
+                         @NlsSafe @NotNull String fingerprints) {
     super(project, true);
     myStore = store;
     myHost = host;

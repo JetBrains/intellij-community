@@ -51,8 +51,9 @@ public final class VcsRootErrorsFinder {
     List<String> mappedPaths = mappingsToPathsWithSelectedVcs(mappings);
     for (VcsRoot root : vcsRoots) {
       String vcsPath = root.getPath().getPath();
-      if (root.getVcs() != null && !mappedPaths.contains(vcsPath)) {
-        errors.add(new VcsRootErrorImpl(VcsRootError.Type.UNREGISTERED_ROOT, vcsPath, root.getVcs().getName()));
+      AbstractVcs vcs = root.getVcs();
+      if (vcs != null && !mappedPaths.contains(vcsPath)) {
+        errors.add(new VcsRootErrorImpl(VcsRootError.Type.UNREGISTERED_ROOT, new VcsDirectoryMapping(vcsPath, vcs.getName())));
       }
     }
     return errors;
@@ -65,16 +66,8 @@ public final class VcsRootErrorsFinder {
       if (!hasVcsChecker(mapping.getVcs())) {
         continue;
       }
-      if (mapping.isDefaultMapping()) {
-        if (!isRoot(mapping)) {
-          errors.add(new VcsRootErrorImpl(VcsRootError.Type.EXTRA_MAPPING, VcsDirectoryMapping.PROJECT_CONSTANT, mapping.getVcs()));
-        }
-      }
-      else {
-        String mappedPath = mapping.getDirectory();
-        if (!isRoot(mapping)) {
-          errors.add(new VcsRootErrorImpl(VcsRootError.Type.EXTRA_MAPPING, mappedPath, mapping.getVcs()));
-        }
+      if (!isRoot(mapping)) {
+        errors.add(new VcsRootErrorImpl(VcsRootError.Type.EXTRA_MAPPING, mapping));
       }
     }
     return errors;

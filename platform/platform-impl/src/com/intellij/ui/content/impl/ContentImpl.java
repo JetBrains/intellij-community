@@ -21,8 +21,8 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 public class ContentImpl extends UserDataHolderBase implements Content {
-  private String myDisplayName;
-  private String myDescription;
+  private @NlsContexts.TabTitle String myDisplayName;
+  private @NlsContexts.Tooltip String myDescription;
   private JComponent myComponent;
   private Icon myIcon;
   private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
@@ -32,11 +32,11 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   private Icon myLayeredIcon = new LayeredIcon(2);
   private Disposable myDisposer;
   private boolean myShouldDisposeContent = true;
-  private String myTabName;
-  private String myToolwindowTitle;
+  private @NlsContexts.TabTitle String myTabName;
+  private @NlsContexts.TabTitle String myToolwindowTitle;
   private boolean myCloseable = true;
   private ActionGroup myActions;
-  private String myPlace;
+  private @NonNls String myPlace;
 
   private AlertIcon myAlertIcon;
 
@@ -133,7 +133,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   }
 
   @Override
-  public void setTabName(String tabName) {
+  public void setTabName(@NlsContexts.TabTitle String tabName) {
     myTabName = tabName;
   }
 

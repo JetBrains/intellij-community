@@ -12,6 +12,7 @@ import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,7 +85,7 @@ public final class DefaultColorSchemesManager {
   }
 
   @NotNull
-  public List<String> listNames() {
+  public List<@NonNls String> listNames() {
     String[] names = new String[mySchemes.size()];
     for (int i = 0; i < names.length; i ++) {
       names[i] = mySchemes.get(i).getName();

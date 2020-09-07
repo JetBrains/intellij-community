@@ -67,7 +67,7 @@ public class PySimplifyBooleanCheckInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyConditionalStatementPart(PyConditionalStatementPart node) {
+    public void visitPyConditionalStatementPart(@NotNull PyConditionalStatementPart node) {
       super.visitPyConditionalStatementPart(node);
       final PyExpression condition = node.getCondition();
       if (condition != null) {
@@ -87,7 +87,7 @@ public class PySimplifyBooleanCheckInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyBinaryExpression(PyBinaryExpression node) {
+    public void visitPyBinaryExpression(@NotNull PyBinaryExpression node) {
       super.visitPyBinaryExpression(node);
       final PyElementType operator = node.getOperator();
       final PyExpression rightExpression = node.getRightExpression();

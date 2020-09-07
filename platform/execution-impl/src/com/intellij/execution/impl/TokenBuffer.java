@@ -103,11 +103,11 @@ final class TokenBuffer {
   private void trim() {
     // toss tokens from the beginning until size became < maxCapacity
     while (size - startIndex > maxCapacity) {
-      TokenInfo info = tokens.peekFirst();
-      int length = info.length() - startIndex;
+      TokenInfo info = tokens.getFirst();
+      int length = info.length();
       if (length > size - maxCapacity) {
         // slice a part of this info
-        startIndex += size - maxCapacity;
+        startIndex = size - maxCapacity;
         break;
       }
       startIndex = 0;

@@ -2,7 +2,6 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.project.Project
@@ -22,7 +21,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.legacyBridge.ProjectLibraryTableBridge
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.impl.VersionedStorageChanged
+import com.intellij.workspaceModel.storage.VersionedStorageChange
 
 internal class ProjectLibraryTableBridgeImpl(
   private val parentProject: Project
@@ -44,7 +43,7 @@ internal class ProjectLibraryTableBridgeImpl(
     val messageBusConnection = project.messageBus.connect(this)
 
     WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(messageBusConnection, object : WorkspaceModelChangeListener {
-      override fun beforeChanged(event: VersionedStorageChanged) {
+      override fun beforeChanged(event: VersionedStorageChange) {
         val changes = event.getChanges(LibraryEntity::class.java).filterProjectLibraryChanges()
           .filterIsInstance<EntityChange.Removed<LibraryEntity>>()
         if (changes.isEmpty()) return
@@ -60,7 +59,7 @@ internal class ProjectLibraryTableBridgeImpl(
         }
       }
 
-      override fun changed(event: VersionedStorageChanged) {
+      override fun changed(event: VersionedStorageChange) {
         val changes = event.getChanges(LibraryEntity::class.java).filterProjectLibraryChanges()
         if (changes.isEmpty()) return
 
@@ -119,34 +118,33 @@ internal class ProjectLibraryTableBridgeImpl(
         }
       }
     })
+  }
 
-    executeOrQueueOnDispatchThread {
-      val libraries = entityStorage.current
-        .entities(LibraryEntity::class.java)
-        .filter { it.tableId is LibraryTableId.ProjectLibraryTableId }
-        .filter { entityStorage.current.libraryMap.getDataByEntity(it) == null }
-        .map { libraryEntity ->
-          Pair(libraryEntity, LibraryBridgeImpl(
-            libraryTable = this@ProjectLibraryTableBridgeImpl,
-            project = project,
-            initialId = libraryEntity.persistentId(),
-            initialEntityStorage = entityStorage,
-            targetBuilder = null
-          ))
+  internal fun loadLibraries() {
+    val storage = entityStorage.current
+    val libraries = storage
+      .entities(LibraryEntity::class.java)
+      .filter { it.tableId is LibraryTableId.ProjectLibraryTableId }
+      .filter { storage.libraryMap.getDataByEntity(it) == null }
+      .map { libraryEntity ->
+        Pair(libraryEntity, LibraryBridgeImpl(
+          libraryTable = this@ProjectLibraryTableBridgeImpl,
+          project = project,
+          initialId = libraryEntity.persistentId(),
+          initialEntityStorage = entityStorage,
+          targetBuilder = null
+        ))
+      }
+      .toList()
+    LOG.debug("Initial load of project-level libraries")
+    if (libraries.isNotEmpty()) {
+      WorkspaceModel.getInstance(project).updateProjectModelSilent {
+        libraries.forEach { (entity, library) ->
+          it.mutableLibraryMap.addIfAbsent(entity, library)
         }
-        .toList()
-      LOG.debug("Initial load of project-level libraries")
-      if (libraries.isNotEmpty()) {
-        runWriteAction {
-          WorkspaceModel.getInstance(project).updateProjectModelSilent {
-            libraries.forEach { (entity, library) ->
-              it.mutableLibraryMap.addIfAbsent(entity, library)
-            }
-          }
-        }
-        libraries.forEach { (_, library) ->
-          dispatcher.multicaster.afterLibraryAdded(library)
-        }
+      }
+      libraries.forEach { (_, library) ->
+        dispatcher.multicaster.afterLibraryAdded(library)
       }
     }
   }
@@ -204,7 +202,8 @@ internal class ProjectLibraryTableBridgeImpl(
       libraryTable = this,
       project = project,
       originalStorage = entityStorage.current,
-      diff = diff
+      diff = diff,
+      cacheStorageResult = false
     )
 
   override fun addListener(listener: LibraryTable.Listener) = dispatcher.addListener(listener)

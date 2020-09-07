@@ -16,6 +16,7 @@
 package com.siyeh.ig.classmetrics;
 
 import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
+import com.intellij.openapi.util.NlsContexts;
 import com.siyeh.ig.BaseInspection;
 
 import javax.swing.*;
@@ -29,7 +30,7 @@ public abstract class ClassMetricInspection extends BaseInspection {
 
   protected abstract int getDefaultLimit();
 
-  protected abstract String getConfigurationLabel();
+  protected abstract @NlsContexts.Label String getConfigurationLabel();
 
   protected int getLimit() {
     return m_limit;

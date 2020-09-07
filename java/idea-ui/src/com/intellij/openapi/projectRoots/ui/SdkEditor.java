@@ -21,6 +21,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.status.InlineProgressIndicator;
@@ -163,7 +165,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
     return ((SdkType)mySdk.getSdkType()).isRootTypeApplicable(type);
   }
 
-  private String getHomeFieldLabelValue() {
+  private @NlsContexts.Label String getHomeFieldLabelValue() {
     return ((SdkType)mySdk.getSdkType()).getHomeFieldLabel();
   }
 
@@ -264,7 +266,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
     }
   }
 
-  private void setHomePathValue(String absolutePath) {
+  private void setHomePathValue(@NlsSafe String absolutePath) {
     myHomeComponent.setText(absolutePath);
     final Color fg;
     if (absolutePath != null && !absolutePath.isEmpty() && mySdk.getSdkType().isLocalSdk(mySdk)) {

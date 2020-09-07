@@ -26,6 +26,7 @@ import com.intellij.psi.xml.XmlTag;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.psi.*;
 import org.intellij.lang.xpath.xslt.quickfix.AddWithParamFix;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -37,7 +38,7 @@ public class AddOptionalArgumentsIntention extends AddWithParamFix {
     @Override
     @NotNull
     public String getFamilyName() {
-        return "Add optional Argument(s)";
+        return XPathBundle.message("intention.family.name.add.optional.argument");
     }
 
     @Override

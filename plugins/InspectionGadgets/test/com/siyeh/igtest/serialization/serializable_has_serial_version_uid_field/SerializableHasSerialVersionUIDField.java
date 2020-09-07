@@ -9,3 +9,6 @@ public class <warning descr="'SerializableHasSerialVersionUIDField' does not def
 
     public interface X extends Serializable {}
 }
+
+record R() implements Serializable {
+}

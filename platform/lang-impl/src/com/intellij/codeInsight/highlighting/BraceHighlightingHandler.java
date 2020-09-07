@@ -5,6 +5,8 @@ package com.intellij.codeInsight.highlighting;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil.BraceHighlightingAndNavigationContext;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
@@ -124,6 +126,9 @@ public class BraceHighlightingHandler {
     if (myEditor.getSelectionModel().hasSelection()) return;
     
     if (myEditor.getSoftWrapModel().isInsideOrBeforeSoftWrap(myEditor.getCaretModel().getVisualPosition())) return;
+
+    TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
+    if (state != null && !state.isFinished()) return;
 
     int offset = myEditor.getCaretModel().getOffset();
     CharSequence chars = myEditor.getDocument().getCharsSequence();

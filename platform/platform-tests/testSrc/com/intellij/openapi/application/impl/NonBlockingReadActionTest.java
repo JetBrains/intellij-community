@@ -503,7 +503,7 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
           }
         }));
       }
-      WriteAction.run(() -> parents.forEach(Disposer::dispose));
+      parents.forEach(Disposer::dispose);
 
       futures.forEach(f -> PlatformTestUtil.waitForFuture(f, 50_000));
     }

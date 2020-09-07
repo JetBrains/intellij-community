@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.IdeBundle;
@@ -42,7 +42,7 @@ public class EncodingPanel extends EditorBasedStatusBarPopup {
     Pair<Charset, String> check = EncodingUtil.getCharsetAndTheReasonTooltip(file);
     String failReason = Pair.getSecond(check);
     Charset charset = ObjectUtils.notNull(Pair.getFirst(check), file.getCharset());
-    String charsetName = ObjectUtils.notNull(charset.displayName(), "n/a");
+    String charsetName = ObjectUtils.notNull(charset.displayName(), IdeBundle.message("encoding.not.available"));
     String toolTipText = failReason == null ? IdeBundle.message("status.bar.text.file.encoding", charsetName)
                                             : StringUtil.capitalize(failReason) + ".";
     return new WidgetState(toolTipText, charsetName, failReason == null);

@@ -29,10 +29,7 @@ import com.intellij.openapi.project.*;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.ZipHandler;
 import com.intellij.serviceContainer.ComponentManagerImpl;
@@ -40,6 +37,7 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -157,7 +155,6 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
                                     @Nullable Project template,
                                     @Nullable ProgressIndicator indicator) {
     LOG.assertTrue(!project.isDefault());
-    boolean succeed = false;
     try {
       if (indicator != null) {
         indicator.setIndeterminate(false);
@@ -173,12 +170,15 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
       ProjectLoadHelper.registerComponents(project);
       project.getStateStore().setPath(file, isRefreshVfsNeeded, template);
       project.init(preloadServices, indicator);
-      succeed = true;
     }
-    finally {
-      if (!succeed) {
+    catch (Throwable initThrowable) {
+      try {
         WriteAction.runAndWait(() -> Disposer.dispose(project));
       }
+      catch (Throwable disposeThrowable) {
+        initThrowable.addSuppressed(disposeThrowable);
+      }
+      throw initThrowable;
     }
   }
 
@@ -198,7 +198,8 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
   public @NotNull Project getDefaultProject() {
     LOG.assertTrue(!ApplicationManager.getApplication().isDisposed(), "Default project has been already disposed!");
     // call instance method to reset timeout
-    LOG.assertTrue(!myDefaultProject.getMessageBus().isDisposed());
+    MessageBus bus = myDefaultProject.getMessageBus(); // re-instantiate if needed
+    LOG.assertTrue(!bus.isDisposed());
     LOG.assertTrue(myDefaultProject.isCached());
     return myDefaultProject;
   }
@@ -534,7 +535,7 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
       return true;
     }
 
-    StringBuilder message = new StringBuilder();
+    @NlsContexts.DialogMessage StringBuilder message = new StringBuilder();
     message.append(String.format("%s was unable to save some project files,\nare you sure you want to close this project anyway?",
                                  ApplicationNamesInfo.getInstance().getProductName()));
 

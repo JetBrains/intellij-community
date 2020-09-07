@@ -19,14 +19,12 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PyBinaryConditionSurrounder extends PyExpressionAsConditionSurrounder {
+public abstract class PyBinaryConditionSurrounder extends PyExpressionAsConditionSurrounder {
 
   private final String myTextToGenerate;
-  private final String myTemplateDescription;
 
-  public PyBinaryConditionSurrounder(@NotNull String textToGenerate, @NotNull String templateDescription) {
+  public PyBinaryConditionSurrounder(@NotNull String textToGenerate) {
     myTextToGenerate = textToGenerate;
-    myTemplateDescription = templateDescription;
   }
 
   @Override
@@ -55,10 +53,5 @@ public class PyBinaryConditionSurrounder extends PyExpressionAsConditionSurround
       return ((PyIfStatement)statement).getIfPart();
     }
     return null;
-  }
-
-  @Override
-  public String getTemplateDescription() {
-    return myTemplateDescription;
   }
 }

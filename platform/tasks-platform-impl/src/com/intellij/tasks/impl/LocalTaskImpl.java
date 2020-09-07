@@ -10,6 +10,7 @@ import com.intellij.tasks.*;
 import com.intellij.tasks.timeTracking.model.WorkItem;
 import com.intellij.util.xmlb.annotations.*;
 import icons.TasksIcons;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,14 +24,14 @@ import java.util.List;
  * @author Dmitry Avdeev
 */
 @Tag("task")
-@SuppressWarnings({"UnusedDeclaration"})
+@SuppressWarnings("UnusedDeclaration")
 public class LocalTaskImpl extends LocalTask {
 
   @NonNls public static final String DEFAULT_TASK_ID = "Default";
 
   private String myId = "";
-  private String mySummary = "";
-  private String myDescription = null;
+  private @Nls String mySummary = "";
+  private @Nls String myDescription = null;
   private Comment[] myComments = Comment.EMPTY_ARRAY;
   private boolean myClosed = false;
   private Date myCreated;
@@ -59,7 +60,7 @@ public class LocalTaskImpl extends LocalTask {
   public LocalTaskImpl() {
   }
 
-  public LocalTaskImpl(@NotNull String id, @NotNull String summary) {
+  public LocalTaskImpl(@NotNull String id, @NotNull @Nls String summary) {
     myId = id;
     mySummary = summary;
   }
@@ -158,7 +159,7 @@ public class LocalTaskImpl extends LocalTask {
     myId = id;
   }
 
-  public void setSummary(String summary) {
+  public void setSummary(@Nls String summary) {
     mySummary = summary;
   }
 

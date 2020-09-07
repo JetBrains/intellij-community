@@ -11,7 +11,7 @@ import org.editorconfig.language.psi.EditorConfigCharClassLetter
 import org.editorconfig.language.services.EditorConfigElementFactory
 
 class EditorConfigSanitizeCharClassQuickFix : LocalQuickFix {
-  override fun getFamilyName() = EditorConfigBundle["quickfix.charclass.sanitize.description"]
+  override fun getFamilyName() = EditorConfigBundle.get("quickfix.charclass.sanitize.description")
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val charClass = descriptor.psiElement as? EditorConfigCharClass ?: return

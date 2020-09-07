@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.ProgressManagerQueue
+import org.jetbrains.idea.svn.SvnBundle.message
 import org.jetbrains.idea.svn.SvnUtil.createUrl
 import org.jetbrains.idea.svn.SvnVcs
 import org.jetbrains.idea.svn.api.Url
@@ -26,7 +27,7 @@ private val LOG = logger<SvnBranchConfigurationManager>()
 
 @State(name = "SvnBranchConfigurationManager")
 internal class SvnBranchConfigurationManager(private val project: Project) : PersistentStateComponent<SvnBranchConfigurationManager.ConfigurationBean> {
-  private val branchesLoader = ProgressManagerQueue(project, "Subversion Branches Preloader")
+  private val branchesLoader = ProgressManagerQueue(project, message("progress.title.svn.branches.preloader"))
   val svnBranchConfigManager: NewRootBunch = NewRootBunch(project, branchesLoader)
   private var isInitialized = false
 

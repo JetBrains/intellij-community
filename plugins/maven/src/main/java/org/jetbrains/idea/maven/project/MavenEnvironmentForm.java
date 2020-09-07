@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
@@ -165,7 +166,8 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
 
   private void updateMavenVersionLabel() {
     String version = MavenServerManager.getInstance().getMavenVersion(getMavenHome());
-    String versionText = version == null ? "Invalid Maven home directory" : String.format("(Version: %s)", version);
+    String versionText = version == null ? MavenProjectBundle.message("label.invalid.maven.home.directory")
+                                         : MavenProjectBundle.message("label.invalid.maven.home.version", version);
     mavenVersionLabelComponent.getComponent().setText(versionText);
   }
 
@@ -211,6 +213,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
   }
 
   private static abstract class PathProvider {
+    @NlsSafe
     public String getPath() {
       final File file = getFile();
       return file == null ? "" : file.getPath();
@@ -226,7 +229,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
     private final PathProvider pathProvider;
 
     private Boolean isOverridden;
-    private String overrideText;
+    private @NlsSafe String overrideText;
 
     PathOverrider(final LabeledComponent<TextFieldWithBrowseButton> component,
                          final JCheckBox checkBox,
@@ -268,7 +271,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
       }
     }
 
-    public void reset(String text) {
+    public void reset(@NlsSafe String text) {
       isOverridden = null;
       checkBox.setSelected(!StringUtil.isEmptyOrSpaces(text));
       overrideText = StringUtil.isEmptyOrSpaces(text) ? null : text;

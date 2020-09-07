@@ -84,7 +84,7 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
     @JvmStatic
     val AGENTS_VOLUME = VolumeDescriptor(JavaLanguageRuntimeType::class.qualifiedName + ":agents",
                                          ExecutionBundle.message("java.language.runtime.agents.volume.label"),
-                                         ExecutionBundle.message("java.language.runtime.application.folder.description"),
+                                         ExecutionBundle.message("java.language.runtime.agents.volume.description"),
                                          "")
   }
 }

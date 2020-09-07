@@ -449,7 +449,7 @@ public abstract class PsiAnchor {
     }
 
     @NotNull
-    public String diagnoseNull() {
+    public @NonNls String diagnoseNull() {
       final PsiFile file = ReadAction.compute(this::getFile);
       try {
         PsiElement element = ReadAction.compute(() -> restoreFromStubIndex((PsiFileWithStubSupport)file, myIndex, myElementType, true));

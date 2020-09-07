@@ -21,6 +21,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaModuleExternalPaths;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
@@ -105,7 +106,7 @@ public class AnnotationsEditor extends ModuleElementsEditor {
     }).setRemoveAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
-          final List removedItems = TableUtil.removeSelectedItems(myTable);
+          final List<Object[]> removedItems = TableUtil.removeSelectedItems(myTable);
           if (removedItems.size() > 0) {
             saveData();
           }
@@ -164,7 +165,7 @@ public class AnnotationsEditor extends ModuleElementsEditor {
     }
 
     @Override
-    public Class getColumnClass(int columnIndex) {
+    public Class<TableItem> getColumnClass(int columnIndex) {
       return TableItem.class;
     }
 
@@ -187,7 +188,7 @@ public class AnnotationsEditor extends ModuleElementsEditor {
     }
   }
 
-  public static String getName() {
+  public static @NlsContexts.ConfigurableName String getName() {
     return JavaUiBundle.message("project.roots.external.annotations.tab.title");
   }
 }

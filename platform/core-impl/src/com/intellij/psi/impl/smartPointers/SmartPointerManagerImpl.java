@@ -19,6 +19,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -47,7 +48,7 @@ public final class SmartPointerManagerImpl extends SmartPointerManager implement
   }
 
   @NotNull
-  private static String anonymize(@NotNull Project project) {
+  private static @NonNls String anonymize(@NotNull Project project) {
     return
       (project.isDisposed() ? "(Disposed)" : "") +
       (project.isDefault() ? "(Default)" : "") +

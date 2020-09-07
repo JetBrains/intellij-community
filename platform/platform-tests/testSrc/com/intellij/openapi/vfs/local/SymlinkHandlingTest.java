@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
+import com.intellij.util.PathUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -414,7 +415,7 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
     String path = sub1.getPath() + StringUtil.repeat("/" + link.getName() + "/" + sub1.getName(), 10);
     VirtualFile f = LocalFileSystem.getInstance().findFileByPath(path);
     assertNotNull(f);
-    while (!FileUtil.pathsEqual(f.getPath(), sub1.getPath())) {
+    while (!PathUtil.pathEqualsTo(f, sub1.getPath())) {
       if (f.getName().equals(link.getName())) {
         assertTrue(f.getPath(),f.is(VFileProperty.SYMLINK));
         assertTrue(f.getPath(), f.isRecursiveOrCircularSymlink());

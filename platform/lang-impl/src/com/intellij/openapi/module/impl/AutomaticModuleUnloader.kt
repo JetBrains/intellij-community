@@ -12,6 +12,7 @@ import com.intellij.openapi.module.ModuleDescription
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.ConfigureUnloadedModulesDialog
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.xmlb.annotations.XCollection
 import com.intellij.xml.util.XmlStringUtil
 
@@ -119,7 +120,7 @@ class AutomaticModuleUnloader(private val project: Project) : SimplePersistentSt
     }
   }
 
-  fun createAction(text: String, action: (MutableList<String>) -> Unit): NotificationAction = object : NotificationAction(text) {
+  fun createAction(@NlsContexts.NotificationContent text: String, action: (MutableList<String>) -> Unit): NotificationAction = object : NotificationAction(text) {
     override fun actionPerformed(e: AnActionEvent, notification: Notification) {
       val unloaded = ArrayList<String>()
       val moduleManager = ModuleManager.getInstance(project)
@@ -135,7 +136,7 @@ class AutomaticModuleUnloader(private val project: Project) : SimplePersistentSt
     list.clear()
     list.addAll(modules)
     // compiler uses module list from disk, ask to save workspace
-    SaveAndSyncHandler.getInstance().scheduleSave(SaveAndSyncHandler.SaveTask(project, saveDocuments = false, forceSavingAllSettings = true))
+    SaveAndSyncHandler.getInstance().scheduleProjectSave(project, forceSavingAllSettings = true)
   }
 
   companion object {

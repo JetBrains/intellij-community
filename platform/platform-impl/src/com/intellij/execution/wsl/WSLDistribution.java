@@ -11,6 +11,7 @@ import com.intellij.execution.process.*;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -20,6 +21,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,8 +71,7 @@ public class WSLDistribution {
   /**
    * @return identification data of WSL distribution.
    */
-  @Nullable
-  public String readReleaseInfo() {
+  public @Nullable @NlsSafe String readReleaseInfo() {
     try {
       final String key = "PRETTY_NAME";
       final String releaseInfo = "/etc/os-release"; // available for all distributions
@@ -117,11 +118,11 @@ public class WSLDistribution {
     return WSLUtil.addInputCloseListener(processHandler).runProcess(timeout);
   }
 
-  public ProcessOutput executeOnWsl(int timeout, String @NotNull ... args) throws ExecutionException {
+  public ProcessOutput executeOnWsl(int timeout, @NonNls String @NotNull ... args) throws ExecutionException {
     return executeOnWsl(timeout, null, args);
   }
 
-  public ProcessOutput executeOnWsl(@Nullable Consumer<? super ProcessHandler> processHandlerConsumer, String @NotNull ... args)
+  public ProcessOutput executeOnWsl(@Nullable Consumer<? super ProcessHandler> processHandlerConsumer, @NonNls String @NotNull ... args)
     throws ExecutionException {
     return executeOnWsl(-1, processHandlerConsumer, args);
   }
@@ -260,8 +261,7 @@ public class WSLDistribution {
     return commandLine;
   }
 
-  @NotNull
-  protected String getRunCommandLineParameter() {
+  protected @NotNull @NlsSafe String getRunCommandLineParameter() {
     return RUN_PARAMETER;
   }
 
@@ -272,8 +272,7 @@ public class WSLDistribution {
    * @param timeoutInMilliseconds timeout for execution
    * @return actual file name
    */
-  @NotNull
-  public String resolveSymlink(@NotNull String path, int timeoutInMilliseconds) {
+  public @NotNull @NlsSafe String resolveSymlink(@NotNull String path, int timeoutInMilliseconds) {
 
     try {
       final ProcessOutput output = executeOnWsl(timeoutInMilliseconds, "readlink", "-f", path);
@@ -290,8 +289,7 @@ public class WSLDistribution {
     return path;
   }
 
-  @NotNull
-  public String resolveSymlink(@NotNull String path) {
+  public @NotNull @NlsSafe String resolveSymlink(@NotNull String path) {
     return resolveSymlink(path, RESOLVE_SYMLINK_TIMEOUT);
   }
 
@@ -341,16 +339,15 @@ public class WSLDistribution {
   /**
    * @return Windows-dependent path for a file, pointed by {@code wslPath} in WSL or null if path is unmappable
    */
-  @Nullable
-  public String getWindowsPath(@NotNull String wslPath) {
+
+  public @Nullable @NlsSafe String getWindowsPath(@NotNull String wslPath) {
     return WSLUtil.getWindowsPath(wslPath, getMntRoot());
   }
 
   /**
    * @return Linux path for a file pointed by {@code windowsPath} or null if unavailable, like \\MACHINE\path
    */
-  @Nullable
-  public String getWslPath(@NotNull String windowsPath) {
+  public @Nullable @NlsSafe String getWslPath(@NotNull String windowsPath) {
     if (FileUtil.isWindowsAbsolutePath(windowsPath)) { // absolute windows path => /mnt/disk_letter/path
       return getMntRoot() + convertWindowsPath(windowsPath);
     }
@@ -360,8 +357,7 @@ public class WSLDistribution {
   /**
    * @see WslDistributionDescriptor#getMntRoot()
    */
-  @NotNull
-  public final String getMntRoot(){
+  public final @NotNull @NlsSafe String getMntRoot(){
     return myDescriptor.getMntRoot();
   }
 
@@ -369,23 +365,19 @@ public class WSLDistribution {
    * @param windowsAbsolutePath properly formatted windows local absolute path: {@code drive:\path}
    * @return windows path converted to the linux path according to wsl rules: {@code c:\some\path} => {@code c/some/path}
    */
-  @NotNull
-  static String convertWindowsPath(@NotNull String windowsAbsolutePath) {
+  static @NotNull @NlsSafe String convertWindowsPath(@NotNull String windowsAbsolutePath) {
     return Character.toLowerCase(windowsAbsolutePath.charAt(0)) + FileUtil.toSystemIndependentName(windowsAbsolutePath.substring(2));
   }
 
-  @NotNull
-  public String getId() {
+  public @NotNull @NlsSafe String getId() {
     return myDescriptor.getId();
   }
 
-  @NotNull
-  public String getMsId() {
+  public @NotNull @NlsSafe String getMsId() {
     return myDescriptor.getMsId();
   }
 
-  @NotNull
-  public String getPresentableName() {
+  public @NotNull @NlsSafe String getPresentableName() {
     return myDescriptor.getPresentableName();
   }
 

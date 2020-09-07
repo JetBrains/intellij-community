@@ -1,8 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
 package com.intellij.util.io.storage;
 
 import com.intellij.openapi.Disposable;
@@ -10,7 +6,8 @@ import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.io.PagePool;
 import com.intellij.util.io.RandomAccessDataFile;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -37,7 +34,7 @@ public abstract class AbstractRecordsTable implements Disposable, Forceable {
 
   protected final RandomAccessDataFile myStorage;
 
-  private TIntArrayList myFreeRecordsList = null;
+  private IntList myFreeRecordsList = null;
   private boolean myIsDirty = false;
   protected static final int SPECIAL_NEGATIVE_SIZE_FOR_REMOVED_RECORD = -1;
 
@@ -80,7 +77,7 @@ public abstract class AbstractRecordsTable implements Disposable, Forceable {
       return result;
     }
     else {
-      final int result = myFreeRecordsList.remove(myFreeRecordsList.size() - 1);
+      final int result = myFreeRecordsList.removeInt(myFreeRecordsList.size() - 1);
       assert isSizeOfRemovedRecord(getSize(result));
       setSize(result, 0);
       return result;
@@ -132,8 +129,8 @@ public abstract class AbstractRecordsTable implements Disposable, Forceable {
     }
   }
 
-  private TIntArrayList scanForFreeRecords() throws IOException {
-    final TIntArrayList result = new TIntArrayList();
+  private IntList scanForFreeRecords() throws IOException {
+    IntList result = new IntArrayList();
     for (int i = 1; i <= getRecordsCount(); i++) {
       if (isSizeOfRemovedRecord(getSize(i))) {
         result.add(i);

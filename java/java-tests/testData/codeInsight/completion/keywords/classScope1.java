@@ -1,1 +1,1 @@
-public <caret>
+public <caret> Cls

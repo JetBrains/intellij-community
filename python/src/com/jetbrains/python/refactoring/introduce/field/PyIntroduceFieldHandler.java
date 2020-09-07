@@ -122,7 +122,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     }
 
     @Override
-    public void visitPyReferenceExpression(PyReferenceExpression node) {
+    public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
       super.visitPyReferenceExpression(node);
       final PsiElement result = node.getReference().resolve();
       if (result != null && PsiTreeUtil.getParentOfType(result, ScopeOwner.class) == myScope) {
@@ -324,7 +324,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     PyInplaceFieldIntroducer(PyTargetExpression target,
                                     IntroduceOperation operation,
                                     List<PsiElement> occurrences) {
-      super(target, operation.getEditor(), operation.getProject(), "Introduce Field",
+      super(target, operation.getEditor(), operation.getProject(), RefactoringBundle.message("introduce.field.title"),
             occurrences.toArray(PsiElement.EMPTY_ARRAY), null);
       myTarget = target;
       myOperation = operation;

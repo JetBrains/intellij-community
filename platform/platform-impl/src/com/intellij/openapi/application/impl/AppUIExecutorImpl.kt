@@ -216,7 +216,7 @@ internal class WithDocumentsCommitted(private val project: Project, private val 
 
 internal class InSmartMode(private val project: Project) : ContextConstraint {
   init {
-    assert(!LightEdit.owns(project)) {
+    check(!LightEdit.owns(project)) {
       "InSmartMode can't be used in LightEdit mode, check that LightEdit.owns(project)==false before calling"
     }
   }

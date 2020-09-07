@@ -8,13 +8,14 @@ import com.intellij.psi.impl.java.stubs.FunctionalExpressionStub;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public final class ClassPresentationUtil {
   private ClassPresentationUtil() {
   }
 
-  public static String getNameForClass(@NotNull PsiClass aClass, boolean qualified) {
+  public static @Nls String getNameForClass(@NotNull PsiClass aClass, boolean qualified) {
     if (aClass instanceof PsiAnonymousClass) {
       if (aClass instanceof PsiEnumConstantInitializer) {
         PsiEnumConstant enumConstant = ((PsiEnumConstantInitializer)aClass).getEnumConstant();
@@ -74,10 +75,10 @@ public final class ClassPresentationUtil {
     }
   }
 
-  public static String getFunctionalExpressionPresentation(PsiFunctionalExpression functionalExpression, boolean qualified) {
-    final StubElement stub = ((StubBasedPsiElementBase<?>)functionalExpression).getGreenStub();
+  public static @Nls String getFunctionalExpressionPresentation(PsiFunctionalExpression functionalExpression, boolean qualified) {
+    final StubElement<?> stub = ((StubBasedPsiElementBase<?>)functionalExpression).getGreenStub();
     final String lambdaText = stub instanceof FunctionalExpressionStub
-                              ? ((FunctionalExpressionStub)stub).getPresentableText()
+                              ? ((FunctionalExpressionStub<?>)stub).getPresentableText()
                               : PsiExpressionTrimRenderer.render(functionalExpression);
     return JavaPsiBundle.message("class.context.display", lambdaText, getContextName(functionalExpression, qualified, false)) ;
   }

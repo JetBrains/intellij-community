@@ -56,7 +56,7 @@ public class PyOldStyleClassesInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyClass(final PyClass node) {
+    public void visitPyClass(final @NotNull PyClass node) {
       final List<PyClassLikeType> expressions = node.getSuperClassTypes(myTypeEvalContext);
       List<LocalQuickFix> quickFixes = Lists.newArrayList(new PyConvertToNewStyleQuickFix());
       if (!expressions.isEmpty()) {
@@ -81,7 +81,7 @@ public class PyOldStyleClassesInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyCallExpression(final PyCallExpression node) {
+    public void visitPyCallExpression(final @NotNull PyCallExpression node) {
       PyClass klass = PsiTreeUtil.getParentOfType(node, PyClass.class);
       if (klass != null && !klass.isNewStyleClass(myTypeEvalContext)) {
         final List<PyClassLikeType> types = klass.getSuperClassTypes(myTypeEvalContext);

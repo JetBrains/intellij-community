@@ -17,15 +17,18 @@ package com.intellij.packaging.elements;
 
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.ui.ArtifactEditorContext;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
 public abstract class CompositePackagingElementType<E extends CompositePackagingElement<?>> extends PackagingElementType<E> {
-  protected CompositePackagingElementType(@NotNull @NonNls String id, @NotNull String presentableName) {
+  protected CompositePackagingElementType(@NotNull @NonNls String id,
+                                          @NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Title) String> presentableName) {
     super(id, presentableName);
   }
 

@@ -10,6 +10,7 @@ import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.function.Supplier;
 
 public class FindFurtherAction extends AnAction implements DumbAware {
   private final boolean directionForward;
@@ -19,18 +20,18 @@ public class FindFurtherAction extends AnAction implements DumbAware {
     this.directionForward = directionForward;
     this.myRangeSearch = rangeSearch;
 
-    String text;
-    String description;
+    Supplier<String> text;
+    Supplier<String> description;
     Icon icon;
 
     if (directionForward) {
-      text = EditorBundle.message("large.file.editor.find.further.forward.action.text");
-      description = EditorBundle.message("large.file.editor.find.further.forward.action.description");
+      text = EditorBundle.messagePointer("large.file.editor.find.further.forward.action.text");
+      description = EditorBundle.messagePointer("large.file.editor.find.further.forward.action.description");
       icon = AllIcons.Actions.FindAndShowNextMatches;
     }
     else {
-      text = EditorBundle.message("large.file.editor.find.further.backward.action.text");
-      description = EditorBundle.message("large.file.editor.find.further.backward.action.description");
+      text = EditorBundle.messagePointer("large.file.editor.find.further.backward.action.text");
+      description = EditorBundle.messagePointer("large.file.editor.find.further.backward.action.description");
       icon = AllIcons.Actions.FindAndShowPrevMatches;
     }
 

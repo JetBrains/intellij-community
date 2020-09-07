@@ -8,6 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
+import com.theoryinpractice.testng.TestngBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.testng.annotations.DataProvider;
@@ -49,7 +50,8 @@ public class DuplicatedDataProviderNamesInspection extends AbstractBaseJavaLocal
       if (entry.getValue().size() > 1) {
         for (PsiMethod method : entry.getValue()) {
           if (method.getContainingClass() != aClass) continue; //don't highlight methods in super class
-          final String description = String.format("Data provider with name '%s' already exists in context", entry.getKey());
+          final String description =
+            TestngBundle.message("inspection.message.data.provider.with.name.already.exists.in.context", entry.getKey());
           final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, dataProviderFqn);
           LOG.assertTrue(annotation != null);
           final PsiAnnotationMemberValue nameElement = annotation.findAttributeValue(NAME_ATTRIBUTE);

@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotification;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotificationPanel.ActionHandler;
@@ -42,7 +43,7 @@ public final class SdkSetupNotificationProvider extends EditorNotifications.Prov
   }
 
   @NotNull
-  private static EditorNotificationPanel createPanel(@NotNull String message, @NotNull ActionHandler fix) {
+  private static EditorNotificationPanel createPanel(@NotNull @NlsContexts.LinkLabel String message, @NotNull ActionHandler fix) {
     EditorNotificationPanel panel = new EditorNotificationPanel();
     panel.setText(message);
     panel.createActionLabel(ProjectBundle.message("project.sdk.setup"), fix, true);

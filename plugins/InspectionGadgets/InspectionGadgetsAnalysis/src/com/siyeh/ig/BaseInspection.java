@@ -122,7 +122,7 @@ public abstract class BaseInspection extends AbstractBaseJavaLocalInspectionTool
    * @param node  the xml element node the fields are written to.
    * @param excludedProperties  fields with names specified here are not written, and have to be handled separately
    */
-  protected void defaultWriteSettings(@NotNull Element node, final String... excludedProperties) throws WriteExternalException {
+  protected void defaultWriteSettings(@NotNull Element node, final @NonNls String... excludedProperties) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, node, new DefaultJDOMExternalizer.JDOMFilter() {
       @Override
       public boolean isAccept(@NotNull Field field) {

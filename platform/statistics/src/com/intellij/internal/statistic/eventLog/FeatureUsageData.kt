@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.codeWithMe.ClientId
+import com.intellij.internal.statistic.collectors.fus.ActionPlaceHolder
 import com.intellij.internal.statistic.eventLog.StatisticsEventEscaper.escapeFieldName
 import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.internal.statistic.utils.StatisticsUtil
@@ -201,7 +202,7 @@ class FeatureUsageData {
     if (place == null) return this
 
     var reported = ActionPlaces.UNKNOWN
-    if (isCommonPlace(place)) {
+    if (isCommonPlace(place) || ActionPlaceHolder.isCustomActionPlace(place)) {
       reported = place
     }
     else if (ActionPlaces.isPopupPlace(place)) {
@@ -299,6 +300,15 @@ class FeatureUsageData {
    * @param key key can contain "-", "_", latin letters or digits. All not allowed symbols will be replaced with "_" or "?".
    */
   fun addData(@NonNls key: String, value: List<String>): FeatureUsageData {
+    return addDataInternal(key, value)
+  }
+
+  /**
+   * The data reported by this method will be available ONLY for ad-hoc analysis.
+   *
+   * @param key key can contain "-", "_", latin letters or digits. All not allowed symbols will be replaced with "_" or "?".
+   */
+  internal fun addListLongData(@NonNls key: String, value: List<Long>): FeatureUsageData {
     return addDataInternal(key, value)
   }
 

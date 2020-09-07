@@ -4,6 +4,7 @@ package com.intellij.util.loader;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -13,7 +14,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 
 public final class NativeLibraryLoader {
-  public static void loadPlatformLibrary(@NotNull String libName) {
+  public static void loadPlatformLibrary(@NotNull @NonNls String libName) {
     String libFileName = mapLibraryName(libName);
 
     String libPath;

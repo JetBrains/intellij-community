@@ -18,6 +18,7 @@ import java.util.*;
  * @author Gregory.Shrago
  * @author Konstantin Bulenkov
  */
+@SuppressWarnings("HardCodedStringLiteral")
 public class DTDModelLoader implements ModelLoader {
   private ModelDesc model;
 

@@ -3,6 +3,8 @@ package com.intellij.remoteServer.impl.configuration;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.RemoteServerConfigurable;
@@ -22,7 +24,7 @@ import java.awt.*;
 public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServer<?>> {
   private final RemoteServerConfigurable myConfigurable;
   private final RemoteServer<?> myServer;
-  private String myServerName;
+  private @NlsSafe String myServerName;
   private boolean myNew;
   private JPanel myMainPanel;
   private JPanel mySettingsPanel;
@@ -97,12 +99,12 @@ public class SingleRemoteServerConfigurable extends NamedConfigurable<RemoteServ
     }
   }
 
-  private void setConnectionStatus(boolean error, boolean connected, String text) {
+  private void setConnectionStatus(boolean error, boolean connected, @NlsContexts.Label String text) {
     myConnected = connected;
     setConnectionStatusText(error, text);
   }
 
-  protected void setConnectionStatusText(boolean error, String text) {
+  protected void setConnectionStatusText(boolean error, @NlsContexts.Label String text) {
     myConnectionStatusLabel.setText(UIUtil.toHtml(text));
     myConnectionStatusLabel.setVisible(StringUtil.isNotEmpty(text));
   }

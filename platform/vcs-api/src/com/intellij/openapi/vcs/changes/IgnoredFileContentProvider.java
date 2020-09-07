@@ -2,8 +2,11 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -16,18 +19,23 @@ public interface IgnoredFileContentProvider {
   VcsKey getSupportedVcs();
 
   @NotNull
+  @NlsSafe
   String getFileName();
 
   @NotNull
+  @NonNls
   String buildIgnoreFileContent(@NotNull VirtualFile ignoreFileRoot, IgnoredFileProvider @NotNull [] ignoredFileProviders);
 
   @NotNull
-  String buildUnignoreContent(@NotNull String ignorePattern);
+  @NonNls
+  String buildUnignoreContent(@NotNull @NonNls String ignorePattern);
 
   @NotNull
+  @NonNls
   String buildIgnoreEntryContent(@NotNull VirtualFile ignoreEntryRoot, @NotNull IgnoredFileDescriptor ignoredFileDescriptor);
 
   @NotNull
+  @NlsContexts.DetailedDescription
   String buildIgnoreGroupDescription(@NotNull IgnoredFileProvider ignoredFileProvider);
 
   default boolean supportIgnoreFileNotInVcsRoot() {

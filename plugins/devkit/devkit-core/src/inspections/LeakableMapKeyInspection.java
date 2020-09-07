@@ -156,7 +156,7 @@ public final class LeakableMapKeyInspection extends DevKitUastInspectionBase {
 
     private final @NotNull @NonNls String myText;
 
-    private ReplaceKeyQuickFix(@NotNull String text) {
+    private ReplaceKeyQuickFix(@NonNls @NotNull String text) {
       myText = text;
     }
 

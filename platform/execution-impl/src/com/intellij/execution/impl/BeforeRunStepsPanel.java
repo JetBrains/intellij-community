@@ -40,7 +40,7 @@ import java.util.Set;
 /**
  * @author Vassiliy Kudryashov
  */
-final class BeforeRunStepsPanel extends JPanel {
+public final class BeforeRunStepsPanel extends JPanel {
   private final JCheckBox myShowSettingsBeforeRunCheckBox;
   private final JCheckBox myActivateToolWindowBeforeRunCheckBox;
   private final JBList<BeforeRunTask<?>> myList;
@@ -53,7 +53,7 @@ final class BeforeRunStepsPanel extends JPanel {
 
   private final Set<BeforeRunTask<?>> clonedTasks = CollectionFactory.createSmallMemoryFootprintSet();
 
-  BeforeRunStepsPanel(@NotNull StepsBeforeRunListener listener) {
+  public BeforeRunStepsPanel(@NotNull StepsBeforeRunListener listener) {
     myListener = listener;
     myModel = new CollectionListModel<>();
     myList = new JBList<>(myModel);
@@ -170,7 +170,7 @@ final class BeforeRunStepsPanel extends JPanel {
     return provider == null ? null : new BeforeRunTaskAndProvider(task, provider, index);
   }
 
-  void doReset(@NotNull RunnerAndConfigurationSettings settings) {
+  public void doReset(@NotNull RunnerAndConfigurationSettings settings) {
     clonedTasks.clear();
 
     myRunConfiguration = settings.getConfiguration();
@@ -274,7 +274,7 @@ final class BeforeRunStepsPanel extends JPanel {
         }
       });
     }
-    ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(ExecutionBundle.message("add.new.run.configuration.action2.name"), actionGroup,
+    ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(ExecutionBundle.message("add.new.before.run.task.name"), actionGroup,
                                                                           SimpleDataContext.getProjectContext(myRunConfiguration.getProject()), false, false, false, null,
                                                                           -1, Conditions.alwaysTrue());
     popup.show(Objects.requireNonNull(button.getPreferredPopupPoint()));
@@ -310,7 +310,7 @@ final class BeforeRunStepsPanel extends JPanel {
     }
   }
 
-  interface StepsBeforeRunListener {
+  public interface StepsBeforeRunListener {
     void fireStepsBeforeRunChanged();
 
     void titleChanged(@NotNull String title);

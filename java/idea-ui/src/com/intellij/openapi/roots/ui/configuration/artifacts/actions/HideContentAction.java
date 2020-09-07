@@ -41,15 +41,9 @@ public class HideContentAction extends DumbAwareAction {
     if (node != null) {
       final Collection<PackagingNodeSource> sources = node.getNodeSources();
       if (!sources.isEmpty()) {
-        String description;
-        if (sources.size() == 1) {
-          description = "Hide Content of '" + sources.iterator().next().getPresentableName() + "'";
-        }
-        else {
-          description = "Hide Content";
-        }
+        final String name = sources.iterator().next().getPresentableName();
         e.getPresentation().setVisible(true);
-        e.getPresentation().setText(description);
+        e.getPresentation().setText(JavaUiBundle.message("action.hide.content.text", name, sources.size()));
         return;
       }
     }

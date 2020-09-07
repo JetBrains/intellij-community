@@ -16,6 +16,7 @@
 package com.intellij.diff.fragments;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -135,6 +136,7 @@ public class LineFragmentImpl implements LineFragment {
     return fragments;
   }
 
+  @NonNls
   @Override
   public String toString() {
     return "LineFragmentImpl: Lines [" + myStartLine1 + ", " + myEndLine1 + ") - [" + myStartLine2 + ", " + myEndLine2 + "); " +

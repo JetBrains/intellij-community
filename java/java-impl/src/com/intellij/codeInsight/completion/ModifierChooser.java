@@ -39,6 +39,25 @@ public final class ModifierChooser {
     {PsiKeyword.TRANSIENT}
   };
 
+  private static final String[][] CLASS_15_MEMBER_MODIFIERS = {
+    {PsiKeyword.PUBLIC, PsiKeyword.PROTECTED, PsiKeyword.PRIVATE},
+    {PsiKeyword.STATIC},
+    {PsiKeyword.FINAL, PsiKeyword.ABSTRACT},
+    {PsiKeyword.SEALED, PsiKeyword.NON_SEALED},
+    {PsiKeyword.NATIVE},
+    {PsiKeyword.SYNCHRONIZED},
+    {PsiKeyword.STRICTFP},
+    {PsiKeyword.VOLATILE},
+    {PsiKeyword.TRANSIENT}
+  };
+
+  private static final String[][] INTERFACE_15_MEMBER_MODIFIERS = {
+    {PsiKeyword.PUBLIC, PsiKeyword.PROTECTED, PsiKeyword.PRIVATE},
+    {PsiKeyword.STATIC, PsiKeyword.DEFAULT},
+    {PsiKeyword.FINAL, PsiKeyword.ABSTRACT},
+    {PsiKeyword.SEALED, PsiKeyword.NON_SEALED}
+  };
+
   private static final String[][] INTERFACE_9_MEMBER_MODIFIERS = {
     {PsiKeyword.PUBLIC, PsiKeyword.PROTECTED, PsiKeyword.PRIVATE},
     {PsiKeyword.STATIC, PsiKeyword.DEFAULT},
@@ -82,10 +101,13 @@ public final class ModifierChooser {
   }
 
   public static String[] addMemberModifiers(PsiModifierList list, final boolean inInterface, @NotNull PsiElement position) {
-    return addKeywords(list, inInterface ? getInterfaceMemberModifiers(position) : CLASS_MEMBER_MODIFIERS);
+    return addKeywords(list, inInterface ? getInterfaceMemberModifiers(position) : getClassMemberModifiers(position));
   }
 
   private static String[][] getInterfaceMemberModifiers(@NotNull PsiElement list) {
+    if (PsiUtil.getLanguageLevel(list).isAtLeast(LanguageLevel.JDK_15_PREVIEW)) {
+      return INTERFACE_15_MEMBER_MODIFIERS;
+    }
     if (PsiUtil.isLanguageLevel9OrHigher(list)) {
       return INTERFACE_9_MEMBER_MODIFIERS;
     }
@@ -93,6 +115,13 @@ public final class ModifierChooser {
       return INTERFACE_8_MEMBER_MODIFIERS;
     }
     return INTERFACE_MEMBER_MODIFIERS;
+  }
+
+  private static String[][] getClassMemberModifiers(@NotNull PsiElement list) {
+    if (PsiUtil.getLanguageLevel(list).isAtLeast(LanguageLevel.JDK_15_PREVIEW)) {
+      return CLASS_15_MEMBER_MODIFIERS;
+    }
+    return CLASS_MEMBER_MODIFIERS;
   }
 
   private static String[] addKeywords(PsiModifierList list, String[][] keywordSets) {

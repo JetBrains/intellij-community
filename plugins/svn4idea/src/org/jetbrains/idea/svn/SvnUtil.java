@@ -32,10 +32,7 @@ import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.idea.svn.api.*;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
@@ -88,6 +85,8 @@ public final class SvnUtil {
   public static final Pattern WARNING_PATTERN = Pattern.compile("^svn: warning: (W(\\d+)): (.*)$", Pattern.MULTILINE);
 
   private static final Pair<Url, WorkingCopyFormat> UNKNOWN_REPOSITORY_AND_FORMAT = Pair.create(null, WorkingCopyFormat.UNKNOWN);
+
+  private static final @NonNls String NOT_VERSIONED_RESOURCE = "(not a versioned resource)";
 
   private SvnUtil() { }
 
@@ -231,12 +230,11 @@ public final class SvnUtil {
       for (String file : failedFiles) {
         exceptions.add(new VcsException(SvnBundle.message("exception.text.locking.file.failed", file)));
       }
-      final StringBuilder sb = new StringBuilder(SvnBundle.message("message.text.files.lock.failed", failedFiles.length == 1 ? 0 : 1));
+      @Nls StringBuilder sb = new StringBuilder(SvnBundle.message("message.text.files.lock.failed", failedFiles.length == 1 ? 0 : 1));
       for (VcsException vcsException : exceptions) {
         if (sb.length() > 0) sb.append('\n');
         sb.append(vcsException.getMessage());
       }
-      //AbstractVcsHelper.getInstance(project).showErrors(exceptions, SvnBundle.message("message.title.lock.failures"));
       throw new VcsException(sb.toString());
     }
 
@@ -344,7 +342,8 @@ public final class SvnUtil {
 
   private static void notifyDatabaseError() {
     VcsBalloonProblemNotifier.NOTIFICATION_GROUP
-      .createNotification("Some errors occurred while accessing svn working copy database.", NotificationType.ERROR).notify(null);
+      .createNotification(SvnBundle.message("notification.content.can.not.access.working.copy.database"), NotificationType.ERROR)
+      .notify(null);
   }
 
   private static File resolveDatabase(final File path) {
@@ -489,9 +488,13 @@ public final class SvnUtil {
     return info != null && info.getDepth() != null ? info.getDepth() : Depth.UNKNOWN;
   }
 
-  public static boolean seemsLikeVersionedDir(final VirtualFile file) {
+  public static boolean seemsLikeVersionedDir(@NotNull VirtualFile file) {
     final VirtualFile child = file.findChild(SVN_ADMIN_DIR_NAME);
     return child != null && child.isDirectory();
+  }
+
+  public static boolean seemsLikeVersionedDir(@NotNull File file) {
+    return new File(file, SVN_ADMIN_DIR_NAME).isDirectory();
   }
 
   public static boolean isAdminDirectory(final VirtualFile file) {
@@ -629,10 +632,10 @@ public final class SvnUtil {
     Info info = vcs.getInfo(url, Revision.HEAD);
 
     if (info == null) {
-      throw new SvnBindException("Could not get info for " + url);
+      throw new SvnBindException(SvnBundle.message("error.could.not.get.info.for.path", url));
     }
     if (!info.getRevision().isValid()) {
-      throw new SvnBindException("Could not get revision for " + url);
+      throw new SvnBindException(SvnBundle.message("error.could.not.get.revision.for.url", url));
     }
 
     return info.getRevision();
@@ -705,7 +708,7 @@ public final class SvnUtil {
            // thrown when getting info from repository for non-existent item - like HEAD revision for deleted file
            e.contains(ErrorCode.ILLEGAL_TARGET) ||
            // for svn 1.6
-           StringUtil.containsIgnoreCase(e.getMessage(), "(not a versioned resource)");
+           StringUtil.containsIgnoreCase(e.getMessage(), NOT_VERSIONED_RESOURCE);
   }
 
   public static boolean isAuthError(@NotNull SvnBindException e) {
@@ -759,7 +762,9 @@ public final class SvnUtil {
 
   private static class SqLiteJdbcWorkingCopyFormatOperation
     implements FileUtilRt.RepeatableIOOperation<WorkingCopyFormat, RuntimeException> {
+
     private static final String SQLITE_JDBC_TEMP_DIR_PROPERTY = "org.sqlite.tmpdir";
+    private static final @NonNls String USER_VERSION_QUERY = "pragma user_version";
 
     @NotNull private final File myDbFile;
 
@@ -780,7 +785,7 @@ public final class SvnUtil {
       try {
         Class.forName("org.sqlite.JDBC");
         connection = DriverManager.getConnection("jdbc:sqlite:" + FileUtil.toSystemIndependentName(myDbFile.getPath()));
-        ResultSet resultSet = connection.createStatement().executeQuery("pragma user_version");
+        ResultSet resultSet = connection.createStatement().executeQuery(USER_VERSION_QUERY);
 
         if (resultSet.next()) {
           userVersion = resultSet.getInt(1);

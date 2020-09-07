@@ -97,6 +97,10 @@ public class TestScaleHelper {
     Assume.assumeTrue("not in " + STANDALONE_PROP + " mode", SystemProperties.is(STANDALONE_PROP));
   }
 
+  public static void assumeHeadful() {
+    Assume.assumeFalse("should not be headless", SystemProperties.is("java.awt.headless"));
+  }
+
   public static Graphics2D createGraphics(double scale) {
     //noinspection UndesirableClassUsage
     Graphics2D g = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB).createGraphics();

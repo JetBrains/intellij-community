@@ -7,7 +7,7 @@ def test_second_form():
 
 
 def test_second_form_fail():
-    for chunk in iter<warning descr="Unexpected type(s):(int, str)Possible types:(() -> Any, Any)(() -> Optional[Any], None)">(10, '')</warning>:
+    for chunk in iter<warning descr="Unexpected type(s):(int, str)Possible type(s):(() -> Any, Any)(() -> Optional[Any], None)">(10, '')</warning>:
         pass
 
 

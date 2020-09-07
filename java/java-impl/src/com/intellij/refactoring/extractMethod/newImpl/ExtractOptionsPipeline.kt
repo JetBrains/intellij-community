@@ -13,6 +13,7 @@ import com.intellij.psi.*
 import com.intellij.psi.search.PsiElementProcessor
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
+import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.findUsedTypeParameters
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.hasExplicitModifier
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.inputParameterOf
@@ -157,7 +158,8 @@ object ExtractMethodPipeline {
     }
 
     if (targetCandidates.size > 1) {
-      NavigationUtil.getPsiElementPopup(targetCandidates.toTypedArray(), PsiClassListCellRenderer(), "Choose Destination Class", processor, preselection)
+      NavigationUtil.getPsiElementPopup(targetCandidates.toTypedArray(), PsiClassListCellRenderer(),
+                                        RefactoringBundle.message("choose.destination.class"), processor, preselection)
         .showInBestPositionFor(editor)
     } else {
       processor.execute(preselection)

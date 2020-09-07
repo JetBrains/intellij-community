@@ -113,8 +113,11 @@ abstract class SuggestedRefactoringAvailability(protected val refactoringSupport
   }
 
   companion object {
+    @Deprecated("Use RefactoringBundle.message(\"suggested.refactoring.usages\") explicitly")
     @JvmField val USAGES = RefactoringBundle.message("suggested.refactoring.usages")
+    @Deprecated("Use RefactoringBundle.message(\"suggested.refactoring.overrides\") explicitly")
     @JvmField val OVERRIDES = RefactoringBundle.message("suggested.refactoring.overrides")
+    @Deprecated("Use RefactoringBundle.message(\"suggested.refactoring.implementations\") explicitly")
     @JvmField val IMPLEMENTATIONS = RefactoringBundle.message("suggested.refactoring.implementations")
   }
 }

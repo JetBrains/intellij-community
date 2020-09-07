@@ -44,11 +44,7 @@ import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.actions.RuleAction;
 import com.intellij.usages.rules.*;
-import com.intellij.util.Consumer;
-import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.EditSourceOnEnterKeyHandler;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.SingleAlarm;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.concurrency.EdtExecutorService;
@@ -69,7 +65,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.event.TreeExpansionEvent;
+import javax.swing.event.TreeExpansionListener;
+import javax.swing.event.TreeModelEvent;
 import javax.swing.plaf.TreeUI;
 import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.*;
@@ -78,6 +76,7 @@ import java.awt.event.*;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -725,7 +724,7 @@ public class UsageViewImpl implements UsageViewEx {
 
       UsageContextPanel.Provider[] extensions = UsageContextPanel.Provider.EP_NAME.getExtensions(myProject);
       myUsageContextPanelProviders = ContainerUtil.filter(extensions, provider -> provider.isAvailableFor(this));
-      Map<String, JComponent> components = new LinkedHashMap<>();
+      Map<@NlsContexts.TabTitle String, JComponent> components = new LinkedHashMap<>();
       for (UsageContextPanel.Provider provider : myUsageContextPanelProviders) {
         JComponent component;
         if (myCurrentUsageContextProvider == null || myCurrentUsageContextProvider == provider) {
@@ -743,7 +742,7 @@ public class UsageViewImpl implements UsageViewEx {
         panel.add(components.values().iterator().next(), BorderLayout.CENTER);
       }
       else {
-        for (Map.Entry<String, JComponent> entry : components.entrySet()) {
+        for (Map.Entry<@NlsContexts.TabTitle String, JComponent> entry : components.entrySet()) {
           tabbedPane.addTab(entry.getKey(), entry.getValue());
         }
         int index = myUsageContextPanelProviders.indexOf(myCurrentUsageContextProvider);
@@ -797,7 +796,7 @@ public class UsageViewImpl implements UsageViewEx {
     }
   }
 
-  protected static UsageFilteringRule @NotNull [] getActiveFilteringRules(Project project) {
+  protected UsageFilteringRule @NotNull [] getActiveFilteringRules(Project project) {
     List<UsageFilteringRuleProvider> providers = UsageFilteringRuleProvider.EP_NAME.getExtensionList();
     List<UsageFilteringRule> list = new ArrayList<>(providers.size());
     for (UsageFilteringRuleProvider provider : providers) {
@@ -1036,7 +1035,8 @@ public class UsageViewImpl implements UsageViewEx {
       ContainerUtil.addAll(list, provider.createGroupingActions(this));
     }
     sortGroupingActions(list);
-    ActionUtil.moveActionTo(list, "Module", "Flatten Modules", true);
+    ActionUtil.moveActionTo(list, UsageViewBundle.message("action.group.by.module"),
+                            UsageViewBundle.message("action.flatten.modules"), true);
     return list.toArray(AnAction.EMPTY_ARRAY);
   }
 
@@ -1251,17 +1251,17 @@ public class UsageViewImpl implements UsageViewEx {
     private ShowSettings() {
       super(UsageViewBundle.message("action.text.usage.view.settings"), null, AllIcons.General.GearPlain);
       ConfigurableUsageTarget configurableUsageTarget = getConfigurableTarget(myTargets);
-      String description = null;
+      Supplier<String> description = null;
       try {
         description = configurableUsageTarget == null
                       ? null
-                      : UsageViewBundle
-                        .message("action.ShowSettings.show.settings.for.description", configurableUsageTarget.getLongDescriptiveName());
+                      : UsageViewBundle.messagePointer("action.ShowSettings.show.settings.for.description",
+                                                       configurableUsageTarget.getLongDescriptiveName());
       }
       catch (IndexNotReadyException ignored) {
       }
       if (description == null) {
-        description = UsageViewBundle.message("action.ShowSettings.show.find.usages.settings.dialog.description");
+        description = UsageViewBundle.messagePointer("action.ShowSettings.show.find.usages.settings.dialog.description");
       }
       getTemplatePresentation().setDescription(description);
       KeyboardShortcut shortcut =
@@ -1711,7 +1711,7 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   @Override
-  public void addButtonToLowerPane(@NotNull Runnable runnable, @NotNull String text) {
+  public void addButtonToLowerPane(@NotNull Runnable runnable, @NotNull @NlsContexts.Button String text) {
     addButtonToLowerPane(new AbstractAction(UIUtil.replaceMnemonicAmpersand(text)) {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -1731,24 +1731,24 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   @Override
-  public void addButtonToLowerPane(@NotNull Runnable runnable, @NotNull String text, char mnemonic) {
+  public void addButtonToLowerPane(@NotNull Runnable runnable, @NotNull @NlsContexts.Button String text, char mnemonic) {
     // implemented method is deprecated, so, it just calls non-deprecated overloading one
     addButtonToLowerPane(runnable, text);
   }
 
   @Override
   public void addPerformOperationAction(@NotNull Runnable processRunnable,
-                                        @NotNull String commandName,
-                                        @NotNull String cannotMakeString,
-                                        @NotNull String shortDescription) {
+                                        @NotNull @NlsContexts.Command String commandName,
+                                        @NotNull @NlsContexts.DialogMessage String cannotMakeString,
+                                        @NotNull @NlsContexts.Button String shortDescription) {
     addPerformOperationAction(processRunnable, commandName, cannotMakeString, shortDescription, true);
   }
 
   @Override
   public void addPerformOperationAction(@NotNull Runnable processRunnable,
-                                        @NotNull String commandName,
-                                        @NotNull String cannotMakeString,
-                                        @NotNull String shortDescription,
+                                        @NotNull @NlsContexts.Command String commandName,
+                                        @NotNull @NlsContexts.DialogMessage String cannotMakeString,
+                                        @NotNull @NlsContexts.Button String shortDescription,
                                         boolean checkReadOnlyStatus) {
     Runnable runnable = new MyPerformOperationRunnable(processRunnable, commandName, cannotMakeString, checkReadOnlyStatus);
     addButtonToLowerPane(runnable, shortDescription);
@@ -2250,12 +2250,14 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   private final class MyPerformOperationRunnable implements Runnable {
-    private final String myCannotMakeString;
+    private final @NlsContexts.DialogMessage String myCannotMakeString;
     private final Runnable myProcessRunnable;
-    private final String myCommandName;
+    private final @NlsContexts.Command String myCommandName;
     private final boolean myCheckReadOnlyStatus;
 
-    private MyPerformOperationRunnable(@NotNull Runnable processRunnable, @NotNull String commandName, String cannotMakeString,
+    private MyPerformOperationRunnable(@NotNull Runnable processRunnable,
+                                       @NotNull @NlsContexts.Command String commandName,
+                                       @NlsContexts.DialogMessage String cannotMakeString,
                                        boolean checkReadOnlyStatus) {
       myCannotMakeString = cannotMakeString;
       myProcessRunnable = processRunnable;

@@ -70,9 +70,7 @@ class FileHistoryTest {
     val beforePath = LocalFilePath("before.txt", false)
     val fileNamesData = FileNamesDataBuilder(afterPath)
       .addChange(beforePath, 6, listOf(ADDED), listOf(7))
-      .addChange(beforePath, 4, listOf(REMOVED), listOf(5))
-      .addChange(afterPath, 4, listOf(ADDED), listOf(5))
-      .addRename(5, 4, beforePath, afterPath)
+      .addDetectedRename(5, 4, beforePath, afterPath)
       .addChange(afterPath, 2, listOf(MODIFIED), listOf(3))
       .build()
 
@@ -160,18 +158,14 @@ class FileHistoryTest {
    * Rename happens in one branch, while the other branch only consists of couple of trivial merge commits.
    */
   @Test
-  fun historyWithUndetectedRename() {
+  fun historyWithUndetectedTrivialRename() {
     val after = LocalFilePath("after.txt", false)
     val before = LocalFilePath("before.txt", false)
     val fileNamesData = FileNamesDataBuilder(after)
       .addChange(before, 7, listOf(ADDED), listOf(7))
       .addChange(before, 6, listOf(MODIFIED), listOf(7))
       .addChange(before, 5, listOf(MODIFIED), listOf(6))
-
-      .addChange(before, 4, listOf(REMOVED), listOf(5))
-      .addChange(after, 4, listOf(ADDED), listOf(5))
-      .addRename(5, 4, before, after)
-
+      .addDetectedRename(5, 4, before, after)
       .addChange(after, 3, listOf(MODIFIED), listOf(4))
 
       .addChange(before, 2, listOf(MODIFIED, NOT_CHANGED), listOf(6, 5))
@@ -206,12 +200,8 @@ class FileHistoryTest {
     val bFile = LocalFilePath("b.txt", false)
     val fileNamesData = FileNamesDataBuilder(aFile)
       .addChange(aFile, 4, listOf(ADDED), listOf(4))
-      .addChange(aFile, 2, listOf(REMOVED), listOf(3))
-      .addChange(bFile, 2, listOf(ADDED), listOf(3))
-      .addRename(3, 2, aFile, bFile)
-      .addChange(bFile, 0, listOf(REMOVED), listOf(1))
-      .addChange(aFile, 0, listOf(ADDED), listOf(1))
-      .addRename(1, 0, bFile, aFile)
+      .addDetectedRename(3, 2, aFile, bFile)
+      .addDetectedRename(1, 0, bFile, aFile)
       .build()
 
     graph {
@@ -237,22 +227,11 @@ class FileHistoryTest {
     val fileNamesData = FileNamesDataBuilder(lowercasePath)
       .addChange(lowercasePath, 7, listOf(ADDED), listOf(7))
       .addChange(lowercasePath, 6, listOf(MODIFIED), listOf(7))
-
-      .addChange(lowercasePath, 5, listOf(REMOVED), listOf(6))
-      .addChange(mixedPath, 5, listOf(ADDED), listOf(6))
-      .addRename(6, 5, lowercasePath, mixedPath)
-
+      .addDetectedRename(6, 5, lowercasePath, mixedPath)
       .addChange(mixedPath, 4, listOf(MODIFIED), listOf(5))
-
-      .addChange(mixedPath, 3, listOf(REMOVED), listOf(4))
-      .addChange(uppercasePath, 3, listOf(ADDED), listOf(4))
-      .addRename(4, 3, mixedPath, uppercasePath)
-
+      .addDetectedRename(4, 3, mixedPath, uppercasePath)
       .addChange(uppercasePath, 2, listOf(MODIFIED), listOf(3))
-
-      .addChange(uppercasePath, 1, listOf(REMOVED), listOf(2))
-      .addChange(lowercasePath, 1, listOf(ADDED), listOf(2))
-      .addRename(2, 1, uppercasePath, lowercasePath)
+      .addDetectedRename(2, 1, uppercasePath, lowercasePath)
 
       .build()
 
@@ -288,12 +267,8 @@ class FileHistoryTest {
       .addChange(file, 0, listOf(MODIFIED), listOf(1))
       .addChange(otherFile, 1, listOf(MODIFIED), listOf(2))
       .addChange(file, 2, listOf(ADDED), listOf(3))
-      .addChange(otherFile, 3, listOf(ADDED), listOf(4))
-      .addChange(file, 3, listOf(REMOVED), listOf(4))
-      .addRename(4, 3, file, otherFile)
-      .addChange(file, 5, listOf(ADDED), listOf(6))
-      .addChange(initialFile, 5, listOf(REMOVED), listOf(6))
-      .addRename(6, 5, initialFile, file)
+      .addDetectedRename(4, 3, file, otherFile)
+      .addDetectedRename(6, 5, initialFile, file)
       .addChange(initialFile, 6, listOf(ADDED), listOf(6))
       .build()
 
@@ -316,9 +291,7 @@ class FileHistoryTest {
     val file = LocalFilePath("file.txt", false)
     val renamedFile = LocalFilePath("renamedFile.txt", false)
     val fileNamesData = FileNamesDataBuilder(file)
-      .addChange(renamedFile, 0, listOf(ADDED), listOf(1))
-      .addChange(file, 0, listOf(REMOVED), listOf(1))
-      .addRename(1, 0, file, renamedFile)
+      .addDetectedRename(1, 0, file, renamedFile)
       .addChange(file, 1, listOf(ADDED), listOf(2))
       .addChange(file, 3, listOf(REMOVED), listOf(4))
       .addChange(file, 4, listOf(MODIFIED), listOf(5))
@@ -356,11 +329,7 @@ class FileHistoryTest {
       .addRename(2, 1, file, renamedFile)
 
       .addChange(file, 2, listOf(MODIFIED), listOf(5))
-
-      .addChange(renamedFile, 4, listOf(ADDED), listOf(5))
-      .addChange(file, 4, listOf(REMOVED), listOf(5))
-      .addRename(5, 4, file, renamedFile)
-
+      .addDetectedRename(5, 4, file, renamedFile)
       .addChange(file, 5, listOf(MODIFIED), listOf(6))
       .addChange(file, 6, listOf(ADDED), listOf(6))
       .build()
@@ -418,6 +387,45 @@ class FileHistoryTest {
       5()
     }
   }
+
+  /**
+   * File is renamed and modified in one branch, modified in another branch. At merge commit rename is not detected by git,
+   * and since there are changes in both branches, merge commit is not considered trivial and is not simplified.
+   * This means that when computing file history, it is important to walk commits parents in a specific order to correctly track file through a rename.
+   */
+  @Test
+  fun historyWithUndetectedNonTrivialRename() {
+    val after = LocalFilePath("after.txt", false)
+    val before = LocalFilePath("before.txt", false)
+    val fileNamesData = FileNamesDataBuilder(after)
+      .addChange(before, 7, listOf(ADDED), listOf(7))
+      .addDetectedRename(6, 4, before, after)
+      .addChange(after, 3, listOf(MODIFIED), listOf(4))
+      .addChange(before, 2, listOf(MODIFIED), listOf(5))
+      .addChange(before, 1, listOf(REMOVED, MODIFIED), listOf(2, 3))
+      .addChange(after, 1, listOf(ADDED, MODIFIED), listOf(2, 3))
+      // rename is not detected at merge commit 1
+      .addChange(after, 0, listOf(MODIFIED), listOf(1))
+      .build()
+
+    graph {
+      0(1)
+      1(2, 3)
+      2(5)
+      3(4)
+      4(6)
+      5(6)
+      6(7)
+      7()
+    }.assert(0, after, fileNamesData) {
+      0(1)
+      1(2, 3)
+      2(7.dot)
+      3(4)
+      4(7.dot)
+      7()
+    }
+  }
 }
 
 private class FileNamesDataBuilder(private val path: FilePath) {
@@ -448,6 +456,12 @@ private class FileNamesDataBuilder(private val path: FilePath) {
       }
     }.build()
   }
+}
+
+private fun FileNamesDataBuilder.addDetectedRename(parent: Int, child: Int, beforePath: FilePath, afterPath: FilePath): FileNamesDataBuilder {
+  return addChange(beforePath, child, listOf(REMOVED), listOf(parent))
+    .addChange(afterPath, child, listOf(ADDED), listOf(parent))
+    .addRename(parent, child, beforePath, afterPath)
 }
 
 private fun <T> List<Pair<Int, T>>.toIntObjectMap(): TIntObjectHashMap<T> {

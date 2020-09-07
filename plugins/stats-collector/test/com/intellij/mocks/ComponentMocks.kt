@@ -2,12 +2,12 @@
 
 package com.intellij.mocks
 
+import com.intellij.completion.ml.experiment.ExperimentInfo
+import com.intellij.completion.ml.experiment.ExperimentStatus
 import com.intellij.lang.Language
-import com.intellij.stats.experiment.ExperimentInfo
-import com.intellij.stats.experiment.ExperimentStatus
-import com.intellij.stats.network.service.RequestService
-import com.intellij.stats.sender.StatisticSender
-import com.intellij.stats.storage.UniqueFilesProvider
+import com.intellij.stats.completion.network.service.RequestService
+import com.intellij.stats.completion.sender.StatisticSender
+import com.intellij.stats.completion.storage.UniqueFilesProvider
 import org.mockito.Mockito
 import java.io.File
 
@@ -31,13 +31,16 @@ internal class TestStatisticSender : StatisticSender {
 
 
 internal class TestExperimentStatus : ExperimentStatus {
+    companion object {
+        const val VERSION = 0
+    }
     private var inExperiment = false
     private var shouldRank = false
     private var shouldShowArrows = false
     private var shouldCalculateFeatures = false
 
     override fun forLanguage(language: Language): ExperimentInfo =
-      ExperimentInfo(inExperiment, 0, shouldRank, shouldShowArrows, shouldCalculateFeatures)
+      ExperimentInfo(inExperiment, VERSION, shouldRank, shouldShowArrows, shouldCalculateFeatures)
 
     override fun experimentChanged(language: Language): Boolean = false
 

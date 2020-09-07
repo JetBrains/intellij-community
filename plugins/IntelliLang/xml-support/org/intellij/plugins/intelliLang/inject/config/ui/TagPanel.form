@@ -17,7 +17,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
-        <border type="none" title="XML Tag"/>
+        <border type="none" title-resource-bundle="messages/IntelliLangBundle" title-key="tag.panel.title"/>
         <children>
           <component id="9c78e" class="javax.swing.JLabel">
             <constraints>
@@ -25,7 +25,7 @@
             </constraints>
             <properties>
               <labelFor value="8f17"/>
-              <text value="&amp;Local name:"/>
+              <text resource-bundle="messages/IntelliLangBundle" key="tag.panel.local.name"/>
             </properties>
           </component>
           <component id="7d32d" class="javax.swing.JLabel">
@@ -34,7 +34,7 @@
             </constraints>
             <properties>
               <labelFor value="3d65f"/>
-              <text value="&amp;Namespace:"/>
+              <text resource-bundle="messages/IntelliLangBundle" key="tag.panel.namespace"/>
             </properties>
           </component>
           <component id="8f17" class="com.intellij.ui.EditorTextField" binding="myLocalName" custom-create="true">
@@ -58,7 +58,7 @@
               <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Sub-&amp;tags"/>
+              <text resource-bundle="messages/IntelliLangBundle" key="tag.panel.sub.tags"/>
             </properties>
           </component>
         </children>

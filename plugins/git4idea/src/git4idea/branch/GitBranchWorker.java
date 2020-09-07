@@ -93,7 +93,7 @@ public final class GitBranchWorker {
                                          name,
                                          GitUtil.getRepositoryManager(repository.getProject()).getRepositories().size(),
                                          getShortRepositoryName(repository));
-        VcsNotifier.getInstance(myProject).notifyError(error, result.getErrorOutputAsHtmlString(), true);
+        VcsNotifier.getInstance(myProject).notifyError("git.could.not.create.tag", error, result.getErrorOutputAsHtmlString(), true);
         break;
       }
     }

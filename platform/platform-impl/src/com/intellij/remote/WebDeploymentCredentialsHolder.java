@@ -3,14 +3,15 @@ package com.intellij.remote;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class WebDeploymentCredentialsHolder {
-  private static final String SFTP_DEPLOYMENT_PREFIX = "sftp://";
+  @NonNls private static final String SFTP_DEPLOYMENT_PREFIX = "sftp://";
 
-  public static final String WEB_SERVER_CREDENTIALS_ID = "WEB_SERVER_CREDENTIALS_ID";
-  public static final String WEB_SERVER_CONFIG_ID = "WEB_SERVER_CONFIG_ID";
-  public static final String WEB_SERVER_CONFIG_NAME = "WEB_SERVER_CONFIG_NAME";
+  @NonNls public static final String WEB_SERVER_CREDENTIALS_ID = "WEB_SERVER_CREDENTIALS_ID";
+  @NonNls public static final String WEB_SERVER_CONFIG_ID = "WEB_SERVER_CONFIG_ID";
+  @NonNls public static final String WEB_SERVER_CONFIG_NAME = "WEB_SERVER_CONFIG_NAME";
 
 
   private @NotNull String myCredentialsId = "";

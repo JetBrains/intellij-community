@@ -36,7 +36,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyPrefixExpression(PyPrefixExpression node) {
+  public void visitPyPrefixExpression(@NotNull PyPrefixExpression node) {
     if (node.getOperator() == PyTokenTypes.NOT_KEYWORD) {
       myPositive = !myPositive;
       super.visitPyPrefixExpression(node);
@@ -48,7 +48,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyCallExpression(PyCallExpression node) {
+  public void visitPyCallExpression(@NotNull PyCallExpression node) {
     if (node.isCalleeText(PyNames.ISINSTANCE, PyNames.ASSERT_IS_INSTANCE)) {
       final PyExpression[] args = node.getArguments();
       if (args.length == 2 && args[0] instanceof PyReferenceExpression) {
@@ -78,7 +78,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyReferenceExpression(final PyReferenceExpression node) {
+  public void visitPyReferenceExpression(final @NotNull PyReferenceExpression node) {
     if (myPositive && (isIfReferenceStatement(node) || isIfReferenceConditionalStatement(node) || isIfNotReferenceStatement(node))) {
       // we could not suggest `None` because it could be a reference to an empty collection
       // so we could push only non-`None` assertions
@@ -90,7 +90,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyBinaryExpression(PyBinaryExpression node) {
+  public void visitPyBinaryExpression(@NotNull PyBinaryExpression node) {
     final PyExpression lhs = node.getLeftExpression();
     final PyExpression rhs = node.getRightExpression();
 

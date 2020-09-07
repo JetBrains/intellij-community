@@ -38,5 +38,14 @@ class StringMethods {
         }
     }
     
+    void testPropagateThroughLowerCase() {
+        if (getFoo().toLowerCase().equals("bar")) {}
+        if (this.getFoo().toLowerCase().equals("bar")) {}
+    }
+    
+    void test() {
+        test("foo".trim());
+    }
+    
     @NonNls native String getFoo();
 }

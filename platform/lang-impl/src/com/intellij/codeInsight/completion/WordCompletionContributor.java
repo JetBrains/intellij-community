@@ -33,7 +33,8 @@ public class WordCompletionContributor extends CompletionContributor implements 
   public static final Key<String> FORBID_WORD_COMPLETION = new Key<>("ForbidWordCompletion");
 
   private static boolean isWordCompletionDefinitelyEnabled(@NotNull PsiFile file) {
-    return (DumbService.isDumb(file.getProject()) && !CompletionIgnoreDumbnessEP.isIgnoringDumbnessAllowed(file.getLanguage())) ||
+    return (DumbService.isDumb(file.getProject()) &&
+            LanguageWordCompletion.INSTANCE.isWordCompletionInDumbModeEnabled(file.getLanguage())) ||
            file instanceof PsiPlainTextFile && file.getViewProvider().getLanguages().size() == 1;
   }
 

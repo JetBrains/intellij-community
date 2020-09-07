@@ -12,18 +12,20 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.DumbAware
+import org.jetbrains.annotations.ApiStatus
 
 // class is "open" due to backward compatibility - do not extend it.
+@ApiStatus.NonExtendable
 open class SaveAllAction : AnAction(), DumbAware, LightEditCompatible {
   override fun actionPerformed(e: AnActionEvent) {
     CommonDataKeys.EDITOR.getData(e.dataContext)?.let(::stripSpacesFromCaretLines)
 
     val project = CommonDataKeys.PROJECT.getData(e.dataContext)
     FileDocumentManager.getInstance().saveAllDocuments()
-    if (LightEdit.owns(project)) {
-      LightEditService.getInstance().saveNewDocuments();
+    if (project != null && LightEdit.owns(project)) {
+      LightEditService.getInstance().saveNewDocuments()
     }
-    (SaveAndSyncHandler.getInstance()).scheduleSave(SaveAndSyncHandler.SaveTask(onlyProject = project, forceSavingAllSettings = true, saveDocuments = false), forceExecuteImmediately = true)
+    SaveAndSyncHandler.getInstance().scheduleSave(SaveAndSyncHandler.SaveTask(project = project, forceSavingAllSettings = true), forceExecuteImmediately = true)
   }
 }
 

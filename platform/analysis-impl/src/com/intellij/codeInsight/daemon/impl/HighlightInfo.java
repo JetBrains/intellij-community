@@ -34,6 +34,7 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,8 +76,8 @@ public class HighlightInfo implements Segment {
   public List<Pair<IntentionActionDescriptor, TextRange>> quickFixActionRanges;
   public List<Pair<IntentionActionDescriptor, RangeMarker>> quickFixActionMarkers;
 
-  private final String description;
-  private final String toolTip;
+  private final @DetailedDescription String description;
+  private final @Tooltip String toolTip;
   @NotNull
   private final HighlightSeverity severity;
   private final GutterMark gutterIconRenderer;
@@ -102,8 +103,8 @@ public class HighlightInfo implements Segment {
                           @NotNull HighlightInfoType type,
                           int startOffset,
                           int endOffset,
-                          @Nullable String escapedDescription,
-                          @Nullable String escapedToolTip,
+                          @Nullable @DetailedDescription String escapedDescription,
+                          @Nullable @Tooltip String escapedToolTip,
                           @NotNull HighlightSeverity severity,
                           boolean afterEndOfLine,
                           @Nullable Boolean needsUpdateOnTyping,
@@ -176,7 +177,7 @@ public class HighlightInfo implements Segment {
    * @return encoded tooltip (stripped html text with one or more placeholder characters)
    *         or tooltip without changes.
    */
-  private static String encodeTooltip(String tooltip, String description) {
+  private static @Tooltip String encodeTooltip(@Tooltip String tooltip, @DetailedDescription String description) {
     if (tooltip == null || description == null || description.isEmpty()) return tooltip;
 
     String encoded = StringUtil.replace(tooltip, XmlStringUtil.escapeString(description), DESCRIPTION_PLACEHOLDER);
@@ -309,7 +310,7 @@ public class HighlightInfo implements Segment {
   }
 
   @Nullable
-  private static String htmlEscapeToolTip(@Nullable String unescapedTooltip) {
+  private static @Tooltip String htmlEscapeToolTip(@Nullable @Tooltip String unescapedTooltip) {
     return unescapedTooltip == null ? null : XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(unescapedTooltip));
   }
 
@@ -362,7 +363,7 @@ public class HighlightInfo implements Segment {
   }
 
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     String s = "HighlightInfo(" + startOffset + "," + endOffset+")";
     if (getActualStartOffset() != startOffset || getActualEndOffset() != endOffset) {
       s += "; actual: (" + getActualStartOffset() + "," + getActualEndOffset() + ")";
@@ -448,8 +449,8 @@ public class HighlightInfo implements Segment {
     private int startOffset = -1;
     private int endOffset = -1;
 
-    private String escapedDescription;
-    private String escapedToolTip;
+    private @DetailedDescription String escapedDescription;
+    private @Tooltip String escapedToolTip;
     private HighlightSeverity severity;
 
     private boolean isAfterEndOfLine;
@@ -762,11 +763,11 @@ public class HighlightInfo implements Segment {
     private volatile HighlightDisplayKey myKey;
     private final ProblemGroup myProblemGroup;
     private final HighlightSeverity mySeverity;
-    private final String myDisplayName;
+    private final @Nls String myDisplayName;
     private final Icon myIcon;
     private Boolean myCanCleanup;
 
-    IntentionActionDescriptor(@NotNull IntentionAction action, List<IntentionAction> options, String displayName) {
+    IntentionActionDescriptor(@NotNull IntentionAction action, List<IntentionAction> options, @Nls String displayName) {
       this(action, options, displayName, null);
     }
 
@@ -776,14 +777,14 @@ public class HighlightInfo implements Segment {
 
     IntentionActionDescriptor(@NotNull IntentionAction action,
                               @Nullable List<IntentionAction> options,
-                              @Nullable String displayName,
+                              @Nullable @Nls String displayName,
                               @Nullable Icon icon) {
       this(action, options, displayName, icon, null, null, null);
     }
 
     public IntentionActionDescriptor(@NotNull IntentionAction action,
                                      @Nullable List<IntentionAction> options,
-                                     @Nullable String displayName,
+                                     @Nullable @Nls String displayName,
                                      @Nullable Icon icon,
                                      @Nullable HighlightDisplayKey key,
                                      @Nullable ProblemGroup problemGroup,
@@ -908,7 +909,7 @@ public class HighlightInfo implements Segment {
     }
 
     @Nullable
-    public String getDisplayName() {
+    public @Nls String getDisplayName() {
       return myDisplayName;
     }
 
@@ -960,7 +961,7 @@ public class HighlightInfo implements Segment {
 
   public void registerFix(@Nullable IntentionAction action,
                           @Nullable List<IntentionAction> options,
-                          @Nullable String displayName,
+                          @Nullable @Nls String displayName,
                           @Nullable TextRange fixRange,
                           @Nullable HighlightDisplayKey key) {
     if (action == null) return;

@@ -11,7 +11,7 @@ import java.awt.*;
 
 public class TwoStepConfirmationDialog extends MessageDialog {
   private JCheckBox myCheckBox;
-  private final String myCheckboxText;
+  private final @NlsContexts.Checkbox String myCheckboxText;
   private final boolean myChecked;
   private final PairFunction<? super Integer, ? super JCheckBox, Integer> myExitFunc;
 

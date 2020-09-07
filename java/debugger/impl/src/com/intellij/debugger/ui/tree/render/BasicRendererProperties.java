@@ -3,6 +3,7 @@ package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
+import com.intellij.openapi.util.NlsSafe;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +30,7 @@ public final class BasicRendererProperties implements Cloneable {
     myEnabledDefaultValue = enabledDefaultValue;
   }
 
-  public String getName() {
+  public @NlsSafe String getName() {
     return myName;
   }
 

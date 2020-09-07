@@ -16,7 +16,7 @@ import javax.swing.JPanel
 
 class VcsCloneComponentStub(
   private val checkoutProvider: CheckoutProvider,
-  @Nls private val primaryActionText: String = VcsBundle.getString("clone.dialog.clone.button")
+  @Nls private val primaryActionText: String = VcsBundle.message("clone.dialog.clone.button")
 ) : VcsCloneComponent {
 
   override fun getView(): JComponent {

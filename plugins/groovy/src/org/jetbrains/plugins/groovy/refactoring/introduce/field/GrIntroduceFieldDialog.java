@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.refactoring.introduce.field;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -16,6 +17,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
@@ -123,7 +125,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
 
     myInvokedOnLocalVar  = context.getVar() == null ? getInvokedOnLocalVar(context.getExpression()) : context.getVar().getName();
     if (myInvokedOnLocalVar != null) {
-      myReplaceAllOccurrencesCheckBox.setText("Replace all occurrences and remove variable '" + myInvokedOnLocalVar + "'");
+      myReplaceAllOccurrencesCheckBox.setText(GroovyBundle.message("replace.all.occurrences.and.remove.variable.0", myInvokedOnLocalVar));
       if (context.getVar() != null) {
         myReplaceAllOccurrencesCheckBox.setEnabled(false);
         myReplaceAllOccurrencesCheckBox.setSelected(true);
@@ -198,8 +200,12 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
       setErrorText(null);
     }
     else {
-      setErrorText(StringUtil.join(errors, "\n"));
+      setErrorText(errorString(errors));
     }
+  }
+
+  private static @NlsSafe @NotNull String errorString(List<String> errors) {
+    return StringUtil.join(errors, "\n");
   }
 
   private static boolean hasLhsUsages(@NotNull GrIntroduceContext context) {

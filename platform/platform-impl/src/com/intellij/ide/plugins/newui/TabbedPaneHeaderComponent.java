@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.scale.JBUIScale;
@@ -17,6 +18,7 @@ import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,7 +93,7 @@ public class TabbedPaneHeaderComponent extends JPanel {
 
 
   @NotNull
-  private static JComponent createToolbar(@Nullable String tooltip, @NotNull DefaultActionGroup actions) {
+  private static JComponent createToolbar(@Nullable @NlsActions.ActionText String tooltip, @NotNull DefaultActionGroup actions) {
     DefaultActionGroup toolbarActionGroup = new DefaultActionGroup();
     ActionToolbar toolbar =
       ActionManager.getInstance().createActionToolbar(ActionPlaces.NAVIGATION_BAR_TOOLBAR, toolbarActionGroup, true);
@@ -165,7 +167,7 @@ public class TabbedPaneHeaderComponent extends JPanel {
     repaint();
   }
 
-  public void addTab(@NotNull String title, @Nullable Icon icon) {
+  public void addTab(@NotNull @Nls String title, @Nullable Icon icon) {
     myTabbedPane.addTab(title, icon, new JLabel());
     if (icon != null) {
       Component tab = myTabbedPane.getTabComponentAt(myTabbedPane.getTabCount() - 1);

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -14,11 +14,11 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 
 import static com.intellij.util.ArrayUtil.isEmpty;
-import static org.jetbrains.idea.svn.SvnBundle.message;
+import static org.jetbrains.idea.svn.SvnBundle.messagePointer;
 
 public class ConfigureBranchesAction extends DumbAwareAction {
   public ConfigureBranchesAction() {
-    super(message("configure.branches.item"), message("configure.branches.item"), null);
+    super(messagePointer("action.Subversion.ConfigureBranches.text"));
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.settings;
 
 import com.intellij.ide.ui.LafManagerListener;
@@ -10,8 +10,13 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
+import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.XMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @State(
   name = "MarkdownApplicationSettings",
@@ -57,11 +62,11 @@ public final class MarkdownApplicationSettings implements PersistentStateCompone
   @NotNull
   @Override
   public MarkdownCssSettings getMarkdownCssSettings() {
-    if (MarkdownCssSettings.DEFAULT.getStylesheetUri().equals(myState.myCssSettings.getStylesheetUri())) {
+    if (MarkdownCssSettings.DEFAULT.getCustomStylesheetPath().equals(myState.myCssSettings.getCustomStylesheetPath())) {
       return new MarkdownCssSettings(false,
                                      "",
                                      myState.myCssSettings.isTextEnabled(),
-                                     myState.myCssSettings.getStylesheetText());
+                                     myState.myCssSettings.getCustomStylesheetText());
     }
 
     return myState.myCssSettings;
@@ -95,6 +100,20 @@ public final class MarkdownApplicationSettings implements PersistentStateCompone
     return myState.myHideErrors;
   }
 
+  public boolean isExtensionsEnabled(String extensionId) {
+    Boolean value = myState.myEnabledExtensions.get(extensionId);
+    return value != null ? value : false;
+  }
+
+  @NotNull
+  public Map<String, Boolean> getExtensionsEnabledState() {
+    return myState.myEnabledExtensions;
+  }
+
+  public void setExtensionsEnabledState(@NotNull Map<String, Boolean> state) {
+    myState.myEnabledExtensions = state;
+  }
+
   public static final class State {
     @Property(surroundWithTag = false)
     @NotNull
@@ -109,6 +128,11 @@ public final class MarkdownApplicationSettings implements PersistentStateCompone
 
     @Attribute("HideErrors")
     private boolean myHideErrors = false;
+
+    @NotNull
+    @XMap
+    @Tag("enabledExtensions")
+    private Map<String, Boolean> myEnabledExtensions = new HashMap<>();
   }
 
   public interface SettingsChangedListener {

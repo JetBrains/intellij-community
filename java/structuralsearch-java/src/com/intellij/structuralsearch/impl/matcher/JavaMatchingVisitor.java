@@ -930,6 +930,10 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     else if (element instanceof PsiJavaCodeReferenceElement) {
       result = ((PsiJavaCodeReferenceElement)element).getCanonicalText();
     }
+    else if (element instanceof PsiTypeElement) {
+      final PsiTypeElement typeElement = (PsiTypeElement)element;
+      result = typeElement.isInferredType() ? typeElement.getText() : typeElement.getType().getCanonicalText();
+    }
     else {
       result = element.getText();
     }
@@ -1003,10 +1007,18 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       final PsiTypeElement typeElement1 = var.getTypeElement();
       if (typeElement1 != null) {
         PsiTypeElement typeElement2 = other.getTypeElement();
-        if (typeElement2 == null) {
+        if (typeElement2 == null) { // e.g. lambda parameter without explicit type
           typeElement2 = JavaPsiFacade.getElementFactory(other.getProject()).createTypeElement(other.getType());
+          final MatchingHandler matchingHandler = context.getPattern().getHandler(typeElement1);
+          if (matchingHandler instanceof SubstitutionHandler) {
+            if (!myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(typeElement1, null)) ||
+                !myMatchingVisitor.setResult(((SubstitutionHandler)matchingHandler).validate(typeElement2, context))) {
+              return;
+            }
+          }
+          else if (!myMatchingVisitor.setResult(myMatchingVisitor.match(typeElement1, typeElement2))) return;
         }
-        if (!myMatchingVisitor.setResult(myMatchingVisitor.match(typeElement1, typeElement2))) return;
+        else if (!myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(typeElement1, typeElement2))) return;
       }
 
       // Check initializer
@@ -1079,11 +1091,11 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     }
     final SubstitutionHandler substitutionHandler = (SubstitutionHandler)matchingHandler;
     if (target instanceof PsiModifierListOwner && ((PsiModifierListOwner)target).hasModifierProperty(PsiModifier.STATIC)) {
-      return substitutionHandler.handle(PsiTreeUtil.getParentOfType(target, PsiClass.class), context);
+      return substitutionHandler.validate(PsiTreeUtil.getParentOfType(target, PsiClass.class), context);
     } else {
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(reference.getProject());
       final PsiExpression implicitReference = factory.createExpressionFromText("this", reference);
-      return substitutionHandler.handle(implicitReference, context);
+      return substitutionHandler.validate(implicitReference, context);
     }
   }
 

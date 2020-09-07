@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.injected
 
 import com.intellij.codeInsight.intention.impl.QuickEditAction
@@ -14,8 +14,8 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TestDialog
+import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
@@ -900,14 +900,14 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
 
   private fun runWithUndoManager(editor: Editor, action: (UndoManager, TextEditor) -> Unit) {
     UIUtil.invokeAndWaitIfNeeded(Runnable {
-      val oldTestDialog = Messages.setTestDialog(TestDialog.OK)
+      val oldTestDialog = TestDialogManager.setTestDialog(TestDialog.OK)
       try {
         val undoManager = UndoManager.getInstance(project)
         val textEditor = TextEditorProvider.getInstance().getTextEditor(editor)
         action(undoManager, textEditor)
       }
       finally {
-        Messages.setTestDialog(oldTestDialog)
+        TestDialogManager.setTestDialog(oldTestDialog)
       }
     })
   }

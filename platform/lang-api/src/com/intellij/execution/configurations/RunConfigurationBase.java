@@ -13,6 +13,7 @@ import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ReflectionUtil;
@@ -304,11 +305,11 @@ public abstract class RunConfigurationBase<T> extends UserDataHolderBase impleme
   }
 
   @Transient
-  public String getOutputFilePath() {
+  public @NlsSafe String getOutputFilePath() {
     return myOptions.getFileOutput().getFileOutputPath();
   }
 
-  public void setFileOutputPath(String fileOutputPath) {
+  public void setFileOutputPath(@NlsSafe String fileOutputPath) {
     myOptions.getFileOutput().setFileOutputPath(fileOutputPath);
   }
 

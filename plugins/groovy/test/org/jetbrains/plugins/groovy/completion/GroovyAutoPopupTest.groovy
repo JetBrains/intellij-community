@@ -222,7 +222,7 @@ void foo(File... files) { }
 foo(new <caret>)
 '''
     type 'File'
-    myFixture.assertPreferredCompletionItems 0, 'File', 'File', 'FileInputStream'
+    myFixture.assertPreferredCompletionItems 0, 'File', 'File'
     type '('
     assert myFixture.editor.document.text.contains('new File()')
   }

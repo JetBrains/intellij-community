@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -114,8 +115,7 @@ public final class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<
     List<VcsFileRevision> revisions = session != null ? session.getRevisionList() : null;
     checkIfFileWasTouchedAndFindParentsInBackground(filePath, rev, parents, revisions, info -> {
       if (!info.wasFileTouched()) {
-        String message = String.format("There were no changes in %s in this merge commit, besides those which were made in both branches",
-                                       filePath.getName());
+        String message = GitBundle.message("git.history.diff.handler.no.changes.in.file.info", filePath.getName());
         VcsBalloonProblemNotifier.showOverVersionControlView(this.myProject, message, MessageType.INFO);
       }
       showPopup(event, rev, filePath, info.getParents());
@@ -298,6 +298,7 @@ public final class GitDiffFromHistoryHandler extends BaseDiffFromHistoryHandler<
   }
 
   @NotNull
+  @NlsSafe
   private static String getRevisionDescription(@NotNull GitFileRevision parent) {
     String hash = DvcsUtil.getShortHash(parent.getHash());
     String message = parent.getCommitMessage();

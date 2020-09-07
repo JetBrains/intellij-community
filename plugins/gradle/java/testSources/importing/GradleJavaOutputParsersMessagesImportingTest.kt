@@ -162,7 +162,7 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
 
     // check unresolved dependency for offline mode
     GradleSettings.getInstance(myProject).isOfflineWork = true
-    buildScript.withMavenCentral(isGradleNewerOrSameThen("6.0"))
+    buildScript.withMavenCentral(isGradleNewerOrSameAs("6.0"))
     buildScript.addDependency("testCompile 'junit:junit:99.99'")
     createProjectConfig(buildScript.generate())
     compileModules("project.test")

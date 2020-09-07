@@ -62,7 +62,7 @@ public abstract class GitHttpAuthService extends GitXmlRpcHandlerService<GitHttp
     public @NotNull String handleInput(@NotNull String handlerNo, @NotNull String arg) {
       GitHttpAuthenticator handler = getHandler(UUID.fromString(handlerNo));
 
-      boolean usernameNeeded = StringUtilRt.startsWithIgnoreCase(arg, "username");
+      boolean usernameNeeded = StringUtilRt.startsWithIgnoreCase(arg, "username"); //NON-NLS
 
       String[] split = arg.split(" ");
       String url = split.length > 2 ? parseUrl(split[2]) : "";

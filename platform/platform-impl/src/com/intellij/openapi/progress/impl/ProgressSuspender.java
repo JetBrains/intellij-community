@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorListenerAdapter;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.containers.ContainerUtil;
@@ -19,7 +20,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author peter
@@ -31,15 +34,16 @@ public final class ProgressSuspender implements AutoCloseable {
 
   private final Object myLock = new Object();
   private static final Application ourApp = ApplicationManager.getApplication();
-  @NotNull private final String mySuspendedText;
-  @Nullable private String myTempReason;
+  @NotNull private final @NlsContexts.ProgressText String mySuspendedText;
+  @Nullable private @NlsContexts.ProgressText String myTempReason;
   private final SuspenderListener myPublisher;
   private volatile boolean mySuspended;
   private final CoreProgressManager.CheckCanceledHook myHook = this::freezeIfNeeded;
   private final Set<ProgressIndicator> myProgresses = ContainerUtil.newConcurrentSet();
+  private final Map<ProgressIndicator, Integer> myProgressesInNonSuspendableSections = new ConcurrentHashMap<>();
   private boolean myClosed;
 
-  private ProgressSuspender(@NotNull ProgressIndicatorEx progress, @NotNull String suspendedText) {
+  private ProgressSuspender(@NotNull ProgressIndicatorEx progress, @NotNull @NlsContexts.ProgressText String suspendedText) {
     mySuspendedText = suspendedText;
     assert progress.isRunning();
     assert ProgressIndicatorProvider.getGlobalProgressIndicator() == progress;
@@ -69,8 +73,17 @@ public final class ProgressSuspender implements AutoCloseable {
     }
   }
 
-  public static ProgressSuspender markSuspendable(@NotNull ProgressIndicator indicator, @NotNull String suspendedText) {
+  public static ProgressSuspender markSuspendable(@NotNull ProgressIndicator indicator, @NotNull @NlsContexts.ProgressText String suspendedText) {
     return new ProgressSuspender((ProgressIndicatorEx)indicator, suspendedText);
+  }
+
+  public void executeNonSuspendableSection(@NotNull ProgressIndicator indicator, @NotNull Runnable runnable) {
+    myProgressesInNonSuspendableSections.compute(indicator, ((__, number) -> (number == null ? 0 : number) + 1));
+    try {
+      runnable.run();
+    } finally {
+      myProgressesInNonSuspendableSections.compute(indicator, (__, number) -> (number == null || number <= 1 ? null : number - 1));
+    }
   }
 
   @Nullable
@@ -87,7 +100,7 @@ public final class ProgressSuspender implements AutoCloseable {
   }
 
   @NotNull
-  public String getSuspendedText() {
+  public @NlsContexts.ProgressText String getSuspendedText() {
     synchronized (myLock) {
       return myTempReason != null ? myTempReason : mySuspendedText;
     }
@@ -100,7 +113,7 @@ public final class ProgressSuspender implements AutoCloseable {
   /**
    * @param reason if provided, is displayed in the UI instead of suspended text passed into constructor until the progress is resumed
    */
-  public void suspendProcess(@Nullable String reason) {
+  public void suspendProcess(@NlsContexts.ProgressText @Nullable String reason) {
     synchronized (myLock) {
       if (mySuspended || myClosed) return;
 
@@ -140,6 +153,10 @@ public final class ProgressSuspender implements AutoCloseable {
     }
 
     if (isCurrentThreadHoldingKnownLocks()) {
+      return false;
+    }
+
+    if (myProgressesInNonSuspendableSections.containsKey(current)) {
       return false;
     }
 

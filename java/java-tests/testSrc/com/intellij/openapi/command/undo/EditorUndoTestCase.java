@@ -8,8 +8,8 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
+import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 
@@ -29,7 +29,7 @@ public abstract class EditorUndoTestCase extends UndoTestCase {
 
   @Override
   protected void setUp() throws Exception {
-    myOldTestDialog = Messages.setTestDialog(TestDialog.OK);
+    myOldTestDialog = TestDialogManager.setTestDialog(TestDialog.OK);
 
     super.setUp();
 
@@ -56,7 +56,7 @@ public abstract class EditorUndoTestCase extends UndoTestCase {
       }
       if (myView != null) editorFactory.releaseEditor(myView);
 
-      Messages.setTestDialog(myOldTestDialog);
+      TestDialogManager.setTestDialog(myOldTestDialog);
     }
     catch (Throwable e) {
       addSuppressedException(e);

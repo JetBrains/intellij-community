@@ -33,11 +33,10 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -196,7 +195,7 @@ public final class EclipseImportBuilder extends ProjectImportBuilder<String> imp
     }
 
     if (!naturesNames.isEmpty()) {
-      final String title = "Unknown Natures Detected";
+      final String title = EclipseBundle.message("notification.title.unknown.natures.detected");
       final String naturesByProject;
       if (oneProjectToConvert) {
         naturesByProject = naturesNames.values().iterator().next();
@@ -204,7 +203,7 @@ public final class EclipseImportBuilder extends ProjectImportBuilder<String> imp
       else {
         naturesByProject = StringUtil.join(naturesNames.keySet(), projectPath -> projectPath + "(" + naturesNames.get(projectPath) + ")", "<br>");
       }
-      Notifications.Bus.notify(new Notification(title, title, EclipseBundle
+      Notifications.Bus.notify(new Notification("Unknown Natures Detected", title, EclipseBundle
         .message("notification.content.imported.projects.contain.unknown.natures",
                  naturesByProject), NotificationType.WARNING));
     }
@@ -216,7 +215,7 @@ public final class EclipseImportBuilder extends ProjectImportBuilder<String> imp
   public List<Module> commit(final Project project, ModifiableModuleModel model, ModulesProvider modulesProvider,
                              ModifiableArtifactModel artifactModel) {
 
-    final Collection<String> unknownLibraries = new TreeSet<>();
+    final Collection<@NlsSafe String> unknownLibraries = new TreeSet<>();
     final Collection<String> unknownJdks = new TreeSet<>();
     final Set<String> refsToModules = new HashSet<>();
     final List<Module> result = new ArrayList<>();
@@ -315,7 +314,6 @@ public final class EclipseImportBuilder extends ProjectImportBuilder<String> imp
     scheduleNaturesImporting(project, module2NatureNames);
     createEclipseLibrary(project, unknownLibraries, IdeaXml.ECLIPSE_LIBRARY);
 
-    StringBuilder message = new StringBuilder();
     refsToModules.removeAll(getParameters().existingModuleNames);
     for (String path : getParameters().projectsToConvert) {
       final String projectName = EclipseProjectFinder.findProjectName(path);
@@ -324,40 +322,33 @@ public final class EclipseImportBuilder extends ProjectImportBuilder<String> imp
         getParameters().existingModuleNames.add(projectName);
       }
     }
+    StringBuilder message = new StringBuilder();
     if (!refsToModules.isEmpty()) {
 
-      message.append("Unknown modules detected");
-      for (String module : refsToModules) {
-        message.append("\n").append(module);
-      }
+      message.append(EclipseBundle.message("unknown.modules.detected.dialog.message", StringUtil.join(refsToModules, "\n")));
     }
     if (!unknownJdks.isEmpty()) {
-      if (message.length() > 0){
-        message.append("\nand jdks");
-      } else {
-        message.append("Imported project refers to unknown jdks");
-      }
-      for (String unknownJdk : unknownJdks) {
-        message.append("\n").append(unknownJdk);
-      }
+      message.append(EclipseBundle.message("unknown.jdks.detected.message", 
+                                           message.length() > 0 ? 0 : 1,
+                                           StringUtil.join(unknownJdks, "\n")));
     }
+    
     if (!unknownLibraries.isEmpty()) {
-      final StringBuilder buf = new StringBuilder();
-      buf.append("<html><body>");
+      final HtmlBuilder buf = new HtmlBuilder();
       buf.append(EclipseBundle.message("eclipse.import.warning.undefinded.libraries"));
-      for (String name : unknownLibraries) {
-        buf.append("<br>").append(name);
+      for (@NlsSafe String name : unknownLibraries) {
+        buf.br().append(name);
       }
       if (model == null) {
-        buf.append("<br><b>Please export Eclipse user libraries and import them now from resulted .userlibraries file</b>");
-        buf.append("</body></html>");
+        buf.br().append(HtmlChunk.text(EclipseBundle.message("unknown.libraries.dialog.description")).bold());
+        
         final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
           @Override
           public boolean isFileSelectable(VirtualFile file) {
             return super.isFileSelectable(file) && Comparing.strEqual(file.getExtension(), "userlibraries");
           }
         };
-        descriptor.setDescription(buf.toString());
+        descriptor.setDescription(buf.wrapWithHtmlBody().toString());
         descriptor.setTitle(getTitle());
         final VirtualFile selectedFile = FileChooser.chooseFile(descriptor, project, project.getBaseDir());
         if (selectedFile != null) {
@@ -393,7 +384,7 @@ public final class EclipseImportBuilder extends ProjectImportBuilder<String> imp
     }
     catch (Exception e) {
       if (messageBuilder.length() > 0) messageBuilder.append('\n');
-      messageBuilder.append("Error while importing project code style: ").append(e.getMessage());
+      messageBuilder.append(EclipseBundle.message("error.while.importing.project.code.style", e.getMessage()));
     }
   }
 

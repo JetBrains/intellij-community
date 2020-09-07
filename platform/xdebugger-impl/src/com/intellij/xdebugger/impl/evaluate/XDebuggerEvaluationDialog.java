@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.evaluate;
 
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -29,6 +29,7 @@ import com.intellij.xdebugger.impl.ui.XDebuggerEditorBase;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
 import com.intellij.xdebugger.impl.ui.tree.nodes.EvaluatingExpressionRootNode;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -239,7 +240,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     return getInputEditor().getExpression();
   }
 
-  private static String getSwitchButtonText(EvaluationMode mode) {
+  private static @Nls String getSwitchButtonText(EvaluationMode mode) {
     return mode != EvaluationMode.EXPRESSION
            ? XDebuggerBundle.message("button.text.expression.mode")
            : XDebuggerBundle.message("button.text.code.fragment.mode");

@@ -15,6 +15,7 @@
  */
 package git4idea.rebase;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public enum GitRebaseResumeMode {
@@ -23,10 +24,11 @@ public enum GitRebaseResumeMode {
 
   @NotNull private final String myCommandLineArgument;
 
-  GitRebaseResumeMode(@NotNull String argument) {
+  GitRebaseResumeMode(@NotNull @NonNls String argument) {
     myCommandLineArgument = argument;
   }
 
+  @NonNls
   @NotNull
   public String asCommandLineArgument() {
     return myCommandLineArgument;

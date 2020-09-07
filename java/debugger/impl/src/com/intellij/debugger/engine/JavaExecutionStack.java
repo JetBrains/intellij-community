@@ -16,6 +16,7 @@ import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.frame.XExecutionStack;
@@ -245,7 +246,7 @@ public class JavaExecutionStack extends XExecutionStack {
           addFrameIfNeeded(new XStackFrame() {
             @Override
             public void customizePresentation(@NotNull ColoredTextContainer component) {
-              component.append("Too many frames, the rest is truncated...", SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES);
+              component.append(JavaDebuggerBundle.message("label.too.many.frames.rest.truncated"), SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES);
             }
           }, true);
           return;
@@ -275,7 +276,7 @@ public class JavaExecutionStack extends XExecutionStack {
     return true;
   }
 
-  private static String calcRepresentation(ThreadReferenceProxyImpl thread) {
+  private static @NlsContexts.ListItem String calcRepresentation(ThreadReferenceProxyImpl thread) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     String name = thread.name();
     ThreadGroupReferenceProxyImpl gr = thread.threadGroupProxy();

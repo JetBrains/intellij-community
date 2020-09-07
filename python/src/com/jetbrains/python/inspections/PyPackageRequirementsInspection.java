@@ -6,6 +6,8 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ui.ListEditForm;
+import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.core.CoreBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.idea.ActionsBundle;
@@ -18,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,6 +43,7 @@ import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.pipenv.PipEnvInstallQuickFix;
 import com.jetbrains.python.sdk.pipenv.PipenvKt;
+import com.jetbrains.python.ui.PyUiUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +64,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    final ListEditForm form = new ListEditForm("Ignore packages", ignoredPackages);
+    final ListEditForm form = new ListEditForm(PyPsiBundle.message("INSP.requirements.column.name.ignore.packages"), ignoredPackages);
     return form.getContentPanel();
   }
 
@@ -98,7 +102,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyFile(PyFile node) {
+    public void visitPyFile(@NotNull PyFile node) {
       checkPackagesHaveBeenInstalled(node, ModuleUtilCore.findModuleForPsiElement(node));
     }
 
@@ -122,11 +126,9 @@ public class PyPackageRequirementsInspection extends PyInspection {
         if (sdk != null) {
           final List<PyRequirement> unsatisfied = findUnsatisfiedRequirements(module, sdk, myIgnoredPackages);
           if (unsatisfied != null && !unsatisfied.isEmpty()) {
-            final boolean plural = unsatisfied.size() > 1;
-            String msg = String.format("Package requirement%s %s %s not satisfied",
-                                       plural ? "s" : "",
-                                       PyPackageUtil.requirementsToString(unsatisfied),
-                                       plural ? "are" : "is");
+            @NlsSafe String requirementsList = PyPackageUtil.requirementsToString(unsatisfied);
+            @InspectionMessage String msg = PyPsiBundle.message("INSP.requirements.package.requirements.not.satisfied",
+                                                                requirementsList, unsatisfied.size());
             final List<LocalQuickFix> quickFixes = new ArrayList<>();
             // TODO: Introduce an inspection extension
             if (PipenvKt.isPipEnv(sdk)) {
@@ -145,7 +147,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyFromImportStatement(PyFromImportStatement node) {
+    public void visitPyFromImportStatement(@NotNull PyFromImportStatement node) {
       final PyReferenceExpression expr = node.getImportSource();
       if (expr != null) {
         checkPackageNameInRequirements(expr);
@@ -153,7 +155,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyImportStatement(PyImportStatement node) {
+    public void visitPyImportStatement(@NotNull PyImportStatement node) {
       for (PyImportElement element : node.getImportElements()) {
         final PyReferenceExpression expr = element.getImportReferenceExpression();
         if (expr != null) {
@@ -235,7 +237,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
                                         new IgnoreRequirementFix(Collections.singleton(packageName))};
 
         registerProblem(packageReferenceExpression,
-                        String.format("Package containing module '%s' is not listed in project requirements", packageName),
+                        PyPsiBundle.message("INSP.requirements.package.containing.module.not.listed.in.project.requirements", packageName),
                         ProblemHighlightType.WEAK_WARNING,
                         null,
                         fixes);
@@ -372,27 +374,26 @@ public class PyPackageRequirementsInspection extends PyInspection {
   }
 
   public static class PyInstallRequirementsFix implements LocalQuickFix {
-    @NotNull private final String myName;
+    @NotNull private final @IntentionFamilyName String myName;
     @NotNull private final Module myModule;
     @NotNull private final Sdk mySdk;
     @NotNull private final List<PyRequirement> myUnsatisfied;
     @NotNull private final List<String> myExtraArgs;
     @Nullable private final PyPackageManagerUI.Listener myListener;
 
-    public PyInstallRequirementsFix(@Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String name,
+    public PyInstallRequirementsFix(@Nullable @IntentionFamilyName String name,
                                     @NotNull Module module, @NotNull Sdk sdk,
                                     @NotNull List<PyRequirement> unsatisfied) {
       this(name, module, sdk, unsatisfied, Collections.emptyList(), null);
     }
 
-    public PyInstallRequirementsFix(@Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String name,
+    public PyInstallRequirementsFix(@Nullable @IntentionFamilyName String name,
                                     @NotNull Module module,
                                     @NotNull Sdk sdk,
                                     @NotNull List<PyRequirement> unsatisfied,
                                     @NotNull List<String> extraArgs,
                                     @Nullable PyPackageManagerUI.Listener listener) {
-      final boolean plural = unsatisfied.size() > 1;
-      myName = name != null ? name : String.format("Install requirement%s", plural ? "s" : "");
+      myName = name != null ? name : PyPsiBundle.message("QFIX.NAME.install.requirements", unsatisfied.size());
       myModule = module;
       mySdk = sdk;
       myUnsatisfied = unsatisfied;
@@ -414,6 +415,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       if (!checkAdminPermissionsAndConfigureInterpreter(project, descriptor, mySdk)) {
+        PyUiUtil.clearFileLevelInspectionResults(project);
         installPackages(project);
       }
     }
@@ -558,8 +560,8 @@ public class PyPackageRequirementsInspection extends PyInspection {
     }
 
     @Override
-    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
-      return PyPsiBundle.message("INSP.package.requirements.quickfix.family.name");
+    public @IntentionFamilyName @NotNull String getFamilyName() {
+      return PyPsiBundle.message("QFIX.add.imported.packages.to.requirements");
     }
 
     @Override
@@ -604,8 +606,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      final boolean plural = myPackageNames.size() > 1;
-      return String.format("Ignore requirement%s", plural ? "s" : "");
+      return PyPsiBundle.message("QFIX.NAME.ignore.requirements", myPackageNames.size());
     }
 
     @Override

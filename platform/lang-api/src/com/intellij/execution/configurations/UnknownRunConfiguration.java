@@ -1,16 +1,21 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
+import com.intellij.execution.RunManager;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.ide.plugins.PluginFeatureService;
+import com.intellij.ide.plugins.PluginManagerConfigurableService;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -83,11 +88,8 @@ public final class UnknownRunConfiguration implements RunConfiguration, WithoutO
 
   @Override
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
-    String factoryName = "";
-    if (myStoredElement != null) {
-      factoryName = myStoredElement.getAttributeValue("type");
-    }
-    throw new ExecutionException("Unknown run configuration type" + (factoryName.isEmpty() ? "" : " " + factoryName));
+    String factoryName = getConfigurationTypeId();
+    throw new ExecutionException("Unknown run configuration type" + (StringUtil.isEmpty(factoryName) ? "" : " " + factoryName));
   }
 
   @NotNull
@@ -99,8 +101,29 @@ public final class UnknownRunConfiguration implements RunConfiguration, WithoutO
     return myName;
   }
 
+  @Nullable
+  private String getConfigurationTypeId() {
+    if (myStoredElement != null) {
+      return myStoredElement.getAttributeValue("type");
+    }
+    return null;
+  }
+
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
+    String typeId = getConfigurationTypeId();
+    if (typeId != null) {
+      PluginFeatureService.FeaturePluginData plugin =
+        PluginFeatureService.getInstance().getPluginForFeature(RunManager.CONFIGURATION_TYPE_FEATURE_ID, typeId);
+      if (plugin != null) {
+        RuntimeConfigurationError err = new RuntimeConfigurationError(
+          LangBundle.message("dialog.message.broken.configuration.missing.plugin", plugin.getDisplayName()));
+        err.setQuickFix(() -> {
+          PluginManagerConfigurableService.getInstance().showPluginConfigurableAndEnable(null, PluginId.getId(plugin.getPluginId()));
+        });
+        throw err;
+      }
+    }
     throw new RuntimeConfigurationException(LangBundle.message("dialog.message.broken.configuration"));
   }
 

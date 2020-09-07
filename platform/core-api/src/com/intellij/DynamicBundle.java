@@ -21,11 +21,11 @@ import java.util.Map;
 import java.util.ResourceBundle;
 
 public abstract class DynamicBundle extends AbstractBundle {
-  private final static Logger LOG = Logger.getInstance(DynamicBundle.class);
-  private final static Method SET_PARENT = ReflectionUtil.getDeclaredMethod(ResourceBundle.class, "setParent", ResourceBundle.class);
+  private static final Logger LOG = Logger.getInstance(DynamicBundle.class);
+  private static final Method SET_PARENT = ReflectionUtil.getDeclaredMethod(ResourceBundle.class, "setParent", ResourceBundle.class);
 
-  @NotNull
-  private static String ourLangTag = Locale.ENGLISH.toLanguageTag();
+  private static @NotNull String ourLangTag = Locale.ENGLISH.toLanguageTag();
+  private static final Map<String, DynamicBundle> ourBundlesForForms = ContainerUtil.createConcurrentSoftValueMap();
 
   protected DynamicBundle(@NotNull String pathToBundle) {
     super(pathToBundle);
@@ -38,31 +38,29 @@ public abstract class DynamicBundle extends AbstractBundle {
                                       @NotNull ResourceBundle.Control control) {
     ResourceBundle base = super.findBundle(pathToBundle, baseLoader, control);
 
-    if (DefaultBundleService.isDefaultBundle()) {
-      return base;
-    }
-
-    LanguageBundleEP langBundle = findLanguageBundle();
-    if (langBundle == null) return base;
-
-    ResourceBundle pluginBundle = super.findBundle(pathToBundle, langBundle.getLoaderForClass(), control);
-    if (pluginBundle == null) return base;
-
-    try {
-      if (SET_PARENT != null) {
-        SET_PARENT.invoke(pluginBundle, base);
+    if (!DefaultBundleService.isDefaultBundle()) {
+      LanguageBundleEP langBundle = findLanguageBundle();
+      if (langBundle != null) {
+        ResourceBundle pluginBundle = super.findBundle(pathToBundle, langBundle.getLoaderForClass(), control);
+        if (pluginBundle != null) {
+          try {
+            if (SET_PARENT != null) {
+              SET_PARENT.invoke(pluginBundle, base);
+            }
+            return pluginBundle;
+          }
+          catch (Exception e) {
+            LOG.warn(e);
+          }
+        }
       }
     }
-    catch (Exception e) {
-      LOG.warn(e);
-      return base;
-    }
-    return pluginBundle;
+
+    return base;
   }
 
   // todo: one language per application
-  @Nullable
-  private static LanguageBundleEP findLanguageBundle() {
+  private static @Nullable LanguageBundleEP findLanguageBundle() {
     try {
       Application application = ApplicationManager.getApplication();
       if (application == null) return null;
@@ -80,9 +78,9 @@ public abstract class DynamicBundle extends AbstractBundle {
     }
   }
 
-  public static final DynamicBundle INSTANCE = new DynamicBundle("") {
-  };
+  public static final DynamicBundle INSTANCE = new DynamicBundle("") { };
 
+  @SuppressWarnings("deprecation")
   public static class LanguageBundleEP extends AbstractExtensionPointBean {
     public static final ExtensionPointName<LanguageBundleEP> EP_NAME = ExtensionPointName.create("com.intellij.languageBundle");
 
@@ -90,52 +88,47 @@ public abstract class DynamicBundle extends AbstractBundle {
     public String lang = Locale.ENGLISH.getLanguage();
   }
 
-  private static final Map<String, DynamicBundle> ourBundlesForForms = ContainerUtil.createConcurrentSoftValueMap();
-
-  /**
-   * @deprecated used only dy GUI form builder
-   */
+  /** @deprecated used only dy GUI form builder */
   @Deprecated
   public static ResourceBundle getBundle(@NotNull String baseName) {
     Class<?> callerClass = ReflectionUtil.findCallerClass(2);
     return getBundle(baseName, callerClass == null ? DynamicBundle.class : callerClass);
   }
 
-  /**
-   * @deprecated used only dy GUI form builder
-   */
+  /** @deprecated used only dy GUI form builder */
   @Deprecated
   public static ResourceBundle getBundle(@NotNull String baseName, @NotNull Class<?> formClass) {
-    DynamicBundle dynamic = ourBundlesForForms.computeIfAbsent(baseName, s -> new DynamicBundle(s) {});
+    DynamicBundle dynamic = ourBundlesForForms.computeIfAbsent(baseName, s -> new DynamicBundle(s) { });
     ResourceBundle rb = dynamic.getResourceBundle(formClass.getClassLoader());
-
     if (BundleBase.SHOW_LOCALIZED_MESSAGES) {
       return new ResourceBundle() {
         @Override
         protected Object handleGetObject(@NotNull String key) {
           Object get = rb.getObject(key);
           assert get instanceof String : "Language bundles should contain only strings";
-          return BundleBase.appendLocalizationMarker((String)get);
+          return BundleBase.appendLocalizationSuffix((String)get, BundleBase.L10N_MARKER);
         }
 
-        @NotNull
         @Override
-        public Enumeration<String> getKeys() {
+        public @NotNull Enumeration<String> getKeys() {
           return rb.getKeys();
         }
       };
     }
-    return rb;
+    else {
+      return rb;
+    }
   }
 
   public static void loadLocale(@Nullable LanguageBundleEP langBundle) {
     if (langBundle != null) {
       ourLangTag = langBundle.lang;
+      clearGlobalLocaleCache();
+      ourBundlesForForms.clear();
     }
   }
 
-  @NotNull
-  public static Locale getLocale() {
+  public static @NotNull Locale getLocale() {
     return Locale.forLanguageTag(ourLangTag);
   }
 }

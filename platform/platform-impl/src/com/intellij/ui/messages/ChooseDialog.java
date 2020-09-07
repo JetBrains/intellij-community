@@ -6,8 +6,9 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.messages.MessageDialog;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.DocumentAdapter;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,11 +26,11 @@ public class ChooseDialog extends MessageDialog {
   private InputValidator myValidator;
 
   public ChooseDialog(Project project,
-                      String message,
-                      @Nls(capitalization = Nls.Capitalization.Title) String title,
+                      @NlsContexts.DialogMessage String message,
+                      @NlsContexts.DialogTitle String title,
                       @Nullable Icon icon,
                       String @NotNull [] values,
-                      String initialValue,
+                      @NlsSafe String initialValue,
                       String @NotNull [] options,
                       int defaultOption) {
     super(project, message, title, options, defaultOption, icon, true);
@@ -39,21 +40,21 @@ public class ChooseDialog extends MessageDialog {
 
   public ChooseDialog(@Nullable Project project,
                       @Nullable Component parent,
-                      String message,
-                      @Nls(capitalization = Nls.Capitalization.Title) String title,
+                      @NlsContexts.DialogMessage String message,
+                      @NlsContexts.DialogTitle String title,
                       @Nullable Icon icon,
                       String[] values,
-                      String initialValue) {
+                      @NlsSafe String initialValue) {
     super(project, parent, message, title, new String[]{Messages.getOkButton(), Messages.getCancelButton()}, 0, -1, icon, null, true);
     myComboBox.setModel(new DefaultComboBoxModel<>(values));
     myComboBox.setSelectedItem(initialValue);
   }
 
-  public ChooseDialog(String message,
-                      @Nls(capitalization = Nls.Capitalization.Title) String title,
+  public ChooseDialog(@NlsContexts.DialogMessage String message,
+                      @NlsContexts.DialogTitle String title,
                       @Nullable Icon icon,
                       String[] values,
-                      String initialValue) {
+                      @NlsSafe String initialValue) {
     super(message, title, new String[]{Messages.getOkButton(), Messages.getCancelButton()}, 0, icon);
     myComboBox.setModel(new DefaultComboBoxModel<>(values));
     myComboBox.setSelectedItem(initialValue);

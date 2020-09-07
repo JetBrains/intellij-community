@@ -170,7 +170,7 @@ public final class SystemShortcuts {
     return result;
   }
 
-  private static <T> T computeOnEdt(Supplier<T> supplier) {
+  private static <T> T computeOnEdt(Supplier<? extends T> supplier) {
     final Application application = ApplicationManager.getApplication();
     if (application.isDispatchThread()) {
       return supplier.get();

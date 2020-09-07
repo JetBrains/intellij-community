@@ -53,7 +53,9 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
 
   protected boolean myTreeBuildBeforeStart = false;
 
-  public GeneralTestEventsProcessor(Project project, @NotNull String testFrameworkName, @NotNull SMTestProxy.SMRootTestProxy testsRootProxy) {
+  public GeneralTestEventsProcessor(@NotNull Project project,
+                                    @NotNull String testFrameworkName,
+                                    @NotNull SMTestProxy.SMRootTestProxy testsRootProxy) {
     myEventPublisher = project.getMessageBus().syncPublisher(SMTRunnerEventsListener.TEST_STATUS);
     myTestFrameworkName = testFrameworkName;
     myTestsRootProxy = testsRootProxy;

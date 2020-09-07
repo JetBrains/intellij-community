@@ -15,14 +15,15 @@
  */
 package com.intellij.compiler;
 
-import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.TripleFunction;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,20 +32,20 @@ public final class CompilerMessageImpl implements CompilerMessage {
   private final Project myProject;
   private final CompilerMessageCategory myCategory;
   @Nullable private Navigatable myNavigatable;
-  private final String myMessage;
+  private final @Nls(capitalization = Nls.Capitalization.Sentence) String myMessage;
   private final VirtualFile myFile;
   private final int myRow;
   private final int myColumn;
   @NotNull
   private TripleFunction<? super CompilerMessage, ? super Integer, ? super Integer, Integer> myColumnAdjuster = (msg, line, col) -> col;
 
-  public CompilerMessageImpl(Project project, CompilerMessageCategory category, String message) {
+  public CompilerMessageImpl(Project project, CompilerMessageCategory category, @Nls(capitalization = Nls.Capitalization.Sentence) String message) {
     this(project, category, message, null, -1, -1, null);
   }
 
   public CompilerMessageImpl(Project project,
                              @NotNull CompilerMessageCategory category,
-                             String message,
+                             @Nls(capitalization = Nls.Capitalization.Sentence) String message,
                              @Nullable final VirtualFile file,
                              int row,
                              int column,

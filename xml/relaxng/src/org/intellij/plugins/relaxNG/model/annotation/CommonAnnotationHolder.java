@@ -16,6 +16,7 @@
 
 package org.intellij.plugins.relaxNG.model.annotation;
 
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationBuilder;
 import com.intellij.lang.annotation.AnnotationHolder;
@@ -38,7 +39,8 @@ abstract class CommonAnnotationHolder<C> {
 
   public abstract void createAnnotation(@NotNull HighlightSeverity severity,
                                         @NotNull C element,
-                                        @Nullable String message, @Nullable GutterIconRenderer renderer);
+                                        @Nullable @InspectionMessage String message,
+                                        @Nullable GutterIconRenderer renderer);
 
   private static class DomHolderAdapter<T extends DomElement> extends CommonAnnotationHolder<T> {
     private final DomElementAnnotationHolder myHolder;
@@ -50,7 +52,8 @@ abstract class CommonAnnotationHolder<C> {
     @Override
     public void createAnnotation(@NotNull HighlightSeverity severity,
                                  @NotNull DomElement element,
-                                 String message, @Nullable GutterIconRenderer renderer) {
+                                 @Nullable @InspectionMessage String message,
+                                 @Nullable GutterIconRenderer renderer) {
       final Annotation annotation = myHolder.createAnnotation(element, severity, message);
       annotation.setTooltip(message);  // no tooltip by default??
       annotation.setGutterIconRenderer(renderer);
@@ -67,7 +70,7 @@ abstract class CommonAnnotationHolder<C> {
     @Override
     public void createAnnotation(@NotNull HighlightSeverity severity,
                                  @NotNull T element,
-                                 @Nullable String message,
+                                 @Nullable @InspectionMessage String message,
                                  @Nullable GutterIconRenderer renderer) {
       AnnotationBuilder builder = message == null ? myHolder.newSilentAnnotation(severity) : myHolder.newAnnotation(severity, message);
       if (renderer != null) {

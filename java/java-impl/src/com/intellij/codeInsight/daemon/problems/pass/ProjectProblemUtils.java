@@ -3,7 +3,7 @@ package com.intellij.codeInsight.daemon.problems.pass;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.JavaLensProvider;
+import com.intellij.codeInsight.daemon.impl.JavaCodeVisionProvider;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.problems.Problem;
 import com.intellij.codeInsight.hints.presentation.AttributesTransformerPresentation;
@@ -77,7 +77,7 @@ public final class ProjectProblemUtils {
   }
 
   private static void showProblems(@NotNull Editor editor, @NotNull PsiMember member) {
-    FUCounterUsageLogger.getInstance().logEvent(member.getProject(), JavaLensProvider.FUS_GROUP_ID, RELATED_PROBLEMS_CLICKED_EVENT_ID);
+    FUCounterUsageLogger.getInstance().logEvent(member.getProject(), JavaCodeVisionProvider.FUS_GROUP_ID, RELATED_PROBLEMS_CLICKED_EVENT_ID);
 
     Map<PsiMember, Set<Problem>> problems = getReportedProblems(editor);
     Set<Problem> relatedProblems = problems.get(member);

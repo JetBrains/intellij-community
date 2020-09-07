@@ -8,8 +8,8 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
+import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
@@ -235,12 +235,12 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
 
   protected void undo() {
     runInEdtAndWait(() -> {
-      final TestDialog oldTestDialog = Messages.setTestDialog(TestDialog.OK);
+      final TestDialog oldTestDialog = TestDialogManager.setTestDialog(TestDialog.OK);
       try {
         UndoManager.getInstance(myProject).undo(null);
       }
       finally {
-        Messages.setTestDialog(oldTestDialog);
+        TestDialogManager.setTestDialog(oldTestDialog);
       }
     });
   }

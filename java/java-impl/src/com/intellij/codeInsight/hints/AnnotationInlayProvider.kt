@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsActions
 import com.intellij.psi.*
 import com.intellij.ui.layout.*
 import com.intellij.util.SmartList
@@ -70,10 +71,10 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
                   val column = offset - startOffset
                   val shifted = factory.inset(presentation, left = column * width)
 
-                  sink.addBlockElement(offset, false, true, BlockInlayPriority.ANNOTATIONS, shifted)
+                  sink.addBlockElement(offset, true, true, BlockInlayPriority.ANNOTATIONS, shifted)
                 }
                 else -> {
-                  sink.addInlineElement(offset, false, factory.inset(presentation, left = 1, right = 1))
+                  sink.addInlineElement(offset, false, factory.inset(presentation, left = 1, right = 1), false)
                 }
               }
             }
@@ -181,7 +182,7 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
   data class Settings(var showInferred: Boolean = false, var showExternal: Boolean = true)
 
 
-  class ToggleSettingsAction(val text: String, val prop: KMutableProperty0<Boolean>, val settings: Settings) : AnAction() {
+  class ToggleSettingsAction(@NlsActions.ActionText val text: String, val prop: KMutableProperty0<Boolean>, val settings: Settings) : AnAction() {
 
     override fun update(e: AnActionEvent) {
       val presentation = e.presentation

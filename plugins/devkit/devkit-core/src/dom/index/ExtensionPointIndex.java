@@ -19,9 +19,6 @@ import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
-import com.intellij.util.xml.impl.AbstractCollectionChildDescription;
-import com.intellij.util.xml.impl.DomInvocationHandler;
-import com.intellij.util.xml.impl.DomManagerImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
@@ -50,15 +47,6 @@ public class ExtensionPointIndex extends PluginXmlIndexBase<String, Integer> {
     }
     return result;
   }
-
-  // skip any xi:include
-  private static List<? extends DomElement> getChildrenWithoutIncludes(DomElement parent, String tagName) {
-    AbstractCollectionChildDescription collectionChildDescription =
-      (AbstractCollectionChildDescription)parent.getGenericInfo().getCollectionChildDescription(tagName);
-    DomInvocationHandler handler = Objects.requireNonNull(DomManagerImpl.getDomInvocationHandler(parent));
-    return handler.getCollectionChildren(collectionChildDescription, false);
-  }
-
 
   @NotNull
   @Override

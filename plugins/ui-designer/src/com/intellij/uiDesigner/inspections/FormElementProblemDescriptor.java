@@ -4,6 +4,7 @@ package com.intellij.uiDesigner.inspections;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptorBase;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,7 +13,7 @@ public class FormElementProblemDescriptor extends ProblemDescriptorBase {
   private final String myComponentId;
   private final String myPropertyName;
   public FormElementProblemDescriptor(@NotNull PsiElement element,
-                                      @NotNull String descriptionTemplate,
+                                      @NotNull @InspectionMessage String descriptionTemplate,
                                       LocalQuickFix @Nullable [] fixes,
                                       @NotNull ProblemHighlightType highlightType,
                                       boolean showTooltip,

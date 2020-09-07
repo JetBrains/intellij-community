@@ -47,7 +47,10 @@ public class HgQImportCommand {
     HgCommandResult result = new HgCommandExecutor(project).executeInCurrentThread(myRepository.getRoot(), "qimport", arguments);
     if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
       new HgCommandResultNotifier(project)
-        .notifyError(result, HgBundle.message("action.hg4idea.QImport.error"), HgBundle.message("action.hg4idea.QImport.error.msg", startRevisionNumber));
+        .notifyError("hg.qimport.error",
+                     result,
+                     HgBundle.message("action.hg4idea.QImport.error"),
+                     HgBundle.message("action.hg4idea.QImport.error.msg", startRevisionNumber));
     }
     myRepository.update();
   }

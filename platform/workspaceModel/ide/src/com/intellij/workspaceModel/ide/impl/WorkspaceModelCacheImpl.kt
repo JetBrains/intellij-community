@@ -8,21 +8,20 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.appSystemDir
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.pooledThreadSingleAlarm
-import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.impl.VersionedStorageChanged
+import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.io.File
 import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
@@ -31,14 +30,33 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 @ApiStatus.Internal
 internal class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Disposable): Disposable {
-  private val LOG = Logger.getInstance(javaClass)
-
   private val cacheFile: File
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
   private val serializer: EntityStorageSerializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager)
 
   init {
     Disposer.register(parentDisposable, this)
+
+    cacheFile = initCacheFile()
+
+    LOG.debug("Project Model Cache at $cacheFile")
+
+    WorkspaceModelTopics.getInstance(project).subscribeImmediately(project.messageBus.connect(this), object : WorkspaceModelChangeListener {
+      override fun changed(event: VersionedStorageChange) {
+        LOG.debug("Schedule cache update")
+        saveAlarm.request()
+      }
+    })
+  }
+
+  private fun initCacheFile(): File {
+
+    if (ApplicationManager.getApplication().isUnitTestMode && testCacheFile != null) {
+      // For testing purposes
+      val testFile = testCacheFile!!
+      if (!testFile.exists()) error("Test cache file defined, but doesn't exist")
+      return testFile
+    }
 
     val hasher = Hashing.sha256().newHasher()
     project.basePath?.let { hasher.putString(it, Charsets.UTF_8) }
@@ -47,16 +65,7 @@ internal class WorkspaceModelCacheImpl(private val project: Project, parentDispo
     hasher.putString(serializer.javaClass.name, Charsets.UTF_8)
     hasher.putString(serializer.serializerDataFormatVersion, Charsets.UTF_8)
 
-    cacheFile = File(cacheDir, hasher.hash().toString().substring(0, 20) + ".data")
-
-    LOG.debug("Project Model Cache at $cacheFile")
-
-    WorkspaceModelTopics.getInstance(project).subscribeImmediately(project.messageBus.connect(this), object : WorkspaceModelChangeListener {
-      override fun changed(event: VersionedStorageChanged) {
-        LOG.debug("Schedule cache update")
-        saveAlarm.request()
-      }
-    })
+    return File(cacheDir, hasher.hash().toString().take(20) + ".data")
   }
 
   private val saveAlarm = pooledThreadSingleAlarm(1000, this) {
@@ -115,7 +124,7 @@ internal class WorkspaceModelCacheImpl(private val project: Project, parentDispo
     }
   }
 
-  private object PluginAwareEntityTypesResolver: EntityTypesResolver {
+  internal object PluginAwareEntityTypesResolver: EntityTypesResolver {
     override fun getPluginId(clazz: Class<*>): String? = PluginManager.getInstance().getPluginOrPlatformByClassName(clazz.name)?.idString
 
     override fun resolveClass(name: String, pluginId: String?): Class<*> {
@@ -135,6 +144,9 @@ internal class WorkspaceModelCacheImpl(private val project: Project, parentDispo
     private val LOG = logger<WorkspaceModelCacheImpl>()
 
     private val cacheDir = appSystemDir.resolve("projectModelCache").toFile()
+
+    @TestOnly
+    internal var testCacheFile: File? = null
 
     private val cachesInvalidated = AtomicBoolean(false)
     private val invalidateCachesMarkerFile = File(cacheDir, ".invalidate")

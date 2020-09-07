@@ -16,13 +16,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.codeStyle.WordPrefixMatcher;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.text.Matcher;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import java.util.Collection;
 import java.util.List;
@@ -94,7 +91,8 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
   }
 
   @NotNull
-  private static Matcher buildMatcher(String pattern) {
+  @VisibleForTesting
+  public static Matcher buildMatcher(String pattern) {
     return new WordPrefixMatcher(pattern);
   }
 
@@ -110,11 +108,11 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
   @Override
   public abstract @NotNull String getId();
 
-  public static String messageApp(@PropertyKey(resourceBundle = ApplicationBundle.BUNDLE) String property) {
+  public static @Nls String messageApp(@PropertyKey(resourceBundle = ApplicationBundle.BUNDLE) String property) {
     return StringUtil.stripHtml(ApplicationBundle.message(property), false);
   }
 
-  public static String messageIde(@PropertyKey(resourceBundle = IdeBundle.BUNDLE) String property) {
+  public static @Nls String messageIde(@PropertyKey(resourceBundle = IdeBundle.BUNDLE) String property) {
     return StringUtil.stripHtml(IdeBundle.message(property), false);
   }
 

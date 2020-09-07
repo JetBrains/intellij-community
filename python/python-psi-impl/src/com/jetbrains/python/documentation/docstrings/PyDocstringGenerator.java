@@ -562,7 +562,7 @@ public final class PyDocstringGenerator {
     }
 
     @Override
-    public void visitPyReturnStatement(PyReturnStatement node) {
+    public void visitPyReturnStatement(@NotNull PyReturnStatement node) {
       myHasReturn = true;
     }
 

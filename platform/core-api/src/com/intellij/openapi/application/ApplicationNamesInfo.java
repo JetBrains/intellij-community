@@ -2,6 +2,7 @@
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PlatformUtils;
 import org.jdom.Element;
@@ -80,7 +81,7 @@ public final class ApplicationNamesInfo {
    * otherwise returns the same value as {@link #getFullProductName()}.
    * <strong>Consider using {@link #getFullProductName()} instead.</strong>
    */
-  public String getProductName() {
+  public @NlsSafe String getProductName() {
     return myProductName;
   }
 
@@ -88,7 +89,7 @@ public final class ApplicationNamesInfo {
    * Returns full product name ({@code "IntelliJ IDEA"} for IntelliJ IDEA, {@code "WebStorm"} for WebStorm, etc).
    * Vendor prefix and edition are not included.
    */
-  public String getFullProductName() {
+  public @NlsSafe String getFullProductName() {
     return myFullProductName;
   }
 
@@ -104,7 +105,7 @@ public final class ApplicationNamesInfo {
    * @see #getFullProductName()
    * @see #getEditionName()
    */
-  public String getFullProductNameWithEdition() {
+  public @NlsSafe String getFullProductNameWithEdition() {
     return myEditionName != null ? myFullProductName + ' ' + myEditionName : myFullProductName;
   }
 
@@ -112,7 +113,7 @@ public final class ApplicationNamesInfo {
    * Returns edition name of the product, if applicable
    * (e.g. {@code "Ultimate Edition"} or {@code "Community Edition"} for IntelliJ IDEA, {@code null} for WebStorm).
    */
-  public @Nullable String getEditionName() {
+  public @NlsSafe @Nullable String getEditionName() {
     return myEditionName;
   }
 

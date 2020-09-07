@@ -6,6 +6,7 @@ import com.google.common.collect.Maps;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation;
 import com.jetbrains.python.debugger.pydev.PyDebugCallback;
@@ -157,7 +158,7 @@ public class PyDebugValue extends XNamedValue {
   }
 
   @Nullable
-  public String getValue() {
+  public @NlsSafe String getValue() {
     return myValue;
   }
 
@@ -252,6 +253,7 @@ public class PyDebugValue extends XNamedValue {
    *
    * @return full variable name at runtime
    */
+  @NlsSafe
   @NotNull
   public String getFullName() {
     return wrapWithPrefix(getName());

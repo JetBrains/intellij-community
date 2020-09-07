@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.roots.OrderRootType;
@@ -111,7 +112,7 @@ public class LibrarySourceItem extends PackagingSourceItem {
       else {
         if (((LibraryEx)myLibrary).isDisposed()) {
           //todo[nik] disposed library should not be shown in the tree
-          presentationData.addText("Invalid Library", SimpleTextAttributes.ERROR_ATTRIBUTES);
+          presentationData.addText(JavaUiBundle.message("library.source.item.label.invalid.library"), SimpleTextAttributes.ERROR_ATTRIBUTES);
           return;
         }
         final VirtualFile[] files = myLibrary.getFiles(OrderRootType.CLASSES);
@@ -121,7 +122,7 @@ public class LibrarySourceItem extends PackagingSourceItem {
           presentationData.addText(file.getName(), mainAttributes);
         }
         else {
-          presentationData.addText("Empty Library", SimpleTextAttributes.ERROR_ATTRIBUTES);
+          presentationData.addText(JavaUiBundle.message("library.source.item.label.empty.library"), SimpleTextAttributes.ERROR_ATTRIBUTES);
         }
       }
     }

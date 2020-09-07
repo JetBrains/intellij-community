@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
@@ -82,7 +83,7 @@ abstract class OccurenceNavigatorActionBase extends AnAction implements DumbAwar
 
   protected abstract boolean hasOccurenceToGo(OccurenceNavigator navigator);
 
-  protected abstract String getDescription(OccurenceNavigator navigator);
+  protected abstract @NlsActions.ActionText String getDescription(OccurenceNavigator navigator);
 
   protected @Nullable OccurenceNavigator getNavigator(DataContext dataContext) {
     ContentManager contentManager = ContentManagerUtil.getContentManagerFromContext(dataContext, false);

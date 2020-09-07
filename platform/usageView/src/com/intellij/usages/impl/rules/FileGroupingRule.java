@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -55,7 +56,7 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
   public static class FileUsageGroup implements UsageGroup, TypeSafeDataProvider, NamedPresentably {
     private final Project myProject;
     private final VirtualFile myFile;
-    private String myPresentableName;
+    private @NlsSafe String myPresentableName;
     private Icon myIcon;
 
     public FileUsageGroup(@NotNull Project project, @NotNull VirtualFile file) {

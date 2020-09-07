@@ -529,7 +529,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
         marker.done(YAMLElementTypes.SEQUENCE_ITEM);
       }
       else {
-        marker.error("Sequence item expected");
+        marker.error(YAMLBundle.message("parsing.error.sequence.item.expected"));
       }
 
       if (getTokenType() == YAMLTokenTypes.COMMA) {

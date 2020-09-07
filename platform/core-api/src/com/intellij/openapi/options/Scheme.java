@@ -1,33 +1,38 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public interface Scheme {
   String EDITABLE_COPY_PREFIX = "_@user_";
 
+  /**
+   * @return An internal non-localizable name. The name is serialized when a scheme is saved and may be used as
+   *         a scheme reference (ID).
+   */
   @NotNull
-  @Nls(capitalization = Nls.Capitalization.Title)
+  @NonNls
   String getName();
 
+  /**
+   * @return A name to be shown in UI, defaults to base name. Specific implementations may contain localization logic.
+   */
   @NotNull
+  @Nls
   default String getDisplayName() {
-    return StringUtil.trimStart(getName(), EDITABLE_COPY_PREFIX);
+    return getBaseName(getName()); //NON-NLS
+  }
+
+  /**
+   * @param schemeName The current scheme name.
+   * @return A name without user prefix as in original scheme.
+   */
+  @NotNull
+  @NonNls
+  static String getBaseName(@NotNull @NonNls String schemeName) {
+    return StringUtil.trimStart(schemeName, EDITABLE_COPY_PREFIX);
   }
 }

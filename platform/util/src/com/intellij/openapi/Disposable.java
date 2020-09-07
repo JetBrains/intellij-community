@@ -3,14 +3,15 @@ package com.intellij.openapi;
 
 /**
  * This class marks classes, which require some work done for cleaning up.
- * <p/>
+ * <p>
  * As a general policy, you shouldn't call the {@link #dispose()} method directly,
  * but register your object to be chained with a parent disposable via {@link com.intellij.openapi.util.Disposer#register(Disposable, Disposable)}.
- * <p/>
+ * </p>
+ * <p>
  * If you're 100% sure that you should control your object's disposal manually,
  * do not call the {@link #dispose()} method either. Use {@link com.intellij.openapi.util.Disposer#dispose(Disposable)} instead, since
  * there might be any object registered in the chain.
- * <p/>
+ * </p>
  * See <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/disposers.html">Disposer and Disposable</a> in SDK Docs.
  */
 public interface Disposable {

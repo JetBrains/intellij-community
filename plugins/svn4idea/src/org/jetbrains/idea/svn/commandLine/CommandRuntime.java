@@ -18,6 +18,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.jetbrains.idea.svn.SvnBundle.message;
+
 /**
  * @author Konstantin Kolosovsky.
  */
@@ -120,7 +122,7 @@ public class CommandRuntime {
       LOG.info("Command - " + executor.getCommandText());
       LOG.info("Command output - " + executor.getOutput());
 
-      throw new SvnBindException("Svn process exited with error code: " + exitCode);
+      throw new SvnBindException(message("error.svn.exited.with.error.code", exitCode));
     }
 
     return false;

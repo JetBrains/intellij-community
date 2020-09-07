@@ -1,12 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.intelliLang
 
 import com.intellij.lang.Language
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TestDialog
+import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.injection.Injectable
 import com.intellij.psi.util.parentOfType
@@ -148,14 +148,14 @@ class JavaLanguageInjectionSupportTest : AbstractLanguageInjectionTestCase() {
 
   private fun undo(editor: Editor) {
     UIUtil.invokeAndWaitIfNeeded(Runnable {
-      val oldTestDialog = Messages.setTestDialog(TestDialog.OK)
+      val oldTestDialog = TestDialogManager.setTestDialog(TestDialog.OK)
       try {
         val undoManager = UndoManager.getInstance(project)
         val textEditor = TextEditorProvider.getInstance().getTextEditor(editor)
         undoManager.undo(textEditor)
       }
       finally {
-        Messages.setTestDialog(oldTestDialog)
+        TestDialogManager.setTestDialog(oldTestDialog)
       }
     })
   }

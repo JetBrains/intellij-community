@@ -2,11 +2,11 @@
 package org.jetbrains.plugins.gradle.tooling.builder;
 
 import com.amazon.ion.IonType;
+import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.Function;
@@ -46,6 +46,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -113,29 +115,18 @@ public abstract class AbstractModelBuilderTest {
     testDir = new File(ourTempDir, methodName);
     FileUtil.ensureExists(testDir);
 
-    final InputStream buildScriptStream = getClass().getResourceAsStream("/" + methodName + "/" + GradleConstants.DEFAULT_SCRIPT_NAME);
-    try {
-      FileUtil.writeToFile(
-        new File(testDir, GradleConstants.DEFAULT_SCRIPT_NAME),
-        FileUtil.loadTextAndClose(buildScriptStream)
-      );
-    }
-    finally {
-      StreamUtil.closeStream(buildScriptStream);
+    try (InputStream buildScriptStream = getClass().getResourceAsStream('/' + methodName + '/' + GradleConstants.DEFAULT_SCRIPT_NAME)) {
+      Files.copy(buildScriptStream, new File(testDir, GradleConstants.DEFAULT_SCRIPT_NAME).toPath(), StandardCopyOption.REPLACE_EXISTING);
     }
 
-    final InputStream settingsStream = getClass().getResourceAsStream("/" + methodName + "/" + GradleConstants.SETTINGS_FILE_NAME);
-    try {
-      if(settingsStream != null) {
-        FileUtil.writeToFile(
-          new File(testDir, GradleConstants.SETTINGS_FILE_NAME),
-          FileUtil.loadTextAndClose(settingsStream)
-        );
+    try (InputStream settingsStream = getClass().getResourceAsStream('/' + methodName + '/' + GradleConstants.SETTINGS_FILE_NAME)) {
+      if (settingsStream != null) {
+        Files.copy(settingsStream, new File(testDir, GradleConstants.SETTINGS_FILE_NAME).toPath(), StandardCopyOption.REPLACE_EXISTING);
       }
-    } finally {
-      StreamUtil.closeStream(settingsStream);
     }
 
+    // fix exception of FJP at org.gradle.process.internal.ExecHandleRunner.run => ... => net.rubygrapefruit.platform.internal.DefaultProcessLauncher.start => java.lang.ProcessBuilder.start => java.lang.ProcessHandleImpl.completion
+    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
     GradleConnector connector = GradleConnector.newConnector();
 
     GradleVersion _gradleVersion = GradleVersion.version(gradleVersion);
@@ -154,7 +145,8 @@ public abstract class AbstractModelBuilderTest {
     try {
       boolean isCompositeBuildsSupported = _gradleVersion.compareTo(GradleVersion.version("3.1")) >= 0;
       final ProjectImportAction projectImportAction = new ProjectImportAction(false, isCompositeBuildsSupported, false);
-      projectImportAction.addProjectImportModelProvider(new ClassSetImportModelProvider(getModels(), set(IdeaProject.class)));
+      projectImportAction.addProjectImportModelProvider(new ClassSetImportModelProvider(getModels(),
+                                                                                        ContainerUtil.<Class<?>>set(IdeaProject.class)));
       BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = connection.action(projectImportAction);
       File initScript = GradleExecutionHelper.generateInitScript(false, getToolingExtensionClasses());
       assertNotNull(initScript);
@@ -227,10 +219,13 @@ public abstract class AbstractModelBuilderTest {
     final DomainObjectSet<? extends IdeaModule> ideaModules = allModels.getModel(IdeaProject.class).getModules();
 
     final String filterKey = "to_filter";
-    final Map<String, T> map = ContainerUtil.map2Map(ideaModules, (Function<IdeaModule, Pair<String, T>>)module -> {
-      final T value = allModels.getModel(module, aClass);
-      final String key = value != null ? module.getGradleProject().getPath() : filterKey;
-      return Pair.create(key, value);
+    final Map<String, T> map = ContainerUtil.map2Map(ideaModules, new Function<IdeaModule, Pair<String, T>>() {
+      @Override
+      public Pair<String, T> fun(IdeaModule module) {
+        final T value = allModels.getModel(module, aClass);
+        final String key = value != null ? module.getGradleProject().getPath() : filterKey;
+        return Pair.create(key, value);
+      }
     });
 
     map.remove(filterKey);

@@ -19,6 +19,8 @@ package com.intellij.util.xml.ui.actions.generate;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions.ActionDescription;
+import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementNavigationProvider;
@@ -27,9 +29,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class GenerateDomElementProvider<T extends DomElement> {
-  private final String myDescription;
+  private final @ActionDescription String myDescription;
+  private final @ActionText String myText;
 
-  public GenerateDomElementProvider(String description) {
+  public GenerateDomElementProvider(@ActionText String text, @ActionDescription String description) {
+    myText = text;
     myDescription = description;
   }
 
@@ -65,7 +69,12 @@ public abstract class GenerateDomElementProvider<T extends DomElement> {
       .getDomElementsNavigateProvider(DomElementsNavigationManager.DEFAULT_PROVIDER_NAME);
   }
 
-  public String getDescription() {
+  public @ActionDescription String getDescription() {
     return myDescription == null ? "" : myDescription;
   }
+
+  public @ActionText String getText() {
+    return myText == null ? "" : myText;
+  }
 }
+

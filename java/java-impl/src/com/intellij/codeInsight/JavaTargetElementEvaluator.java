@@ -275,7 +275,7 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
   }
 
   private static PsiClass @Nullable [] getClassesWithMember(final PsiReference reference, final PsiMember member) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
+    return ApplicationManager.getApplication().runReadAction(new Computable<>() {
       @Override
       public PsiClass[] compute() {
         PsiClass containingClass = member.getContainingClass();
@@ -294,7 +294,8 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
             if (resolve instanceof PsiClass) {
               containingClass = (PsiClass)resolve;
             }
-          } else {
+          }
+          else {
             psiClass = PsiTreeUtil.getParentOfType((PsiReferenceExpression)reference, PsiClass.class);
           }
         }
@@ -324,7 +325,7 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
           if (!processor1.process(psiClass) ||
               !ClassInheritorsSearch.search(containingClass).forEach(new PsiElementFindProcessor<>(psiClass)) ||
               !ClassInheritorsSearch.search(psiClass).forEach(processor1)) {
-            return new PsiClass[] {psiClass};
+            return new PsiClass[]{psiClass};
           }
           psiClass = psiClass.getContainingClass();
         }

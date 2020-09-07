@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowContentUiType;
 import com.intellij.openapi.wm.ToolWindowManager;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +22,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public final class ShowContentAction extends AnAction implements DumbAware {
-  public static final String ACTION_ID = "ShowContent";
+  @NonNls public static final String ACTION_ID = "ShowContent";
 
   private ToolWindow myWindow;
 

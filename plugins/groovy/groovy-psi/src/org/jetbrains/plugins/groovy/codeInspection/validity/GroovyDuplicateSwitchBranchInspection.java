@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.codeInspection.validity;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.utils.EquivalenceChecker;
@@ -34,7 +35,7 @@ public class GroovyDuplicateSwitchBranchInspection extends BaseInspection {
   @Override
   @Nullable
   protected String buildErrorString(Object... args) {
-    return "Duplicate switch case '#ref' #loc";
+    return GroovyBundle.message("inspection.message.duplicate.switch.case.ref");
   }
 
   @NotNull

@@ -15,8 +15,6 @@
  */
 package com.jetbrains.numpy.codeInsight;
 
-import com.google.common.collect.Lists;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.Ref;
@@ -275,7 +273,6 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
   }
 
   public static boolean isInsideNumPy(@NotNull PsiElement element) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return true;
     final PsiFile file = element.getContainingFile();
 
     if (file != null) {
@@ -400,7 +397,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
         }
         final PyType numpyDocType = parseNumpyDocType(function, paramType);
         if ("size".equals(parameterName)) {
-          return getPsiFacade(function).createUnionType(Lists.newArrayList(numpyDocType, PyBuiltinCache.getInstance(function).getIntType()));
+          return getPsiFacade(function).createUnionType(Arrays.asList(numpyDocType, PyBuiltinCache.getInstance(function).getIntType()));
         }
         return numpyDocType;
       }

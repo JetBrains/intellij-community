@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -30,7 +31,7 @@ public class LineSeparatorPanel extends EditorBasedStatusBarPopup {
       return WidgetState.HIDDEN;
     }
     String lineSeparator = FileDocumentManager.getInstance().getLineSeparator(file, getProject());
-    String toolTipText = "Line Separator: " + StringUtil.escapeLineBreak(lineSeparator);
+    String toolTipText = IdeBundle.message("tooltip.line.separator", StringUtil.escapeLineBreak(lineSeparator));
     String panelText = LineSeparator.fromString(lineSeparator).toString();
     return new WidgetState(toolTipText, panelText, true);
   }

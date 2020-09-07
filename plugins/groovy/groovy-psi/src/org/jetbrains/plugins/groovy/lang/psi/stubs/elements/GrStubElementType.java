@@ -19,6 +19,7 @@ public abstract class GrStubElementType<S extends StubElement<?>, T extends Groo
   }
 
   @Override
+  @NonNls
   public @NotNull String getExternalId() {
     return "gr." + super.toString();
   }

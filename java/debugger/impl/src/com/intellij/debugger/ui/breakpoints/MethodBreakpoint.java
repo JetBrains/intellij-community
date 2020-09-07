@@ -50,6 +50,7 @@ import com.sun.jdi.event.MethodExitEvent;
 import com.sun.jdi.request.*;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -203,9 +204,9 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     }
     Method lambdaMethod = MethodBytecodeUtil.getLambdaMethod(classType, classesByName);
     if (lambdaMethod != null &&
-        !breakpoint
+        breakpoint
           .matchingMethods(StreamEx.of(((ClassType)classType).interfaces()).flatCollection(ReferenceType::allMethods), debugProcess)
-          .findFirst().isPresent()) {
+          .findFirst().isEmpty()) {
       return;
     }
     StreamEx<Method> methods = lambdaMethod != null
@@ -344,7 +345,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     return getEventMessage(event, getFileName());
   }
 
-  static String getEventMessage(@NotNull LocatableEvent event, @NotNull String defaultFileName) {
+  static @Nls String getEventMessage(@NotNull LocatableEvent event, @NotNull String defaultFileName) {
     Location location = event.location();
     if (event instanceof MethodEntryEvent) {
       return getEventMessage(true, ((MethodEntryEvent)event).method(), location, defaultFileName);
@@ -359,7 +360,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     return "";
   }
 
-  private static String getEventMessage(boolean entry, Method method, Location location, String defaultFileName) {
+  private static @Nls String getEventMessage(boolean entry, Method method, Location location, String defaultFileName) {
     String locationQName = DebuggerUtilsEx.getLocationMethodQName(location);
     String locationFileName = DebuggerUtilsEx.getSourceName(location, e -> defaultFileName);
     int locationLine = location.lineNumber();
@@ -398,7 +399,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
 
   @Override
   public String getDisplayName() {
-    final StringBuilder buffer = new StringBuilder();
+    final @Nls StringBuilder buffer = new StringBuilder();
     if(isValid()) {
       final String className = getClassName();
       final boolean classNameExists = className != null && className.length() > 0;

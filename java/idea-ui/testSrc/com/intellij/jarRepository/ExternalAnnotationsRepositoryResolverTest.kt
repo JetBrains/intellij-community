@@ -2,8 +2,9 @@
 package com.intellij.jarRepository
 
 import com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocation
-import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.AnnotationOrderRootType
 import com.intellij.openapi.roots.libraries.Library
@@ -53,8 +54,7 @@ class ExternalAnnotationsRepositoryResolverTest: UsefulTestCase() {
 
   @Test fun testAnnotationsResolution() {
     val resolver = ExternalAnnotationsRepositoryResolver()
-    val libraryTable = LibraryTablesRegistrar.getInstance().libraryTable
-    val library = WriteAction.compute<Library, RuntimeException> { libraryTable.createLibrary("NewLibrary") }
+    val library = createLibrary()
 
     RemoteRepositoriesConfiguration.getInstance(myProject).repositories = listOf(myTestRepo)
 
@@ -70,11 +70,21 @@ class ExternalAnnotationsRepositoryResolverTest: UsefulTestCase() {
     assertTrue(result.getFiles(AnnotationOrderRootType.getInstance()).isNotEmpty())
   }
 
+  private fun createLibrary(): Library {
+    val libraryTable = LibraryTablesRegistrar.getInstance().libraryTable
+    val library = runWriteActionAndWait { libraryTable.createLibrary("NewLibrary") }
+    disposeOnTearDown(object : Disposable {
+      override fun dispose() {
+        runWriteActionAndWait { libraryTable.removeLibrary(library) }
+      }
+    })
+    return library
+  }
+
 
   @Test fun testAnnotationsSyncResolution() {
     val resolver = ExternalAnnotationsRepositoryResolver()
-    val libraryTable = LibraryTablesRegistrar.getInstance().libraryTable
-    val library = WriteAction.compute<Library, RuntimeException> { libraryTable.createLibrary("NewLibrary") }
+    val library = createLibrary()
 
     RemoteRepositoriesConfiguration.getInstance(myProject).repositories = listOf(myTestRepo)
 
@@ -89,8 +99,7 @@ class ExternalAnnotationsRepositoryResolverTest: UsefulTestCase() {
 
   @Test fun testAnnotationsSyncResolutionUsingLocation() {
     val resolver = ExternalAnnotationsRepositoryResolver()
-    val libraryTable = LibraryTablesRegistrar.getInstance().libraryTable
-    val library = WriteAction.compute<Library, RuntimeException> { libraryTable.createLibrary("NewLibrary") }
+    val library = createLibrary()
 
     MavenRepoFixture(myMavenRepo).apply {
       addAnnotationsArtifact(version = "1.0-an1")
@@ -103,8 +112,7 @@ class ExternalAnnotationsRepositoryResolverTest: UsefulTestCase() {
 
   @Test fun testThirdPartyAnnotationsResolution() {
     val resolver = ExternalAnnotationsRepositoryResolver()
-    val libraryTable = LibraryTablesRegistrar.getInstance().libraryTable
-    val library = WriteAction.compute<Library, RuntimeException> { libraryTable.createLibrary("NewLibrary") }
+    val library = createLibrary()
 
     RemoteRepositoriesConfiguration.getInstance(myProject).repositories = listOf(myTestRepo)
 
@@ -121,8 +129,7 @@ class ExternalAnnotationsRepositoryResolverTest: UsefulTestCase() {
 
   @Test fun testThirdPartyAnnotationsResolutionAsync() {
     val resolver = ExternalAnnotationsRepositoryResolver()
-    val libraryTable = LibraryTablesRegistrar.getInstance().libraryTable
-    val library = WriteAction.compute<Library, RuntimeException> { libraryTable.createLibrary("NewLibrary") }
+    val library = createLibrary()
 
     RemoteRepositoriesConfiguration.getInstance(myProject).repositories = listOf(myTestRepo)
 
@@ -143,8 +150,7 @@ class ExternalAnnotationsRepositoryResolverTest: UsefulTestCase() {
 
   @Test fun `test select annotations artifact when newer library artifacts are available`() {
     val resolver = ExternalAnnotationsRepositoryResolver()
-    val libraryTable = LibraryTablesRegistrar.getInstance().libraryTable
-    val library = WriteAction.compute<Library, RuntimeException> { libraryTable.createLibrary("NewLibrary") }
+    val library = createLibrary()
 
     RemoteRepositoriesConfiguration.getInstance(myProject).repositories = listOf(myTestRepo)
 
@@ -166,8 +172,7 @@ class ExternalAnnotationsRepositoryResolverTest: UsefulTestCase() {
 
   @Test fun `test annotations resolution overrides existing roots`() {
     val resolver = ExternalAnnotationsRepositoryResolver()
-    val libraryTable = LibraryTablesRegistrar.getInstance().libraryTable
-    val library = WriteAction.compute<Library, RuntimeException> { libraryTable.createLibrary("NewLibrary") }
+    val library = createLibrary()
     val modifiableModel = library.modifiableModel
     modifiableModel.addRoot("file://fake.url", AnnotationOrderRootType.getInstance())
     runWriteAction { modifiableModel.commit() }

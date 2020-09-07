@@ -20,6 +20,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -160,7 +161,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     if (application == null || !application.isInternal() || application.isHeadlessEnvironment()) {
       return;
     }
-    String message = null;
+    @NonNls String message = null;
     if (application.isDispatchThread()) {
       message = "Synchronous execution on EDT: ";
     }

@@ -389,4 +389,12 @@ abstract class LibrariesFromLibraryTableInRootModelTestCase {
       assertThat(libraryEntry.library).isEqualTo(a)
     }
   }
+
+  @Test
+  fun `remove module which refers to library`() {
+    val library = createLibrary("foo")
+    ModuleRootModificationUtil.addDependency(module, library)
+    projectModel.removeModule(module)
+    assertThat(libraryTable.libraries).containsExactly(library)
+  }
 }

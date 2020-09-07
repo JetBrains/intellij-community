@@ -46,13 +46,13 @@ public class PyPropertyAccessInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyReferenceExpression(PyReferenceExpression node) {
+    public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
       super.visitPyReferenceExpression(node);
       checkPropertyExpression(node);
     }
 
     @Override
-    public void visitPyTargetExpression(PyTargetExpression node) {
+    public void visitPyTargetExpression(@NotNull PyTargetExpression node) {
       super.visitPyTargetExpression(node);
       checkPropertyExpression(node);
     }
@@ -89,13 +89,13 @@ public class PyPropertyAccessInspection extends PyInspection {
       if (accessor.isDefined() && accessor.value() == null) {
         final String message;
         if (dir == AccessDirection.WRITE) {
-          message = PyPsiBundle.message("INSP.property.$0.cant.be.set", name);
+          message = PyPsiBundle.message("INSP.property.cannot.be.set", name);
         }
         else if (dir == AccessDirection.DELETE) {
-          message = PyPsiBundle.message("INSP.property.$0.cant.be.deleted", name);
+          message = PyPsiBundle.message("INSP.property.cannot.be.deleted", name);
         }
         else {
-          message = PyPsiBundle.message("INSP.property.$0.cant.be.read", name);
+          message = PyPsiBundle.message("INSP.property.cannot.be.read", name);
         }
         registerProblem(node, message, new PyCreatePropertyQuickFix(dir));
       }

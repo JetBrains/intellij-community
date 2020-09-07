@@ -130,7 +130,7 @@ public final class ReflectionUtil {
   }
 
   @NotNull
-  public static Field findField(@NotNull Class<?> clazz, @Nullable final Class<?> type, @NotNull final String name) throws NoSuchFieldException {
+  public static Field findField(@NotNull Class<?> clazz, @Nullable final Class<?> type, @NotNull @NonNls final String name) throws NoSuchFieldException {
     Field result = findFieldInHierarchy(clazz, field -> name.equals(field.getName()) && (type == null || field.getType().equals(type)));
     if (result != null) return result;
 
@@ -138,7 +138,7 @@ public final class ReflectionUtil {
   }
 
   @NotNull
-  public static Field findAssignableField(@NotNull Class<?> clazz, @Nullable("null means any type") final Class<?> fieldType, @NotNull final String fieldName) throws NoSuchFieldException {
+  public static Field findAssignableField(@NotNull Class<?> clazz, @Nullable("null means any type") final Class<?> fieldType, @NotNull @NonNls String fieldName) throws NoSuchFieldException {
     Field result = findFieldInHierarchy(clazz, field -> fieldName.equals(field.getName()) && (fieldType == null || fieldType.isAssignableFrom(field.getType())));
     if (result != null) {
       return result;
@@ -185,7 +185,7 @@ public final class ReflectionUtil {
     return null;
   }
 
-  public static void resetField(@NotNull Class<?> clazz, @Nullable("null means of any type") Class<?> type, @NotNull String name)  {
+  public static void resetField(@NotNull Class<?> clazz, @Nullable("null means of any type") Class<?> type, @NotNull @NonNls String name)  {
     try {
       resetField(null, findField(clazz, type, name));
     }
@@ -194,7 +194,7 @@ public final class ReflectionUtil {
     }
   }
 
-  public static void resetField(@NotNull Object object, @Nullable("null means any type") Class<?> type, @NotNull String name)  {
+  public static void resetField(@NotNull Object object, @Nullable("null means any type") Class<?> type, @NotNull @NonNls String name)  {
     try {
       resetField(object, findField(object.getClass(), type, name));
     }
@@ -203,7 +203,7 @@ public final class ReflectionUtil {
     }
   }
 
-  public static void resetField(@NotNull Object object, @NotNull String name) {
+  public static void resetField(@NotNull Object object, @NotNull @NonNls String name) {
     try {
       resetField(object, findField(object.getClass(), null, name));
     }

@@ -25,6 +25,9 @@
       <val name="flagsFromClass" val="java.awt.event.InputEvent.class" />
     </annotation>
   </item>
+  <item name='java.awt.AWTPermission AWTPermission(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
   <item name="java.awt.BasicStroke BasicStroke(float, int, int) 1">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="intValues" val="{java.awt.BasicStroke.CAP_BUTT, java.awt.BasicStroke.CAP_ROUND, java.awt.BasicStroke.CAP_SQUARE}" />
@@ -65,6 +68,21 @@
       <val name="intValues" val="{java.awt.BasicStroke.JOIN_BEVEL, java.awt.BasicStroke.JOIN_MITER, java.awt.BasicStroke.JOIN_ROUND}" />
     </annotation>
   </item>
+  <item name='java.awt.BorderLayout CENTER'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='java.awt.BorderLayout EAST'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='java.awt.BorderLayout NORTH'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='java.awt.BorderLayout SOUTH'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='java.awt.BorderLayout WEST'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
   <item name="java.awt.CardLayout void show(java.awt.Container, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
@@ -77,10 +95,19 @@
   <item name='java.awt.Component java.awt.Point location()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.awt.Component void firePropertyChange(java.lang.String, boolean, boolean) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='java.awt.Component void firePropertyChange(java.lang.String, java.lang.Object, java.lang.Object) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
   <item name='java.awt.Component void setLocation(java.awt.Point) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-  <item name='java.awt.Container void add(java.awt.Component, java.lang.Object) 0'>
+    <item name='java.awt.Component void setName(java.lang.String) 0'>
+        <annotation name='org.jetbrains.annotations.NonNls'/>
+    </item>
+    <item name='java.awt.Container void add(java.awt.Component, java.lang.Object) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name="java.awt.Container void addPropertyChangeListener(java.lang.String, java.beans.PropertyChangeListener) 0">
@@ -127,6 +154,9 @@
       <val name="intValues" val="{java.awt.FlowLayout.LEFT, java.awt.FlowLayout.CENTER, java.awt.FlowLayout.RIGHT, java.awt.FlowLayout.LEADING, java.awt.FlowLayout.TRAILING}" />
     </annotation>
   </item>
+  <item name='java.awt.Font Font(java.lang.String, int, int) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
   <item name="java.awt.Font Font(java.lang.String, int, int) 1">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="flags" val="{java.awt.Font.PLAIN, java.awt.Font.BOLD, java.awt.Font.ITALIC}" />
@@ -163,6 +193,9 @@
   </item>
   <item name="java.awt.KeyboardFocusManager void addPropertyChangeListener(java.lang.String, java.beans.PropertyChangeListener) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name='java.awt.KeyboardFocusManager void removePropertyChangeListener(java.lang.String, java.beans.PropertyChangeListener) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name="java.awt.Label int getAlignment()">
     <annotation name="org.intellij.lang.annotations.MagicConstant">

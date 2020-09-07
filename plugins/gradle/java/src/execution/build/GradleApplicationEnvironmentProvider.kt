@@ -38,6 +38,7 @@ import com.intellij.psi.PsiJavaModule
 import com.intellij.task.ExecuteRunConfigurationTask
 import com.intellij.util.PathUtil
 import gnu.trove.THashMap
+import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
@@ -79,7 +80,7 @@ class GradleApplicationEnvironmentProvider : GradleExecutionEnvironmentProvider 
       javaModuleName = findJavaModuleName(jdk, applicationConfiguration.configurationModule, mainClass)
     }
     catch (e: CantRunException) {
-      ExecutionErrorDialog.show(e, "Cannot use specified JRE", project)
+      ExecutionErrorDialog.show(e, GradleInspectionBundle.message("dialog.title.cannot.use.specified.jre"), project)
       throw RuntimeException(ExecutionBundle.message("run.configuration.cannot.find.vm.executable"))
     }
 

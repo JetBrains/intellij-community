@@ -2,6 +2,7 @@
 package com.jetbrains.python.refactoring.classes.ui;
 
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.NlsSafe;
 import com.jetbrains.python.psi.PyClass;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,7 +52,7 @@ public class PyClassCellRenderer extends DefaultListCellRenderer {
   }
 
   @Nullable
-  public static String getClassText(PyClass aClass) {
+  public static @NlsSafe String getClassText(PyClass aClass) {
     return aClass.getName();
   }
 }

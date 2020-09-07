@@ -10,6 +10,7 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ArtifactProperties;
@@ -22,6 +23,7 @@ import com.intellij.packaging.ui.ArtifactPropertiesEditor;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.packaging.preloader.JavaFxPreloaderArtifactProperties;
 import org.jetbrains.plugins.javaFX.packaging.preloader.JavaFxPreloaderArtifactPropertiesProvider;
 import org.jetbrains.plugins.javaFX.packaging.preloader.JavaFxPreloaderArtifactType;
@@ -82,7 +84,8 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     }
 
     if (fxCompatibleSdk == null) {
-      compileContext.addMessage(CompilerMessageCategory.ERROR, "Java version 7 or higher is required to build JavaFX package", null, -1, -1);
+      compileContext.addMessage(CompilerMessageCategory.ERROR,
+                                JavaFXBundle.message("java.version.7.or.higher.is.required.to.build.javafx.package"), null, -1, -1);
       return;
     }
 
@@ -303,7 +306,7 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     return null;
   }
 
-  public String getNativeBundle() {
+  public @NlsSafe String getNativeBundle() {
     return myNativeBundle;
   }
 
@@ -327,7 +330,7 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     myIcons = icons;
   }
 
-  public String getMsgOutputLevel() {
+  public @NlsSafe String getMsgOutputLevel() {
     return myMsgOutputLevel;
   }
 

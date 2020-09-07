@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.WizardPopup;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class FlatSpeedSearchPopup extends PopupFactoryImpl.ActionGroupPopup {
 
-  public FlatSpeedSearchPopup(String title,
+  public FlatSpeedSearchPopup(@NlsContexts.PopupTitle String title,
                               @NotNull ActionGroup actionGroup,
                               @NotNull DataContext dataContext,
                               @Nullable Condition<? super AnAction> preselectActionCondition, boolean showDisableActions) {

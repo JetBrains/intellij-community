@@ -61,7 +61,7 @@ public class StaticImportInspection extends BaseInspection {
     final PsiClass aClass = importStaticStatement.resolveTargetClass();
     if (aClass != null) {
       final String name = aClass.getQualifiedName();
-      result.add(new IgnoreClassFix(name, allowedClasses, "Allow static imports for class '" + name + "'"));
+      result.add(new IgnoreClassFix(name, allowedClasses, InspectionGadgetsBundle.message("static.import.fix.ignore.class", name)));
     }
     result.add(buildFix(infos));
     return result.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
@@ -77,7 +77,8 @@ public class StaticImportInspection extends BaseInspection {
     constraints.weighty = 1.0;
     constraints.fill = GridBagConstraints.BOTH;
     final JPanel chooserList =
-      UiUtils.createTreeClassChooserList(allowedClasses, "Statically importable Classes", "Choose statically importable class");
+      UiUtils.createTreeClassChooserList(allowedClasses, InspectionGadgetsBundle.message("static.import.options.border.title"),
+                                         InspectionGadgetsBundle.message("static.import.options.chooserTitle"));
     panel.add(chooserList, constraints);
 
     constraints.gridy = 1;

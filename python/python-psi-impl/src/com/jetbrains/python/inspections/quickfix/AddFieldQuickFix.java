@@ -8,15 +8,14 @@ import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PythonTemplateRunner;
 import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -50,13 +49,13 @@ public class AddFieldQuickFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getName() {
-    return PyPsiBundle.message("QFIX.NAME.add.field.$0.to.class.$1", myIdentifier, myClassName);
+    return PyPsiBundle.message("QFIX.add.field.to.class", myIdentifier, myClassName);
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyPsiBundle.message("QFIX.add.field.to.class");
+    return PyPsiBundle.message("QFIX.NAME.add.field.to.class");
   }
 
   @NotNull
@@ -133,11 +132,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
           else {
             builder.replaceElement(leftExpression.getLastChild(), myIdentifier);
           }
-          final VirtualFile virtualFile = file.getVirtualFile();
-          if (virtualFile == null) return;
-          final Editor editor = PythonUiService.getInstance().openTextEditor(file.getProject(), virtualFile);
-          if (editor == null) return;
-          builder.run(editor, false);
+          PythonTemplateRunner.runTemplate(file, builder);
         }
       }
     }
@@ -168,7 +163,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
         newInit = (PyFunction)clsContent.addAfter(newInit, addAnchor);
 
         PythonUiService.getInstance()
-          .showBalloonInfo(project, PyPsiBundle.message("QFIX.added.constructor.$0.for.field.$1", cls.getName(), itemName));
+          .showBalloonInfo(project, PyPsiBundle.message("QFIX.add.field.to.class.popup.content.added.init", cls.getName(), itemName));
 
         final PyStatementList statementList = newInit.getStatementList();
         final PyStatement[] statements = statementList.getStatements();

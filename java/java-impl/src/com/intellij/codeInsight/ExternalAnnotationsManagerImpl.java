@@ -216,7 +216,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
     
     if (annotationsByFiles.isEmpty()) return;
 
-    WriteCommandAction.writeCommandAction(project).run(new ThrowableRunnable<RuntimeException>() {
+    WriteCommandAction.writeCommandAction(project).run(new ThrowableRunnable<>() {
       @Override
       public void run() throws RuntimeException {
         if (project.isDisposed()) return;
@@ -503,7 +503,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
 
   private void chooseRootAndAnnotateExternally(VirtualFile @NotNull [] roots, @NotNull ExternalAnnotation annotation) {
     if (roots.length > 1) {
-      JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<VirtualFile>(JavaBundle.message("external.annotations.roots"), roots) {
+      JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>(JavaBundle.message("external.annotations.roots"), roots) {
         @Override
         public void canceled() {
           notifyAfterAnnotationChanging(annotation.getOwner(), annotation.getAnnotationFQName(), false);
@@ -691,7 +691,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
   }
 
   private @NotNull AnnotationPlace chooseAnnotationsPlace(@NotNull PsiElement element,
-                                                          @NotNull Supplier<AnnotationPlace> confirmNewExternalAnnotationRoot) {
+                                                          @NotNull Supplier<? extends AnnotationPlace> confirmNewExternalAnnotationRoot) {
     if (!element.isPhysical() && !(element.getOriginalElement() instanceof PsiCompiledElement)) {
       return AnnotationPlace.IN_CODE; //element just created
     }
@@ -939,9 +939,11 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
   }
 
   @Override
-  protected void duplicateError(@NotNull PsiFile file, @NotNull String externalName, @NotNull String text) {
-    String message = text + "; for signature: '" + externalName + "' in the file " + file.getName();
-    LOG.error(message, new Throwable(), AttachmentFactory.createAttachment(file.getVirtualFile()));
+  protected void duplicateError(@NotNull VirtualFile virtualFile,
+                                @NotNull String externalName,
+                                @NotNull String text) {
+    String message = text + "; for signature: '" + externalName + "' in the file " + virtualFile.getName();
+    LOG.error(message, new Throwable(), AttachmentFactory.createAttachment(virtualFile));
   }
 
   public static boolean areExternalAnnotationsApplicable(@NotNull PsiModifierListOwner owner) {

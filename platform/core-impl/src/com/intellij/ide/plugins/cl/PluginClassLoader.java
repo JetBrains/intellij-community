@@ -11,10 +11,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.awt.*;
 import java.io.File;
@@ -31,7 +28,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-public final class PluginClassLoader extends UrlClassLoader {
+public final class PluginClassLoader extends UrlClassLoader implements PluginAwareClassLoader {
   static {
     if (registerAsParallelCapable()) {
       markParallelCapable(PluginClassLoader.class);
@@ -77,14 +74,17 @@ public final class PluginClassLoader extends UrlClassLoader {
     }
   }
 
+  @Override
   public long getEdtTime() {
     return edtTime.get();
   }
 
+  @Override
   public long getBackgroundTime() {
     return backgroundTime.get();
   }
 
+  @Override
   public long getLoadedClassCount() {
     return loadedClassCounter.get();
   }
@@ -233,7 +233,7 @@ public final class PluginClassLoader extends UrlClassLoader {
     "kotlin.properties.ReadWriteProperty",
     "kotlin.properties.ReadOnlyProperty");
 
-  private static boolean mustBeLoadedByPlatform(String className) {
+  private static boolean mustBeLoadedByPlatform(@NonNls String className) {
     if (className.startsWith("java.")) {
       return true;
     }
@@ -380,10 +380,12 @@ public final class PluginClassLoader extends UrlClassLoader {
     return null;
   }
 
+  @Override
   public @NotNull PluginId getPluginId() {
     return pluginId;
   }
 
+  @Override
   public @NotNull PluginDescriptor getPluginDescriptor() {
     return myPluginDescriptor;
   }

@@ -13,7 +13,7 @@
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="&amp;Link created IntelliJ IDEA modules to Eclipse project files"/>
+          <text resource-bundle="messages/EclipseBundle" key="checkbox.link.created.intellij.idea.modules.to.eclipse.project.files"/>
         </properties>
       </component>
       <vspacer id="26af9">
@@ -30,14 +30,14 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
-        <border type="none" title="IntelliJ IDEA project and module files location"/>
+        <border type="none" title-resource-bundle="messages/EclipseBundle" title-key="border.title.intellij.idea.project.and.module.files.location"/>
         <children>
           <component id="7a680" class="javax.swing.JRadioButton" binding="rbModulesColocated">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Create module files near .classpath files"/>
+              <text resource-bundle="messages/EclipseBundle" key="radio.button.create.module.files.near.classpath.files"/>
             </properties>
           </component>
           <component id="681ea" class="javax.swing.JRadioButton" binding="rbModulesDedicated">
@@ -45,7 +45,7 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Keep project and module files in"/>
+              <text resource-bundle="messages/EclipseBundle" key="radio.button.keep.project.and.module.files.in"/>
             </properties>
           </component>
           <component id="8242e" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myDirComponent">
@@ -93,7 +93,7 @@
             </constraints>
             <properties>
               <labelFor value="4533f"/>
-              <text value="Detect &amp;test sources (comma-separated path masks, '*' and '?' wildcards allowed):"/>
+              <text resource-bundle="messages/EclipseBundle" key="label.detect.test.sources.comma.separated.path.masks.and.wildcards.allowed"/>
             </properties>
           </component>
           <component id="4533f" class="javax.swing.JTextField" binding="myTestSourcesMask">

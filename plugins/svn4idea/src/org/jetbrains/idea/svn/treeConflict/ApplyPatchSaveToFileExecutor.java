@@ -23,6 +23,7 @@ import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnBundle;
 
 import java.io.File;
 import java.io.IOException;
@@ -51,7 +52,7 @@ public final class ApplyPatchSaveToFileExecutor implements ApplyPatchExecutor<Te
 
   @Override
   public String getName() {
-    return "Save Patch to File";
+    return message("patch.creation.save.to.file.button");
   }
 
   @Override
@@ -60,8 +61,11 @@ public final class ApplyPatchSaveToFileExecutor implements ApplyPatchExecutor<Te
                     @Nullable LocalChangeList localList,
                     @Nullable String fileName,
                     @Nullable ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
-    FileSaverDialog dialog = FileChooserFactory.getInstance().createSaveFileDialog(new FileSaverDescriptor("Save Patch to", ""), myProject);
-    VirtualFileWrapper targetFile = dialog.save(myProject.getBaseDir(), "TheirsChanges.patch");
+    FileSaverDialog dialog = FileChooserFactory.getInstance().createSaveFileDialog(
+      new FileSaverDescriptor(message("patch.creation.save.to.title"), ""),
+      myProject
+    );
+    VirtualFileWrapper targetFile = dialog.save(myProject.getBaseDir(), SvnBundle.message("value.patch.file.name"));
     if (targetFile != null) {
       savePatch(patchGroupsToApply, targetFile);
     }

@@ -2,6 +2,7 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactProperties;
 import com.intellij.packaging.artifacts.ArtifactPropertiesProvider;
@@ -11,6 +12,7 @@ import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.ArtifactPropertiesEditor;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.components.JBScrollPane;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +23,7 @@ public class ArtifactPropertiesEditors {
   private static final List<String> STANDARD_TABS_ORDER = Arrays.asList(
     ArtifactPropertiesEditor.VALIDATION_TAB, ArtifactPropertiesEditor.PRE_PROCESSING_TAB, ArtifactPropertiesEditor.POST_PROCESSING_TAB
   );
-  private final Map<String, JPanel> myMainPanels;
+  private final Map<@Nls(capitalization = Nls.Capitalization.Sentence) String, JPanel> myMainPanels;
   private final ArtifactEditorContext myContext;
   private final Artifact myOriginalArtifact;
   private final List<PropertiesEditorInfo> myEditors;
@@ -53,7 +55,7 @@ public class ArtifactPropertiesEditors {
   }
 
   public void addTabs(TabbedPaneWrapper tabbedPane) {
-    List<String> sortedTabs = new ArrayList<>(myMainPanels.keySet());
+    List<@NlsContexts.TabTitle String> sortedTabs = new ArrayList<>(myMainPanels.keySet());
     sortedTabs.sort((o1, o2) -> {
       int i1 = STANDARD_TABS_ORDER.indexOf(o1);
       if (i1 == -1) i1 = STANDARD_TABS_ORDER.size();
@@ -64,7 +66,7 @@ public class ArtifactPropertiesEditors {
       }
       return o1.compareTo(o2);
     });
-    for (String tab : sortedTabs) {
+    for (@NlsContexts.TabTitle String tab : sortedTabs) {
       tabbedPane.addTab(tab, new JBScrollPane(myMainPanels.get(tab)));
     }
   }

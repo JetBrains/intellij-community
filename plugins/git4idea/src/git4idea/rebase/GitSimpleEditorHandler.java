@@ -26,7 +26,7 @@ public class GitSimpleEditorHandler implements GitRebaseEditorHandler {
         myProject,
         null,
         file,
-        GitBundle.getString("rebase.simple.editor.dialog.title"),
+        GitBundle.message("rebase.simple.editor.dialog.title"),
         CommonBundle.getOkButtonText()
       );
       return cancelled ? ERROR_EXIT_CODE : 0;

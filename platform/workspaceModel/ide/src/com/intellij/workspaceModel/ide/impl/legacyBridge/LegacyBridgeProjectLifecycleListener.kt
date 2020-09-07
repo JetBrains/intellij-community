@@ -17,6 +17,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.project.ProjectStoreOwner
 import com.intellij.project.stateStore
 import com.intellij.serviceContainer.ComponentManagerImpl
+import com.intellij.util.pico.DefaultPicoContainer
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
@@ -38,7 +39,6 @@ import org.picocontainer.MutablePicoContainer
 @ApiStatus.Internal
 class LegacyBridgeProjectLifecycleListener : ProjectServiceContainerCustomizer {
   companion object {
-    const val ENABLED_REGISTRY_KEY = "ide.new.project.model"
     const val ENABLED_CACHE_KEY = "ide.new.project.model.cache"
 
     private val LOG = logger<LegacyBridgeProjectLifecycleListener>()
@@ -48,7 +48,7 @@ class LegacyBridgeProjectLifecycleListener : ProjectServiceContainerCustomizer {
   }
 
   override fun serviceRegistered(project: Project) {
-    val enabled = Registry.`is`(ENABLED_REGISTRY_KEY) || WorkspaceModelInitialTestContent.peek() != null
+    val enabled = WorkspaceModel.isEnabled || WorkspaceModelInitialTestContent.peek() != null
     if (!enabled) {
       LOG.info("Using legacy project model to open project")
       return
@@ -71,7 +71,12 @@ class LegacyBridgeProjectLifecycleListener : ProjectServiceContainerCustomizer {
     container.registerService(FilePointerProvider::class.java, FilePointerProviderImpl::class.java, pluginDescriptor, false)
     container.registerService(WorkspaceModel::class.java, WorkspaceModelImpl::class.java, pluginDescriptor, false)
     container.registerService(ProjectLibraryTable::class.java, ProjectLibraryTableBridgeImpl::class.java, pluginDescriptor, true)
-    container.registerService(ExternalStorageConfigurationManager::class.java, ExternalStorageConfigurationManagerBridge::class.java, pluginDescriptor, true)
+
+    if ((container.picoContainer as DefaultPicoContainer).getServiceAdapter(ExternalStorageConfigurationManager::class.java.name) != null) {
+      container.registerService(ExternalStorageConfigurationManager::class.java, ExternalStorageConfigurationManagerBridge::class.java,
+                                pluginDescriptor, true)
+    }
+
     container.registerService(ModifiableModelCommitterService::class.java, ModifiableModelCommitterServiceBridge::class.java, pluginDescriptor, true)
     container.registerService(WorkspaceModelTopics::class.java, WorkspaceModelTopics::class.java, pluginDescriptor, false)
     container.registerService(FacetEntityChangeListener::class.java, FacetEntityChangeListener::class.java, pluginDescriptor, false)

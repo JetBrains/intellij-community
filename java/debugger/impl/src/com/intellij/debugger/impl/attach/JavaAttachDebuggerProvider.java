@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl.attach;
 
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.RemoteStateState;
 import com.intellij.debugger.impl.DebuggerManagerImpl;
 import com.intellij.debugger.impl.GenericDebuggerRunner;
@@ -17,6 +18,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.rt.execution.application.AppMainV2;
@@ -68,13 +70,14 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
 
   private static final Key<Map<String, LocalAttachInfo>> ADDRESS_MAP_KEY = Key.create("ADDRESS_MAP");
 
-  private static final XLocalAttachGroup ourAttachGroup = new JavaDebuggerAttachGroup("Java", -20);
+  private static final XLocalAttachGroup ourAttachGroup = new JavaDebuggerAttachGroup(
+    JavaDebuggerBundle.message("debugger.attach.group.name.java"), -20);
 
   static class JavaDebuggerAttachGroup extends XDefaultLocalAttachGroup {
-    private final String myName;
+    private final @Nls String myName;
     private final int myOrder;
 
-    JavaDebuggerAttachGroup(String name, int order) {
+    JavaDebuggerAttachGroup(@Nls String name, int order) {
       myName = name;
       myOrder = order;
     }
@@ -421,8 +424,10 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       return "pid " + myPid;
     }
 
+    @NlsSafe
     abstract String getDebuggerName();
 
+    @NlsSafe
     String getProcessDisplayText(String text) {
       return text;
     }
@@ -500,13 +505,13 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     @Nls
     @Override
     public String getDisplayName() {
-      return getId();
+      return JavaDebuggerBundle.message("process.attach.run.configuration.type.name");
     }
 
     @Nls
     @Override
     public String getConfigurationTypeDescription() {
-      return getId();
+      return getDisplayName();
     }
 
     @Override

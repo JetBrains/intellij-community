@@ -9,6 +9,7 @@ import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyLocalPositionConverter;
 import com.jetbrains.python.debugger.PyRemoteDebugProcess;
@@ -43,7 +44,7 @@ public class PyAttachToProcessDebugRunner extends PyDebugRunner {
       serverSocket = new ServerSocket(0);
     }
     catch (IOException e) {
-      throw new ExecutionException("Failed to find free socket port", e);
+      throw new ExecutionException(PyBundle.message("debugger.attach.to.process.failed.to.find.free.socket.port"), e);
     }
 
 
@@ -76,12 +77,12 @@ public class PyAttachToProcessDebugRunner extends PyDebugRunner {
 
               @Override
               protected String getConnectionMessage() {
-                return "Attaching to a process with PID=" + myPid;
+                return PyBundle.message("python.debugger.attaching.to.process.with.pid", myPid);
               }
 
               @Override
               protected String getConnectionTitle() {
-                return "Attaching Debugger";
+                return PyBundle.message("python.debugger.attaching");
               }
             };
           pyDebugProcess.setPositionConverter(new PyLocalPositionConverter());

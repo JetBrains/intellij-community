@@ -48,17 +48,21 @@ internal fun GitCommitEditingOperationResult.Complete.notifySuccess(
 }
 
 internal fun UndoResult.Error.notifyUndoError(project: Project, @NlsContexts.NotificationTitle title: String) {
-  VcsNotifier.getInstance(project).notifyError(title, errorHtml)
+  VcsNotifier.getInstance(project).notifyError("git.rebase.commit.edit.undo.error", title, errorHtml)
 }
 
 internal fun UndoPossibility.Impossible.notifyUndoImpossible(project: Project, @NlsContexts.NotificationTitle title: String) {
   val notifier = VcsNotifier.getInstance(project)
   when (this) {
     UndoPossibility.Impossible.HeadMoved -> {
-      notifier.notifyError(title, GitBundle.getString("rebase.log.reword.action.notification.undo.not.allowed.repository.changed.message"))
+      notifier.notifyError("git.rebase.commit.edit.undo.error.repo.changed",
+                           title,
+                           GitBundle.message("rebase.log.reword.action.notification.undo.not.allowed.repository.changed.message"))
     }
     is UndoPossibility.Impossible.PushedToProtectedBranch -> {
-      notifier.notifyError(title, GitBundle.message("rebase.log.undo.impossible.pushed.to.protected.branch.notification.text", branch))
+      notifier.notifyError("git.rebase.commit.edit.undo.error.protected.branch",
+                           title,
+                           GitBundle.message("rebase.log.undo.impossible.pushed.to.protected.branch.notification.text", branch))
     }
   }
 }

@@ -12,6 +12,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +40,7 @@ public final class TextDiffTypeFactory {
 
   @NotNull
   public synchronized TextDiffType createTextDiffType(@NonNls @NotNull TextAttributesKey key,
-                                                      @NotNull String name) {
+                                                      @NotNull @Nls String name) {
     TextDiffTypeImpl type = new TextDiffTypeImpl(key, name);
     myTypes.add(type);
     return type;
@@ -55,13 +56,14 @@ public final class TextDiffTypeFactory {
 
   public static class TextDiffTypeImpl implements TextDiffType {
     @NotNull private final TextAttributesKey myKey;
-    @NotNull private final String myName;
+    @NotNull private final @Nls String myName;
 
-    public TextDiffTypeImpl(@NotNull TextAttributesKey key, @NotNull String name) {
+    public TextDiffTypeImpl(@NotNull TextAttributesKey key, @NotNull @Nls String name) {
       myKey = key;
       myName = name;
     }
 
+    @Nls
     @NotNull
     @Override
     public String getName() {

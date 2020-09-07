@@ -9,6 +9,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
@@ -117,7 +118,7 @@ public class LargeFileEncodingWidget extends EditorBasedWidget implements Status
     LargeFileEditorAccess largeFileEditorAccess = LargeFileEditorAccessor.getAccess(myStatusBar);
 
     myActionEnabled = false;
-    String charsetName;
+    @NlsSafe String charsetName;
     String toolTipText;
 
     if (largeFileEditorAccess == null) {

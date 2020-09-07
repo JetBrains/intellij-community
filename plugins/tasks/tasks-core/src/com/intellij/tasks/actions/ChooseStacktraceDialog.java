@@ -20,11 +20,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.tasks.Comment;
 import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.unscramble.AnalyzeStacktraceUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -46,7 +48,7 @@ public class ChooseStacktraceDialog extends DialogWrapper {
   public ChooseStacktraceDialog(Project project, final Task issue) {
     super(project, false);
 
-    setTitle("Choose Stacktrace to Analyze");
+    setTitle(TaskBundle.message("dialog.title.choose.stacktrace.to.analyze"));
     Comment[] comments = issue.getComments();
     ArrayList<Comment> list = new ArrayList<>(comments.length + 1);
     final String description = issue.getDescription();
@@ -57,7 +59,8 @@ public class ChooseStacktraceDialog extends DialogWrapper {
 
     myList.setModel(new CollectionListModel<>(list));
     myList.setCellRenderer(SimpleListCellRenderer.create("", o ->
-      o instanceof Description ? "Description" : "Commented by " + o.getAuthor() + " (" + o.getDate() + ")"));
+      o instanceof Description ? TaskBundle.message("label.description") :
+      TaskBundle.message("label.commented.by", o.getAuthor(), o.getDate())));
     myEditor = AnalyzeStacktraceUtil.createEditorPanel(project, myDisposable);
     myEditorPanel.add(myEditor, BorderLayout.CENTER);
     myList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
@@ -82,13 +85,13 @@ public class ChooseStacktraceDialog extends DialogWrapper {
   }
 
   public Comment[] getTraces() {
-    return ArrayUtil.toObjectArray(Comment.class, myList.getSelectedValues());
+    return ArrayUtil.toObjectArray(Comment.class, myList.getSelectedValuesList());
   }
 
   private static class Description extends Comment {
-    private final String myDescription;
+    private final @Nls String myDescription;
 
-    Description(String description) {
+    Description(@Nls String description) {
       myDescription = description;
     }
 

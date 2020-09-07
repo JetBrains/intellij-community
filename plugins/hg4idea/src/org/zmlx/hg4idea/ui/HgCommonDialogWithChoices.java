@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgBundle;
@@ -134,6 +135,7 @@ public class HgCommonDialogWithChoices extends DialogWrapper {
   protected void createUIComponents() {
   }
 
+  @NonNls
   public String getTargetValue() {
     return isBranchSelected()
            ? "branch(\"" + getBranch() + "\")"

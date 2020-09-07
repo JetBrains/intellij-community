@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -26,6 +27,7 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +35,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
 import java.util.Map.Entry;
@@ -72,7 +73,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   private PluginUpdatesService myPluginUpdatesService;
 
   private Runnable myInvalidFixCallback;
-  private Consumer<IdeaPluginDescriptor> myCancelInstallCallback;
+  private Consumer<? super IdeaPluginDescriptor> myCancelInstallCallback;
 
   private final Map<PluginId, PendingDynamicPluginInstall> myDynamicPluginsToInstall = new LinkedHashMap<>();
   private final Set<IdeaPluginDescriptor> myDynamicPluginsToUninstall = new HashSet<>();
@@ -182,7 +183,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       }
       else {
         try {
-          PluginInstaller.installAfterRestart(pendingPluginInstall.getFile(), true, (Path)null, pendingPluginInstall.getPluginDescriptor());
+          PluginInstaller.installAfterRestart(pendingPluginInstall.getFile(), !UpdateSettings.getInstance().isKeepPluginsArchive(),
+                                              null, pendingPluginInstall.getPluginDescriptor());
           installsRequiringRestart = true;
         }
         catch (IOException e) {
@@ -257,7 +259,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   public void addComponent(@NotNull ListPluginComponent component) {
     if (!component.isMarketplace()) {
       if (myInstallingPlugins.contains(component.myPlugin) &&
-          (myInstalling.ui == null || myInstalling.ui.findComponent(component.myPlugin) == null)) {
+          (myInstalling == null || myInstalling.ui == null || myInstalling.ui.findComponent(component.myPlugin) == null)) {
         return;
       }
 
@@ -790,7 +792,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     return enabled == null || enabled;
   }
 
-  @NotNull
+  @NotNull @Nls
   String getEnabledTitle(@NotNull IdeaPluginDescriptor plugin) {
     return isEnabled(plugin)
            ? IdeBundle.message("plugins.configurable.disable.button")
@@ -875,7 +877,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     myInvalidFixCallback = invalidFixCallback;
   }
 
-  public void setCancelInstallCallback(@NotNull Consumer<IdeaPluginDescriptor> callback) {
+  public void setCancelInstallCallback(@NotNull Consumer<? super IdeaPluginDescriptor> callback) {
     myCancelInstallCallback = callback;
   }
 
@@ -1016,13 +1018,13 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   @Nullable
-  public String getErrorMessage(@NotNull IdeaPluginDescriptor pluginDescriptor, @Nullable Ref<? super String> enableAction) {
+  public @Nls String getErrorMessage(@NotNull IdeaPluginDescriptor pluginDescriptor, @Nullable Ref<? super @Nls String> enableAction) {
     if (InstalledPluginsState.getInstance().wasInstalledWithoutRestart(pluginDescriptor.getPluginId())) {
       // we'll actually install the plugin when the configurable is closed; at this time we don't know if there's any error
       return null;
     }
 
-    String message = PluginManagerCore.getLoadingError(pluginDescriptor);
+    String message = PluginManagerCore.getShortLoadingErrorMessage(pluginDescriptor);
 
     PluginId disabledDependency = PluginManagerCore.getFirstDisabledDependency(pluginDescriptor);
     if (disabledDependency != null) {

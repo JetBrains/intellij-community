@@ -12,9 +12,14 @@ import java.util.List;
 
 public interface MemoryAgent {
   /**
-   * Maximal number of objects that will be retrieved by {@code findReferringObjects} call
+   * Maximal number of paths that will be retrieved by {@code findPathsToClosestGCRoots} call
    */
-  int DEFAULT_GC_ROOTS_OBJECTS_LIMIT = 1000;
+  int DEFAULT_GC_ROOTS_PATHS_LIMIT = 10;
+
+  /**
+   * Maximal number of objects that will be retrieved by {@code findPathsToClosestGCRoots} call
+   */
+  int DEFAULT_GC_ROOTS_OBJECTS_LIMIT = 50;
 
   @NotNull
   static MemoryAgent get(@NotNull DebugProcessImpl debugProcess) {
@@ -32,6 +37,7 @@ public interface MemoryAgent {
     throws EvaluateException;
 
   @NotNull
-  ReferringObjectsInfo findReferringObjects(@NotNull EvaluationContextImpl evaluationContext, @NotNull ObjectReference reference, int limit)
+  ReferringObjectsInfo findPathsToClosestGCRoots(@NotNull EvaluationContextImpl evaluationContext, @NotNull ObjectReference reference,
+                                                 int pathsNumber, int objectsNumber)
     throws EvaluateException;
 }

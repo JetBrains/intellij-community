@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -310,7 +311,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     });
   }
 
-  public static void scanProject(@NotNull Project project, @NotNull Function<Module, ContentIteratorEx> iteratorProducer) {
+  public static void scanProject(@NotNull Project project, @NotNull Function<? super Module, ? extends ContentIteratorEx> iteratorProducer) {
     Module[] modules = ReadAction.compute(() -> ModuleManager.getInstance(project).getModules());
     List<Runnable> tasks = ContainerUtil.mapNotNull(modules, module -> {
       return ReadAction.compute(() -> {
@@ -373,7 +374,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
 
     ApplicationManager.getApplication().runReadAction(() -> {
       ProgressManager.checkCanceled();
-      if (!fileOrDir.isValid()) return;
+      if (!fileOrDir.isValid() || !(fileOrDir instanceof VirtualFileWithId)) return;
       doApplyPushersToFile(fileOrDir, pushers, moduleValues);
     });
   }

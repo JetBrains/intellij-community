@@ -43,7 +43,6 @@ class CommunityStandaloneJpsBuilder {
           module("intellij.java.guiForms.compiler")
           module("intellij.java.compiler.instrumentationUtil")
           module("intellij.java.compiler.instrumentationUtil.java8")
-          module("intellij.java.jps.javacRefScanner8")
           module("intellij.platform.jps.build")
           module("intellij.tools.jps.build.standalone")
         }
@@ -54,33 +53,25 @@ class CommunityStandaloneJpsBuilder {
           module("intellij.platform.jps.build.javac.rt")
         }
         //layout of groovy jars must be consistent with GroovyBuilder.getGroovyRtRoots method
-        jar("groovy-jps-plugin.jar") {
-          module("intellij.groovy.jps")
-        }
-        jar("groovy_rt.jar") {
-          module("intellij.groovy.rt")
-        }
-        jar("groovy-rt-constants.jar") {
-          module("intellij.groovy.constants.rt")
-        }
-        jar("ui-designer-jps-plugin.jar") { module("intellij.java.guiForms.jps") }
+        jar("groovy-jps.jar") { module("intellij.groovy.jps") }
+        jar("groovy-rt.jar") { module("intellij.groovy.rt") }
+        jar("groovy-constants-rt.jar") { module("intellij.groovy.constants.rt") }
+        jar("java-guiForms-jps.jar") { module("intellij.java.guiForms.jps") }
 
 
-        jar("maven-jps-plugin.jar") { module("intellij.maven.jps") }
+        jar("maven-jps.jar") { module("intellij.maven.jps") }
         jar("aether-dependency-resolver.jar") { module("intellij.java.aetherDependencyResolver") }
-        jar("gradle-jps-plugin.jar") { module("intellij.gradle.jps") }
+        jar("gradle-jps.jar") { module("intellij.gradle.jps") }
 
-        jar("eclipse-jps-plugin.jar") {
-          module("intellij.eclipse.common")
-          module("intellij.eclipse.jps")
-        }
-        jar("devkit-jps-plugin.jar") { module("intellij.devkit.jps") }
-        jar("intellilang-jps-plugin.jar") { module("intellij.java.langInjection.jps") }
+        jar("eclipse-jps.jar") { module("intellij.eclipse.jps") }
+        jar("eclipse-common.jar") { module("intellij.eclipse.common") }
+        jar("devkit-jps.jar") { module("intellij.devkit.jps") }
+        jar("java-langInjection-jps.jar") { module("intellij.java.langInjection.jps") }
 
         [
           "JDOM", "jna", "OroMatcher", "Trove4j", "ASM", "NanoXML", "protobuf", "cli-parser", "Log4J", "jgoodies-forms", "Eclipse",
           "netty-codec-http", "lz4-java", "commons-codec", "commons-logging", "http-client", "Slf4j", "Guava", "plexus-utils",
-          "jetbrains-annotations-java5", "qdox-java-parser", "gson"
+          "jetbrains-annotations-java5", "qdox-java-parser", "gson", "jps-javac-extension"
         ].each {
           projectLibrary(it)
         }
@@ -88,7 +79,7 @@ class CommunityStandaloneJpsBuilder {
           jpsLibrary(it)
         }
 
-        jar("ant-jps-plugin.jar") { module("intellij.ant.jps") }
+        jar("ant-jps.jar") { module("intellij.ant.jps") }
         include(additionalJars)
       }
       jar("jps-build-test-${buildNumber}.jar") {

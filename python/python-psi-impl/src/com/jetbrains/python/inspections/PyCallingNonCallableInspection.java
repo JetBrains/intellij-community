@@ -17,15 +17,16 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.quickfix.PyRemoveCallQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,20 +49,18 @@ public class PyCallingNonCallableInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyCallExpression(PyCallExpression node) {
+    public void visitPyCallExpression(@NotNull PyCallExpression node) {
       super.visitPyCallExpression(node);
       checkCallable(node, node.getCallee());
     }
 
     @Override
-    public void visitPyDecoratorList(PyDecoratorList node) {
-      super.visitPyDecoratorList(node);
-      for (PyDecorator decorator : node.getDecorators()) {
-        final PyExpression callee = decorator.getCallee();
-        checkCallable(decorator, callee);
-        if (decorator.hasArgumentList()) {
-          checkCallable(decorator, decorator);
-        }
+    public void visitPyDecorator(@NotNull PyDecorator decorator) {
+      super.visitPyDecorator(decorator);
+      final PyExpression callee = decorator.getCallee();
+      checkCallable(decorator, callee);
+      if (decorator.hasArgumentList()) {
+        checkCallable(decorator, decorator);
       }
     }
 
@@ -70,14 +69,14 @@ public class PyCallingNonCallableInspection extends PyInspection {
 
       if (callee != null && isCallable(callee, myTypeEvalContext) == Boolean.FALSE) {
         final PyType calleeType = myTypeEvalContext.getType(callee);
-        String message = "Expression is not callable";
+        @InspectionMessage String message = PyPsiBundle.message("INSP.expression.is.not.callable");
         if (calleeType instanceof PyClassType) {
-          message = String.format("'%s' object is not callable", calleeType.getName());
+          message = PyPsiBundle.message("INSP.class.object.is.not.callable", calleeType.getName());
         }
         else {
           final String name = callee.getName();
           if (name != null) {
-            message = String.format("'%s' is not callable", name);
+            message = PyPsiBundle.message("INSP.symbol.is.not.callable", name);
           }
         }
         registerProblem(node, message, new PyRemoveCallQuickFix());

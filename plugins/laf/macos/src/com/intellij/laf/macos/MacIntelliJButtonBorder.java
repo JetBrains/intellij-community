@@ -2,7 +2,6 @@
 package com.intellij.laf.macos;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
-import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
@@ -16,6 +15,7 @@ import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
 
 import static com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.isSmallVariant;
+import static com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.isTag;
 
 /**
  * @author Konstantin Bulenkov
@@ -31,7 +31,7 @@ public class MacIntelliJButtonBorder implements Border, UIResource {
 
       float arc = MacIntelliJTextBorder.ARC.getFloat();
 
-      if (DarculaButtonUI.isSmallVariant(c) && c.isFocusable() && c.hasFocus()) {
+      if (isSmallVariant(c) && c.isFocusable() && c.hasFocus()) {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
                             MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
@@ -45,6 +45,9 @@ public class MacIntelliJButtonBorder implements Border, UIResource {
 
         g2.setColor(JBUI.CurrentTheme.Focus.focusColor());
         g2.fill(border);
+      }
+      else if (isTag(c)) {
+        DarculaUIUtil.paintFocusTag(g2, width, height);
       }
       else {
         DarculaUIUtil.paintFocusBorder(g2, width, height, arc, true);

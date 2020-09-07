@@ -12,6 +12,7 @@ import com.intellij.ui.mac.MacMainFrameDecorator;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.Animator;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +37,7 @@ final class SheetMessage implements Disposable {
   private int imageHeight;
 
   SheetMessage(@NotNull Window owner,
-               String title,
+               @Nls String title,
                String message,
                Icon icon,
                String[] buttons,

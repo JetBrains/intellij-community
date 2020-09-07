@@ -8,7 +8,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlUnboundNsPrefixInspection;
-import com.intellij.codeInsight.daemon.impl.quickfix.AddXsiSchemaLocationForExtResourceAction;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.htmlInspections.*;
@@ -1145,7 +1144,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   public void testSpecifyXsiSchemaLocationQuickFix() throws Exception {
     configureByFile(BASE_PATH + "web-app_2_4.xsd");
     final String testName = getTestName(false);
-    final String actionName = XmlBundle.message(AddXsiSchemaLocationForExtResourceAction.KEY);
+    final String actionName = XmlBundle.message("xml.intention.add.xsi.schema.location.for.external.resource");
     doTestWithQuickFix(BASE_PATH + testName, actionName, false);
     doTestWithQuickFix(BASE_PATH + testName + "2", actionName, false);
     doTestWithQuickFix(BASE_PATH + testName + "3", actionName, false);

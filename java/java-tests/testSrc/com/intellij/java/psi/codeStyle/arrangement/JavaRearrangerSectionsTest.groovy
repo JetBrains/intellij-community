@@ -606,7 +606,7 @@ class Double {
       section("//sectionClassStart", "//sectionClassEnd", rule(CLASS)),
       section("//sectionPublicFieldStart", "//sectionPublicFieldEnd", rule(FIELD, PUBLIC)),
       section("//sectionPrivateFieldStart", "//sectionPrivateFieldEnd", rule(FIELD, PRIVATE)),
-      section("//sectionPubicMethodStart", "//sectionPublicMethodEnd", rule(METHOD, PUBLIC)),
+      section("//sectionPublicMethodStart", "//sectionPublicMethodEnd", rule(METHOD, PUBLIC)),
       section("//sectionPrivateMethodStart", "//sectionPrivateMethodEnd", rule(METHOD, PRIVATE)),
     ]
 
@@ -659,7 +659,7 @@ public class SuperTest {
     private int b;
 //sectionPrivateFieldEnd
 
-//sectionPubicMethodStart
+//sectionPublicMethodStart
     public void test() {}
 
     public void testtt() {}
@@ -703,7 +703,7 @@ public class SuperTest {
     private int b;
 //sectionPrivateFieldEnd
 
-//sectionPubicMethodStart
+//sectionPublicMethodStart
     public void test() {}
 
     public void testtt() {}
@@ -751,7 +751,7 @@ public class SuperTest {
     private int b;
 //sectionPrivateFieldEnd
 
-//sectionPubicMethodStart
+//sectionPublicMethodStart
     public void test() {}
 
     public void testtt() {}

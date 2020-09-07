@@ -92,7 +92,7 @@ public class ConfigurationException extends Exception {
     return true;
   }
 
-  public static String getDefaultTitle() {
+  public static @NlsContexts.DialogTitle String getDefaultTitle() {
     return OptionsBundle.message("cannot.save.settings.default.dialog.title");
   }
 }

@@ -30,6 +30,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.text.Matcher;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -303,6 +304,7 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
   }
 
   @Nullable
+  @Nls
   public static String getActionText(Object value) {
     if (value instanceof OptionDescription) return ((OptionDescription)value).getHit();
     if (value instanceof AnAction) return ((AnAction)value).getTemplatePresentation().getText();

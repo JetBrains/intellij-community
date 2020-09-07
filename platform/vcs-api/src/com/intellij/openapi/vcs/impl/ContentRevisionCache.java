@@ -6,10 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.FilePathsHelper;
 import com.intellij.openapi.vcs.changes.VcsDirtyScope;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -197,10 +194,9 @@ public class ContentRevisionCache {
 
   public static void checkContentsSize(final String path, final long size) throws VcsException {
     if (size > VcsUtil.getMaxVcsLoadedFileSize()) {
-      throw new VcsException("Can not show contents of \n'" + path +
-                             "'.\nFile size is bigger than " +
-                             StringUtil.formatFileSize(VcsUtil.getMaxVcsLoadedFileSize()) +
-                             ".\n\nYou can relax this restriction by increasing " + VcsUtil.MAX_VCS_LOADED_SIZE_KB + " property in idea.properties file.");
+      throw new VcsException(VcsBundle.message("file.content.too.big.to.load.increase.property.suggestion", path,
+                                               StringUtil.formatFileSize(VcsUtil.getMaxVcsLoadedFileSize()),
+                                               VcsUtil.MAX_VCS_LOADED_SIZE_KB));
     }
   }
 

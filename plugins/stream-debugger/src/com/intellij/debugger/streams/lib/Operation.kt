@@ -8,11 +8,13 @@ import com.intellij.debugger.streams.trace.TerminatorCallHandler
 import com.intellij.debugger.streams.trace.dsl.Dsl
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.wrapper.TerminatorStreamCall
+import com.intellij.openapi.util.NlsSafe
 
 /**
  * @author Vitaliy.Bibaev
  */
 interface Operation {
+  @get:NlsSafe
   val name: String
 
   val traceInterpreter: CallTraceInterpreter

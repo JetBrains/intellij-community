@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -44,9 +45,9 @@ public final class GrStringUtil {
   private GrStringUtil() {
   }
 
-  public static String unescapeString(String s) {
+  public static @NlsSafe String unescapeString(String s) {
     final int length = s.length();
-    StringBuilder buffer = new StringBuilder(length);
+    @NlsSafe StringBuilder buffer = new StringBuilder(length);
     boolean escaped = false;
     for (int idx = 0; idx < length; idx++) {
       char ch = s.charAt(idx);
@@ -131,9 +132,9 @@ public final class GrStringUtil {
     return unescapeRegex(s, false);
   }
 
-  private static String unescapeRegex(String s, boolean unescapeSlash) {
+  private static @NlsSafe String unescapeRegex(String s, boolean unescapeSlash) {
     final int length = s.length();
-    StringBuilder buffer = new StringBuilder(length);
+    @NlsSafe StringBuilder buffer = new StringBuilder(length);
 
     boolean escaped = false;
     for (int idx = 0; idx < length; idx++) {
@@ -254,7 +255,7 @@ public final class GrStringUtil {
     }
   }
 
-  private static void appendUnicode(StringBuilder buffer, char ch) {
+  private static void appendUnicode(@NlsSafe StringBuilder buffer, char ch) {
     String hexCode = StringUtil.toUpperCase(Integer.toHexString(ch));
     buffer.append("\\u");
     int paddingCount = 4 - hexCode.length();

@@ -31,7 +31,7 @@ public class MethodListDlg extends DialogWrapper {
     super(parent, false);
     createList(psiClass.getAllMethods(), filter);
     myWholePanel.add(ScrollPaneFactory.createScrollPane(myList));
-    myList.setCellRenderer(new ColoredListCellRenderer<PsiMethod>() {
+    myList.setCellRenderer(new ColoredListCellRenderer<>() {
       @Override
       protected void customizeCellRenderer(@NotNull final JList<? extends PsiMethod> list,
                                            @NotNull final PsiMethod psiMethod,

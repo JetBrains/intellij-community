@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.IntentionMenuContributor
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.PriorityAction
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.application.ApplicationManager
@@ -98,7 +99,7 @@ class SuggestedRefactoringIntentionContributor : IntentionMenuContributor {
   }
 
   private class MyIntention(
-    private val text: String,
+    @IntentionName private val text: String,
     private val showReviewBalloon: Boolean
   ) : IntentionAction, PriorityAction {
     override fun getPriority() = PriorityAction.Priority.TOP

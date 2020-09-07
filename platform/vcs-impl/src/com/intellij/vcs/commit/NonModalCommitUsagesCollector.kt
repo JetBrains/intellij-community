@@ -34,4 +34,4 @@ internal object NonModalCommitUsagesCollector {
     FUCounterUsageLogger.getInstance().logEvent(COUNTER_GROUP, state.toEventId())
 }
 
-private fun NonModalCommitPromotionState.toEventId(): String = "non.modal.commit.promotion.${toLowerCase(name)}"
+private fun NonModalCommitPromotionState.toEventId(): String = "non.modal.commit.promotion.${toLowerCase(name)}" // NON-NLS

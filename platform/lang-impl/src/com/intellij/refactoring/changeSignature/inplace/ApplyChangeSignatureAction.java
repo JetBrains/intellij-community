@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ApplyChangeSignatureAction extends BaseRefactoringIntentionAction {
-  public static final String CHANGE_SIGNATURE = "Apply signature change";
   private final String myMethodName;
 
   public ApplyChangeSignatureAction(String methodName) {
@@ -43,7 +42,7 @@ public class ApplyChangeSignatureAction extends BaseRefactoringIntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return CHANGE_SIGNATURE;
+    return RefactoringBundle.message("intention.family.name.apply.signature.change");
   }
 
   @Override

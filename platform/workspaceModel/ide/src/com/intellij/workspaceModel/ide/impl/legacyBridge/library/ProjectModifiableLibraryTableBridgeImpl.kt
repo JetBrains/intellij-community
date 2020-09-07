@@ -5,18 +5,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryProperties
-import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Disposer
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
 import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
+import com.intellij.workspaceModel.ide.legacyBridge.ProjectModifiableLibraryTableBridge
 import com.intellij.workspaceModel.storage.CachedValue
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
@@ -24,8 +24,9 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
   originalStorage: WorkspaceEntityStorage,
   private val libraryTable: ProjectLibraryTableBridgeImpl,
   private val project: Project,
-  diff: WorkspaceEntityStorageBuilder = WorkspaceEntityStorageBuilder.from(originalStorage)
-) : LegacyBridgeModifiableBase(diff), LibraryTable.ModifiableModel {
+  diff: WorkspaceEntityStorageBuilder = WorkspaceEntityStorageBuilder.from(originalStorage),
+  cacheStorageResult: Boolean = true
+) : LegacyBridgeModifiableBase(diff, cacheStorageResult), ProjectModifiableLibraryTableBridge {
 
   private val myAddedLibraries = mutableListOf<LibraryBridgeImpl>()
 
@@ -65,8 +66,7 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
       diff.addLibraryPropertiesEntity(
         library = libraryEntity,
         libraryType = type.kindId,
-        propertiesXmlTag = serializeComponentAsString(JpsLibraryTableSerializer.PROPERTIES_TAG, type.createDefaultProperties()),
-        source = libraryEntity.entitySource
+        propertiesXmlTag = serializeComponentAsString(JpsLibraryTableSerializer.PROPERTIES_TAG, type.createDefaultProperties())
       )
     }
 
@@ -95,16 +95,16 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
   }
 
   override fun commit() {
-    assertModelIsLive()
-    modelIsCommittedOrDisposed = true
-
-    myAddedLibraries.forEach { library ->
-      library.clearTargetBuilder()
-    }
-
+    prepareForCommit()
     WorkspaceModel.getInstance(project).updateProjectModel {
       it.addDiff(diff)
     }
+  }
+
+  override fun prepareForCommit() {
+    assertModelIsLive()
+    modelIsCommittedOrDisposed = true
+    myAddedLibraries.forEach { library -> library.clearTargetBuilder() }
   }
 
   override fun getLibraryIterator(): Iterator<Library> = librariesArray.iterator()

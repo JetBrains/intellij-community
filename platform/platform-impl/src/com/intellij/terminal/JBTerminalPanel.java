@@ -99,7 +99,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
   private final TerminalEventDispatcher myEventDispatcher = new TerminalEventDispatcher();
   private final JBTerminalSystemSettingsProviderBase mySettingsProvider;
   private final TerminalEscapeKeyListener myEscapeKeyListener;
-  private final List<Consumer<KeyEvent>> myPreKeyEventConsumers = new CopyOnWriteArrayList<>();
+  private final List<Consumer<? super KeyEvent>> myPreKeyEventConsumers = new CopyOnWriteArrayList<>();
 
   private List<AnAction> myActionsToSkip;
 
@@ -142,16 +142,8 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
 
   @Override
   public void handleKeyEvent(@NotNull KeyEvent e) {
-    if (SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast(11, 0, 0)) {
-      // Workaround for https://youtrack.jetbrains.com/issue/JBR-1098
-      // sun.lwawt.macosx.CPlatformResponder.mapNsCharsToCompatibleWithJava converts 0x0003 (NSEnterCharacter) to 0x000a
-      if (e.getKeyChar() == KeyEvent.VK_ENTER && e.getKeyCode() == KeyEvent.VK_C && e.getModifiersEx() == InputEvent.CTRL_DOWN_MASK) {
-        LOG.debug("Fixing Ctrl+C");
-        e.setKeyChar((char)3);
-      }
-    }
     myEscapeKeyListener.handleKeyEvent(e);
-    for (Consumer<KeyEvent> preKeyEventConsumer : myPreKeyEventConsumers) {
+    for (Consumer<? super KeyEvent> preKeyEventConsumer : myPreKeyEventConsumers) {
       preKeyEventConsumer.accept(e);
     }
     if (!e.isConsumed()) {
@@ -159,7 +151,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     }
   }
 
-  public void addPreKeyEventHandler(@NotNull Consumer<KeyEvent> preKeyEventHandler) {
+  public void addPreKeyEventHandler(@NotNull Consumer<? super KeyEvent> preKeyEventHandler) {
     myPreKeyEventConsumers.add(preKeyEventHandler);
   }
 
@@ -308,6 +300,14 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
 
     private boolean dispatchKeyEvent(@NotNull KeyEvent e) {
       if (!skipKeyEvent(e)) {
+        if (!JBTerminalPanel.this.isFocusOwner()) {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Prevented attempt to process " + KeyStroke.getKeyStrokeForEvent(e) + " by not focused " +
+                      getDebugTerminalPanelName() + ", unregistering");
+          }
+          unregister();
+          return false;
+        }
         if (LOG.isDebugEnabled()) {
           LOG.debug("Consuming " + KeyStroke.getKeyStrokeForEvent(e) + ", registered:" + myRegistered);
         }
@@ -326,8 +326,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     void register() {
       ApplicationManager.getApplication().assertIsDispatchThread();
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Register terminal event dispatcher for " +
-                  JBTerminalPanel.class.getSimpleName() + "@" + System.identityHashCode(JBTerminalPanel.this));
+        LOG.debug("Register terminal event dispatcher for " + getDebugTerminalPanelName());
       }
       if (myRegistered) {
         LOG.info("Already registered terminal event dispatcher");
@@ -346,13 +345,16 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     void unregister() {
       ApplicationManager.getApplication().assertIsDispatchThread();
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Unregister terminal event dispatcher for " +
-                  JBTerminalPanel.class.getSimpleName() + "@" + System.identityHashCode(JBTerminalPanel.this));
+        LOG.debug("Unregister terminal event dispatcher for " + getDebugTerminalPanelName());
       }
       if (myRegistered) {
         IdeEventQueue.getInstance().removeDispatcher(this);
       }
       myRegistered = false;
+    }
+
+    private @NotNull String getDebugTerminalPanelName() {
+      return JBTerminalPanel.class.getSimpleName() + "@" + System.identityHashCode(JBTerminalPanel.this);
     }
   }
 }

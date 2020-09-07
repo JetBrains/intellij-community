@@ -6,6 +6,7 @@ import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
@@ -432,8 +433,8 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     NewVirtualFileSystem fs = (NewVirtualFileSystem)virtualFile.getFileSystem();
     FileAttributes attributes = fs.getAttributes(virtualFile);
     assertNotNull(attributes);
-    assertEquals(FileAttributes.Type.FILE, attributes.type);
-    assertEquals(FileAttributes.HIDDEN, attributes.flags);
+    assertEquals(FileAttributes.Type.FILE, attributes.getType());
+    assertTrue(attributes.isHidden());
   }
 
   @Test
@@ -486,6 +487,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testNoMoreFakeRoots() {
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
     try {
       ManagingFS.getInstance().findRoot("", myFS);
       fail("should fail by assertion in PersistentFsImpl.findRoot()");
@@ -527,8 +529,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
       sourceFile.copy(this, parentDir, ".");
       fail("Copying a file into a '.' path should have failed");
     }
-    catch (IOException e) {
-      e.printStackTrace();
+    catch (IOException ignored) {
     }
 
     topDir.refresh(false, true);
@@ -629,7 +630,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
     File target = tempDir.newDirectory("target");
     File link = new File(tempDir.getRoot(), "link");
-    Files.createSymbolicLink(link.toPath(), target.toPath()).toFile();
+    createSymbolicLink(link.toPath(), target.toPath()).toFile();
 
     VirtualFile vTop = myFS.refreshAndFindFileByIoFile(tempDir.getRoot());
     assertNotNull(vTop);
@@ -763,7 +764,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     runInEdtAndWait(() -> {
       File srcDir = tempDir.newDirectory("src");
       File link = new File(tempDir.getRoot(), "link");
-      Files.createSymbolicLink(link.toPath(), new File(tempDir.getRoot(), "missing").toPath());
+      createSymbolicLink(link.toPath(), new File(tempDir.getRoot(), "missing").toPath());
       File dstDir = tempDir.newDirectory("dst");
 
       VirtualFile file = myFS.refreshAndFindFileByIoFile(link);

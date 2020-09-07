@@ -124,13 +124,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
       if (containingClass != null) {
         String name = ((PsiRecordComponent)element).getName();
         if (name != null) {
-          PsiMethod explicitGetter = ContainerUtil
-            .find(containingClass.findMethodsByName(name, false), m -> m.getParameterList().isEmpty());
-
-          if (explicitGetter != null) {
-            AutomaticGetterSetterRenamer
-              .addOverriddenAndImplemented(explicitGetter, newName, null, newName, JavaCodeStyleManager.getInstance(element.getProject()), allRenames);
-          }
+          addGetter(element, newName, allRenames, containingClass, name);
 
           PsiMethod canonicalConstructor = ContainerUtil.find(containingClass.getConstructors(), c -> JavaPsiRecordUtil.isExplicitCanonicalConstructor(c));
           if (canonicalConstructor != null) {
@@ -141,6 +135,34 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
           }
         }
       }
+    }
+    if (element instanceof PsiParameter) {
+      PsiMethod method = PsiTreeUtil.getParentOfType(element.getParent(), PsiMethod.class);
+      if (method == null) return;
+      if (JavaPsiRecordUtil.isExplicitCanonicalConstructor(method)) {
+        PsiRecordComponent recordComponent = JavaPsiRecordUtil.getComponentForCanonicalConstructorParameter((PsiParameter)element);
+        allRenames.put(recordComponent, newName);
+
+        PsiClass containingClass = method.getContainingClass();
+        if (containingClass != null) {
+          addGetter(element, newName, allRenames, containingClass, ((PsiParameter)element).getName());
+        }
+      }
+    }
+  }
+
+  private static void addGetter(@NotNull PsiElement element,
+                                @NotNull String newName,
+                                @NotNull Map<PsiElement, String> allRenames,
+                                PsiClass containingClass,
+                                String name) {
+    PsiMethod explicitGetter = ContainerUtil
+      .find(containingClass.findMethodsByName(name, false), m -> m.getParameterList().isEmpty());
+
+    if (explicitGetter != null) {
+      AutomaticGetterSetterRenamer
+        .addOverriddenAndImplemented(explicitGetter, newName, null, newName, JavaCodeStyleManager.getInstance(element.getProject()),
+                                     allRenames);
     }
   }
 
@@ -212,13 +234,15 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
     if (element instanceof PsiField){
       JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_FIELD = enabled;
     }
-    JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_VARIABLE = enabled;
+    else {
+      JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_VARIABLE = enabled;
+    }
   }
 
   @Override
   public boolean isToSearchForTextOccurrences(@NotNull final PsiElement element) {
     if (element instanceof PsiField) {
-      return JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_FIELD;
+      return JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_FIELD;
     }
     return JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_VARIABLE;
   }
@@ -226,9 +250,11 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
   @Override
   public void setToSearchForTextOccurrences(@NotNull final PsiElement element, final boolean enabled) {
     if (element instanceof PsiField) {
-      JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_FIELD = enabled;
+      JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_FIELD = enabled;
     }
-    JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_VARIABLE = enabled;
+    else {
+      JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_VARIABLE = enabled;
+    }
   }
 
   private static void findSubmemberHidesFieldCollisions(final PsiField field, final String newName, final List<? super UsageInfo> result) {

@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util.treeView.smartTree;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -39,5 +40,5 @@ public interface TreeAction {
    *
    * @return the action identifier.
    */
-  @NotNull String getName();
+  @NonNls @NotNull String getName();
 }

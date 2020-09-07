@@ -13,10 +13,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.text.MessageFormat;
 import java.util.*;
@@ -221,7 +218,7 @@ public final class ConfigurableExtensionPointUtil {
         node.myValue = new SortedConfigurableGroup(id, name, ep.getDescription(), ep.helpTopic, ep.weight);
       }
       else if (root) {
-        node.myValue = new SortedConfigurableGroup(id, "ROOT GROUP", null, null, 0);
+        node.myValue = new SortedConfigurableGroup(id, "ROOT GROUP", null, null, 0); //NON-NLS
       }
       else {
         LOG.warn("Use <groupConfigurable> to specify custom configurable group: " + groupId);
@@ -420,7 +417,7 @@ public final class ConfigurableExtensionPointUtil {
     return null;
   }
 
-  private static String getString(ResourceBundle bundle, @NonNls String resource) {
+  private static @Nls String getString(ResourceBundle bundle, @NonNls String resource) {
     if (bundle == null) return null;
     try {
       return bundle.getString(resource);
@@ -430,7 +427,7 @@ public final class ConfigurableExtensionPointUtil {
     }
   }
 
-  private static String getName(ResourceBundle bundle, @NonNls String resource) {
+  private static @Nls String getName(ResourceBundle bundle, @NonNls String resource) {
     if (bundle == null) return null;
     try {
       return AbstractBundle.message(bundle, resource);

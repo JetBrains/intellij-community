@@ -8,6 +8,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -109,7 +110,7 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
     Map<String, String> envs = Maps.newHashMap(settingsProvider.getEnvs());
     putIPythonEnvFlag(project, envs);
 
-    Consumer<String> rerunAction = title -> {
+    Consumer<String> rerunAction = (@NlsContexts.TabTitle String title) -> {
       PydevConsoleRunner runner = createConsoleRunner(project, module);
       if (runner instanceof PydevConsoleRunnerImpl) {
         ((PydevConsoleRunnerImpl)runner).setConsoleTitle(title);
@@ -221,7 +222,7 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
                                                         @NotNull PythonRunConfiguration config) {
     final ConsoleParameters consoleParameters = createConsoleParameters(project, contextModule);
 
-    Consumer<String> rerunAction = title -> {
+    Consumer<String> rerunAction = (@NlsContexts.TabTitle String title) -> {
       PydevConsoleRunner runner = createConsoleRunnerWithFile(project, contextModule, runFileText, config);
       if (runner instanceof PydevConsoleRunnerImpl) {
         ((PydevConsoleRunnerImpl)runner).setConsoleTitle(title);

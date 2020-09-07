@@ -12,7 +12,6 @@ import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.SingleParentUsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleEx;
 import com.intellij.usages.rules.UsageInFile;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,7 +78,6 @@ class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule implements 
 
   private static class DynamicUsageGroup extends UsageGroupBase {
     public static final UsageGroup INSTANCE = new DynamicUsageGroup();
-    @NonNls private static final String DYNAMIC_CAPTION = "Dynamic usages";
 
     DynamicUsageGroup() {
       super(2);
@@ -88,13 +86,13 @@ class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule implements 
     @Override
     @NotNull
     public String getText(UsageView view) {
-      if (view == null) {
-        return DYNAMIC_CAPTION;
+      if (view != null) {
+        String dynamicCodeUsagesString = view.getPresentation().getDynamicCodeUsagesString();
+        if (dynamicCodeUsagesString != null) {
+          return dynamicCodeUsagesString;
+        }
       }
-      else {
-        final String dynamicCodeUsagesString = view.getPresentation().getDynamicCodeUsagesString();
-        return dynamicCodeUsagesString == null ? DYNAMIC_CAPTION : dynamicCodeUsagesString;
-      }
+      return UsageViewBundle.message("list.item.dynamic.usages");
     }
 
     public String toString() {
@@ -112,7 +110,7 @@ class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule implements 
     @NotNull
     @Override
     public String getText(@Nullable UsageView view) {
-      return "Usages in Unloaded Modules";
+      return UsageViewBundle.message("list.item.usages.in.unloaded.modules");
     }
 
     @Override

@@ -42,6 +42,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
+import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.project.ProjectKt;
@@ -402,7 +403,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     }
 
     if (app.getServiceIfCreated(VirtualFileManager.class) != null) {
-      LocalFileSystemImpl localFileSystem = (LocalFileSystemImpl)LocalFileSystem.getInstance();
+      LocalFileSystemBase localFileSystem = (LocalFileSystemBase)LocalFileSystem.getInstance();
       if (localFileSystem != null) {
         localFileSystem.cleanupForNextTest();
       }

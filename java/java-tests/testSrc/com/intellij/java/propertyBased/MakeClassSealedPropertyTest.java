@@ -12,6 +12,7 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
+import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.testFramework.propertyBased.InvokeIntention;
@@ -26,6 +27,7 @@ import org.jetbrains.jetCheck.PropertyChecker;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 public class MakeClassSealedPropertyTest extends BaseUnivocityTest {
 
@@ -71,13 +73,17 @@ public class MakeClassSealedPropertyTest extends BaseUnivocityTest {
         return;
       }
 
-      FileViewProvider viewProvider = psiFile.getViewProvider();
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-      assertFalse(MadTestingUtil.containsErrorElements(viewProvider));
+      Set<PsiFile> relatedFiles = ContainerUtil.set(psiFile);
+      DirectClassInheritorsSearch.search(psiClass).mapping(PsiElement::getContainingFile).forEach(relatedFiles::add);
+      relatedFiles.forEach(f -> assertFalse(MadTestingUtil.containsErrorElements(f.getViewProvider())));
 
-      env.executeCommands(IntDistribution.uniform(1, 5), Generator.constant(new InvokeIntention(psiFile, new JavaGreenIntentionPolicy())));
+      PsiFile fileToChange = env.generateValue(Generator.sampledFrom(relatedFiles.toArray(PsiFile.EMPTY_ARRAY)),
+                                               "Invoking intention in %s");
+      env.executeCommands(IntDistribution.uniform(1, 5),
+                          Generator.constant(new InvokeIntention(fileToChange, new JavaGreenIntentionPolicy())));
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-      assertFalse(MadTestingUtil.containsErrorElements(viewProvider));
+      relatedFiles.forEach(f -> assertFalse(MadTestingUtil.containsErrorElements(f.getViewProvider())));
     });
   }
 

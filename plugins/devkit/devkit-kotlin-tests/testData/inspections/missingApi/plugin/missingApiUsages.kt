@@ -60,7 +60,7 @@ class A {
 
   fun m4() {
     <error descr="'OldClass(java.lang.String)' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0. Note that this method might have had a different full signature in the previous IDEs.">OldClass</error>("")
-    <error descr="'OldKotlinClass(java.lang.@org.jetbrains.annotations.NotNull String)' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0. Note that this method might have had a different full signature in the previous IDEs.">OldKotlinClass</error>("")
+    <error descr="'OldKotlinClass(java.lang.String)' is available only since 2.0 but the module is targeted for 1.0 - 999.0. It may lead to compatibility problems with IDEs prior to 2.0. Note that this method might have had a different full signature in the previous IDEs.">OldKotlinClass</error>("")
   }
 
   fun anonymousClasses() {

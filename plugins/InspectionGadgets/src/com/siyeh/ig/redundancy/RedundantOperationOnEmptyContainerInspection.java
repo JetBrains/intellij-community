@@ -9,6 +9,7 @@ import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.SpecialField;
 import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
@@ -84,7 +85,7 @@ public class RedundantOperationOnEmptyContainerInspection extends AbstractBaseJa
       }
 
       @Nullable
-      public String getProblemMessage(PsiExpression value) {
+      public @InspectionMessage String getProblemMessage(PsiExpression value) {
         SpecialField lengthField;
         PsiType type = value.getType();
         String message;

@@ -343,7 +343,7 @@
       <action id="Diff.MagicResolveConflicts" class="com.intellij.openapi.actionSystem.EmptyAction"
               icon="AllIcons.Diff.MagicResolveToolbar"/>
 
-      <group text="Compare Contents" icon="AllIcons.Actions.Diff" popup="true">
+      <group id="compare.contents" icon="AllIcons.Actions.Diff" popup="true">
         <action id="Diff.ComparePartial.Base.Left" class="com.intellij.openapi.actionSystem.EmptyAction"
                 icon="AllIcons.Diff.Compare4LeftMiddle"/>
         <action id="Diff.ComparePartial.Base.Right" class="com.intellij.openapi.actionSystem.EmptyAction"
@@ -488,8 +488,12 @@
           <separator/>
           <action id="FindWordAtCaret" class="com.intellij.openapi.editor.actions.FindWordAtCaretAction"/>
           <separator/>
-          <action id="FindInPath" class="com.intellij.find.actions.FindInPathAction"/>
-          <action id="ReplaceInPath" class="com.intellij.find.actions.ReplaceInPathAction"/>
+          <action id="FindInPath" class="com.intellij.find.actions.FindInPathAction">
+            <synonym key="action.FindInPath.synonym1"/>
+          </action>
+          <action id="ReplaceInPath" class="com.intellij.find.actions.ReplaceInPathAction">
+            <synonym key="action.ReplaceInPath.synonym1"/>
+          </action>
         </group>
         <separator/>
         <reference ref="EditorToggleColumnMode"/>
@@ -534,10 +538,22 @@
         <group id="ViewAppearanceGroup" popup="true">
           <group id="ToggleFullScreenGroup">
             <separator/>
-            <action id="TogglePresentationMode" class="com.intellij.ide.actions.TogglePresentationModeAction"/>
-            <action id="ToggleDistractionFreeMode" class="com.intellij.ide.actions.ToggleDistractionFreeModeAction"/>
-            <action id="ToggleFullScreen" class="com.intellij.ide.actions.ToggleFullScreenAction"/>
-            <action id="ToggleZenMode" class="com.intellij.ide.actions.ToggleZenModeAction"/>
+            <action id="TogglePresentationMode" class="com.intellij.ide.actions.TogglePresentationModeAction">
+              <synonym key="action.TogglePresentationMode.text.enter"/>
+              <synonym key="action.TogglePresentationMode.text.exit"/>
+            </action>
+            <action id="ToggleDistractionFreeMode" class="com.intellij.ide.actions.ToggleDistractionFreeModeAction">
+              <synonym key="action.ToggleDistractionFreeMode.enter"/>
+              <synonym key="action.ToggleDistractionFreeMode.exit"/>
+            </action>
+            <action id="ToggleFullScreen" class="com.intellij.ide.actions.ToggleFullScreenAction">
+              <synonym key="action.ToggleFullScreen.text.enter"/>
+              <synonym key="action.ToggleFullScreen.text.exit"/>
+            </action>
+            <action id="ToggleZenMode" class="com.intellij.ide.actions.ToggleZenModeAction">
+              <synonym key="action.ToggleZenMode.exit"/>
+              <synonym key="action.ToggleZenMode.enter"/>
+            </action>
           </group>
           <group id="UIToggleActions">
             <separator/>
@@ -774,6 +790,7 @@
     </group>
 
     <group id="NavBarVcsGroup"/>
+    <group id="NavBarVcsGroupLight"/>
 
     <group id="EditorPopupMenu">
       <reference ref="$Cut"/>
@@ -826,8 +843,6 @@
       <reference ref="PinActiveEditorTab"/>
       <reference ref="ConfigureEditorTabs"/>
       <separator/>
-      <reference ref="NextTab"/>
-      <reference ref="PreviousTab"/>
       <reference ref="ReopenClosedTab"/>
       <separator/>
       <reference ref="Unsplit"/>
@@ -836,6 +851,8 @@
 
     <group id="WelcomeScreen.QuickStart">
     </group>
+
+    <action id="WelcomeScreen.OpenDirectoryProject" class="com.intellij.ide.actions.OpenFileAction$OnWelcomeScreen"/>
 
     <group id="WelcomeScreen.Documentation">
       <reference ref="HelpTopics"/>
@@ -867,6 +884,16 @@
       <action id="WelcomeScreen.Update" class="com.intellij.openapi.updateSettings.impl.CheckForUpdateAction"/>
     </group>
 
+    <group id="WelcomeScreen.Help">
+      <reference ref="WelcomeScreen.Documentation"/>
+      <separator/>
+      <reference ref="WelcomeScreen.Configure.Properties"/>
+      <reference ref="WelcomeScreen.Configure.VMOptions"/>
+      <reference ref="WelcomeScreen.Configure.CollectZippedLogs"/>
+      <separator/>
+      <reference ref="WelcomeScreen.Update"/>
+    </group>
+
     <group id="WelcomeScreenRecentProjectActionGroup">
       <action id="WelcomeScreen.OpenSelected" class="com.intellij.openapi.wm.impl.welcomeScreen.OpenSelectedProjectsAction"/>
       <action id="WelcomeScreen.NewGroup" class="com.intellij.openapi.wm.impl.welcomeScreen.CreateNewProjectGroupAction"/>
@@ -877,7 +904,8 @@
       <action id="WelcomeScreen.CopyProjectPath" class="com.intellij.openapi.wm.impl.welcomeScreen.CopyProjectPathAction"
               use-shortcut-of="CopyPaths"/>
       <separator/>
-      <action id="WelcomeScreen.RemoveSelected" class="com.intellij.openapi.wm.impl.welcomeScreen.RemoveSelectedProjectsAction"/>
+      <action id="WelcomeScreen.RemoveSelected" class="com.intellij.openapi.wm.impl.welcomeScreen.RemoveSelectedProjectsAction"
+              use-shortcut-of="$Delete"/>
     </group>
 
     <group id="FileChooser">
@@ -951,6 +979,7 @@
       <action internal="true" id="ReloadProjectAction" class="com.intellij.internal.ReloadProjectAction"/>
       <action internal="true" id="ShowMainMenu" class="com.intellij.internal.ui.ShowMainMenuAction"/>
       <action id="JBTabsDemo" internal="true" class="com.intellij.internal.JBTabsDemoAction"/>
+      <action id="JTabbedPaneDemo" internal="true" class="com.intellij.internal.JTabbedPaneDemoAction"/>
       <action id="DumbMode" internal="true" class="com.intellij.internal.ToggleDumbModeAction"/>
       <action id="ShowPoweredProgress" internal="true" class="com.intellij.internal.ShowPoweredProgressAction"/>
       <action id="DisablePCE" internal="true" class="com.intellij.internal.DisablePCEAction"/>

@@ -26,6 +26,9 @@ public interface AnActionListener {
   default void beforeEditorTyping(char c, @NotNull DataContext dataContext) {
   }
 
+  default void afterEditorTyping(char c, @NotNull DataContext dataContext) {
+  }
+
   /**
    * @deprecated Use {@link AnActionListener} directly.
    */

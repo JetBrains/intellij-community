@@ -217,7 +217,7 @@ public abstract class MatchingHandler {
     return true;
   }
 
-  boolean validate(@NotNull MatchContext context, int matchedOccurs) {
+  public boolean validate(@NotNull MatchContext context, int matchedOccurs) {
     return matchedOccurs == 1;
   }
 

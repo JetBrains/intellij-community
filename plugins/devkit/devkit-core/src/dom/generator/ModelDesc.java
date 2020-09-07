@@ -32,6 +32,7 @@ import java.util.*;
  * @author Gregory.Shrago
  * @author Konstantin Bulenkov
  */
+@SuppressWarnings("HardCodedStringLiteral")
 public class ModelDesc {
   final Map<String, String> name2replaceMap = new HashMap<>();
   final Map<QName, String> qname2FileMap = new HashMap<>();

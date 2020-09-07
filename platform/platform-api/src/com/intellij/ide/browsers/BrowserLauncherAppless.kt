@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
@@ -209,7 +210,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     }
   }
 
-  protected open fun showError(error: String?, browser: WebBrowser? = null, project: Project? = null, title: String? = null, fix: (() -> Unit)? = null) {
+  protected open fun showError(@NlsContexts.DialogMessage error: String?, browser: WebBrowser? = null, project: Project? = null, @NlsContexts.DialogTitle title: String? = null, fix: (() -> Unit)? = null) {
     // Not started yet. Not able to show message up. (Could happen in License panel under Linux).
     LOG.warn(error)
   }

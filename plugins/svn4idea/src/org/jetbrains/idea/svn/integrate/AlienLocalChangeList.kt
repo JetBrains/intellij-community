@@ -1,16 +1,17 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate
 
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.LocalChangeList
+import org.jetbrains.annotations.Nls
 
-open class AlienLocalChangeList(private val myChanges: List<Change>, private var myName: String) : LocalChangeList() {
+open class AlienLocalChangeList(private val myChanges: List<Change>, @Nls private var myName: String) : LocalChangeList() {
   private var myComment: String? = ""
 
   override fun getChanges(): Collection<Change> = myChanges
 
   override fun getName(): String = myName
-  override fun setName(name: String) {
+  override fun setName(@Nls name: String) {
     myName = name
   }
 

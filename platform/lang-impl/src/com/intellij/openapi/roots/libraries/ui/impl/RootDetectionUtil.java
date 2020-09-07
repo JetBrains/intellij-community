@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.DialogTitle;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -124,8 +125,8 @@ public final class RootDetectionUtil {
       }
       else {
         String title = LangBundle.message("dialog.title.choose.categories.selected.files");
-        String description = XmlStringUtil.wrapInHtml(ApplicationNamesInfo.getInstance().getProductName() + " cannot determine what kind of files the chosen items contain.<br>" +
-                                                      "Choose the appropriate categories from the list.");
+        String description = XmlStringUtil.wrapInHtml(
+          LangBundle.message("root.detector.cannot.determine.file.kind", ApplicationNamesInfo.getInstance().getProductName()));
         ChooseElementsDialog<String> dialog;
         if (parentComponent != null) {
           dialog = new ChooseRootTypeElementsDialog(parentComponent, names, title, description);
@@ -167,7 +168,7 @@ public final class RootDetectionUtil {
     }
 
     @Override
-    protected String getItemText(String item) {
+    protected String getItemText(@NlsSafe String item) {
       return item;
     }
 

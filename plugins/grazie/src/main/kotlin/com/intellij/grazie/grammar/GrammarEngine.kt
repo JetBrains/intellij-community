@@ -5,7 +5,7 @@ import com.intellij.grazie.detection.LangDetector
 import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.utils.LinkedSet
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.util.ExceptionUtil
 import org.slf4j.LoggerFactory
 
 object GrammarEngine {
@@ -23,16 +23,17 @@ object GrammarEngine {
     val lang = LangDetector.getLang(str) ?: return emptySet()
 
     return try {
-      LangTool.getTool(lang).check(str, checkCancelled = { ProgressManager.checkCanceled() })
+      LangTool.getTool(lang).check(str)
         .asSequence()
         .filterNotNull()
         .map { Typo(it, lang, offset) }
         .toCollection(LinkedSet())
     }
-    catch (e: ProcessCanceledException) {
-      throw e
-    }
     catch (e: Throwable) {
+      if (ExceptionUtil.causedBy(e, ProcessCanceledException::class.java)) {
+        throw ProcessCanceledException()
+      }
+
       logger.warn("Got exception during check for typos by LanguageTool", e)
       emptySet()
     }

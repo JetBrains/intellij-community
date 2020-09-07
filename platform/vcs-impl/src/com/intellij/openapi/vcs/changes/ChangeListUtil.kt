@@ -7,12 +7,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
 import com.intellij.util.text.UniqueNameGenerator
+import org.jetbrains.annotations.Nls
 
-private const val CHANGELIST_NAME_PATTERN = "\\s\\[(.*)\\]"
-private val STASH_MESSAGE_PATTERN = VcsBundle.message("stash.changes.message", ".*")
-private val SYSTEM_CHANGELIST_REGEX = (STASH_MESSAGE_PATTERN + CHANGELIST_NAME_PATTERN).toRegex()
+private const val CHANGELIST_NAME_PATTERN = "\\s\\[(.*)\\]"  // NON-NLS
+private val STASH_MESSAGE_PATTERN get() = VcsBundle.message("stash.changes.message", ".*")
+private val SYSTEM_CHANGELIST_REGEX get() = (STASH_MESSAGE_PATTERN + CHANGELIST_NAME_PATTERN).toRegex()
 
-fun createSystemShelvedChangeListName(systemPrefix: String, changelistName: String): String {
+fun createSystemShelvedChangeListName(systemPrefix: @Nls(capitalization = Nls.Capitalization.Sentence) String,
+                                      changelistName: String): @Nls(capitalization = Nls.Capitalization.Sentence) String {
   return "$systemPrefix [$changelistName]"
 }
 

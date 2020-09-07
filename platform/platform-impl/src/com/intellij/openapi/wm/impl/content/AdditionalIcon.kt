@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.content
 
 import com.intellij.openapi.ui.popup.ActiveIcon
+import com.intellij.openapi.util.NlsContexts
 import java.awt.Component
 import java.awt.Graphics
 import java.awt.Point
@@ -12,6 +13,7 @@ import java.awt.Rectangle
  */
 
 abstract class AdditionalIcon(val myIcon: ActiveIcon) {
+  @get:NlsContexts.Tooltip
   open val tooltip: String? = null
   var x: Int = 0
   val centerPoint: Point

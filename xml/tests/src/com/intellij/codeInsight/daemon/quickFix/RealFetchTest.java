@@ -25,7 +25,7 @@ public class RealFetchTest extends BasePlatformTestCase {
     final String url = "http://java.sun.com/dtd/preferences.dtd";
     assertEquals(url, ExternalResourceManager.getInstance().getResourceLocation(url, getProject()));
     myFixture.configureByText(XmlFileType.INSTANCE, "<!DOCTYPE images SYSTEM \"http://java.sun.com/dtd/prefer<caret>ences.dtd\">");
-    IntentionAction intention = myFixture.getAvailableIntention(XmlBundle.message("fetch.external.resource"));
+    IntentionAction intention = myFixture.getAvailableIntention(XmlBundle.message("xml.intention.fetch.name"));
     assertNotNull(intention);
     intention.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
     String location = ExternalResourceManager.getInstance().getResourceLocation(url, getProject());
@@ -44,7 +44,7 @@ public class RealFetchTest extends BasePlatformTestCase {
                               "        </qos_profile>\n" +
                               "    </qos_library>\n" +
                               "</dds>");
-    IntentionAction intention = myFixture.getAvailableIntention(XmlBundle.message("fetch.external.resource"));
+    IntentionAction intention = myFixture.getAvailableIntention(XmlBundle.message("xml.intention.fetch.name"));
     assertNotNull(intention);
     intention.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
     myFixture.testHighlighting();
@@ -63,7 +63,7 @@ public class RealFetchTest extends BasePlatformTestCase {
                               "  <domain_library name=\"xxx\"/>\n" +
                               "  <domain_participant_library name=\"ffff\"/>\n" +
                               "</dds>");
-    IntentionAction intention = myFixture.getAvailableIntention(XmlBundle.message("fetch.external.resource"));
+    IntentionAction intention = myFixture.getAvailableIntention(XmlBundle.message("xml.intention.fetch.name"));
     assertNotNull(intention);
     intention.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
 
@@ -85,7 +85,7 @@ public class RealFetchTest extends BasePlatformTestCase {
                               "           xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
                               "           xsi:schemaLocation=\"http://checklists.nist.gov/xccdf/1.2 https://csrc.nist.gov/schema/xccdf/1.2/xc<caret>cdf_1.2.xsd\" id=\"xccdf_N_benchmark_S\">\n" +
                               "</Benchmark>");
-    IntentionAction intention = myFixture.getAvailableIntention(XmlBundle.message("fetch.external.resource"));
+    IntentionAction intention = myFixture.getAvailableIntention(XmlBundle.message("xml.intention.fetch.name"));
     assertNotNull(intention);
     intention.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
     myFixture.testHighlighting();
@@ -101,7 +101,7 @@ public class RealFetchTest extends BasePlatformTestCase {
                                                     "  <root type=\"system\"><map/></root>\n" +
                                                     "</preferences>");
     myFixture.testHighlighting();
-    IntentionAction intention = myFixture.getAvailableIntention(XmlBundle.message("fetch.external.resource"));
+    IntentionAction intention = myFixture.getAvailableIntention(XmlBundle.message("xml.intention.fetch.name"));
     assertNotNull(intention);
     intention.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
     List<HighlightInfo> infos = myFixture.doHighlighting();

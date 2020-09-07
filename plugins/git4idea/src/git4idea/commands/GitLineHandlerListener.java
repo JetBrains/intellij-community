@@ -2,6 +2,7 @@
 package git4idea.commands;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.LineProcessEventListener;
 
 /**
@@ -16,5 +17,5 @@ public interface GitLineHandlerListener extends LineProcessEventListener {
    */
   @Override
   @SuppressWarnings({"UnnecessaryFullyQualifiedName"})
-  void onLineAvailable(String line, Key outputType);
+  void onLineAvailable(@NlsSafe String line, Key outputType);
 }

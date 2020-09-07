@@ -8,9 +8,9 @@ import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.workspaceModel.storage.VirtualFileUrl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FilePointerProvider
-import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FilePointerScope
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.jps.model.JpsElement
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.module.UnknownSourceRootType
@@ -29,7 +29,7 @@ internal class SourceFolderBridge(private val entry: ContentEntryBridge, val sou
 
   override fun getFile(): VirtualFile? {
     val filePointerProvider = FilePointerProvider.getInstance(entry.model.moduleBridge)
-    return filePointerProvider.getAndCacheFilePointer(sourceRootEntity.url, FilePointerScope.SourceRoot).file
+    return filePointerProvider.getAndCacheSourceRoot(sourceRootEntity.url).file
   }
 
   private var packagePrefixVar: String? = null
@@ -88,15 +88,19 @@ internal class SourceFolderBridge(private val entry: ContentEntryBridge, val sou
       if (javaResourceRoot != null) return
 
       updater { diff ->
-        diff.addJavaSourceRootEntity(sourceRootEntity, false, packagePrefix, sourceRootEntity.entitySource)
+        diff.addJavaSourceRootEntity(sourceRootEntity, false, packagePrefix)
       }
-    } else {
+    }
+    else {
       updater { diff ->
         diff.modifyEntity(ModifiableJavaSourceRootEntity::class.java, javaSourceRoot) {
           this.packagePrefix = packagePrefix
         }
       }
     }
+    //we need to also update package prefix in Jps root properties, otherwise this change will be lost if some code changes some other
+    // property (e.g. 'forGeneratedProperties') in Jps root later
+    jpsElement.getProperties(JavaModuleSourceRootTypes.SOURCES)?.packagePrefix = packagePrefix
 
     packagePrefixVar = packagePrefix
   }
@@ -119,6 +123,6 @@ internal class ExcludeFolderBridge(val entry: ContentEntryBridge, val excludeFol
   : ContentFolderBridge(entry, excludeFolderUrl), ExcludeFolder {
   override fun getFile(): VirtualFile? {
     val filePointerProvider = FilePointerProvider.getInstance(entry.model.moduleBridge)
-    return filePointerProvider.getAndCacheFilePointer(excludeFolderUrl, FilePointerScope.ExcludedRoots).file
+    return filePointerProvider.getAndCacheExcludedRoot(excludeFolderUrl).file
   }
 }

@@ -31,6 +31,8 @@ import com.intellij.openapi.roots.impl.storage.ClasspathStorageProvider;
 import com.intellij.openapi.roots.ui.configuration.classpath.ClasspathPanelImpl;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.JBUI;
@@ -187,8 +189,9 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
       return (String)comboBoxClasspathFormat.getSelectedItem();
     }
 
-    private String getModuleClasspathFormat() {
-      return ClassPathStorageUtil.getStorageType(myState.getRootModel().getModule());
+    private @NlsContexts.Label String getModuleClasspathFormat() {
+      @NlsSafe final String type = ClassPathStorageUtil.getStorageType(myState.getRootModel().getModule());
+      return type;
     }
 
     private boolean isModified() {
@@ -208,7 +211,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
     }
   }
 
-  public static String getName() {
+  public static @NlsContexts.ConfigurableName String getName() {
     return JavaCompilerBundle.message("modules.classpath.title");
   }
 }

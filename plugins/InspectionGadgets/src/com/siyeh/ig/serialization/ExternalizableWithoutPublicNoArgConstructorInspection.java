@@ -85,7 +85,7 @@ public class ExternalizableWithoutPublicNoArgConstructorInspection extends BaseI
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType() || aClass instanceof PsiTypeParameter) {
+      if (aClass.isInterface() || aClass.isEnum() || aClass.isAnnotationType() || aClass.isRecord() || aClass instanceof PsiTypeParameter) {
         return;
       }
       if (aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {

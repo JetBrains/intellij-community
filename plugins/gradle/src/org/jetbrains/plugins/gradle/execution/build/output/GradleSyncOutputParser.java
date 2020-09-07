@@ -6,6 +6,7 @@ import com.intellij.build.events.MessageEvent;
 import com.intellij.build.events.impl.MessageEventImpl;
 import com.intellij.build.output.BuildOutputInstantReader;
 import com.intellij.build.output.BuildOutputParser;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
@@ -32,7 +33,7 @@ public class GradleSyncOutputParser implements BuildOutputParser {
       }
     }
 
-    String text = line.substring(prefixIndex + prefix.length()).trim();
+    @NlsSafe String text = line.substring(prefixIndex + prefix.length()).trim();
     messageConsumer.accept(new MessageEventImpl(reader.getParentEventId(), kind, null, text, text));
     return true;
   }

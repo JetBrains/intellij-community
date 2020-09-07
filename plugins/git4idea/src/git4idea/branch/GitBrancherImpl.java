@@ -159,12 +159,12 @@ class GitBrancherImpl implements GitBrancher {
 
   @Override
   public void compare(@NotNull String branchName, @NotNull List<? extends GitRepository> repositories) {
-    new GitCompareBranchesUi(myProject, repositories, branchName).create();
+    new GitCompareBranchesUi(myProject, repositories, branchName).open();
   }
 
   @Override
   public void compareAny(@NotNull String branchName, @NotNull String otherBranchName, @NotNull List<? extends GitRepository> repositories) {
-    new GitCompareBranchesUi(myProject, repositories, branchName, otherBranchName).create();
+    new GitCompareBranchesUi(myProject, repositories, branchName, otherBranchName).open();
   }
 
   @Override

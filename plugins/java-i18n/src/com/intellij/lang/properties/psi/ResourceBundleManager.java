@@ -49,6 +49,10 @@ public abstract class ResourceBundleManager {
   public abstract boolean isActive(@NotNull PsiFile context) throws ResourceBundleNotFoundException;
 
   public abstract boolean canShowJavaCodeInfo();
+  
+  public String escapeValue(String value) {
+    return value;
+  }
 
   @Nullable
   public static ResourceBundleManager getManager(@NotNull PsiFile context) throws ResourceBundleNotFoundException {

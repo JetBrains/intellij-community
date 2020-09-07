@@ -159,7 +159,7 @@ class ProcessPopup {
     builder.setLocateByContent(true);
     builder.setMinSize(new JBDimension(300, 100));
 
-    builder.setCancelButton(new MinimizeButton("Hide"));
+    builder.setCancelButton(new MinimizeButton(IdeBundle.message("tooltip.hide")));
 
     myPopup = builder.addUserData("SIMPLE_WINDOW").createPopup();
     myPopup.getContent().putClientProperty(AbstractPopup.FIRST_TIME_SIZE, new JBDimension(300, 0));

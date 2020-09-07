@@ -5,6 +5,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchConfiguration;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,12 +19,15 @@ public final class PredefinedConfigurationUtil {
    */
   @Deprecated
   @NotNull
-  public static Configuration createSearchTemplateInfo(@NotNull String name, @NonNls @NotNull String criteria, @NotNull String category) {
+  public static Configuration createSearchTemplateInfo(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String name,
+                                                       @NonNls @NotNull String criteria, @NotNull String category) {
     return createSearchTemplateInfo(name, criteria, category, StdFileTypes.JAVA);
   }
 
   @NotNull
-  public static Configuration createSearchTemplateInfo(@NotNull String name, @NonNls @NotNull String criteria, @NotNull String category, @NotNull LanguageFileType fileType) {
+  public static Configuration createSearchTemplateInfo(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String name,
+                                                       @NonNls @NotNull String criteria,
+                                                       @NotNull String category, @NotNull LanguageFileType fileType) {
     return createSearchTemplateInfo(name, criteria, category, fileType, null);
   }
 
@@ -49,8 +53,9 @@ public final class PredefinedConfigurationUtil {
    * @deprecated this creates a Java template, which is most likely not what you need.
    */
   @Deprecated
-  public static Configuration createSearchTemplateInfoSimple(String name, @NonNls String criteria, String category) {
-    final Configuration info = createSearchTemplateInfo(name,criteria,category);
+  public static Configuration createSearchTemplateInfoSimple(@Nls(capitalization = Nls.Capitalization.Sentence) String name,
+                                                             @NonNls String criteria, String category) {
+    final Configuration info = createSearchTemplateInfo(name, criteria, category);
     info.getMatchOptions().setRecursiveSearch(false);
 
     return info;

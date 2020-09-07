@@ -6,6 +6,7 @@ import com.intellij.json.JsonBundle;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -67,7 +68,7 @@ public class JsonSchemaReader {
   }
 
   @Nullable
-  public static String checkIfValidJsonSchema(@NotNull final Project project, @NotNull final VirtualFile file) {
+  public static @DialogMessage String checkIfValidJsonSchema(@NotNull Project project, @NotNull VirtualFile file) {
     final long length = file.getLength();
     final String fileName = file.getName();
     if (length > MAX_SCHEMA_LENGTH) {

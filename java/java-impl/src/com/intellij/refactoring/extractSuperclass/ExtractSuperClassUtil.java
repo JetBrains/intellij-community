@@ -2,6 +2,7 @@
 package com.intellij.refactoring.extractSuperclass;
 
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -225,7 +226,7 @@ public final class ExtractSuperClassUtil {
       if (targetDirectory != null &&
           module != null &&
           !GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, inTestSourceContent).contains(targetDirectory.getVirtualFile())) {
-        conflicts.putValue(subclass, "Superclass won't be accessible in subclass");
+        conflicts.putValue(subclass, JavaRefactoringBundle.message("superclass.cannot.be.accessed.in.subclass"));
       }
     }
   }

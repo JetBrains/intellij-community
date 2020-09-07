@@ -37,7 +37,7 @@ public class OrderRootsCache {
     if (myRootsDisposable != null) {
       Disposer.dispose(myRootsDisposable);
     }
-    if (!Disposer.isDisposing(myParentDisposable)) {
+    if (!Disposer.isDisposed(myParentDisposable)) {
       Disposer.register(myParentDisposable, myRootsDisposable = Disposer.newDisposable());
     }
   }

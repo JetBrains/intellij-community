@@ -84,7 +84,8 @@ public class IvyAttachSourceProvider extends AbstractAttachSourceProvider {
           return Collections.emptyList(); // Sources already attached.
         }
 
-        return Collections.singleton(new AttachExistingSourceAction(jarRoot, library, "Attache sources from Ivy repository") );
+        return Collections.singleton(new AttachExistingSourceAction(jarRoot, library,
+                                                                    JavaUiBundle.message("ivi.attach.source.provider.action.name")));
       }
     }
 

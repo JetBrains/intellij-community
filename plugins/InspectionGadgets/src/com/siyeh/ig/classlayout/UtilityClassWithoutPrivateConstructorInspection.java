@@ -36,6 +36,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.AddToIgnoreIfAnnotatedByListQuickFix;
 import com.siyeh.ig.psiutils.UtilityClassUtil;
 import com.siyeh.ig.ui.ExternalizableStringSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -249,7 +250,8 @@ public class UtilityClassWithoutPrivateConstructorInspection extends BaseInspect
         final PsiParameter[] parameters = parameterList.getParameters();
         final PsiParameter parameter = parameters[0];
         final PsiType type = parameter.getType();
-        if (!type.equalsToText("java.lang.String[]")) {
+        @NonNls final String stringArray = "java.lang.String[]";
+        if (!type.equalsToText(stringArray)) {
           return false;
         }
       }

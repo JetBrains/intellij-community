@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.intention;
 
 import com.intellij.analysis.AnalysisBundle;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -27,9 +28,9 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public final class EmptyIntentionAction extends AbstractEmptyIntentionAction implements LowPriorityAction, Iconable {
-  private final String myName;
+  private final @IntentionFamilyName String myName;
 
-  public EmptyIntentionAction(@NotNull String name) {
+  public EmptyIntentionAction(@NotNull @IntentionFamilyName String name) {
     myName = name;
   }
 

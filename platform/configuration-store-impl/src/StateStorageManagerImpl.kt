@@ -14,6 +14,7 @@ import com.intellij.util.SmartList
 import com.intellij.util.ThreeState
 import com.intellij.util.io.systemIndependentPath
 import org.jdom.Element
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -23,7 +24,7 @@ import kotlin.concurrent.write
 /**
  * If componentManager not specified, storage will not add file tracker
  */
-open class StateStorageManagerImpl(private val rootTagName: String,
+open class StateStorageManagerImpl(@NonNls private val rootTagName: String,
                                    final override val macroSubstitutor: PathMacroSubstitutor? = null,
                                    override val componentManager: ComponentManager? = null,
                                    private val virtualFileTracker: StorageVirtualFileTracker? = createDefaultVirtualTracker(componentManager)) : StateStorageManager {

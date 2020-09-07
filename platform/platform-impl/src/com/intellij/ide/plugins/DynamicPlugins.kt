@@ -10,6 +10,7 @@ import com.intellij.diagnostic.MessagePool
 import com.intellij.diagnostic.hprof.action.SystemTempFilenameSupplier
 import com.intellij.diagnostic.hprof.analysis.AnalyzeClassloaderReferencesGraph
 import com.intellij.diagnostic.hprof.analysis.HProfAnalysis
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.impl.ProjectUtil
@@ -33,6 +34,7 @@ import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.DecodeDefaultsUtil
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
@@ -49,6 +51,8 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.objectTree.ThrowableInterner
 import com.intellij.openapi.util.registry.Registry
@@ -65,9 +69,9 @@ import com.intellij.util.io.URLUtil
 import com.intellij.util.messages.Topic
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.xmlb.BeanBinding
+import org.jetbrains.annotations.NonNls
 import java.awt.Window
 import java.io.File
-import java.io.IOException
 import java.nio.channels.FileChannel
 import java.nio.file.FileVisitResult
 import java.nio.file.Paths
@@ -138,6 +142,7 @@ object DynamicPlugins {
    */
   @JvmStatic
   @JvmOverloads
+  @NonNls
   fun checkCanUnloadWithoutRestart(
     descriptor: IdeaPluginDescriptorImpl,
     baseDescriptor: IdeaPluginDescriptorImpl? = null,
@@ -428,7 +433,7 @@ object DynamicPlugins {
         }
       }
     }
-    val indicator = PotemkinProgress("Unloading plugin ${pluginDescriptor.name}", project, parentComponent, null)
+    val indicator = PotemkinProgress(IdeBundle.message("unloading.plugin.progress.title", pluginDescriptor.name), project, parentComponent, null)
     indicator.runInSwingThread {
       result = unloadPlugin(pluginDescriptor, options.withSave(false))
     }
@@ -520,6 +525,7 @@ object DynamicPlugins {
           ActionToolbarImpl.updateAllToolbarsImmediately()
           (NotificationsManager.getNotificationsManager() as NotificationsManagerImpl).expireAll()
           MessagePool.getInstance().clearErrors()
+          DecodeDefaultsUtil.clearResourceCache()
 
           (ApplicationManager.getApplication().messageBus as MessageBusEx).clearPublisherCache()
           val projectManager = ProjectManagerEx.getInstanceExIfCreated()
@@ -577,7 +583,7 @@ object DynamicPlugins {
             FileUtil.asyncDelete(File(snapshotPath))
             classLoaderUnloaded = true
           }
-          if (Registry.`is`("ide.plugins.analyze.snapshot")) {
+          if (Registry.`is`("ide.plugins.analyze.snapshot") && File(snapshotPath).exists()) {
             val analysisResult = analyzeSnapshot(snapshotPath, pluginDescriptor.pluginId)
             if (analysisResult.isEmpty()) {
               LOG.info("Successfully unloaded plugin ${pluginDescriptor.pluginId} (no strong references to classloader in .hprof file)")
@@ -590,7 +596,7 @@ object DynamicPlugins {
             }
           }
           if (!classLoaderUnloaded) {
-            notify("Captured memory snapshot on plugin unload fail: $snapshotPath", NotificationType.WARNING)
+            notify(IdeBundle.message("captured.memory.snapshot.on.plugin.unload.fail", snapshotPath), NotificationType.WARNING)
             LOG.info("Plugin ${pluginDescriptor.pluginId} is not unload-safe because class loader cannot be unloaded. Memory snapshot created at $snapshotPath")
           }
         }
@@ -621,7 +627,7 @@ object DynamicPlugins {
     }
   }
 
-  internal fun notify(text: String, notificationType: NotificationType, vararg actions: AnAction) {
+  internal fun notify(@NlsContexts.NotificationContent text: String, notificationType: NotificationType, vararg actions: AnAction) {
     val notification = GROUP.createNotification(text, notificationType)
     for (action in actions) {
       notification.addAction(action)

@@ -18,6 +18,7 @@ package com.siyeh.ig.javadoc;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
@@ -32,6 +33,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -93,7 +95,7 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection {
 
   private static class MissingDeprecatedTagFix extends InspectionGadgetsFix {
 
-    private static final String DEPRECATED_TAG_NAME = "deprecated";
+    @NonNls private static final String DEPRECATED_TAG_NAME = "deprecated";
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
@@ -121,7 +123,7 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection {
         moveCaretAfter(addedTag);
       }
       else {
-        PsiDocComment newDocComment = JavaPsiFacade.getElementFactory(project).createDocCommentFromText(
+        @NlsSafe PsiDocComment newDocComment = JavaPsiFacade.getElementFactory(project).createDocCommentFromText(
           StringUtil.join("/**\n", " * ", "@" + DEPRECATED_TAG_NAME + " TODO: explain", "\n */")
         );
         PsiElement addedComment = documentedElement.addBefore(newDocComment, documentedElement.getFirstChild());

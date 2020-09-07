@@ -16,7 +16,7 @@ public class StopRangeSearchAction extends AnAction implements DumbAware {
 
   public StopRangeSearchAction(@NotNull RangeSearch rangeSearch) {
     this.myRangeSearch = rangeSearch;
-    getTemplatePresentation().setText(EditorBundle.message("large.file.editor.stop.searching.action.text"));
+    getTemplatePresentation().setText(EditorBundle.messagePointer("large.file.editor.stop.searching.action.text"));
     getTemplatePresentation().setIcon(AllIcons.Actions.Suspend);
   }
 

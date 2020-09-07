@@ -17,8 +17,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 
 
-private val LOG = logger<CreateAnnotationAction>()
-
 internal class CreateAnnotationAction(target: PsiModifierListOwner, override val request: AnnotationRequest) :
   CreateTargetAction<PsiModifierListOwner>(target, request) {
 
@@ -32,27 +30,30 @@ internal class CreateAnnotationAction(target: PsiModifierListOwner, override val
     addAnnotationToModifierList(modifierList, request)
   }
 
-}
+  companion object {
+    private val LOG = logger<CreateAnnotationAction>()
+    internal fun addAnnotationToModifierList(modifierList: PsiModifierList, annotationRequest: AnnotationRequest) {
+      val project = modifierList.project
+      val annotation = modifierList.addAnnotation(annotationRequest.qualifiedName)
+      val psiElementFactory = PsiElementFactory.getInstance(project)
 
-internal fun addAnnotationToModifierList(modifierList: PsiModifierList, annotationRequest: AnnotationRequest) {
-  val project = modifierList.project
-  val annotation = modifierList.addAnnotation(annotationRequest.qualifiedName)
-  val psiElementFactory = PsiElementFactory.getInstance(project)
-
-  attributes@ for ((name, value) in annotationRequest.attributes) {
-    val memberValue = when (value) {
-      is AnnotationAttributeValueRequest.PrimitiveValue -> psiElementFactory
-        .createExpressionFromText(value.value.toString(), null)
-      is AnnotationAttributeValueRequest.StringValue -> psiElementFactory
-        .createExpressionFromText("\"" + StringUtil.escapeStringCharacters(value.value) + "\"", null)
-      else -> {
-        LOG.error("adding annotation members of ${value.javaClass} type is not implemented"); continue@attributes
+      attributes@ for ((name, value) in annotationRequest.attributes) {
+        val memberValue = when (value) {
+          is AnnotationAttributeValueRequest.PrimitiveValue -> psiElementFactory
+            .createExpressionFromText(value.value.toString(), null)
+          is AnnotationAttributeValueRequest.StringValue -> psiElementFactory
+            .createExpressionFromText("\"" + StringUtil.escapeStringCharacters(value.value) + "\"", null)
+          else -> {
+            LOG.error("adding annotation members of ${value.javaClass} type is not implemented"); continue@attributes
+          }
+        }
+        annotation.setDeclaredAttributeValue(name.takeIf { name != "value" }, memberValue)
       }
-    }
-    annotation.setDeclaredAttributeValue(name.takeIf { name != "value" }, memberValue)
-  }
 
-  val formatter = CodeStyleManager.getInstance(project)
-  val codeStyleManager = JavaCodeStyleManager.getInstance(project)
-  codeStyleManager.shortenClassReferences(formatter.reformat(annotation))
+      val formatter = CodeStyleManager.getInstance(project)
+      val codeStyleManager = JavaCodeStyleManager.getInstance(project)
+      codeStyleManager.shortenClassReferences(formatter.reformat(annotation))
+    }
+  }
 }
+

@@ -16,6 +16,7 @@
 package com.intellij.ui.components.fields;
 
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.valueEditors.CommaSeparatedIntegersValueEditor;
 import com.intellij.ui.components.fields.valueEditors.ValueEditor;
@@ -37,7 +38,7 @@ public class CommaSeparatedIntegersField extends JBTextField {
     this(null, Integer.MIN_VALUE, Integer.MAX_VALUE, null);
   }
 
-  public CommaSeparatedIntegersField(@Nullable String valueName, int minValue, int maxValue, @Nullable String optionalText) {
+  public CommaSeparatedIntegersField(@Nullable String valueName, int minValue, int maxValue, @Nullable @NlsContexts.StatusText String optionalText) {
     myValueEditor = new CommaSeparatedIntegersValueEditor(this, valueName, minValue, maxValue);
     if (optionalText != null) {
       getEmptyText().setText(optionalText);

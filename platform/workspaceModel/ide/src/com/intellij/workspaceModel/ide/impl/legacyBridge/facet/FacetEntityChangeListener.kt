@@ -8,7 +8,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.facetMapping
 import com.intellij.workspaceModel.storage.EntityChange
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 
@@ -37,7 +39,7 @@ internal class FacetEntityChangeListener(private val project: Project) {
   private val publisher
     get() = FacetEventsPublisher.getInstance(project)
 
-  fun processChange(change: EntityChange<FacetEntity>) {
+  fun processChange(change: EntityChange<FacetEntity>, storageBefore: WorkspaceEntityStorage, addedModulesNames: Set<String>) {
     when (change) {
       is EntityChange.Added -> {
         val manager = getFacetManager(change.entity.module) ?: return
@@ -45,11 +47,17 @@ internal class FacetEntityChangeListener(private val project: Project) {
         manager.model.updateEntity(change.entity, change.entity)
         FacetManagerBase.setFacetName(facet, change.entity.name)
         facet.initFacet()
-        publisher.fireFacetAdded(facet)
+
+        // We should not send an event if the associated module was added in the same transaction
+        // Event will be sent with "moduleAdded" event.
+        if (facet.module.name !in addedModulesNames) publisher.fireFacetAdded(facet)
       }
       is EntityChange.Removed -> {
         val manager = getFacetManager(change.entity.module) ?: return
-        val facet = manager.model.removeEntity(change.entity) ?: return
+
+        // Mapping to facet isn't saved in manager.model after addDiff. But you can get an object from the older version of the store
+        manager.model.facetsChanged()
+        val facet = storageBefore.facetMapping().getDataByEntity(change.entity) ?: return
         Disposer.dispose(facet)
         publisher.fireFacetRemoved(manager.module, facet)
       }

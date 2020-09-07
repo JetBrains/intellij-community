@@ -93,7 +93,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
           myCurrentReader.appendln(cleanLine)
           if (myCurrentReader != myRootReader) {
             val parentEventId = myCurrentReader.parentEventId
-            myBuildProgressListener.onEvent(buildId, OutputBuildEventImpl(parentEventId, line + '\n', stdOut))
+            myBuildProgressListener.onEvent(buildId, OutputBuildEventImpl(parentEventId, line + '\n', stdOut)) //NON-NLS
           }
         }
       }
@@ -127,7 +127,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
 
     override fun append(csq: CharSequence): Appendable {
       if (appendOutputToMainConsole) {
-        myBuildProgressListener.onEvent(buildId, OutputBuildEventImpl(buildId, csq.toString(), stdOut))
+        myBuildProgressListener.onEvent(buildId, OutputBuildEventImpl(buildId, csq.toString(), stdOut)) //NON-NLS
       }
       lineProcessor.append(csq)
       return this
@@ -135,7 +135,7 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
 
     override fun append(csq: CharSequence, start: Int, end: Int): Appendable {
       if (appendOutputToMainConsole) {
-        myBuildProgressListener.onEvent(buildId, OutputBuildEventImpl(buildId, csq.subSequence(start, end).toString(), stdOut))
+        myBuildProgressListener.onEvent(buildId, OutputBuildEventImpl(buildId, csq.subSequence(start, end).toString(), stdOut)) //NON-NLS
       }
       lineProcessor.append(csq, start, end)
       return this

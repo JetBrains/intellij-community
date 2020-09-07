@@ -15,6 +15,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
@@ -233,7 +234,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
   }
 
   @Nullable
-  public static String getAdText(CompletionResult result) {
+  public static @NlsContexts.PopupAdvertisement String getAdText(CompletionResult result) {
     if (result.myCompletionBase == null) return null;
     if (result.myCompletionBase.length() == result.myFieldText.length()) return null;
 
@@ -259,24 +260,12 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     public String myFieldText;
   }
 
-  private static final class Separator {
-    private final String myText;
-
-    private Separator(final String text) {
-      myText = text;
-    }
-
-    public String getText() {
-      return myText;
-    }
-  }
-
   private void showCompletionPopup(final CompletionResult result, boolean isExplicit) {
     if (myList == null) {
       myList = new JBList<>();
       myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-      myList.setCellRenderer(new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<LookupFile>() {
+      myList.setCellRenderer(new GroupedItemsListRenderer<>(new ListItemDescriptorAdapter<>() {
         @Override
         public String getTextFor(final LookupFile file) {
           return FileTextFieldUtil.getLookupString(file, myFinder, myCurrentCompletion);
@@ -287,8 +276,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
           return value.getIcon();
         }
 
-        @Nullable
-        private Separator getSeparatorAboveOf(Object value) {
+        private @NlsContexts.Separator @Nullable String getSeparatorAboveOf(Object value) {
           if (myCurrentCompletion == null) return null;
           final LookupFile file = (LookupFile)value;
 
@@ -296,36 +284,33 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
           if (fileIndex > 0 && !myCurrentCompletion.myMacros.contains(file)) {
             final LookupFile prev = myCurrentCompletion.myToComplete.get(fileIndex - 1);
             if (myCurrentCompletion.myMacros.contains(prev)) {
-              return new Separator("");
+              return "";
             }
           }
 
-
           if (myCurrentCompletion.myKidsAfterSeparator.indexOf(file) == 0 && myCurrentCompletion.mySiblings.size() > 0) {
-            final LookupFile parent = file.getParent();
-            return parent == null ? new Separator("") : new Separator(parent.getName());
+            LookupFile parent = file.getParent();
+            return parent != null ? parent.getName() : "";
           }
 
           if (myCurrentCompletion.myMacros.size() > 0 && fileIndex == 0) {
-            return new Separator(getPathVariablesSeparatorText());
+            return getPathVariablesSeparatorText();
           }
 
           return null;
         }
 
         @Override
-        public boolean hasSeparatorAboveOf(final LookupFile value) {
+        public boolean hasSeparatorAboveOf(LookupFile value) {
           return getSeparatorAboveOf(value) != null;
         }
 
         @Override
-        public String getCaptionAboveOf(final LookupFile value) {
-          final FileTextFieldImpl.Separator separator = getSeparatorAboveOf(value);
-          return separator != null ? separator.getText() : null;
+        public String getCaptionAboveOf(LookupFile value) {
+          return getSeparatorAboveOf(value);
         }
       }));
     }
-
 
     if (myCurrentPopup != null) {
       closePopup();
@@ -401,8 +386,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
     );
   }
 
-  @NotNull
-  protected String getPathVariablesSeparatorText() {
+  protected @NlsContexts.Separator @NotNull String getPathVariablesSeparatorText() {
     return IdeBundle.message("file.chooser.completion.path.variables.text");
   }
 

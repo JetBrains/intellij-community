@@ -25,6 +25,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -37,7 +38,7 @@ import java.util.*;
 @SuppressWarnings("deprecation")
 public final class InjectedLanguageManagerImpl extends InjectedLanguageManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(InjectedLanguageManagerImpl.class);
-  static final Object ourInjectionPsiLock = new String("injectionPsiLock");
+  static final Object ourInjectionPsiLock = ObjectUtils.sentinel("injectionPsiLock");
   private final Project myProject;
   private final DumbService myDumbService;
   private final PsiDocumentManager myDocManager;
@@ -97,7 +98,7 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
         return (PsiLanguageInjectionHost)host;
       }
     }
-    return null;
+    return InjectedLanguageUtil.findInjectionHost(file);
   }
 
   @Override

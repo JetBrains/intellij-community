@@ -3,12 +3,15 @@ package com.intellij.build.output;
 
 import com.intellij.build.FilePosition;
 import com.intellij.build.events.BuildEvent;
+import com.intellij.build.events.BuildEventsNls;
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.events.impl.FileMessageEventImpl;
 import com.intellij.build.events.impl.MessageEventImpl;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -16,20 +19,21 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * Parses javac's output.
  */
 public class JavacOutputParser implements BuildOutputParser {
-  private static final String COMPILER_MESSAGES_GROUP = "Compiler";
+  private static final @NotNull Supplier<@BuildEventsNls.Title String> COMPILER_MESSAGES_GROUP =
+    LangBundle.messagePointer("build.event.title.compiler");
 
   private static final char COLON = ':';
-  private static final String WARNING_PREFIX = "warning:"; // default value
-  private static final String NOTE_PREFIX = "note:";
-  private static final String ERROR_PREFIX = "error:";
+  private static final @NonNls String WARNING_PREFIX = "warning:"; // default value
+  private static final @NonNls String NOTE_PREFIX = "note:";
+  private static final @NonNls String ERROR_PREFIX = "error:";
   private final String[] myFileExtensions;
 
   public JavacOutputParser() {
@@ -41,7 +45,7 @@ public class JavacOutputParser implements BuildOutputParser {
   }
 
   @Override
-  public boolean parse(@NotNull String line,
+  public boolean parse(@NlsSafe @NotNull String line,
                        @NotNull BuildOutputInstantReader reader,
                        @NotNull Consumer<? super BuildEvent> messageConsumer) {
     int colonIndex1 = line.indexOf(COLON);
@@ -50,21 +54,24 @@ public class JavacOutputParser implements BuildOutputParser {
     }
 
     if (colonIndex1 >= 0) { // looks like found something like a file path.
-      String part1 = line.substring(0, colonIndex1).trim();
+      @NlsSafe String part1 = line.substring(0, colonIndex1).trim();
       if (part1.equalsIgnoreCase("error") /* jikes */ || part1.equalsIgnoreCase("Caused by")) {
         // +1 so we don't include the colon
         String text = line.substring(colonIndex1 + 1).trim();
-        messageConsumer.accept(new MessageEventImpl(reader.getParentEventId(), MessageEvent.Kind.ERROR, COMPILER_MESSAGES_GROUP, text, line));
+        messageConsumer
+          .accept(new MessageEventImpl(reader.getParentEventId(), MessageEvent.Kind.ERROR, COMPILER_MESSAGES_GROUP.get(), text, line));
         return true;
       }
       if (part1.equalsIgnoreCase("warning")) {
         // +1 so we don't include the colon
         String text = line.substring(colonIndex1 + 1).trim();
-        messageConsumer.accept(new MessageEventImpl(reader.getParentEventId(), MessageEvent.Kind.WARNING, COMPILER_MESSAGES_GROUP, text, line));
+        messageConsumer
+          .accept(new MessageEventImpl(reader.getParentEventId(), MessageEvent.Kind.WARNING, COMPILER_MESSAGES_GROUP.get(), text, line));
         return true;
       }
       if (part1.equalsIgnoreCase("javac")) {
-        messageConsumer.accept(new MessageEventImpl(reader.getParentEventId(), MessageEvent.Kind.ERROR, COMPILER_MESSAGES_GROUP, line, line));
+        messageConsumer
+          .accept(new MessageEventImpl(reader.getParentEventId(), MessageEvent.Kind.ERROR, COMPILER_MESSAGES_GROUP.get(), line, line));
         return true;
       }
       if (part1.equalsIgnoreCase("Note")) {
@@ -75,9 +82,10 @@ public class JavacOutputParser implements BuildOutputParser {
           if (file.isFile()) {
             message = message.substring(javaFileExtensionIndex + ".java".length() + 1);
             String detailedMessage = amendNextInfoLinesIfNeeded(file.getPath() + ":\n" + message, reader);
-            messageConsumer.accept(new FileMessageEventImpl(reader.getParentEventId(), MessageEvent.Kind.INFO, COMPILER_MESSAGES_GROUP,
-                                                            message, detailedMessage,
-                                                            new FilePosition(file, 0, 0)));
+            messageConsumer
+              .accept(new FileMessageEventImpl(reader.getParentEventId(), MessageEvent.Kind.INFO, COMPILER_MESSAGES_GROUP.get(),
+                                               message, detailedMessage,
+                                               new FilePosition(file, 0, 0)));
             return true;
           }
         }
@@ -146,8 +154,8 @@ public class JavacOutputParser implements BuildOutputParser {
 
           if (column >= 0) {
             String message = StringUtil.join(convertMessages(messageList), "\n");
-            String detailedMessage = line + "\n" + outputCollector.getOutput();
-            messageConsumer.accept(new FileMessageEventImpl(reader.getParentEventId(), kind, COMPILER_MESSAGES_GROUP,
+            String detailedMessage = line + "\n" + outputCollector.getOutput(); //NON-NLS
+            messageConsumer.accept(new FileMessageEventImpl(reader.getParentEventId(), kind, COMPILER_MESSAGES_GROUP.get(),
                                                             message, detailedMessage, new FilePosition(file, lineNumber - 1, column)));
             return true;
           }
@@ -158,7 +166,7 @@ public class JavacOutputParser implements BuildOutputParser {
     }
 
     if (line.endsWith("java.lang.OutOfMemoryError")) {
-      messageConsumer.accept(new MessageEventImpl(reader.getParentEventId(), MessageEvent.Kind.ERROR, COMPILER_MESSAGES_GROUP,
+      messageConsumer.accept(new MessageEventImpl(reader.getParentEventId(), MessageEvent.Kind.ERROR, COMPILER_MESSAGES_GROUP.get(),
                                                   LangBundle.message("build.event.message.out.memory"), line));
       return true;
     }
@@ -168,10 +176,10 @@ public class JavacOutputParser implements BuildOutputParser {
 
   private boolean isRelatedFile(File file) {
     String filePath = file.getPath();
-    return Arrays.stream(myFileExtensions).anyMatch(extension -> FileUtilRt.extensionEquals(filePath, extension));
+    return ContainerUtil.exists(myFileExtensions, extension -> FileUtilRt.extensionEquals(filePath, extension));
   }
 
-  private static String amendNextInfoLinesIfNeeded(String str, BuildOutputInstantReader reader) {
+  private static @NlsSafe String amendNextInfoLinesIfNeeded(String str, BuildOutputInstantReader reader) {
     StringBuilder builder = new StringBuilder(str);
     String nextLine = reader.readLine();
     while (nextLine != null) {

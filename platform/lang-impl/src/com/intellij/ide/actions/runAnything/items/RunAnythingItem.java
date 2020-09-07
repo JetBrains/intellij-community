@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.runAnything.items;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,7 +15,7 @@ public abstract class RunAnythingItem {
    * Returns text presentation of command
    */
   @NotNull
-  public abstract String getCommand();
+  public abstract @NlsSafe String getCommand();
 
   /**
    * Creates current item {@link Component}

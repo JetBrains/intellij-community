@@ -11,24 +11,19 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
+import com.intellij.openapi.util.NlsContexts.NotificationContent;
+import com.intellij.openapi.util.NlsContexts.NotificationTitle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
 public class PyCharmProfessionalAdvertiser implements Annotator {
-
-
-  @Language("HTML")
-  private static final String NOTIFICATIONS_TEXT =
-    "<a href=\"prof\">PyCharm Professional Edition</a> has special support for it.";
-
   private static final NotificationGroup BALLOON_NOTIFICATIONS = new NotificationGroup("PyCharm Professional Advertiser",
                                                                                        NotificationDisplayType.STICKY_BALLOON, false);
   @Override
@@ -48,33 +43,44 @@ public class PyCharmProfessionalAdvertiser implements Annotator {
       }
 
       if (PyCellUtil.hasCells(pyFile)) {
-        showInspectionAdvertisement(project, "code cells in the editor", "https://www.jetbrains.com/pycharm/features/scientific_tools.html", "codecells");
+        showInspectionAdvertisement(project,
+                                    PyCharmCommunityCustomizationBundle.message("pro.advertiser.notification.title.cells.in.editor"),
+                                    "https://www.jetbrains.com/pycharm/features/scientific_tools.html", "codecells");
       }
 
       if (PyPsiUtils.containsImport(pyFile, "django")) {
-        showInspectionAdvertisement(project, "the Django Framework", "https://www.jetbrains.com/pycharm/features/web_development.html#django","django");
+        showInspectionAdvertisement(project,
+                                    PyCharmCommunityCustomizationBundle.message("pro.advertiser.notification.title.django.framework"),
+                                    "https://www.jetbrains.com/pycharm/features/web_development.html#django", "django");
       }
 
       if (PyPsiUtils.containsImport(pyFile, "flask")) {
-        showInspectionAdvertisement(project, "the Flask Framework", null,"flask");
+        showInspectionAdvertisement(project,
+                                    PyCharmCommunityCustomizationBundle.message("pro.advertiser.notification.title.flask.framework"),
+                                    null, "flask");
       }
 
       if (PyPsiUtils.containsImport(pyFile, "pyramid")) {
-        showInspectionAdvertisement(project, "the Pyramid Framework", null,"pyramid");
+        showInspectionAdvertisement(project,
+                                    PyCharmCommunityCustomizationBundle.message("pro.advertiser.notification.title.pyramid.framework"),
+                                    null, "pyramid");
       }
     }
 
     if (isJupyterFile(element)) {
-      showInspectionAdvertisement(element.getProject(), "Jupyter notebook",
+      showInspectionAdvertisement(element.getProject(),
+                                  PyCharmCommunityCustomizationBundle.message("pro.advertiser.notification.title.jupyter.notebook"),
                                   "https://www.jetbrains.com/pycharm/features/scientific_tools.html", "jupyter");
     }
   }
 
   private static void showInspectionAdvertisement(@NotNull Project project,
-                                                  @NotNull String message,
+                                                  @NotNull @NotificationTitle String message,
                                                   @Nullable String url,
                                                   @NotNull String source) {
-    showSingletonNotification(project, "You are using " + message, NOTIFICATIONS_TEXT, NotificationType.INFORMATION,
+    showSingletonNotification(project, message,
+                              PyCharmCommunityCustomizationBundle.message("pro.advertiser.notification.pycharm.pro.has.support.for.it"),
+                              NotificationType.INFORMATION,
                               (notification, event) -> {
                                 if ("prof".equals(event.getDescription())) {
                                   BrowserUtil.browse(
@@ -95,8 +101,8 @@ public class PyCharmProfessionalAdvertiser implements Annotator {
   }
 
   private static void showSingletonNotification(@NotNull Project project,
-                                                @NotNull String title,
-                                                @NotNull String htmlContent,
+                                                @NotNull @NotificationTitle String title,
+                                                @NotNull @NotificationContent String htmlContent,
                                                 @NotNull NotificationType type,
                                                 @NotNull NotificationListener listener) {
     getSettings(project).shown = true;

@@ -46,7 +46,7 @@ public final class HeaderParserRepository {
     return ServiceManager.getService(HeaderParserRepository.class);
   }
 
-  private final ClearableLazyValue<Map<String, HeaderParser>> myParsers = new ClearableLazyValue<Map<String, HeaderParser>>() {
+  private final ClearableLazyValue<Map<String, HeaderParser>> myParsers = new ClearableLazyValue<>() {
     @NotNull
     @Override
     protected Map<String, HeaderParser> compute() {

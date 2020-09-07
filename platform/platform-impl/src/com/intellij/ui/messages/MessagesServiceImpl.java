@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.messages;
 
 import com.intellij.diagnostic.LoadingState;
@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.messages.MessageDialog;
 import com.intellij.openapi.ui.messages.MessagesService;
 import com.intellij.openapi.ui.messages.TwoStepConfirmationDialog;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -47,7 +48,7 @@ public class MessagesServiceImpl implements MessagesService {
                                @Nullable DialogWrapper.DoNotAskOption doNotAskOption,
                                boolean alwaysUseIdeaUI) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return getTestImplementation().show(message);
+      return TestDialogManager.getTestImplementation().show(message);
     }
 
     try {
@@ -74,13 +75,13 @@ public class MessagesServiceImpl implements MessagesService {
   public int showMoreInfoMessageDialog(Project project,
                                        String message,
                                        String title,
-                                       String moreInfo,
+                                       @NlsContexts.DetailedDescription String moreInfo,
                                        String[] options,
                                        int defaultOptionIndex,
                                        int focusedOptionIndex,
                                        Icon icon) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return getTestImplementation().show(message);
+      return TestDialogManager.getTestImplementation().show(message);
     }
 
     try {
@@ -112,7 +113,7 @@ public class MessagesServiceImpl implements MessagesService {
                                            Icon icon,
                                            PairFunction<? super Integer, ? super JCheckBox, Integer> exitFunc) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return getTestImplementation().show(message);
+      return TestDialogManager.getTestImplementation().show(message);
     }
 
     TwoStepConfirmationDialog dialog =
@@ -124,7 +125,7 @@ public class MessagesServiceImpl implements MessagesService {
   @Override
   public String showPasswordDialog(Project project, String message, String title, Icon icon, InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return getTestInputImplementation().show(message, validator);
+      return TestDialogManager.getTestInputImplementation().show(message, validator);
     }
 
     final InputDialog dialog = project != null
@@ -137,7 +138,7 @@ public class MessagesServiceImpl implements MessagesService {
   @Override
   public char[] showPasswordDialog(@NotNull Component parentComponent, String message, String title, Icon icon, @Nullable InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return getTestInputImplementation().show(message, validator).toCharArray();
+      return TestDialogManager.getTestInputImplementation().show(message, validator).toCharArray();
     }
 
     PasswordInputDialog dialog = new PasswordInputDialog(parentComponent, message, title, icon, validator);
@@ -153,9 +154,9 @@ public class MessagesServiceImpl implements MessagesService {
                                 @Nullable String initialValue,
                                 @Nullable InputValidator validator,
                                 @Nullable TextRange selection,
-                                @Nullable String comment) {
+                                @Nullable @NlsContexts.DetailedDescription String comment) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return getTestInputImplementation().show(message, validator);
+      return TestDialogManager.getTestInputImplementation().show(message, validator);
     }
 
     InputDialog dialog = new InputDialog(project, message, title, icon, initialValue, validator,
@@ -181,10 +182,10 @@ public class MessagesServiceImpl implements MessagesService {
                                          Icon icon,
                                          @Nullable InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return getTestInputImplementation().show(message, validator);
+      return TestDialogManager.getTestInputImplementation().show(message, validator);
     }
 
-    Messages.InputDialog dialog = new Messages.MultilineInputDialog(project, message, title, icon, initialValue, validator,
+    InputDialog dialog = new MultilineInputDialog(project, message, title, icon, initialValue, validator,
                                                                     new String[]{getOkButton(), getCancelButton()}, 0);
     dialog.show();
     return dialog.getInputString();
@@ -200,7 +201,7 @@ public class MessagesServiceImpl implements MessagesService {
                                                                               String initialValue,
                                                                               InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return new Pair<>(getTestInputImplementation().show(message), checked);
+      return new Pair<>(TestDialogManager.getTestInputImplementation().show(message), checked);
     }
 
     InputDialogWithCheckbox dialog =
@@ -217,7 +218,7 @@ public class MessagesServiceImpl implements MessagesService {
                                          String initialValue,
                                          InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return getTestInputImplementation().show(message, validator);
+      return TestDialogManager.getTestInputImplementation().show(message, validator);
     }
 
     ChooseDialog dialog = new ChooseDialog(message, title, icon, values, initialValue);
@@ -238,7 +239,7 @@ public class MessagesServiceImpl implements MessagesService {
                               String initialValue,
                               @Nullable Icon icon) {
     if (isApplicationInUnitTestOrHeadless()) {
-      return getTestImplementation().show(message);
+      return TestDialogManager.getTestImplementation().show(message);
     }
 
     ChooseDialog dialog = new ChooseDialog(project, parentComponent, message, title, icon, values, initialValue);
@@ -253,7 +254,7 @@ public class MessagesServiceImpl implements MessagesService {
                                  Function<? super String, ? extends List<String>> parser,
                                  final Function<? super List<String>, String> lineJoiner) {
     if (isApplicationInUnitTestOrHeadless()) {
-      getTestImplementation().show(title);
+      TestDialogManager.getTestImplementation().show(title);
       return;
     }
 

@@ -35,7 +35,7 @@ public abstract class ExtensionDeclarationRelatedItemLineMarkerProviderTestBase 
     int expectedTagPosition = pluginXmlFile.getText().indexOf(xmlDeclarationText);
     String expectedTooltip = "<html><body>&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"#navigation/" + pluginXmlPath
                              + ":" + expectedTagPosition + "\">com.intellij.myEp</a> declaration in plugin.xml " +
-                             "<font color=" + color + ">[" + module.getName() + "]</font><br></body></html>";
+                             "<font color=\"" + color + "\">[" + module.getName() + "]</font><br></body></html>";
 
     GutterMark gutter = myFixture.findGutter(file);
     DevKitGutterTargetsChecker.checkGutterTargets(gutter, expectedTooltip, DevkitIcons.Gutter.Plugin, "myEp");

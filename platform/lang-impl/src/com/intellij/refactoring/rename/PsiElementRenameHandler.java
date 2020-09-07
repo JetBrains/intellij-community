@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -123,7 +124,7 @@ public class PsiElementRenameHandler implements RenameHandler {
   }
 
   @Nullable
-  private static String renameabilityStatus(@NotNull Project project, @NotNull PsiElement element) {
+  private static @NlsContexts.DialogMessage String renameabilityStatus(@NotNull Project project, @NotNull PsiElement element) {
     boolean hasRenameProcessor = RenamePsiElementProcessor.forElement(element) != RenamePsiElementProcessor.DEFAULT;
     boolean hasWritableMetaData = element instanceof PsiMetaOwner && ((PsiMetaOwner)element).getMetaData() instanceof PsiWritableMetaData;
 
@@ -153,7 +154,7 @@ public class PsiElementRenameHandler implements RenameHandler {
     return null;
   }
 
-  private static void showErrorMessage(@NotNull Project project, @Nullable Editor editor, @NotNull String message) {
+  private static void showErrorMessage(@NotNull Project project, @Nullable Editor editor, @NotNull @NlsContexts.DialogMessage String message) {
     CommonRefactoringUtil.showErrorHint(project, editor, message, RefactoringBundle.message("rename.title"), null);
   }
 

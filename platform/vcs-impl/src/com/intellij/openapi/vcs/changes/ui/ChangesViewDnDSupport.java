@@ -8,7 +8,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.openapi.vcs.changes.DefaultChangeListOwner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,8 +73,7 @@ public final class ChangesViewDnDSupport extends ChangesTreeDnDSupport {
       final ChangeListDragBean dragBean = (ChangeListDragBean)attached;
       final ChangesBrowserNode<?> changesBrowserNode = dragBean.getTargetNode();
       if (changesBrowserNode != null) {
-        ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
-        changesBrowserNode.acceptDrop(changeListManager, dragBean);
+        changesBrowserNode.acceptDrop(new DefaultChangeListOwner(myProject), dragBean);
       }
     }
   }

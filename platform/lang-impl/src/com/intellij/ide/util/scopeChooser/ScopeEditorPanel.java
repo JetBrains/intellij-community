@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.FlattenModulesToggleAction;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -40,7 +41,6 @@ import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
 import javax.swing.event.*;
-import javax.swing.tree.ExpandVetoException;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusEvent;
@@ -446,12 +446,12 @@ public class ScopeEditorPanel {
     new TreeSpeedSearch(tree);
     tree.addTreeWillExpandListener(new TreeWillExpandListener() {
       @Override
-      public void treeWillExpand(TreeExpansionEvent event) throws ExpandVetoException {
+      public void treeWillExpand(TreeExpansionEvent event) {
         ((PackageDependenciesNode)event.getPath().getLastPathComponent()).sortChildren();
       }
 
       @Override
-      public void treeWillCollapse(TreeExpansionEvent event) throws ExpandVetoException {
+      public void treeWillCollapse(TreeExpansionEvent event) {
       }
     });
 
@@ -482,7 +482,7 @@ public class ScopeEditorPanel {
           if (myErrorMessage == null) {
             String message = IdeBundle.message("label.scope.contains.files", model.getMarkedFileCount(), model.getTotalFileCount());
             if (FilePatternPackageSet.SCOPE_FILE.equals(DependencyUISettings.getInstance().SCOPE_TYPE)) {
-              message = UIUtil.toHtml(message + "<br/>(Non-project files are not shown)");
+              message = UIUtil.toHtml(message + "<br>" + LangBundle.message("non.project.files.are.not.shown"));
             }
             myMatchingCountLabel.setText(message);
             myMatchingCountLabel.setForeground(new JLabel().getForeground());
@@ -646,7 +646,7 @@ public class ScopeEditorPanel {
 
     public MyPanelProgressIndicator(final boolean requestFocus) {
       //noinspection Convert2Lambda
-      super(new Consumer<JComponent>() {
+      super(new Consumer<>() {
         @Override
         public void consume(final JComponent component) {
           setToComponent(component, requestFocus);

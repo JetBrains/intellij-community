@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesModifiab
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable;
 import com.intellij.openapi.ui.MasterDetailsComponent;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +37,11 @@ public final class CreateNewLibraryAction extends DumbAwareAction {
   private final BaseLibrariesConfigurable myLibrariesConfigurable;
   private final Project myProject;
 
-  private CreateNewLibraryAction(@NotNull String text, @Nullable Icon icon, @Nullable LibraryType type, @NotNull BaseLibrariesConfigurable librariesConfigurable, final @NotNull Project project) {
+  private CreateNewLibraryAction(@NotNull @NlsActions.ActionText String text,
+                                 @Nullable Icon icon,
+                                 @Nullable LibraryType type,
+                                 @NotNull BaseLibrariesConfigurable librariesConfigurable,
+                                 final @NotNull Project project) {
     super(text, null, icon);
     myType = type;
     myLibrariesConfigurable = librariesConfigurable;
@@ -76,7 +81,9 @@ public final class CreateNewLibraryAction extends DumbAwareAction {
     return configuration;
   }
 
-  public static AnAction[] createActionOrGroup(@NotNull String text, @NotNull BaseLibrariesConfigurable librariesConfigurable, final @NotNull Project project) {
+  public static AnAction[] createActionOrGroup(@NotNull @NlsActions.ActionText String text,
+                                               @NotNull BaseLibrariesConfigurable librariesConfigurable,
+                                               final @NotNull Project project) {
     final LibraryType<?>[] extensions = LibraryType.EP_NAME.getExtensions();
     List<LibraryType<?>> suitableTypes = new ArrayList<>();
     if (librariesConfigurable instanceof ProjectLibrariesConfigurable || !project.isDefault()) {

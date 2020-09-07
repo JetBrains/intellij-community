@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -162,17 +163,22 @@ public class ExceptionWorker {
     return startIdx < 0 ? line.indexOf(AT_PREFIX) : startIdx;
   }
 
-  private static int findFirstRParenAfterDigit(@NotNull String line) {
-    int rParenIdx = -1;
+  private static int findRParenAfterLocation(@NotNull String line) {
+    int afterDigit = -1;
     int rParenCandidate = line.lastIndexOf(')');
-    //Looking for minimal position for ')' after a digit
+    boolean singleOccurrence = true;
     while (rParenCandidate > 0) {
       if (Character.isDigit(line.charAt(rParenCandidate - 1))) {
-        rParenIdx = rParenCandidate;
+        afterDigit = rParenCandidate;
       }
-      rParenCandidate = line.lastIndexOf(')', rParenCandidate - 1);
+      int prev = line.lastIndexOf(')', rParenCandidate - 1);
+      if (prev < 0 && singleOccurrence) {
+        return rParenCandidate;
+      }
+      rParenCandidate = prev;
+      singleOccurrence = false;
     }
-    return rParenIdx;
+    return afterDigit;
   }
 
   @Nullable
@@ -186,7 +192,7 @@ public class ExceptionWorker {
   @Nullable
   private static ParsedLine parseNormalStackTraceLine(@NotNull String line) {
     int startIdx = findAtPrefix(line);
-    int rParenIdx = findFirstRParenAfterDigit(line);
+    int rParenIdx = findRParenAfterLocation(line);
     if (rParenIdx < 0) return null;
 
     TextRange methodName = findMethodNameCandidateBefore(line, startIdx, rParenIdx);
@@ -309,6 +315,10 @@ public class ExceptionWorker {
                                                     int fileLineStart, int fileLineEnd, @NotNull String line) {
       TextRange fileLineRange = TextRange.create(fileLineStart, fileLineEnd);
       String fileAndLine = fileLineRange.substring(line);
+
+      if ("Native Method".equals(fileAndLine)) {
+        return new ParsedLine(classFqnRange, methodNameRange, fileLineRange, null, -1);
+      }
 
       int colonIndex = fileAndLine.lastIndexOf(':');
       if (colonIndex < 0) return null;
@@ -457,11 +467,11 @@ public class ExceptionWorker {
         action = exceptionAnalysisProvider.getAnalysisAction(element, info, supplier);
       }
       if (action == null) return;
-      String actionName = Objects.requireNonNull(action.getTemplatePresentation().getDescription());
+      String actionName = action.getTemplatePresentation().getDescription();
+      Objects.requireNonNull(actionName);
       Ref<Balloon> ref = Ref.create();
       Balloon balloon = JBPopupFactory.getInstance()
-        .createHtmlTextBalloonBuilder(String.format("<a href=\"analyze\">%s</a>", StringUtil.escapeXmlEntities(actionName)),
-                                      null, MessageType.INFO.getPopupBackground(), new HyperlinkAdapter() {
+        .createHtmlTextBalloonBuilder(HtmlChunk.link("analyze", actionName).toString(), null, MessageType.INFO.getPopupBackground(), new HyperlinkAdapter() {
             @Override
             protected void hyperlinkActivated(HyperlinkEvent e) {
               if (e.getDescription().equals("analyze")) {

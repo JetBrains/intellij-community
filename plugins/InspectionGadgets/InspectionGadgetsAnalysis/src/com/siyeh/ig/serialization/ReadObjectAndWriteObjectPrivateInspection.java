@@ -62,7 +62,7 @@ public class ReadObjectAndWriteObjectPrivateInspection
       if (aClass == null) {
         return;
       }
-      if (aClass.isInterface() || aClass.isAnnotationType()) {
+      if (aClass.isInterface() || aClass.isAnnotationType() || aClass.isRecord()) {
         return;
       }
       if (method.hasModifierProperty(PsiModifier.PRIVATE)) {

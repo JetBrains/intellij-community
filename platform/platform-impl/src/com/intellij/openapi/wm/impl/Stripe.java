@@ -11,6 +11,7 @@ import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -498,7 +499,7 @@ final class Stripe extends JPanel implements UISettingsListener {
 
   @Override
   public String toString() {
-    String anchor = null;
+    @NonNls String anchor = null;
     switch (this.anchor) {
       case SwingConstants.TOP:
         anchor = "TOP";

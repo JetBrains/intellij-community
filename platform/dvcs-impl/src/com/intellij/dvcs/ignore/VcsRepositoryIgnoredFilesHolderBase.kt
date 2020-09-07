@@ -9,7 +9,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.ChangeListListener
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
+import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl
 import com.intellij.openapi.vfs.newvfs.events.*
 import com.intellij.util.EventDispatcher
@@ -85,7 +85,7 @@ abstract class VcsRepositoryIgnoredFilesHolderBase<REPOSITORY : Repository>(
       unprocessedFiles.removeAll(filesToCheck)
     }
     //if the files already unversioned, there is no need to check it for ignore
-    val unversioned = ChangeListManagerImpl.getInstanceImpl(repository.project).unversionedFilesPaths
+    val unversioned = ChangeListManager.getInstance(repository.project).unversionedFilesPaths
     filesToCheck.removeAll(unversioned)
 
     if (filesToCheck.isNotEmpty()) {

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.projectRoots.impl;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -39,7 +40,7 @@ public abstract class JavaDependentSdkType extends DependentSdkType implements J
   @NotNull
   @Override
   public String getUnsatisfiedDependencyMessage() {
-    return "You need to configure a Java SDK first";
+    return JavaBundle.message("dependant.sdk.unsatisfied.dependency.message");
   }
 
   @NotNull

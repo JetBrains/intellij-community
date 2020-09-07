@@ -10,6 +10,7 @@ import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 import git4idea.config.GitVersionSpecialty
+import org.jetbrains.annotations.NonNls
 
 @Service
 internal class GitAmendCommitService(project: Project) : AmendCommitService(project) {
@@ -24,7 +25,7 @@ internal class GitAmendCommitService(project: Project) : AmendCommitService(proj
     return Git.getInstance().runCommand(h).getOutputOrThrow()
   }
 
-  private fun getCommitMessageFormatPattern(): String =
+  private fun getCommitMessageFormatPattern(): @NonNls String =
     if (GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(project)) {
       "%B"
     }

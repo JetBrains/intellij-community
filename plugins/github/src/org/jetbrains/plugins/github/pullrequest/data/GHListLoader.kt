@@ -2,45 +2,45 @@
 package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
-import org.jetbrains.annotations.CalledInAwt
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.util.*
 
 interface GHListLoader<T> : Disposable {
-  @get:CalledInAwt
+  @get:RequiresEdt
   val loading: Boolean
 
-  @get:CalledInAwt
+  @get:RequiresEdt
   val error: Throwable?
 
-  @get:CalledInAwt
+  @get:RequiresEdt
   val loadedData: List<T>
 
   @Deprecated("Use loadedData", replaceWith = ReplaceWith("loadedData.isNotEmpty()"))
-  @get:CalledInAwt
+  @get:RequiresEdt
   val hasLoadedItems: Boolean
 
-  @CalledInAwt
+  @RequiresEdt
   fun canLoadMore(): Boolean
 
-  @CalledInAwt
+  @RequiresEdt
   fun loadMore(update: Boolean = false)
 
-  @CalledInAwt
+  @RequiresEdt
   fun updateData(item: T)
 
-  @CalledInAwt
+  @RequiresEdt
   fun removeData(predicate: (T) -> Boolean)
 
-  @CalledInAwt
+  @RequiresEdt
   fun reset()
 
-  @CalledInAwt
+  @RequiresEdt
   fun addLoadingStateChangeListener(disposable: Disposable, listener: () -> Unit)
 
-  @CalledInAwt
+  @RequiresEdt
   fun addDataListener(disposable: Disposable, listener: ListDataListener)
 
-  @CalledInAwt
+  @RequiresEdt
   fun addErrorChangeListener(disposable: Disposable, listener: () -> Unit)
 
   interface ListDataListener : EventListener {

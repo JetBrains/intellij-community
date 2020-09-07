@@ -17,7 +17,9 @@ package com.intellij.execution.ui;
 
 import com.intellij.application.options.ModuleDescriptionsComboBox;
 import com.intellij.application.options.ModuleListCellRenderer;
+import com.intellij.application.options.ModulesCombo;
 import com.intellij.application.options.ModulesComboBox;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.openapi.module.Module;
@@ -26,6 +28,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ModulesAlphaComparator;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.SortedComboBoxModel;
@@ -37,10 +40,9 @@ import java.util.Collection;
 import java.util.List;
 
 public class ConfigurationModuleSelector {
-  public static final String NO_MODULE_TEXT = "<no module>";
   private final Project myProject;
   /** this field is {@code null} if and only if {@link #myModulesList} is not null */
-  private final ModuleDescriptionsComboBox myModulesDescriptionsComboBox;
+  private final ModulesCombo myModulesDescriptionsComboBox;
   /** this field is {@code null} if and only if {@link #myModulesDescriptionsComboBox} is not null */
   private final JComboBox<? extends Module> myModulesList;
 
@@ -49,25 +51,29 @@ public class ConfigurationModuleSelector {
    */
   @Deprecated
   public ConfigurationModuleSelector(final Project project, final JComboBox<? extends Module> modulesList) {
-    this(project, modulesList, NO_MODULE_TEXT);
+    this(project, modulesList, JavaPsiBundle.message("list.item.no.module"));
   }
 
   public ConfigurationModuleSelector(Project project, ModulesComboBox modulesComboBox) {
-    this(project, modulesComboBox, NO_MODULE_TEXT);
+    this(project, modulesComboBox, JavaPsiBundle.message("list.item.no.module"));
   }
 
   public ConfigurationModuleSelector(Project project, ModuleDescriptionsComboBox modulesDescriptionsComboBox) {
-    this(project, modulesDescriptionsComboBox, NO_MODULE_TEXT);
+    this(project, modulesDescriptionsComboBox, JavaPsiBundle.message("list.item.no.module"));
   }
 
-  public ConfigurationModuleSelector(Project project, ModuleDescriptionsComboBox modulesDescriptionsComboBox, String emptySelectionText) {
+  public ConfigurationModuleSelector(Project project, ModulesCombo modulesDescriptionsComboBox) {
+    this(project, modulesDescriptionsComboBox, JavaPsiBundle.message("list.item.no.module"));
+  }
+
+  public ConfigurationModuleSelector(Project project, ModulesCombo modulesDescriptionsComboBox, @NlsContexts.ListItem String emptySelectionText) {
     myProject = project;
     myModulesDescriptionsComboBox = modulesDescriptionsComboBox;
     myModulesList = null;
     modulesDescriptionsComboBox.allowEmptySelection(emptySelectionText);
   }
 
-  public ConfigurationModuleSelector(Project project, ModulesComboBox modulesComboBox, String noModule) {
+  public ConfigurationModuleSelector(Project project, ModulesComboBox modulesComboBox, @NlsContexts.ListItem String noModule) {
     myProject = project;
     myModulesList = modulesComboBox;
     myModulesDescriptionsComboBox = null;
@@ -78,7 +84,7 @@ public class ConfigurationModuleSelector {
    * @deprecated use {@link #ConfigurationModuleSelector(Project, ModulesComboBox, String)} instead
    */
   @Deprecated
-  public ConfigurationModuleSelector(final Project project, final JComboBox<? extends Module> modulesList, final String noModule) {
+  public ConfigurationModuleSelector(final Project project, final JComboBox<? extends Module> modulesList, final @NlsContexts.ListItem String noModule) {
     myProject = project;
     myModulesList = modulesList;
     myModulesDescriptionsComboBox = null;

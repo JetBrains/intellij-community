@@ -6,7 +6,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
-import org.jetbrains.annotations.CalledInAwt;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +62,7 @@ public interface UpdateEnvironment {
    * Returns true if the {@link UpdateSession} created by this UpdateEnvironment will
    * {@link UpdateSession#showNotification() show a custom notification} instead of the standard one.
    */
-  @CalledInAwt
+  @RequiresEdt
   default boolean hasCustomNotification() {
     return false;
   }

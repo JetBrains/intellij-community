@@ -3,7 +3,6 @@ package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -19,9 +18,11 @@ import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomTarget;
 import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.util.xml.ResolvingConverter;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Action;
 import org.jetbrains.idea.devkit.dom.ActionOrGroup;
 import org.jetbrains.idea.devkit.dom.Group;
@@ -84,14 +85,14 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
 
   @Override
   public String getErrorMessage(@Nullable String s, ConvertContext context) {
-    return "Cannot resolve " + getResultTypes() + " '" + s + "'";
+    return DevKitBundle.message("plugin.xml.convert.action.or.group.cannot.resolve", getResultTypes(), s);
   }
 
   @Nullable
   @Override
   public LookupElement createLookupElement(ActionOrGroup actionOrGroup) {
     PsiElement psiElement = getPsiElement(actionOrGroup);
-    String name = StringUtil.notNullize(getName(actionOrGroup), "<invalid name>");
+    String name = StringUtil.notNullize(getName(actionOrGroup), DevKitBundle.message("plugin.xml.convert.action.or.group.invalid.name"));
     LookupElementBuilder builder = psiElement == null ? LookupElementBuilder.create(name) :
                                    LookupElementBuilder.create(psiElement, name);
 
@@ -116,9 +117,9 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
     return true;
   }
 
-  @InspectionMessage
+  @Nls
   protected String getResultTypes() {
-    return "action or group";
+    return DevKitBundle.message("plugin.xml.convert.action.or.group.type.action.or.group");
   }
 
 
@@ -130,7 +131,7 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
 
     @Override
     protected String getResultTypes() {
-      return "action";
+      return DevKitBundle.message("plugin.xml.convert.action.or.group.type.action");
     }
   }
 
@@ -142,7 +143,7 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
 
     @Override
     protected String getResultTypes() {
-      return "group";
+      return DevKitBundle.message("plugin.xml.convert.action.or.group.type.group");
     }
   }
 

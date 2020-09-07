@@ -1,5 +1,6 @@
 <idea-plugin>
   <module value="com.intellij.modules.structuralsearch"/>
+  <resource-bundle>messages.SSRBundle</resource-bundle>
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.structuralsearch.profile"
@@ -35,6 +36,7 @@
     <structuralsearch.filter implementation="com.intellij.structuralsearch.plugin.ui.filters.ReferenceFilter"/>
     <structuralsearch.filter implementation="com.intellij.structuralsearch.plugin.ui.filters.TextFilter"/>
     <structuralsearch.filter implementation="com.intellij.structuralsearch.plugin.ui.filters.TypeFilter"/>
+    <notificationGroup id="Structural Search" displayType="STICKY_BALLOON" toolWindowId="Find" key="structural.search.title" isLogByDefault="true"/>
   </extensions>
 
   <actions>

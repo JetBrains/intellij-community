@@ -38,7 +38,7 @@ public final class FileSystemUtil {
 
   private static final Logger LOG = Logger.getInstance(FileSystemUtil.class);
 
-  private interface Mediator {
+  interface Mediator {
     @Nullable FileAttributes getAttributes(@NotNull String path) throws IOException;
     @Nullable String resolveSymLink(@NotNull String path) throws IOException;
     boolean clonePermissions(@NotNull String source, @NotNull String target, boolean execOnly) throws IOException;
@@ -280,6 +280,7 @@ public final class FileSystemUtil {
     private final boolean myCoarseTs = SystemProperties.getBooleanProperty(COARSE_TIMESTAMP_KEY, false);
     private final LimitedPool<Memory> myMemoryPool = new LimitedPool.Sync<>(10, () -> new Memory(256));
 
+    @SuppressWarnings("HardCodedStringLiteral")
     JnaUnixMediatorImpl() {
       if ("linux-x86".equals(Platform.RESOURCE_PREFIX)) myOffsets = LINUX_32;
       else if ("linux-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = LINUX_64;
@@ -330,7 +331,9 @@ public final class FileSystemUtil {
 
         boolean writable = ownFile(buffer) ? (mode & LibC.WRITE_MASK) != 0 : LibC.access(path, LibC.W_OK) == 0;
 
-        return new FileAttributes(isDirectory, isSpecial, isSymlink, false, size, mTime, writable);
+        //todo CaseSensitiveDir teach me to obtain dir case sensitivity
+        FileAttributes.CaseSensitivity sensitivity = stubCaseSensitivity(isDirectory);
+        return new FileAttributes(isDirectory, isSpecial, isSymlink, false, size, mTime, writable, sensitivity);
       }
       finally {
         myMemoryPool.recycle(buffer);
@@ -410,15 +413,18 @@ public final class FileSystemUtil {
         boolean isOther = attributes.isOther();
         long size = attributes.size();
         long lastModified = attributes.lastModifiedTime().toMillis();
+        boolean isHidden;
+        boolean isWritable;
         if (SystemInfo.isWindows) {
-          boolean isHidden = path.getParent() != null && ((DosFileAttributes)attributes).isHidden();
-          boolean isWritable = isDirectory || !((DosFileAttributes)attributes).isReadOnly();
-          return new FileAttributes(isDirectory, isOther, isSymbolicLink, isHidden, size, lastModified, isWritable);
+          isHidden = path.getParent() != null && ((DosFileAttributes)attributes).isHidden();
+          isWritable = isDirectory || !((DosFileAttributes)attributes).isReadOnly();
         }
         else {
-          boolean isWritable = Files.isWritable(path);
-          return new FileAttributes(isDirectory, isOther, isSymbolicLink, false, size, lastModified, isWritable);
+          isHidden = false;
+          isWritable = Files.isWritable(path);
         }
+        FileAttributes.CaseSensitivity sensitivity = stubCaseSensitivity(isDirectory);
+        return new FileAttributes(isDirectory, isOther, isSymbolicLink, isHidden, size, lastModified, isWritable, sensitivity);
       }
       catch (IOException | InvalidPathException e) {
         LOG.debug(pathStr, e);
@@ -462,5 +468,16 @@ public final class FileSystemUtil {
       Files.setAttribute(targetPath, "posix:permissions", newPermissions);
       return true;
     }
+  }
+
+  @NotNull
+  public static FileAttributes.CaseSensitivity stubCaseSensitivity(boolean isDirectory) {
+    //todo CaseSensitiveDir should actually load dir case sensitivity with some clever native call
+    // in the meantime, just use the current file system case
+    return !isDirectory
+           ? FileAttributes.CaseSensitivity.UNSPECIFIED
+           : SystemInfo.isFileSystemCaseSensitive
+             ? FileAttributes.CaseSensitivity.SENSITIVE
+             : FileAttributes.CaseSensitivity.INSENSITIVE;
   }
 }

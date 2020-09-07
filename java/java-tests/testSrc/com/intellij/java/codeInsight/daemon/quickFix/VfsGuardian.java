@@ -9,10 +9,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 final class VfsGuardian {
@@ -21,7 +21,7 @@ final class VfsGuardian {
    * Listens for changes in files under {@code root} and reverts them back when {@code parent} gets disposed
    */
   static void guard(@NotNull String root, @NotNull Disposable parent) {
-    Map<VirtualFile, byte[]> oldContent = new THashMap<>();
+    Map<VirtualFile, byte[]> oldContent = new HashMap<>();
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
       @Override
       public void beforeContentsChange(@NotNull VirtualFileEvent event) {

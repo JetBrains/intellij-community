@@ -21,6 +21,7 @@ import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -41,12 +42,12 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText, T
     init();
   }
 
-  public JBTextField(String text) {
+  public JBTextField(@Nls String text) {
     super(text);
     init();
   }
 
-  public JBTextField(String text, int columns) {
+  public JBTextField(@Nls String text, int columns) {
     super(text, columns);
     init();
   }
@@ -110,7 +111,7 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText, T
   @Override
   public String getToolTipText(MouseEvent event) {
     TextUI ui = getUI();
-    String text = ui == null ? null : ui.getToolTipText(this, event.getPoint());
+    @SuppressWarnings("HardCodedStringLiteral") String text = ui == null ? null : ui.getToolTipText(this, event.getPoint());
     return text != null ? text : getToolTipText();
   }
 }

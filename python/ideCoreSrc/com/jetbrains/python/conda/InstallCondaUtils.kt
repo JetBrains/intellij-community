@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SystemProperties
+import org.jetbrains.annotations.Nls
 import java.io.File
 
 /**
@@ -110,6 +111,7 @@ object InstallCondaUtils {
    * @return String with error message or null if none
    */
   @JvmStatic
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   fun checkPath(path: String): String? {
     if (path.isBlank())
       return ActionsBundle.message("action.SetupMiniconda.installDirectoryMissing")

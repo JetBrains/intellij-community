@@ -5,6 +5,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
@@ -29,10 +30,8 @@ import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassTagDescriptorBase;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyTagDescriptor;
 import org.jetbrains.plugins.javaFX.indexing.JavaFxControllerClassIndex;
@@ -470,7 +469,7 @@ public final class JavaFxPsiUtil {
     final PsiMethod valueOf = findValueOfMethod(psiClass);
     if (valueOf == null) {
       if (!hasBuilder(psiClass)) {
-        messageConsumer.accept("Unable to instantiate");
+        messageConsumer.accept(JavaFXBundle.message("unable.to.instantiate"));
         return false;
       }
     }
@@ -626,16 +625,17 @@ public final class JavaFxPsiUtil {
 
   private static boolean unableToCoerceError(@NotNull PsiType targetType, @NotNull PsiClass fromClass,
                                              @NotNull BiConsumer<? super String, ? super Validator.ValidationHost.ErrorType> messageConsumer) {
-    messageConsumer.accept("Unable to coerce " + HighlightUtil.formatClass(fromClass) + " to " + targetType.getCanonicalText(),
-                           Validator.ValidationHost.ErrorType.ERROR);
+    messageConsumer.accept(
+      JavaFXBundle.message("unable.to.coerce.error", HighlightUtil.formatClass(fromClass), targetType.getCanonicalText()),
+      Validator.ValidationHost.ErrorType.ERROR);
     return false;
   }
 
   private static boolean unrelatedTypesWarning(@NotNull PsiType targetType, @NotNull PsiClass fromClass,
-                                               @NotNull BiConsumer<? super String, ? super Validator.ValidationHost.ErrorType> messageConsumer) {
-    messageConsumer.accept("Conversion between unrelated types, " + HighlightUtil.formatClass(fromClass) +
-                           " to " + targetType.getCanonicalText(),
-                           Validator.ValidationHost.ErrorType.WARNING);
+                                               @NotNull BiConsumer<? super @InspectionMessage String, ? super Validator.ValidationHost.ErrorType> messageConsumer) {
+    messageConsumer.accept(
+      JavaFXBundle.message("conversion.between.unrelated.types.error", HighlightUtil.formatClass(fromClass), targetType.getCanonicalText()),
+      Validator.ValidationHost.ErrorType.WARNING);
     return true;
   }
 
@@ -1105,7 +1105,7 @@ public final class JavaFxPsiUtil {
   }
 
   @Nullable
-  public static String validateEnumConstant(@NotNull PsiClass enumClass, @NonNls @Nullable String name) {
+  public static @Nls String validateEnumConstant(@NotNull PsiClass enumClass, @NonNls @Nullable String name) {
     if (!enumClass.isEnum() || name == null) return null;
     final Set<String> constantNames = CachedValuesManager.getCachedValue(enumClass, () ->
       CachedValueProvider.Result.create(Arrays.stream(enumClass.getFields())
@@ -1115,7 +1115,7 @@ public final class JavaFxPsiUtil {
                                           .collect(Collectors.toCollection(THashSet::new)),
                                         PsiModificationTracker.MODIFICATION_COUNT));
     if (!constantNames.contains(StringUtil.toUpperCase(name))) {
-      return "No enum constant '" + name + "' in " + enumClass.getQualifiedName();
+      return JavaFXBundle.message("enum.constant.not.found", name, enumClass.getQualifiedName());
     }
     return null;
   }

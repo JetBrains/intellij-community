@@ -80,11 +80,15 @@ public class HgPullCommand {
     HgCommandResult result = executor.executeInCurrentThread(repo, "pull", arguments);
     if (HgErrorUtil.isAuthorizationError(result)) {
       new HgCommandResultNotifier(project)
-        .notifyError(result, HgBundle.message("action.hg4idea.pull.auth.required"), HgBundle.message("action.hg4idea.pull.auth.required.msg", source));
+        .notifyError("hg.pull.auth.required",
+                     result,
+                     HgBundle.message("action.hg4idea.pull.auth.required"),
+                     HgBundle.message("action.hg4idea.pull.auth.required.msg", source));
       return ERROR;
     }
     else if (HgErrorUtil.isAbort(result) || result.getExitValue() > 1) { //if result == null - > isAbort returns true
-      new HgCommandResultNotifier(project).notifyError(result, "", HgBundle.message("action.hg4idea.pull.failed"));
+      new HgCommandResultNotifier(project)
+        .notifyError("hg.pull.error", result, "", HgBundle.message("action.hg4idea.pull.failed"));
       return ERROR;
     }
     else if (result.getExitValue() == 1) {

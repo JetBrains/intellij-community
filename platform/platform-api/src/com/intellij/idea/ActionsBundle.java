@@ -32,7 +32,7 @@ public final class ActionsBundle extends DynamicBundle {
     return message("action." + actionId + ".text");
   }
 
-  public static String groupText(@NonNls String actionId) {
+  public static @NlsActions.ActionText String groupText(@NonNls String actionId) {
     return message("group." + actionId + ".text");
   }
 

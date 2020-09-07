@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.ide.highlighter.XHtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.Language;
@@ -71,10 +72,10 @@ public class ExternalDocumentValidator {
 
   private static final class ValidationInfo {
     final PsiElement element;
-    final String message;
+    final @InspectionMessage String message;
     final Validator.ValidationHost.ErrorType type;
 
-    private ValidationInfo(PsiElement element, String message, Validator.ValidationHost.ErrorType type) {
+    private ValidationInfo(PsiElement element, @InspectionMessage String message, Validator.ValidationHost.ErrorType type) {
       this.element = element;
       this.message = message;
       this.type = type;
@@ -306,10 +307,10 @@ public class ExternalDocumentValidator {
     }
   }
 
-  private PsiElement addProblemToTagName(PsiElement currentElement,
-                                     final PsiElement originalElement,
-                                     final String localizedMessage,
-                                     final ValidateXmlActionHandler.ProblemType problemType) {
+  private void addProblemToTagName(PsiElement currentElement,
+                                   final PsiElement originalElement,
+                                   final @InspectionMessage String localizedMessage,
+                                   final ValidateXmlActionHandler.ProblemType problemType) {
     currentElement = PsiTreeUtil.getParentOfType(currentElement,XmlTag.class,false);
     if (currentElement==null) {
       currentElement = PsiTreeUtil.getParentOfType(originalElement,XmlElementDecl.class,false);
@@ -322,8 +323,6 @@ public class ExternalDocumentValidator {
     if (currentElement!=null) {
       myHost.addMessage(currentElement,localizedMessage, getProblemType(problemType));
     }
-
-    return currentElement;
   }
 
   private static void assertValidElement(PsiElement currentElement, PsiElement originalElement, String message) {

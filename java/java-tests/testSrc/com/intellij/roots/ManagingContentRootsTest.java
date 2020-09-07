@@ -2,11 +2,13 @@
 package com.intellij.roots;
 
 import com.intellij.configurationStore.StoreUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -58,26 +60,6 @@ public class ManagingContentRootsTest extends JavaProjectTestCase {
     VirtualFile root = createChildDirectory(dir, "root");
     addContentRoot(root.getPath());
     assertEquals(root, findContentEntry(root.getUrl()).getFile());
-  }
-
-  public void testGettingModifiableModelCorrectlySetsRootModelForContentEntries() {
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      PsiTestUtil.addContentRoot(myModule, dir);
-
-      ModifiableRootModel m = getRootManager().getModifiableModel();
-      ContentEntry e = findContentEntry(dir.getUrl(), m);
-
-      assertSame(m, e.getRootModel());
-      m.dispose();
-    });
-  }
-
-  public void testAddExcludePattern() {
-    PsiTestUtil.addContentRoot(myModule, dir);
-    ModuleRootModificationUtil.updateModel(myModule, model -> findContentEntry(dir.getUrl(), model).addExcludePattern("*.txt"));
-    assertEquals("*.txt", assertOneElement(findContentEntry(dir.getUrl()).getExcludePatterns()));
-    ModuleRootModificationUtil.updateModel(myModule, model -> findContentEntry(dir.getUrl(), model).removeExcludePattern("*.txt"));
-    assertEmpty(findContentEntry(dir.getUrl()).getExcludePatterns());
   }
 
   public void testExcludePatternSerialization() throws Exception {

@@ -12,11 +12,11 @@ public class Method {
     return null;
   }
 
-  public Integer @Required @Preliminary [][] test4() {
+  public Integer[] @Required @Preliminary [] test4() {
     return null;
   }
 
-  public Integer[] @Required [][] test5() {
+  public Integer @Required [][][] test5() {
     retun null;
   }
 }

@@ -205,7 +205,7 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
 
   companion object {
     const val TOOLWINDOW_ID = ToolWindowId.VCS
-    internal const val COMMIT_TOOLWINDOW_ID = "Commit"
+    internal const val COMMIT_TOOLWINDOW_ID = "Commit" // NON-NLS
 
     @JvmField
     val CONTENT_PROVIDER_SUPPLIER_KEY = Key.create<() -> ChangesViewContentProvider>("CONTENT_PROVIDER_SUPPLIER")

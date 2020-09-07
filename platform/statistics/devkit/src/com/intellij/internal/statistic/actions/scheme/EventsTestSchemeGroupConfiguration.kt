@@ -105,11 +105,13 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
       buttonGroup {
         row {
           allowAllEventsRadioButton = radioButton(StatisticsBundle.message("stats.allow.all.events")).component
+          allowAllEventsRadioButton.isSelected = !initialGroup.useCustomRules
           allowAllEventsRadioButton.addChangeListener { updateRulesOption() }
         }
         row {
           cell {
             customRulesRadioButton = radioButton(StatisticsBundle.message("stats.use.custom.validation.rules")).component
+            customRulesRadioButton.isSelected = initialGroup.useCustomRules
             customRulesRadioButton.addChangeListener { updateRulesOption() }
             ContextHelpLabel.create(StatisticsBundle.message("stats.test.scheme.custom.rules.help"))()
           }

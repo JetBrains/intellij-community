@@ -27,6 +27,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.resolve.*;
+import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -190,15 +191,26 @@ public final class PyiUtil {
       if (originalOwner instanceof PyTypedElement) {
         final TypeEvalContext context = TypeEvalContext.codeInsightFallback(file.getProject());
         final PyType type = context.getType((PyTypedElement)originalOwner);
-
-        if (type != null) {
-          final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
-          final PsiElement result = takeTopPriorityElement(type.resolveMember(name, null, AccessDirection.READ, resolveContext));
-          return result == element ? null : result;
-        }
+        final PsiElement result = resolveSimilarMember(type, name, context);
+        return result == element ? null : result;
       }
     }
     return null;
+  }
+
+  private static @Nullable PsiElement resolveSimilarMember(@Nullable PyType similarOwnerType,
+                                                           @NotNull String name,
+                                                           @NotNull TypeEvalContext context) {
+    if (similarOwnerType == null) return null;
+
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+
+    final List<? extends RatedResolveResult> results =
+      similarOwnerType instanceof PyClassLikeType
+      ? ((PyClassLikeType)similarOwnerType).resolveMember(name, null, AccessDirection.READ, resolveContext, false)
+      : similarOwnerType.resolveMember(name, null, AccessDirection.READ, resolveContext);
+
+    return takeTopPriorityElement(results);
   }
 
   @NotNull

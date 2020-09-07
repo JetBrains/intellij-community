@@ -22,6 +22,7 @@ import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.config.GitVersionSpecialty;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -120,7 +121,7 @@ public final class GitFileHistory {
    * If it's not a rename, returns null.
    */
   @Nullable
-  private Pair<String, FilePath> getFirstCommitParentAndPathIfRename(@NotNull String commit,
+  private Pair<String, FilePath> getFirstCommitParentAndPathIfRename(@NotNull @NonNls String commit,
                                                                      @NotNull FilePath filePath) throws VcsException {
     // 'git show -M --name-status <commit hash>' returns the information about commit and detects renames.
     // NB: we can't specify the filepath, because then rename detection will work only with the '--follow' option, which we don't wanna use.
@@ -154,8 +155,8 @@ public final class GitFileHistory {
   @NotNull
   private GitLineHandler createLogHandler(@NotNull GitLogParser<GitLogFullRecord> parser,
                                           @NotNull FilePath path,
-                                          @NotNull String lastCommit,
-                                          String... parameters) {
+                                          @NotNull @NonNls String lastCommit,
+                                          @NonNls String... parameters) {
     GitLineHandler h = new GitLineHandler(myProject, myRoot, GitCommand.LOG);
     h.setStdoutSuppressed(true);
     h.addParameters("--name-status", parser.getPretty(), "--encoding=UTF-8", lastCommit);
@@ -185,7 +186,7 @@ public final class GitFileHistory {
                                  @Nullable VcsRevisionNumber startingFrom,
                                  @NotNull Consumer<? super GitFileRevision> consumer,
                                  @NotNull Consumer<? super VcsException> exceptionConsumer,
-                                 String... parameters) {
+                                 @NonNls String... parameters) {
     try {
       VirtualFile repositoryRoot = GitUtil.getRootForFile(project, path);
       VcsRevisionNumber revision = startingFrom == null ? GitRevisionNumber.HEAD : startingFrom;
@@ -210,7 +211,7 @@ public final class GitFileHistory {
   public static List<VcsFileRevision> collectHistoryForRevision(@NotNull Project project,
                                                                 @NotNull FilePath path,
                                                                 @NotNull VcsRevisionNumber startingFrom,
-                                                                String... parameters) throws VcsException {
+                                                                @NonNls String... parameters) throws VcsException {
     List<VcsFileRevision> revisions = new ArrayList<>();
     List<VcsException> exceptions = new ArrayList<>();
 
@@ -232,7 +233,7 @@ public final class GitFileHistory {
    * @throws VcsException if there is problem with running git
    */
   @NotNull
-  public static List<VcsFileRevision> collectHistory(@NotNull Project project, @NotNull FilePath path, String... parameters)
+  public static List<VcsFileRevision> collectHistory(@NotNull Project project, @NotNull FilePath path, @NonNls String... parameters)
     throws VcsException {
     return collectHistoryForRevision(project, path, GitRevisionNumber.HEAD, parameters);
   }

@@ -3,7 +3,6 @@ package org.jetbrains.jps.ant.model.impl;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -56,12 +55,6 @@ public class JpsAntModelSerializerExtension extends JpsModelSerializerExtension 
       return new JpsAntArtifactExtensionImpl(
         optionsTag != null ? XmlSerializer.deserialize(optionsTag, AntArtifactExtensionProperties.class) : null);
     }
-
-    @Override
-    public void saveExtension(@NotNull JpsAntArtifactExtension extension, @NotNull Element optionsTag) {
-      AntArtifactExtensionProperties properties = ((JpsAntArtifactExtensionImpl)extension).getProperties();
-      XmlSerializer.serializeInto(properties, optionsTag, new SkipDefaultValuesSerializationFilters());
-    }
   }
 
   @Nullable
@@ -98,10 +91,6 @@ public class JpsAntModelSerializerExtension extends JpsModelSerializerExtension 
         }
       }
     }
-    @Override
-    public void saveExtension(@NotNull JpsGlobal global, @NotNull Element componentTag) {
-    }
-
   }
   private static final class JpsProjectAntConfigurationSerializer extends JpsProjectExtensionSerializer {
     private JpsProjectAntConfigurationSerializer() {
@@ -151,10 +140,6 @@ public class JpsAntModelSerializerExtension extends JpsModelSerializerExtension 
       }
       project.getContainer().setChild(JpsAntConfigurationImpl.ROLE, new JpsAntConfigurationImpl(optionsMap, projectDefaultAntName));
     }
-
-    @Override
-    public void saveExtension(@NotNull JpsProject project, @NotNull Element componentTag) {
-    }
   }
 
   private static final class JpsWorkspaceAntConfigurationSerializer extends JpsProjectExtensionSerializer {
@@ -174,10 +159,6 @@ public class JpsAntModelSerializerExtension extends JpsModelSerializerExtension 
           }
         }
       }
-    }
-
-    @Override
-    public void saveExtension(@NotNull JpsProject project, @NotNull Element componentTag) {
     }
   }
 }

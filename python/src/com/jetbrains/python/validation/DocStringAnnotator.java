@@ -20,6 +20,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.documentation.docstrings.*;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Highlights doc strings in classes, functions, and files.
@@ -27,22 +28,22 @@ import com.jetbrains.python.psi.*;
 public class DocStringAnnotator extends PyAnnotator {
 
   @Override
-  public void visitPyFile(final PyFile node) {
+  public void visitPyFile(final @NotNull PyFile node) {
     annotateDocStringStmt(DocStringUtil.findDocStringExpression(node));
   }
 
   @Override
-  public void visitPyFunction(final PyFunction node) {
+  public void visitPyFunction(final @NotNull PyFunction node) {
     annotateDocStringStmt(DocStringUtil.findDocStringExpression(node.getStatementList()));
   }
 
   @Override
-  public void visitPyClass(final PyClass node) {
+  public void visitPyClass(final @NotNull PyClass node) {
     annotateDocStringStmt(DocStringUtil.findDocStringExpression(node.getStatementList()));
   }
 
   @Override
-  public void visitPyAssignmentStatement(PyAssignmentStatement node) {
+  public void visitPyAssignmentStatement(@NotNull PyAssignmentStatement node) {
     if (node.isAssignmentTo(PyNames.DOC)) {
       PyExpression right = node.getAssignedValue();
       if (right instanceof PyStringLiteralExpression) {
@@ -53,7 +54,7 @@ public class DocStringAnnotator extends PyAnnotator {
   }
 
   @Override
-  public void visitPyExpressionStatement(PyExpressionStatement node) {
+  public void visitPyExpressionStatement(@NotNull PyExpressionStatement node) {
     if (node.getExpression() instanceof PyStringLiteralExpression &&
         DocStringUtil.isVariableDocString((PyStringLiteralExpression)node.getExpression())) {
       annotateDocStringStmt((PyStringLiteralExpression)node.getExpression());

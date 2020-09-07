@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -179,7 +180,7 @@ public class ToggleHighlightingMarkupAction extends AnAction {
     return offset;
   }
 
-  private static void appendTag(StringBuilder sb, HighlightInfo cur, boolean opening) {
+  private static void appendTag(@NonNls StringBuilder sb, HighlightInfo cur, boolean opening) {
     sb.append("<");
     if (!opening) sb.append("/");
     if (cur.isAfterEndOfLine()) {

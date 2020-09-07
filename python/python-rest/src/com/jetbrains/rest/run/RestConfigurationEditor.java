@@ -6,6 +6,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.components.JBLabel;
@@ -125,7 +126,7 @@ public class RestConfigurationEditor extends SettingsEditor<RestRunConfiguration
     myCommonOptionsForm.setAnchor(anchor);
   }
 
-  public void setConfigurationName(String name) {
+  public void setConfigurationName(@NlsSafe String name) {
     myConfigurationName.setText(name);
   }
 }

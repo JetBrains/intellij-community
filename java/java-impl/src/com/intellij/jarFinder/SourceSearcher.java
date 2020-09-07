@@ -64,7 +64,7 @@ public abstract class SourceSearcher {
   protected static Element readElementCancelable(final ProgressIndicator indicator, String url) throws IOException {
     return HttpRequests.request(url)
       .accept("application/xml")
-      .connect(new HttpRequests.RequestProcessor<Element>() {
+      .connect(new HttpRequests.RequestProcessor<>() {
         @Override
         public Element process(@NotNull HttpRequests.Request request) throws IOException {
           try {

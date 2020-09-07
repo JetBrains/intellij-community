@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.util.NlsSafe
 import org.eclipse.jgit.api.MergeResult
 import org.eclipse.jgit.lib.RepositoryState
 import org.eclipse.jgit.merge.MergeStrategy
@@ -12,7 +13,9 @@ import org.jetbrains.settingsRepository.UpdateResult
 
 internal class Reset(manager: GitRepositoryManager, indicator: ProgressIndicator) : Pull(manager, indicator) {
   suspend fun reset(toTheirs: Boolean, localRepositoryInitializer: (() -> Unit)? = null): UpdateResult {
-    val message = if (toTheirs) "Overwrite local to ${manager.repository.upstream}" else "Overwrite remote ${manager.repository.upstream} to local"
+    @NlsSafe val message = if (toTheirs)
+      "Overwrite local to ${manager.repository.upstream}"
+      else "Overwrite remote ${manager.repository.upstream} to local"
     LOG.debug { message }
 
     val resetResult = repository.resetHard()

@@ -21,6 +21,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.codeInsight.lookup.VariableLookupItem;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
@@ -36,7 +37,7 @@ import java.util.*;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
-public class MagicCompletionContributor extends CompletionContributor {
+public class MagicCompletionContributor extends CompletionContributor implements DumbAware {
   private static final ElementPattern<PsiElement> IN_METHOD_CALL_ARGUMENT =
     psiElement().withParent(psiElement(PsiReferenceExpression.class).inside(psiElement(PsiExpressionList.class).withParent(PsiCall.class)));
   private static final ElementPattern<PsiElement> IN_BINARY_COMPARISON =
@@ -182,7 +183,7 @@ public class MagicCompletionContributor extends CompletionContributor {
                                             @NotNull final CompletionResultSet result,
                                             PsiElement pos,
                                             MagicConstantUtils.AllowedValues allowedValues) {
-    final Set<PsiElement> allowed = new THashSet<>(new TObjectHashingStrategy<PsiElement>() {
+    final Set<PsiElement> allowed = new THashSet<>(new TObjectHashingStrategy<>() {
       @Override
       public int computeHashCode(PsiElement object) {
         return 0;

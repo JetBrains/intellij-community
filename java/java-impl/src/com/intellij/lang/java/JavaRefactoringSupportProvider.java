@@ -7,6 +7,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -55,7 +56,7 @@ public class JavaRefactoringSupportProvider extends RefactoringSupportProvider {
 
   @Override
   public boolean isMemberInplaceRenameAvailable(@NotNull PsiElement elementToRename, @Nullable PsiElement context) {
-    return elementToRename instanceof PsiMember || elementToRename instanceof PsiJavaModule;
+    return elementToRename instanceof PsiMember || elementToRename instanceof PsiJavaModule || isCanonicalConstructorParameter(elementToRename);
   }
 
   @Override
@@ -135,6 +136,7 @@ public class JavaRefactoringSupportProvider extends RefactoringSupportProvider {
         !isResourceVariable(scopeElements)) {
       return false;    // ... and badly scoped resource variables
     }
+    if (isCanonicalConstructorParameter(elementToRename)) return false;
     PsiFile containingFile = elementToRename.getContainingFile();
     return PsiTreeUtil.isAncestor(containingFile, scopeElements[0], false);
   }
@@ -158,5 +160,12 @@ public class JavaRefactoringSupportProvider extends RefactoringSupportProvider {
     return scopeElements.length == 2 &&
            scopeElements[0] instanceof PsiResourceList &&
            scopeElements[1] instanceof PsiCodeBlock;
+  }
+
+  private static boolean isCanonicalConstructorParameter(@NotNull PsiElement elementToRename) {
+    if (!(elementToRename instanceof PsiParameter)) return false;
+    PsiMethod method = PsiTreeUtil.getParentOfType(elementToRename.getParent(), PsiMethod.class);
+    if (method == null) return false;
+    return JavaPsiRecordUtil.isExplicitCanonicalConstructor(method);
   }
 }

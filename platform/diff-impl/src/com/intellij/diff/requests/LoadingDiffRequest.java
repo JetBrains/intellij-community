@@ -16,10 +16,11 @@
 package com.intellij.diff.requests;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nullable;
 
 public class LoadingDiffRequest extends MessageDiffRequest {
-  public LoadingDiffRequest(@Nullable String title) {
+  public LoadingDiffRequest(@Nullable @NlsContexts.DialogTitle String title) {
     super(title, CommonBundle.getLoadingTreeNodeText());
   }
 

@@ -7,7 +7,9 @@
 
 package com.intellij.tasks.mantis.model;
 
-public class AccountData  implements java.io.Serializable {
+import org.jetbrains.annotations.Nls;
+
+public class AccountData implements java.io.Serializable {
     private java.math.BigInteger id;
 
     private java.lang.String name;
@@ -56,7 +58,7 @@ public class AccountData  implements java.io.Serializable {
      * 
      * @return name
      */
-    public java.lang.String getName() {
+    public java.lang.@Nls String getName() {
         return name;
     }
 

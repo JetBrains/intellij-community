@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ContentFolder;
 import com.intellij.openapi.roots.ExcludeFolder;
 import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -28,6 +29,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
@@ -145,7 +147,7 @@ public abstract class ContentRootPanel extends JPanel {
     return panel;
   }
 
-  protected JComponent createFolderGroupComponent(String title,
+  protected JComponent createFolderGroupComponent(@Nls String title,
                                                   List<? extends ContentFolderRef> folders,
                                                   Color foregroundColor,
                                                   @Nullable ModuleSourceRootEditHandler<?> editor) {
@@ -255,7 +257,7 @@ public abstract class ContentRootPanel extends JPanel {
     return false;
   }
 
-  protected static String toRelativeDisplayPath(String url, String ancestorUrl) {
+  protected static @NlsSafe String toRelativeDisplayPath(String url, String ancestorUrl) {
     if (!StringUtil.endsWithChar(ancestorUrl, '/')) {
       ancestorUrl += "/";
     }
@@ -265,7 +267,7 @@ public abstract class ContentRootPanel extends JPanel {
     return toDisplayPath(url);
   }
 
-  private static String toDisplayPath(final String url) {
+  private static @NlsSafe String toDisplayPath(final String url) {
     return VirtualFileManager.extractPath(url).replace('/', File.separatorChar);
   }
 

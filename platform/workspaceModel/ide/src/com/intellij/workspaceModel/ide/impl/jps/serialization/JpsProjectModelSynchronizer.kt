@@ -22,7 +22,6 @@ import com.intellij.openapi.project.getExternalConfigurationDir
 import com.intellij.openapi.project.impl.ProjectLifecycleListener
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
@@ -34,14 +33,15 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.project.stateStore
 import com.intellij.util.PathUtil
 import com.intellij.workspaceModel.ide.*
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.isExternalModuleFile
-import com.intellij.workspaceModel.ide.impl.moduleLoadingActivity
+import com.intellij.workspaceModel.ide.impl.recordModuleLoadingActivity
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
-import com.intellij.workspaceModel.storage.impl.VersionedStorageChanged
+import com.intellij.workspaceModel.storage.VersionedStorageChange
 import org.jdom.Element
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.*
@@ -63,8 +63,11 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
     if (!project.isDefault) {
       ApplicationManager.getApplication().messageBus.connect(this).subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener {
         override fun projectComponentsInitialized(project: Project) {
-          if (project === this@JpsProjectModelSynchronizer.project) {
-            loadInitialProject(project.configLocation!!)
+          LOG.debug { "Project component initialized" }
+          if (project === this@JpsProjectModelSynchronizer.project
+              && !(WorkspaceModel.getInstance(project) as WorkspaceModelImpl).loadedFromCache) {
+            LOG.info("Workspace model loaded without cache. Loading real project state into workspace model. ${Thread.currentThread()}")
+            loadRealProject(project)
           }
         }
       })
@@ -132,7 +135,7 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
       }
     })
     WorkspaceModelTopics.getInstance(project).subscribeImmediately(project.messageBus.connect(), object : WorkspaceModelChangeListener {
-      override fun changed(event: VersionedStorageChanged) {
+      override fun changed(event: VersionedStorageChange) {
         LOG.debug("Marking changed entities for save")
         event.getAllChanges().forEach {
           when (it) {
@@ -148,9 +151,10 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
     })
   }
 
-  internal fun loadInitialProject(configLocation: JpsProjectConfigLocation) {
+  internal fun loadRealProject(project: Project) {
+    val configLocation: JpsProjectConfigLocation = project.configLocation!!
     LOG.debug { "Initial loading of project located at $configLocation" }
-    moduleLoadingActivity = StartUpMeasurer.startMainActivity("module loading")
+    recordModuleLoadingActivity(project)
     val activity = StartUpMeasurer.startActivity("(wm) Load initial project")
     var childActivity = activity.startChild("(wm) Prepare serializers")
     val baseDirUrl = configLocation.baseDirectoryUrlString

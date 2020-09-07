@@ -30,7 +30,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -100,7 +99,7 @@ public class IntroduceParameterObjectHandler implements RefactoringActionHandler
   }
 
   private static void invoke(final Project project, final PsiMethod selectedMethod, Editor editor) {
-    PsiMethod newMethod = SuperMethodWarningUtil.checkSuperMethod(selectedMethod, RefactoringBundle.message("to.refactor"));
+    PsiMethod newMethod = SuperMethodWarningUtil.checkSuperMethod(selectedMethod);
     if (newMethod == null) return;
     final String message = getErrorMessage(newMethod);
     if (message != null) {
@@ -112,7 +111,7 @@ public class IntroduceParameterObjectHandler implements RefactoringActionHandler
     new IntroduceParameterObjectDialog(newMethod).show();
   }
 
-  private static String getErrorMessage(PsiMethod newMethod) {
+  private static @NlsContexts.DialogMessage String getErrorMessage(PsiMethod newMethod) {
     final PsiParameter[] parameters = newMethod.getParameterList().getParameters();
     if (parameters.length == 0) {
      return RefactorJBundle.message("cannot.perform.the.refactoring") +

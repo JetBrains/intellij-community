@@ -10,12 +10,14 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
+import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.SingleParentUsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleEx;
@@ -26,7 +28,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author yole
@@ -87,7 +91,7 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
   private final class DirectoryGroup implements UsageGroup, TypeSafeDataProvider, CompactGroup {
     private final VirtualFile myDir;
     private Icon myIcon;
-    private final String relativePathText;
+    private final @NlsSafe String relativePathText;
 
     private DirectoryGroup(@NotNull VirtualFile dir) {
       myDir = dir;
@@ -204,7 +208,7 @@ public class DirectoryGroupingRule extends SingleParentUsageGroupingRule impleme
 
     @Override
     public String toString() {
-      return "Directory:" + myDir.getName();
+      return UsageViewBundle.message("directory.0", myDir.getName());
     }
 
     @Override

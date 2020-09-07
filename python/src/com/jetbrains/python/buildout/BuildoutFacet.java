@@ -14,6 +14,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -53,7 +54,11 @@ public class BuildoutFacet extends LibraryContributingFacet<BuildoutFacetConfigu
   private static final Logger LOG = Logger.getInstance(BuildoutFacet.class);
   @NonNls public static final String BUILDOUT_CFG = "buildout.cfg";
   @NonNls public static final String SCRIPT_SUFFIX = "-script";
-  private static final String BUILDOUT_LIB_NAME = "Buildout Eggs";
+  @NonNls private static final String PYCHARM_ENGULF_SCRIPT_KEY = "PYCHARM_ENGULF_SCRIPT";
+  @NlsSafe private static final String BUILDOUT_LIB_NAME = "Buildout Eggs";
+  @NonNls private static final String BAIT_STRING = "sys.path[0:0]";
+  @NonNls private static final String BUILDOUT_PATHS = "buildout_paths = [";
+  @NonNls private static final String DEF_ADDSITEPACKAGES = "def addsitepackages(";
 
   public BuildoutFacet(@NotNull final FacetType facetType,
                        @NotNull final Module module,
@@ -130,7 +135,7 @@ public class BuildoutFacet extends LibraryContributingFacet<BuildoutFacetConfigu
    */
   @Nullable
   public String getPathPrependStatement(List<String> additionalPythonPath) {
-    StringBuilder sb = new StringBuilder("sys.path[0:0]=[");
+    StringBuilder sb = new StringBuilder(BAIT_STRING).append("=[");
     for (String s : additionalPythonPath) {
       sb.append("'").append(s).append("',");
       // NOTE: we assume that quotes and spaces are escaped in paths back in the buildout script we extracted them from.
@@ -201,7 +206,7 @@ public class BuildoutFacet extends LibraryContributingFacet<BuildoutFacetConfigu
   public static List<String> extractFromScript(@NotNull VirtualFile script) throws IOException {
     String text = VfsUtilCore.loadText(script);
     Pattern pat = Pattern.compile("(?:^\\s*(['\"])(.*)(\\1),\\s*$)|(\\])", Pattern.MULTILINE);
-    final String bait_string = "sys.path[0:0]";
+    final String bait_string = BAIT_STRING;
     int pos = text.indexOf(bait_string);
     List<String> ret = null;
     if (pos >= 0) {
@@ -235,10 +240,10 @@ public class BuildoutFacet extends LibraryContributingFacet<BuildoutFacetConfigu
     String text = VfsUtilCore.loadText(vFile);
     String[] lines = LineTokenizer.tokenize(text, false);
     int index = 0;
-    while (index < lines.length && !lines[index].startsWith("def addsitepackages(")) {
+    while (index < lines.length && !lines[index].startsWith(DEF_ADDSITEPACKAGES)) {
       index++;
     }
-    while (index < lines.length && !lines[index].trim().startsWith("buildout_paths = [")) {
+    while (index < lines.length && !lines[index].trim().startsWith(BUILDOUT_PATHS)) {
       index++;
     }
     index++;
@@ -278,7 +283,7 @@ public class BuildoutFacet extends LibraryContributingFacet<BuildoutFacetConfigu
     if (scriptParams.getParameters().size() > 0) {
       String normalScript = scriptParams.getParameters().get(0); // expect DjangoUtil.MANAGE_FILE
       HelperPackage engulfer = PythonHelper.BUILDOUT_ENGULFER;
-      env.put("PYCHARM_ENGULF_SCRIPT", getConfiguration().getScriptName());
+      env.put(PYCHARM_ENGULF_SCRIPT_KEY, getConfiguration().getScriptName());
       scriptParams.getParametersList().replaceOrPrepend(normalScript, engulfer.asParamString());
     }
     // add pycharm helpers to pythonpath so that fixGetpass is importable

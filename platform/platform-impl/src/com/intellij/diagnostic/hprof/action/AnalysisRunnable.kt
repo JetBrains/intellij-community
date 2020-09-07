@@ -88,7 +88,7 @@ class AnalysisRunnable(val hprofPath: Path,
 
     override fun run(indicator: ProgressIndicator) {
       indicator.isIndeterminate = false
-      indicator.text = "Analyze Heap"
+      indicator.text = DiagnosticBundle.message("heap.dump.analysis.indicator.title")
       indicator.fraction = 0.0
 
       val openOptions: Set<OpenOption>

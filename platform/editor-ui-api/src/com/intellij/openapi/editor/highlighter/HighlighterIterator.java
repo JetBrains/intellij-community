@@ -25,8 +25,20 @@ public interface HighlighterIterator {
   TextAttributes getTextAttributes();
   int getStart();
   int getEnd();
+
+  /**
+   * @return type if the current token
+   */
   IElementType getTokenType();
+
+  /**
+   * Move iterator to the next segment
+   */
   void advance();
+
+  /**
+   * Move iterator to the previous segment
+   */
   void retreat();
   boolean atEnd();
   Document getDocument();

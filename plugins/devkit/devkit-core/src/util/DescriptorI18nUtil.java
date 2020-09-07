@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.ResourceBundleReference;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ObjectUtils;
@@ -65,7 +66,7 @@ public class DescriptorI18nUtil {
     if (ideaPlugin == null) return false;
 
     return PluginManagerCore.CORE_PLUGIN_ID.equals(ideaPlugin.getPluginId()) ||
-           PsiUtil.isIdeaProject(module.getProject());
+           PsiUtil.isIdeaProject(module.getProject()) && (module.getName().startsWith("intellij.platform.") || ApplicationManager.getApplication().isUnitTestMode());
   }
 
   private static @Nullable PropertiesFile findCoreActionsBundlePropertiesFile(@Nullable Actions actions) {

@@ -38,4 +38,8 @@ public final class CodeStylePropertiesUtil {
     }
     return builder.toString();
   }
+
+  public static boolean isAccessorAllowingEmptyList(@NotNull CodeStylePropertyAccessor<?> accessor) {
+    return accessor instanceof CodeStyleValueList && ((CodeStyleValueList)accessor).isEmptyListAllowed();
+  }
 }

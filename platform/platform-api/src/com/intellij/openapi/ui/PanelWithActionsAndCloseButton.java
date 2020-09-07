@@ -19,7 +19,7 @@ import java.awt.*;
 
 public abstract class PanelWithActionsAndCloseButton extends JPanel implements DataProvider, Disposable {
   protected final ContentManager myContentManager;
-  private final String myHelpId;
+  private final @NonNls String myHelpId;
   private final boolean myVerticalToolbar;
   private boolean myCloseEnabled;
   private final DefaultActionGroup myToolbarGroup = new DefaultActionGroup();
@@ -49,7 +49,7 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
 
   }
 
-  public String getHelpId() {
+  public @NonNls String getHelpId() {
     return myHelpId;
   }
 

@@ -20,7 +20,7 @@ final class RecentProjectApplication extends ApplicationStarterBase {
 
   @Override
   public String getUsageMessage() {
-    return "This command is used for internal purpose only.";
+    return "This command is used for internal purpose only."; //NON-NLS
   }
 
   @NotNull

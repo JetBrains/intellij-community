@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
@@ -51,13 +52,22 @@ class MergeApplication extends DiffApplicationBase {
   @NotNull
   @Override
   public Future<CliResult> processCommand(@NotNull List<String> args, @Nullable String currentDirectory) throws Exception {
-    List<String> filePaths = args.subList(1, args.size());
-    List<VirtualFile> files = findFiles(filePaths, currentDirectory);
+    List<String> filePaths = args.subList(1, 4);
+    List<VirtualFile> files = findFilesOrThrow(filePaths, currentDirectory);
     Project project = guessProject(files);
 
     List<VirtualFile> contents = Arrays.asList(files.get(0), files.get(2), files.get(1)); // left, base, right
-    VirtualFile outputFile = files.get(files.size() - 1);
-    if (outputFile == null) throw new Exception(DiffBundle.message("cannot.find.file.error", ContainerUtil.getLastItem(filePaths)));
+
+    VirtualFile outputFile;
+    if (args.size() == 5) {
+      String outputFilePath = args.get(4);
+      outputFile = findOrCreateFile(outputFilePath, currentDirectory);
+      refreshAndEnsureFilesValid(Collections.singletonList(outputFile));
+    }
+    else {
+      outputFile = files.get(2); // base
+    }
+    if (outputFile == null) throw new Exception(DiffBundle.message("cannot.create.file.error", ContainerUtil.getLastItem(filePaths)));
 
     CompletableFuture<CliResult> future = new CompletableFuture<>();
     AtomicReference<CliResult> resultRef = new AtomicReference<>(new CliResult(127, null));

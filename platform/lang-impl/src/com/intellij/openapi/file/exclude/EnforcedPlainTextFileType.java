@@ -2,6 +2,7 @@
 package com.intellij.openapi.file.exclude;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,7 +32,7 @@ public final class EnforcedPlainTextFileType implements FileType {
   @NotNull
   @Override
   public String getDescription() {
-    return "Enforced Plain Text";
+    return LangBundle.message("file.type.enforced.plain.text");
   }
 
   @NotNull

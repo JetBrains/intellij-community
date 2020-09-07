@@ -3,11 +3,9 @@ package com.jetbrains.python.sdk.flavors
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
-import icons.PythonIcons
 import java.io.File
-import javax.swing.Icon
 
-class MayaSdkFlavor private constructor() : PythonSdkFlavor() {
+class MayaSdkFlavor private constructor() : CPythonSdkFlavor() {
 
   override fun isValidSdkHome(path: String): Boolean {
     val file = File(path)
@@ -19,18 +17,6 @@ class MayaSdkFlavor private constructor() : PythonSdkFlavor() {
     return name.startsWith("mayapy")
   }
 
-  override fun getVersionOption(): String {
-    return "--version"
-  }
-
-  override fun getName(): String {
-    return "MayaPy"
-  }
-
-  override fun getIcon(): Icon {
-    return PythonIcons.Python.Python //TODO: maya icon
-  }
-
   override fun getSdkPath(path: VirtualFile): VirtualFile? {
     if (isMayaFolder(File(path.path))) {
       return path.findFileByRelativePath("Contents/bin/mayapy")
@@ -40,7 +26,7 @@ class MayaSdkFlavor private constructor() : PythonSdkFlavor() {
 
   companion object {
 
-    var INSTANCE: MayaSdkFlavor = MayaSdkFlavor()
+    val INSTANCE: MayaSdkFlavor = MayaSdkFlavor()
 
     private fun isMayaFolder(file: File): Boolean {
       return file.isDirectory && file.name == "Maya.app"

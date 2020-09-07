@@ -1,9 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.ide.plugins.StartupAbortedException;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -35,15 +33,12 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap;
 import org.jetbrains.annotations.*;
 
-import javax.swing.*;
-import java.awt.*;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
-import java.util.List;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -65,9 +60,7 @@ public final class FSRecords {
   private static final boolean useSmallAttrTable = SystemProperties.getBooleanProperty("idea.use.small.attr.table.for.vfs", true);
   private static final boolean ourStoreRootsSeparately = SystemProperties.getBooleanProperty("idea.store.roots.separately", false);
 
-  //TODO[anyone] when bumping the version, please delete `ourSymlinkTargetAttr_old`, use it's value for `ourSymlinkTargetAttr`,
-  //             and drop path conversion from `readSymlinkTarget`
-  private static final int VERSION = 53 +
+  private static final int VERSION = 54 +
                                      (WE_HAVE_CONTENT_HASHES ? 0x10 : 0) +
                                      (IOUtil.BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER ? 0x37 : 0) +
                                      (bulkAttrReadSupport ? 0x27 : 0) +
@@ -112,9 +105,7 @@ public final class FSRecords {
   private static final int CORRUPTED_MAGIC = 0xabcf7f7f;
 
   private static final FileAttribute ourChildrenAttr = new FileAttribute("FsRecords.DIRECTORY_CHILDREN");
-  private static final FileAttribute ourSymlinkTargetAttr = new FileAttribute("FsRecords.SYMLINK_TARGET_2");
-  private static final FileAttribute ourSymlinkTargetAttr_old = new FileAttribute("FsRecords.SYMLINK_TARGET");
-
+  private static final FileAttribute ourSymlinkTargetAttr = new FileAttribute("FsRecords.SYMLINK_TARGET");
   private static final ReentrantReadWriteLock lock;
   private static final ReentrantReadWriteLock.ReadLock r;
   private static final ReentrantReadWriteLock.WriteLock w;
@@ -346,35 +337,10 @@ public final class FSRecords {
             throw new IOException("Cannot delete filesystem storage files");
           }
         }
-        catch (final IOException e1) {
-          final Runnable warnAndShutdown = () -> {
-            if (ApplicationManager.getApplication().isUnitTestMode()) {
-              //noinspection CallToPrintStackTrace
-              e1.printStackTrace();
-            }
-            else {
-              final String message = "Files in " + basePath + " are locked.\n" +
-                                     ApplicationNamesInfo.getInstance().getProductName() + " will not be able to start up.";
-              if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-                JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, IdeBundle.message("dialog.title.fatal.error"), JOptionPane.ERROR_MESSAGE);
-              }
-              else {
-                //noinspection UseOfSystemOutOrSystemErr
-                System.err.println(message);
-              }
-            }
-            Runtime.getRuntime().halt(1);
-          };
-
-          if (EventQueue.isDispatchThread()) {
-            warnAndShutdown.run();
-          }
-          else {
-            //noinspection SSBasedInspection
-            SwingUtilities.invokeLater(warnAndShutdown);
-          }
-
-          throw new RuntimeException("Can't rebuild filesystem storage ", e1);
+        catch (IOException e1) {
+          e1.addSuppressed(e);
+          LOG.warn("Cannot rebuild filesystem storage", e1);
+          return e1;
         }
 
         return e;
@@ -1050,7 +1016,7 @@ public final class FSRecords {
         VirtualFile parent = PersistentFS.getInstance().findFileById(parentId);
         assert parent != null : parentId + '/' + id + ": " + name + " -> " + symlinkTarget;
         String linkPath = parent.getPath() + '/' + name;
-        ((LocalFileSystemImpl)fs).symlinkUpdated(id, parent, linkPath, symlinkTarget);
+        ((LocalFileSystemImpl)fs).symlinkUpdated(id, parent, name, linkPath, symlinkTarget);
       }
     }
   }
@@ -1155,9 +1121,6 @@ public final class FSRecords {
     String result = readAndHandleErrors(() -> {
       try (DataInputStream stream = readAttribute(id, ourSymlinkTargetAttr)) {
         if (stream != null) return StringUtil.nullize(IOUtil.readUTF(stream));
-      }
-      try (DataInputStream stream = readAttribute(id, ourSymlinkTargetAttr_old)) {
-        if (stream != null) return StringUtil.nullize(stream.readUTF());
       }
       return null;
     });
@@ -1329,15 +1292,17 @@ public final class FSRecords {
     });
   }
 
+  @PersistentFS.Attributes
   static int getFlags(int id) {
     return readAndHandleErrors(() -> doGetFlags(id));
   }
 
+  @PersistentFS.Attributes
   private static int doGetFlags(int id) {
     return getRecordInt(id, FLAGS_OFFSET);
   }
 
-  static void setFlags(int id, int flags, final boolean markAsChange) {
+  static void setFlags(int id, @PersistentFS.Attributes int flags, final boolean markAsChange) {
     writeAndHandleErrors(() -> {
       if (markAsChange) {
         incModCount(id);

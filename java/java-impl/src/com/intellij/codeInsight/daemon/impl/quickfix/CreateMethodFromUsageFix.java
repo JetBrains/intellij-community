@@ -166,7 +166,7 @@ public final class CreateMethodFromUsageFix {
   public static boolean checkTypeParam(final PsiMethod method, final PsiTypeParameter typeParameter) {
     final String typeParameterName = typeParameter.getName();
 
-    final PsiTypeVisitor<Boolean> visitor = new PsiTypeVisitor<Boolean>() {
+    final PsiTypeVisitor<Boolean> visitor = new PsiTypeVisitor<>() {
       @Override
       public Boolean visitClassType(@NotNull PsiClassType classType) {
         final PsiClass psiClass = classType.resolve();

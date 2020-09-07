@@ -14,7 +14,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileTypeDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.BooleanFunction;
@@ -38,6 +37,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.text.StringUtil.*;
 import static org.jetbrains.plugins.gradle.util.GradleConstants.EXTENSION;
@@ -64,7 +64,7 @@ public final class GradleUtil {
   @NotNull
   public static FileChooserDescriptor getGradleProjectFileChooserDescriptor() {
     return new FileChooserDescriptor(true, false, false, false, false, false)
-      .withFileFilter(file -> SystemInfo.isFileSystemCaseSensitive
+      .withFileFilter(file -> file.isCaseSensitive()
                               ? endsWith(file.getName(), "." + EXTENSION) || endsWith(file.getName(), "." + KOTLIN_DSL_SCRIPT_EXTENSION)
                               : endsWithIgnoreCase(file.getName(), "." + EXTENSION) || endsWithIgnoreCase(file.getName(), "." + KOTLIN_DSL_SCRIPT_EXTENSION));
   }
@@ -244,11 +244,16 @@ public final class GradleUtil {
   }
 
   private static boolean containsGradleSettingsFile(Path directory) throws IOException {
-    return Files.isDirectory(directory) && Files.walk(directory, 1)
-      .map(Path::getFileName)
-      .filter(Objects::nonNull)
-      .map(Path::toString)
-      .anyMatch(name -> name.startsWith("settings.gradle"));
+    if (!Files.isDirectory(directory)) {
+      return false;
+    }
+    try (Stream<Path> stream = Files.walk(directory, 1)) {
+      return stream
+        .map(Path::getFileName)
+        .filter(Objects::nonNull)
+        .map(Path::toString)
+        .anyMatch(name -> name.startsWith("settings.gradle"));
+    }
   }
 
   /**

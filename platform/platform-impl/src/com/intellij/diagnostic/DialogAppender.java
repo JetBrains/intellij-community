@@ -2,12 +2,11 @@
 package com.intellij.diagnostic;
 
 import com.intellij.idea.Main;
-import com.intellij.openapi.diagnostic.ErrorLogger;
-import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
-import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
-import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
+import com.intellij.openapi.diagnostic.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.Level;
 import org.apache.log4j.spi.LoggingEvent;
@@ -17,8 +16,10 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.ArrayDeque;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 public class DialogAppender extends AppenderSkeleton {
   private static final ErrorLogger[] LOGGERS = {new DefaultIdeaErrorLogger()};
@@ -107,15 +108,17 @@ public class DialogAppender extends AppenderSkeleton {
     }
 
     String message = null;
-    ExceptionWithAttachments withAttachments = ExceptionUtil.findCause(throwable, ExceptionWithAttachments.class);
-    if (withAttachments instanceof RuntimeExceptionWithAttachments) {
-      message = ((RuntimeExceptionWithAttachments)withAttachments).getUserMessage();
+    List<ExceptionWithAttachments> withAttachments = ExceptionUtil.findCauseAndSuppressed(throwable, ExceptionWithAttachments.class);
+    if (!withAttachments.isEmpty() && withAttachments.get(0) instanceof RuntimeExceptionWithAttachments) {
+      message = ((RuntimeExceptionWithAttachments)withAttachments.get(0)).getUserMessage();
     }
     if (message == null && messageObject != null) {
       message = messageObject.toString();
     }
-    if (withAttachments != null) {
-      return LogMessage.createEvent(throwable, message, withAttachments.getAttachments());
+    if (!withAttachments.isEmpty()) {
+      return LogMessage.createEvent(
+        throwable, message,
+        withAttachments.stream().flatMap(e -> Stream.of(e.getAttachments())).toArray(Attachment[]::new));
     }
     else {
       return new IdeaLoggingEvent(message, throwable);

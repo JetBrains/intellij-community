@@ -15,6 +15,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -141,9 +142,9 @@ public class ListRemoveInLoopInspection extends AbstractBaseJavaLocalInspectionT
 
       String start = startEnd.getFirst();
       String end = startEnd.getSecond();
-      String replacement = ct.text(listExpression) + ".subList(" + start + "," + end + ").clear();";
-      replacement = "if(" + end + ">" + start + "){" + replacement + "}";
-      PsiIfStatement ifStatement = (PsiIfStatement)ct.replaceAndRestoreComments(loopStatement, replacement);
+      @NonNls final String statementText = ct.text(listExpression) + ".subList(" + start + "," + end + ").clear();";
+      final String replacementText = "if(" + end + ">" + start + "){" + statementText + "}";
+      PsiIfStatement ifStatement = (PsiIfStatement)ct.replaceAndRestoreComments(loopStatement, replacementText);
       ct = new CommentTracker();
       PsiExpression condition = ifStatement.getCondition();
       String simplified = JavaPsiMathUtil.simplifyComparison(condition, ct);

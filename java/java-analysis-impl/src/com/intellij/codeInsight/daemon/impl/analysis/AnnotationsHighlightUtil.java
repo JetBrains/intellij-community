@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
+import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceVarWithExplicitTypeFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
@@ -262,12 +263,7 @@ public final class AnnotationsHighlightUtil {
       PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
       for (PsiNameValuePair attribute : attributes) {
         final String name = attribute.getName();
-        if (name != null) {
-          names.add(name);
-        }
-        else {
-          names.add(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
-        }
+        names.add(Objects.requireNonNullElse(name, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME));
       }
 
       PsiMethod[] annotationMethods = aClass.getMethods();
@@ -373,21 +369,30 @@ public final class AnnotationsHighlightUtil {
         if (nextElement instanceof PsiTypeElement) {
           PsiTypeElement typeElement = (PsiTypeElement)nextElement;
           PsiType type = typeElement.getType();
+          //see JLS 9.7.4 Where Annotations May Appear
           if (PsiType.VOID.equals(type)) {
             String message = JavaErrorBundle.message("annotation.not.allowed.void");
             return annotationError(annotation, message);
+          }
+          if (typeElement.isInferredType()) {
+            final HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+              .range(annotation)
+              .descriptionAndTooltip(JavaErrorBundle.message("annotation.not.allowed.var"))
+              .create();
+            QuickFixAction.registerQuickFixAction(info, QuickFixFactory.getInstance().createDeleteFix(annotation, JavaAnalysisBundle.message("intention.text.remove.annotation")));
+            QuickFixAction.registerQuickFixAction(info, new ReplaceVarWithExplicitTypeFix(typeElement));
+            return info;
           }
           if (!(type instanceof PsiPrimitiveType || type instanceof PsiArrayType)) {
             PsiJavaCodeReferenceElement ref = getOutermostReferenceElement(typeElement.getInnermostComponentReferenceElement());
             HighlightInfo info = checkReferenceTarget(annotation, ref);
             if (info != null) return info;
           }
-          PsiElement context = PsiTreeUtil.skipParentsOfType(typeElement, PsiTypeElement.class);
-          if (context instanceof PsiClassObjectAccessExpression) {
-            String message = JavaErrorBundle.message("annotation.not.allowed.class");
-            return annotationError(annotation, message);
-          }
         }
+      }
+      if (PsiTreeUtil.skipParentsOfType(annotation, PsiTypeElement.class) instanceof PsiClassObjectAccessExpression) {
+        String message = JavaErrorBundle.message("annotation.not.allowed.class");
+        return annotationError(annotation, message);
       }
     }
 
@@ -395,7 +400,7 @@ public final class AnnotationsHighlightUtil {
   }
 
   @Nullable
-  private static HighlightInfo annotationError(@NotNull PsiAnnotation annotation, @NotNull String message) {
+  private static HighlightInfo annotationError(@NotNull PsiAnnotation annotation, @NotNull @NlsContexts.DetailedDescription String message) {
     LocalQuickFixAndIntentionActionOnPsiElement fix =
       QuickFixFactory.getInstance().createDeleteFix(annotation, JavaAnalysisBundle.message("intention.text.remove.annotation"));
     return annotationError(annotation, message, fix);
@@ -598,7 +603,7 @@ public final class AnnotationsHighlightUtil {
     return null;
   }
 
-  private static String doCheckRepeatableAnnotation(@NotNull PsiAnnotation annotation) {
+  private static @NlsContexts.DetailedDescription String doCheckRepeatableAnnotation(@NotNull PsiAnnotation annotation) {
     PsiAnnotationOwner owner = annotation.getOwner();
     if (!(owner instanceof PsiModifierList)) return null;
     PsiElement target = ((PsiModifierList)owner).getParent();

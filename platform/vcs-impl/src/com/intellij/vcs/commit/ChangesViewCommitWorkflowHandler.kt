@@ -43,7 +43,7 @@ internal class ChangesViewCommitWorkflowHandler(
 
   private val activityEventDispatcher = EventDispatcher.create(ActivityListener::class.java)
 
-  private val changeListManager = ChangeListManager.getInstance(project) as ChangeListManagerEx
+  private val changeListManager = ChangeListManagerEx.getInstanceEx(project)
   private var knownActiveChanges: Collection<Change> = emptyList()
 
   private val inclusionModel = PartialCommitInclusionModel(project)
@@ -73,6 +73,7 @@ internal class ChangesViewCommitWorkflowHandler(
     ui.addInclusionListener(this, this)
     ui.inclusionModel = inclusionModel
     Disposer.register(inclusionModel, Disposable { ui.inclusionModel = null })
+    ui.setCompletionContext(changeListManager.changeLists)
 
     ProjectManager.TOPIC.subscribe(this, this)
     CheckinHandlerFactory.EP_NAME.addChangeListener(Runnable { commitHandlersChanged() }, this)
@@ -128,6 +129,8 @@ internal class ChangesViewCommitWorkflowHandler(
     // Local Changes tree is not yet updated here. So calling `updateDefaultCommitActionEnabled()` leads to button blinking.
     // Next `inclusionChanged()` (likely because of `synchronizeInclusion()` after committed changes refresh) will set correct button
     // state without blinking.
+
+    ui.endExecution()
   }
 
   internal fun updateDefaultCommitActionEnabled() {

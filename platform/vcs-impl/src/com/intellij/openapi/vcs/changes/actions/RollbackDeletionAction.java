@@ -20,7 +20,7 @@ import java.util.List;
 
 public class RollbackDeletionAction extends AbstractMissingFilesAction {
   @Override
-  protected List<VcsException> processFiles(final AbstractVcs vcs, final List<FilePath> files) {
+  protected List<VcsException> processFiles(final AbstractVcs vcs, final List<? extends FilePath> files) {
     RollbackEnvironment environment = vcs.getRollbackEnvironment();
     if (environment == null) return Collections.emptyList();
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();

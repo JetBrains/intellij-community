@@ -21,7 +21,7 @@ import javax.swing.*
 import static com.intellij.testFramework.PlatformTestUtil.waitForFuture
 
 class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
-  static final int SEARCH_TIMEOUT = 10_000
+  static final int SEARCH_TIMEOUT = 50_000
 
   SearchEverywhereUIBase mySearchUI
 
@@ -145,7 +145,7 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
 
         abbreviationManager.register("imaginary", "ia2")
         future = ui.findElementsForPattern("imaginary")
-        assert PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT) == [matchedAction2, class1, matchedAction1, class2]
+        assert PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT) == [action2, class1, matchedAction1, class2]
       }
       finally {
         actions.each {actionManager.unregisterAction(it.key)}

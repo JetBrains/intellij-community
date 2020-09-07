@@ -15,6 +15,7 @@ import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.changes.GitChangeUtils;
 import git4idea.changes.GitChangeUtils.GitDiffChange;
+import git4idea.i18n.GitBundle;
 import git4idea.index.GitFileStatus;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -242,7 +243,7 @@ final class GitChangesCollector {
   }
 
   private static void throwStatus(char xStatus, char yStatus) throws VcsException {
-    throw new VcsException(String.format("Unexpected symbol as status: '%s%s'", xStatus, yStatus));
+    throw new VcsException(GitBundle.message("status.exception.message.unexpected.xstatus.ystatus", xStatus, yStatus));
   }
 
   private void reportModified(FilePath filepath) {

@@ -15,25 +15,26 @@ public final class ForkedDebuggerHelper {
   public static final String DEBUG_FORK_SOCKET_PARAM = "-forkSocket";
 
   public static final String DEBUG_SERVER_PORT_KEY = "DEBUG_SERVER_PORT";
+  public static final String RUNTIME_MODULE_DIR_KEY = "MODULE_DIR";
   public static final String PARAMETERS_SEPARATOR = ";";
 
   public static final String FINISH_PARAMS = "FINISH_PARAMS";
   public static final String DISPATCH_PORT_SYS_PROP = "idea.debugger.dispatch.port";
 
   // returns port at which debugger is supposed to communicate with debuggee process
-  public static int setupDebugger(String debuggerId, String processName, String processParameters) {
-    return setupDebugger(debuggerId, processName, processParameters, getPortFromProperty());
+  public static int setupDebugger(String debuggerId, String processName, String processParameters, String moduleDir) {
+    return setupDebugger(debuggerId, processName, processParameters, getPortFromProperty(), moduleDir);
   }
 
-  public static int setupDebugger(String debuggerId, String processName, String processParameters, int dispatchPort) {
+  public static int setupDebugger(String debuggerId, String processName, String processParameters, int dispatchPort, String moduleDir) {
     int port = 0;
     try {
       port = findAvailableSocketPort();
       processParameters = (processParameters == null || processParameters.isEmpty()) ? "" : processParameters + PARAMETERS_SEPARATOR;
-      processParameters = processParameters + DEBUG_SERVER_PORT_KEY + "=" + port;
+      processParameters = processParameters + DEBUG_SERVER_PORT_KEY + "=" + port + PARAMETERS_SEPARATOR;
+      processParameters = processParameters + RUNTIME_MODULE_DIR_KEY + "=" + moduleDir;
       send(debuggerId, processName, processParameters, dispatchPort);
-    }
-    catch (IOException e) {
+    } catch (IOException e) {
       //noinspection CallToPrintStackTrace
       e.printStackTrace();
     }

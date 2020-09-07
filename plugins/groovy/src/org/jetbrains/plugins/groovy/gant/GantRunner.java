@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.execution.CantRunException;
@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunner;
@@ -44,7 +45,7 @@ public class GantRunner extends GroovyScriptRunner {
   public void ensureRunnerConfigured(@NotNull GroovyScriptRunConfiguration configuration) throws RuntimeConfigurationException {
     Project project = configuration.getProject();
     if (GantUtils.getSDKInstallPath(configuration.getModule(), project).isEmpty()) {
-      RuntimeConfigurationException e = new RuntimeConfigurationException("Gant is not configured");
+      RuntimeConfigurationException e = new RuntimeConfigurationException(GroovyBundle.message("dialog.message.gant.not.configured"));
       e.setQuickFix(() -> ShowSettingsUtil.getInstance().editConfigurable(project, new GantConfigurable(project)));
       throw e;
     }

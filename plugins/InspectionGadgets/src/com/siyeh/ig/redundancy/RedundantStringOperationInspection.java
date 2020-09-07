@@ -20,10 +20,7 @@ import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -540,7 +537,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       @NotNull private final String myConverted;
 
       SubstringToCharAtQuickFix(@NotNull final String text,
-                                @NotNull final String converted) {
+                                @NotNull @NonNls final String converted) {
         myText = text;
         myConverted = converted;
       }
@@ -723,7 +720,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
   private static class RemoveRedundantSubstringFix implements LocalQuickFix {
     private final @NotNull String myBindCallName;
 
-    RemoveRedundantSubstringFix(@NotNull String bindCallName) {
+    RemoveRedundantSubstringFix(@NotNull @NonNls String bindCallName) {
       myBindCallName = bindCallName;
     }
 

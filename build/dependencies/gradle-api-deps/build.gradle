@@ -29,11 +29,19 @@ task expandGradleApiJar() {
     def projectDir = new File(buildDir, "tmp/gradleApiExpanded/$gradleApiVersion")
     projectDir.mkdirs()
 
+    // ensure generated jars are created from specified Gradle distribution
+    // ATTENTION! This might not work on some environments, e.g. on windows agents of teamcity
+    project.delete(new File(project.gradle.gradleUserHomeDir, "caches/$gradleApiVersion/generated-gradle-jars"))
+
     // prevent discovering of the settings.gradle file from the parent dir
     new File(projectDir, 'settings.gradle').createNewFile()
     new File(projectDir, 'build.gradle').withWriter { writer ->
       writer << """
+import org.gradle.util.GradleVersion
 defaultTasks 'setupGradleApiDeps'
+
+def currentGradleVersion = GradleVersion.current().getVersion()
+println 'currentGradleVersion: ' + currentGradleVersion
 
 configurations {
   gradleApiDeps
@@ -44,8 +52,9 @@ dependencies {
 }
 
 task setupGradleApiDeps(dependsOn: configurations.gradleApiDeps, type: Sync) {
+  println 'configurations.gradleApiDeps.files: ' + configurations.gradleApiDeps.files
   from new File(project.gradle.getGradleHomeDir(), 'lib/${gradleLauncherFileName}')
-  from zipTree(configurations.gradleApiDeps.files.find {it.name == "gradle-api-${gradleApiVersion}.jar"})
+  from zipTree(configurations.gradleApiDeps.files.find {it.name == "gradle-api-" + currentGradleVersion + ".jar"})
   into '${gradleApiDepsDir.path.replace("\\","\\\\")}'
 
   include '${gradleWrapperFileName}'
@@ -61,8 +70,15 @@ task setupGradleApiDeps(dependsOn: configurations.gradleApiDeps, type: Sync) {
 """
     }
 
-    def connection = GradleConnector.newConnector()
-      .useGradleVersion(gradleApiVersion)
+    def connector = GradleConnector.newConnector()
+    def gradleDistribution = findProperty('gradleDistribution') ?: null
+    if (gradleDistribution) {
+      println 'Using Gradle distribution from: ' + gradleDistribution
+      connector.useDistribution(new URI(gradleDistribution))
+    } else {
+      connector.useGradleVersion(gradleApiVersion)
+    }
+    def connection = connector
       .forProjectDirectory(projectDir)
       .connect()
     try {
@@ -74,6 +90,8 @@ task setupGradleApiDeps(dependsOn: configurations.gradleApiDeps, type: Sync) {
       if (logging.level == LogLevel.DEBUG) {
         buildLauncher.withArguments("--debug")
       }
+      buildLauncher.setStandardOutput(System.out);
+      buildLauncher.setStandardError(System.err);
       buildLauncher.run()
       assert new File(gradleApiDepsDir, "org/gradle/internal/impldep").isDirectory()
       assert new File(gradleApiDepsDir, gradleWrapperFileName).isFile()

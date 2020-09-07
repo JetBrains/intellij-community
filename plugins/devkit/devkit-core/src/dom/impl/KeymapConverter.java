@@ -14,6 +14,7 @@ import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.ResolvingConverter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -49,7 +50,7 @@ public class KeymapConverter extends ResolvingConverter<XmlFile> {
 
   @Override
   public String getErrorMessage(@Nullable String s, ConvertContext context) {
-    return "Cannot resolve keymap '" + s + "'";
+    return DevKitBundle.message("plugin.xml.convert.keymap.cannot.resolve", s);
   }
 
   private static String getKeymapName(XmlFile file) {

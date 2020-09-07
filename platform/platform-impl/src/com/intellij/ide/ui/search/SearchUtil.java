@@ -256,7 +256,7 @@ public final class SearchUtil {
     }
   }
 
-  private static int getSelection(String tabIdx, int tabCount, Function<Integer,String> titleGetter) {
+  private static int getSelection(String tabIdx, int tabCount, Function<? super Integer, String> titleGetter) {
     SearchableOptionsRegistrar searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance();
     for (int i = 0; i < tabCount; i++) {
       final Set<String> pathWords = searchableOptionsRegistrar.getProcessedWords(tabIdx);

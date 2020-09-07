@@ -6,7 +6,7 @@ import com.intellij.openapi.util.SafeJdomFactory;
 import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +27,7 @@ final class ClassPathXmlPathResolver implements PathBasedJdomXIncluder.PathResol
   @NotNull
   @Override
   public List<String> createNewStack(@Nullable Path base) {
-    List<String> stack = new ArrayList<>(2);
+    List<@NonNls String> stack = new ArrayList<>(2);
     stack.add("META-INF");
     return stack;
   }

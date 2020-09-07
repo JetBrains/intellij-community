@@ -235,7 +235,7 @@ class Bar {
 
       assert component.decoratedText == expected
 
-      documentationManager.navigateByLink(component, "psi_element://java.lang.String#regionMatches(int, java.lang.String, int, int)")
+      documentationManager.navigateByLink(component, null, "psi_element://java.lang.String#regionMatches(int, java.lang.String, int, int)")
       try {
         JavaExternalDocumentationTest.waitTillDone(documentationManager.getLastAction())
       }

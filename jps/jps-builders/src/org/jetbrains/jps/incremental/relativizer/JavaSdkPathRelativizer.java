@@ -14,14 +14,14 @@ import java.util.stream.Collectors;
 
 /**
  * For now, it doesn't convert any paths related to JDK  during producing portable caches, because
- * they skipped in {@link ModuleBuildTarget#getDependenciesFingerprint}. But it stays to be included in
+ * they skipped in {@link org.jetbrains.jps.incremental.ModuleBuildTarget#getDependenciesFingerprint}. But it stays to be included in
  * {@link PathRelativizerService} to get an opportunity to handle such paths due to manual call of
  * {@link PathRelativizerService#toRelative} or {@link PathRelativizerService#toFull} with any path.
  */
 class JavaSdkPathRelativizer implements PathRelativizer {
   @Nullable private Map<String, String> myJavaSdkPathMap;
 
-  JavaSdkPathRelativizer(@Nullable Set<JpsSdk<?>> javaSdks) {
+  JavaSdkPathRelativizer(@Nullable Set<? extends JpsSdk<?>> javaSdks) {
     if (javaSdks != null) {
       myJavaSdkPathMap = javaSdks.stream()
         .collect(Collectors.toMap(sdk -> {
@@ -36,7 +36,7 @@ class JavaSdkPathRelativizer implements PathRelativizer {
   public String toRelativePath(@NotNull String path) {
     if (myJavaSdkPathMap == null || myJavaSdkPathMap.isEmpty()) return null;
     Optional<Map.Entry<String, String>> optionalEntry = myJavaSdkPathMap.entrySet().stream()
-      .filter(it -> FileUtil.startsWith(path, it.getValue())).findFirst();
+      .filter(entry -> FileUtil.startsWith(path, entry.getValue())).findFirst();
     if (!optionalEntry.isPresent()) return null;
 
     Map.Entry<String, String> javaSdkEntry = optionalEntry.get();

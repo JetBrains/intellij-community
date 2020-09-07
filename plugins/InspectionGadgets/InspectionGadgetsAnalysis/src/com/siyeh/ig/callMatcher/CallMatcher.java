@@ -275,7 +275,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
      * @throws IllegalStateException if this matcher is already limited to parameters count or types
      */
     @Contract(pure = true)
-    public Simple parameterTypes(String @NotNull ... types) {
+    public Simple parameterTypes(@NonNls String @NotNull ... types) {
       if (myParameters != null) {
         throw new IllegalStateException("Parameters are already registered");
       }

@@ -4,7 +4,7 @@ package com.intellij.util.execution;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -16,7 +16,7 @@ public final class ParametersListUtil {
   public static final Function<String, List<String>> DEFAULT_LINE_PARSER = text -> parse(text, true);
   public static final Function<List<String>, String> DEFAULT_LINE_JOINER = strings -> StringUtil.join(strings, " ");
   public static final Function<String, List<String>> COLON_LINE_PARSER = text -> {
-    final ArrayList<String> result = new ArrayList<>();
+    final List<String> result = new ArrayList<>();
     final StringTokenizer tokenizer = new StringTokenizer(text, ";", false);
     while (tokenizer.hasMoreTokens()) {
       result.add(tokenizer.nextToken());
@@ -122,14 +122,14 @@ public final class ParametersListUtil {
       parameterString = parameterString.trim();
     }
 
-    final ArrayList<String> params = new ArrayList<>();
+    final List<String> params = new ArrayList<>();
     if (parameterString.isEmpty()) {
       return params;
     }
     final StringBuilder token = new StringBuilder(128);
     boolean inQuotes = false;
     boolean escapedQuote = false;
-    final TIntHashSet possibleQuoteChars = new TIntHashSet();
+    IntOpenHashSet possibleQuoteChars = new IntOpenHashSet();
     possibleQuoteChars.add('"');
     if (supportSingleQuotes) {
       possibleQuoteChars.add('\'');

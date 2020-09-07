@@ -188,6 +188,8 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testConstructorRef() { doParserTest("Foo::new"); }
   public void testConstructorWithTypeParamsRef() { doParserTest("Foo<Integer>::new"); }
 
+  public void testVarLabel() { doParserTest("var: foo();"); }
+
   private void doBlockParserTest(String text) {
     doParserTest(text, builder -> JavaParser.INSTANCE.getStatementParser().parseCodeBlockDeep(builder, true));
   }

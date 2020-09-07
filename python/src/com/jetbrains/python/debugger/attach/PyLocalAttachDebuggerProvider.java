@@ -24,6 +24,7 @@ import com.intellij.execution.process.ProcessInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.attach.XLocalAttachDebugger;
@@ -111,7 +112,7 @@ public class PyLocalAttachDebuggerProvider implements XLocalAttachDebuggerProvid
   
   private static class PyLocalAttachDebugger implements XLocalAttachDebugger {
     private final String mySdkHome;
-    @NotNull private final String myName;
+    @NotNull @NlsSafe private final String myName;
 
     PyLocalAttachDebugger(@NotNull Sdk sdk) {
       mySdkHome = sdk.getHomePath();

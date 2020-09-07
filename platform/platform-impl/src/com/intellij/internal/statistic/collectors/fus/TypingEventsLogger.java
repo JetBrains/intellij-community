@@ -14,7 +14,7 @@ public class TypingEventsLogger implements AnActionListener {
   public static final String GROUP_ID = "editor.typing";
 
   public static final EventsRateWindowThrottle ourThrottle =
-    new EventsRateWindowThrottle(500, 60 * 60 * 1000, System.currentTimeMillis());
+    new EventsRateWindowThrottle(2000, 60 * 60 * 1000, System.currentTimeMillis());
 
   @Override
   public void beforeEditorTyping(char c, @NotNull DataContext dataContext) {

@@ -18,7 +18,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
 
-private val LOG = logger<FeatureUsageSettingsEventScheduler>()
+
 
 private const val PERIOD_DELAY = 24 * 60
 private const val INITIAL_DELAY = PERIOD_DELAY
@@ -36,6 +36,10 @@ internal class FeatureUsageSettingsEventScheduler : FeatureUsageStateEventTracke
 
   override fun reportNow(): CompletableFuture<Void> {
     return logConfigStateEvents()
+  }
+
+  companion object {
+    val LOG = logger<FeatureUsageSettingsEventScheduler>()
   }
 }
 
@@ -97,7 +101,7 @@ private fun logInitializedComponent(project: Project?, info: ComponentInfo, name
       component.state?.let { FeatureUsageSettingsEvents.logConfigurationState(name, it, project) }
     }
     catch (e: Exception) {
-      LOG.warn("Error during configuration recording", e)
+      FeatureUsageSettingsEventScheduler.LOG.warn("Error during configuration recording", e)
     }
   }, EDT_EXECUTOR)
 }

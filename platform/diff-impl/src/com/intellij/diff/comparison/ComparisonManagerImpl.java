@@ -337,6 +337,15 @@ public final class ComparisonManagerImpl extends ComparisonManager {
   }
 
   @NotNull
+  public static List<LineFragment> convertIntoLineFragments(@NotNull LineOffsets lineOffsets1,
+                                                            @NotNull LineOffsets lineOffsets2,
+                                                            @NotNull DiffIterable changes) {
+    Range range = new Range(0, lineOffsets1.getLineCount(),
+                            0, lineOffsets2.getLineCount());
+    return convertIntoLineFragments(range, lineOffsets1, lineOffsets2, changes);
+  }
+
+  @NotNull
   public static List<LineFragment> convertIntoLineFragments(@NotNull Range range,
                                                             @NotNull LineOffsets lineOffsets1,
                                                             @NotNull LineOffsets lineOffsets2,

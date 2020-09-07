@@ -15,11 +15,11 @@ import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListe
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.TextFieldWithHistory
 import com.intellij.ui.layout.*
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
-import org.jetbrains.annotations.CalledInAwt
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.event.DocumentEvent
@@ -92,10 +92,10 @@ abstract class DvcsCloneDialogComponent(var project: Project,
 
   override fun dispose() {}
 
-  @CalledInAwt
+  @RequiresEdt
   protected open fun isOkActionEnabled(): Boolean = getUrl().isNotBlank()
 
-  @CalledInAwt
+  @RequiresEdt
   protected fun updateOkActionState(dialogStateListener: VcsCloneDialogComponentStateListener) {
     dialogStateListener.onOkActionEnabled(isOkActionEnabled())
   }

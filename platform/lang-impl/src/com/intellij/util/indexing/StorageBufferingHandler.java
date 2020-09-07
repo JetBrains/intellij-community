@@ -1,12 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.stream.Stream;
 
 abstract class StorageBufferingHandler {
+  private static final Logger LOG = Logger.getInstance(StorageBufferingHandler.class);
+
   private final StorageGuard myStorageLock = new StorageGuard();
   private volatile boolean myPreviousDataBufferingState;
   private final Object myBufferingStateUpdateLock = new Object();
@@ -35,6 +38,14 @@ abstract class StorageBufferingHandler {
 
   void resetState() {
     myPreviousDataBufferingState = false;
+  }
+
+  void assertTransientMode() {
+    LOG.assertTrue(myPreviousDataBufferingState);
+  }
+
+  void assertOnTheDiskMode() {
+    LOG.assertTrue(!myPreviousDataBufferingState);
   }
 
   @NotNull

@@ -175,7 +175,7 @@ public class PluginInstallOperation {
 
       boolean allowNoRestart = myAllowInstallWithoutRestart && DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor);
       if (allowNoRestart) {
-        myPendingDynamicPluginInstalls.add(new PendingDynamicPluginInstall(downloader.getFile(), descriptor));
+        myPendingDynamicPluginInstalls.add(new PendingDynamicPluginInstall(downloader.getFile().toPath(), descriptor));
         InstalledPluginsState state = InstalledPluginsState.getInstanceIfLoaded();
         if (state != null) {
           state.onPluginInstall(downloader.getDescriptor(), false, false);
@@ -187,7 +187,7 @@ public class PluginInstallOperation {
           downloader.install();
         }
       }
-      myDependant.add(new PluginInstallCallbackData(downloader.getFile(), descriptor, !allowNoRestart));
+      myDependant.add(new PluginInstallCallbackData(downloader.getFile().toPath(), descriptor, !allowNoRestart));
       pluginNode.setStatus(PluginNode.Status.DOWNLOADED);
       if (!toDisable.isNull()) {
         myPluginEnabler.disablePlugins(Collections.singleton(toDisable.get()));

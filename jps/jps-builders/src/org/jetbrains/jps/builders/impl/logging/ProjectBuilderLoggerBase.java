@@ -16,6 +16,7 @@
 package org.jetbrains.jps.builders.impl.logging;
 
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 
 import java.io.File;
@@ -43,7 +44,7 @@ public abstract class ProjectBuilderLoggerBase implements ProjectBuilderLogger {
   }
 
   @Override
-  public void logCompiledFiles(Collection<File> files, String builderName, final String description) throws IOException {
+  public void logCompiledFiles(Collection<File> files, String builderId, final String description) throws IOException {
     logLine(description);
     final String[] buffer = new String[files.size()];
     int i = 0;
@@ -58,13 +59,13 @@ public abstract class ProjectBuilderLoggerBase implements ProjectBuilderLogger {
   }
 
   @Override
-  public void logCompiledPaths(Collection<String> paths, String builderName, String description) throws IOException {
+  public void logCompiledPaths(Collection<String> paths, String builderId, String description) throws IOException {
     List<File> files = new ArrayList<>(paths.size());
     for (String path : paths) {
       files.add(new File(path));
     }
-    logCompiledFiles(files, builderName, description);
+    logCompiledFiles(files, builderId, description);
   }
 
-  protected abstract void logLine(String message);
+  protected abstract void logLine(@NonNls String message);
 }

@@ -22,6 +22,7 @@ import git4idea.history.GitCommitRequirements
 import git4idea.history.GitCommitRequirements.DiffInMergeCommits.DIFF_TO_PARENTS
 import git4idea.history.GitCommitRequirements.DiffRenameLimit.NO_RENAMES
 import git4idea.history.GitLogUtil
+import git4idea.i18n.GitBundle
 import git4idea.merge.GitConflictResolver
 import git4idea.ui.StashInfo
 import git4idea.util.GitUntrackedFilesHelper
@@ -40,7 +41,7 @@ fun unstash(project: Project,
             rootAndRevisions: Map<VirtualFile, Hash?>,
             handlerProvider: (VirtualFile) -> GitLineHandler,
             conflictResolver: GitConflictResolver) {
-  DvcsUtil.workingTreeChangeStarted(project, "Unstash").use {
+  DvcsUtil.workingTreeChangeStarted(project, GitBundle.message("activity.name.unstash")).use {
     for ((root, hash) in rootAndRevisions) {
       val handler = handlerProvider(root)
 
@@ -61,15 +62,17 @@ fun unstash(project: Project,
         if (!conflictsResolved) return
       }
       else if (untrackedFilesDetector.wasMessageDetected()) {
-        GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(project, root, untrackedFilesDetector.relativeFilePaths, "unstash", null)
+        GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(project, root, untrackedFilesDetector.relativeFilePaths,
+                                                                  GitBundle.message("unstash.operation.name"), null)
         return
       }
       else if (localChangesDetector.wasMessageDetected()) {
-        LocalChangesWouldBeOverwrittenHelper.showErrorNotification(project, root, "unstash", localChangesDetector.relativeFilePaths)
+        LocalChangesWouldBeOverwrittenHelper.showErrorNotification(project, "git.stash.local.changes.detected", root,
+                                                                   GitBundle.message("unstash.operation.name"), localChangesDetector.relativeFilePaths)
         return
       }
       else if (!result.success()) {
-        VcsNotifier.getInstance(project).notifyError("Unstash Failed", result.errorOutputAsHtmlString, true)
+        VcsNotifier.getInstance(project).notifyError("git.unstash.failed", GitBundle.message("notification.title.unstash.failed"), result.errorOutputAsHtmlString, true)
         return
       }
     }

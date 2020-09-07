@@ -123,7 +123,7 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
         for (PsiType conjunct : conjuncts) {
           if (!TypeConversionUtil.isAssignable(conjunct, lType)) {
             final String descriptionTemplate =
-              "Though assignment is formal correct, it could lead to ClassCastException at runtime. Expected: '" + lType.getPresentableText() + "', actual: '" + rType.getPresentableText() + "'";
+              JavaAnalysisBundle.message("inspection.message.javac.quick.intersection.type.problem", lType.getPresentableText(),rType.getPresentableText());
             myHolder.registerProblem(elementToHighlight, descriptionTemplate);
           }
         }

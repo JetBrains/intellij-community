@@ -29,18 +29,10 @@ import java.util.List;
  * (with checked format)
  */
 public class PyGenerateDocstringIntention extends PyBaseIntentionAction {
-  private String myText;
-
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyPsiBundle.message("INTN.doc.string.stub");
-  }
-
-  @NotNull
-  @Override
-  public String getText() {
-    return myText;
+    return PyPsiBundle.message("INTN.NAME.insert.docstring.stub");
   }
 
   @Override
@@ -62,7 +54,7 @@ public class PyGenerateDocstringIntention extends PyBaseIntentionAction {
   private boolean isAvailableForFunction(PyFunction function) {
     if (function.getDocStringValue() != null) {
       if (PyDocstringGenerator.forDocStringOwner(function).withInferredParameters(false).hasParametersToAdd()) {
-        myText = PyPsiBundle.message("INTN.add.parameters.to.docstring");
+        setText(PyPsiBundle.message("INTN.add.parameters.to.docstring"));
         return true;
       }
       else {
@@ -70,7 +62,7 @@ public class PyGenerateDocstringIntention extends PyBaseIntentionAction {
       }
     }
     else {
-      myText = PyPsiBundle.message("INTN.doc.string.stub");
+      setText(PyPsiBundle.message("INTN.insert.docstring.stub"));
       return true;
     }
   }

@@ -4,6 +4,7 @@ package com.intellij.psi.impl;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.FileIndexFacade;
@@ -120,6 +121,37 @@ public final class PsiClassImplUtil {
   public static PsiClass findInnerByName(@NotNull PsiClass aClass, String name, boolean checkBases) {
     List<PsiMember> byMap = findByMap(aClass, name, checkBases, MemberType.CLASS);
     return byMap.isEmpty() ? null : (PsiClass)byMap.get(0);
+  }
+
+  public static boolean processAllMembersWithoutSubstitutors(@NotNull PsiClass psiClass, @NotNull PsiScopeProcessor processor, @NotNull ResolveState state) {
+    ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
+
+    NameHint nameHint = processor.getHint(NameHint.KEY);
+    String name = nameHint == null ? null : nameHint.getName(state);
+
+    if ((classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.METHOD)) &&
+        !processMembers(state, processor, getMap(psiClass, MemberType.METHOD).get(name == null ? ALL : name))) {
+      return false;
+    }
+    if ((classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.FIELD)) &&
+        !processMembers(state, processor, getMap(psiClass, MemberType.FIELD).get(name == null ? ALL : name))) {
+      return false;
+    }
+    if ((classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) &&
+        !processMembers(state, processor, getMap(psiClass, MemberType.CLASS).get(name == null ? ALL : name))) {
+      return false;
+    }
+    return true;
+  }
+
+  private static boolean processMembers(ResolveState state, PsiScopeProcessor processor, PsiMember @Nullable[] members) {
+    if (members == null) return true;
+    for (PsiMember member : members) {
+      if (!processor.execute(member, state)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @NotNull
@@ -343,7 +375,7 @@ public final class PsiClassImplUtil {
                               key == MemberType.METHOD ? eachSuper.getMethods() :
                               eachSuper.getFields();
         for (PsiMember element : members) {
-          PsiUtilCore.ensureValid(element);
+          if (skipInvalid(element)) continue;
           allMembers.add(element);
           map.computeIfAbsent(element.getName(), __ -> new SmartList<>()).add(element);
         }
@@ -354,6 +386,20 @@ public final class PsiClassImplUtil {
       }
       return result;
     });
+  }
+
+  private static boolean skipInvalid(@NotNull PsiElement element) {
+    try {
+      PsiUtilCore.ensureValid(element);
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      LOG.error(e);
+      return true;
+    }
+    return false;
   }
 
   private static class ByNameCachedValueProvider implements ParameterizedCachedValueProvider<Map<GlobalSearchScope, MembersMap>, PsiClass> {
@@ -450,9 +496,10 @@ public final class PsiClassImplUtil {
     if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.FIELD)) {
       PsiField fieldByName = aClass.findFieldByName(name, false);
       if (fieldByName != null) {
-        PsiUtilCore.ensureValid(fieldByName);
-        processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, aClass);
-        if (!processor.execute(fieldByName, state)) return false;
+        if (!skipInvalid(fieldByName)) {
+          processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, aClass);
+          if (!processor.execute(fieldByName, state)) return false;
+        }
       }
       else {
         Map<String, PsiMember[]> allFieldsMap = value.get(MemberType.FIELD);
@@ -462,7 +509,9 @@ public final class PsiClassImplUtil {
           boolean resolved = false;
           for (PsiMember candidateField : list) {
             PsiClass containingClass = candidateField.getContainingClass();
-            PsiUtilCore.ensureValid(candidateField);
+            if (skipInvalid(candidateField)) {
+              continue;
+            }
             if (containingClass == null) {
               PsiElement parent = candidateField.getParent();
               LOG.error("No class for field " + candidateField.getName() + " of " + candidateField.getClass() +
@@ -491,9 +540,10 @@ public final class PsiClassImplUtil {
       if (!(last instanceof PsiReferenceList)) {
         PsiClass classByName = aClass.findInnerClassByName(name, false);
         if (classByName != null) {
-          PsiUtilCore.ensureValid(classByName);
-          processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, aClass);
-          if (!processor.execute(classByName, state)) return false;
+          if (!skipInvalid(classByName)) {
+            processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, aClass);
+            if (!processor.execute(classByName, state)) return false;
+          }
         }
         else {
           Map<String, PsiMember[]> allClassesMap = value.get(MemberType.CLASS);
@@ -502,7 +552,8 @@ public final class PsiClassImplUtil {
           if (list != null) {
             boolean resolved = false;
             for (PsiMember inner : list) {
-              PsiUtilCore.ensureValid(inner);
+              if (skipInvalid(inner)) continue;
+
               PsiClass containingClass = inner.getContainingClass();
               if (containingClass != null) {
                 processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, containingClass);
@@ -523,8 +574,7 @@ public final class PsiClassImplUtil {
           PsiMethod[] constructors = aClass.getConstructors();
           methodResolverProcessor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, aClass);
           for (PsiMethod constructor : constructors) {
-            PsiUtilCore.ensureValid(constructor);
-            if (!methodResolverProcessor.execute(constructor, state)) return false;
+            if (!skipInvalid(constructor) && !methodResolverProcessor.execute(constructor, state)) return false;
           }
           return true;
         }
@@ -536,7 +586,8 @@ public final class PsiClassImplUtil {
         for (PsiMember candidate : list) {
           ProgressIndicatorProvider.checkCanceled();
           PsiMethod candidateMethod = (PsiMethod)candidate;
-          PsiUtilCore.ensureValid(candidateMethod);
+          if (skipInvalid(candidateMethod)) continue;
+
           if (processor instanceof MethodResolverProcessor) {
             if (candidateMethod.isConstructor() != ((MethodResolverProcessor)processor).isConstructor()) continue;
           }
@@ -610,9 +661,7 @@ public final class PsiClassImplUtil {
     ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
 
     if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.FIELD)) {
-      for (PsiField field : aClass.getFields()) {
-        if (!processor.execute(field, state)) return false;
-      }
+      if (!processMembers(state, processor, aClass.getFields())) return false;
     }
 
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(aClass.getProject());
@@ -634,9 +683,7 @@ public final class PsiClassImplUtil {
       }
 
       if (!(last instanceof PsiReferenceList) && !(last instanceof PsiModifierList)) {
-        for (PsiClass inner : aClass.getInnerClasses()) {
-          if (!processor.execute(inner, state)) return false;
-        }
+        if (!processMembers(state, processor, aClass.getInnerClasses())) return false;
       }
     }
 
@@ -658,7 +705,9 @@ public final class PsiClassImplUtil {
   }
 
   public static List<PsiClassType.ClassResolveResult> getScopeCorrectedSuperTypes(PsiClass aClass, GlobalSearchScope resolveScope) {
-    PsiUtilCore.ensureValid(aClass);
+    if (skipInvalid(aClass)) {
+      return Collections.emptyList();
+    }
     return ScopedClassHierarchy.getHierarchy(aClass, resolveScope).getImmediateSupersWithCapturing();
   }
 

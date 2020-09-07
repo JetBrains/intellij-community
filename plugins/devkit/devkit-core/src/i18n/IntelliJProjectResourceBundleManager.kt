@@ -10,7 +10,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiLiteralExpression
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.util.PathUtil
@@ -20,6 +19,10 @@ import org.jetbrains.idea.devkit.util.PsiUtil
 class IntelliJProjectResourceBundleManager(project: Project) : ResourceBundleManager(project) {
   override fun isActive(context: PsiFile): Boolean {
     return PsiUtil.isIdeaProject(myProject)
+  }
+
+  override fun escapeValue(value: String): String {
+    return value.replace("&", "\\&")
   }
 
   override fun suggestPropertiesFiles(contextModules: MutableSet<Module>): MutableList<String> {

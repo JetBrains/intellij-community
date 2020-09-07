@@ -160,7 +160,7 @@ public class MissingOverrideAnnotationInspection extends AbstractBaseJavaLocalIn
                                               !JavaOverridingMethodUtil.containsAnnotationWithName(m, OVERRIDE_SHORT_NAME);
         Stream<PsiMethod> overridingMethods = JavaOverridingMethodUtil.getOverridingMethodsIfCheapEnough(method, scope, preFilter);
         if (overridingMethods == null) return;
-        result.hierarchyAnnotated = ThreeState.fromBoolean(!overridingMethods.findAny().isPresent());
+        result.hierarchyAnnotated = ThreeState.fromBoolean(overridingMethods.findAny().isEmpty());
       }
 
       private void checkMissingOverride(@NotNull PsiMethod method,

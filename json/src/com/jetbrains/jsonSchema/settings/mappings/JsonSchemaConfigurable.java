@@ -9,6 +9,8 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts.ConfigurableName;
+import com.intellij.openapi.util.NlsContexts.NotificationContent;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -38,8 +40,8 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
   @Nullable private final TreeUpdater myTreeUpdater;
   @NotNull private final Function<? super String, String> myNameCreator;
   private JsonSchemaMappingsView myView;
-  private String myDisplayName;
-  private String myError;
+  private @ConfigurableName String myDisplayName;
+  private @Nls String myError;
 
   public JsonSchemaConfigurable(Project project,
                                 @NotNull String schemaFilePath, @NotNull UserDefinedJsonSchemaConfiguration schema,
@@ -180,7 +182,7 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
     }
   }
 
-  private void logErrorForUser(@NotNull final String error) {
+  private void logErrorForUser(@NotNull @NotificationContent String error) {
     JsonSchemaReader.ERRORS_NOTIFICATION.createNotification(error, MessageType.WARNING).notify(myProject);
   }
 
@@ -213,7 +215,7 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
     if (myView != null) Disposer.dispose(myView);
   }
 
-  public void setError(String error, boolean showWarning) {
+  public void setError(@Nls String error, boolean showWarning) {
     myError = error;
     if (myView != null) {
       myView.setError(error, showWarning);

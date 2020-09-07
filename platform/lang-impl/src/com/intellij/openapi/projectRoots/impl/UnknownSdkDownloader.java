@@ -33,7 +33,7 @@ public final class UnknownSdkDownloader {
   public static void downloadFix(@Nullable Project project,
                                  @NotNull UnknownSdk info,
                                  @NotNull UnknownSdkDownloadableSdkFix fix,
-                                 @NotNull Function<SdkDownloadTask, Sdk> createSdk,
+                                 @NotNull Function<? super SdkDownloadTask, ? extends Sdk> createSdk,
                                  @NotNull Consumer<? super Sdk> onSdkNameReady,
                                  @NotNull Consumer<? super Sdk> onCompleted) {
     SdkDownloadTask task;

@@ -21,14 +21,16 @@ import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showOkCancelDialog
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.processAllImplementationClasses
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ReflectionUtil
-import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.putValue
 import com.intellij.util.io.*
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -131,11 +133,11 @@ fun exportSettings(exportableItems: Set<ExportableItem>,
     }
 }
 
-data class FileSpec(val relativePath: String, val isDirectory: Boolean = false)
+data class FileSpec(@NlsSafe val relativePath: String, val isDirectory: Boolean = false)
 
 data class ExportableItem(val fileSpec: FileSpec,
                           val presentableName: String,
-                          val componentName: String? = null,
+                          @NonNls val componentName: String? = null,
                           val roamingType: RoamingType = RoamingType.DEFAULT)
 
 data class LocalExportableItem(val file: Path, val presentableName: String, val roamingType: RoamingType = RoamingType.DEFAULT)
@@ -279,7 +281,7 @@ private fun getComponentPresentableName(state: State, aClass: Class<*>, pluginDe
   return trimDefaultName()
 }
 
-private fun messageOrDefault(classLoader: ClassLoader, bundleName: String, defaultName: String): String {
+private fun messageOrDefault(classLoader: ClassLoader, bundleName: String, @Nls defaultName: String): String {
   try {
     return AbstractBundle.messageOrDefault(
       DynamicBundle.INSTANCE.getResourceBundle(bundleName, classLoader), "exportable.$defaultName.presentable.name", defaultName)

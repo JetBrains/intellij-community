@@ -51,6 +51,6 @@ public class RngDefineMetaData extends DomMetaData<RngDefine> {
 
   @Override
   public String getTypeName() {
-    return RelaxngBundle.message("pattern.definition");
+    return RelaxngBundle.message("relaxng.symbol.pattern-definition");
   }
 }

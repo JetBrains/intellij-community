@@ -71,7 +71,7 @@ public class EditorConfigPreviewFileEditor implements FileEditor, CodeStyleSetti
   @NotNull
   @Override
   public String getName() {
-    return "Preview";
+    return EditorConfigBundle.message("preview.file.editor.name");
   }
 
   @Override

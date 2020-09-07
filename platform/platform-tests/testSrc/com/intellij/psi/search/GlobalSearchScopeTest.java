@@ -110,6 +110,21 @@ public class GlobalSearchScopeTest extends HeavyPlatformTestCase {
     assertTrue(GlobalSearchScopesCore.directoriesScope(myProject, true, libRoot, contentRoot).isSearchInLibraries());
   }
 
+  public void testDirScopeAlsoContainsItsRoot() throws IOException {
+    VirtualFile dir1 = getVirtualFile(createTempDir("dir1"));
+    VirtualFile dir2 = getVirtualFile(createTempDir("dir2"));
+
+    assertTrue(GlobalSearchScopesCore.directoryScope(myProject, dir1, true).contains(createChildData(dir1, "child1")));
+
+    assertTrue(GlobalSearchScopesCore.directoryScope(myProject, dir1, true).contains(dir1));
+    assertTrue(GlobalSearchScopesCore.directoryScope(myProject, dir1, false).contains(dir1));
+    assertFalse(GlobalSearchScopesCore.directoryScope(myProject, dir1, true).contains(dir2));
+
+    assertTrue(GlobalSearchScopesCore.directoriesScope(myProject, true, dir1, dir2).contains(dir1));
+    assertTrue(GlobalSearchScopesCore.directoriesScope(myProject, true, dir1, dir2).contains(dir2));
+    assertTrue(GlobalSearchScopesCore.directoriesScope(myProject, false, dir1, dir2).contains(dir2));
+  }
+
   public void testUnionWithEmptyScopeMustNotAffectCompare() {
     VirtualFile moduleRoot = getTempDir().createVirtualDir();
     assertNotNull(moduleRoot);

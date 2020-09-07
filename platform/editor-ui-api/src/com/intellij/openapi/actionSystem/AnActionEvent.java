@@ -20,7 +20,7 @@ import java.util.Map;
  * @see AnAction#actionPerformed(AnActionEvent)
  * @see AnAction#update(AnActionEvent)
  */
-public class AnActionEvent implements PlaceProvider<String> {
+public class AnActionEvent implements PlaceProvider {
   private final InputEvent myInputEvent;
   @NotNull private final ActionManager myActionManager;
   @NotNull private final DataContext myDataContext;

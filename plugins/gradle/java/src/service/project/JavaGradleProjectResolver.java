@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.execution.CommandLineUtil;
@@ -38,7 +38,8 @@ import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -176,9 +177,9 @@ public class JavaGradleProjectResolver extends AbstractProjectResolverExtension 
     String testExecutionExpected = parameters.get(GradleProjectResolverExtension.TEST_EXECUTION_EXPECTED_KEY);
 
     if (Boolean.valueOf(testExecutionExpected)) {
-      try (InputStream stream = getClass().getResourceAsStream("/org/jetbrains/plugins/gradle/java/addTestListener.groovy")) {
-        String addTestListenerScript = StreamUtil.readText(stream, StandardCharsets.UTF_8);
-        initScriptConsumer.consume(addTestListenerScript);
+      String name = "/org/jetbrains/plugins/gradle/java/addTestListener.groovy";
+      try (Reader reader = new InputStreamReader(getClass().getResourceAsStream(name), StandardCharsets.UTF_8)) {
+        initScriptConsumer.consume(StreamUtil.readText(reader));
       }
       catch (IOException e) {
         LOG.info(e);
@@ -190,9 +191,11 @@ public class JavaGradleProjectResolver extends AbstractProjectResolverExtension 
   }
 
   private String loadTestEventListenerDefinition() {
-    try(InputStream stream = getClass().getResourceAsStream("/org/jetbrains/plugins/gradle/IJTestLogger.groovy")) {
-      return StreamUtil.readText(stream, StandardCharsets.UTF_8);
-    } catch (IOException e) {
+    String name = "/org/jetbrains/plugins/gradle/IJTestLogger.groovy";
+    try (Reader reader = new InputStreamReader(getClass().getResourceAsStream(name), StandardCharsets.UTF_8)) {
+      return StreamUtil.readText(reader);
+    }
+    catch (IOException e) {
       LOG.info(e);
     }
     return "";

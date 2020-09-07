@@ -25,6 +25,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.local.GroovyPostHighlightingPass;
 import org.jetbrains.plugins.groovy.editor.GroovyImportOptimizer;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -47,13 +48,13 @@ public final class GroovyOptimizeImportsFix implements IntentionAction {
   @Override
   @NotNull
   public String getText() {
-    return GroovyInspectionBundle.message("optimize.all.imports");
+    return GroovyBundle.message("optimize.all.imports");
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return GroovyInspectionBundle.message("optimize.imports");
+    return GroovyBundle.message("optimize.imports");
   }
 
   @Override

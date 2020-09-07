@@ -47,7 +47,9 @@ import java.util.Arrays;
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 
 public class PluginRunConfiguration extends RunConfigurationBase<Element> implements ModuleRunConfiguration {
-  private static final String IDEA_LOG = "idea.log";
+  @NonNls private static final String IDEA_LOG = "idea.log";
+  @NonNls private static final String LOG_DIR = "/system/log/";
+
   private Module myModule;
   private String myModuleName;
 
@@ -75,7 +77,7 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
       if (ideaJdk != null) {
         final String sandboxHome = ((Sandbox)ideaJdk.getSdkAdditionalData()).getSandboxHome();
         if (sandboxHome != null) {
-          return new LogFileOptions(IDEA_LOG, sandboxHome + "/system/log/" + IDEA_LOG, predefinedLogFile.isEnabled());
+          return new LogFileOptions(IDEA_LOG, sandboxHome + LOG_DIR + IDEA_LOG, predefinedLogFile.isEnabled());
         }
       }
     }
@@ -157,8 +159,8 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
         boolean fromIdeaProject = PsiUtil.isPathToIntelliJIdeaSources(ideaJdkHome);
 
         if (!fromIdeaProject) {
-          String bootPath = "/lib/boot.jar";
-          String bootJarPath = ideaJdkHome + toSystemDependentName(bootPath);
+          @NonNls String bootPath = "/lib/boot.jar";
+          @NonNls String bootJarPath = ideaJdkHome + toSystemDependentName(bootPath);
           if (new File(bootJarPath).exists()) {
             //there is no need to add boot.jar in modern IDE builds (181.*)
             vm.add("-Xbootclasspath/a:" + bootJarPath);
@@ -184,7 +186,8 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
         }
 
         if (SystemInfo.isXWindow) {
-          if (VM_PARAMETERS == null || !VM_PARAMETERS.contains("-Dsun.awt.disablegrab")) {
+          if (VM_PARAMETERS == null || !VM_PARAMETERS.contains("-Dsun.awt.disablegrab")) // NON-NLS
+          {
             vm.defineProperty("sun.awt.disablegrab", "true"); // See http://devnet.jetbrains.net/docs/DOC-1142
           }
         }

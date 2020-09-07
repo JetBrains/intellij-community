@@ -4,6 +4,7 @@ package com.intellij.build.output
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.events.BuildEvent
 import com.intellij.execution.process.ProcessIOExecutorService
+import com.intellij.lang.LangBundle
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.ConcurrencyUtil.underThreadNameRunnable
 import org.jetbrains.annotations.ApiStatus
@@ -35,8 +36,8 @@ open class BuildOutputInstantReaderImpl @JvmOverloads constructor(
   private var readFinishedFuture = CompletableFuture<Unit>()
 
   private val readerRunnable = underThreadNameRunnable(
-    "Reader thread for BuildOutputInstantReaderImpl@${System.identityHashCode(parentEventId)}") {
-    require(!readFinishedFuture.isDone) { "Can't read from closed stream" }
+    LangBundle.message("thread.name.reader.thread.for.buildoutputinstantreaderimpl.0", System.identityHashCode(parentEventId))) {
+    require(!readFinishedFuture.isDone) { LangBundle.message("error.can.t.read.from.closed.stream") }
 
     var lastMessage: BuildEvent? = null
     val messageConsumer = { event: BuildEvent ->
@@ -81,7 +82,7 @@ open class BuildOutputInstantReaderImpl @JvmOverloads constructor(
 
   private val appendedLineProcessor = object : LineProcessor() {
     override fun process(line: String) {
-      require(state.get() != State.Closed) { "Can't append to closed stream" }
+      require(state.get() != State.Closed) { LangBundle.message("error.can.t.append.to.closed.stream") }
       try {
         while (state.get() != State.Closed) {
           if (state.compareAndSet(State.Idle, State.Running)) {

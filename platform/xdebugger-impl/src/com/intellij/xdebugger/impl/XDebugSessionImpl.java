@@ -48,6 +48,7 @@ import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,7 +79,7 @@ public final class XDebugSessionImpl implements XDebugSession {
   private volatile XSourcePosition myTopFramePosition;
   private final AtomicBoolean myPaused = new AtomicBoolean();
   private XValueMarkers<?, ?> myValueMarkers;
-  private final String mySessionName;
+  private @Nls final String mySessionName;
   private @Nullable XDebugSessionTab mySessionTab;
   private @NotNull final XDebugSessionData mySessionData;
   private XBreakpoint<?> myActiveNonLineBreakpoint;
@@ -104,7 +105,7 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   public XDebugSessionImpl(@Nullable ExecutionEnvironment environment,
                            @NotNull XDebuggerManagerImpl debuggerManager,
-                           @NotNull String sessionName,
+                           @NotNull @Nls String sessionName,
                            @Nullable Icon icon,
                            boolean showTabOnSuspend,
                            @Nullable RunContentDescriptor contentToReuse) {

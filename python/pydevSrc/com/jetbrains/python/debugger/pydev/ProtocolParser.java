@@ -369,7 +369,8 @@ public final class ProtocolParser {
     }
 
     if (rows <= 0 || cols <= 0) {
-      throw new PyDebuggerException("Array xml: bad rows or columns number: (" + rows + ", " + cols + ")");
+      return null;
+      //throw new PyDebuggerException("Array xml: bad rows or columns number: (" + rows + ", " + cols + ")");
     }
     Object[][] values = new Object[rows][cols];
 

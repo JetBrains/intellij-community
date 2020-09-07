@@ -73,6 +73,7 @@ final class BuiltInHelpPlugin {
     <description>$productName Web Help for offline use.</description>
 
     <depends>$productModuleDep</depends>
+    <resource-bundle>messages.BuiltInHelpBundle</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceInterface="com.intellij.openapi.help.HelpManager" overrides="true"

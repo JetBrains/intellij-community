@@ -22,6 +22,7 @@ public final class GithubIcons {
   /** 16x16 */ public static final @NotNull Icon DeleteHovered = load("/org/jetbrains/plugins/github/deleteHovered.svg");
   /** 16x16 */ public static final @NotNull Icon IssueClosed = load("/org/jetbrains/plugins/github/issueClosed.svg");
   /** 16x16 */ public static final @NotNull Icon IssueOpened = load("/org/jetbrains/plugins/github/issueOpened.svg");
+  /** 16x16 */ public static final @NotNull Icon LocalBranch = load("/org/jetbrains/plugins/github/localBranch.svg");
   /** 16x16 */ public static final @NotNull Icon PullRequestClosed = load("/org/jetbrains/plugins/github/pullRequestClosed.svg");
   /** 16x16 */ public static final @NotNull Icon PullRequestDraft = load("/org/jetbrains/plugins/github/pullRequestDraft.svg");
   /** 16x16 */ public static final @NotNull Icon PullRequestMerged = load("/org/jetbrains/plugins/github/pullRequestMerged.svg");

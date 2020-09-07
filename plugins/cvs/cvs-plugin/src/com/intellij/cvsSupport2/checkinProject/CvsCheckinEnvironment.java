@@ -69,10 +69,10 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
   }
 
   @Override
-  public List<VcsException> commit(@NotNull List<Change> changes,
+  public List<VcsException> commit(@NotNull List<? extends Change> changes,
                                    @NotNull String commitMessage,
                                    @NotNull CommitContext commitContext,
-                                   @NotNull Set<String> feedback) {
+                                   @NotNull Set<? super String> feedback) {
     final Collection<FilePath> filesList = ChangesUtil.getPaths(changes);
     FilePath[] files = filesList.toArray(new FilePath[0]);
     final CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
@@ -107,7 +107,7 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
   }
 
   @Override
-  public List<VcsException> scheduleMissingFileForDeletion(@NotNull List<FilePath> files) {
+  public List<VcsException> scheduleMissingFileForDeletion(@NotNull List<? extends FilePath> files) {
     for (FilePath file : files) {
       if (file.isDirectory()) {
         VcsBalloonProblemNotifier.showOverChangesView(myProject,
@@ -126,7 +126,7 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
   }
 
   @Override
-  public List<VcsException> scheduleUnversionedFilesForAddition(@NotNull List<VirtualFile> files) {
+  public List<VcsException> scheduleUnversionedFilesForAddition(@NotNull List<? extends VirtualFile> files) {
     final CvsHandler handler = AddFileOrDirectoryAction.getDefaultHandler(myProject, VfsUtil.toVirtualFileArray(files));
     final CvsOperationExecutor executor = new CvsOperationExecutor(myProject);
     executor.performActionSync(handler, CvsOperationExecutorCallback.EMPTY);

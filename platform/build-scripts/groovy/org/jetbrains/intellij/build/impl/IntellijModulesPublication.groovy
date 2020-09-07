@@ -40,7 +40,7 @@ class IntellijModulesPublication {
      * URL where the artifacts will be deployed
      *
      *  <p>
-     *  Note: Append /;publish=1; for Bintray
+     *  Note: Append /;publish=1;override=1 for Bintray
      *  </p>
      */
     String repositoryUrl = property('intellij.modules.publication.repository.url')
@@ -120,11 +120,11 @@ class IntellijModulesPublication {
   }
 
   private def deployJar(File jar, File pom, MavenArtifactsBuilder.MavenCoordinates coordinates) {
-    deployFile(jar, coordinates, ["-DpomFile=$pom.absolutePath"])
+    deployFile(jar, coordinates, "", ["-DpomFile=$pom.absolutePath"])
   }
 
   private def deploySources(File sources, MavenArtifactsBuilder.MavenCoordinates coordinates) {
-    deployFile(sources, coordinates, [
+    deployFile(sources, coordinates, "sources", [
       "-DgroupId=$coordinates.groupId",
       "-DartifactId=$coordinates.artifactId",
       "-Dversion=$coordinates.version",
@@ -133,12 +133,12 @@ class IntellijModulesPublication {
     ])
   }
 
-  private def deployFile(File file, MavenArtifactsBuilder.MavenCoordinates coordinates, Collection args) {
-    context.messages.info("Upload of $file.name")
-    if (artifactExists(coordinates)) {
-      context.messages.info("Artifact ${coordinates.groupId}:${coordinates.artifactId}:${coordinates.version} was already published.")
+  private def deployFile(File file, MavenArtifactsBuilder.MavenCoordinates coordinates, String classifier, Collection args) {
+    if (artifactExists(coordinates, classifier, file.name.split('\\.').last())) {
+      context.messages.info("Artifact $coordinates was already published.")
     }
     else {
+      context.messages.info("Upload of $file.name")
       def process = (['mvn', '--settings', mavenSettings.absolutePath,
                       'deploy:deploy-file',
                       '-DrepositoryId=server-id',
@@ -154,9 +154,8 @@ class IntellijModulesPublication {
     }
   }
 
-  private boolean artifactExists(MavenArtifactsBuilder.MavenCoordinates coordinates) {
-    String groupUrlPart = coordinates.groupId.replace('.' as char, '/' as char)
-    URL url = new URL("${options.checkArtifactExistsUrl}/${groupUrlPart}/${coordinates.artifactId}/${coordinates.version}")
+  private boolean artifactExists(MavenArtifactsBuilder.MavenCoordinates coordinates, String classifier, String packaging) {
+    URL url = new URL("${options.checkArtifactExistsUrl}/$coordinates.directoryPath/${coordinates.getFileName(classifier, packaging)}")
 
     HttpURLConnection connection = (HttpURLConnection)url.openConnection()
     connection.requestMethod = "HEAD"

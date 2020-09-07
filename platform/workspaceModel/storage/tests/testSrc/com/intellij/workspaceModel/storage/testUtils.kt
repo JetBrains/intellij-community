@@ -67,12 +67,13 @@ object SerializationRoundTripChecker {
     assertMapsEqual(expected.refs.oneToManyContainer, actual.refs.oneToManyContainer)
     assertMapsEqual(expected.refs.abstractOneToOneContainer, actual.refs.abstractOneToOneContainer)
     assertMapsEqual(expected.refs.oneToAbstractManyContainer, actual.refs.oneToAbstractManyContainer)
+    assertMapsEqual(expected.indexes.virtualFileIndex.entityId2VirtualFileUrlInfo, actual.indexes.virtualFileIndex.entityId2VirtualFileUrlInfo)
+    assertMapsEqual(expected.indexes.virtualFileIndex.vfu2VirtualFileUrlInfo, actual.indexes.virtualFileIndex.vfu2VirtualFileUrlInfo)
     // Just checking that all properties have been asserted
     assertEquals(4, RefsTable::class.memberProperties.size)
 
     // Assert indexes
     assertBiMultiMap(expected.indexes.softLinks.index, actual.indexes.softLinks.index)
-    assertBiMultiMap(expected.indexes.virtualFileIndex.index, actual.indexes.virtualFileIndex.index)
     assertBiMap(expected.indexes.entitySourceIndex.index, actual.indexes.entitySourceIndex.index)
     assertBiMap(expected.indexes.persistentIdIndex.index, actual.indexes.persistentIdIndex.index)
     // External index should not be persisted

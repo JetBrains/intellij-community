@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.daemon.XmlErrorBundle;
 import com.intellij.codeInsight.editorActions.XmlEditUtil;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.template.Expression;
@@ -38,6 +37,7 @@ import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.XmlExtension.AttributeValuePresentation;
+import com.intellij.xml.psi.XmlPsiBundle;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -58,13 +58,13 @@ public class InsertRequiredAttributeFix extends LocalQuickFixAndIntentionActionO
   @Override
   @NotNull
   public String getText() {
-    return XmlErrorBundle.message("insert.required.attribute.quickfix.text", myAttrName);
+    return XmlPsiBundle.message("xml.quickfix.insert.required.attribute.text", myAttrName);
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return XmlErrorBundle.message("insert.required.attribute.quickfix.family");
+    return XmlPsiBundle.message("xml.quickfix.insert.required.attribute.family");
   }
 
   @Override
@@ -122,7 +122,8 @@ public class InsertRequiredAttributeFix extends LocalQuickFixAndIntentionActionO
       template.addTextSegment("</jsp:attribute>");
       template.addEndVariable();
       if (anchorIsEmptyTag) template.addTextSegment("</" + myTag.getName() + ">");
-    } else if (!insertShorthand) {
+    }
+    else if (!insertShorthand) {
       template.addTextSegment(valuePostfix);
     }
 
@@ -134,7 +135,7 @@ public class InsertRequiredAttributeFix extends LocalQuickFixAndIntentionActionO
         if (!anchorIsEmptyTag && indirectSyntax) ++textOffset;
         editor.getCaretModel().moveToOffset(textOffset);
         if (anchorIsEmptyTag && indirectSyntax) {
-          editor.getDocument().deleteString(textOffset,textOffset + 2);
+          editor.getDocument().deleteString(textOffset, textOffset + 2);
         }
         TemplateManager.getInstance(project).startTemplate(editor, template);
       });

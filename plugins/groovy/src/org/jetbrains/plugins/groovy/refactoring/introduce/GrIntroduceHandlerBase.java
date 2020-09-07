@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.introduce;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -35,8 +35,10 @@ import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -60,6 +62,8 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.NameValidator;
 
 import java.util.*;
+
+import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
 public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSettings, Scope extends PsiElement> implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance(GrIntroduceHandlerBase.class);
@@ -127,8 +131,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     }
   }
 
-  @NotNull
-  protected abstract String getRefactoringName();
+  protected abstract @Nls(capitalization = Title) @NotNull String getRefactoringName();
 
   @NotNull
   protected abstract String getHelpID();
@@ -311,9 +314,12 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     };
 
     if (scopes.length == 0) {
-      CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle
-        .getCannotRefactorMessage(getRefactoringName() + "is not available in current scope"),
-                                          getRefactoringName(), getHelpID());
+      CommonRefactoringUtil.showErrorHint(
+        project, editor,
+        RefactoringBundle.getCannotRefactorMessage(getRefactoringName()),
+        GroovyBundle.message("dialog.title.refactoring.unavailable.in.current.scope"),
+        getHelpID()
+      );
     }
     else if (scopes.length == 1) {
       callback.pass(scopes[0]);
@@ -584,7 +590,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     if (context.getEditor() != null) {
       highlightManager = HighlightManager.getInstance(context.getProject());
       if (context.getOccurrences().length > 1) {
-        highlightManager.addOccurrenceHighlights(context.getEditor(), context.getOccurrences(), 
+        highlightManager.addOccurrenceHighlights(context.getEditor(), context.getOccurrences(),
                                                  EditorColors.SEARCH_RESULT_ATTRIBUTES, true, highlighters);
       }
     }

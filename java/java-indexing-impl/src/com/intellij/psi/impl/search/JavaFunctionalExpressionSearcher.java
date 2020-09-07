@@ -396,10 +396,10 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
             return true;
           });
 
-        PsiSearchHelper helper = PsiSearchHelper.getInstance(project);
+        PsiSearchHelperImpl helper = (PsiSearchHelperImpl)PsiSearchHelper.getInstance(project);
         Processor<VirtualFile> processor = Processors.cancelableCollectProcessor(files);
         for (String word : likelyNames) {
-          helper.processCandidateFilesForText(searchScope, UsageSearchContext.IN_CODE, true, word, processor);
+          helper.processCandidateFilesForText(searchScope, UsageSearchContext.IN_CODE, true, true, word, processor);
         }
       });
       return files;

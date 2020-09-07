@@ -27,6 +27,4 @@ public abstract class JpsRunConfigurationPropertiesSerializer<P extends JpsEleme
   }
 
   public abstract P loadProperties(@Nullable Element runConfigurationTag);
-
-  public abstract void saveProperties(P properties, Element runConfigurationTag);
 }

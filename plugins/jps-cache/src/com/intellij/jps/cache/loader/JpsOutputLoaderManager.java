@@ -4,8 +4,8 @@ import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.jps.cache.JpsCacheBundle;
-import com.intellij.jps.cache.client.JpsServerAuthExtension;
 import com.intellij.jps.cache.client.JpsServerClient;
+import com.intellij.jps.cache.git.GitCommitsIterator;
 import com.intellij.jps.cache.git.GitRepositoryUtil;
 import com.intellij.jps.cache.loader.JpsOutputLoader.LoaderStatus;
 import com.intellij.jps.cache.model.BuildTargetState;
@@ -135,27 +135,41 @@ public class JpsOutputLoaderManager implements Disposable {
 
   @Nullable
   private Pair<String, Integer> getNearestCommit(boolean isForceUpdate) {
-    Set<String> allCacheKeys = myServerClient.getAllCacheKeys(myProject);
+    Map<String, Set<String>> availableCommitsPerRemote = myServerClient.getCacheKeysPerRemote(myProject);
 
     String previousCommitId = PropertiesComponent.getInstance().getValue(LATEST_COMMIT_ID);
-    List<Iterator<String>> repositoryList = GitRepositoryUtil.getCommitsIterator(myProject);
+    List<GitCommitsIterator> repositoryList = GitRepositoryUtil.getCommitsIterator(myProject, availableCommitsPerRemote.keySet());
     String commitId = "";
     int commitsBehind = 0;
-    for (Iterator<String> commitsIterator : repositoryList) {
-      if (allCacheKeys.contains(commitId)) continue;
+    Set<String> availableCommitsForRemote = new HashSet<>();
+    for (GitCommitsIterator commitsIterator : repositoryList) {
+      availableCommitsForRemote = availableCommitsPerRemote.get(commitsIterator.getRemote());
+      if (availableCommitsForRemote.contains(commitId)) continue;
       commitsBehind = 0;
-      while (commitsIterator.hasNext() && !allCacheKeys.contains(commitId)) {
+      while (commitsIterator.hasNext() && !availableCommitsForRemote.contains(commitId)) {
         commitId = commitsIterator.next();
         commitsBehind++;
       }
     }
 
-    if (!allCacheKeys.contains(commitId)) {
-      LOG.warn("Not found any caches for the latest commits in the branch");
+    if (!availableCommitsForRemote.contains(commitId)) {
+      String warning = "Not found any caches for the latest commits in the branch";
+      LOG.warn(warning);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        Notification notification = NONE_NOTIFICATION_GROUP.createNotification("Jps Caches Downloader", warning,
+                                                                               NotificationType.WARNING, null);
+        Notifications.Bus.notify(notification, myProject);
+      });
       return null;
     }
     if (previousCommitId != null && commitId.equals(previousCommitId) && !isForceUpdate) {
-      LOG.info("The system contains up to date caches");
+      String info = "The system contains up to date caches";
+      LOG.info(info);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        Notification notification = NONE_NOTIFICATION_GROUP.createNotification("Jps Caches Downloader", info,
+                                                                               NotificationType.INFORMATION, null);
+        Notifications.Bus.notify(notification, myProject);
+      });
       return null;
     }
     return Pair.create(commitId, commitsBehind);

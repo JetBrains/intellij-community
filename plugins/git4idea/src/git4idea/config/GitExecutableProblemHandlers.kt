@@ -5,16 +5,17 @@ import com.intellij.CommonBundle
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
-import git4idea.GitVcs
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import git4idea.config.GitExecutableProblemsNotifier.getPrettyErrorMessage
 import git4idea.i18n.GitBundle
 import org.jetbrains.annotations.CalledInAny
-import org.jetbrains.annotations.CalledInAwt
-import org.jetbrains.annotations.CalledInBackground
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.Nls.Capitalization.Sentence
 import org.jetbrains.annotations.Nls.Capitalization.Title
+import org.jetbrains.annotations.NotNull
 
 fun findGitExecutableProblemHandler(project: Project): GitExecutableProblemHandler {
   return when {
@@ -26,10 +27,10 @@ fun findGitExecutableProblemHandler(project: Project): GitExecutableProblemHandl
 
 interface GitExecutableProblemHandler {
 
-  @CalledInAwt
+  @RequiresEdt
   fun showError(exception: Throwable, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit)
 
-  @CalledInAwt
+  @RequiresEdt
   fun showError(exception: Throwable, errorNotifier: ErrorNotifier) {
     showError(exception, errorNotifier, {})
   }
@@ -50,59 +51,59 @@ interface ErrorNotifier {
   @CalledInAny
   fun showError(@Nls(capitalization = Sentence) text: String)
 
-  @CalledInAwt
+  @RequiresEdt
   fun executeTask(@Nls(capitalization = Title) title: String, cancellable: Boolean, action: () -> Unit)
 
   @CalledInAny
   fun changeProgressTitle(@Nls(capitalization = Title) text: String)
 
   @CalledInAny
-  fun showMessage(@Nls(capitalization = Sentence) text: String)
+  fun showMessage(@NlsContexts.NotificationContent @NotNull message: String)
 
   @CalledInAny
   fun hideProgress()
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   fun resetGitExecutable() {
     GitVcsApplicationSettings.getInstance().setPathToGit(null)
     GitExecutableManager.getInstance().dropExecutableCache()
   }
 
-  sealed class FixOption(@Nls(capitalization = Title) val text: String, @CalledInAwt val fix: () -> Unit) {
-    class Standard(@Nls(capitalization = Title) text: String, @CalledInAwt fix: () -> Unit) : FixOption(text, fix)
+  sealed class FixOption(@Nls(capitalization = Title) val text: String, @RequiresEdt val fix: () -> Unit) {
+    class Standard(@Nls(capitalization = Title) text: String, @RequiresEdt fix: () -> Unit) : FixOption(text, fix)
 
     // todo probably change to "Select on disk" instead of opening Preferences
     internal class Configure(val project: Project) : FixOption(CommonBundle.message("action.text.configure.ellipsis"), {
-      ShowSettingsUtil.getInstance().showSettingsDialog(project, GitVcs.NAME)
+      ShowSettingsUtil.getInstance().showSettingsDialog(project, GitBundle.message("settings.git.option.group"))
     })
   }
 }
 
-@CalledInAwt
+@RequiresEdt
 internal fun showUnsupportedVersionError(project: Project, version: GitVersion, errorNotifier: ErrorNotifier) {
   val description = if (version.type == GitVersion.Type.WSL1) unsupportedWslVersionDescription() else unsupportedVersionDescription()
   errorNotifier.showError(unsupportedVersionMessage(version), description, getLinkToConfigure(project))
 }
 
-internal fun unsupportedVersionMessage(version: GitVersion): String =
+internal fun unsupportedVersionMessage(version: GitVersion): @Nls String =
   GitBundle.message("git.executable.validation.error.version.title", version.presentation)
 
-internal fun unsupportedVersionDescription(): String =
+internal fun unsupportedVersionDescription(): @Nls String =
   GitBundle.message("git.executable.validation.error.version.message", GitVersion.MIN.presentation)
 
-internal fun unsupportedWslVersionDescription(): String =
+internal fun unsupportedWslVersionDescription(): @Nls String =
   GitBundle.message("git.executable.validation.error.wsl1.unsupported.message")
 
 internal fun getLinkToConfigure(project: Project): ErrorNotifier.FixOption = ErrorNotifier.FixOption.Configure(project)
 
 internal fun ProcessOutput.dumpToString() = "output: ${stdout}, error output: ${stderr}"
 
-internal fun getErrorTitle(text: String, description: String?) =
+internal fun getErrorTitle(text: @Nls String, description: @Nls String?): @Nls String =
   if (description == null) GitBundle.getString("git.executable.validation.error.start.title") else text
 
-internal fun getErrorMessage(text: String, description: String?) = description ?: text
+internal fun getErrorMessage(text: @Nls String, description: @Nls String?): @Nls String = description ?: text
 
-internal fun getHumanReadableErrorFor(exception: Throwable): String? {
+internal fun getHumanReadableErrorFor(exception: Throwable): @Nls String? {
   if (exception is GitNotInstalledException) {
     return null
   }

@@ -5,7 +5,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -214,11 +214,11 @@ public class ModuleUtilCore {
   }
 
   public static boolean isModuleFile(@NotNull Module module, @NotNull VirtualFile file) {
-    return FileUtil.namesEqual(file.getPath(), module.getModuleFilePath());
+    return StringUtil.equal(file.getPath(), module.getModuleFilePath(), file.isCaseSensitive());
   }
 
   public static boolean isModuleDir(@NotNull Module module, @NotNull VirtualFile dir) {
-    return FileUtil.namesEqual(dir.getPath(), getModuleDirPath(module));
+    return StringUtil.equal(dir.getPath(), getModuleDirPath(module), dir.isCaseSensitive());
   }
 
   @NotNull

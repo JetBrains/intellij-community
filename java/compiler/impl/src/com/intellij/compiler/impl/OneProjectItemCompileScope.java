@@ -27,7 +27,7 @@ public class OneProjectItemCompileScope extends ExportableUserDataHolderBase imp
   private final VirtualFile myFile;
   private final String myUrl;
 
-  public OneProjectItemCompileScope(Project project, VirtualFile file) {
+  public OneProjectItemCompileScope(Project project, @NotNull VirtualFile file) {
     myProject = project;
     myFile = file;
     final String url = file.getUrl();

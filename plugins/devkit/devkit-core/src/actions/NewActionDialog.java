@@ -10,6 +10,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
@@ -195,12 +196,14 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
   @Override
   @NotNull
   public String getActionText() {
-    return myActionNameEdit.getText();
+    @NlsSafe String text = myActionNameEdit.getText();
+    return text;
   }
 
   @Override
   public String getActionDescription() {
-    return myActionDescriptionEdit.getText();
+    @NlsSafe String description = myActionDescriptionEdit.getText();
+    return description;
   }
 
   @Override
@@ -243,7 +246,7 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
     return getKeystrokeText(mySecondKeystrokeEdit.getKeyStroke());
   }
 
-  private static String getKeystrokeText(KeyStroke keyStroke) {
+  private static @NonNls String getKeystrokeText(KeyStroke keyStroke) {
     return keyStroke != null ?
            keyStroke.toString().replaceAll("pressed ", "").replaceAll("released ", "") :
            null;
@@ -281,7 +284,7 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
   }
 
   @Nullable
-  private String checkCanCreateActionClass() {
+  private @NlsSafe String checkCanCreateActionClass() {
     if (myDirectory != null) {
       try {
         DevkitActionsUtil.checkCanCreateClass(myDirectory, myActionClassNameEdit.getText());
@@ -345,7 +348,8 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
   private static class MyActionRenderer extends ColoredListCellRenderer<AnAction> {
     @Override
     protected void customizeCellRenderer(@NotNull JList list, AnAction value, int index, boolean selected, boolean hasFocus) {
-      append(ActionManager.getInstance().getId(value), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      @NlsSafe String actionId = ActionManager.getInstance().getId(value);
+      append(actionId, SimpleTextAttributes.REGULAR_ATTRIBUTES);
       String text = value.getTemplatePresentation().getText();
       if (StringUtil.isNotEmpty(text)) {
         append(" (" + text + ")", SimpleTextAttributes.REGULAR_ATTRIBUTES);

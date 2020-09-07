@@ -54,7 +54,7 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyCallExpression(final PyCallExpression node) {
+    public void visitPyCallExpression(final @NotNull PyCallExpression node) {
       if (node.getParent() instanceof PyDecorator) {
         return;
       }
@@ -66,14 +66,10 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyDecoratorList(final PyDecoratorList node) {
-      PyDecorator[] decorators = node.getDecorators();
-
-      for (PyDecorator decorator: decorators) {
-        if (decorator.hasArgumentList()) {
-          PyExpression[] arguments = decorator.getArguments();
-          checkArguments(decorator, arguments);
-        }
+    public void visitPyDecorator(final @NotNull PyDecorator decorator) {
+      if (decorator.hasArgumentList()) {
+        PyExpression[] arguments = decorator.getArguments();
+        checkArguments(decorator, arguments);
       }
     }
 

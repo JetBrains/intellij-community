@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.NonNls;
@@ -11,7 +11,7 @@ import java.util.Map;
 /**
  * @author Konstantin Bulenkov
  */
-public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
+final class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
   @NonNls private static final Map<String, String> ourDeprecatedIconsReplacements = new HashMap<>();
 
   static {
@@ -323,9 +323,8 @@ public class DeprecatedDuplicatesIconPathPatcher extends IconPathPatcher {
     ourDeprecatedIconsReplacements.put("/general/getProjectfromVCS.svg", "AllIcons.Welcome.FromVCS");
   }
 
-  @Nullable
   @Override
-  public String patchPath(@NotNull String path, ClassLoader classLoader) {
+  public @Nullable String patchPath(@NotNull String path, ClassLoader classLoader) {
     return ourDeprecatedIconsReplacements.get(path);
   }
 }

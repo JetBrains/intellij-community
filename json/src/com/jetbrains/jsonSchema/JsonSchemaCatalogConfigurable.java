@@ -6,6 +6,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
+import com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.ui.FormBuilder;
@@ -52,7 +53,7 @@ public class JsonSchemaCatalogConfigurable implements Configurable {
     return wrap(builder.getPanel());
   }
 
-  private static void addWithComment(FormBuilder builder, JBCheckBox box, String s) {
+  private static void addWithComment(FormBuilder builder, JBCheckBox box, @DetailedDescription String s) {
     builder.addComponent(new ComponentPanelBuilder(box).withComment(s).createPanel());
   }
 

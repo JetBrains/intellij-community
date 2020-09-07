@@ -19,9 +19,11 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.Actions;
@@ -41,7 +43,7 @@ class PropertyKeyReferenceProvider extends PsiReferenceProvider {
 
   @Nullable private final NullableFunction<? super XmlTag, String> myBundleNameFunction;
 
-  PropertyKeyReferenceProvider(boolean tagMode, @Nullable String fallbackKeyName, @Nullable String fallbackBundleName) {
+  PropertyKeyReferenceProvider(boolean tagMode, @NonNls @Nullable String fallbackKeyName, @Nullable String fallbackBundleName) {
     myTagMode = tagMode;
     myFallbackKeyName = fallbackKeyName;
     myFallbackBundleName = fallbackBundleName;
@@ -87,10 +89,15 @@ class PropertyKeyReferenceProvider extends PsiReferenceProvider {
       }
 
       if (value != null) {
-        return new PsiReference[]{new MyPropertyReference(value, element, bundle)};
+        return new PsiReference[]{new MyPropertyReference(value, element, bundle, getFallbackBundleName())};
       }
     }
     return PsiReference.EMPTY_ARRAY;
+  }
+
+  @Nullable
+  protected String getFallbackBundleName() {
+    return null;
   }
 
   private PsiReference[] getTagReferences(XmlTag element) {
@@ -98,7 +105,7 @@ class PropertyKeyReferenceProvider extends PsiReferenceProvider {
     if (parent == null) return PsiReference.EMPTY_ARRAY;
     final XmlTag bundleNameTag = parent.findFirstSubTag(myFallbackBundleName);
     String bundleName = bundleNameTag != null ? bundleNameTag.getValue().getTrimmedText() : null;
-    return new PsiReference[]{new MyPropertyReference(element.getValue().getText(), element, bundleName)};
+    return new PsiReference[]{new MyPropertyReference(element.getValue().getText(), element, bundleName, getFallbackBundleName())};
   }
 
 
@@ -106,10 +113,13 @@ class PropertyKeyReferenceProvider extends PsiReferenceProvider {
 
     @Nullable
     private final String myBundleName;
+    @Nullable
+    private final String myFallbackBundleName;
 
-    private MyPropertyReference(String value, PsiElement psiElement, @Nullable String bundleName) {
+    private MyPropertyReference(String value, PsiElement psiElement, @Nullable String bundleName, @Nullable String fallbackBundleName) {
       super(value, psiElement, bundleName, false);
       myBundleName = bundleName;
+      myFallbackBundleName = fallbackBundleName;
     }
 
     @Nullable
@@ -125,7 +135,8 @@ class PropertyKeyReferenceProvider extends PsiReferenceProvider {
         return Collections.emptyList();
       }
 
-      final String bundleNameToUse = bundleName == null ? getPluginResourceBundle(element) : bundleName;
+      final String bundleNameToUse =
+        ObjectUtils.chooseNotNull(bundleName == null ? getPluginResourceBundle(element) : bundleName, myFallbackBundleName);
       if (bundleNameToUse == null) {
         return Collections.emptyList();
       }

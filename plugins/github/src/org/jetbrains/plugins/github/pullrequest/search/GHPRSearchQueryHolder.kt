@@ -2,17 +2,17 @@
 package org.jetbrains.plugins.github.pullrequest.search
 
 import com.intellij.openapi.Disposable
-import org.jetbrains.annotations.CalledInAwt
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery
 
 internal interface GHPRSearchQueryHolder {
 
-  @get:CalledInAwt
-  @set:CalledInAwt
+  @get:RequiresEdt
+  @set:RequiresEdt
   var queryString: String
 
-  @get:CalledInAwt
-  @set:CalledInAwt
+  @get:RequiresEdt
+  @set:RequiresEdt
   var query: GHPRSearchQuery
 
   fun addQueryChangeListener(disposable: Disposable, listener: () -> Unit)

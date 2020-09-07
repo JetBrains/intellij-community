@@ -26,35 +26,10 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 import java.awt.event.InputEvent
 
-private val LOG = logger<BaseOpenInBrowserAction>()
-
-internal fun openInBrowser(request: OpenInBrowserRequest, preferLocalUrl: Boolean = false, browser: WebBrowser? = null) {
-  try {
-    val urls = WebBrowserService.getInstance().getUrlsToOpen(request, preferLocalUrl)
-    if (!urls.isEmpty()) {
-      chooseUrl(urls)
-        .onSuccess { url ->
-          FileDocumentManager.getInstance().saveAllDocuments()
-          BrowserLauncher.instance.browse(url.toExternalForm(), browser, request.project)
-        }
-    }
-  }
-  catch (e: WebBrowserUrlProvider.BrowserException) {
-    Messages.showErrorDialog(e.message, IdeBundle.message("browser.error"))
-  }
-  catch (e: Exception) {
-    LOG.error(e)
-  }
-}
-
-internal fun openInBrowser(event: AnActionEvent, browser: WebBrowser?) {
-  createRequest(event.dataContext, isForceFileUrlIfNoUrlProvider = true)?.let {
-    openInBrowser(it, BitUtil.isSet(event.modifiers, InputEvent.SHIFT_MASK), browser)
-  }
-}
 
 internal class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAwareAction(browser.name, null, browser.icon) {
   companion object {
+    private val LOG = logger<BaseOpenInBrowserAction>()
     @JvmStatic
     fun doUpdate(event: AnActionEvent): OpenInBrowserRequest? {
       val request = createRequest(event.dataContext, isForceFileUrlIfNoUrlProvider = false)
@@ -62,6 +37,31 @@ internal class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAw
       event.presentation.isEnabledAndVisible = applicable
       return if (applicable) request else  null
     }
+    internal fun openInBrowser(request: OpenInBrowserRequest, preferLocalUrl: Boolean = false, browser: WebBrowser? = null) {
+      try {
+        val urls = WebBrowserService.getInstance().getUrlsToOpen(request, preferLocalUrl)
+        if (!urls.isEmpty()) {
+          chooseUrl(urls)
+            .onSuccess { url ->
+              FileDocumentManager.getInstance().saveAllDocuments()
+              BrowserLauncher.instance.browse(url.toExternalForm(), browser, request.project)
+            }
+        }
+      }
+      catch (e: WebBrowserUrlProvider.BrowserException) {
+        Messages.showErrorDialog(e.message, IdeBundle.message("browser.error"))
+      }
+      catch (e: Exception) {
+        LOG.error(e)
+      }
+    }
+
+    internal fun openInBrowser(event: AnActionEvent, browser: WebBrowser?) {
+      createRequest(event.dataContext, isForceFileUrlIfNoUrlProvider = true)?.let {
+        openInBrowser(it, BitUtil.isSet(event.modifiers, InputEvent.SHIFT_MASK), browser)
+      }
+    }
+
   }
 
   private fun getBrowser(): WebBrowser? {

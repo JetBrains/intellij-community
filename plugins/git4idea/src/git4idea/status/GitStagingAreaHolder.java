@@ -69,8 +69,13 @@ public class GitStagingAreaHolder {
   @Nullable
   private GitConflict createConflict(@Nullable GitFileStatus record) {
     if (record == null) return null;
+    return createConflict(myRepository.getRoot(), record);
+  }
+
+  @Nullable
+  public static GitConflict createConflict(@NotNull VirtualFile root, @NotNull GitFileStatus record) {
     if (!GitIndexStatusUtilKt.isConflicted(record.getIndex(), record.getWorkTree())) return null;
-    return new GitConflict(myRepository.getRoot(), record.getPath(),
+    return new GitConflict(root, record.getPath(),
                            getConflictStatus(record.getIndex()), getConflictStatus(record.getWorkTree()));
   }
 

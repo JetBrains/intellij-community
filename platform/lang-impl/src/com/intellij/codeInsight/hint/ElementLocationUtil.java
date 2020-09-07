@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -29,7 +30,7 @@ public final class ElementLocationUtil {
     label.setIcon(ref.get());
   }
 
-  public static String renderElementLocation(final PsiElement element, final Ref<? super Icon> icon) {
+  public static @NlsSafe String renderElementLocation(final PsiElement element, final Ref<? super Icon> icon) {
     if (element != null) {
       PsiFile file = element.getContainingFile();
       VirtualFile vfile = file == null ? null : file.getVirtualFile();

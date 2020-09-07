@@ -12,7 +12,7 @@ abstract class GradleJavaCompilerSettingsImportingTestCase : GradleJavaImporting
 
   override fun setUp() {
     super.setUp()
-    isNotSupportedJava14 = isGradleOlderThen("6.3")
+    isNotSupportedJava14 = isGradleOlderThan("6.3")
   }
 
   fun createGradleSettingsFile(vararg moduleNames: String) {

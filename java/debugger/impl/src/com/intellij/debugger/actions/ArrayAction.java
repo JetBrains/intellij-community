@@ -14,6 +14,7 @@ import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -139,9 +140,9 @@ public abstract class ArrayAction extends DebuggerAction {
   }
 
   private static class NamedArrayConfigurable extends ArrayRendererConfigurable implements Configurable {
-    private final String myTitle;
+    private final @NlsContexts.ConfigurableName String myTitle;
 
-    NamedArrayConfigurable(String title, ArrayRenderer renderer) {
+    NamedArrayConfigurable(@NlsContexts.ConfigurableName String title, ArrayRenderer renderer) {
       super(renderer);
       myTitle = title;
     }
@@ -163,7 +164,7 @@ public abstract class ArrayAction extends DebuggerAction {
     protected Promise<ArrayRenderer> createNewRenderer(XValueNodeImpl node,
                                                        ArrayRenderer original,
                                                        @NotNull DebuggerContextImpl debuggerContext,
-                                                       String title) {
+                                                       @NlsContexts.ConfigurableName String title) {
       ArrayRenderer clonedRenderer = original.clone();
       clonedRenderer.setForced(true);
       if (ShowSettingsUtil.getInstance().editConfigurable(debuggerContext.getProject(), new NamedArrayConfigurable(title, clonedRenderer))) {

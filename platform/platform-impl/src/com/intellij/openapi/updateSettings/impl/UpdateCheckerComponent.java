@@ -31,9 +31,12 @@ import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -122,11 +125,11 @@ final class UpdateCheckerComponent {
     }
 
     String title = IdeBundle.message("update.whats.new.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
-    UpdateChecker.getNotificationGroup().createNotification(title, null, NotificationType.INFORMATION, null, "ide.update.installed")
+    UpdateChecker.getNotificationGroup().createNotification(title, NotificationType.INFORMATION, "ide.update.installed")
       .addAction(new NotificationAction(IdeBundle.message("update.whats.new.notification.action")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-          String title = IdeBundle.message("update.whats.new.file.name", ApplicationInfo.getInstance().getFullVersion());
+          String title = IdeBundle.message("update.whats.new", ApplicationInfo.getInstance().getFullVersion());
           HTMLEditorProvider.Companion.openEditor(project, title, null, updateHtmlMessage, updateHtmlMessage);
           IdeUpdateUsageTriggerCollector.trigger("update.whats.new");
           notification.expire();
@@ -156,7 +159,7 @@ final class UpdateCheckerComponent {
       settings.setSelectedChannelStatus(ChannelStatus.EAP);
       LOG.info("channel forced to 'eap'");
       if (!ConfigImportHelper.isFirstSession()) {
-        String title = IdeBundle.message("update.notifications.title");
+        String title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
         String message = IdeBundle.message("update.channel.enforced", ChannelStatus.EAP);
         UpdateChecker.getNotificationGroup().createNotification(title, message, NotificationType.INFORMATION, null, "ide.update.channel.switched").notify(null);
       }
@@ -233,7 +236,7 @@ final class UpdateCheckerComponent {
       }
     }
 
-    String title = IdeBundle.message("update.notifications.title");
+    String title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
     String message = blogPost == null ? IdeBundle.message("update.snap.message")
                                       : IdeBundle.message("update.snap.message.with.blog.post", StringUtil.escapeXmlEntities(blogPost));
     UpdateChecker.getNotificationGroup().createNotification(
@@ -289,25 +292,19 @@ final class UpdateCheckerComponent {
     }
 
     String title = IdeBundle.message("update.installed.notification.title");
-    String message = "<html>" + StringUtil.join(descriptors, descriptor -> {
-      return "<a href='" + descriptor.getPluginId().getIdString() + "'>" + descriptor.getName() + "</a>";
-    }, ", ") + "</html>";
+    String message = new HtmlBuilder()
+      .appendWithSeparators(HtmlChunk.text(", "), ContainerUtil.map(descriptors, d -> HtmlChunk.link(d.getPluginId().getIdString(), d.getName())))
+      .wrapWith("html").toString();
 
     UpdateChecker.getNotificationGroup().createNotification(title, message, NotificationType.INFORMATION, (notification, event) -> {
       String id = event.getDescription();
-      if (id == null) {
-        return;
-      }
+      if (id == null) return;
 
       PluginId pluginId = PluginId.findId(id);
-      if (pluginId == null) {
-        return;
-      }
+      if (pluginId == null) return;
 
       IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(pluginId);
-      if (descriptor == null) {
-        return;
-      }
+      if (descriptor == null) return;
 
       InputEvent inputEvent = event.getInputEvent();
       Component component = inputEvent == null ? null : inputEvent.getComponent();

@@ -6,6 +6,7 @@ import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.CommitSession
 import com.intellij.vcs.commit.commitProperty
+import git4idea.i18n.GitBundle
 import org.jetbrains.annotations.Nls
 
 private val IS_PUSH_AFTER_COMMIT_KEY = Key.create<Boolean>("Git.Commit.IsPushAfterCommit")
@@ -13,7 +14,7 @@ internal var CommitContext.isPushAfterCommit: Boolean by commitProperty(IS_PUSH_
 
 class GitCommitAndPushExecutor : CommitExecutor {
   @Nls
-  override fun getActionText(): String = "Commit and &Push..."
+  override fun getActionText(): String = GitBundle.message("action.Git.Commit.And.Push.Executor.text")
 
   override fun useDefaultAction(): Boolean = false
 

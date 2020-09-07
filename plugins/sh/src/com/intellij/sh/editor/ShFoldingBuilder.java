@@ -5,21 +5,29 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.CustomFoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.sh.ShTypes;
 import com.intellij.sh.lexer.ShTokenTypes;
-import com.intellij.sh.psi.*;
+import com.intellij.sh.psi.ShBlock;
+import com.intellij.sh.psi.ShDoBlock;
+import com.intellij.sh.psi.ShFile;
+import com.intellij.sh.psi.ShHeredoc;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class ShFoldingBuilder extends CustomFoldingBuilder {
   private static final String DOT_DOT_DOT = "...";
   private static final String BRACE_DOTS = "{...}";
-  private static final String DO_DOTS_DONE = "do...done";
+  private static final @NlsSafe String DO_DOTS_DONE = "do...done";
 
   @Override
   protected void buildLanguageFoldRegions(@NotNull List<FoldingDescriptor> descriptors,
@@ -61,7 +69,7 @@ public class ShFoldingBuilder extends CustomFoldingBuilder {
         while (currentElement.getNextSibling() != null) {
           PsiElement nextSibling = currentElement.getNextSibling();
           IElementType elementType = nextSibling.getNode().getElementType();
-          if (elementType != ShTokenTypes.LINEFEED && elementType != ShTokenTypes.WHITESPACE && !(nextSibling instanceof PsiComment)) break;
+          if (elementType != ShTypes.LINEFEED && elementType != ShTokenTypes.WHITESPACE && !(nextSibling instanceof PsiComment)) break;
           if (nextSibling instanceof PsiComment){
             handledComments.add(nextSibling);
             lastComment = nextSibling;
@@ -86,8 +94,8 @@ public class ShFoldingBuilder extends CustomFoldingBuilder {
   @Override
   protected String getLanguagePlaceholderText(@NotNull ASTNode node, @NotNull TextRange range) {
     IElementType elementType = node.getElementType();
-    if (elementType == ShTokenTypes.BLOCK) return BRACE_DOTS;
-    if (elementType == ShTokenTypes.DO_BLOCK) return DO_DOTS_DONE;
+    if (elementType == ShTypes.BLOCK) return BRACE_DOTS;
+    if (elementType == ShTypes.DO_BLOCK) return DO_DOTS_DONE;
     return DOT_DOT_DOT;
   }
 

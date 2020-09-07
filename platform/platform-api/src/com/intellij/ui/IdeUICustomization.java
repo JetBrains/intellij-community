@@ -30,7 +30,7 @@ public class IdeUICustomization {
    * Returns a message which mentions 'project' concept. 
    */
   @NotNull
-  public String projectMessage(@NotNull @PropertyKey(resourceBundle = ProjectConceptBundle.BUNDLE) String key, Object @NotNull ... params) {
+  public @Nls String projectMessage(@NotNull @PropertyKey(resourceBundle = ProjectConceptBundle.BUNDLE) String key, Object @NotNull ... params) {
     return ProjectConceptBundle.message(key, params);
   }
 
@@ -76,7 +76,7 @@ public class IdeUICustomization {
     return projectMessage("scope.name.non.project.files");
   }
 
-  public String getSelectAutopopupByCharsText() {
+  public @Nls String getSelectAutopopupByCharsText() {
     return IdeBundle.message("ui.customization.select.auto.popup.by.chars.text");
   }
 

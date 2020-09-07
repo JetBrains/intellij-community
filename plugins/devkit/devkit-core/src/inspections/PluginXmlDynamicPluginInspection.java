@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.IntentionAndQuickFixAction;
@@ -12,6 +12,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
@@ -21,6 +23,7 @@ import com.intellij.util.xml.highlighting.DomHighlightingHelper;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.*;
 
 import javax.swing.*;
@@ -32,7 +35,8 @@ public class PluginXmlDynamicPluginInspection extends DevKitPluginXmlInspectionB
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel("Highlight usage of non-dynamic extension points", this, "highlightNonDynamicEPUsages");
+    return new SingleCheckboxOptionsPanel(DevKitBundle.message("inspections.plugin.xml.dynamic.plugin.option.highlight.usages.ep"), this,
+                                          "highlightNonDynamicEPUsages");
   }
 
   @Override
@@ -57,9 +61,16 @@ public class PluginXmlDynamicPluginInspection extends DevKitPluginXmlInspectionB
   }
 
   private static void highlightComponents(DomElementAnnotationHolder holder, DomElement component) {
+
     holder.createProblem(component,
-                         "<html>Non-dynamic plugin due to using components, replace with " +
-                         "<a href=\"https://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_components.html\">alternatives</a></html>");
+                         new HtmlBuilder()
+                           .append(DevKitBundle.message("inspections.plugin.xml.dynamic.plugin.component.usage"))
+                           .nbsp()
+                           .append(HtmlChunk
+                                     .link("https://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_components.html",
+                                           DevKitBundle.message("inspections.plugin.xml.dynamic.plugin.component.usage.docs.link.title")))
+                           .wrapWithHtmlBody()
+                           .toString());
   }
 
   private static void highlightExtensionPoint(DomElementAnnotationHolder holder, ExtensionPoint extensionPoint) {
@@ -68,11 +79,15 @@ public class PluginXmlDynamicPluginInspection extends DevKitPluginXmlInspectionB
         createAnalyzeEPFix("AnalyzeEPUsage", extensionPoint),
         createAnalyzeEPFix("AnalyzeEPUsageIgnoreSafeClasses", extensionPoint)
       } : LocalQuickFix.EMPTY_ARRAY;
-      holder.createProblem(extensionPoint, "Non-dynamic extension point '" + extensionPoint.getEffectiveQualifiedName() + "'",
+      holder.createProblem(extensionPoint,
+                           DevKitBundle.message("inspections.plugin.xml.dynamic.plugin.extension.point",
+                                                extensionPoint.getEffectiveQualifiedName()),
                            fixes);
     }
     else if (Boolean.FALSE == extensionPoint.getDynamic().getValue()) {
-      holder.createProblem(extensionPoint, "Explicit non-dynamic extension point '" + extensionPoint.getEffectiveQualifiedName() + "'");
+      holder.createProblem(extensionPoint,
+                           DevKitBundle.message("inspections.plugin.xml.dynamic.plugin.explicit.non.dynamic.extension.point",
+                                                extensionPoint.getEffectiveQualifiedName()));
     }
   }
 
@@ -80,7 +95,8 @@ public class PluginXmlDynamicPluginInspection extends DevKitPluginXmlInspectionB
     final AnAction action = ActionManager.getInstance().getAction(actionId);
     assert action != null : actionId;
 
-    String name = action.getTemplateText() + " for '" + extensionPoint.getEffectiveQualifiedName() + "'";
+    String name = DevKitBundle.message("inspections.plugin.xml.dynamic.plugin.analyze.extension.point",
+                                       action.getTemplateText(), extensionPoint.getEffectiveQualifiedName());
     return new IntentionAndQuickFixAction() {
       @Nls(capitalization = Nls.Capitalization.Sentence)
       @NotNull
@@ -106,7 +122,8 @@ public class PluginXmlDynamicPluginInspection extends DevKitPluginXmlInspectionB
 
   private static void highlightGroup(DomElementAnnotationHolder holder, Group group) {
     if (!DomUtil.hasXml(group.getId())) {
-      holder.createProblem(group, "'id' must be specified for <group>", new AddDomElementQuickFix<>(group.getId()));
+      holder.createProblem(group, DevKitBundle.message("inspections.plugin.xml.dynamic.plugin.id.required.for.group"),
+                           new AddDomElementQuickFix<>(group.getId()));
     }
   }
 
@@ -114,7 +131,9 @@ public class PluginXmlDynamicPluginInspection extends DevKitPluginXmlInspectionB
     final ExtensionPoint extensionPoint = extension.getExtensionPoint();
 
     if (extensionPoint != null && Boolean.TRUE != extensionPoint.getDynamic().getValue()) {
-      holder.createProblem(extension, "Usage of non-dynamic extension point '" + extensionPoint.getEffectiveQualifiedName() + "'");
+      holder.createProblem(extension,
+                           DevKitBundle.message("inspections.plugin.xml.dynamic.plugin.usage.of.non.dynamic.extension.point",
+                                                extensionPoint.getEffectiveQualifiedName()));
     }
   }
 }

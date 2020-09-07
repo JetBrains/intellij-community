@@ -21,6 +21,7 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
+@SuppressWarnings("ComponentNotRegistered")
 public class ReferenceFilter extends FilterAction {
 
   public ReferenceFilter() {

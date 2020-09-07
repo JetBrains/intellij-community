@@ -33,18 +33,10 @@ import org.jetbrains.annotations.Nullable;
  * Helps to specify type
  */
 public class SpecifyTypeInDocstringIntention extends TypeIntention {
-  private String myText = PyPsiBundle.message("INTN.specify.type");
-
-  @Override
-  @NotNull
-  public String getText() {
-    return myText;
-  }
-
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyPsiBundle.message("INTN.specify.type");
+    return PyPsiBundle.message("INTN.NAME.specify.type.in.docstring");
   }
 
   @Override
@@ -100,7 +92,7 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
 
   @Override
   protected void updateText(boolean isReturn) {
-    myText = PyPsiBundle.message(isReturn ? "INTN.specify.return.type" : "INTN.specify.type");
+    setText(PyPsiBundle.message(isReturn ? "INTN.specify.return.type.in.docstring" : "INTN.specify.type.in.docstring"));
   }
 
   @Override

@@ -6,5 +6,5 @@ import git4idea.i18n.GitBundle
 
 internal class GitCommitSquashBySubjectAction : GitAutoSquashCommitAction() {
   override fun getCommitMessage(commit: VcsShortCommitDetails) = "squash! ${commit.subject}"
-  override fun getFailureTitle() = GitBundle.getString("rebase.log.create.squash.commit.action.failure.title")
+  override fun getFailureTitle() = GitBundle.message("rebase.log.create.squash.commit.action.failure.title")
 }

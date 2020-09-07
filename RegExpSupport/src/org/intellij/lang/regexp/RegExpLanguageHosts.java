@@ -204,4 +204,9 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
   String[][] getPosixCharacterClasses(@NotNull final PsiElement element) {
     return myDefaultProvider.getPosixCharacterClasses();
   }
+
+  public boolean belongsToConditionalExpression(@NotNull PsiElement regexpElement, @NotNull PsiElement hostElement) {
+    final RegExpLanguageHost host = findRegExpHost(regexpElement);
+    return host != null && host.belongsToConditionalExpression(hostElement);
+  }
 }

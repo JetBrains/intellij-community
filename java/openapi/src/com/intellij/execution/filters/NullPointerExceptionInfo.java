@@ -26,17 +26,15 @@ public class NullPointerExceptionInfo extends ExceptionInfo {
                                                              "read the array (?<arraylength>length)|" +
                                                              "enter (?<monitor>synchronized) block|" +
                                                              "throw (?<athrow>exception))(?: because .+)?");
-  private static final Map<String, PsiPrimitiveType> UNBOXING_METHODS =
-    ContainerUtil.<String, PsiPrimitiveType>immutableMapBuilder()
-      .put("booleanValue", PsiType.BOOLEAN)
-      .put("byteValue", PsiType.BYTE)
-      .put("charValue", PsiType.CHAR)
-      .put("shortValue", PsiType.SHORT)
-      .put("intValue", PsiType.INT)
-      .put("longValue", PsiType.LONG)
-      .put("floatValue", PsiType.FLOAT)
-      .put("doubleValue", PsiType.DOUBLE)
-      .build();
+  private static final Map<String, PsiPrimitiveType> UNBOXING_METHODS = Map.of(
+      "booleanValue", PsiType.BOOLEAN,
+      "byteValue", PsiType.BYTE,
+      "charValue", PsiType.CHAR,
+      "shortValue", PsiType.SHORT,
+      "intValue", PsiType.INT,
+      "longValue", PsiType.LONG,
+      "floatValue", PsiType.FLOAT,
+      "doubleValue", PsiType.DOUBLE);
   private final @NotNull UnaryOperator<PsiElement> myExtractor;
   
   NullPointerExceptionInfo(int offset, String message) {

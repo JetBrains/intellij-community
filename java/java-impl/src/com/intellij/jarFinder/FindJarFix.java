@@ -112,7 +112,7 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
     }
   }
 
-  private void findJarsForFqn(final String fqn, @NotNull Editor editor) {
+  private void findJarsForFqn(@NlsSafe final String fqn, @NotNull Editor editor) {
     ProgressManager.getInstance().run(new Task.Modal(editor.getProject(), JavaBundle.message("progress.title.looking.for.libraries"), true) {
       final Map<String, String> libs = new HashMap<>();
 
@@ -144,7 +144,7 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
       @Override
       public void onSuccess() {
         if (libs.isEmpty()) {
-          HintManager.getInstance().showInformationHint(editor, "No libraries found for '" + fqn + "'");
+          HintManager.getInstance().showInformationHint(editor, JavaBundle.message("find.jar.hint.text.no.libraries.found.for.fqn", fqn));
         }
         else {
           JBList<@NlsSafe String> libNames = new JBList<>(ContainerUtil.sorted(libs.keySet()));

@@ -2,26 +2,28 @@
 package com.intellij.ide.errorTreeView;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CustomizeColoredTreeCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.MutableErrorTreeView;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 
 public class HotfixGroupElement extends GroupingElement {
 
   private final Consumer<? super HotfixGate> myHotfix;
-  private final String myFixDescription;
+  private final @Nls String myFixDescription;
   private final MutableErrorTreeView myView;
   private boolean myInProgress;
   private final CustomizeColoredTreeCellRenderer myLeftTreeCellRenderer;
   private final CustomizeColoredTreeCellRenderer myRightTreeCellRenderer;
 
   public HotfixGroupElement(final String name, final Object data, final VirtualFile file, final Consumer<? super HotfixGate> hotfix,
-                            final String fixDescription, final MutableErrorTreeView view) {
+                            final @Nls String fixDescription, final MutableErrorTreeView view) {
     super(name, data, file);
     myHotfix = hotfix;
     myFixDescription = fixDescription;
@@ -40,7 +42,7 @@ public class HotfixGroupElement extends GroupingElement {
 
         final String[] text = getText();
         final String errorText = ((text != null) && (text.length > 0)) ? text[0] : "";
-        renderer.append("Error: " + errorText, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        renderer.append(IdeBundle.message("error.tree.view.cell.error", errorText), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
     };
     myRightTreeCellRenderer = new MyRightRenderer();
@@ -64,9 +66,11 @@ public class HotfixGroupElement extends GroupingElement {
                                       boolean hasFocus) {
       renderer.append(" ");
       if (myInProgress) {
-        renderer.append("fixing...", SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES);
+        renderer.append(IdeBundle.message("error.tree.view.fixing"), SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES);
       } else {
-        renderer.append("Fix: " + myFixDescription, SimpleTextAttributes.LINK_BOLD_ATTRIBUTES, myRunner);
+        renderer.append(
+          IdeBundle.message("error.tree.view.fix.description", myFixDescription), SimpleTextAttributes.LINK_BOLD_ATTRIBUTES, myRunner
+        );
       }
     }
 

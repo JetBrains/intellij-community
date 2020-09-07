@@ -5,10 +5,14 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.GeneralPath;
+
+import static javax.swing.SwingConstants.*;
 
 /**
  * @author pegov
@@ -39,5 +43,46 @@ public final class TabsUtil {
     }
 
     return font;
+  }
+
+  @MagicConstant(intValues = {TOP, LEFT, BOTTOM, RIGHT, -1})
+  public static int getDropSideFor(Point point, JComponent component) {
+    int placement = UISettings.getInstance().getState().getEditorTabPlacement();
+    Dimension size = component.getSize();
+    double width = size.getWidth();
+    double height = size.getHeight();
+    GeneralPath topShape = new GeneralPath();
+    topShape.moveTo(0, 0);
+    topShape.lineTo(width, 0);
+    topShape.lineTo(width * 2 / 3, height / 3);
+    topShape.lineTo(width / 3, height / 3);
+    topShape.closePath();
+
+    GeneralPath leftShape = new GeneralPath();
+    leftShape.moveTo(0, 0);
+    leftShape.lineTo(width / 3, height / 3);
+    leftShape.lineTo(width / 3, height * 2 / 3);
+    leftShape.lineTo(0, height);
+    leftShape.closePath();
+
+    GeneralPath bottomShape = new GeneralPath();
+    bottomShape.moveTo(0, height);
+    bottomShape.lineTo(width / 3, height * 2 / 3);
+    bottomShape.lineTo(width * 2 / 3, height * 2 / 3);
+    bottomShape.lineTo(width, height);
+    bottomShape.closePath();
+
+    GeneralPath rightShape = new GeneralPath();
+    rightShape.moveTo(width, 0);
+    rightShape.lineTo(width * 2 / 3, height / 3);
+    rightShape.lineTo(width * 2 / 3, height * 2 / 3);
+    rightShape.lineTo(width, height);
+    rightShape.closePath();
+
+    if (placement != RIGHT && rightShape.contains(point)) return RIGHT;
+    if (placement != LEFT && leftShape.contains(point)) return LEFT;
+    if (placement != BOTTOM && bottomShape.contains(point)) return BOTTOM;
+    if (placement != TOP && topShape.contains(point)) return TOP;
+    return -1;
   }
 }

@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,7 +44,7 @@ class DfIntRangeType implements DfIntType {
 
   @Override
   public String toString() {
-    if (myRange == FULL_RANGE) return "int";
-    return "int " + myRange.getPresentationText(PsiType.INT);
+    if (myRange == FULL_RANGE) return PsiKeyword.INT;
+    return PsiKeyword.INT + " " + myRange.getPresentationText(PsiType.INT);
   }
 }

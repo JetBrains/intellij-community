@@ -16,6 +16,7 @@ import com.intellij.execution.configurations.coverage.JavaCoverageEnabledConfigu
 import com.intellij.execution.junit.RefactoringListeners;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.SettingsEditorFragment;
+import com.intellij.java.coverage.JavaCoverageBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -92,9 +93,11 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
 
       final Sdk jdk = params.getJdk();
       if (jdk != null && JavaSdk.getInstance().isOfVersionOrHigher(jdk, JavaSdkVersion.JDK_1_7) && coverageRunner instanceof JavaCoverageRunner && !((JavaCoverageRunner)coverageRunner).isJdk7Compatible()) {
-        Notifications.Bus.notify(new Notification("Coverage", "Coverage instrumentation is not fully compatible with JDK 7",
-                                                  coverageRunner.getPresentableName() +
-                                                  " coverage instrumentation can lead to java.lang.VerifyError errors with JDK 7. If so, please try IDEA coverage runner.",
+        Notifications.Bus.notify(new Notification("Coverage",
+                                                  JavaCoverageBundle.message("coverage.instrumentation.jdk7.compatibility"),
+                                                  JavaCoverageBundle.message(
+                                                    "coverage.instrumentation.jdk7.compatibility.veryfy.error.warning",
+                                                    coverageRunner.getPresentableName()),
                                                   NotificationType.WARNING));
       }
     }

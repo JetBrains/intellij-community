@@ -19,7 +19,7 @@ public class OverheadTimings {
   private final Map<OverheadProducer, Timings> myMap = new ConcurrentHashMap<>();
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private final List<Pair<Long, Timings>> myLast10Elements = new LinkedList<Pair<Long, Timings>>() {
+  private final List<Pair<Long, Timings>> myLast10Elements = new LinkedList<>() {
     private long totalTime = 0;
 
     @Override

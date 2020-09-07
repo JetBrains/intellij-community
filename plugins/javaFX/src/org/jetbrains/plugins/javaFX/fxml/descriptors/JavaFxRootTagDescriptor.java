@@ -60,7 +60,8 @@ public class JavaFxRootTagDescriptor extends JavaFxClassTagDescriptorBase {
     super.validate(context, host);
 
     if (context.getParentTag() != null) {
-      host.addMessage(context.getNavigationElement(), "<fx:root> is valid only as the root node of an FXML document",
+      host.addMessage(context.getNavigationElement(),
+                      JavaFXBundle.message("inspection.message.fx.root.valid.only.as.root.node.fxml.document"),
                       ValidationHost.ErrorType.ERROR);
     }
   }

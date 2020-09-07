@@ -6,6 +6,7 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.ui.search.SearchUtil;
+import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileTypes.FileType;
@@ -13,6 +14,7 @@ import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.HyperlinkLabel;
@@ -70,7 +72,7 @@ public class IntentionDescriptionPanel {
   }
 
   // TODO 134099: see SingleInspectionProfilePanel#setHTML and PostfixDescriptionPanel#readHtml
-  private String toHTML(String text) {
+  private String toHTML(@NlsContexts.HintText String text) {
     final HintHint hintHint = new HintHint(myDescriptionBrowser, new Point(0, 0));
     hintHint.setFont(StartupUiUtil.getLabelFont());
     return HintUtil.prepareHintText(text, hintHint);
@@ -100,7 +102,8 @@ public class IntentionDescriptionPanel {
     PluginId pluginId = actionMetaData == null ? null : actionMetaData.getPluginId();
     myPoweredByPanel.removeAll();
     IdeaPluginDescriptorImpl pluginDescriptor  = (IdeaPluginDescriptorImpl)PluginManagerCore.getPlugin(pluginId);
-    boolean isCustomPlugin = pluginDescriptor != null && pluginDescriptor.isBundled();
+    ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
+    boolean isCustomPlugin = pluginDescriptor != null && pluginDescriptor.isBundled() && !appInfo.isEssentialPlugin(pluginId);
     if (isCustomPlugin) {
       HyperlinkLabel label = new HyperlinkLabel(CodeInsightBundle.message("powered.by.plugin", pluginDescriptor.getName()));
       label.addHyperlinkListener(__ -> {

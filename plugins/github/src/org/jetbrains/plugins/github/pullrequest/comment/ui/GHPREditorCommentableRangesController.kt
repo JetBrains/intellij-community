@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.diff.util.LineRange
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
@@ -62,7 +63,7 @@ class GHPREditorCommentableRangesController(commentableRanges: SingleValueModel<
 
   private inner class IconVisibilityController : EditorMouseListener, EditorMouseMotionListener {
 
-    override fun mouseMoved(e: EditorMouseEvent) = doUpdate(e.editor, e.visualPosition.line)
+    override fun mouseMoved(e: EditorMouseEvent) = doUpdate(e.editor, e.logicalPosition.line)
     override fun mouseExited(e: EditorMouseEvent) = doUpdate(e.editor, -1)
 
     private fun doUpdate(editor: Editor, line: Int) {
@@ -72,7 +73,7 @@ class GHPREditorCommentableRangesController(commentableRanges: SingleValueModel<
         if (needUpdate) {
           it.iconVisible = visible
           val gutter = editor.gutter as JComponent
-          val y = editor.visualLineToY(it.line)
+          val y = editor.logicalPositionToXY(LogicalPosition(it.line, 0)).y
           gutter.repaint(0, y, gutter.width, y + editor.lineHeight)
         }
       }

@@ -30,6 +30,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStr
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.ListCellRendererWithRightAlignedComponent;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.list.ListPopupImpl;
@@ -38,7 +39,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -76,7 +76,7 @@ public abstract class FindUsagesInProjectStructureActionBase extends AnAction im
     Arrays.sort(usagesArray, (o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
 
     BaseListPopupStep<ProjectStructureElementUsage> step =
-      new BaseListPopupStep<ProjectStructureElementUsage>(JavaUiBundle.message("dependencies.used.in.popup.title"), usagesArray) {
+      new BaseListPopupStep<>(JavaUiBundle.message("dependencies.used.in.popup.title"), usagesArray) {
         @Override
         public PopupStep onChosen(final ProjectStructureElementUsage selected, final boolean finalChoice) {
           PlaceInProjectStructure place = selected.getPlace();
@@ -111,7 +111,7 @@ public abstract class FindUsagesInProjectStructureActionBase extends AnAction im
             setLeftText(value.getPresentableName());
             setIcon(value.getIcon());
             setLeftForeground(value.getPlace().canNavigate() ? UIUtil.getLabelTextForeground() : UIUtil.getLabelDisabledForeground());
-            setRightForeground(Color.GRAY);
+            setRightForeground(JBColor.GRAY);
             setRightText(value.getPresentableLocationInElement());
           }
         };

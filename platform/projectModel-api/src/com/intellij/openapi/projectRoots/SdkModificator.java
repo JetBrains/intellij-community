@@ -2,6 +2,7 @@
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtilRt;
@@ -21,6 +22,7 @@ public interface SdkModificator {
 
   void setName(@NotNull String name);
 
+  @NlsSafe
   String getHomePath();
 
   void setHomePath(String path);

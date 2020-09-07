@@ -2,11 +2,10 @@
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.internal.statistic.beans.MetricEvent
-import com.intellij.internal.statistic.beans.newMetric
-import com.intellij.internal.statistic.eventLog.EventField
-import com.intellij.internal.statistic.eventLog.EventFields
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.components.service
@@ -19,7 +18,8 @@ import org.jetbrains.plugins.github.api.data.GithubPullRequestMergeMethod
 
 object GHPRStatisticsCollector : ProjectUsagesCollector() {
 
-  private val STATE_GROUP = EventLogGroup("vcs.github.pullrequests", 1)
+  private val STATE_GROUP = EventLogGroup("vcs.github.pullrequests", 2)
+  private val TOOL_WINDOW_EVENT = STATE_GROUP.registerEvent("toolwindow", EventFields.Int("tabs"), EventFields.Int("initialized_tabs"))
 
   class ProjectState : ProjectUsagesCollector() {
     override fun getMetrics(project: Project): Set<MetricEvent> {
@@ -31,10 +31,7 @@ object GHPRStatisticsCollector : ProjectUsagesCollector() {
         it.getUserData(GHPRToolWindowTabsContentManager.INIT_DONE_KEY) != null
       } ?: 0
 
-      return setOf(
-        newMetric("toolwindow", FeatureUsageData()
-          .addData("tabs", tabsCount)
-          .addData("initialized_tabs", initializedTabsCount)))
+      return setOf(TOOL_WINDOW_EVENT.metric(tabsCount, initializedTabsCount))
     }
 
     override fun getGroup() = STATE_GROUP
@@ -51,13 +48,16 @@ object GHPRStatisticsCollector : ProjectUsagesCollector() {
   private val MERGED_EVENT = COUNTERS_GROUP.registerEvent("merged", EventFields.Enum<GithubPullRequestMergeMethod>("method") {
     it.name.toUpperCase()
   })
-  private val anonymizedId = object : EventField<String>() {
+  private val anonymizedId = object : PrimitiveEventField<String>() {
 
     override val name = "anonymized_id"
 
     override fun addData(fuData: FeatureUsageData, value: String) {
       fuData.addAnonymizedId(value)
     }
+
+    override val validationRule: List<String>
+      get() = listOf("{regexp#hash}")
   }
   private val SERVER_META_EVENT = COUNTERS_GROUP.registerEvent("server.meta.collected", anonymizedId, EventFields.Version)
 

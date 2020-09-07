@@ -46,6 +46,12 @@ public class FieldReferringObject implements ReferringObject {
 
   @NotNull
   @Override
+  public ObjectReference getReference() {
+    return myReference;
+  }
+
+  @NotNull
+  @Override
   public Function<XValueNode, XValueNode> getNodeCustomizer() {
     return node -> new XValueNodePresentationConfigurator.ConfigurableXValueNodeImpl() {
       @Override

@@ -57,7 +57,7 @@ public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends 
     JPanel panel = new JPanel(new BorderLayout());
     JPanel labelPanel = new JPanel(new BorderLayout());
     JLabel label = new JLabel(ExecutionBundle.message("run.configuration.before.run.label"));
-    label.setBorder(JBUI.Borders.empty(12, 0, 0, 5));
+    label.setBorder(JBUI.Borders.empty(JBUI.scale(12), 0, 0, JBUI.scale(5)));
     labelPanel.add(label, BorderLayout.NORTH);
     panel.add(labelPanel, BorderLayout.WEST);
     panel.add(component, BorderLayout.CENTER);

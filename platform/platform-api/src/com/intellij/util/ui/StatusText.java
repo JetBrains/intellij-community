@@ -397,7 +397,7 @@ public abstract class StatusText {
                          Math.max(myPrimaryColumn.preferredSize.height, mySecondaryColumn.preferredSize.height));
   }
 
-  public static String getDefaultEmptyText() {
+  public static @NlsContexts.StatusText String getDefaultEmptyText() {
     return UIBundle.message("message.nothingToShow");
   }
 }

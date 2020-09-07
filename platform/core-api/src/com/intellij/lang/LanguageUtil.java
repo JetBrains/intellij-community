@@ -118,7 +118,7 @@ public final class LanguageUtil {
     return getLanguages((lang) -> isFileLanguage(lang));
   }
 
-  public static @NotNull List<Language> getLanguages(Function<Language, Boolean> filter) {
+  public static @NotNull List<Language> getLanguages(Function<? super Language, Boolean> filter) {
     LanguageParserDefinitions.INSTANCE.ensureValuesLoaded();
     List<Language> result = new ArrayList<>();
     for (Language language : Language.getRegisteredLanguages()) {

@@ -100,12 +100,12 @@ public final class BorderType {
 
   public static BorderType[] getAllTypes() {
     return new BorderType[]{
-          BorderType.NONE,
-          BorderType.EMPTY,
-          BorderType.BEVEL_LOWERED,
-          BorderType.BEVEL_RAISED,
-          BorderType.ETCHED,
-          BorderType.LINE
+          NONE,
+          EMPTY,
+          BEVEL_LOWERED,
+          BEVEL_RAISED,
+          ETCHED,
+          LINE
         };
   }
 }

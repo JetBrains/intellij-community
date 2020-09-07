@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing.pytest;
 
 import com.intellij.openapi.util.io.StreamUtil;
@@ -23,7 +9,9 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.nio.charset.Charset;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.HashSet;
 import java.util.Set;
@@ -100,8 +88,10 @@ public final class PyTestTracebackParserTest {
 
   @Test
   public void testLinks() throws java.io.IOException {
-    final String s =
-      StreamUtil.readText(PyTestTracebackParserTest.class.getResource("linksDataTest.txt").openStream(), Charset.defaultCharset());
+    final String s;
+    try (Reader reader = new InputStreamReader(PyTestTracebackParserTest.class.getResourceAsStream("linksDataTest.txt"), StandardCharsets.UTF_8)) {
+      s = StreamUtil.readText(reader);
+    }
 
     final Set<String> requiredStrings = new HashSet<>();
     requiredStrings.add("file:///c:/windows/system32/file.txt - 42");

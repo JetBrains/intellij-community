@@ -18,6 +18,7 @@ package com.intellij.ui.components;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.JBCardLayout;
+import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -39,7 +40,7 @@ public class JBSlidingPanel extends JBPanel {
   }
 
   @Override
-  public Component add(String name, Component comp) {
+  public Component add(@NonNls String name, Component comp) {
     mySlides.add(Pair.create(name, comp));
     if (mySelectedIndex == -1) {
       mySelectedIndex = 0;

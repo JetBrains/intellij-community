@@ -18,6 +18,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -32,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author peter
  */
-public class JavaClassReferenceCompletionContributor extends CompletionContributor {
+public class JavaClassReferenceCompletionContributor extends CompletionContributor implements DumbAware {
   @Override
   public void duringCompletion(@NotNull CompletionInitializationContext context) {
     JavaClassReference reference = findJavaClassReference(context.getFile(), context.getStartOffset());

@@ -15,6 +15,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.ClassUtils;
@@ -57,6 +58,10 @@ public class AddOnDemandStaticImportAction extends BaseElementAtCaretIntentionAc
     if (gParent instanceof PsiMethodReferenceExpression) return null;
     if (!(gParent instanceof PsiJavaCodeReferenceElement) ||
         isParameterizedReference((PsiJavaCodeReferenceElement)gParent)) return null;
+
+    if (PsiUtilCore.getElementType(PsiTreeUtil.nextCodeLeaf(gParent)) == JavaTokenType.ARROW) {
+      return null;
+    }
 
     PsiElement resolved = refExpr.resolve();
     if (!(resolved instanceof PsiClass)) {

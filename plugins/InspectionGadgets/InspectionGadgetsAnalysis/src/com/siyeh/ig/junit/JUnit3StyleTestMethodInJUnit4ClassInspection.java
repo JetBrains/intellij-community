@@ -65,7 +65,7 @@ public class JUnit3StyleTestMethodInJUnit4ClassInspection extends BaseInspection
       final TestFramework testFramework = TestFrameworks.detectFramework(containingClass);
       if (testFramework != null) {
         if (testFramework.isTestMethod(method, false)) {
-          final String testFrameworkName = testFramework.getName();
+          @NonNls final String testFrameworkName = testFramework.getName();
           if (testFrameworkName.equals("JUnit4") || testFrameworkName.equals("JUnit5")) return;
         }
         if (AnnotationUtil.isAnnotated(method, "org.junit.Ignore", 0) ||

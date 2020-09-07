@@ -34,7 +34,7 @@ public final class ModuleCompilerUtil {
 
   @NotNull
   private static Graph<Module> createModuleGraph(Module @NotNull [] modules) {
-    return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<Module>() {
+    return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<>() {
       @NotNull
       @Override
       public Collection<Module> getNodes() {
@@ -112,7 +112,7 @@ public final class ModuleCompilerUtil {
 
   @NotNull
   private static Graph<ModuleSourceSet> createModuleSourceDependenciesGraph(@NotNull RootModelProvider provider) {
-    return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<ModuleSourceSet>() {
+    return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<>() {
       @NotNull
       @Override
       public Collection<ModuleSourceSet> getNodes() {

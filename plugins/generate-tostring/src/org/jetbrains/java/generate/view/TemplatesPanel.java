@@ -93,8 +93,18 @@ public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
   }
 
   @Override
-  protected String subjDisplayName() {
-    return "template";
+  protected String getCopyDialogTitle() {
+    return JavaBundle.message("dialog.title.copy.template");
+  }
+
+  @Override
+  protected String getCreateNewDialogTitle() {
+    return JavaBundle.message("dialog.title.create.new.template");
+  }
+
+  @Override
+  protected @NlsContexts.Label String getNewLabelText() {
+    return JavaBundle.message("label.new.template.name");
   }
 
   @Override

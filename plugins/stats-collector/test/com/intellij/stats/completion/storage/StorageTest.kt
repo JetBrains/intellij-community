@@ -16,9 +16,8 @@
 package com.intellij.stats.completion.storage
 
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.stats.logger.LineStorage
-import com.intellij.stats.logger.LogFileManager
-import com.intellij.stats.storage.UniqueFilesProvider
+import com.intellij.stats.completion.logger.LineStorage
+import com.intellij.stats.completion.logger.LogFileManager
 import com.intellij.testFramework.HeavyPlatformTestCase
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.After

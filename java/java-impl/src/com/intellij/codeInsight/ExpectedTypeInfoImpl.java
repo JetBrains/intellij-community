@@ -67,7 +67,7 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
     this.defaultType = defaultType;
     myCalledMethod = calledMethod;
     this.expectedNameComputable = expectedName;
-    expectedNameLazyValue = new VolatileNullableLazyValue<String>() {
+    expectedNameLazyValue = new VolatileNullableLazyValue<>() {
       @Nullable
       @Override
       protected String compute() {

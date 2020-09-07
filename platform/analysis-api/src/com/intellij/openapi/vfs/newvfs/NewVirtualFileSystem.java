@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +39,7 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
   @ApiStatus.OverrideOnly
   protected abstract @NotNull String extractRootPath(@NotNull String normalizedPath);
 
-  public abstract @Nullable VirtualFile findFileByPathIfCached(@NotNull String path);
+  public abstract @Nullable VirtualFile findFileByPathIfCached(@NonNls @NotNull String path);
 
   @Override
   public void refreshWithoutFileWatcher(boolean asynchronous) {
@@ -110,6 +111,11 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
    *
    * @param file file to get attributes of.
    * @return attributes of a given file, or {@code null} if the file doesn't exist.
+   *
+   * <p><i>Note to implementers.<br>
+   * When returning file attributes for a directory, please supply correct case sensitivity (via {@link FileAttributes#FileAttributes(boolean, boolean, boolean, boolean, long, long, boolean, com.intellij.openapi.util.io.FileAttributes.CaseSensitivity)} constructor).
+   * When file attributes for a non-directory are returned, {@link FileAttributes.CaseSensitivity#UNSPECIFIED} should be used.
+   * </i>
    */
   public abstract @Nullable FileAttributes getAttributes(@NotNull VirtualFile file);
 

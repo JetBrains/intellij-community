@@ -2,6 +2,7 @@
 package com.intellij.ui.layout
 
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.DialogPanel
 
 /**
@@ -16,7 +17,7 @@ import com.intellij.ui.components.DialogPanel
  *
  * `ToolbarDecorator` and `JBScrollPane` (use [Row.scrollPane]) components automatically have [Row.grow] and [Row.push].
  */
-inline fun panel(vararg constraints: LCFlags, title: String? = null, init: LayoutBuilder.() -> Unit): DialogPanel {
+inline fun panel(vararg constraints: LCFlags, @NlsContexts.DialogTitle title: String? = null, init: LayoutBuilder.() -> Unit): DialogPanel {
   val builder = createLayoutBuilder()
   builder.init()
 

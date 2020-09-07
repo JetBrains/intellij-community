@@ -21,7 +21,7 @@ import com.intellij.xml.XmlBundle;
 
 public class XmlCodeFoldingOptionsProvider extends BeanConfigurable<XmlFoldingSettings.State> implements CodeFoldingOptionsProvider {
   public XmlCodeFoldingOptionsProvider() {
-    super(XmlFoldingSettings.getInstance().getState(), "XML");
+    super(XmlFoldingSettings.getInstance().getState(), XmlBundle.message("options.xml.display.name"));
     XmlFoldingSettings settings = XmlFoldingSettings.getInstance();
     checkBox(XmlBundle.message("checkbox.collapse.xml.tags"), settings::isCollapseXmlTags, value->settings.getState().COLLAPSE_XML_TAGS=value);
     checkBox(XmlBundle.message("checkbox.collapse.html.style.attribute"),settings::isCollapseHtmlStyleAttribute, value->settings.getState().COLLAPSE_HTML_STYLE_ATTRIBUTE=value);

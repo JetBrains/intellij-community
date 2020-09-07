@@ -402,7 +402,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     }
   }
 
-  private static void appendElement(PsiElement element, boolean renameBreakElements, String breakLabelString, StringBuilder switchStatementText) {
+  private static void appendElement(PsiElement element, boolean renameBreakElements, String breakLabelString, @NonNls StringBuilder switchStatementText) {
     final String text = element.getText();
     if (!renameBreakElements) {
       switchStatementText.append(text);

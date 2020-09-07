@@ -4,9 +4,12 @@ package com.intellij.openapi.roots.ui.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.roots.ui.ModifiableCellAppearanceEx;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -53,7 +56,7 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
   @NotNull
   public String getText() {
     synchronized (mySections) {
-      StringBuilder buffer = new StringBuilder();
+      @Nls StringBuilder buffer = new StringBuilder();
       for (TextSection section : mySections) {
         buffer.append(section.TEXT);
       }
@@ -103,24 +106,24 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
     return new DequeSuffix();
   }
 
-  public static CompositeAppearance textComment(String text, String comment) {
+  public static CompositeAppearance textComment(@Nls String text, @Nls String comment) {
     DequeEnd ending = new CompositeAppearance().getEnding();
     ending.addText(text);
     ending.addComment(comment);
     return ending.getAppearance();
   }
 
-  public static CompositeAppearance single(String text, SimpleTextAttributes textAttributes) {
+  public static CompositeAppearance single(@Nls String text, SimpleTextAttributes textAttributes) {
     CompositeAppearance result = new CompositeAppearance();
     result.getEnding().addText(text, textAttributes);
     return result;
   }
 
-  public static CompositeAppearance single(String text) {
+  public static CompositeAppearance single(@Nls String text) {
     return single(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
 
-  public static CompositeAppearance invalid(String absolutePath) {
+  public static CompositeAppearance invalid(@NlsSafe String absolutePath) {
     CompositeAppearance appearance = new CompositeAppearance();
     appearance.setIcon(PlatformIcons.INVALID_ENTRY_ICON);
     appearance.getEnding().addText(absolutePath, SimpleTextAttributes.ERROR_ATTRIBUTES);
@@ -135,15 +138,15 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
   public static class TextSection {
     private static final TextAttributes DEFAULT_TEXT_ATTRIBUTES = new TextAttributes(null, null, null, null, Font.PLAIN);
     private static final String DEFAULT_TEXT = "";
-    private final String TEXT;
+    private final @Nls String TEXT;
     private final TextAttributes ATTRIBUTES;
 
-    public TextSection(String text, TextAttributes attributes) {
+    public TextSection(@Nls String text, TextAttributes attributes) {
       ATTRIBUTES = attributes == null ? DEFAULT_TEXT_ATTRIBUTES : attributes;
       TEXT = text == null ? DEFAULT_TEXT : text;
     }
 
-    public String getText() {
+    public @Nls String getText() {
       return TEXT;
     }
 
@@ -163,21 +166,24 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
   }
 
   public abstract class DequeEnd {
-    public void addText(String text, SimpleTextAttributes textAttributes) {
+    public void addText(@Nls String text, SimpleTextAttributes textAttributes) {
       addText(text, textAttributes.toTextAttributes());
     }
 
-    public void addText(String text) {
+    public void addText(@Nls String text) {
       addText(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
 
     public abstract void addSection(TextSection section);
 
-    public void addText(String text, TextAttributes attributes) {
+    public void addText(@Nls String text, TextAttributes attributes) {
       addSection(new TextSection(text, attributes));
     }
 
-    public void addSurrounded(String text, String prefix, String suffix, SimpleTextAttributes textAttributes) {
+    public void addSurrounded(@Nls String text,
+                              @NlsContexts.Separator String prefix,
+                              @NlsContexts.Separator String suffix,
+                              SimpleTextAttributes textAttributes) {
       if (text != null && !text.trim().isEmpty()) {
         addText(prefix + text + suffix, textAttributes);
       }
@@ -187,11 +193,11 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
       return CompositeAppearance.this;
     }
 
-    public void addComment(String comment, SimpleTextAttributes commentAttributes) {
+    public void addComment(@Nls String comment, SimpleTextAttributes commentAttributes) {
       addSurrounded(comment, " (", ")", commentAttributes);
     }
 
-    public void addComment(String comment) {
+    public void addComment(@Nls String comment) {
       addComment(comment, SimpleTextAttributes.GRAY_ATTRIBUTES);
     }
   }

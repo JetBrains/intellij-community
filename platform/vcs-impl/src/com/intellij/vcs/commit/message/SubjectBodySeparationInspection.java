@@ -31,7 +31,7 @@ public class SubjectBodySeparationInspection extends BaseCommitMessageInspection
                                                      boolean isOnTheFly) {
     ProblemDescriptor descriptor = document.getLineCount() > 1
                                    ? checkRightMargin(file, document, manager, isOnTheFly, 1, 0,
-                                                      "Missing blank line between subject and body", new AddBlankLineQuickFix(),
+                                                      VcsBundle.message("commit.message.missing.blank.line.between.subject.and.body"), new AddBlankLineQuickFix(),
                                                       new ReformatCommitMessageQuickFix())
                                    : null;
 

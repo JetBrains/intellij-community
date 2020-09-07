@@ -12,9 +12,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 
 public class IgnoreExtResourceAction extends BaseExtResourceAction {
+
+  private static final String KEY = "xml.intention.ignore.external.resource.text";
+
   @Override
   protected String getQuickFixKeyId() {
-    return "ignore.external.resource.text";
+    return KEY;
   }
 
   @Nullable

@@ -2,6 +2,7 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.ClearableLazyValue;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -9,7 +10,6 @@ import org.jetbrains.idea.svn.api.Url;
 
 import java.util.*;
 
-import static com.intellij.openapi.util.SystemInfo.isFileSystemCaseSensitive;
 import static com.intellij.openapi.util.io.FileUtil.comparePaths;
 import static com.intellij.openapi.util.text.StringUtil.startsWithIgnoreCase;
 import static com.intellij.util.containers.ContainerUtil.find;
@@ -63,7 +63,7 @@ public class SvnMapping {
   @Nullable
   public String getRootForPath(@NotNull String path) {
     return find(myFile2UrlMap.headMap(path, true).descendingKeySet(),
-                root -> isFileSystemCaseSensitive ? path.startsWith(root) : startsWithIgnoreCase(path, root));
+                root -> SystemInfo.isFileSystemCaseSensitive ? path.startsWith(root) : startsWithIgnoreCase(path, root));
   }
 
   @NotNull

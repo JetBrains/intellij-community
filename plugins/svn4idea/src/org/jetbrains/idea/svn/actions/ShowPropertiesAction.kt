@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.actions
 
 import com.intellij.openapi.actionSystem.DataContext
@@ -9,13 +9,14 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
+import org.jetbrains.idea.svn.SvnBundle.message
 import org.jetbrains.idea.svn.SvnBundle.messagePointer
 import org.jetbrains.idea.svn.SvnUtil.toIoFiles
 import org.jetbrains.idea.svn.SvnVcs
 import org.jetbrains.idea.svn.dialogs.PropertiesComponent
 
 class ShowPropertiesAction : BasicAction() {
-  override fun getActionName(): String = "Show Properties"
+  override fun getActionName(): String = message("action.name.show.properties")
 
   override fun needsAllFiles(): Boolean = false
 

@@ -107,7 +107,7 @@ abstract class FileHistoryColumnWrapper<T> extends DualViewColumnInfo<TreeNodeOn
         }
       }
     }
-    return value + "ww";
+    return value + "ww"; // NON-NLS
   }
 
   @Override

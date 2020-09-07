@@ -79,6 +79,7 @@ public abstract class AutomaticUsageRenamer<T> {
    * Element source, path. For example, package. Taken into account while sorting.
    */
   @Nullable
+  @NlsSafe
   public String getSourceName(T element) {
     return null;
   }

@@ -137,9 +137,8 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
       GitCommandResult res;
       GitRemote remote = getRemoteByName(repository, remoteName);
       if (remote == null) {
-        String error = "Couldn't find remote by name: " + remoteName;
-        LOG.error(error);
-        res = GitCommandResult.error(error);
+        LOG.error("Couldn't find remote by name: " + remoteName);
+        res = GitCommandResult.error(GitBundle.message("delete.remote.branch.operation.couldn.t.find.remote.by.name", remoteName));
       }
       else {
         res = pushDeletion(repository, remote, branch);
@@ -152,7 +151,7 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
     }
     if (!result.totalSuccess()) {
       VcsNotifier.getInstance(myProject).notifyError(
-        GitBundle.message("delete.remote.branch.operation.failed.to.delete.remote.branch", branchName),
+        "git.remote.branch.deletion.error", GitBundle.message("delete.remote.branch.operation.failed.to.delete.remote.branch", branchName),
         result.getErrorOutputWithReposIndication(),
         true);
     }
@@ -197,6 +196,7 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
                                   StringUtil.join(localBranches, ", "));
     }
     VcsNotifier.getInstance(myProject).notifySuccess(
+      "git.remote.branch.deletion.success",
       GitBundle.message("delete.remote.branch.operation.deleted.remote.branch", remoteBranchName),
       message);
   }

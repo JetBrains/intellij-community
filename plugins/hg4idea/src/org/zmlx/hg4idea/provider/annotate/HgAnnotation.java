@@ -1,22 +1,9 @@
-/*
- * Copyright 2008-2010 Victor Iacoban
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
-*/
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.provider.annotate;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
@@ -28,6 +15,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.annotate.AnnotationTooltipBuilder;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgBundle;
@@ -97,6 +85,7 @@ public class HgAnnotation extends FileAnnotation {
     return getToolTip(lineNumber, true);
   }
 
+  @Nls
   @Nullable
   private String getToolTip(int lineNumber, boolean asHtml) {
     if ( myLines.size() <= lineNumber || lineNumber < 0 ) {
@@ -162,10 +151,27 @@ public class HgAnnotation extends FileAnnotation {
   @Nullable
   private static String id(FIELD field) {
     switch (field) {
-      case USER: return LineAnnotationAspect.AUTHOR;
-      case REVISION: return LineAnnotationAspect.REVISION;
-      case DATE: return LineAnnotationAspect.DATE;
-      default: return null;
+      case USER:
+        return LineAnnotationAspect.AUTHOR;
+      case REVISION:
+        return LineAnnotationAspect.REVISION;
+      case DATE:
+        return LineAnnotationAspect.DATE;
+      default:
+        return null;
+    }
+  }
+
+  private static @NlsContexts.ListItem @Nullable String displayName(FIELD field) {
+    switch (field) {
+      case USER:
+        return VcsBundle.message("line.annotation.aspect.author");
+      case REVISION:
+        return VcsBundle.message("line.annotation.aspect.revision");
+      case DATE:
+        return VcsBundle.message("line.annotation.aspect.date");
+      default:
+        return null;
     }
   }
 
@@ -177,8 +183,8 @@ public class HgAnnotation extends FileAnnotation {
     private final FIELD myAspectType;
 
     HgLineAnnotationAspect(FIELD aspectType) {
-      super(id(aspectType), HgAnnotation.isShowByDefault(aspectType));
-      this.myAspectType = aspectType;
+      super(id(aspectType), HgAnnotation.displayName(aspectType), HgAnnotation.isShowByDefault(aspectType));
+      myAspectType = aspectType;
     }
 
     @Override

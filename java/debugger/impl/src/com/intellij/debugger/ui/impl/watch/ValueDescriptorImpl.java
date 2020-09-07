@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -297,15 +298,23 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       .thenAccept(renderer -> calcRepresentation(context, labelListener, debugProcess, renderer))
       .exceptionally(throwable -> {
         throwable = DebuggerUtilsAsync.unwrap(throwable);
-        String message;
-        if (throwable instanceof CancellationException) {
-          message = JavaDebuggerBundle.message("error.context.has.changed");
+        if (throwable instanceof EvaluateException) {
+          setValueLabelFailed((EvaluateException)throwable);
         }
         else {
-          message = JavaDebuggerBundle.message("internal.debugger.error");
-          LOG.error(new Throwable(throwable));
+          String message;
+          if (throwable instanceof CancellationException) {
+            message = JavaDebuggerBundle.message("error.context.has.changed");
+          }
+          else if (throwable instanceof VMDisconnectedException) {
+            message = JavaDebuggerBundle.message("error.vm.disconnected");
+          }
+          else {
+            message = JavaDebuggerBundle.message("internal.debugger.error");
+            LOG.error(new Throwable(throwable));
+          }
+          setValueLabelFailed(new EvaluateException(message));
         }
-        setValueLabelFailed(new EvaluateException(message));
         labelListener.labelChanged();
         return null;
       });
@@ -370,7 +379,10 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       }
       else {
         ex = DebuggerUtilsAsync.unwrap(ex);
-        if (!(ex instanceof CancellationException)) {
+        if (ex instanceof EvaluateException) {
+          LOG.warn(new Throwable(ex));
+        }
+        else if (!(ex instanceof CancellationException) && !(ex instanceof VMDisconnectedException)) {
           LOG.error(new Throwable(ex));
         }
       }
@@ -382,7 +394,8 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   @Override
   public String getLabel() {
-    return calcValueName() + getDeclaredTypeLabel() + " = " + getValueLabel();
+    @NlsSafe String label = calcValueName() + getDeclaredTypeLabel() + " = " + getValueLabel();
+    return label;
   }
 
   public ValueDescriptorImpl getFullValueDescriptor() {

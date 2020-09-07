@@ -2,6 +2,7 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeListChange
 import com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator
@@ -29,7 +30,7 @@ class PartialCommitChangeNodeDecorator @JvmOverloads constructor(
     val rangesToCommit = ranges.count { it.changelistId == changeListId && !it.isExcludedFromCommit }
 
     if (rangesToCommit != 0 && rangesToCommit != ranges.size) {
-      renderer.append(spaceAndThinSpace()).append("$rangesToCommit of ${ranges.size} changes", GRAY_ITALIC_ATTRIBUTES)
+      renderer.append(spaceAndThinSpace()).append(VcsBundle.message("ranges.to.commit.of.ranges.size.changes", rangesToCommit, ranges.size), GRAY_ITALIC_ATTRIBUTES)
     }
   }
 

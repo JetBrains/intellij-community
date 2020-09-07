@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -9,6 +10,8 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ObjectIntHashMap;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrBlockLambdaBody;
@@ -28,9 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.readWrite.ReadBeforeWriteI
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.readWrite.ReadBeforeWriteSemilattice;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.readWrite.ReadBeforeWriteState;
 
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author ven
@@ -39,23 +40,54 @@ public final class ControlFlowBuilderUtil {
   private ControlFlowBuilderUtil() {
   }
 
-  public static ReadWriteVariableInstruction[] getReadsWithoutPriorWrites(Instruction[] flow, boolean onlyFirstRead) {
+  private static @NotNull Pair<@Nullable ReadBeforeWriteState, @NotNull TObjectIntHashMap<VariableDescriptor>>
+  getLastReadBeforeWriteState(Instruction[] flow, boolean onlyFirstRead) {
+    TObjectIntHashMap<VariableDescriptor> index = buildVariablesIndex(flow);
     DFAEngine<ReadBeforeWriteState> engine = new DFAEngine<>(
       flow,
-      new ReadBeforeWriteInstance(buildVariablesIndex(flow), onlyFirstRead),
+      new ReadBeforeWriteInstance(index, onlyFirstRead),
       ReadBeforeWriteSemilattice.INSTANCE
     );
     List<ReadBeforeWriteState> dfaResult = engine.performDFAWithTimeout();
-    if (dfaResult == null) {
-      return ReadWriteVariableInstruction.EMPTY_ARRAY;
+    ReadBeforeWriteState lastState = dfaResult == null ? null : dfaResult.get(dfaResult.size() - 1);
+    return Pair.create(lastState, index);
+  }
+
+  public static ReadWriteVariableInstruction[] getReadsWithoutPriorWrites(Instruction[] flow, boolean onlyFirstRead) {
+    ReadBeforeWriteState lastState = getLastReadBeforeWriteState(flow, onlyFirstRead).first;
+    if (lastState == null) {
+      return null;
     }
-    List<ReadWriteVariableInstruction> result = new ArrayList<>();
-    BitSet reads = dfaResult.get(dfaResult.size() - 1).getReads();
+    BitSet reads = lastState.getReads();
+    ArrayList<ReadWriteVariableInstruction> result = new ArrayList<>();
     for (int i = reads.nextSetBit(0); i >= 0; i = reads.nextSetBit(i + 1)) {
       if (i == Integer.MAX_VALUE) break;
       result.add((ReadWriteVariableInstruction)flow[i]);
     }
     return result.toArray(ReadWriteVariableInstruction.EMPTY_ARRAY);
+  }
+
+  public static @NotNull Set<@NotNull VariableDescriptor> getDescriptorsWithoutWrites(Instruction @NotNull [] flow) {
+    Pair<ReadBeforeWriteState, TObjectIntHashMap<VariableDescriptor>> dfaResult = getLastReadBeforeWriteState(flow, true);
+    ReadBeforeWriteState lastState = dfaResult.first;
+    if (lastState == null) {
+      return Collections.emptySet();
+    }
+    BitSet reads = lastState.getReads();
+    BitSet writes = lastState.getWrites();
+    Set<VariableDescriptor> result = new HashSet<>();
+    for (int i = reads.nextSetBit(0); i >= 0; i = reads.nextSetBit(i + 1)) {
+      if (i == Integer.MAX_VALUE) break;
+      result.add(((ReadWriteVariableInstruction)flow[i]).getDescriptor());
+    }
+    TObjectIntHashMap<VariableDescriptor> index = dfaResult.second;
+    index.forEachEntry((descriptor, id) -> {
+      if (!writes.get(id)) {
+        result.add(descriptor);
+      }
+      return true;
+    });
+    return result;
   }
 
   private static TObjectIntHashMap<VariableDescriptor> buildVariablesIndex(Instruction[] flow) {

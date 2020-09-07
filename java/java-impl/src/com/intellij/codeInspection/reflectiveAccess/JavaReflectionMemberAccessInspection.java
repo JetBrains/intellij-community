@@ -37,7 +37,7 @@ import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflection
  */
 public class JavaReflectionMemberAccessInspection extends AbstractBaseJavaLocalInspectionTool {
 
-  private static final Set<String> MEMBER_METHOD_NAMES = ContainerUtil.immutableSet(GET_FIELD, GET_DECLARED_FIELD,
+  private static final Set<String> MEMBER_METHOD_NAMES = Set.of(GET_FIELD, GET_DECLARED_FIELD,
                       GET_METHOD, GET_DECLARED_METHOD,
                       GET_CONSTRUCTOR, GET_DECLARED_CONSTRUCTOR);
 

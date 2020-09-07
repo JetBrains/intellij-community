@@ -4,16 +4,20 @@ package com.intellij.vcs.log.ui.actions;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.vcs.log.VcsLogBundle;
-import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
-import com.intellij.vcs.log.ui.table.VcsLogColumn;
+import com.intellij.vcs.log.ui.table.column.VcsLogColumn;
+import com.intellij.vcs.log.ui.table.column.VcsLogCustomColumn;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.util.containers.ContainerUtil.filter;
+import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.*;
+import static com.intellij.vcs.log.ui.table.column.VcsLogDefaultColumnKt.getDefaultDynamicColumns;
 
 public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAware {
 
@@ -37,7 +41,10 @@ public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAwar
     if (e != null && !isPopup(e)) {
       actions.add(Separator.create(VcsLogBundle.message("action.title.select.columns.to.see")));
     }
-    for (VcsLogColumn column : VcsLogColumn.DYNAMIC_COLUMNS) {
+    for (VcsLogColumn<?> column : getDefaultDynamicColumns()) {
+      actions.add(new ToggleColumnAction(column));
+    }
+    for (VcsLogColumn<?> column : filter(VcsLogCustomColumn.KEY.getExtensionList(), (it) -> it.isDynamic())) {
       actions.add(new ToggleColumnAction(column));
     }
 
@@ -50,23 +57,22 @@ public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAwar
 
   private static boolean isEnabledAndVisible(@NotNull AnActionEvent e) {
     VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
-    return properties != null && properties.exists(CommonUiProperties.COLUMN_ORDER);
+    return properties != null && supportsColumnsToggling(properties);
   }
 
   private static final class ToggleColumnAction extends ToggleAction implements DumbAware {
-    private final int myIndex;
+    private final VcsLogColumn<?> myColumn;
 
-    private ToggleColumnAction(@NotNull VcsLogColumn column) {
+    private ToggleColumnAction(@NotNull VcsLogColumn<?> column) {
       super(() -> column.getLocalizedName());
-      myIndex = column.ordinal();
+      myColumn = column;
     }
 
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
-      if (properties != null && properties.exists(CommonUiProperties.COLUMN_ORDER)) {
-        List<Integer> columnOrder = properties.get(CommonUiProperties.COLUMN_ORDER);
-        return columnOrder.contains(myIndex);
+      if (properties != null) {
+        return isVisible(myColumn, properties);
       }
       return false;
     }
@@ -76,16 +82,14 @@ public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAwar
       VcsLogUsageTriggerCollector.triggerUsage(e, this);
 
       VcsLogUiProperties properties = e.getRequiredData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
-      assert properties.exists(CommonUiProperties.COLUMN_ORDER);
+      assert supportsColumnsToggling(properties);
 
-      List<Integer> columnOrder = new ArrayList<>(properties.get(CommonUiProperties.COLUMN_ORDER));
-      if (columnOrder.contains(myIndex)) {
-        columnOrder.remove((Integer)myIndex);
+      if (state) {
+        addColumn(properties, myColumn);
       }
       else {
-        columnOrder.add(myIndex);
+        removeColumn(properties, myColumn);
       }
-      properties.set(CommonUiProperties.COLUMN_ORDER, columnOrder);
     }
 
     @Override

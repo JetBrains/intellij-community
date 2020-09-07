@@ -7,6 +7,7 @@ import com.intellij.json.navigation.JsonQualifiedNameProvider;
 import com.intellij.json.psi.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -175,7 +176,7 @@ public final class JsonCachedValues {
   }
 
   @Nullable
-  private static String readStringValue(@Nullable JsonProperty property) {
+  private static @NlsSafe String readStringValue(@Nullable JsonProperty property) {
     if (property == null) return null;
     JsonValue urlValue = property.getValue();
     if (urlValue instanceof JsonStringLiteral) {

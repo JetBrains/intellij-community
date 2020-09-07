@@ -8,6 +8,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.Extension;
@@ -27,7 +28,7 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
     return DomUtil.hasXml(getInterface()) ? getInterface().getValue() : getBeanClass().getValue();
   }
 
-  private static final Set<String> EXTENSION_POINT_CLASS_ATTRIBUTE_NAMES = ContainerUtil.immutableSet(
+  private static final @NonNls Set<String> EXTENSION_POINT_CLASS_ATTRIBUTE_NAMES = ContainerUtil.immutableSet(
     "implementationClass", "implementation", "instance",
     "factoryClass", // ToolWindowEP
     "extenderClass" // DomExtenderEP

@@ -351,7 +351,9 @@ internal abstract class GHCloneDialogExtensionComponentBase(
     val destinationValidation = CloneDvcsValidationUtils.createDestination(parent.toString())
     if (destinationValidation != null) {
       LOG.error("Unable to create destination directory", destinationValidation.message)
-      GithubNotifications.showError(project, GithubBundle.message("clone.dialog.clone.failed"),
+      GithubNotifications.showError(project,
+                                    "github.clone.unable.to.create.destination.dir",
+                                    GithubBundle.message("clone.dialog.clone.failed"),
                                     GithubBundle.message("clone.error.unable.to.create.dest.dir"))
       return
     }
@@ -363,7 +365,9 @@ internal abstract class GHCloneDialogExtensionComponentBase(
     }
     if (destinationParent == null) {
       LOG.error("Clone Failed. Destination doesn't exist")
-      GithubNotifications.showError(project, GithubBundle.message("clone.dialog.clone.failed"),
+      GithubNotifications.showError(project,
+                                    "github.clone.unable.to.find.destination",
+                                    GithubBundle.message("clone.dialog.clone.failed"),
                                     GithubBundle.message("clone.error.unable.to.find.dest"))
       return
     }

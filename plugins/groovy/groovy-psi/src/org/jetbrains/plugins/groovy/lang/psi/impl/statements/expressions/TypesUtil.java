@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -57,7 +58,7 @@ public final class TypesUtil implements TypeConstants {
   }
 
   private static final Map<IElementType, String> ourPrimitiveTypesToClassNames = new HashMap<>();
-  private static final String NULL = "null";
+  private static final @NlsSafe String NULL = "null";
 
   static {
     ourPrimitiveTypesToClassNames.put(STRING_SQ, CommonClassNames.JAVA_LANG_STRING);
@@ -760,6 +761,7 @@ public final class TypesUtil implements TypeConstants {
   }
 
   @Nullable
+  @NlsSafe
   public static String getQualifiedName(@Nullable PsiType type) {
     if (type instanceof PsiClassType) {
       PsiClass resolved = ((PsiClassType)type).resolve();

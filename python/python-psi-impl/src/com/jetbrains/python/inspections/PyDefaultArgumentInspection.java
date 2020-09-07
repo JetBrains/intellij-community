@@ -18,6 +18,7 @@ package com.jetbrains.python.inspections;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.quickfix.PyDefaultArgumentQuickFix;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyNamedParameter;
@@ -44,10 +45,11 @@ public class PyDefaultArgumentInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyNamedParameter(PyNamedParameter node) {
+    public void visitPyNamedParameter(@NotNull PyNamedParameter node) {
       final PyExpression defaultValue = node.getDefaultValue();
       if (PyUtil.isForbiddenMutableDefault(defaultValue, myTypeEvalContext)) {
-        registerProblem(defaultValue, "Default argument value is mutable", new PyDefaultArgumentQuickFix());
+        registerProblem(defaultValue, PyPsiBundle.message("INSP.default.arguments.default.argument.value.mutable"),
+                        new PyDefaultArgumentQuickFix());
       }
     }
   }

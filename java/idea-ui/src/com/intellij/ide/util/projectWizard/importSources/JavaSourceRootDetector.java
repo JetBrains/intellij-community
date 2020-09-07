@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.NullableFunction;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -84,7 +85,7 @@ public abstract class JavaSourceRootDetector extends ProjectStructureDetector {
   }
 
   @NotNull
-  protected abstract String getLanguageName();
+  protected abstract @Nls(capitalization = Nls.Capitalization.Sentence) String getLanguageName();
 
   @NotNull
   protected abstract String getFileExtension();

@@ -25,10 +25,10 @@ val BLACK_CELL_COLOR_KEY = ColorKey.createColorKey("IMAGES_WHITE_CELL_COLOR", Gr
 class ImageEditorColorSchemeSettings : ColorSettingsPage, DisplayPrioritySortable {
   override fun getColorDescriptors(): Array<ColorDescriptor> {
     return arrayOf(
-      ColorDescriptor("Background", BACKGROUND_COLOR_KEY, ColorDescriptor.Kind.BACKGROUND),
-      ColorDescriptor("Grid line", GRID_LINE_COLOR_KEY, ColorDescriptor.Kind.BACKGROUND),
-      ColorDescriptor("'White' cell", WHITE_CELL_COLOR_KEY, ColorDescriptor.Kind.BACKGROUND),
-      ColorDescriptor("'Black' cell", BLACK_CELL_COLOR_KEY, ColorDescriptor.Kind.BACKGROUND))
+      ColorDescriptor(ImagesBundle.message("background.color.descriptor"), BACKGROUND_COLOR_KEY, ColorDescriptor.Kind.BACKGROUND),
+      ColorDescriptor(ImagesBundle.message("grid.line.color.descriptor"), GRID_LINE_COLOR_KEY, ColorDescriptor.Kind.BACKGROUND),
+      ColorDescriptor(ImagesBundle.message("white.cell.color.descriptor"), WHITE_CELL_COLOR_KEY, ColorDescriptor.Kind.BACKGROUND),
+      ColorDescriptor(ImagesBundle.message("black.cell.color.descriptor"), BLACK_CELL_COLOR_KEY, ColorDescriptor.Kind.BACKGROUND))
   }
 
   override fun getPriority() = DisplayPriority.OTHER_SETTINGS

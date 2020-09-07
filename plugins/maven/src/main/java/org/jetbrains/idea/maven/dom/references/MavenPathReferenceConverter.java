@@ -1,11 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom.references;
 
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -54,7 +51,7 @@ public class MavenPathReferenceConverter extends PathReferenceConverter {
     TextRange range = ElementManipulators.getValueTextRange(element);
     String text = range.substring(element.getText());
 
-    FileReferenceSet set = new FileReferenceSet(text, element, range.getStartOffset(), null, SystemInfo.isFileSystemCaseSensitive, false) {
+    FileReferenceSet set = new FileReferenceSet(text, element, range.getStartOffset(), null, element.getContainingFile().getViewProvider().getVirtualFile().isCaseSensitive(), false) {
 
       private MavenDomProjectModel model;
 

@@ -25,7 +25,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.ImmutableCharSequence;
-import gnu.trove.TIntIntHashMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.*;
 
@@ -296,9 +296,9 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
       return specialFilter == StripTrailingSpacesFilter.NOT_ALLOWED;
     }
 
-    TIntIntHashMap caretPositions = null;
+    Int2IntOpenHashMap caretPositions = null;
     if (caretOffsets != null) {
-      caretPositions = new TIntIntHashMap(caretOffsets.length);
+      caretPositions = new Int2IntOpenHashMap(caretOffsets.length);
       for (int caretOffset : caretOffsets) {
         int line = getLineNumber(caretOffset);
         // need to remember only maximum caret offset on a line

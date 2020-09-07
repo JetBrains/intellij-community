@@ -35,7 +35,7 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
     @NotNull
     protected final Content myContent;
 
-    public ForContent(@NotNull Content content, @NotNull AnAction shortcutTemplate, final String text) {
+    public ForContent(@NotNull Content content, @NotNull AnAction shortcutTemplate, final @NlsActions.ActionText String text) {
       super(content.getManager(), shortcutTemplate, text, content);
 
       myContent = content;

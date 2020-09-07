@@ -88,11 +88,18 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
 
   @Test
   fun test_simple_enum_rules_with_spaces() {
+    // enum values: ["NODE_REF_AAA", "NODE_REF_BBB", "NODE_REF_CCC"]
     val validator = newValidatorByFile("test_simple_enum_rules.json")
 
     val elg = EventLogGroup("my.simple.enum.node.ref", 1)
     assertEventAccepted(validator, elg, "NODE REF AAA")
     assertEventAccepted(validator, elg, "NOD'E;REF:BBB")
+    assertEventAccepted(validator, elg, "NODE;REF:BBB")
+    assertEventAccepted(validator, elg, "NODE_REF_BBB")
+    assertEventAccepted(validator, elg, "NODE,REF,BBB")
+    assertEventAccepted(validator, elg, "NOD'E_REF_BBB")
+    assertEventAccepted(validator, elg, "NOD'E;REF_BBB")
+    assertEventAccepted(validator, elg, "NOD'E:REF;BBB")
     assertEventAccepted(validator, elg, "NO\"DE REF CCC")
 
     assertEventRejected(validator, elg, "NODEREFCCC")
@@ -169,9 +176,19 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
 
     val elg = EventLogGroup("my.simple.regexp.with.underscore", 1)
     assertEventAccepted(validator, elg, "A_x")
+    assertEventAccepted(validator, elg, "A;x")
+    assertEventAccepted(validator, elg, "A,x")
+    assertEventAccepted(validator, elg, "A:x")
     assertEventAccepted(validator, elg, "A x")
     assertEventAccepted(validator, elg, "B:x")
+    assertEventAccepted(validator, elg, "B;x")
+    assertEventAccepted(validator, elg, "B_x")
     assertEventAccepted(validator, elg, "B x")
+    assertEventAccepted(validator, elg, "B  x")
+    assertEventAccepted(validator, elg, "B:_x")
+    assertEventAccepted(validator, elg, "B:;x")
+    assertEventAccepted(validator, elg, "B,,x")
+    assertEventAccepted(validator, elg, "B__x")
     assertEventRejected(validator, elg, "Bxx")
   }
 
@@ -201,6 +218,9 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
     val validator = newValidatorByFile("test_simple_expression_rules.json")
     val elg = EventLogGroup("my.simple.expression", 1)
 
+    assertEventAccepted(validator, elg, "JUST_TEXT[_123456_]:xxx_CCC_zzzREF_AAA_yyy")
+    assertEventAccepted(validator, elg, "JUST_TEXT[_123456_]_xxx;CCC_zzzREF_AAA_yyy")
+    assertEventAccepted(validator, elg, "JUST_TEXT[_123456_]:xxx,CCC_zzzREF_AAA_yyy")
     assertEventAccepted(validator, elg, "JUST_TEXT[_123456_]_xxx_CCC_zzzREF_AAA_yyy")
     assertEventAccepted(validator, elg, "JUST TEXT[_123456_]_xxx CCC,zzzREF:AAA;yyy")
     assertEventRejected(validator, elg, "JUSTTEXT[_123456_]_xxx!CCC_zzzREF:AAA;yyy")

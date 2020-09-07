@@ -3,7 +3,6 @@ package com.intellij.psi;
 
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,11 +50,11 @@ public final class ThreadLocalTypes {
     return false;
   }
 
-  public static <T> T performWithTypes(@NotNull Function<ThreadLocalTypes, T> action) {
+  public static <T> T performWithTypes(@NotNull Function<? super ThreadLocalTypes, ? extends T> action) {
     return performWithTypes(action, true);
   }
 
-  public static <T> T performWithTypes(@NotNull Function<ThreadLocalTypes, T> action,
+  public static <T> T performWithTypes(@NotNull Function<? super ThreadLocalTypes, ? extends T> action,
                                        boolean prohibitCaching) {
     ThreadLocalTypes types = new ThreadLocalTypes(prohibitCaching);
     return ourGuard.doPreventingRecursion(types, false, () -> action.apply(types));

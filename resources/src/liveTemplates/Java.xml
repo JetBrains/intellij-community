@@ -144,7 +144,7 @@
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.toar"
-            name="toar" toReformat="true" toShortenFQNames="true" value="$COLLECTION$.toArray(new $COMPONENT_TYPE$[$COLLECTION$.size()])$END$">
+            name="toar" toReformat="true" toShortenFQNames="true" value="$COLLECTION$.toArray(new $COMPONENT_TYPE$[0])$END$">
     <variable alwaysStopAt="true" defaultValue="&quot;Object&quot;" expression="componentTypeOf(expectedType())" name="COMPONENT_TYPE" />
     <variable alwaysStopAt="true" defaultValue="collection" expression="variableOfType(&quot;java.util.Collection&quot;)" name="COLLECTION" />
     <context>

@@ -353,6 +353,19 @@ class ModuleModelTest {
     assertThat(projectModel.moduleManager.getModuleGroupPath(module)).containsExactly("group")
   }
 
+  @Test
+  fun `remove module and add module with same name`() {
+    val module = projectModel.createModule("foo")
+    edit { model ->
+      model.disposeModule(module)
+      val updatedModule = projectModel.createModule("foo", model)
+      assertThat(model.modules).containsExactly(updatedModule)
+    }
+    val updatedModule = projectModel.moduleManager.modules.single()
+    assertThat(updatedModule.name).isEqualTo("foo")
+    assertThat(module).isNotSameAs(updatedModule)
+  }
+
   class ModifiableModuleModelAccessor(private val moduleModel: ModifiableModuleModel) : RootConfigurationAccessor() {
     override fun getModule(module: Module?, moduleName: String): Module? {
       return module ?: moduleModel.findModuleByName(moduleName)

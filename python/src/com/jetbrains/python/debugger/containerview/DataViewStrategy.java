@@ -25,6 +25,7 @@ import com.jetbrains.python.debugger.dataframe.SeriesViewStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Set;
 
 
@@ -39,11 +40,23 @@ public abstract class DataViewStrategy {
     );
   }
 
-  public abstract AsyncArrayTableModel createTableModel(int rowCount, int columnCount, @NotNull PyDataViewerPanel panel, @NotNull PyDebugValue debugValue);
+  public abstract AsyncArrayTableModel createTableModel(int rowCount,
+                                                        int columnCount,
+                                                        @NotNull PyDataViewerPanel panel,
+                                                        @NotNull PyDebugValue debugValue);
 
   public abstract ColoredCellRenderer createCellRenderer(double minValue, double maxValue, @NotNull ArrayChunk arrayChunk);
 
   public abstract boolean isNumeric(String dtypeKind);
+
+  @NotNull
+  public abstract String sortModifier(@NotNull String varName, @NotNull RowSorter.SortKey key);
+
+  @NotNull
+  public abstract String filterModifier(@NotNull String varName, @NotNull ColumnFilter filter);
+
+  @Nullable
+  public String getInitExecuteString() { return null; }
 
   @NotNull
   public abstract String getTypeName();

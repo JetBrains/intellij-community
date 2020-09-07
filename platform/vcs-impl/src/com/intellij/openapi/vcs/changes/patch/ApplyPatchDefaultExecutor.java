@@ -15,9 +15,9 @@ import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +36,7 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
     return null;
   }
 
-  @CalledInAwt
+  @RequiresEdt
   @Override
   public void apply(@NotNull List<? extends FilePatch> remaining,
                     @NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress<?>> patchGroupsToApply,
@@ -48,7 +48,7 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
       applyAdditionalInfoBefore(myProject, additionalInfo, commitContext);
     }
     Collection<PatchApplier> appliers = getPatchAppliers(patchGroupsToApply, localList, commitContext);
-    new Task.Backgroundable(myProject, VcsBundle.getString("patch.apply.progress.title")) {
+    new Task.Backgroundable(myProject, VcsBundle.message("patch.apply.progress.title")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         PatchApplier.executePatchGroup(appliers, localList);

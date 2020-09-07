@@ -106,7 +106,7 @@
         </constraints>
         <properties>
           <labelFor value="6bb2c"/>
-          <text value="Result schema file name:"/>
+          <text resource-bundle="messages/XmlBundle" key="xml.generate.schema.dialog.label.result.schema.file.name"/>
           <toolTipText resource-bundle="messages/XmlBundle" key="xmlbeans.instance2schema.result.schema.name"/>
         </properties>
       </component>

@@ -3,6 +3,7 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ex.InspectionElementsMergerBase;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -10,8 +11,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class MultipleVariablesInDeclarationInspectionMerger extends InspectionElementsMergerBase {
 
-  private static final String MULTIPLE_DECLARATION = "MultipleDeclaration";
-  private static final String MULTIPLE_TYPED_DECLARATION = "MultipleTypedDeclaration";
+  @NonNls private static final String MULTIPLE_DECLARATION = "MultipleDeclaration";
+  @NonNls private static final String MULTIPLE_TYPED_DECLARATION = "MultipleTypedDeclaration";
 
   @Override
   protected boolean isEnabledByDefault(@NotNull String sourceToolName) {

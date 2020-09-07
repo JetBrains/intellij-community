@@ -1,10 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
+import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.JBLabel;
@@ -38,7 +41,7 @@ public class EditXmxVMOptionDialog extends DialogWrapper {
 
     mySettingsFileHintLabel.setIcon(AllIcons.General.Warning);
 
-    myIgnoreAction = new AbstractAction("Close") {
+    myIgnoreAction = new AbstractAction(CommonBundle.getCloseButtonText()) {
       @Override
       public void actionPerformed(ActionEvent e) {
         close(0);
@@ -46,10 +49,10 @@ public class EditXmxVMOptionDialog extends DialogWrapper {
     };
 
     if (isRestartCapable) {
-      myShutdownAction = new SaveAction("Save and Restart");
+      myShutdownAction = new SaveAction(IdeBundle.message("action.save.restart.text"));
     }
     else {
-      myShutdownAction = new SaveAction("Save");
+      myShutdownAction = new SaveAction(IdeBundle.message("button.save"));
     }
     myShutdownAction.putValue(DialogWrapper.DEFAULT_ACTION, true);
 
@@ -99,7 +102,7 @@ public class EditXmxVMOptionDialog extends DialogWrapper {
   }
 
   private class SaveAction extends AbstractAction {
-    SaveAction(String actionName) {
+    SaveAction(@NlsActions.ActionText String actionName) {
       super(actionName);
     }
 

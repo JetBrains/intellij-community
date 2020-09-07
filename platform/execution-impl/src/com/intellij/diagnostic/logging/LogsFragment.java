@@ -208,7 +208,7 @@ public final class LogsFragment<T extends RunConfigurationBase<?>> extends Neste
   }
 
   @Override
-  public @Nullable String getChildrenGroupName() {
+  public String getChildrenGroupName() {
     return DiagnosticBundle.message("log.monitor.fragment.settings");
   }
 

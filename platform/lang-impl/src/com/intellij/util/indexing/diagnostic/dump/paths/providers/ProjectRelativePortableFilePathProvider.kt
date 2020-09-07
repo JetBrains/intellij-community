@@ -5,6 +5,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
+import com.intellij.util.PathUtil
 import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePath
 import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePaths
 
@@ -31,10 +32,9 @@ object ProjectRelativePortableFilePathProvider : PortableFilePathProvider {
     }
 
     // Usual non-archive local pth.
-    val filePath = virtualFile.path
     val systemIndependentBase = FileUtil.toSystemIndependentName(rootBasePath)
-    if (FileUtil.isAncestor(systemIndependentBase, filePath, false)) {
-      val relativePath = FileUtil.getRelativePath(systemIndependentBase, filePath, '/')
+    if (PathUtil.isAncestorOrSelf(systemIndependentBase, virtualFile)) {
+      val relativePath = FileUtil.getRelativePath(systemIndependentBase, virtualFile.path, '/')
       if (relativePath != null) {
         return PortableFilePath.RelativePath(root, relativePath)
       }

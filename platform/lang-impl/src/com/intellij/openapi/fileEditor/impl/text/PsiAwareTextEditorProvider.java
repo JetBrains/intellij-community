@@ -75,7 +75,7 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
       }
     }
     else {
-      Supplier<CodeFoldingState> delayedProducer = state.getDelayedFoldState();
+      Supplier<? extends CodeFoldingState> delayedProducer = state.getDelayedFoldState();
       if (delayedProducer instanceof MyDelayedFoldingState) {
         element.addContent(((MyDelayedFoldingState)delayedProducer).getSerializedState());
       }

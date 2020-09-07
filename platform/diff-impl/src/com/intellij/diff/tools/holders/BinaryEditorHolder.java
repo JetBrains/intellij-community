@@ -178,7 +178,7 @@ public class BinaryEditorHolder extends EditorHolder {
     @NotNull
     @Override
     public String getName() {
-      return "Dumb";
+      return "Dumb"; //NON-NLS
     }
   }
 }

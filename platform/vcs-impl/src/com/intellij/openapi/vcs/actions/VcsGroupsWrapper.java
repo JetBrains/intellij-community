@@ -82,7 +82,8 @@ public class VcsGroupsWrapper extends DefaultActionGroup implements DumbAware {
 
     for (AnAction child : vcsGroup.getChildren(e)) {
       if (!(child instanceof StandardVcsGroup)) {
-        LOG.error(MessageFormat.format("Any version control group should extend {0}. Violated by {1}, {2}.", StandardVcsGroup.class,
+        LOG.error(MessageFormat.format("Any version control group should extend {0}. Violated by {1}, {2}.", // NON-NLS
+                                       StandardVcsGroup.class,
                                        ActionManager.getInstance().getId(child), child.getClass()));
       }
       else {

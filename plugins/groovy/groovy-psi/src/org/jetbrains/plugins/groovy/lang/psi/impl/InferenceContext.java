@@ -51,4 +51,8 @@ public interface InferenceContext {
 
   @Nullable
   <T extends GroovyPsiElement> PsiType getExpressionType(@NotNull T element, @NotNull Function<? super T, ? extends PsiType> calculator);
+
+  default boolean isInferenceResultsCachingAllowed() {
+    return true;
+  }
 }

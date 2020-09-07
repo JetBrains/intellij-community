@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
 import com.intellij.util.ui.JBUI;
 
@@ -14,14 +15,14 @@ public class ConfigImportProgressDialog extends JDialog {
   private boolean myCanceled;
 
   public ConfigImportProgressDialog() {
-    super((Frame)null, "Migrating Plugins", true);
+    super((Frame)null, IdeBundle.message("dialog.title.migrating.plugins"), true);
     JPanel panel = new JPanel();
     panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
-    panel.add(new JLabel("Migrating plugins..."));
+    panel.add(new JLabel(IdeBundle.message("progress.text.migrating.plugins")));
     panel.add(myProgressTextLabel);
     myProgressBar.setAlignmentX(Component.CENTER_ALIGNMENT);
     panel.add(myProgressBar);
-    JButton cancelButton = new JButton("Cancel");
+    JButton cancelButton = new JButton(IdeBundle.message("button.cancel.without.mnemonic"));
     cancelButton.setAlignmentX(Component.CENTER_ALIGNMENT);
     panel.add(cancelButton);
     panel.setBorder(JBUI.Borders.empty(10, 20));

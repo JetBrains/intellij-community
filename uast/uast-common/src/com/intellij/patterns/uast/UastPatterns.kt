@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.patterns.*
+import com.intellij.patterns.PsiJavaPatterns.psiClass
 import com.intellij.patterns.StandardPatterns.string
 import com.intellij.psi.*
 import com.intellij.util.ProcessingContext
@@ -66,7 +67,10 @@ open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz:
     })
 
   fun filterWithContext(filter: (T, ProcessingContext) -> Boolean): Self =
-    with(object : PatternCondition<T>(null) {
+    filterWithContext(null, filter)
+
+  fun filterWithContext(debugName: String?, filter: (T, ProcessingContext) -> Boolean): Self =
+    with(object : PatternCondition<T>(debugName) {
       override fun accepts(t: T, context: ProcessingContext?): Boolean = filter.invoke(t, context ?: ProcessingContext())
     })
 
@@ -142,9 +146,11 @@ class UCallExpressionPattern : UElementPattern<UCallExpression, UCallExpressionP
       }
 
       if (multiResolve && uCallExpression is UMultiResolvable) {
-        uCallExpression.multiResolve().any { method.accepts(it.element, context) }}
-      else
+        uCallExpression.multiResolve().any { method.accepts(it.element, context) }
+      }
+      else {
         uCallExpression.resolve().let { method.accepts(it, context) }
+      }
     }
   }
 
@@ -154,12 +160,26 @@ class UCallExpressionPattern : UElementPattern<UCallExpression, UCallExpressionP
     } ?: false
   }
 
+  fun constructor(classPattern: ElementPattern<PsiClass>, parameterCount: Int): UCallExpressionPattern = filterWithContext { it, context ->
+    if (it.classReference == null) return@filterWithContext false
+
+    val psiMethod = it.resolve() ?: return@filterWithContext false
+
+    psiMethod.isConstructor
+    && psiMethod.parameterList.parametersCount == parameterCount
+    && classPattern.accepts(psiMethod.containingClass, context)
+  }
+
   fun constructor(classPattern: ElementPattern<PsiClass>): UCallExpressionPattern = filterWithContext { it, context ->
+    if (it.classReference == null) return@filterWithContext false
+
     val psiMethod = it.resolve() ?: return@filterWithContext false
     psiMethod.isConstructor && classPattern.accepts(psiMethod.containingClass, context)
   }
 
-  fun constructor(className: String): UCallExpressionPattern = constructor(PsiJavaPatterns.psiClass().withQualifiedName(className))
+  fun constructor(className: String): UCallExpressionPattern = constructor(psiClass().withQualifiedName(className))
+
+  fun constructor(className: String, parameterCount: Int): UCallExpressionPattern = constructor(psiClass().withQualifiedName(className), parameterCount)
 }
 
 private val IS_UAST_ANNOTATION_PARAMETER: Key<Boolean> = Key.create("UAST_ANNOTATION_PARAMETER")
@@ -231,7 +251,7 @@ open class UExpressionPattern<T : UExpression, Self : UExpressionPattern<T, Self
 class ULiteralExpressionPattern : UExpressionPattern<ULiteralExpression, ULiteralExpressionPattern>(ULiteralExpression::class.java)
 
 fun uAnnotationQualifiedNamePattern(annotationQualifiedName: ElementPattern<String>): UElementPattern<UAnnotation, *> =
-  capture(UAnnotation::class.java).filterWithContext { it, context ->
+  capture(UAnnotation::class.java).filterWithContext(annotationQualifiedName.toString()) { it, context ->
     it.qualifiedName?.let {
       annotationQualifiedName.accepts(it, context)
     } ?: false

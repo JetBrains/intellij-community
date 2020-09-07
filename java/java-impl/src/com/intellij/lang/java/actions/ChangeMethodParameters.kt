@@ -54,7 +54,7 @@ internal class ChangeMethodParameters(target: PsiMethod, override val request: C
       val newParameter = factory.createParameter(name, psiType)
 
       for (annotationRequest in expectedHead.expectedAnnotations) {
-        addAnnotationToModifierList(newParameter.modifierList!!, annotationRequest)
+        CreateAnnotationAction.addAnnotationToModifierList(newParameter.modifierList!!, annotationRequest)
       }
 
       if (currentHead == null)

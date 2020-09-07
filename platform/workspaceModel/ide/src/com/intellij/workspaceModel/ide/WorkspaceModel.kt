@@ -3,6 +3,7 @@ package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
 
@@ -17,10 +18,18 @@ interface WorkspaceModel {
    */
   fun <R> updateProjectModel(updater: (WorkspaceEntityStorageBuilder) -> R): R
 
-  /** Update project model without the notification to message bus */
+  /**
+   * Update project model without the notification to message bus and without resetting accumulated changes.
+   *
+   * This method doesn't require write action.
+   */
   fun <R> updateProjectModelSilent(updater: (WorkspaceEntityStorageBuilder) -> R): R
 
   companion object {
+    @JvmStatic
+    val isEnabled: Boolean
+      get() = Registry.`is`("ide.new.project.model")
+
     @JvmStatic
     fun getInstance(project: Project): WorkspaceModel = ServiceManager.getService(project, WorkspaceModel::class.java)
   }

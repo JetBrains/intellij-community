@@ -7,6 +7,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.JBScrollPane.Alignment;
@@ -130,11 +131,11 @@ public class JBViewport extends JViewport implements ZoomableViewport {
   private void checkScrollingCapabilities() {
     if (myPreviousNotification == null || myPreviousNotification.isExpired()) {
       if (!Boolean.TRUE.equals(isWindowBlitterAvailableFor(this))) {
-        myPreviousNotification = notify("Scrolling: cannot use window blitter");
+        myPreviousNotification = notify("Scrolling: cannot use window blitter"); //NON-NLS
       }
       else {
         if (!Boolean.TRUE.equals(isTrueDoubleBufferingAvailableFor(this))) {
-          myPreviousNotification = notify("Scrolling: cannot use true double buffering");
+          myPreviousNotification = notify("Scrolling: cannot use true double buffering"); //NON-NLS
         }
       }
     }
@@ -189,7 +190,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
     return null;
   }
 
-  private static Notification notify(String message) {
+  private static Notification notify(@NlsContexts.NotificationContent String message) {
     Notification notification = NOTIFICATION_GROUP.createNotification(message, NotificationType.INFORMATION);
     notification.notify(null);
 

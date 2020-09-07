@@ -12,7 +12,7 @@ PyFile:MultilineFStringContainsCommentInsteadOfExpression.py
         PsiElement(Py:FSTRING_START)('f'''')
         PyFStringFragment
           PsiElement(Py:FSTRING_FRAGMENT_START)('{')
-          PsiErrorElement:expression expected
+          PsiErrorElement:Expression expected
             PsiWhiteSpace('\n  ')
             PsiComment(Py:END_OF_LINE_COMMENT)('# comment')
             PsiWhiteSpace('\n')

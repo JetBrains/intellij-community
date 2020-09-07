@@ -29,7 +29,7 @@ public class LayoutProjectCodeDialog extends DialogWrapper implements ReformatFi
   private static @NonNls final String HELP_ID = "Reformat Code on Directory Dialog";
 
   private final Project myProject;
-  private final String  myText;
+  private final @NlsContexts.Label String  myText;
   private final boolean myEnableOnlyVCSChangedTextCb;
   private final LastRunReformatCodeOptionsProvider myLastRunOptions;
 

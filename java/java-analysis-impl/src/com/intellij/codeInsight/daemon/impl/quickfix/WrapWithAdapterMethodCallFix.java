@@ -175,7 +175,7 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
                 outType -> InheritanceUtil.isInheritor(outType, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM))
   };
 
-  private static boolean isAppropriateLanguageLevel(@NotNull PsiType psiType, @NotNull Predicate<LanguageLevel> level) {
+  private static boolean isAppropriateLanguageLevel(@NotNull PsiType psiType, @NotNull Predicate<? super LanguageLevel> level) {
     if (!(psiType instanceof PsiClassType)) return true;
     return level.test(((PsiClassType)psiType).getLanguageLevel());
   }

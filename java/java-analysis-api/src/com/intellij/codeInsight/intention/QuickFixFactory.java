@@ -485,4 +485,6 @@ public abstract class QuickFixFactory {
    */
   @NotNull
   public abstract IntentionAction createAddToPermitsListFix(@NotNull PsiClass subClass, @NotNull PsiClass superClass);
+
+  public abstract IntentionAction createMoveClassToPackageFix(@NotNull PsiClass classToMove, @NotNull String packageName);
 }

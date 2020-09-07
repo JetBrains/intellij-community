@@ -1,10 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.generic;
 
-import static com.intellij.tasks.generic.GenericRepositoryUtil.concat;
-import static com.intellij.tasks.generic.GenericRepositoryUtil.substituteTemplateVariables;
-import static com.intellij.tasks.generic.TemplateVariable.FactoryVariable;
-
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -16,16 +12,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.HTTPMethod;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import javax.swing.Icon;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.HttpStatus;
@@ -33,6 +19,17 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+
+import static com.intellij.tasks.generic.GenericRepositoryUtil.concat;
+import static com.intellij.tasks.generic.GenericRepositoryUtil.substituteTemplateVariables;
+import static com.intellij.tasks.generic.TemplateVariable.FactoryVariable;
 
 /**
  * @author Evgeny.Zakrevsky
@@ -210,7 +207,14 @@ public class GenericRepository extends BaseRepositoryImpl {
     }
     else {
       InputStream stream = method.getResponseBodyAsStream();
-      responseBody = stream == null ? "" : StreamUtil.readText(stream, StandardCharsets.UTF_8);
+      if (stream == null) {
+        responseBody = "";
+      }
+      else {
+        try (Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
+          responseBody = StreamUtil.readText(reader);
+        }
+      }
     }
     if (method.getStatusCode() != HttpStatus.SC_OK) {
       throw new Exception("Request failed with HTTP error: " + method.getStatusText());

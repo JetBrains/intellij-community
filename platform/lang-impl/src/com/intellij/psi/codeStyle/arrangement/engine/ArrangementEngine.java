@@ -2,6 +2,7 @@
 package com.intellij.psi.codeStyle.arrangement.engine;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.actions.VcsFacade;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,6 +12,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -53,9 +55,9 @@ public final class ArrangementEngine {
   }
 
   @Nullable
-  public String getUserNotificationInfo() {
+  public @NlsContexts.HintText String getUserNotificationInfo() {
     if (myCodeChanged) {
-      return "rearranged code";
+      return CodeInsightBundle.message("hint.text.rearranged.code");
     }
     return null;
   }

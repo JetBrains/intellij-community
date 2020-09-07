@@ -186,8 +186,7 @@ class PyDevTerminalInteractiveShell(TerminalInteractiveShell):
 
         if tb is not None:
             traceback.print_exception(etype, value, tb)
-
-
+            sys.last_type, sys.last_value, sys.last_traceback = etype, value, tb
 
     #-------------------------------------------------------------------------
     # Things related to text completion

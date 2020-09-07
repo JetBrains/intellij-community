@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.icons.IconLoadMeasurer;
 import org.jetbrains.annotations.NotNull;
@@ -13,20 +12,18 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public abstract class SVGLoaderCache {
   private static final long MAX_IMAGE_SIZE = 16 * 1024L * 1024L;
 
-  @NotNull
-  protected abstract Path getCachesHome();
+  protected abstract @NotNull Path getCachesHome();
 
   protected abstract void forkIOTask(@NotNull Runnable action);
 
-
-  @NotNull
-  private Path cacheFile(byte @NotNull [] theme, byte @NotNull [] imageBytes, double scale) {
+  private @NotNull Path cacheFile(byte @NotNull [] theme, byte @NotNull [] imageBytes, double scale) {
     try {
       MessageDigest d = MessageDigest.getInstance("SHA-256");
       //caches version
@@ -47,25 +44,27 @@ public abstract class SVGLoaderCache {
                                            double scale,
                                            @NotNull ImageLoader.Dimension2DDouble docSize) {
     Path file = cacheFile(theme, imageBytes, scale);
-    if (!Files.isRegularFile(file)) {
+    BasicFileAttributes fileAttributes;
+    try {
+      fileAttributes = Files.readAttributes(file, BasicFileAttributes.class);
+    }
+    catch (IOException ignore) {
+      return null;
+    }
+    if (!fileAttributes.isRegularFile()) {
       return null;
     }
 
-    //let's avoid OOM if an image is too big
-    try {
-      long size = Files.size(file);
-      if (size > MAX_IMAGE_SIZE) {
-        forkIOTask(() -> {
-          try {
-            FileUtil.delete(file);
-          }
-          catch (IOException ignore) {
-          }
-        });
-        return null;
-      }
-    }
-    catch (IOException e) {
+    // let's avoid OOM if an image is too big
+    long size = fileAttributes.size();
+    if (size > MAX_IMAGE_SIZE) {
+      forkIOTask(() -> {
+        try {
+          Files.deleteIfExists(file);
+        }
+        catch (IOException ignore) {
+        }
+      });
       return null;
     }
 
@@ -82,7 +81,7 @@ public abstract class SVGLoaderCache {
       Logger.getInstance(getClass()).warn("Failed to read SVG cache from: " + file + ". " + e.getMessage(), e);
       forkIOTask(() -> {
         try {
-          FileUtil.delete(file);
+          Files.deleteIfExists(file);
         }
         catch (IOException ignore) {
         }

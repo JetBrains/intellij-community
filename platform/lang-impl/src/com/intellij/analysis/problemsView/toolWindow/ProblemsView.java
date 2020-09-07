@@ -36,16 +36,21 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
     return project == null || project.isDisposed() ? null : ToolWindowManager.getInstance(project).getToolWindow(ID);
   }
 
-  public static void toggleCurrentFileProblems(@NotNull Project project) {
+  public static void toggleCurrentFileProblems(@NotNull Project project, @Nullable VirtualFile file) {
     ToolWindow window = getToolWindow(project);
     if (window == null) return; // does not exist
     ContentManager manager = window.getContentManager();
-    if (window.isVisible() && manager.getSelectedContent() == manager.getContent(CURRENT_FILE_INDEX)) {
-      window.hide(); // hide toolwindow only if the Current File tab is selected
-    }
-    else {
+    HighlightingPanel panel = get(HighlightingPanel.class, manager.getSelectedContent());
+    if (file == null || panel == null || !panel.isShowing()) {
       selectContent(manager, CURRENT_FILE_INDEX);
       window.setAvailable(true, null);
+      window.activate(null, true);
+    }
+    else if (file.equals(panel.getCurrentFile())) {
+      window.hide(); // hide toolwindow only if the Current File tab is selected and shows the given file
+    }
+    else {
+      panel.setCurrentFile(file);
       window.activate(null, true);
     }
   }
@@ -71,7 +76,7 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
   }
 
   private static void createContent(@NotNull ContentManager manager, @NotNull ProblemsViewPanel panel) {
-    Content content = manager.getFactory().createContent(panel, panel.getDisplayName(), false);
+    Content content = manager.getFactory().createContent(panel, panel.getName(0), false);
     content.setCloseable(false);
     manager.addContent(content);
   }
@@ -109,8 +114,12 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
     state.setShowToolbar(isToolbarVisible(window, PropertiesComponent.getInstance(project)));
     ContentManager manager = window.getContentManager();
     createContent(manager, new HighlightingPanel(project, state));
-    if (isProjectErrorsEnabled())
-    createContent(manager, new ProjectErrorsPanel(project, state));
+    if (isProjectErrorsEnabled()) {
+      ProblemsViewPanel panel = new ProblemsViewPanel(project, state, ProblemsViewBundle.messagePointer("problems.view.project"));
+      panel.getTreeModel().setRoot(new CollectorBasedRoot(panel));
+      panel.getTree().getEmptyText().setText(ProblemsViewBundle.message("problems.view.project.empty"));
+      createContent(manager, panel);
+    }
     selectContent(manager, state.getSelectedIndex());
     selectionChanged(true, manager.getSelectedContent());
     manager.addContentManagerListener(new ContentManagerListener() {

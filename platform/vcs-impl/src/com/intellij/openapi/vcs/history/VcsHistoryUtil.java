@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -74,7 +75,7 @@ public final class VcsHistoryUtil {
    */
   public static void showDiff(@NotNull final Project project, @NotNull FilePath path,
                               @NotNull VcsFileRevision revision1, @NotNull VcsFileRevision revision2,
-                              @NotNull String title1, @NotNull String title2) throws VcsException, IOException {
+                              @NotNull @NlsContexts.Label String title1, @NotNull @NlsContexts.Label String title2) throws VcsException, IOException {
     FilePath path1 = getRevisionPath(revision1);
     FilePath path2 = getRevisionPath(revision2);
 
@@ -120,7 +121,8 @@ public final class VcsHistoryUtil {
 
   public static byte @NotNull [] loadRevisionContent(@NotNull VcsFileRevision revision) throws VcsException, IOException {
     byte[] content = revision.loadContent();
-    if (content == null) throw new VcsException("Failed to load content for revision " + revision.getRevisionNumber().asString());
+    if (content == null) throw new VcsException(
+      VcsBundle.message("history.failed.to.load.content.for.revision.0", revision.getRevisionNumber().asString()));
     return content;
   }
 
@@ -188,7 +190,7 @@ public final class VcsHistoryUtil {
       }
 
       @NotNull
-      private String makeTitle(@NotNull VcsFileRevision revision) {
+      private @NlsContexts.Label String makeTitle(@NotNull VcsFileRevision revision) {
         return revision.getRevisionNumber().asString() +
                (revision instanceof CurrentRevision ? " (" + VcsBundle.message("diff.title.local") + ")" : "");
       }

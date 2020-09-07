@@ -2,6 +2,7 @@
 package com.intellij.ui.mac.foundation;
 
 import com.intellij.jna.JnaLoader;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -246,8 +247,7 @@ public final class Foundation {
     return Native.toString(buffer);
   }
 
-  @Nullable
-  public static String getNSErrorText(@Nullable ID error) {
+  public static @NlsSafe @Nullable String getNSErrorText(@Nullable ID error) {
     if (error == null || error.byteValue() == 0) return null;
 
     String description = toStringViaUTF8(invoke(error, "localizedDescription"));
@@ -298,7 +298,7 @@ public final class Foundation {
   }
 
   public static ID autorelease(ID id){
-    return Foundation.invoke(id, "autorelease");
+    return invoke(id, "autorelease");
   }
 
   public static boolean isMainThread() {
@@ -610,7 +610,7 @@ public final class Foundation {
     return new ID(pointerType.getPointer().getLong(0));
   }
 
-  private static Object[] convertTypes(Object @NotNull [] v) {
+  public static Object[] convertTypes(Object @NotNull [] v) {
     final Object[] result = new Object[v.length + 1];
     for (int i = 0; i < v.length; i++) {
       result[i] = convertType(v[i]);

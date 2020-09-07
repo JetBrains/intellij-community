@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.ui.ComponentContainer;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.NlsContexts.TabTitle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,13 +93,13 @@ public interface Content extends UserDataHolder, ComponentContainer {
   boolean isCloseable();
   void setCloseable(boolean closeable);
 
-  void setActions(ActionGroup actions, String place, @Nullable JComponent contextComponent);
+  void setActions(ActionGroup actions, @NonNls String place, @Nullable JComponent contextComponent);
   ActionGroup getActions();
 
   void setSearchComponent(@Nullable JComponent comp);
   @Nullable JComponent getSearchComponent();
 
-  String getPlace();
+  @NonNls String getPlace();
   JComponent getActionsContextComponent();
 
   void setAlertIcon(@Nullable AlertIcon icon);

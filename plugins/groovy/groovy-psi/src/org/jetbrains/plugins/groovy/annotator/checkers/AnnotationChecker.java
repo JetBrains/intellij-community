@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.checkers;
 
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Pair;
@@ -47,8 +48,8 @@ public final class AnnotationChecker {
     }
   }
 
-  public static @Nullable Pair<@Nullable PsiElement, @Nullable String> checkAnnotationArgumentList(@NotNull GrAnnotation annotation,
-                                                                                                   @NotNull AnnotationHolder holder) {
+  public static @Nullable Pair<@Nullable PsiElement, @InspectionMessage @Nullable String> checkAnnotationArgumentList(@NotNull GrAnnotation annotation,
+                                                                                                                      @NotNull AnnotationHolder holder) {
     final PsiClass anno = ResolveUtil.resolveAnnotation(annotation);
     if (anno == null) return null;
 

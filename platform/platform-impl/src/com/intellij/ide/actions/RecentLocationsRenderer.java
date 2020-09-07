@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -30,6 +30,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,7 +67,7 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
     }
 
     EditorColorsScheme colorsScheme = editor.getColorsScheme();
-    String breadcrumbs = myData.getBreadcrumbsMap(myCheckBox.isSelected()).get(value.getInfo());
+    @Nls String breadcrumbs = myData.getBreadcrumbsMap(myCheckBox.isSelected()).get(value.getInfo());
     JPanel panel = new JPanel(new VerticalFlowLayout(0, 0));
     if (index != 0) {
       panel.add(createSeparatorLine(colorsScheme));
@@ -86,7 +87,7 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
   private static JComponent createTitleComponent(@NotNull Project project,
                                                  @NotNull JList<? extends RecentLocationItem> list,
                                                  @NotNull SpeedSearch speedSearch,
-                                                 @Nullable String breadcrumb,
+                                                 @Nullable @Nls String breadcrumb,
                                                  @NotNull IdeDocumentHistoryImpl.PlaceInfo placeInfo,
                                                  @NotNull EditorColorsScheme colorsScheme,
                                                  boolean selected) {
@@ -145,7 +146,7 @@ class RecentLocationsRenderer extends ColoredListCellRenderer<RecentLocationItem
                                                                  @NotNull SpeedSearch speedSearch,
                                                                  @NotNull IdeDocumentHistoryImpl.PlaceInfo placeInfo,
                                                                  @NotNull EditorColorsScheme colorsScheme,
-                                                                 @Nullable String breadcrumbText,
+                                                                 @Nullable @Nls String breadcrumbText,
                                                                  boolean selected) {
     SimpleColoredComponent titleTextComponent = new SimpleColoredComponent();
 

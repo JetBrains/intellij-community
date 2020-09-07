@@ -20,6 +20,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -291,7 +292,7 @@ public abstract class AbstractEclipseClasspathReader<T> {
   }
 
   @NotNull
-  protected static String pathToUrl(@NotNull String path) {
+  protected static @NonNls String pathToUrl(@NotNull String path) {
     return "file://" + FileUtil.toSystemIndependentName(path);
   }
 

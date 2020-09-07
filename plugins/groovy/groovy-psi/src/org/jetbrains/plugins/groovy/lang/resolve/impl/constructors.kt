@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.impl
 
 import com.intellij.psi.*
@@ -14,6 +14,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.*
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.processNonCodeMembers
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorResult
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind
 
 fun getAllConstructorResults(type: PsiClassType, place: PsiElement): Collection<GroovyResolveResult> {
@@ -203,7 +204,7 @@ private fun chooseConstructors(constructors: List<PsiMethod>, result: (construct
  */
 private fun chooseConstructors(results: List<GroovyMethodResult>): List<GroovyMethodResult>? {
   val applicable = results.filterTo(SmartList()) {
-    it.isApplicable
+    it.checkMapConstructor() && it.isApplicable
   }
   if (applicable.isNotEmpty()) {
     return chooseOverloads(applicable)
@@ -212,3 +213,7 @@ private fun chooseConstructors(results: List<GroovyMethodResult>): List<GroovyMe
     return null
   }
 }
+
+private fun GroovyMethodResult.checkMapConstructor(): Boolean =
+  if (this is GroovyConstructorResult && isMapConstructor) candidate?.method?.parameters?.size == 0 else true
+

@@ -4,6 +4,7 @@ package com.jetbrains.jsonSchema;
 import com.intellij.icons.AllIcons;
 import com.intellij.json.JsonBundle;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 
@@ -12,7 +13,7 @@ public enum JsonMappingKind {
   Pattern,
   Directory;
 
-  public String getDescription() {
+  public @Nls String getDescription() {
     switch (this) {
       case File:
         return JsonBundle.message("schema.mapping.file");
@@ -24,7 +25,7 @@ public enum JsonMappingKind {
     return "";
   }
 
-  public String getPrefix() {
+  public @Nls String getPrefix() {
     return StringUtil.capitalize(getDescription()) + ": ";
   }
 

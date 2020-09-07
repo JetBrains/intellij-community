@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.CommonBundle;
@@ -66,6 +66,7 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 import com.intellij.xdebugger.ui.DebuggerColors;
+import com.intellij.xml.CommonXmlStrings;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -330,15 +331,22 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
         !ApplicationManager.getApplication().isHeadlessEnvironment() &&
         !ApplicationManager.getApplication().isUnitTestMode() &&
         XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isConfirmBreakpointRemoval()) {
-      StringBuilder message = new StringBuilder(XDebuggerBundle.message("message.confirm.breakpoint.removal.message"));
+      StringBuilder message = new StringBuilder("<html>").append(XDebuggerBundle.message("message.confirm.breakpoint.removal.message"));
       if (!isEmptyExpression(breakpoint.getConditionExpression())) {
-        message.append(XDebuggerBundle.message("message.confirm.breakpoint.removal.message.condition",
-                                               StringUtil.escapeXmlEntities(breakpoint.getConditionExpression().getExpression())));
+        message.append("<br>")
+          .append(XDebuggerBundle.message("message.confirm.breakpoint.removal.message.condition"))
+          .append("<br><pre>")
+          .append(StringUtil.escapeXmlEntities(breakpoint.getConditionExpression().getExpression()))
+          .append("</pre>");
       }
       if (!isEmptyExpression(breakpoint.getLogExpressionObject())) {
-        message.append(XDebuggerBundle.message("message.confirm.breakpoint.removal.message.log",
-                                               StringUtil.escapeXmlEntities(breakpoint.getLogExpressionObject().getExpression())));
+        message.append("<br>")
+          .append(XDebuggerBundle.message("message.confirm.breakpoint.removal.message.log"))
+          .append("<br><pre>")
+          .append(StringUtil.escapeXmlEntities(breakpoint.getLogExpressionObject().getExpression()))
+          .append("</pre>");
       }
+      //noinspection HardCodedStringLiteral
       if (Messages.showOkCancelDialog(message.toString(),
                                       XDebuggerBundle.message("message.confirm.breakpoint.removal.title"),
                                       CommonBundle.message("button.remove"),

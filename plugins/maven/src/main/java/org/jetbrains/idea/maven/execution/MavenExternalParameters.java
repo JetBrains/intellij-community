@@ -43,6 +43,8 @@ import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -50,6 +52,7 @@ import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.Compressor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -132,7 +135,7 @@ public class MavenExternalParameters {
     final String mavenHome = resolveMavenHome(coreSettings, project, runConfiguration);
     final String mavenVersion = MavenUtil.getMavenVersion(mavenHome);
     if(mavenVersion == null) {
-      throw new ExecutionException("Cannot run maven: Maven home " + mavenHome + " looks incorrect");
+      throw new ExecutionException(MavenProjectBundle.message("dialog.message.maven.home.directory.invalid", mavenHome));
     }
     if(!verifyMavenSdkRequirements(jdk, mavenVersion)){
       throw new ExecutionException(RunnerBundle.message("maven.3.3.1.bad.jdk"));
@@ -148,7 +151,8 @@ public class MavenExternalParameters {
 
     File confFile = MavenUtil.getMavenConfFile(new File(mavenHome));
     if (!confFile.isFile()) {
-      throw new ExecutionException("Configuration file is not exists in maven home: " + confFile.getAbsolutePath());
+      throw new ExecutionException(
+        MavenProjectBundle.message("dialog.message.configuration.file.not.exists.in.maven.home", confFile.getAbsolutePath()));
     }
 
     if (project != null && parameters.isResolveToWorkspace()) {
@@ -161,7 +165,7 @@ public class MavenExternalParameters {
       }
       catch (IOException e) {
         LOG.error(e);
-        throw new ExecutionException("Failed to run maven configuration", e);
+        throw new ExecutionException(MavenProjectBundle.message("dialog.message.failed.to.run.maven.configuration"), e);
       }
     }
 
@@ -356,7 +360,8 @@ public class MavenExternalParameters {
         return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
       }
 
-      throw new ProjectJdkSettingsOpenerExecutionException("Project JDK is not specified. <a href=''>Configure</a>", project);
+      throw new ProjectJdkSettingsOpenerExecutionException(
+       RunnerBundle.message("dialog.message.project.jdk.not.specified.href.configure"), project);
     }
 
     if (name.equals(MavenRunnerSettings.USE_JAVA_HOME)) {
@@ -438,6 +443,7 @@ public class MavenExternalParameters {
    * @throws ExecutionException
    */
   @NotNull
+  @NlsSafe
   public static String resolveMavenHome(@NotNull MavenGeneralSettings coreSettings,
                                         @Nullable Project project,
                                         @Nullable MavenRunConfiguration runConfiguration) throws ExecutionException {
@@ -469,8 +475,8 @@ public class MavenExternalParameters {
     }
   }
 
-  private static ExecutionException createExecutionException(String text,
-                                                             String textWithFix,
+  private static ExecutionException createExecutionException(@NlsContexts.DialogMessage String text,
+                                                             @NlsContexts.DialogMessage String textWithFix,
                                                              @NotNull MavenGeneralSettings coreSettings,
                                                              @Nullable Project project,
                                                              @Nullable MavenRunConfiguration runConfiguration) {
@@ -587,7 +593,7 @@ public class MavenExternalParameters {
 
     private final Project myProject;
 
-    ProjectSettingsOpenerExecutionException(final String s, Project project) {
+    ProjectSettingsOpenerExecutionException(@NlsContexts.DialogMessage final String s, Project project) {
       super(s);
       myProject = project;
     }
@@ -602,7 +608,7 @@ public class MavenExternalParameters {
 
     private final Project myProject;
 
-    ProjectJdkSettingsOpenerExecutionException(final String s, Project project) {
+    ProjectJdkSettingsOpenerExecutionException(@NlsContexts.DialogMessage final String s, Project project) {
       super(s);
       myProject = project;
     }
@@ -617,7 +623,7 @@ public class MavenExternalParameters {
 
     private final MavenRunConfiguration myRunConfiguration;
 
-    RunConfigurationOpenerExecutionException(final String s, MavenRunConfiguration runConfiguration) {
+    RunConfigurationOpenerExecutionException(@NlsContexts.DialogMessage final String s, MavenRunConfiguration runConfiguration) {
       super(s);
       myRunConfiguration = runConfiguration;
     }
@@ -633,7 +639,7 @@ public class MavenExternalParameters {
   private static abstract class WithHyperlinkExecutionException extends ExecutionException
     implements HyperlinkListener, NotificationListener {
 
-    WithHyperlinkExecutionException(String s) {
+    WithHyperlinkExecutionException(@NlsContexts.DialogMessage String s) {
       super(s);
     }
 

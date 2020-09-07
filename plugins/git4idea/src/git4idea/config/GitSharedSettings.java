@@ -7,6 +7,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +19,7 @@ import java.util.List;
 public class GitSharedSettings implements PersistentStateComponent<GitSharedSettings.State> {
 
   public static class State {
-    public List<String> FORCE_PUSH_PROHIBITED_PATTERNS = ContainerUtil.newArrayList("master");
+    public List<@NonNls String> FORCE_PUSH_PROHIBITED_PATTERNS = ContainerUtil.newArrayList("master");
   }
 
   private State myState = new State();

@@ -23,6 +23,7 @@ import org.intellij.lang.xpath.XPathFileType;
 import org.intellij.lang.xpath.XPathTokenTypes;
 import org.intellij.lang.xpath.psi.*;
 import org.intellij.lang.xpath.validation.ExpectedTypeUtil;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,9 +61,9 @@ public class IndexZeroPredicate extends XPathInspection {
             if (expr != null) {
                 if (expr.getType() == XPathType.NUMBER) {
                     if (isZero(expr)) {
-                        addProblem(myManager.createProblemDescriptor(expr,
-                                "Use of 0 as predicate index", (LocalQuickFix)null,
-                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly));
+                      final String message = XPathBundle.message("inspection.message.use.of.0.as.predicate.index");
+                      addProblem(myManager.createProblemDescriptor(expr, message, (LocalQuickFix)null,
+                                                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly));
                     }
                 } else if (expr instanceof XPathBinaryExpression && expr.getType() == XPathType.BOOLEAN) {
                     final XPathBinaryExpression expression = (XPathBinaryExpression)expr;
@@ -77,17 +78,17 @@ public class IndexZeroPredicate extends XPathInspection {
                         assert lOp != null;
 
                         if (isPosition(rOp)) {
-                            addProblem(myManager.createProblemDescriptor(expr,
-                                    "Comparing position() to 0", (LocalQuickFix)null,
-                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly));
+                          final String message = XPathBundle.message("inspection.message.comparing.position.to.0");
+                          addProblem(myManager.createProblemDescriptor(expr, message, (LocalQuickFix)null,
+                                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly));
                         }
                     } else if (isZero(rOp)) {
                         assert rOp != null;
 
                         if (isPosition(lOp)) {
-                            addProblem(myManager.createProblemDescriptor(expr,
-                                    "Comparing position() to 0", (LocalQuickFix)null,
-                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly));
+                          final String message = XPathBundle.message("inspection.message.comparing.position.to");
+                          addProblem(myManager.createProblemDescriptor(expr, message, (LocalQuickFix)null,
+                                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly));
                         }
                     }
                 }

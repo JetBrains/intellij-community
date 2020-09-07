@@ -1,11 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.transformations.singleton
 
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
+import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
-import org.jetbrains.plugins.groovy.transformations.GroovyTransformationsBundle
 
 @CompileStatic
 class SingletonConstructorInspectionTest extends LightGroovyTestCase {
@@ -50,7 +50,7 @@ class A {
   <caret>A() {}
 }
 '''
-      def intention = findSingleIntention(GroovyTransformationsBundle.message("singleton.constructor.makeNonStrict"))
+      def intention = findSingleIntention(GroovyBundle.message("singleton.constructor.makeNonStrict"))
       assert intention
       launchAction(intention)
       checkResult '''\
@@ -70,7 +70,7 @@ class A {
   <caret>A() {}
 }
 '''
-      def intention = findSingleIntention(GroovyTransformationsBundle.message("singleton.constructor.makeNonStrict"))
+      def intention = findSingleIntention(GroovyBundle.message("singleton.constructor.makeNonStrict"))
       assert intention
       launchAction(intention)
       checkResult '''\
@@ -90,7 +90,7 @@ class A {
   <caret>A() {}
 }
 '''
-      def intention = findSingleIntention(GroovyTransformationsBundle.message("singleton.constructor.remove"))
+      def intention = findSingleIntention(GroovyBundle.message("singleton.constructor.remove"))
       assert intention
       launchAction(intention)
       checkResult '''\

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.portability;
 
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiType;
 import com.siyeh.InspectionGadgetsBundle;
@@ -23,12 +24,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 public class HardcodedLineSeparatorsInspection extends BaseInspection {
-
-  private static final Pattern newlines = Pattern.compile("\\\\n|\\\\r|\\\\0?12|\\\\0?15");
 
   @Override
   @NotNull
@@ -57,12 +53,16 @@ public class HardcodedLineSeparatorsInspection extends BaseInspection {
         return;
       }
       final String text = expression.getText();
-      final Matcher matcher = newlines.matcher(text);
-      int end = 0;
-      while (matcher.find(end)) {
-        final int start = matcher.start();
-        end = matcher.end();
-        registerErrorAtOffset(expression, start, end - start);
+      final int[] offsets = new int[text.length() + 1];
+      final StringBuilder result = new StringBuilder();
+      final boolean success = CodeInsightUtilCore.parseStringCharacters(text, result, offsets);
+      if (success) {
+        for (int i = 0, length = result.length(); i < length; i++) {
+          final char c = result.charAt(i);
+          if (c == '\n' || c == '\r') {
+            registerErrorAtOffset(expression, offsets[i], offsets[i + 1] - offsets[i]);
+          }
+        }
       }
     }
   }

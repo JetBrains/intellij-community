@@ -3,7 +3,7 @@ package org.jetbrains.jps.gradle.model.impl;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.*;
@@ -11,6 +11,7 @@ import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.gradle.model.JpsGradleExtensionService;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import org.jetbrains.jps.indices.IgnoredFileIndex;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
@@ -101,7 +102,7 @@ public final class GradleResourcesTarget extends ModuleBasedTarget<GradleResourc
   public Collection<File> getOutputRoots(CompileContext context) {
     GradleModuleResourceConfiguration configuration =
       getModuleResourcesConfiguration(context.getProjectDescriptor().dataManager.getDataPaths());
-    final Set<File> result = CollectionFactory.createFileSet();
+    final Set<File> result = FileCollectionFactory.createCanonicalFileSet();
     final File moduleOutput = getModuleOutputDir();
     for (ResourceRootConfiguration resConfig : getRootConfigurations(configuration)) {
       final File output = getOutputDir(moduleOutput, resConfig, configuration.outputDirectory);
@@ -140,7 +141,8 @@ public final class GradleResourcesTarget extends ModuleBasedTarget<GradleResourc
     final BuildDataPaths dataPaths = pd.getTargetsState().getDataPaths();
     final GradleModuleResourceConfiguration configuration = getModuleResourcesConfiguration(dataPaths);
     if (configuration != null) {
-      out.write(Integer.toHexString(configuration.computeConfigurationHash(isTests())));
+      PathRelativizerService pathRelativizerService = pd.dataManager.getRelativizer();
+      out.write(Integer.toHexString(configuration.computeConfigurationHash(isTests(), pathRelativizerService)));
     }
   }
 }

@@ -29,6 +29,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiCompiledElement;
@@ -50,6 +52,7 @@ import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.StepRequest;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -153,7 +156,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
      * since the thread was resumed
      */
     @Override
-    public void setState(@NotNull final DebuggerContextImpl context, final State state, final Event event, final String description) {
+    public void setState(@NotNull final DebuggerContextImpl context, final State state, final Event event, final @NlsContexts.Label String description) {
       ApplicationManager.getApplication().assertIsDispatchThread();
       final DebuggerSession session = context.getDebuggerSession();
       LOG.assertTrue(session == DebuggerSession.this || session == null);
@@ -201,7 +204,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     return session;
   }
 
-  private DebuggerSession(String sessionName, @NotNull final DebugProcessImpl debugProcess, DebugEnvironment environment) {
+  private DebuggerSession(@Nls String sessionName, @NotNull final DebugProcessImpl debugProcess, DebugEnvironment environment) {
     mySessionName  = sessionName;
     myDebugProcess = debugProcess;
     SESSION_EMPTY_CONTEXT = DebuggerContextImpl.createDebuggerContext(this, null, null, null);
@@ -224,7 +227,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     return getProcess().getProject();
   }
 
-  public String getSessionName() {
+  public @NlsSafe String getSessionName() {
     return mySessionName;
   }
 
@@ -235,9 +238,9 @@ public final class DebuggerSession implements AbstractDebuggerSession {
 
   private static class DebuggerSessionState {
     final State myState;
-    final String myDescription;
+    final @NlsContexts.Label String myDescription;
 
-    DebuggerSessionState(State state, String description) {
+    DebuggerSessionState(State state, @NlsContexts.Label String description) {
       myState = state;
       myDescription = description;
     }
@@ -247,7 +250,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     return myState.myState;
   }
 
-  public String getStateDescription() {
+  public @NlsContexts.Label String getStateDescription() {
     if (myState.myDescription != null) {
       return myState.myDescription;
     }

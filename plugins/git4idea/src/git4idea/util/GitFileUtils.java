@@ -19,7 +19,9 @@ import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.config.GitExecutableManager;
 import git4idea.config.GitVersion;
+import git4idea.index.vfs.GitIndexFileSystemRefresher;
 import git4idea.repo.GitRepository;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,19 +42,19 @@ public final class GitFileUtils {
    */
   @Deprecated
   public static void delete(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<? extends FilePath> files,
-                            String @NotNull ... additionalOptions) throws VcsException {
+                            @NonNls String @NotNull ... additionalOptions) throws VcsException {
     deletePaths(project, root, files, additionalOptions);
   }
 
   public static void deletePaths(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<? extends FilePath> files,
-                                 String @NotNull ... additionalOptions) throws VcsException {
+                                 @NonNls String @NotNull ... additionalOptions) throws VcsException {
     for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
       doDelete(project, root, paths, additionalOptions);
     }
   }
 
   public static void deleteFiles(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<? extends VirtualFile> files,
-                                 String @NotNull ... additionalOptions) throws VcsException {
+                                 @NonNls String @NotNull ... additionalOptions) throws VcsException {
     for (List<String> paths : VcsFileUtil.chunkFiles(root, files)) {
       doDelete(project, root, paths, additionalOptions);
     }
@@ -63,7 +65,7 @@ public final class GitFileUtils {
   }
 
   private static void doDelete(@NotNull Project project, @NotNull VirtualFile root, @NotNull List<String> paths,
-                               String @NotNull ... additionalOptions) throws VcsException {
+                               @NonNls String @NotNull ... additionalOptions) throws VcsException {
     GitLineHandler handler = new GitLineHandler(project, root, GitCommand.RM);
     handler.addParameters(additionalOptions);
     handler.endOptions();
@@ -83,6 +85,7 @@ public final class GitFileUtils {
       addPathsImpl(project, root, paths, false, true);
     }
     updateUntrackedFilesHolderOnFileAdd(project, root, files);
+    GitIndexFileSystemRefresher.refreshVirtualFiles(project, files);
   }
 
   public static void addFilesForce(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<? extends VirtualFile> files)
@@ -91,6 +94,7 @@ public final class GitFileUtils {
       addPathsImpl(project, root, paths, true, false);
     }
     updateUntrackedFilesHolderOnFileAdd(project, root, files);
+    GitIndexFileSystemRefresher.refreshVirtualFiles(project, files);
   }
 
   private static void updateUntrackedFilesHolderOnFileAdd(@NotNull Project project, @NotNull VirtualFile root,
@@ -156,6 +160,7 @@ public final class GitFileUtils {
     if (force) {
       updateIgnoredFilesHolderOnFileAdd(project, root, getVirtualFilesFromFilePaths(files));
     }
+    GitIndexFileSystemRefresher.refreshFilePaths(project, files);
   }
 
   public static void addPathsForce(@NotNull Project project, @NotNull VirtualFile root,
@@ -165,6 +170,7 @@ public final class GitFileUtils {
     }
     updateUntrackedFilesHolderOnFileAdd(project, root, getVirtualFilesFromFilePaths(files));
     updateIgnoredFilesHolderOnFileAdd(project, root, getVirtualFilesFromFilePaths(files));
+    GitIndexFileSystemRefresher.refreshFilePaths(project, files);
   }
 
   @NotNull
@@ -223,6 +229,7 @@ public final class GitFileUtils {
       Git.getInstance().runCommand(handler).throwOnError();
     }
     updateUntrackedFilesHolderOnFileReset(project, root, files);
+    GitIndexFileSystemRefresher.refreshFilePaths(project, files);
   }
 
   public static void revertUnstagedPaths(@NotNull Project project, @NotNull VirtualFile root, @NotNull List<? extends FilePath> files) throws VcsException {
@@ -245,8 +252,8 @@ public final class GitFileUtils {
    */
   public static byte @NotNull [] getFileContent(@NotNull Project project,
                                                 @NotNull VirtualFile root,
-                                                @NotNull String revisionOrBranch,
-                                                @NotNull String relativePath) throws VcsException {
+                                                @NotNull @NonNls String revisionOrBranch,
+                                                @NotNull @NonNls String relativePath) throws VcsException {
     GitBinaryHandler h = new GitBinaryHandler(project, root, GitCommand.CAT_FILE);
     h.setSilent(true);
     addTextConvParameters(project, h, true);

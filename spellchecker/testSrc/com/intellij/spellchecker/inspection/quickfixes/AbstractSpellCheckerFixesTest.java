@@ -16,14 +16,10 @@
 package com.intellij.spellchecker.inspection.quickfixes;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.spellchecker.inspection.SpellcheckerInspectionTestCase;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.spellchecker.quickfixes.ChangeTo;
-
+import com.intellij.util.containers.ContainerUtil;
 
 import java.io.File;
 
@@ -38,18 +34,12 @@ public abstract class AbstractSpellCheckerFixesTest extends SpellcheckerInspecti
   private void doChangeToTest(int toSelect) {
     myFixture.configureByFile(getBeforeFile());
     myFixture.enableInspections(SpellCheckingInspection.class);
-    final IntentionAction intention = myFixture.findSingleIntention(ChangeTo.getFixName());
+    final IntentionAction intention = ContainerUtil.filter(
+      myFixture.getAvailableIntentions(), (it) -> it.getFamilyName().equals(ChangeTo.getFixName())
+    ).get(toSelect + 1);
     assertNotNull("cannot find quick fix", intention);
     myFixture.launchAction(intention);
-    selectLookupElement(toSelect);
     myFixture.checkResultByFile(getResultFile());
-  }
-
-  private void selectLookupElement(int i) {
-    final LookupElement[] elements = myFixture.getLookupElements();
-    final LookupImpl lookup = (LookupImpl)LookupManager.getInstance(getProject()).getActiveLookup();
-    lookup.setCurrentItem(elements[i]);
-    lookup.finishLookup(Lookup.NORMAL_SELECT_CHAR);
   }
 
   protected void doNoQuickFixTest(String quickfix) {

@@ -25,8 +25,8 @@ public abstract class RunConfigurationEditorFragment<Settings, C extends JCompon
   public abstract void applyEditorTo(@NotNull RunnerAndConfigurationSettingsImpl s);
 
   public static <Settings> SettingsEditorFragment<Settings, ?> createSettingsTag(String id, String name, String group,
-                                                                                 @NotNull Predicate<RunnerAndConfigurationSettingsImpl> getter,
-                                                                                 @NotNull BiConsumer<RunnerAndConfigurationSettingsImpl, Boolean> setter,
+                                                                                 @NotNull Predicate<? super RunnerAndConfigurationSettingsImpl> getter,
+                                                                                 @NotNull BiConsumer<? super RunnerAndConfigurationSettingsImpl, ? super Boolean> setter,
                                                                                  int menuPosition) {
     Ref<SettingsEditorFragment<?, ?>> ref = new Ref<>();
     TagButton button = new TagButton(name, () -> ref.get().setSelected(false));

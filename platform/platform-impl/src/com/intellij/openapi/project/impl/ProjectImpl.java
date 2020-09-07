@@ -14,6 +14,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.Key;
 import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.util.ExceptionUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -24,6 +25,7 @@ public abstract class ProjectImpl extends ComponentManagerImpl implements Projec
   public static final Key<Long> CREATION_TIME = Key.create("ProjectImpl.CREATION_TIME");
 
   @TestOnly
+  @NonNls
   public static final String LIGHT_PROJECT_NAME = "light_temp";
 
   static boolean ourClassesAreLoaded;

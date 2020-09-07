@@ -8,6 +8,7 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.intellij.lang.regexp.inspection.AnonymousGroupInspection;
+import org.intellij.lang.regexp.inspection.UnexpectedAnchorInspection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -240,10 +241,56 @@ public class RegExpHighlightingTest extends LightJavaCodeInsightFixtureTestCase 
     doTest("\\p{gc=<error descr=\"Unknown property value\">ZZZ</error>}+");
   }
 
+  public void testConditionalExprNegative1() {
+    doTestConditionalExpr("c ? \"^Hello$\" : \"^World$\"");
+  }
+
+  public void testBinaryExprPositive1() {
+    doTestConditionalExpr("\"^good" + warningMarker('$') + "\" + \"" + warningMarker('^') + "luck$\"");
+  }
+
+  public void testConditionalExprPositive1() {
+    doTestConditionalExpr("c ? \" " + warningMarker('^') + "Hello" + warningMarker('$') + " \" " +
+                          ": \" " + warningMarker('^') + "World" + warningMarker('$') + " \"");
+  }
+
+  public void testConditionalExprPositive2() {
+    doTestConditionalExpr("c ? \" " + warningMarker('^') + "Hello$\" " +
+                          ": \"^Have" + warningMarker('$') + "\" + \"" + warningMarker('^') + "Fun$\"");
+  }
+
+  public void testConditionalExprPositive3() {
+    doTestConditionalExpr("c ? (c ? (c ? \"^go$\" : \"^od" + warningMarker('$') + "\" + \"" + warningMarker('^') + "lu$\") : \"^ck$\") " +
+                          ": (c ? \"^and" + warningMarker('$') + "\" + \"" + warningMarker('^') +
+                          "ha" + warningMarker('$') + "\" + \"" + warningMarker('^') + "ve$\" : \"^fun$\")");
+  }
+
+  public void testConditionalExprPositive4() {
+    doTestConditionalExpr("c ? \"^hello" + warningMarker('$') + "\" + getStr() + \"" + warningMarker('^') + "world$\" " +
+                          ": getStr() + \"" + warningMarker('^') + "yeah" + warningMarker('$') + " \"");
+  }
+
   private void doTest(@NonNls String code) {
     code = StringUtil.escapeBackSlashes(code);
     myFixture.configureByText(JavaFileType.INSTANCE, "class X {{ java.util.regex.Pattern.compile(\"" + code + "\"); }}");
     myFixture.testHighlighting();
+  }
+
+  private void doTestConditionalExpr(@NonNls String code) {
+    myFixture.enableInspections(new UnexpectedAnchorInspection());
+    myFixture.configureByText(JavaFileType.INSTANCE, "class X {" +
+                                                     " void test(boolean c) {" +
+                                                     "   java.util.regex.Pattern.compile(" + code + ");" +
+                                                     " }" +
+                                                     " String getStr() {" +
+                                                     "   return \"\";" +
+                                                     " }" +
+                                                     "}");
+    myFixture.testHighlighting();
+  }
+
+  private static String warningMarker(char symbol) {
+    return String.format("<warning descr=\"Anchor '%s' in unexpected position\">%s</warning>", symbol, symbol);
   }
 
   @NotNull

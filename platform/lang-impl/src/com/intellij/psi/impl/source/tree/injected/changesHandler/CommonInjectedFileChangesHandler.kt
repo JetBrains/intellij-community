@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.injected.changesHandler
 
 import com.intellij.openapi.diagnostic.Attachment
@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Segment
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
 import java.util.*
 import kotlin.math.max
 import kotlin.math.min
@@ -33,7 +34,8 @@ open class CommonInjectedFileChangesHandler(
     val result = ArrayList<MarkersMapping>(shreds.size)
 
     val smartPointerManager = SmartPointerManager.getInstance(myProject)
-    var curOffset = -1
+    var currentOffsetInHostFile = -1
+    var currentOffsetInInjectedFile = -1
     for (shred in shreds) {
       val rangeMarker = fragmentMarkerFromShred(shred)
       val rangeInsideHost = shred.rangeInsideHost
@@ -44,11 +46,14 @@ open class CommonInjectedFileChangesHandler(
 
       origMarker.isGreedyToRight = true
       rangeMarker.isGreedyToRight = true
-      if (origMarker.startOffset > curOffset) {
+      if (origMarker.startOffset > currentOffsetInHostFile) {
         origMarker.isGreedyToLeft = true
+      }
+      if (rangeMarker.startOffset > currentOffsetInInjectedFile) {
         rangeMarker.isGreedyToLeft = true
       }
-      curOffset = origMarker.endOffset
+      currentOffsetInHostFile = origMarker.endOffset
+      currentOffsetInInjectedFile = rangeMarker.endOffset
     }
     return result
   }
@@ -62,35 +67,35 @@ open class CommonInjectedFileChangesHandler(
 
     val documentManager = PsiDocumentManager.getInstance(myProject)
     documentManager.commitDocument(myHostDocument) // commit here and after each manipulator update
-    var localInsideFileCursor = 0
     for (host in map.keys) {
       if (host == null) continue
-      val hostText = host.text
-      var insideHost: ProperTextRange? = null
-      val sb = StringBuilder()
-      for ((hostMarker, fragmentMarker, _) in map[host].orEmpty()) {
-        val hostOffset = host.textRange.startOffset
+      val hostRange = host.textRange
+      val hostOffset = hostRange.startOffset
+      val originalText = host.text
+      var currentHost = host;
+      for ((hostMarker, fragmentMarker, _) in map[host].orEmpty().reversed()) {
         val localInsideHost = ProperTextRange(hostMarker.startOffset - hostOffset, hostMarker.endOffset - hostOffset)
-        val localInsideFile = ProperTextRange(max(localInsideFileCursor, fragmentMarker.startOffset), fragmentMarker.endOffset)
-        if (insideHost != null) {
-          //append unchanged inter-markers fragment
-          sb.append(hostText, insideHost.endOffset, localInsideHost.startOffset)
-        }
+        val localInsideFile = ProperTextRange(fragmentMarker.startOffset, fragmentMarker.endOffset)
 
-        if (localInsideFile.endOffset <= text.length && !localInsideFile.isEmpty) {
-          sb.append(localInsideFile.substring(text))
+        // fixme we could optimize here and check if host text has been changed and update only really changed fragments, not all of them
+        if (currentHost != null && localInsideFile.endOffset <= text.length && !localInsideFile.isEmpty) {
+          val decodedText = localInsideFile.substring(text)
+          currentHost = updateInjectionHostElement(currentHost, localInsideHost, decodedText)
+          if (currentHost == null) {
+            failAndReport("Updating host returned null. Original host" + host +
+                          "; original text: " + originalText +
+                          "; updated range in host: " + localInsideHost +
+                          "; decoded text to replace: " + decodedText, e)
+          }
         }
-        localInsideFileCursor = localInsideFile.endOffset
-        insideHost = insideHost?.union(localInsideHost) ?: localInsideHost
       }
-      if (insideHost == null) failAndReport("insideHost is null", e)
-      updateInjectionHostElement(host, insideHost, sb.toString())
-      documentManager.commitDocument(myHostDocument)
     }
   }
 
-  protected fun updateInjectionHostElement(host: PsiLanguageInjectionHost, insideHost: ProperTextRange, content: String) {
-    ElementManipulators.handleContentChange(host, insideHost, content)
+  protected fun updateInjectionHostElement(host: PsiLanguageInjectionHost,
+                                           insideHost: ProperTextRange,
+                                           content: String): PsiLanguageInjectionHost? {
+    return ElementManipulators.handleContentChange(host, insideHost, content)
   }
 
   override fun dispose() {
@@ -110,10 +115,10 @@ open class CommonInjectedFileChangesHandler(
   protected fun fragmentMarkerFromShred(shred: PsiLanguageInjectionHost.Shred): RangeMarker =
     myFragmentDocument.createRangeMarker(shred.innerRange)
 
-  protected fun failAndReport(message: String, e: DocumentEvent? = null, exception: Exception? = null): Nothing =
+  protected fun failAndReport(@NonNls message: String, e: DocumentEvent? = null, exception: Exception? = null): Nothing =
     throw getReportException(message, e, exception)
 
-  protected fun getReportException(message: String,
+  protected fun getReportException(@NonNls message: String,
                                    e: DocumentEvent?,
                                    exception: Exception?): RuntimeExceptionWithAttachments =
     RuntimeExceptionWithAttachments("${this.javaClass.simpleName}: $message (event = $e)," +

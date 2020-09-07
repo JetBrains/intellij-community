@@ -9,6 +9,7 @@ import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,14 +36,14 @@ public final class TestsPresentationUtil {
   private TestsPresentationUtil() {
   }
 
-  public static String getProgressStatus_Text(final long startTime,
-                                              final long endTime,
-                                              final int testsTotal,
-                                              final int testsCount,
-                                              final int failuresCount,
-                                              @Nullable final Set<String> allCategories,
-                                              final boolean isFinished) {
-    final StringBuilder sb = new StringBuilder();
+  public static @Nls String getProgressStatus_Text(final long startTime,
+                                                   final long endTime,
+                                                   final int testsTotal,
+                                                   final int testsCount,
+                                                   final int failuresCount,
+                                                   @Nullable final Set<String> allCategories,
+                                                   final boolean isFinished) {
+    final @Nls StringBuilder sb = new StringBuilder();
     if (endTime == 0) {
       sb.append(SmRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.running"));
     } else {

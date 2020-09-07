@@ -152,7 +152,7 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
 
   public static void reportFailure(@NotNull Exception e, @Nullable Project project) {
     LOG.warn(e);
-    String message = ExceptionUtil.getNonEmptyMessage(e, "Internal error");
+    String message = ExceptionUtil.getNonEmptyMessage(e, IdeBundle.message("notification.content.internal error"));
     Notifications.Bus.notify(
       new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, IdeBundle.message("notification.title.launcher.script.creation.failed"), message, NotificationType.ERROR),
       project);

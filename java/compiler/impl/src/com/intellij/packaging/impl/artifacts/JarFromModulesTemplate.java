@@ -38,6 +38,7 @@ import com.intellij.packaging.impl.elements.ProductionModuleOutputElementType;
 import com.intellij.packaging.impl.elements.TestModuleOutputElementType;
 import com.intellij.util.CommonProcessors;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -180,7 +181,7 @@ public class JarFromModulesTemplate extends ArtifactTemplate {
   }
 
   @Override
-  public String getPresentableName() {
-    return "From modules with dependencies...";
+  public @Nls String getPresentableName() {
+    return JavaCompilerBundle.message("jar.from.modules.presentable.name");
   }
 }

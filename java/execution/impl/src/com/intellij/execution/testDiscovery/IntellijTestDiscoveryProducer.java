@@ -119,7 +119,8 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
     return executeQuery(() -> HttpRequests.post(url, "application/json").productNameAsUserAgent().gzip(true).connect(
       r -> {
         r.write("[\"" + testClassName +  "\"]");
-        Map<String, List<String>> map = new ObjectMapper().readValue(r.getInputStream(), new TypeReference<Map<String, List<String>>>() {});
+        Map<String, List<String>> map = new ObjectMapper().readValue(r.getInputStream(), new TypeReference<>() {
+        });
         return ObjectUtils.notNull(ContainerUtil.getFirstItem(map.values()), Collections.emptyList());
       }), project);
   }
@@ -132,7 +133,8 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
     LOG.debug(url);
     return HttpRequests.post(url, "application/json").productNameAsUserAgent().gzip(true).connect(r -> {
       r.write(paths.stream().map(s -> "\"" + s + "\"").collect(Collectors.joining(",", "[", "]")));
-      return new ObjectMapper().readValue(r.getInputStream(), new TypeReference<List<String>>(){});
+      return new ObjectMapper().readValue(r.getInputStream(), new TypeReference<>() {
+      });
     });
   }
 

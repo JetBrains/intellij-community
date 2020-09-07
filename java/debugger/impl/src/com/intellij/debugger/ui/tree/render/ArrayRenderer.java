@@ -337,7 +337,8 @@ public class ArrayRenderer extends NodeRendererImpl{
       }
     }
 
-    public static final XDebuggerTreeNodeHyperlink FILTER_HYPERLINK = new XDebuggerTreeNodeHyperlink(" clear") {
+    public static final XDebuggerTreeNodeHyperlink FILTER_HYPERLINK = new XDebuggerTreeNodeHyperlink(
+      JavaDebuggerBundle.message("array.filter.node.clear.link")) {
       @Override
       public void onClick(MouseEvent e) {
         XDebuggerTree tree = (XDebuggerTree)e.getSource();

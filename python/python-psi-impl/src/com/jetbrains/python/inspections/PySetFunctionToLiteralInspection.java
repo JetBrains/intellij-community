@@ -53,7 +53,7 @@ public class PySetFunctionToLiteralInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyCallExpression(final PyCallExpression node) {
+    public void visitPyCallExpression(final @NotNull PyCallExpression node) {
       if (!isAvailable(node)) return;
       PyExpression callee = node.getCallee();
       if (node.isCalleeText(PyNames.SET) && callee != null && PyBuiltinCache.isInBuiltins(callee)) {

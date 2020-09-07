@@ -19,14 +19,12 @@ import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.PythonUiService;
+import com.jetbrains.python.PythonTemplateRunner;
 import org.jetbrains.annotations.NotNull;
 
 public class PyRenameArgumentQuickFix implements LocalQuickFix {
@@ -40,15 +38,10 @@ public class PyRenameArgumentQuickFix implements LocalQuickFix {
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
     if (!(element instanceof PsiNamedElement)) return;
-    final VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
-    if (virtualFile != null) {
-      final Editor editor = PythonUiService.getInstance().openTextEditor(project, virtualFile);
-      final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(element);
-      final String name = ((PsiNamedElement)element).getName();
-      assert name != null;
-      assert editor != null;
-      builder.replaceElement(element, TextRange.create(0, name.length()), name);
-      builder.run(editor, false);
-    }
+    final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(element);
+    final String name = ((PsiNamedElement)element).getName();
+    assert name != null;
+    builder.replaceElement(element, TextRange.create(0, name.length()), name);
+    PythonTemplateRunner.runTemplate(element.getContainingFile(), builder);
   }
 }

@@ -1090,8 +1090,8 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                          "movie2 = Movie2()\n" +
                          "s: str = movie['address'][0]\n" +
                          "s: str = movie2['address'][0]\n" +
-                         "s: str = movie['address'][<warning descr=\"Unexpected type(s):(str)Possible types:(int)(slice)\">'i'</warning>]\n" +
-                         "s2: str = movie2['address'][<warning descr=\"Unexpected type(s):(str)Possible types:(int)(slice)\">'i'</warning>]\n"));
+                         "s: str = movie['address'][<warning descr=\"Unexpected type(s):(str)Possible type(s):(int)(slice)\">'i'</warning>]\n" +
+                         "s2: str = movie2['address'][<warning descr=\"Unexpected type(s):(str)Possible type(s):(int)(slice)\">'i'</warning>]\n"));
   }
 
   // PY-36008

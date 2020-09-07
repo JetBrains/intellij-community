@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
@@ -9,7 +9,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle.message
+import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.codeInspection.GroovySuppressableInspectionTool
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessChecker.shouldHighlightAsUnresolved
 import org.jetbrains.plugins.groovy.highlighting.HighlightSink
@@ -28,8 +28,8 @@ class GrUnresolvedAccessInspection : GroovySuppressableInspectionTool() {
 
   override fun createOptionsPanel(): JComponent? {
     val optionsPanel = MultipleCheckboxOptionsPanel(this)
-    optionsPanel.addCheckbox(message("highlight.if.groovy.object.methods.overridden"), "myHighlightIfGroovyObjectOverridden")
-    optionsPanel.addCheckbox(message("highlight.if.missing.methods.declared"), "myHighlightIfMissingMethodsDeclared")
+    optionsPanel.addCheckbox(GroovyBundle.message("highlight.if.groovy.object.methods.overridden"), "myHighlightIfGroovyObjectOverridden")
+    optionsPanel.addCheckbox(GroovyBundle.message("highlight.if.missing.methods.declared"), "myHighlightIfMissingMethodsDeclared")
     return optionsPanel
   }
 

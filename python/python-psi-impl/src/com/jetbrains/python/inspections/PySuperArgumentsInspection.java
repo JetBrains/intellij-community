@@ -48,7 +48,7 @@ public class PySuperArgumentsInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyCallExpression(PyCallExpression node) {
+    public void visitPyCallExpression(@NotNull PyCallExpression node) {
       final PyExpression callee = node.getCallee();
       if (callee != null) {
         if (PyNames.SUPER.equals(callee.getName())) {
@@ -61,7 +61,7 @@ public class PySuperArgumentsInspection extends PyInspection {
                 if (!secondClass.isSubclass(firstClass, myTypeEvalContext)) {
                   registerProblem(
                     node.getArgumentList(),
-                    PyPsiBundle.message("INSP.$0.is.not.superclass.of.$1",
+                    PyPsiBundle.message("INSP.class.is.not.subtype.of.class",
                                         secondClass.getName(), firstClass.getName())
                   );
                 }

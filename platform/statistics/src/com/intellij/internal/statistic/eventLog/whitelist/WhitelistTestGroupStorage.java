@@ -75,7 +75,7 @@ public class WhitelistTestGroupStorage extends BaseWhitelistStorage {
     final EventLogBuild build = EventLogBuild.fromString(EventLogConfiguration.INSTANCE.getBuild());
     return groups.groups.stream().
       filter(group -> StatisticsWhitelistGroupConditions.create(group).accepts(build)).
-      collect(Collectors.toMap(group -> group.id, group -> createRules(group, rules)));
+      collect(Collectors.toMap(group -> group.id, group -> EventGroupRules.create(group, new GlobalRulesHolder(rules))));
   }
 
   public void addTestGroup(@NotNull LocalWhitelistGroup group) throws IOException {

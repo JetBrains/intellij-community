@@ -20,6 +20,7 @@ import com.intellij.util.text.ByteArrayCharSequence;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -258,12 +259,12 @@ public final class VfsData {
       return myObjectArray.compareAndSet(getOffset(fileId), oldMap, newMap);
     }
 
-    boolean getFlag(int id, int mask) {
+    boolean getFlag(int id, @VirtualFileSystemEntry.Flags int mask) {
       assert (mask & ~ALL_FLAGS_MASK) == 0 : "Unexpected flag";
       return (myIntArray.get(getOffset(id) * 2 + 1) & mask) != 0;
     }
 
-    void setFlag(int id, int mask, boolean value) {
+    void setFlag(int id, @VirtualFileSystemEntry.Flags int mask, boolean value) {
       if (LOG.isTraceEnabled()) {
         LOG.trace("Set flag " + Integer.toHexString(mask) + "=" + value + " for id=" + id);
       }
@@ -277,7 +278,7 @@ public final class VfsData {
         }
       }
     }
-    void setFlags(int id, int combinedMask, int combinedValue) {
+    void setFlags(int id, @VirtualFileSystemEntry.Flags int combinedMask, @VirtualFileSystemEntry.Flags int combinedValue) {
       if (LOG.isTraceEnabled()) {
         LOG.trace("Set flags " + Integer.toHexString(combinedMask) + "=" + combinedValue + " for id=" + id);
       }
@@ -326,7 +327,7 @@ public final class VfsData {
     /**
      * sorted by {@link VfsData#getNameByFileId(int)}
      * assigned under lock(this) only; never modified in-place
-     * @see VirtualDirectoryImpl#findIndex(int[], CharSequence, boolean)
+     * @see VirtualDirectoryImpl#findIndex(int[], CharSequence)
      */
     volatile int @NotNull [] myChildrenIds = ArrayUtilRt.EMPTY_INT_ARRAY; // guarded by this
 
@@ -432,6 +433,7 @@ public final class VfsData {
     }
 
     @Override
+    @NonNls
     public String toString() {
       return "DirectoryData{" +
              "myUserMap=" + myUserMap +

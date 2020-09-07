@@ -38,7 +38,4 @@ public class JpsCompilerValidationExcludeSerializer extends JpsProjectExtensionS
     JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project);
     JpsJavaCompilerConfigurationSerializer.readExcludes(componentTag, configuration.getValidationExcludes());
   }
-
-  @Override
-  public void saveExtension(@NotNull JpsProject project, @NotNull Element componentTag) {}
 }

@@ -15,11 +15,13 @@
  */
 package com.intellij.ide.diff;
 
+import com.intellij.openapi.util.NlsSafe;
+
 /**
  * @author gregsh
  */
 public interface DirDiffElement {
-
+  @NlsSafe
   String getName();
 
   DiffType getType();

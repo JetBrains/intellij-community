@@ -11,6 +11,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.commands.Git;
 import git4idea.config.GitSaveChangesPolicy;
 import git4idea.rollback.GitRollbackEnvironment;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -21,7 +23,7 @@ public final class GitShelveChangesSaver extends GitChangesSaver {
   public GitShelveChangesSaver(@NotNull Project project,
                                @NotNull Git git,
                                @NotNull ProgressIndicator indicator,
-                               @NotNull String stashMessage) {
+                               @NotNull @Nls String stashMessage) {
     super(project, git, indicator, GitSaveChangesPolicy.SHELVE, stashMessage);
     myVcsShelveChangesSaver = new VcsShelveChangesSaver(project, indicator, stashMessage) {
       @Override
@@ -58,6 +60,7 @@ public final class GitShelveChangesSaver extends GitChangesSaver {
       .activateView(myVcsShelveChangesSaver.getShelvedLists().get(myVcsShelveChangesSaver.getShelvedLists().keySet().iterator().next()));
   }
 
+  @NonNls
   @Override
   public String toString() {
     return "ShelveChangesSaver. Lists: " + myVcsShelveChangesSaver.getShelvedLists();

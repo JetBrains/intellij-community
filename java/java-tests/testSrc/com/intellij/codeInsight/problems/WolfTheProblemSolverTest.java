@@ -19,14 +19,12 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.problems.ProblemListener;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.search.scope.ProblemsScope;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThrowableRunnable;
@@ -62,12 +60,6 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
 
     assertTrue(myWolfTheProblemSolver.isProblemFile(x));
     assertTrue(myWolfTheProblemSolver.isProblemFile(y));
-    PsiJavaFile psiX = (PsiJavaFile)myPsiManager.findFile(x);
-    PsiJavaFile psiY = (PsiJavaFile)myPsiManager.findFile(y);
-    DependencyValidationManager validationManager = DependencyValidationManager.getInstance(myProject);
-    ProblemsScope problemsScope = ProblemsScope.INSTANCE;
-    assertTrue(problemsScope.getValue().contains(psiX, validationManager));
-    assertTrue(problemsScope.getValue().contains(psiY, validationManager));
 
     deleteMethodWithProblem(x);
     assertTrue(myWolfTheProblemSolver.isProblemFile(x));
@@ -75,8 +67,6 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
     highlightFile(x);
     assertFalse(myWolfTheProblemSolver.isProblemFile(x));
     assertTrue(myWolfTheProblemSolver.isProblemFile(y));
-    assertFalse(problemsScope.getValue().contains(psiX, validationManager));
-    assertTrue(problemsScope.getValue().contains(psiY, validationManager));
 
     deleteMethodWithProblem(y);
     assertFalse(myWolfTheProblemSolver.isProblemFile(x));
@@ -84,8 +74,6 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
     highlightFile(y);
     assertFalse(myWolfTheProblemSolver.isProblemFile(x));
     assertFalse(myWolfTheProblemSolver.isProblemFile(y));
-    assertFalse(problemsScope.getValue().contains(psiX, validationManager));
-    assertFalse(problemsScope.getValue().contains(psiY, validationManager));
   }
 
   private void deleteMethodWithProblem(VirtualFile virtualFile) {

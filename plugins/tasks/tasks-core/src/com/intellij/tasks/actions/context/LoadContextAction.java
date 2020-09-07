@@ -51,7 +51,7 @@ public class LoadContextAction extends BaseTaskAction {
         @Override
         void load(final boolean clear) {
           LoadContextUndoableAction undoableAction = LoadContextUndoableAction.createAction(manager, clear, info.name);
-          UndoableCommand.execute(project, undoableAction, "Load context " + info.comment, "Context");
+          UndoableCommand.execute(project, undoableAction, TaskBundle.message("command.name.load.context", info.comment), "Context");
         }
 
         @Override
@@ -84,7 +84,8 @@ public class LoadContextAction extends BaseTaskAction {
         @Override
         void load(boolean clear) {
           LoadContextUndoableAction undoableAction = LoadContextUndoableAction.createAction(manager, clear, task);
-          UndoableCommand.execute(project, undoableAction, "Load context " + TaskUtil.getTrimmedSummary(task), "Context");
+          UndoableCommand.execute(project, undoableAction,
+                                  TaskBundle.message("command.name.load.context", TaskUtil.getTrimmedSummary(task)), "Context");
         }
 
         @Override
@@ -127,20 +128,20 @@ public class LoadContextAction extends BaseTaskAction {
     }
 
     final ListPopupImpl popup = (ListPopupImpl)JBPopupFactory.getInstance()
-      .createActionGroupPopup("Load Context", group, e.getDataContext(), false, null, MAX_ROW_COUNT);
-    popup.setAdText("Press SHIFT to merge with current context");
+      .createActionGroupPopup(TaskBundle.message("popup.title.load.context"), group, e.getDataContext(), false, null, MAX_ROW_COUNT);
+    popup.setAdText(TaskBundle.message("popup.advertisement.press.shift.to.merge.with.current.context"));
     popup.registerAction("shiftPressed", KeyStroke.getKeyStroke("shift pressed SHIFT"), new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
         shiftPressed.set(true);
-        popup.setCaption("Merge with Current Context");
+        popup.setCaption(TaskBundle.message("popup.title.merge.with.current.context"));
       }
     });
     popup.registerAction("shiftReleased", KeyStroke.getKeyStroke("released SHIFT"), new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
         shiftPressed.set(false);
-        popup.setCaption("Load Context");
+        popup.setCaption(TaskBundle.message("popup.title.load.context"));
       }
     });
     popup.registerAction("invoke", KeyStroke.getKeyStroke("shift ENTER"), new AbstractAction() {

@@ -29,11 +29,28 @@ fun writeProjectDescription(path: Path, project: Project) {
 private fun writeProjectDescription(project: Project, writer: JsonWriter) {
   val modules = ModuleManager.getInstance(project).modules
   val macroManager = PathMacroManager.getInstance(project)
+
+  //all modules
   writer.beginObject()
   writer.name("modules")
   writer.beginArray()
   for (module in modules) {
     writeModuleDescription(module, writer, macroManager)
+  }
+  writer.endArray()
+
+  //all orderEntries
+  writer.name("orderEntries")
+  writer.beginArray()
+  val entries = mutableListOf<OrderEntry>()
+
+  ProjectRootManager.getInstance(project).orderEntries().withoutModuleSourceEntries().forEach {
+    entries.add(it)
+    true
+  }
+
+  entries.distinctBy { it.presentableName }.forEach {
+    writeOrderEntry(it, writer, macroManager)
   }
   writer.endArray()
   writer.endObject()
@@ -53,7 +70,7 @@ private fun writeModuleDescription(module: Module,
   writer.endArray()
   writer.name("OrderEntries").beginArray()
   for (orderEntry in rootManager.orderEntries) {
-    writeOrderEntry(orderEntry, writer, macroManager)
+    writer.value(orderEntry.presentableName)
   }
   writer.endArray()
   writer.endObject()

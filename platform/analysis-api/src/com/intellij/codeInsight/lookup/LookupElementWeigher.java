@@ -19,7 +19,7 @@ public abstract class LookupElementWeigher {
     myPrefixDependent = dependsOnPrefix;
   }
 
-  protected LookupElementWeigher(String id) {
+  protected LookupElementWeigher(@NonNls String id) {
     this(id, false, false);
   }
 

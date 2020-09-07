@@ -85,7 +85,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     myDestinationFolderComboBox.setData(myProject, sourceClass.getContainingFile().getContainingDirectory(),
                                         packageTextField.getChildComponent());
     classNameField.getDocument().addDocumentListener(docListener);
-    final MemberInfo.Filter<PsiMember> filter = new MemberInfo.Filter<PsiMember>() {
+    final MemberInfo.Filter<PsiMember> filter = new MemberInfo.Filter<>() {
       @Override
       public boolean includeMember(PsiMember element) {
         if (element instanceof PsiMethod) {
@@ -251,7 +251,8 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
   @Override
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
-    final MemberSelectionTable table = new MemberSelectionTable(memberInfo, "As enum") {
+    String asEnumColumnTitle = RefactorJBundle.message("extract.class.as.enum.column.title");
+    final MemberSelectionTable table = new MemberSelectionTable(memberInfo, asEnumColumnTitle) {
       @Nullable
       @Override
       protected Object getAbstractColumnValue(MemberInfo memberInfo) {
@@ -279,7 +280,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
       }
     };
 
-    table.setMemberInfoModel(new DelegatingMemberInfoModel<PsiMember, MemberInfo>(table.getMemberInfoModel()) {
+    table.setMemberInfoModel(new DelegatingMemberInfoModel<>(table.getMemberInfoModel()) {
 
       @Override
       public int checkForProblems(@NotNull final MemberInfo member) {
@@ -295,12 +296,11 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
         if (cause != null) {
           final String presentation = SymbolPresentationUtil.getSymbolPresentableText(cause);
           if (member.isChecked()) {
-            return JavaBundle.message("extract.class.depends.on.0.from.1.tooltip", presentation, sourceClass.getName());
+            return RefactorJBundle.message("extract.class.depends.on.0.from.1.tooltip", presentation, sourceClass.getName());
           }
           else {
             final String className = getClassName();
-            return JavaBundle
-              .message("extract.class.depends.on.0.from.new.class", presentation, className);
+            return RefactorJBundle.message("extract.class.depends.on.0.from.new.class", presentation, className);
           }
         }
         return null;

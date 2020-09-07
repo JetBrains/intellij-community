@@ -164,8 +164,8 @@ public final class DnDSupport implements DnDTarget, DnDSource, DnDDropHandler.Wi
     final Ref<Boolean> asTarget = Ref.create(true);
     final Ref<Boolean> asSource = Ref.create(true);
     final Ref<Boolean> asNativeTarget = Ref.create(false);
-    final Ref<Function<DnDActionInfo, DnDImage>> imageProvider = Ref.create(null);
-    final Ref<Function<DnDActionInfo, DnDDragStartBean>> beanProvider = Ref.create(null);
+    final Ref<Function<? super DnDActionInfo, ? extends DnDImage>> imageProvider = Ref.create(null);
+    final Ref<Function<? super DnDActionInfo, ? extends DnDDragStartBean>> beanProvider = Ref.create(null);
     final Ref<Runnable> dropEnded = Ref.create(null);
     final Ref<Disposable> disposable = Ref.create(null);
     final Ref<DnDDropHandler.WithResult> dropHandler = Ref.create(null);
@@ -193,13 +193,13 @@ public final class DnDSupport implements DnDTarget, DnDSource, DnDDropHandler.Wi
       }
 
       @Override
-      public DnDSupportBuilder setImageProvider(Function<DnDActionInfo, DnDImage> fun) {
+      public DnDSupportBuilder setImageProvider(Function<? super DnDActionInfo, ? extends DnDImage> fun) {
         imageProvider.set(fun);
         return this;
       }
 
       @Override
-      public DnDSupportBuilder setBeanProvider(Function<DnDActionInfo, DnDDragStartBean> fun) {
+      public DnDSupportBuilder setBeanProvider(Function<? super DnDActionInfo, ? extends DnDDragStartBean> fun) {
         beanProvider.set(fun);
         return this;
       }

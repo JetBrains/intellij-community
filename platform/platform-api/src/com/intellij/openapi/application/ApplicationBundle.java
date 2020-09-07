@@ -2,10 +2,8 @@
 package com.intellij.openapi.application;
 
 import com.intellij.DynamicBundle;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.PropertyKey;
+import com.intellij.ide.IdeDeprecatedMessagesBundle;
+import org.jetbrains.annotations.*;
 
 import java.util.function.Supplier;
 
@@ -13,20 +11,24 @@ import java.util.function.Supplier;
  * Provides access to localized properties of the IntelliJ Platform.
  */
 public final class ApplicationBundle extends DynamicBundle {
-  @NonNls public static final String BUNDLE = "messages.ApplicationBundle";
-  private static final ApplicationBundle INSTANCE = new ApplicationBundle();
+  public static final String BUNDLE = "messages.ApplicationBundle";
+  public static final ApplicationBundle INSTANCE = new ApplicationBundle();
 
   private ApplicationBundle() {
     super(BUNDLE);
   }
 
-  @NotNull
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
-    return INSTANCE.getMessage(key, params);
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    if (INSTANCE.containsKey(key)) {
+      return INSTANCE.getMessage(key, params);
+    }
+    return IdeDeprecatedMessagesBundle.message(key, params);
   }
 
-  @NotNull
-  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
-    return INSTANCE.getLazyMessage(key, params);
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    if (INSTANCE.containsKey(key)) {
+      return INSTANCE.getLazyMessage(key, params);
+    }
+    return IdeDeprecatedMessagesBundle.messagePointer(key, params);
   }
 }

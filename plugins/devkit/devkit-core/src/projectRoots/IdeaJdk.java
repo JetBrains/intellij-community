@@ -13,10 +13,7 @@ import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -136,7 +133,7 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   @NotNull
   @Override
   public String suggestSdkName(@Nullable String currentSdkName, String sdkHome) {
-    if (PsiUtil.isPathToIntelliJIdeaSources(sdkHome)) return "Local IDEA [" + sdkHome + "]";
+    if (PsiUtil.isPathToIntelliJIdeaSources(sdkHome)) return "Local IDEA [" + sdkHome + "]"; //NON-NLS
     String buildNumber = getBuildNumber(sdkHome);
     return IntelliJPlatformProduct.fromBuildNumber(buildNumber).getName() + " " + (buildNumber != null ? buildNumber : "");
   }
@@ -173,7 +170,7 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
-  private static void appendIdeaLibrary(@NotNull String libDirPath,
+  private static void appendIdeaLibrary(@NonNls @NotNull String libDirPath,
                                         @NotNull List<VirtualFile> result,
                                         @NonNls final String @NotNull ... forbidden) {
     Arrays.sort(forbidden);
@@ -218,18 +215,21 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
       if (javaSdks.isEmpty()) {
         JavaSdkVersion requiredVersion = getRequiredJdkVersion(sdk);
         if (requiredVersion != null) {
-          Messages.showErrorDialog(DevKitBundle.message("no.java.sdk.for.idea.sdk.found", requiredVersion), "No Java SDK Found");
+          Messages.showErrorDialog(DevKitBundle.message("sdk.no.java.sdk.for.idea.sdk.found", requiredVersion),
+                                   DevKitBundle.message("sdk.no.java.sdk.for.idea.sdk.found.title"));
         }
         else {
-          Messages.showErrorDialog(DevKitBundle.message("no.idea.sdk.version.found"), "No Java SDK Found");
+          Messages.showErrorDialog(DevKitBundle.message("sdk.no.idea.sdk.version.found"),
+                                   DevKitBundle.message("sdk.no.java.sdk.for.idea.sdk.found.title"));
         }
         return false;
       }
 
+      @NlsSafe String firstSdkName = javaSdks.get(0);
       int choice = Messages.showChooseDialog(
-        "Select Java SDK to be used for " + DevKitBundle.message("sdk.title"),
-        "Select Internal Java Platform",
-        ArrayUtilRt.toStringArray(javaSdks), javaSdks.get(0), Messages.getQuestionIcon());
+        DevKitBundle.message("sdk.select.java.sdk"),
+        DevKitBundle.message("sdk.select.java.sdk.title"),
+        ArrayUtilRt.toStringArray(javaSdks), firstSdkName, Messages.getQuestionIcon());
       if (choice != -1) {
         String name = javaSdks.get(choice);
         Sdk internalJava = Objects.requireNonNull(sdkModel.findSdk(name));
@@ -300,7 +300,7 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
         ProgressManager.getInstance().runProcessWithProgressSynchronously((ThrowableComputable<Void, IOException>)() -> {
           setupSdkPathsFromIDEAProject(sdk, sdkModificator, sdkModel);
           return null;
-        }, "Scanning for Roots", true, null);
+        }, DevKitBundle.message("sdk.from.sources.scanning.roots"), true, null);
       }
       catch (ProcessCanceledException e) {
         return false;
@@ -332,7 +332,7 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     }
 
     Map<String, JpsModule> moduleByName = model.getProject().getModules().stream().collect(Collectors.toMap(JpsModule::getName, Function.identity()));
-    String[] mainModuleCandidates = {
+    @NonNls String[] mainModuleCandidates = {
       "intellij.idea.ultimate.main",
       "intellij.idea.community.main",
       "main",

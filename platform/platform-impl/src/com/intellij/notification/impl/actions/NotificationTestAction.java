@@ -280,7 +280,7 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
 
     @Override
     public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-      if (myNotification != null && MessageDialogBuilder.yesNo("Notification Listener", event.getDescription() + "      Expire?").isYes()) {
+      if (myNotification != null && MessageDialogBuilder.yesNo("Notification Listener", event.getDescription() + "      Expire?").guessWindowAndAsk()) {
         myNotification.expire();
         myNotification = null;
       }
@@ -306,7 +306,7 @@ public final class NotificationTestAction extends AnAction implements DumbAware 
           return;
         }
         Notification.get(e);
-        if (MessageDialogBuilder.yesNo("AnAction", getTemplatePresentation().getText() + "      Expire?").isYes()) {
+        if (MessageDialogBuilder.yesNo("AnAction", getTemplatePresentation().getText() + "      Expire?").guessWindowAndAsk()) {
           myNotification.expire();
           myNotification = null;
         }

@@ -33,6 +33,7 @@ public final class UsageViewBundle extends DynamicBundle {
   }
 
   @SuppressWarnings({"AutoBoxing"})
+  @Nls
   public static String getReferencesString(int usagesCount, int filesCount) {
     return " (" + message("occurence.info.reference", usagesCount, filesCount) + ")";
   }

@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerListener;
 import org.jetbrains.annotations.NonNls;
@@ -145,12 +146,13 @@ public interface ToolWindow extends BusyObject {
    * @return Window stripe button text.
    */
   @NotNull
+  @NlsContexts.TabTitle
   String getStripeTitle();
 
   /**
    * Sets new window stripe button text.
    */
-  void setStripeTitle(@NotNull String title);
+  void setStripeTitle(@NotNull @NlsContexts.TabTitle String title);
 
   /**
    * @return Whether the window is available or not.

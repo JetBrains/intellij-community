@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.jetbrains.python.debugger.pydev.ExceptionBreakpointCommandFactory;
@@ -10,6 +11,8 @@ public abstract class ExceptionBreakpointProperties<T> extends XBreakpointProper
   @Attribute("exception")
   public String myException;
 
+  /** Python exception class name. */
+  @NlsSafe
   public String getException() {
     return myException;
   }

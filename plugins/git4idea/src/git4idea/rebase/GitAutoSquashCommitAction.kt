@@ -25,7 +25,7 @@ internal abstract class GitAutoSquashCommitAction : GitSingleCommitEditingAction
     }
 
     val executors = repository.vcs.commitExecutors +
-                    if (getProhibitedStateMessage(commitEditingData, GitBundle.getString("rebase.log.action.operation.rebase.name")) == null) {
+                    if (getProhibitedStateMessage(commitEditingData, GitBundle.message("rebase.log.action.operation.rebase.name")) == null) {
                       listOf(GitRebaseAfterCommitExecutor(project, repository, commit.id.asString() + "~"))
                     }
                     else {
@@ -46,7 +46,7 @@ internal abstract class GitAutoSquashCommitAction : GitSingleCommitEditingAction
   protected abstract fun getCommitMessage(commit: VcsShortCommitDetails): String
 
   class GitRebaseAfterCommitExecutor(val project: Project, val repository: GitRepository, val hash: String) : CommitExecutor {
-    override fun getActionText(): String = GitBundle.getString("commit.action.commit.and.rebase.text")
+    override fun getActionText(): String = GitBundle.message("commit.action.commit.and.rebase.text")
     override fun createCommitSession(commitContext: CommitContext): CommitSession = CommitSession.VCS_COMMIT
     override fun supportsPartialCommit() = true
   }

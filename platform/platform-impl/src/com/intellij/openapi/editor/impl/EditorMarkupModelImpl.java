@@ -55,6 +55,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -488,7 +489,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     boolean resetAnalyzingStatus = analyzerStatus != null &&
                             analyzerStatus.isTextStatus() && analyzerStatus.getAnalyzingType() == AnalyzingType.COMPLETE;
     analyzerStatus = newStatus;
-    smallIconLabel.setIcon(analyzerStatus.getAnalyzingType() == AnalyzingType.COMPLETE ? analyzerStatus.getIcon() : AllIcons.General.InspectionsEye);
+    AnalyzingType type = analyzerStatus.getAnalyzingType();
+    smallIconLabel.setIcon(type == AnalyzingType.COMPLETE || type == AnalyzingType.SUSPENDED ? analyzerStatus.getIcon() : AllIcons.General.InspectionsEye);
 
     if (showToolbar != analyzerStatus.getController().enableToolbar()) {
       showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget() &&
@@ -1053,10 +1055,9 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       final int[] thinYStart = new int[1];  // in range 0..yStart all spots are drawn
       final int[] wideYStart = new int[1];  // in range 0..yStart all spots are drawn
 
-      MarkupIterator<ErrorStripeMarkerImpl> iterator = myErrorStripeMarkersModel.overlappingIterator(startOffset, endOffset);
+      MarkupIterator<RangeHighlighterEx> iterator = myErrorStripeMarkersModel.highlighterIterator(startOffset, endOffset);
       try {
-        ContainerUtil.process(iterator, errorStripeMarker -> {
-          RangeHighlighterEx highlighter = errorStripeMarker.getHighlighter();
+        ContainerUtil.process(iterator, highlighter -> {
           boolean isThin = highlighter.isThinErrorStripeMark();
           int[] yStart = isThin ? thinYStart : wideYStart;
           List<PositionedStripe> stripes = isThin ? thinStripes : wideStripes;
@@ -1583,6 +1584,10 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       mouseListener = new MouseAdapter() {
         @Override
         public void mouseClicked(MouseEvent me) {
+          if (SwingUtilities.isLeftMouseButton(me)) showInspectionsHint(me);
+        }
+
+        private void showInspectionsHint(MouseEvent me) {
           DataContext context = getDataContext();
           AnActionEvent event = AnActionEvent.createFromInputEvent(me, place, presentation, context, false, true);
           if (!ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
@@ -1605,14 +1610,31 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
           }
         }
 
+        private void showContextMenu(MouseEvent me) {
+          DefaultActionGroup group = new DefaultActionGroup();
+          /*
+          TODO: show context menu by right click
+          group.addAll(analyzerStatus.getController().getActions());
+          group.add(new CompactViewAction());
+          */
+          if (0 < group.getChildrenCount()) {
+            ActionManager.getInstance()
+              .createActionPopupMenu(ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR, group)
+              .getComponent()
+              .show(me.getComponent(), me.getX(), me.getY());
+          }
+        }
+
         @Override
         public void mousePressed(MouseEvent me) {
+          if (me.isPopupTrigger()) showContextMenu(me);
           mousePressed = true;
           repaint();
         }
 
         @Override
         public void mouseReleased(MouseEvent me) {
+          if (me.isPopupTrigger()) showContextMenu(me);
           mousePressed = false;
           repaint();
         }
@@ -1700,7 +1722,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       }
     }
 
-    private JLabel createStyledLabel(@Nullable String text, @Nullable Icon icon, int alignment) {
+    private JLabel createStyledLabel(@Nullable @Nls String text, @Nullable Icon icon, int alignment) {
       JLabel label = new JLabel(text, icon, alignment) {
         @Override
         protected void paintComponent(Graphics graphics) {

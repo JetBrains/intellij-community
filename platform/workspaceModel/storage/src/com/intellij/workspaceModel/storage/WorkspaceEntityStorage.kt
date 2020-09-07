@@ -116,6 +116,7 @@ interface WorkspaceEntityStorage {
   fun <E : WorkspaceEntityWithPersistentId, R : WorkspaceEntity> referrers(id: PersistentEntityId<E>, entityClass: Class<R>): Sequence<R>
   fun <E : WorkspaceEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E?
   fun <T> getExternalMapping(identifier: String): ExternalEntityMapping<T>
+  fun getVirtualFileUrlIndex(): VirtualFileUrlIndex
   fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>>
 }
 
@@ -154,6 +155,10 @@ interface WorkspaceEntityStorageBuilder : WorkspaceEntityStorage, WorkspaceEntit
   }
 }
 
+fun WorkspaceEntityStorage.toBuilder(): WorkspaceEntityStorageBuilder {
+  return WorkspaceEntityStorageBuilder.from(this)
+}
+
 sealed class EntityChange<T : WorkspaceEntity> {
   data class Added<T : WorkspaceEntity>(val entity: T) : EntityChange<T>()
   data class Removed<T : WorkspaceEntity>(val entity: T) : EntityChange<T>()
@@ -171,8 +176,7 @@ interface WorkspaceEntityStorageDiffBuilder {
   fun removeEntity(e: WorkspaceEntity)
   fun <T : WorkspaceEntity> changeSource(e: T, newSource: EntitySource): T
 
-  // Returns an association between an entity in diff and an entity in the current builder
-  fun addDiff(diff: WorkspaceEntityStorageDiffBuilder): Map<WorkspaceEntity, WorkspaceEntity>
+  fun addDiff(diff: WorkspaceEntityStorageDiffBuilder)
   fun <T> getExternalMapping(identifier: String): ExternalEntityMapping<T>
   fun <T> getMutableExternalMapping(identifier: String): MutableExternalEntityMapping<T>
 

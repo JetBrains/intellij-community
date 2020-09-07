@@ -3,6 +3,7 @@ package com.intellij.codeInspection.unsorted;
 
 import com.intellij.codeInspection.*;
 import com.intellij.lang.properties.IProperty;
+import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesElementFactory;
@@ -27,7 +28,6 @@ import java.util.List;
  */
 public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(AlphaUnsortedPropertiesFileInspection.class);
-  private static final String MESSAGE_TEMPLATE_WHOLE_RESOURCE_BUNDLE = "Property keys of resource bundle '%s' aren't alphabetically sorted";
 
   @NotNull
   @Override
@@ -48,13 +48,14 @@ public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
         final String resourceBundleBaseName = resourceBundle.getBaseName();
         if (!isResourceBundleAlphaSortedExceptOneFile(resourceBundle, propertiesFile)) {
           final List<PropertiesFile> allFiles = resourceBundle.getPropertiesFiles();
-          holder.registerProblem(file, String.format(MESSAGE_TEMPLATE_WHOLE_RESOURCE_BUNDLE, resourceBundleBaseName),
+          holder.registerProblem(file,
+                                 PropertiesBundle.message("inspection.alpha.unsorted.properties.file.description1", resourceBundleBaseName),
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                  new PropertiesSorterQuickFix(allFiles.toArray(new PropertiesFile[0])));
           return;
         }
         if (!propertiesFile.isAlphaSorted()) {
-          holder.registerProblem(file, "Properties file is alphabetically unsorted", ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new PropertiesSorterQuickFix(
+          holder.registerProblem(file, PropertiesBundle.message("inspection.alpha.unsorted.properties.file.description"), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new PropertiesSorterQuickFix(
             propertiesFile));
         }
       }
@@ -84,7 +85,7 @@ public class AlphaUnsortedPropertiesFileInspection extends LocalInspectionTool {
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Sort resource bundle files";
+      return PropertiesBundle.message("properties.sorter.quick.fix.family.name");
     }
 
     @Override

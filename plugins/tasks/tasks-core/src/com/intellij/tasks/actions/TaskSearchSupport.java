@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.config.TaskRepositoriesConfigurable;
@@ -77,11 +78,12 @@ public final class TaskSearchSupport {
     String details = e.getMessage();
     TaskRepository repository = e.getRepository();
     Notifications.Bus.register(TASKS_NOTIFICATION_GROUP, NotificationDisplayType.BALLOON);
-    String content = "<p><a href=\"\">Configure server...</a></p>";
+    String content = TaskBundle.message("notification.content.p.href.configure.server.p");
     if (!StringUtil.isEmpty(details)) {
-      content = "<p>" + details + "</p>" + content;
+      content = "<p>" + details + "</p>" + content; //NON-NLS
     }
-    Notifications.Bus.notify(new Notification(TASKS_NOTIFICATION_GROUP, "Cannot connect to " + repository.getUrl(),
+    Notifications.Bus.notify(new Notification(TASKS_NOTIFICATION_GROUP,
+                                              TaskBundle.message("notification.title.cannot.connect.to", repository.getUrl()),
                                               content, NotificationType.WARNING,
                                               new NotificationListener() {
                                                 @Override

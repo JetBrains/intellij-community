@@ -15,6 +15,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ref.DebugReflectionUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -54,7 +55,7 @@ final class CachedValueLeakChecker {
       }
       return true;
     };
-    Map<Object, String> roots = Collections.singletonMap(root, "CachedValueProvider "+key);
+    Map<Object, @NonNls String> roots = Collections.singletonMap(root, "CachedValueProvider " + key);
     DebugReflectionUtil.walkObjects(5, roots, PsiElement.class, shouldExamineValue, (value, backLink) -> {
       if (value instanceof PsiElement) {
         LOG.error(

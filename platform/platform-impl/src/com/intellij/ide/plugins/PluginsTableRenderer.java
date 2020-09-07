@@ -33,7 +33,6 @@ import java.util.Objects;
 * @author Konstantin Bulenkov
 */
 public class PluginsTableRenderer extends DefaultTableCellRenderer {
-  static final String N_A = "N/A";
   private static final InstalledPluginsState ourState = InstalledPluginsState.getInstance();
 
   protected SimpleColoredComponent myName;
@@ -106,7 +105,7 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
                                                            SimpleTextAttributes.STYLE_PLAIN);
       Matcher matcher = NameUtil.buildMatcher("*" + query, NameUtil.MatchingCaseSensitivity.NONE);
 
-      String category = myPluginDescriptor.getCategory() == null ? null : StringUtil.toUpperCase(myPluginDescriptor.getCategory());
+      String category = myPluginDescriptor.getCategory() == null ? null : StringUtil.toUpperCase(myPluginDescriptor.getCategory()); //NON-NLS
       if (category != null) {
         if (query instanceof String) {
           SpeedSearchUtil.appendColoredFragmentForMatcher(category, myCategory, attr, matcher, UIUtil.getTableBackground(isSelected, hasFocus), true);
@@ -116,12 +115,12 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
         }
       }
       else if (!myPluginsView) {
-        myCategory.append(N_A);
+        myCategory.append(IdeBundle.message("plugin.info.not.available"));
       }
 
       myStatus.setIcon(AllIcons.Nodes.Plugin);
       if (myPluginDescriptor.isBundled()) {
-        myCategory.append(" [Bundled]");
+        myCategory.append(" [Bundled]"); //NON-NLS
         myStatus.setIcon(AllIcons.Nodes.PluginJB);
       }
       String vendor = myPluginDescriptor.getVendor();

@@ -14,7 +14,7 @@ public final class TreeStructureUtil {
 
   private TreeStructureUtil() {}
 
-  public static boolean isInStructureViewPopup(@NotNull PlaceHolder<String> model) {
+  public static boolean isInStructureViewPopup(@NotNull PlaceHolder model) {
     return PLACE.equals(model.getPlace());
   }
 

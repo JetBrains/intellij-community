@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
 import kotlin.NotImplementedError;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +35,7 @@ public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderF
   public static final class MyJsonSchemaFileProvider implements JsonSchemaFileProvider {
     @NotNull private final Project myProject;
     @NotNull private final NullableLazyValue<VirtualFile> mySchemaFile;
-    @NotNull private final String myFileName;
+    @NotNull private final @Nls String myFileName;
 
     public boolean isSchemaV4() {
       return SCHEMA_JSON_FILE_NAME.equals(myFileName);
@@ -46,7 +47,7 @@ public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderF
       return SCHEMA07_JSON_FILE_NAME.equals(myFileName);
     }
 
-    private MyJsonSchemaFileProvider(@NotNull final Project project, @NotNull String fileName) {
+    private MyJsonSchemaFileProvider(@NotNull Project project, @NotNull @Nls String fileName) {
       myProject = project;
       myFileName = fileName;
       // schema file can not be static here, because in schema's user data we cache project-scope objects (i.e. which can refer to project)

@@ -86,15 +86,15 @@ public class MoveClassToInnerTest extends LightMultiFileTestCase {
   }
 
   public void testMoveIntoPackageLocalClass() {
-    doTestConflicts("pack1.Class1", "pack2.A", "Class <b><code>Class1</code></b> will no longer be accessible from field <b><code>Class2.c1</code></b>");
+    doTestConflicts("pack1.Class1", "pack2.A", "Class <b><code>pack1.Class1</code></b> will no longer be accessible from field <b><code>Class2.c1</code></b>");
   }
 
   public void testMoveOfPackageLocalClass() {
-    doTestConflicts("pack1.Class1", "pack2.A", "Class <b><code>Class1</code></b> will no longer be accessible from field <b><code>Class2.c1</code></b>");
+    doTestConflicts("pack1.Class1", "pack2.A", "Class <b><code>pack1.Class1</code></b> will no longer be accessible from field <b><code>Class2.c1</code></b>");
   }
 
   public void testMoveIntoPrivateInnerClass() {
-    doTestConflicts("pack1.Class1", "pack1.A.PrivateInner", "Class <b><code>Class1</code></b> will no longer be accessible from field <b><code>Class2.c1</code></b>");
+    doTestConflicts("pack1.Class1", "pack1.A.PrivateInner", "Class <b><code>pack1.Class1</code></b> will no longer be accessible from field <b><code>Class2.c1</code></b>");
   }
 
   public void testMoveWithPackageLocalMember() {

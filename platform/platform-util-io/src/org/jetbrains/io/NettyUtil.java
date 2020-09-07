@@ -2,6 +2,7 @@
 package org.jetbrains.io;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
@@ -52,7 +53,7 @@ public final class NettyUtil {
       return;
     }
 
-    if (message.startsWith("Connection reset")) {
+    if (message.startsWith("Connection reset")) {//NON-NLS
       return;
     }
 
@@ -64,7 +65,7 @@ public final class NettyUtil {
     }
   }
 
-  private static boolean isAsWarning(@NotNull String message, @NotNull Throwable throwable) {
+  private static boolean isAsWarning(@NlsSafe @NotNull String message, @NotNull Throwable throwable) {
     if (message.equals("Operation timed out") || message.equals("Connection timed out")) {
       return true;
     }
@@ -100,7 +101,7 @@ public final class NettyUtil {
                                                       .allowCredentials()
                                                       .allowNullOrigin()
                                                       .allowedRequestMethods(HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE, HttpMethod.HEAD, HttpMethod.PATCH)
-                                                      .allowedRequestHeaders("origin", "accept", "authorization", "content-type", "x-ijt", "x-requested-with")
+                                                      .allowedRequestHeaders("origin", "accept", "authorization", "content-type", "x-ijt", "x-requested-with") //NON-NLS
                                                       .build()));
   }
 

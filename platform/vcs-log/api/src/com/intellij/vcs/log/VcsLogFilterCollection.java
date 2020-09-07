@@ -78,8 +78,9 @@ public interface VcsLogFilterCollection {
     }
 
     @Override
+    @NonNls
     public String toString() {
-      return myName + " filter"; // NON-NLS
+      return myName + " filter";
     }
   }
 }

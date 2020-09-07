@@ -68,6 +68,8 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -88,6 +90,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.JBUI;
@@ -398,7 +401,7 @@ public final class DiffUtil {
 
   @NotNull
   public static JPanel createMessagePanel(@NotNull @Nls String message) {
-    String text = StringUtil.replace(message, "\n", "<br>");
+    String text = StringUtil.replace(message, "\n", UIUtil.BR);
     JLabel label = new JBLabel(text) {
       @Override
       public Dimension getMinimumSize() {
@@ -450,41 +453,38 @@ public final class DiffUtil {
     }
   }
 
+  @Nls
   @NotNull
   public static String getSettingsConfigurablePath() {
     return SystemInfo.isMac ? DiffBundle.message("label.diff.settings.path.macos")
                             : DiffBundle.message("label.diff.settings.path");
   }
 
+  @NlsContexts.Tooltip
   @NotNull
-  public static String createTooltipText(@NotNull @Nls String text, @Nullable @Nls String appendix) {
-    StringBuilder result = new StringBuilder();
-    result.append("<html><body>");
+  public static String createTooltipText(@NotNull @NlsContexts.Tooltip String text, @Nullable @Nls String appendix) {
+    HtmlBuilder result = new HtmlBuilder();
     result.append(text);
     if (appendix != null) {
-      result.append("<br><div style='margin-top: 5px'><font size='2'>");
-      result.append(appendix);
-      result.append("</font></div>");
+      result.br();
+      result.append(HtmlChunk.div("margin-top:5px; font-size:small").addText(appendix));
     }
-    result.append("</body></html>");
-    return result.toString();
+    return result.wrapWithHtmlBody().toString();
   }
 
+  @Nls
   @NotNull
   public static String createNotificationText(@NotNull @Nls String text, @Nullable @Nls String appendix) {
-    StringBuilder result = new StringBuilder();
-    result.append("<html><body>");
+    HtmlBuilder result = new HtmlBuilder();
     result.append(text);
     if (appendix != null) {
-      result.append("<br><span style='color:#").append(ColorUtil.toHex(JBColor.gray)).append("'><small>");
-      result.append(appendix);
-      result.append("</small></span>");
+      result.br();
+      result.append(HtmlChunk.span("color:#" + ColorUtil.toHex(JBColor.gray) + "; font-size:small").addText(appendix));
     }
-    result.append("</body></html>");
-    return result.toString();
+    return result.wrapWithHtmlBody().toString();
   }
 
-  public static void showSuccessPopup(@NotNull String message,
+  public static void showSuccessPopup(@NotNull @NlsContexts.PopupContent String message,
                                       @NotNull RelativePoint point,
                                       @NotNull Disposable disposable,
                                       @Nullable Runnable hyperlinkHandler) {
@@ -515,7 +515,7 @@ public final class DiffUtil {
   @NotNull
   public static List<JComponent> createSimpleTitles(@NotNull ContentDiffRequest request) {
     List<DiffContent> contents = request.getContents();
-    List<String> titles = request.getContentTitles();
+    List<@Nls String> titles = request.getContentTitles();
 
     if (!ContainerUtil.exists(titles, Conditions.notNull())) {
       return Collections.nCopies(titles.size(), null);
@@ -524,7 +524,7 @@ public final class DiffUtil {
     List<JComponent> components = new ArrayList<>(titles.size());
     List<DiffEditorTitleCustomizer> diffTitleCustomizers = request.getUserData(EDITORS_TITLE_CUSTOMIZER);
     for (int i = 0; i < contents.size(); i++) {
-      JComponent title = createTitle(StringUtil.notNullize(titles.get(i)),
+      JComponent title = createTitle(titles.get(i),
                                      diffTitleCustomizers != null ? diffTitleCustomizers.get(i) : null);
       title = createTitleWithNotifications(title, contents.get(i));
       components.add(title);
@@ -536,7 +536,7 @@ public final class DiffUtil {
   @NotNull
   public static List<JComponent> createTextTitles(@NotNull ContentDiffRequest request, @NotNull List<? extends Editor> editors) {
     List<DiffContent> contents = request.getContents();
-    List<String> titles = request.getContentTitles();
+    List<@Nls String> titles = request.getContentTitles();
 
     boolean equalCharsets = TextDiffViewerUtil.areEqualCharsets(contents);
     boolean equalSeparators = TextDiffViewerUtil.areEqualLineSeparators(contents);
@@ -548,7 +548,7 @@ public final class DiffUtil {
     }
     List<DiffEditorTitleCustomizer> diffTitleCustomizers = request.getUserData(EDITORS_TITLE_CUSTOMIZER);
     for (int i = 0; i < contents.size(); i++) {
-      JComponent title = createTitle(StringUtil.notNullize(titles.get(i)),
+      JComponent title = createTitle(titles.get(i),
                                      contents.get(i),
                                      equalCharsets,
                                      equalSeparators,
@@ -582,7 +582,7 @@ public final class DiffUtil {
   }
 
   @Nullable
-  private static JComponent createTitle(@NotNull String title,
+  private static JComponent createTitle(@Nullable @NlsContexts.Label String title,
                                         @NotNull DiffContent content,
                                         boolean equalCharsets,
                                         boolean equalSeparators,
@@ -600,17 +600,17 @@ public final class DiffUtil {
   }
 
   @NotNull
-  public static JComponent createTitle(@NotNull String title) {
+  public static JComponent createTitle(@Nullable @NlsContexts.Label String title) {
     return createTitle(title, null, null, null, false, null);
   }
 
   @NotNull
-  public static JComponent createTitle(@NotNull String title, @Nullable DiffEditorTitleCustomizer titleCustomizer) {
+  public static JComponent createTitle(@Nullable @NlsContexts.Label String title, @Nullable DiffEditorTitleCustomizer titleCustomizer) {
     return createTitle(title, null, null, null, false, titleCustomizer);
   }
 
   @NotNull
-  public static JComponent createTitle(@NotNull String title,
+  public static JComponent createTitle(@Nullable @NlsContexts.Label String title,
                                        @Nullable LineSeparator separator,
                                        @Nullable Charset charset,
                                        @Nullable Boolean bom,
@@ -619,7 +619,8 @@ public final class DiffUtil {
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(JBUI.Borders.empty(0, 4));
     BorderLayoutPanel labelWithIcon = new BorderLayoutPanel();
-    JComponent titleLabel = titleCustomizer == null ? new JBLabel(title).setCopyable(true) : titleCustomizer.getLabel();
+    JComponent titleLabel = titleCustomizer != null ? titleCustomizer.getLabel()
+                                                    : new JBLabel(StringUtil.notNullize(title)).setCopyable(true);
     labelWithIcon.addToCenter(titleLabel);
     if (readOnly) {
       labelWithIcon.addToLeft(new JBLabel(AllIcons.Ide.Readonly));
@@ -645,7 +646,7 @@ public final class DiffUtil {
   private static JComponent createCharsetPanel(@NotNull Charset charset, @Nullable Boolean bom) {
     String text = charset.displayName();
     if (bom != null && bom) {
-      text += " BOM";
+      text = DiffBundle.message("diff.utf.charset.name.bom.suffix", text);
     }
 
     JLabel label = new JLabel(text);
@@ -664,7 +665,7 @@ public final class DiffUtil {
 
   @NotNull
   private static JComponent createSeparatorPanel(@NotNull LineSeparator separator) {
-    JLabel label = new JLabel(separator.name());
+    JLabel label = new JLabel(separator.toString());
     Color color;
     if (separator == LineSeparator.CRLF) {
       color = JBColor.RED;
@@ -705,6 +706,7 @@ public final class DiffUtil {
     return panel;
   }
 
+  @Nls
   @NotNull
   public static String getStatusText(int totalCount, int excludedCount, @NotNull ThreeState isContentsEqual) {
     if (totalCount == 0 && isContentsEqual == ThreeState.NO) {
@@ -1451,10 +1453,10 @@ public final class DiffUtil {
   // Writable
   //
 
-  @CalledInAwt
+  @RequiresEdt
   public static boolean executeWriteCommand(@Nullable Project project,
                                             @NotNull Document document,
-                                            @Nullable String commandName,
+                                            @Nullable @NlsContexts.Command String commandName,
                                             @Nullable String commandGroupId,
                                             @NotNull UndoConfirmationPolicy confirmationPolicy,
                                             boolean underBulkUpdate,
@@ -1476,7 +1478,7 @@ public final class DiffUtil {
     return true;
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public static boolean executeWriteCommand(@NotNull final Document document,
                                             @Nullable final Project project,
                                             @Nullable @Nls final String commandName,
@@ -1501,7 +1503,7 @@ public final class DiffUtil {
     return false;
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public static boolean makeWritable(@Nullable Project project, @NotNull Document document) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file == null) return document.isWritable();
@@ -1509,7 +1511,7 @@ public final class DiffUtil {
     return makeWritable(project, file) && document.isWritable();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public static boolean makeWritable(@Nullable Project project, @NotNull VirtualFile file) {
     if (project == null) project = ProjectManager.getInstance().getDefaultProject();
     return !ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(Collections.singletonList(file)).hasReadonlyFiles();
@@ -1771,7 +1773,7 @@ public final class DiffUtil {
       return size;
     }
 
-    private int getMaximumHeight(@NotNull Function<JComponent, Dimension> getter) {
+    private int getMaximumHeight(@NotNull Function<? super JComponent, ? extends Dimension> getter) {
       int height = 0;
       for (JComponent component : myComponents) {
         if (component != null) {

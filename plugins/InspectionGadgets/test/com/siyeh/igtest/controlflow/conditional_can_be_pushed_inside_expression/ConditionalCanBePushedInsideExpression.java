@@ -70,4 +70,24 @@ class ConditionalCanBePushedInsideExpression {
     int b = flag ? new long[0].length : new int[0].length;
     int c = <warning descr="Conditional expression can be pushed inside branch">flag ? new Object[0].length : new String[0].length</warning>;
   }
+
+  void x(boolean flag) {
+    Runnable r =
+      flag
+      ? () -> {
+        System.out.println("one");
+      }
+      : () -> {
+        System.out.print("two");
+      };
+    Runnable r1 =
+      flag
+      ? () -> {
+        System.out.println("one");
+        System.out.println("one");
+      }
+      : () -> {
+        System.out.print("two");
+      };
+  }
 }

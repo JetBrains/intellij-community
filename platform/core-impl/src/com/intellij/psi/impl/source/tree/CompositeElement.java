@@ -101,7 +101,7 @@ public class CompositeElement extends TreeElement {
     }
   }
 
-  private static String getThreadingDiagnostics(@NotNull PsiFile psiFile) {
+  private static @NonNls String getThreadingDiagnostics(@NotNull PsiFile psiFile) {
     return "psiFile: " + psiFile +
            "; psiFile.getViewProvider(): " + psiFile.getViewProvider() +
            "; psiFile.isPhysical(): " + psiFile.isPhysical() +

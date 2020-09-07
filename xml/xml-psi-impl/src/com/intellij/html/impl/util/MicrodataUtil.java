@@ -19,7 +19,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.PairFunction;
 import com.intellij.util.text.StringTokenizer;
 import com.intellij.xml.util.HtmlUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -134,7 +133,7 @@ public final class MicrodataUtil {
   }
 
   @Nullable
-  public static String getStripedAttributeValue(@Nullable XmlTag tag, @Nls String attributeName) {
+  public static String getStripedAttributeValue(@Nullable XmlTag tag, String attributeName) {
     String value = tag != null ? tag.getAttributeValue(attributeName) : null;
     return value != null ? StringUtil.unquoteString(value) : null;
   }

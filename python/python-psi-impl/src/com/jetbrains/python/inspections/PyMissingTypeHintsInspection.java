@@ -34,7 +34,7 @@ public class PyMissingTypeHintsInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     return new PyInspectionVisitor(holder, session) {
       @Override
-      public void visitPyFunction(PyFunction function) {
+      public void visitPyFunction(@NotNull PyFunction function) {
         if (function.getTypeComment() == null &&
             !typeAnnotationsExist(function) &&
             PyiUtil.getOverloads(function, getResolveContext().getTypeEvalContext()).isEmpty()) {
@@ -43,7 +43,7 @@ public class PyMissingTypeHintsInspection extends PyInspection {
             ASTNode nameNode = function.getNameNode();
             if (nameNode != null) {
               registerProblem(nameNode.getPsi(),
-                              "Type hinting is missing for function definition",
+                              PyPsiBundle.message("INSP.missing.type.hints.type.hinting.missing.for.function.definition"),
                               new AddTypeHintsQuickFix(function.getName()));
             }
           }
@@ -92,7 +92,7 @@ public class PyMissingTypeHintsInspection extends PyInspection {
   @Override
   public JComponent createOptionsPanel() {
     return PythonUiService.getInstance().createSingleCheckboxOptionsPanel(
-      PyPsiBundle.message("INSP.missing.type.hints.only.when.types.are.known.collected.from.run.time.or.inferred"),
+      PyPsiBundle.message("INSP.missing.type.hints.checkbox.only.when.types.are.known"),
       this, "m_onlyWhenTypesAreKnown");
   }
 

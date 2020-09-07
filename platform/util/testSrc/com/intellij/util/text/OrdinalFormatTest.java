@@ -22,6 +22,17 @@ public class OrdinalFormatTest {
     assertEquals("Blah blah 1st blah blah 'whatever' blah blah 33rd [en]", BundleBase.message(de, "ordinals", 1, "whatever", 33));
   }
 
+  @Test
+  public void englishOrdinals() {
+    assertEquals("100th", OrdinalFormat.formatEnglish(100));
+    assertEquals("101st", OrdinalFormat.formatEnglish(101));
+    assertEquals("111th", OrdinalFormat.formatEnglish(111));
+    assertEquals("122nd", OrdinalFormat.formatEnglish(122));
+
+    assertEquals("-3rd", OrdinalFormat.formatEnglish(-3));
+    assertEquals("-9223372036854775808th", OrdinalFormat.formatEnglish(Long.MIN_VALUE));
+  }
+
   @SuppressWarnings("unused")
   public static class TestBundle extends ListResourceBundle {
     @Override

@@ -4,6 +4,7 @@ package com.intellij.structuralsearch.impl.matcher.predicates;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchResult;
@@ -34,6 +35,7 @@ public class ScriptSupport {
    * We use a randomly generated uuid for this, so the chance of accidental collision with an existing variable name is extremely small.
    * This also enables to filter out this uuid from Groovy error messages, to clarify for which SSR variable the script failed.
    */
+  @NlsSafe
   public static final String UUID = "a3cd264774bf4efb9ab609b250c5165c";
 
   private final Script script;

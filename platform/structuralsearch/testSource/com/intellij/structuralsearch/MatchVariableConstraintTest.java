@@ -34,11 +34,11 @@ public class MatchVariableConstraintTest extends LightPlatformTestCase {
                  JDOMUtil.writeElement(test));
   }
 
-  public void testAdditionalConstraints1() {
+  public void testAdditionalConstraints() {
     final MatchVariableConstraint constraint = new MatchVariableConstraint();
     assertNull(constraint.getAdditionalConstraint("hypergolic"));
     try {
-      constraint.putAdditionalConstraint("reference", "test");
+      constraint.putAdditionalConstraint("reférence", "test");
       fail();
     } catch (IllegalArgumentException ignored) {}
     try {
@@ -55,13 +55,16 @@ public class MatchVariableConstraintTest extends LightPlatformTestCase {
 
     final Element element = new Element("constraint");
     constraint.writeExternal(element);
-    assertEquals("<constraint name=\"\" within=\"\" contains=\"\" test=\"test\" />",
+    assertEquals("<constraint name=\"\" within=\"\" contains=\"\" _test=\"test\" />",
                  JDOMUtil.writeElement(element));
     final MatchVariableConstraint constraint2 = new MatchVariableConstraint();
     constraint2.readExternal(element);
     assertEquals("test", constraint2.getAdditionalConstraint("test"));
+    final MatchVariableConstraint constraint3 = constraint2.copy();
+    assertEquals("test", constraint3.getAdditionalConstraint("test"));
+    assertEquals(String.valueOf(constraint2.getAllAdditionalConstraints()), 1, constraint2.getAllAdditionalConstraints().size());
 
-    constraint.putAdditionalConstraint("test",null);
+    constraint.putAdditionalConstraint("test", null);
     assertTrue(constraint.equals(new MatchVariableConstraint()));
   }
 

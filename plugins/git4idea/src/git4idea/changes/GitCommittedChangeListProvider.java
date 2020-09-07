@@ -24,6 +24,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import git4idea.*;
 import git4idea.history.GitFileHistory;
 import git4idea.history.GitHistoryUtils;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
@@ -109,7 +110,7 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
     final String author = settings.getUserFilter();
     VirtualFile root = LocalFileSystem.getInstance().findFileByIoFile(l.getRoot());
     if (root == null) {
-      throw new VcsException("The repository does not exists anymore: " + l.getRoot());
+      throw new VcsException(GitBundle.message("error.git.repository.not.found", l.getRoot()));
     }
 
     GitUtil.getLocalCommittedChanges(myProject, root, h -> {

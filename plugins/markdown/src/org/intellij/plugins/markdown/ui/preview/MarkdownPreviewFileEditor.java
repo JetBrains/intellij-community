@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview;
 
 import com.intellij.CommonBundle;
@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -15,73 +16,33 @@ import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import org.intellij.markdown.html.HtmlGenerator;
 import org.intellij.plugins.markdown.MarkdownBundle;
 import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings;
 import org.intellij.plugins.markdown.settings.MarkdownCssSettings;
 import org.intellij.plugins.markdown.settings.MarkdownPreviewSettings;
+import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil;
 import org.intellij.plugins.markdown.ui.split.SplitFileEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.owasp.html.HtmlPolicyBuilder;
-import org.owasp.html.PolicyFactory;
-import org.owasp.html.Sanitizers;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class MarkdownPreviewFileEditor extends UserDataHolderBase implements FileEditor {
   private final static long PARSING_CALL_TIMEOUT_MS = 50L;
-
   private final static long RENDERING_DELAY_MS = 20L;
 
-  final static NotNullLazyValue<PolicyFactory> SANITIZER_VALUE = new NotNullLazyValue<PolicyFactory>() {
-    @NotNull
-    @Override
-    protected PolicyFactory compute() {
-      return Sanitizers.BLOCKS
-        .and(Sanitizers.FORMATTING)
-        .and(new HtmlPolicyBuilder()
-               .allowUrlProtocols("source", "file", "http", "https").allowElements("img")
-               .allowAttributes("alt", "src", "title").onElements("img")
-               .allowAttributes("border", "height", "width").onElements("img")
-               .toFactory())
-        .and(new HtmlPolicyBuilder()
-               .allowUrlProtocols("http", "https").allowElements("input")
-               .allowAttributes("type", "class", "checked", "disabled").onElements("input")
-               .toFactory())
-        .and(new HtmlPolicyBuilder()
-               .allowUrlProtocols("http", "https").allowElements("li")
-               .allowAttributes("class").onElements("li")
-               .toFactory())
-        .and(new HtmlPolicyBuilder()
-               .allowUrlProtocols("source", "file", "http", "https", "mailto").allowElements("a")
-               .allowAttributes("href", "title").onElements("a")
-               .toFactory())
-        .and(Sanitizers.TABLES)
-        .and(new HtmlPolicyBuilder()
-               .allowElements("body", "pre", "hr", "code", "tr", "span")
-               .allowAttributes(HtmlGenerator.Companion.getSRC_ATTRIBUTE_NAME()).globally()
-               .allowAttributes("class").onElements("code", "tr", "span")
-               .toFactory())
-        .and(new HtmlPolicyBuilder()
-               .allowElements("font")
-               .allowAttributes("color").onElements("font")
-               .toFactory());
-    }
-  };
   @NotNull
   private final JPanel myHtmlPanelWrapper;
   @Nullable
@@ -112,6 +73,8 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
   @Nullable
   private static Boolean ourIsDefaultMarkdownPreviewSettings = null;
 
+  private Editor mainEditor;
+
   public MarkdownPreviewFileEditor(@NotNull Project project, @NotNull VirtualFile file) {
     myProject = project;
     myFile = file;
@@ -128,7 +91,6 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
         @Override
         public void documentChanged(@NotNull final DocumentEvent e) {
           myPooledAlarm.addRequest(() -> {
-            //myLastScrollOffset = e.getOffset();
             updateHtml(true);
           }, PARSING_CALL_TIMEOUT_MS);
         }
@@ -168,6 +130,10 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
     MessageBusConnection settingsConnection = ApplicationManager.getApplication().getMessageBus().connect(this);
     MarkdownApplicationSettings.SettingsChangedListener settingsChangedListener = new MyUpdatePanelOnSettingsChangedListener();
     settingsConnection.subscribe(MarkdownApplicationSettings.SettingsChangedListener.TOPIC, settingsChangedListener);
+  }
+
+  public void setMainEditor(Editor editor) {
+    this.mainEditor = editor;
   }
 
   public void scrollToSrcOffset(final int offset) {
@@ -219,7 +185,7 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
   @NotNull
   @Override
   public String getName() {
-    return "Markdown HTML Preview";
+    return MarkdownBundle.message("markdown.editor.preview.name");
   }
 
   @Override
@@ -290,7 +256,6 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
       }
       settings.setMarkdownPreviewSettings(new MarkdownPreviewSettings(settings.getMarkdownPreviewSettings().getSplitEditorLayout(),
                                                                       MarkdownPreviewSettings.DEFAULT.getHtmlPanelProviderInfo(),
-                                                                      settings.getMarkdownPreviewSettings().isUseGrayscaleRendering(),
                                                                       settings.getMarkdownPreviewSettings().isAutoScrollPreview(),
                                                                       settings.getMarkdownPreviewSettings().isVerticalSplit()));
 
@@ -304,8 +269,11 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
       }
 
       provider = Objects.requireNonNull(
-        Arrays.stream(MarkdownHtmlPanelProvider.getProviders()).filter(
-          p -> p.isAvailable() == MarkdownHtmlPanelProvider.AvailabilityInfo.AVAILABLE).findFirst().orElse(null));
+        ContainerUtil.find(
+          MarkdownHtmlPanelProvider.getProviders(),
+          p -> p.isAvailable() == MarkdownHtmlPanelProvider.AvailabilityInfo.AVAILABLE
+        )
+      );
     }
 
     myLastPanelProviderInfo = settings.getMarkdownPreviewSettings().getHtmlPanelProviderInfo();
@@ -341,14 +309,10 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
           return;
         }
 
-        final String currentHtml = "<html><head></head>" + SANITIZER_VALUE.getValue().sanitize(html) + "</html>";
+        final String currentHtml = "<html><head></head>" + html + "</html>";
         if (!currentHtml.equals(myLastRenderedHtml)) {
           myLastRenderedHtml = currentHtml;
-          myPanel.setHtml(myLastRenderedHtml);
-
-          if (preserveScrollOffset) {
-            scrollToSrcOffset(myLastScrollOffset);
-          }
+          myPanel.setHtml(myLastRenderedHtml, mainEditor.getCaretModel().getOffset());
         }
 
         myPanel.render();
@@ -389,13 +353,13 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
     String styles = getCustomStyles();
 
     if (styles != null) {
-      panel.setCSS(styles, MarkdownCssSettings.DEFAULT.getStylesheetUri());
+      panel.setCSS(styles, MarkdownCssSettings.DEFAULT.getCustomStylesheetPath());
     }
     else {
-      String inlineCss = cssSettings.isTextEnabled() ? cssSettings.getStylesheetText() : null;
-      String customCssURI = cssSettings.isUriEnabled()
-                            ? cssSettings.getStylesheetUri()
-                            : MarkdownCssSettings.DEFAULT.getStylesheetUri();
+      String inlineCss = cssSettings.isTextEnabled() ? cssSettings.getCustomStylesheetText() : null;
+      String customCssURI = cssSettings.isCustomStylesheetEnabled()
+                            ? cssSettings.getCustomStylesheetPath()
+                            : MarkdownCssSettings.DEFAULT.getCustomStylesheetPath();
 
       panel.setCSS(inlineCss, customCssURI);
     }
@@ -457,7 +421,7 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
             attachHtmlPanel();
           }
 
-          updateHtml(true);
+          myPanel.reloadWithOffset(mainEditor.getCaretModel().getOffset());
           updatePanelCssSettings(myPanel, settings.getMarkdownCssSettings());
         }
       }, 0, ModalityState.stateForComponent(getComponent()));

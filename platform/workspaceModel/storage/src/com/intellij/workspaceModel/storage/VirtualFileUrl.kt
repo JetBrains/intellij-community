@@ -15,6 +15,9 @@ class VirtualFileUrl(private val id: Int, internal val manager: VirtualFileUrlMa
   val parent: VirtualFileUrl?
     get() = manager.getParentVirtualUrlById(id)
 
+  val subTreeFileUrls: List<VirtualFileUrl>
+    get() = manager.getSubtreeVirtualUrlsById(id)
+
   val file: File?
     get() = filePath?.let { File(it) }
 

@@ -1,11 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.java;
 
 import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
-import gnu.trove.THashSet;
+import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.incremental.BinaryContent;
@@ -28,13 +29,13 @@ import java.util.Set;
 /**
 * @author Eugene Zhuravlev
 */
-class OutputFilesSink implements OutputFileConsumer {
+final class OutputFilesSink implements OutputFileConsumer {
   private static final Logger LOG = Logger.getInstance(OutputFilesSink.class);
   private final CompileContext myContext;
   private final ModuleLevelBuilder.OutputConsumer myOutputConsumer;
   private final Callbacks.Backend myMappingsCallback;
   private final String myChunkName;
-  private final Set<File> mySuccessfullyCompiled = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+  private final Set<File> mySuccessfullyCompiled = FileCollectionFactory.createCanonicalFileSet();
 
   OutputFilesSink(CompileContext context,
                          ModuleLevelBuilder.OutputConsumer outputConsumer,
@@ -77,7 +78,7 @@ class OutputFilesSink implements OutputFileConsumer {
         }
       }
       catch (IOException e) {
-        myContext.processMessage(new CompilerMessage(JavaBuilder.BUILDER_NAME, e));
+        myContext.processMessage(new CompilerMessage(JavaBuilder.getBuilderName(), e));
       }
 
       if (!isTemp && outKind == JavaFileObject.Kind.CLASS) {
@@ -88,17 +89,18 @@ class OutputFilesSink implements OutputFileConsumer {
         }
         catch (Throwable e) {
           // need this to make sure that unexpected errors in, for example, ASM will not ruin the compilation
-          final String message = "Class dependency information may be incomplete! Error parsing generated class " + fileObject.getFile().getPath();
+          final String message =
+            JpsBuildBundle.message("build.message.class.dependency.information.may.be.incomplete", fileObject.getFile().getPath());
           LOG.info(message, e);
           myContext.processMessage(new CompilerMessage(
-            JavaBuilder.BUILDER_NAME, BuildMessage.Kind.WARNING, message + "\n" + CompilerMessage.getTextFromThrowable(e), sourcePath)
+            JavaBuilder.getBuilderName(), BuildMessage.Kind.WARNING, message + "\n" + CompilerMessage.getTextFromThrowable(e), sourcePath)
           );
         }
       }
     }
 
     if (outKind == JavaFileObject.Kind.CLASS) {
-      myContext.processMessage(new ProgressMessage("Writing classes... " + myChunkName));
+      myContext.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.writing.classes.0", myChunkName)));
       if (!isTemp && srcFile != null) {
         mySuccessfullyCompiled.add(srcFile);
       }

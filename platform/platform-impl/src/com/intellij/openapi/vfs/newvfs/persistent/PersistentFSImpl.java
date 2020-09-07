@@ -176,22 +176,39 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       // preserve current children which match delegateNames (to have stable id)
       // (on case-insensitive system replace those from current with case-changes ones from delegateNames preserving the id)
       // add those from delegateNames which are absent from current
-      Set<String> toAddNames = CollectionFactory.createFilePathSet(delegateNames, fs.isCaseSensitive());
+      Set<String> toAddNames = CollectionFactory.createFilePathSet(delegateNames, file.isCaseSensitive());
       for (ChildInfo currentChild : currentChildren) {
         toAddNames.remove(currentChild.getName().toString());
       }
-      List<ChildInfo> toAddChildren = new ArrayList<>(toAddNames.size());
-      for (String newName : toAddNames) {
-        Pair<@NotNull FileAttributes, String> childData = getChildData(fs, file, newName, null, null);
-        if (childData != null) {
-          ChildInfo newChild = justCreated.computeIfAbsent(newName, name->makeChildRecord(id, name, childData, fs, null));
+      
+      var toAddChildren = new ArrayList<ChildInfo>(toAddNames.size());
+      var map = fs instanceof BatchingFileSystem ?
+                                        ((BatchingFileSystem)fs).listWithAttributes(file, toAddNames) :
+                                        null;
+      if (map != null) {
+        for (var entry : map.entrySet()) {
+          var attributes = VfsImplUtil.getAttributesWithCaseSensitivity(fs, entry.getValue());
+          var newName = entry.getKey();
+          // copy paste from getChildData
+          var symlinkTarget = attributes.isSymLink() ? fs.resolveSymLink(new FakeVirtualFile(file, newName)) : null;
+          var childData = pair(attributes, symlinkTarget);
+          ChildInfo newChild = justCreated.computeIfAbsent(newName, name -> makeChildRecord(file, id, name, childData, fs, null));
           toAddChildren.add(newChild);
+        }
+      }
+      else {
+        for (String newName : toAddNames) {
+          var childData = getChildData(fs, file, newName, null, null);
+          if (childData != null) {
+            ChildInfo newChild = justCreated.computeIfAbsent(newName, name -> makeChildRecord(file, id, name, childData, fs, null));
+            toAddChildren.add(newChild);
+          }
         }
       }
 
       // some clients (e.g. RefreshWorker) expect subsequent list() calls to return equal arrays
       toAddChildren.sort(ChildInfo.BY_ID);
-      return current.merge(toAddChildren, fs.isCaseSensitive());
+      return current.merge(toAddChildren, file.isCaseSensitive());
     });
 
     setChildrenCached(id);
@@ -281,15 +298,15 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   // return nameId>0 if write successful, -1 if not
   private static int writeAttributesToRecord(int id,
+                                             @Nullable VirtualFile parentFile,
                                              int parentId,
                                              @NotNull CharSequence name,
                                              @NotNull NewVirtualFileSystem fs,
-                                             @NotNull FileAttributes attributes,
-                                             @Nullable String symlinkTarget) {
+                                             @NotNull FileAttributes attributes) {
     assert id > 0 : id;
     assert parentId >= 0 : parentId; // 0 means there's no parent
     if (name.length() != 0) {
-      if (namesEqual(fs, name, FSRecords.getNameSequence(id))) return -1; // TODO: Handle root attributes change.
+      if (namesEqual(fs, parentFile, name, FSRecords.getNameSequence(id))) return -1; // TODO: Handle root attributes change.
     }
     else {
       if (areChildrenLoaded(id)) return -1; // TODO: hack
@@ -299,9 +316,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @Override
+  @PersistentFS.Attributes
   public int getFileAttributes(int id) {
     assert id > 0;
-    //noinspection MagicConstant
     return FSRecords.getFlags(id);
   }
 
@@ -310,8 +327,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return isDirectory(getFileAttributes(getFileId(file)));
   }
 
-  private static boolean namesEqual(@NotNull VirtualFileSystem fs, @NotNull CharSequence n1, @NotNull CharSequence n2) {
-    return Comparing.equal(n1, n2, fs.isCaseSensitive());
+  private static boolean namesEqual(@NotNull VirtualFileSystem fs,
+                                    @Nullable VirtualFile parentFile,
+                                    @NotNull CharSequence n1,
+                                    @NotNull CharSequence n2) {
+    return Comparing.equal(n1, n2, parentFile == null ? fs.isCaseSensitive() : parentFile.isCaseSensitive());
   }
 
   @Override
@@ -371,7 +391,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     Ref<ChildInfo> result = new Ref<>();
 
     Function<ListResult, ListResult> convertor = children -> {
-      ChildInfo child = findExistingChildInfo(childName, children.children, fs);
+      ChildInfo child = findExistingChildInfo(parent, childName, children.children, fs);
       if (child != null) {
         result.set(child);
         return children;
@@ -381,7 +401,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         return children;
       }
       String canonicalName;
-      if (fs.isCaseSensitive()) {
+      if (parent.isCaseSensitive()) {
         canonicalName = childName;
       }
       else {
@@ -389,13 +409,13 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         if (StringUtil.isEmptyOrSpaces(canonicalName)) return children;
 
         if (!childName.equals(canonicalName)) {
-          child = findExistingChildInfo(canonicalName, children.children, fs);
+          child = findExistingChildInfo(parent, canonicalName, children.children, fs);
           result.set(child);
         }
       }
       if (child == null) {
         if (result.isNull()) {
-          child = makeChildRecord(parentId, canonicalName, childData, fs, null);
+          child = makeChildRecord(parent, parentId, canonicalName, childData, fs, null);
           result.set(child);
         }
         else {
@@ -410,7 +430,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return result.get();
   }
 
-  private static ChildInfo findExistingChildInfo(@NotNull String childName,
+  private static ChildInfo findExistingChildInfo(@NotNull VirtualFile parent,
+                                                 @NotNull String childName,
                                                  @NotNull List<? extends ChildInfo> children,
                                                  @NotNull NewVirtualFileSystem fs) {
     if (!children.isEmpty()) {
@@ -424,7 +445,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       // for case sensitive system the above check is exhaustive in consistent state of vfs
     }
     for (ChildInfo info : children) {
-      if (namesEqual(fs, childName, FSRecords.getNameByNameId(info.getNameId()))) {
+      if (namesEqual(fs, parent, childName, FSRecords.getNameByNameId(info.getNameId()))) {
         return info;
       }
     }
@@ -590,13 +611,16 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   public InputStream getInputStream(@NotNull VirtualFile file) throws IOException {
     synchronized (myInputLock) {
       InputStream contentStream;
-      if (getLengthIfUpToDate(file) == -1 || mustReloadContent(file) || FileUtilRt.isTooLarge(file.getLength()) || (contentStream = readContent(file)) == null) {
+      long storedLength = getLengthIfUpToDate(file);
+      boolean mustReloadLength = storedLength == -1;
+
+      if (mustReloadLength || mustReloadContent(file) || FileUtilRt.isTooLarge(file.getLength()) || (contentStream = readContent(file)) == null) {
         NewVirtualFileSystem delegate = getDelegate(file);
-        long len = reloadLengthFromDelegate(file, delegate);
+        long len = mustReloadLength ? reloadLengthFromDelegate(file, delegate) : storedLength;
         InputStream nativeStream = delegate.getInputStream(file);
 
         if (len > PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD) return nativeStream;
-        return createReplicator(file, nativeStream, len, delegate.isReadOnly());
+        return createReplicatorAndStoreContent(file, nativeStream, len, delegate.isReadOnly());
       }
       return contentStream;
     }
@@ -619,10 +643,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @NotNull
-  private InputStream createReplicator(@NotNull VirtualFile file,
-                                       @NotNull InputStream nativeStream,
-                                       long fileLength,
-                                       boolean readOnly) {
+  private InputStream createReplicatorAndStoreContent(@NotNull VirtualFile file,
+                                                      @NotNull InputStream nativeStream,
+                                                      long fileLength,
+                                                      boolean readOnly) {
     if (nativeStream instanceof BufferExposingByteArrayInputStream) {
       // optimization
       BufferExposingByteArrayInputStream  byteStream = (BufferExposingByteArrayInputStream )nativeStream;
@@ -632,10 +656,28 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
     final BufferExposingByteArrayOutputStream cache = new BufferExposingByteArrayOutputStream((int)fileLength);
     return new ReplicatorInputStream(nativeStream, cache) {
+      boolean isClosed;
+
       @Override
       public void close() throws IOException {
-        super.close();
-        storeContentToStorage(fileLength, file, readOnly, cache.getInternalBuffer(), cache.size());
+        if (!isClosed) {
+          try {
+            boolean isEndOfFileReached;
+            try {
+              isEndOfFileReached = available() <= 0;
+            }
+            catch (IOException ignored) {
+              isEndOfFileReached = false;
+            }
+            super.close();
+            if (isEndOfFileReached) {
+              storeContentToStorage(fileLength, file, readOnly, cache.getInternalBuffer(), cache.size());
+            }
+          }
+          finally {
+            isClosed = true;
+          }
+        }
       }
     };
   }
@@ -802,24 +844,22 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return i;
   }
 
-  @Nullable
   private static String getAlternativePath(@NotNull VFileEvent event) {
-    String path2 = null;
     if (event instanceof VFilePropertyChangeEvent && ((VFilePropertyChangeEvent)event).getPropertyName().equals(VirtualFile.PROP_NAME)) {
       VFilePropertyChangeEvent pce = (VFilePropertyChangeEvent)event;
       VirtualFile parent = pce.getFile().getParent();
       String newName = (String)pce.getNewValue();
-      path2 = parent == null ? newName : parent.getPath()+"/"+newName;
+      return parent == null ? newName : parent.getPath()+"/"+newName;
     }
-    else if (event instanceof VFileCopyEvent) {
-      path2 = ((VFileCopyEvent)event).getFile().getPath();
+    if (event instanceof VFileCopyEvent) {
+      return ((VFileCopyEvent)event).getFile().getPath();
     }
-    else if (event instanceof VFileMoveEvent) {
+    if (event instanceof VFileMoveEvent) {
       VFileMoveEvent vme = (VFileMoveEvent)event;
       String newName = vme.getFile().getName();
-      path2 = vme.getNewParent().getPath() + "/" + newName;
+      return vme.getNewParent().getPath() + "/" + newName;
     }
-    return path2;
+    return null;
   }
 
   private static boolean removeNestedDelete(@NotNull String path, @NotNull Set<? super String> deletedPaths) {
@@ -1109,15 +1149,16 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       String name = createEvent.getChildName();
       Pair<@NotNull FileAttributes, String> childData = getChildData(delegate, createEvent.getParent(), name, createEvent.getAttributes(), createEvent.getSymlinkTarget());
       if (childData != null) {
-        ChildInfo child = makeChildRecord(parentId, name, childData, delegate, createEvent.getChildren());
+        ChildInfo child = makeChildRecord(parent, parentId, name, childData, delegate, createEvent.getChildren());
         childrenAdded.add(child);
       }
     }
     childrenAdded.sort(ChildInfo.BY_ID);
-    FSRecords.update(parentId, oldChildren -> oldChildren.merge(childrenAdded, delegate.isCaseSensitive()));
+    boolean caseSensitive = parent.isCaseSensitive();
+    FSRecords.update(parentId, oldChildren -> oldChildren.merge(childrenAdded, caseSensitive));
     parent.createAndAddChildren(childrenAdded, false, (__,___)->{});
 
-    saveScannedChildrenRecursively(createEvents, delegate, delegate.isCaseSensitive());
+    saveScannedChildrenRecursively(createEvents, delegate, parent.isCaseSensitive());
   }
 
   private static void saveScannedChildrenRecursively(@NotNull Collection<VFileCreateEvent> createEvents,
@@ -1141,7 +1182,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
             CharSequence childName = childInfo.getName();
             Pair<@NotNull FileAttributes, String> childData = getChildData(delegate, directory, childName.toString(), childInfo.getFileAttributes(), childInfo.getSymlinkTarget());
             if (childData != null) {
-              ChildInfo newChild = makeChildRecord(directoryId, childName, childData, delegate, childInfo.getChildren());
+              ChildInfo newChild = makeChildRecord(directory, directoryId, childName, childData, delegate, childInfo.getChildren());
               added.add(newChild);
             }
           }
@@ -1188,21 +1229,14 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       rootName = rootPath = path;
     }
 
-    FileAttributes attributes = fs.getAttributes(new StubVirtualFile() {
-      @NotNull @Override public String getPath() { return rootPath; }
-      @Nullable @Override public VirtualFile getParent() { return null; }
-    });
+    FileAttributes attributes = loadAttributes(fs, rootPath);
     if (attributes == null || !attributes.isDirectory()) {
       return null;
     }
-
     // avoid creating zillion of roots which are not actual roots
     String parentPath = fs instanceof LocalFileSystem ? PathUtil.getParentPath(rootPath) : "";
     if (!parentPath.isEmpty()) {
-      FileAttributes parentAttributes = fs.getAttributes(new StubVirtualFile() {
-        @NotNull @Override public String getPath() { return parentPath; }
-        @Nullable @Override public VirtualFile getParent() { return null; }
-      });
+      FileAttributes parentAttributes = loadAttributes(fs, parentPath);
       if (parentAttributes != null) {
         throw new IllegalArgumentException("Must pass FS root path, but got: '" + path + "', which has a parent '" + parentPath + "'." +
                                            " Use NewVirtualFileSystem.extractRootPath() for obtaining root path");
@@ -1219,7 +1253,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       if (root != null) return root;
 
       try {
-        newRoot = new FsRoot(rootId, rootNameId, myVfsData, fs, StringUtil.trimTrailing(rootPath, '/'));
+        newRoot = new FsRoot(rootId, rootNameId, myVfsData, fs, StringUtil.trimTrailing(rootPath, '/'), attributes);
       }
       catch (VfsData.FileAlreadyCreatedException e) {
         for (Map.Entry<String, VirtualFileSystemEntry> entry : myRoots.entrySet()) {
@@ -1233,7 +1267,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                    " path='" + path + "'; fs=" + fs + "; rootUrl='" + rootUrl + "'", e);
       }
       incStructuralModificationCount();
-      mark = writeAttributesToRecord(rootId, 0, rootName, fs, attributes, null) != -1;
+      mark = writeAttributesToRecord(rootId, null, 0, rootName, fs, attributes) != -1;
 
       myRoots.put(rootUrl, newRoot);
       myIdToDirCache.put(rootId, newRoot);
@@ -1246,6 +1280,19 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     LOG.assertTrue(rootId == newRoot.getId(), "root=" + newRoot + " expected=" + rootId + " actual=" + newRoot.getId());
 
     return newRoot;
+  }
+
+  private static FileAttributes loadAttributes(@NotNull NewVirtualFileSystem fs, @NotNull String path) {
+    StubVirtualFile file = new StubVirtualFile(fs) {
+      @NotNull
+      @Override
+      public String getPath() { return path; }
+
+      @Nullable
+      @Override
+      public VirtualFile getParent() { return null; }
+    };
+    return VfsImplUtil.getAttributesWithCaseSensitivity(fs, file);
   }
 
   @Override
@@ -1319,7 +1366,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         if (!contentUpdateEvent.isLengthAndTimestampDiffProvided()) {
           final NewVirtualFileSystem delegate = getDelegate(file);
           final FileAttributes attributes = delegate.getAttributes(file);
-          length =  attributes != null ? attributes.length : DEFAULT_LENGTH;
+          length = attributes != null ? attributes.length : DEFAULT_LENGTH;
           timestamp = attributes != null ? attributes.lastModified : DEFAULT_TIMESTAMP;
         }
 
@@ -1376,38 +1423,40 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     NewVirtualFileSystem delegate = getDelegate(parent);
     int parentId = getFileId(parent);
     Pair<@NotNull FileAttributes, String> childData = getChildData(delegate, parent, name, attributes, symlinkTarget);
-    if (childData != null) {
-      ChildInfo childInfo = makeChildRecord(parentId, name, childData, delegate, null);
-      FSRecords.update(parentId, children -> {
-        // check that names are not duplicated
-        ChildInfo duplicate = findExistingChildInfo(name, children.children, delegate);
-        if (duplicate != null) return children;
-
-        return children.insert(childInfo);
-      });
-      int childId = childInfo.getId();
-      assert parent instanceof VirtualDirectoryImpl : parent;
-      VirtualDirectoryImpl dir = (VirtualDirectoryImpl)parent;
-      VirtualFileSystemEntry child = dir.createChild(name, childId, dir.getFileSystem(), fileAttributesToFlags(childData.first), isEmptyDirectory);
-      if (isEmptyDirectory) {
-        // when creating empty directory we need to make sure every file created inside will fire "file created" event
-        // in order to virtual file pointer manager get those events to update its pointers properly
-        // (because currently VirtualFilePointerManager ignores empty directory creation events for performance reasons)
-        setChildrenCached(childId);
-      }
-      dir.addChild(child);
-      incStructuralModificationCount();
+    if (childData == null) {
+      return;
     }
+    ChildInfo childInfo = makeChildRecord(parent, parentId, name, childData, delegate, null);
+    FSRecords.update(parentId, children -> {
+      // check that names are not duplicated
+      ChildInfo duplicate = findExistingChildInfo(parent, name, children.children, delegate);
+      if (duplicate != null) return children;
+
+      return children.insert(childInfo);
+    });
+    int childId = childInfo.getId();
+    assert parent instanceof VirtualDirectoryImpl : parent;
+    VirtualDirectoryImpl dir = (VirtualDirectoryImpl)parent;
+    VirtualFileSystemEntry child = dir.createChild(name, childId, dir.getFileSystem(), fileAttributesToFlags(childData.first), isEmptyDirectory);
+    if (isEmptyDirectory) {
+      // when creating empty directory we need to make sure every file created inside will fire "file created" event
+      // in order to virtual file pointer manager get those events to update its pointers properly
+      // (because currently VirtualFilePointerManager ignores empty directory creation events for performance reasons)
+      setChildrenCached(childId);
+    }
+    dir.addChild(child);
+    incStructuralModificationCount();
   }
 
   @NotNull
-  private static ChildInfo makeChildRecord(int parentId,
+  private static ChildInfo makeChildRecord(@NotNull VirtualFile parentFile,
+                                           int parentId,
                                            @NotNull CharSequence name,
                                            @NotNull Pair<@NotNull FileAttributes, String> childData,
                                            @NotNull NewVirtualFileSystem fs,
                                            ChildInfo @Nullable [] children) {
     int childId = FSRecords.createRecord();
-    int nameId = writeAttributesToRecord(childId, parentId, name, fs, childData.first, childData.second);
+    int nameId = writeAttributesToRecord(childId, parentFile, parentId, name, fs, childData.first);
     assert childId > 0 : childId;
     return new ChildInfoImpl(childId, nameId, childData.first, children, childData.second);
   }
@@ -1421,7 +1470,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                                                     @Nullable String symlinkTarget) {
     if (attributes == null) {
       FakeVirtualFile virtualFile = new FakeVirtualFile(parent, name);
-      attributes = fs.getAttributes(virtualFile);
+      attributes = VfsImplUtil.getAttributesWithCaseSensitivity(fs, virtualFile);
       symlinkTarget = attributes != null && attributes.isSymLink() ? fs.resolveSymLink(virtualFile) : null;
     }
     return attributes == null ? null : pair(attributes, symlinkTarget);
@@ -1501,15 +1550,15 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     FSRecords.storeSymlinkTarget(id, target);
     VirtualFileSystem fs = file.getFileSystem();
     if (fs instanceof LocalFileSystemImpl) {
-      ((LocalFileSystemImpl)fs).symlinkUpdated(id, file.getParent(), file.getPath(), target);
+      ((LocalFileSystemImpl)fs).symlinkUpdated(id, file.getParent(), file.getNameSequence(), file.getPath(), target);
     }
   }
 
-  private static void setFlag(@NotNull VirtualFile file, int mask, boolean value) {
+  private static void setFlag(@NotNull VirtualFile file, @PersistentFS.Attributes int mask, boolean value) {
     setFlag(getFileId(file), mask, value);
   }
 
-  private static void setFlag(int id, int mask, boolean value) {
+  private static void setFlag(int id, @PersistentFS.Attributes int mask, boolean value) {
     int oldFlags = FSRecords.getFlags(id);
     int flags = value ? oldFlags | mask : oldFlags & ~mask;
 
@@ -1549,7 +1598,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     ChildInfo newChild = new ChildInfoImpl(fileId, virtualFileSystemEntry.getNameId(), null, null, null);
     FSRecords.update(newParentId, children -> {
       // check that names are not duplicated
-      ChildInfo duplicate = findExistingChildInfo(file.getName(), children.children, fileSystem);
+      ChildInfo duplicate = findExistingChildInfo(file, file.getName(), children.children, fileSystem);
       if (duplicate != null) return children;
       return children.insert(newChild);
     });
@@ -1597,22 +1646,27 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @TestOnly
+  @NotNull
   ConcurrentIntObjectMap<VirtualFileSystemEntry> getIdToDirCache() {
     return myIdToDirCache;
   }
 
   @Attributes
   static int fileAttributesToFlags(@NotNull FileAttributes attributes) {
-    return fileAttributesToFlags(attributes.isDirectory(), attributes.isWritable(), attributes.isSymLink(), attributes.isSpecial(), attributes.isHidden());
+    FileAttributes.CaseSensitivity sensitivity = attributes.isCaseSensitive();
+    assert attributes.isDirectory() == (sensitivity != FileAttributes.CaseSensitivity.UNSPECIFIED) : attributes;
+    boolean isCaseSensitive = attributes.isDirectory() && sensitivity == FileAttributes.CaseSensitivity.SENSITIVE;
+    return fileAttributesToFlags(attributes.isDirectory(), attributes.isWritable(), attributes.isSymLink(), attributes.isSpecial(), attributes.isHidden(), isCaseSensitive);
   }
 
   @Attributes
   public static int fileAttributesToFlags(boolean isDirectory, boolean isWritable,
-                                          boolean isSymLink, boolean isSpecial, boolean isHidden) {
+                                          boolean isSymLink, boolean isSpecial, boolean isHidden, boolean isCaseSensitive) {
     return (isDirectory ? IS_DIRECTORY_FLAG : 0) |
            (isWritable ? 0 : IS_READ_ONLY) |
            (isSymLink ? IS_SYMLINK : 0) |
            (isSpecial ? IS_SPECIAL : 0) |
-           (isHidden ? IS_HIDDEN : 0);
+           (isHidden ? IS_HIDDEN : 0) |
+           (isCaseSensitive ? IS_CASE_SENSITIVE : 0);
   }
 }

@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.util.dynamicMembers;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.ElementClassHint;
@@ -96,8 +97,9 @@ public final class DynamicMemberUtils {
     return version.compareTo(since) >= 0;
   }
 
+  @NlsSafe
   @Nullable
-  public static String getCommentValue(PsiMethod method, String commentTagName) {
+  public static String getCommentValue(PsiMethod method, @NlsSafe String commentTagName) {
     Map<String, String> commentMap = method.getUserData(COMMENT_KEY);
     if (commentMap == null) return null;
     return commentMap.get(commentTagName);
@@ -210,7 +212,7 @@ public final class DynamicMemberUtils {
       myNonStaticMethodMap = convertMap(nonStaticMultiMap);
     }
 
-    private static Map<String, String> parseComment(@Nullable GrDocComment comment) {
+    private static @NlsSafe Map<String, String> parseComment(@Nullable GrDocComment comment) {
       if (comment == null) return Collections.emptyMap();
 
       GrDocTag[] docTags = comment.getTags();

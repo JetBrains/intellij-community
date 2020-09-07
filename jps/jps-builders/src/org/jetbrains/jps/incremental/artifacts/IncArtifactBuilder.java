@@ -21,10 +21,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
+import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.builders.artifacts.ArtifactBuildTaskProvider;
 import org.jetbrains.jps.builders.artifacts.impl.ArtifactOutToSourceStorageProvider;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
@@ -46,7 +48,7 @@ import java.util.*;
 
 public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, ArtifactBuildTarget> {
   private static final Logger LOG = Logger.getInstance(IncArtifactBuilder.class);
-  public static final String BUILDER_NAME = "Artifacts builder";
+  public static final String BUILDER_ID = "artifacts-builder";
 
   public IncArtifactBuilder() {
     super(Collections.singletonList(ArtifactBuildTargetType.INSTANCE));
@@ -69,7 +71,8 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
     JpsArtifact artifact = target.getArtifact();
     String outputFilePath = artifact.getOutputFilePath();
     if (StringUtil.isEmpty(outputFilePath)) {
-      context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Cannot build '" + artifact.getName() + "' artifact: output path is not specified"));
+      context.processMessage(new CompilerMessage(getBuilderName(), BuildMessage.Kind.ERROR,
+                                                 JpsBuildBundle.message("build.message.cannot.build.0.artifact.output.path.is.not.specified", artifact.getName())));
       return;
     }
     final ProjectDescriptor pd = context.getProjectDescriptor();
@@ -77,8 +80,8 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
     final Map<JpsArtifact, JpsArtifact> selfIncludingNameMap = sorter.getArtifactToSelfIncludingNameMap();
     final JpsArtifact selfIncluding = selfIncludingNameMap.get(artifact);
     if (selfIncluding != null) {
-      String name = selfIncluding.equals(artifact) ? "it" : "'" + selfIncluding.getName() + "' artifact";
-      context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Cannot build '" + artifact.getName() + "' artifact: " + name + " includes itself in the output layout"));
+      context.processMessage(new CompilerMessage(getBuilderName(), BuildMessage.Kind.ERROR,
+                                                 JpsBuildBundle.message("build.message.cannot.build.0.artifact.it.includes.itself", artifact.getName(), selfIncluding.getName(), selfIncluding.equals(artifact) ? 0 : 1)));
       return;
     }
 
@@ -86,7 +89,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
     try {
       final Collection<String> deletedFiles = holder.getRemovedFiles(target);
 
-      String messageText = "Building artifact '" + artifact.getName() + "'...";
+      String messageText = JpsBuildBundle.message("progress.message.building.artifact.0", artifact.getName());
       context.processMessage(new ProgressMessage(messageText));
       LOG.debug(messageText);
 
@@ -138,7 +141,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
       deleteOutdatedFiles(filesToDelete, context, srcOutMapping, outSrcMapping);
       context.checkCanceled();
 
-      context.processMessage(new ProgressMessage("Building artifact '" + artifact.getName() + "': copying files..."));
+      context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.building.artifact.0.copying.files", artifact.getName())));
       final Set<JarInfo> changedJars = new THashSet<>();
       for (ArtifactRootDescriptor descriptor : pd.getBuildRootIndex().getTargetRoots(target, context)) {
         context.checkCanceled();
@@ -206,7 +209,8 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
   private static void runArtifactTasks(List<BuildTask> tasks, JpsArtifact artifact, CompileContext context,
                                        ArtifactBuildTaskProvider.ArtifactBuildPhase phase) throws ProjectBuildException {
     if (!tasks.isEmpty()) {
-      context.processMessage(new ProgressMessage("Running " + phase.getPresentableName() + " tasks for '" + artifact.getName() + "' artifact..."));
+      context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.running.0.tasks.for.1.artifact",
+                                                                        phase.ordinal(), artifact.getName())));
       for (BuildTask task : tasks) {
         task.build(context);
       }
@@ -233,7 +237,7 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
                                           ArtifactOutputToSourceMapping outSrcMapping) throws IOException {
     if (filesToDelete.isEmpty()) return;
 
-    context.processMessage(new ProgressMessage("Deleting outdated files..."));
+    context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.deleting.outdated.files")));
     int notDeletedFilesCount = 0;
     final THashSet<String> notDeletedPaths = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
     final THashSet<String> deletedPaths = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
@@ -261,10 +265,12 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
       else {
         notDeletedPaths.add(filePath);
         if (notDeletedFilesCount++ > 50) {
-          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.WARNING, "Deletion of outdated files stopped because too many files cannot be deleted"));
+          context.processMessage(new CompilerMessage(getBuilderName(), BuildMessage.Kind.WARNING,
+                                                     JpsBuildBundle.message("build.message.deletion.of.outdated.files.stopped")));
           break;
         }
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.WARNING, "Cannot delete file '" + filePath + "'"));
+        context.processMessage(new CompilerMessage(getBuilderName(), BuildMessage.Kind.WARNING,
+                                                   JpsBuildBundle.message("build.message.cannot.delete.file.0", filePath)));
       }
     }
     ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
@@ -276,6 +282,10 @@ public class IncArtifactBuilder extends TargetBuilder<ArtifactRootDescriptor, Ar
   @NotNull
   @Override
   public String getPresentableName() {
-    return BUILDER_NAME;
+    return getBuilderName();
+  }
+
+  public static @Nls String getBuilderName() {
+    return JpsBuildBundle.message("builder.name.artifacts.builder");
   }
 }

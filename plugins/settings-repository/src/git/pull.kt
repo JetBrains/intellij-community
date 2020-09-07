@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.diagnostic.debug
@@ -334,7 +334,7 @@ internal suspend fun resolveUnmergedConflicts(repository: Repository) {
   val conflicts = LinkedHashMap<String, Array<ByteArray?>>()
   repository.newObjectReader().use { reader ->
     val dirCache = repository.readDirCache()
-    for (i in 0..(dirCache.entryCount - 1)) {
+    for (i in 0 until dirCache.entryCount) {
       val entry = dirCache.getEntry(i)
       if (!entry.isMerged) {
         conflicts.getOrPut(entry.pathString) { arrayOfNulls(3) }[entry.stage - 1] = reader.open(entry.objectId, Constants.OBJ_BLOB).cachedBytes

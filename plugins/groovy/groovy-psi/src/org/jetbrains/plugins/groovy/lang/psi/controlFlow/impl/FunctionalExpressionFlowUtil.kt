@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("FunctionalExpressionFlowUtil")
 
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl
@@ -8,6 +8,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaExpression
@@ -40,6 +41,7 @@ enum class InvocationKind {
   UNKNOWN
 }
 
+@NonNls
 private val trustedMethodsForExecutingOnce: Set<String> = setOf(
   "identity",
   "runAfter",
@@ -48,6 +50,7 @@ private val trustedMethodsForExecutingOnce: Set<String> = setOf(
   "with"
 )
 
+@NonNls
 private val trustedMethodsForExecutingManyTimes: Set<String> = setOf(
   "any",
   "collect",

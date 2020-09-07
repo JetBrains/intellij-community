@@ -1,12 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
-
 import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.MultiMap
+import com.jetbrains.plugin.blockmap.core.BlockMap
+import com.jetbrains.plugin.blockmap.core.FileHash
 import groovy.io.FileType
+import groovy.json.JsonOutput
 import groovy.transform.CompileStatic
 import org.apache.tools.ant.types.FileSet
 import org.apache.tools.ant.types.resources.FileProvider
@@ -23,11 +25,15 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
 import org.jetbrains.jps.util.JpsPathUtil
 
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.stream.Collectors
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 /**
  * Assembles output of modules to platform JARs (in {@link org.jetbrains.intellij.build.BuildPaths#distAll distAll}/lib directory),
  * bundled plugins' JARs (in {@link org.jetbrains.intellij.build.BuildPaths#distAll distAll}/plugins directory) and zip archives with
@@ -164,6 +170,7 @@ class DistributionJARsBuilder {
 
       addModule("intellij.platform.builtInServer.impl")
       addModule("intellij.platform.credentialStore")
+      withoutModuleLibrary("intellij.platform.credentialStore", "dbus-java")
       addModule("intellij.json")
       addModule("intellij.spellchecker")
       addModule("intellij.platform.statistics")
@@ -181,6 +188,7 @@ class DistributionJARsBuilder {
       addModule("intellij.platform.vcs.dvcs.impl", "intellij-dvcs.jar")
       addModule("intellij.platform.vcs.log.graph.impl", "intellij-dvcs.jar")
       addModule("intellij.platform.vcs.log.impl", "intellij-dvcs.jar")
+      addModule("intellij.platform.vcs.codeReview", "intellij-dvcs.jar")
 
       addModule("intellij.platform.objectSerializer.annotations")
       addModule("intellij.platform.objectSerializer")
@@ -266,6 +274,7 @@ class DistributionJARsBuilder {
     buildBundledPlugins()
     buildOsSpecificBundledPlugins()
     buildNonBundledPlugins()
+    buildNonBundledPluginsBlockMaps()
     buildThirdPartyLibrariesList()
     reorderJARs()
   }
@@ -317,6 +326,19 @@ class DistributionJARsBuilder {
     validator.validate()
   }
 
+  @CompileStatic
+  List<String> getProductModules() {
+    List<String> result = new ArrayList<>()
+    for (moduleJar in platform.moduleJars.entrySet()) {
+      // Filter out jars with relative paths in name
+      if (moduleJar.key.contains("\\") || moduleJar.key.contains("/"))
+        continue
+
+      result.addAll(moduleJar.value)
+    }
+    return result
+  }
+
   /**
    * Build index which is used to search options in the Settings dialog.
    */
@@ -346,14 +368,15 @@ class DistributionJARsBuilder {
 
   static List<String> getModulesToCompile(BuildContext buildContext) {
     def productLayout = buildContext.productProperties.productLayout
-    productLayout.getIncludedPluginModules(productLayout.bundledPluginModules as Set<String>) +
-    CommunityRepositoryModules.PLATFORM_API_MODULES +
-    CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES +
-    productLayout.productApiModules +
-    productLayout.productImplementationModules +
-    productLayout.additionalPlatformJars.values() +
-    toolModules + buildContext.productProperties.additionalModulesToCompile +
-    SVGPreBuilder.getModulesToInclude()
+    def modulesToInclude = productLayout.getIncludedPluginModules(productLayout.bundledPluginModules as Set<String>) +
+            CommunityRepositoryModules.PLATFORM_API_MODULES +
+            CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES +
+            productLayout.productApiModules +
+            productLayout.productImplementationModules +
+            productLayout.additionalPlatformJars.values() +
+            toolModules + buildContext.productProperties.additionalModulesToCompile +
+            SVGPreBuilder.getModulesToInclude()
+    modulesToInclude - productLayout.excludedModuleNames
   }
 
   List<String> getModulesForPluginsToPublish() {
@@ -483,26 +506,27 @@ class DistributionJARsBuilder {
 
     def resultLines = new ArrayList<String>()
     for (def line : lines) {
-      List<String> split = StringUtil.split(line, ":")
-      if (!(split.size() == 2)) continue
-      String modulePath = split.get(1)
+      def i = line.indexOf(':')
+      if (-1 == i) continue
+      def className = line.substring(0, i)
+      def modulePath = line.substring(i + 1)
       if (modulePath.endsWith(".jar")) {
         String jarName = pathToToJarName.get(modulePath)
         //possible jar from a plugin
         if (jarName == null) continue
-        resultLines.add(split.get(0) + ":/lib/" + jarName)
+        resultLines.add(className + ":/lib/" + jarName)
       }
       else {
         def moduleName = pathToModuleName.get(modulePath)
         if (moduleName == null) continue
         def libJarName = libModulesToJar.get(moduleName)
         if (libJarName != null) {
-          resultLines.add(split.get(0) + ":/lib/" + libJarName)
+          resultLines.add(className + ":/lib/" + libJarName)
         }
         else {
           def moduleJarName = pluginModulesToJar.get(moduleName)
           if (moduleName == null) continue
-          resultLines.add("${split.get(0)}:$moduleJarName")
+          resultLines.add("${className}:$moduleJarName")
         }
       }
     }
@@ -527,7 +551,7 @@ class DistributionJARsBuilder {
     for (def moduleName in allModules) {
       def module = buildContext.findModule(moduleName)
       if (module == null) continue
-      def classpath = buildContext.getModuleOutputPath(module)
+      def classpath = (SystemInfo.isWindows) ? '/' + FileUtil.toSystemIndependentName(buildContext.getModuleOutputPath(module)) : buildContext.getModuleOutputPath(module);
       pathToModuleName.put(classpath, moduleName)
     }
     return pathToModuleName
@@ -547,7 +571,8 @@ class DistributionJARsBuilder {
             jarName = candidate
           }
         }
-        libraryJarPathToJarName.put(libFile.getPath(), jarName)
+        def jarPath = (SystemInfo.isWindows) ? '/' + FileUtil.toSystemIndependentName(libFile.getPath()) : libFile.getPath();
+        libraryJarPathToJarName.put(jarPath, jarName)
       }
     }
     return libraryJarPathToJarName
@@ -763,6 +788,52 @@ class DistributionJARsBuilder {
       if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
         new PluginRepositoryXmlGenerator(buildContext).generate(pluginsToIncludeInCustomRepository, nonBundledPluginsArtifacts)
         buildContext.notifyArtifactBuilt("$nonBundledPluginsArtifacts/plugins.xml")
+      }
+    }
+  }
+
+  /**
+   * This function builds a blockmap and hash files for each non bundled plugin
+   * to provide downloading plugins via incremental downloading algorithm Blockmap.
+   */
+  void buildNonBundledPluginsBlockMaps(){
+    def pluginsDirectoryName = "${buildContext.applicationInfo.productCode}-plugins"
+    def nonBundledPluginsArtifacts = "$buildContext.paths.artifacts/$pluginsDirectoryName"
+    def path = Paths.get(nonBundledPluginsArtifacts)
+    if(path.toFile().exists()){
+      Files.walk(path)
+        .filter({ it -> Files.isRegularFile(it)} )
+        .filter({ it -> it.toString().endsWith(".zip") })
+        .collect(Collectors.toList())
+        .each { it ->
+          def blockMapFileName = "${it.toString()}.blockmap.zip"
+          def hashFileName = "${it.toString()}.hash.json"
+          def blockMapJson = "blockmap.json"
+          def algorithm = "SHA-256"
+          def file = it.toFile()
+          file.withInputStream { input ->
+            def blockMap = new BlockMap(input, algorithm)
+            new File(blockMapFileName).withOutputStream { output ->
+              writeBlockMapToZip(output, JsonOutput.toJson(blockMap).bytes, blockMapJson)
+            }
+          }
+          file.withInputStream { input ->
+            def fileHash = new FileHash(input, algorithm)
+            new File(hashFileName).withWriter { writer ->
+              writer.writeLine(JsonOutput.toJson(fileHash).toString())
+            }
+          }
+        }
+    }
+  }
+
+  private static void writeBlockMapToZip(OutputStream output, byte[] bytes, String blockMapJson){
+    new BufferedOutputStream(output).withStream {bufferedOutput ->
+      new ZipOutputStream(bufferedOutput).withStream { zipOutputStream ->
+        def entry = new ZipEntry(blockMapJson)
+        zipOutputStream.putNextEntry(entry)
+        zipOutputStream.write(bytes)
+        zipOutputStream.closeEntry()
       }
     }
   }
@@ -1144,7 +1215,7 @@ class DistributionJARsBuilder {
     if (text.contains("<product-descriptor ")) {
       def releaseDate = buildContext.applicationInfo.majorReleaseDate ?:
               ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("uuuuMMdd"))
-      def releaseVersion = "${buildContext.applicationInfo.majorVersion}${buildContext.applicationInfo.minorVersion}00"
+      def releaseVersion = "${buildContext.applicationInfo.majorVersion}${buildContext.applicationInfo.minorVersionMainPart}00"
       text = text.replaceFirst(
               "<product-descriptor code=\"([\\w]*)\"\\s+release-date=\"[^\"]*\"\\s+release-version=\"[^\"]*\"/>",
               !toPublish ? "" :
@@ -1185,7 +1256,7 @@ class DistributionJARsBuilder {
       sinceBuild = buildNumber
       untilBuild = buildNumber
     }
-    Pair.create(sinceBuild, untilBuild);
+    Pair.create(sinceBuild, untilBuild)
   }
 
   private File createKeyMapWithAltClickReassignedToMultipleCarets() {

@@ -4,10 +4,13 @@ package git4idea.index.ui
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
@@ -23,7 +26,7 @@ import com.intellij.ui.SideBorder
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.OpenSourceUtil
 import com.intellij.util.Processor
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.commit.getDefaultCommitShortcut
 import com.intellij.vcs.commit.showEmptyCommitMessageConfirmation
 import com.intellij.vcs.log.runInEdt
@@ -32,6 +35,7 @@ import com.intellij.vcs.log.ui.frame.ProgressStripe
 import com.intellij.vcsUtil.VcsImplUtil
 import com.intellij.xml.util.XmlStringUtil
 import git4idea.GitVcs
+import git4idea.conflicts.GitMergeHandler
 import git4idea.i18n.GitBundle
 import git4idea.index.CommitListener
 import git4idea.index.GitStageTracker
@@ -40,9 +44,11 @@ import git4idea.index.actions.GitAddOperation
 import git4idea.index.actions.GitResetOperation
 import git4idea.index.actions.StagingAreaOperation
 import git4idea.index.actions.performStageOperation
+import git4idea.merge.GitDefaultMergeDialogCustomizer
+import git4idea.merge.GitMergeUtil
 import git4idea.repo.GitRepository
+import git4idea.repo.GitRepositoryManager
 import git4idea.status.GitChangeProvider
-import org.jetbrains.annotations.CalledInAwt
 import java.awt.BorderLayout
 import javax.swing.JPanel
 
@@ -123,13 +129,13 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
     git4idea.index.performCommit(project, rootsToCommit, commitMessage, amend, MyCommitListener(commitMessage))
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private fun commitStarted() {
     isCommitInProgress = true
     commitPanel.commitButton.isEnabled = false
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private fun commitFinished(success: Boolean) {
     isCommitInProgress = false
     // commit button is going to be enabled after state update
@@ -140,7 +146,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun update() {
     if (isCommitInProgress) {
       hasPendingUpdates = true
@@ -167,7 +173,16 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
       doubleClickHandler = Processor { e ->
         if (EditSourceOnDoubleClickHandler.isToggleEvent(this, e)) return@Processor false
 
-        OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(this), true)
+        val dataContext = DataManager.getInstance().getDataContext(this)
+
+        val mergeAction = ActionManager.getInstance().getAction("Git.Stage.Merge")
+        val event = AnActionEvent.createFromAnAction(mergeAction, e, ActionPlaces.UNKNOWN, dataContext)
+        if (ActionUtil.lastUpdateAndCheckDumb(mergeAction, event, true)) {
+          ActionUtil.performActionDumbAwareWithCallbacks(mergeAction, event, dataContext)
+        }
+        else {
+          OpenSourceUtil.openSourcesFrom(dataContext, true)
+        }
         true
       }
     }
@@ -232,15 +247,27 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
       commitFinished(successfulRoots.isNotEmpty() && failedRoots.isEmpty())
 
       if (successfulRoots.isNotEmpty()) {
-        notifier.notifySuccess(GitBundle.message("stage.commit.successful", successfulRoots.joinToString {
-          "'${VcsImplUtil.getShortVcsRootName(project, it)}'"
-        }, XmlStringUtil.escapeString(commitMessage)))
+        notifier.notifySuccess("git.stage.commit.successful",
+                               "",
+                               GitBundle.message("stage.commit.successful", successfulRoots.joinToString {
+                                 "'${VcsImplUtil.getShortVcsRootName(project, it)}'"
+                               }, XmlStringUtil.escapeString(commitMessage)))
       }
       if (failedRoots.isNotEmpty()) {
-        notifier.notifyError(GitBundle.message("stage.commit.failed", failedRoots.keys.joinToString {
-          "'${VcsImplUtil.getShortVcsRootName(project, it)}'"
-        }), failedRoots.values.joinToString(UIUtil.BR) { it.localizedMessage })
+        notifier.notifyError("git.stage.commit.error",
+                             GitBundle.message("stage.commit.failed",
+                                               failedRoots.keys.joinToString {
+                                                 "'${VcsImplUtil.getShortVcsRootName(project, it)}'"
+                                               }), HtmlBuilder().appendWithSeparators(HtmlChunk.br(), failedRoots.values.map { HtmlChunk.text(it.localizedMessage) }).toString())
       }
     }
   }
 }
+
+internal fun Project.isReversedRoot(root: VirtualFile): Boolean {
+  return GitRepositoryManager.getInstance(this).getRepositoryForRootQuick(root)?.let { repository ->
+    GitMergeUtil.isReverseRoot(repository)
+  } ?: false
+}
+
+internal fun createMergeHandler(project: Project) = GitMergeHandler(project, GitDefaultMergeDialogCustomizer(project))

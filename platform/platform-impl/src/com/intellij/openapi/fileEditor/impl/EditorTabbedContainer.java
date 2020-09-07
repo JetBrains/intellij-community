@@ -23,6 +23,7 @@ import com.intellij.openapi.fileEditor.impl.text.FileDropHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -189,11 +190,11 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     return myTabs.getTabAt(index).getIcon();
   }
 
-  void setTitleAt(int index, @NotNull String text) {
+  void setTitleAt(int index, @NlsContexts.TabTitle @NotNull String text) {
     myTabs.getTabAt(index).setText(text);
   }
 
-  void setToolTipTextAt(int index, String text) {
+  void setToolTipTextAt(int index, @NlsContexts.Tooltip String text) {
     myTabs.getTabAt(index).setTooltipText(text);
   }
 
@@ -253,7 +254,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
   public void insertTab(@NotNull VirtualFile file,
                         Icon icon,
                         @NotNull JComponent component,
-                        @Nullable String tooltip,
+                        @Nullable @NlsContexts.Tooltip String tooltip,
                         int indexToInsert,
                         @NotNull Disposable parentDisposable) {
     TabInfo tab = myTabs.findInfo(file);

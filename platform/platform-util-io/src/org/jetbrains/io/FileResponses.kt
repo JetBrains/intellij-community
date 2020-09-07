@@ -27,7 +27,7 @@ fun flushChunkedResponse(channel: Channel, isKeepAlive: Boolean) {
 
 private val fileExtToMimeType by lazy {
   val map = CollectionFactory.createSmallMemoryFootprintMap<String, String>(1100)
-  FileResponses.javaClass.getResourceAsStream("/mime-types.csv").bufferedReader().useLines {
+  FileResponses.javaClass.getResourceAsStream("/mime-types.csv").bufferedReader().useLines {//NON-NLS
     for (line in it) {
       if (line.isBlank()) {
         continue
@@ -68,7 +68,7 @@ object FileResponses {
     response.headers().set(HttpHeaderNames.CONTENT_TYPE, getContentType(filename))
     response.addCommonHeaders()
     @Suppress("SpellCheckingInspection")
-    response.headers().set(HttpHeaderNames.CACHE_CONTROL, "private, must-revalidate")
+    response.headers().set(HttpHeaderNames.CACHE_CONTROL, "private, must-revalidate")//NON-NLS
     if (response.status() != HttpResponseStatus.PARTIAL_CONTENT) {
       response.headers().set(HttpHeaderNames.LAST_MODIFIED, Date(lastModified))
     }
@@ -107,7 +107,7 @@ object FileResponses {
       doPrepareResponse(response, file.fileName.toString(), lastModified, extraHeaders)
 
       if (isPartialContent) {
-        response.headers().set(HttpHeaderNames.CONTENT_RANGE, "bytes ${range.start}-${range.end - 1}/${fileLength}")
+        response.headers().set(HttpHeaderNames.CONTENT_RANGE, "bytes ${range.start}-${range.end - 1}/${fileLength}")//NON-NLS
       }
 
       val contentLength = range.end - range.start

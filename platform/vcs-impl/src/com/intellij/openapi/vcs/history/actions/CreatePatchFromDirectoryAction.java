@@ -114,7 +114,7 @@ public class CreatePatchFromDirectoryAction implements AnActionExtensionProvider
         helper.showError(myException, VcsBundle.message("create.patch.error.title", myException.getMessage()));
       }
       else if (myList == null) {
-        helper.showError(null, "Can not load changelist contents");
+        helper.showError(null, VcsBundle.message("history.tab.title.can.not.load.changelist.contents"));
       }
       else {
         CreatePatchFromChangesAction.createPatch(myProject, myList.getComment(), new ArrayList<>(myList.getChanges()));

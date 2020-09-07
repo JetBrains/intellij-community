@@ -11,6 +11,7 @@ import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
@@ -29,6 +30,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.*;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -187,6 +189,15 @@ public class PluginDetailsPageComponent extends MultiPanel {
         Dimension size = myBaselineComponent.getPreferredSize();
         return myBaselineComponent.getBaseline(size.width, size.height);
       }
+
+      @Override
+      public Dimension getPreferredSize() {
+        Dimension size = super.getPreferredSize();
+        if (size.height == 0) {
+          size.height = getMinimumSize().height;
+        }
+        return size;
+      }
     };
 
     ErrorComponent.convertToLabel(editorPane);
@@ -196,6 +207,10 @@ public class PluginDetailsPageComponent extends MultiPanel {
     if (font != null) {
       editorPane.setFont(font.deriveFont(Font.BOLD, 25));
     }
+
+    editorPane.setText("<html><span>Foo</span></html>");
+    editorPane.setMinimumSize(editorPane.getPreferredSize());
+    editorPane.setText(null);
 
     return editorPane;
   }
@@ -312,7 +327,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
     myBottomScrollPane = new JBScrollPane(bottomPanel);
     myBottomScrollPane.getVerticalScrollBar().setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
-    myBottomScrollPane.setBorder(null);
+    myBottomScrollPane.setBorder(JBUI.Borders.empty());
     myPanel.add(myBottomScrollPane);
 
     bottomPanel.add(myLicensePanel);
@@ -340,7 +355,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
   }
 
   @NotNull
-  public static JEditorPane createDescriptionComponent(@Nullable Consumer<View> imageViewHandler) {
+  public static JEditorPane createDescriptionComponent(@Nullable Consumer<? super View> imageViewHandler) {
     JEditorPane editorPane = new JEditorPane();
 
     HTMLEditorKit kit;
@@ -599,7 +614,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
       String stamp = instance.getConfirmationStamp(productCode);
       if (stamp == null) {
         if (ApplicationManager.getApplication().isEAP()) {
-          myTagPanel.setFirstTagTooltip("The license is not required for EAP version");
+          myTagPanel.setFirstTagTooltip(IdeBundle.message("tooltip.license.not.required.for.eap.version"));
           myLicensePanel.hideWithChildren();
           return;
         }
@@ -683,7 +698,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private void updateErrors() {
-    Ref<String> enableAction = new Ref<>();
+    Ref<@Nls String> enableAction = new Ref<>();
     String message = myPluginModel.getErrorMessage(myPlugin, enableAction);
     if (message != null) {
       ErrorComponent.show(myErrorComponent, message, enableAction.get(), enableAction.isNull() ? null : () -> handleErrors());
@@ -801,6 +816,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
   }
 
   @Nullable
+  @NlsSafe
   private String getChangeNotes() {
     if (myUpdateDescriptor != null) {
       String notes = myUpdateDescriptor.getChangeNotes();

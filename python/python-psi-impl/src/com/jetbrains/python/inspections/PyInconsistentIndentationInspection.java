@@ -18,15 +18,16 @@ package com.jetbrains.python.inspections;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.inspections.quickfix.ConvertIndentsFix;
 import com.jetbrains.python.lexer.PythonIndentingLexer;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -94,7 +95,7 @@ public class PyInconsistentIndentationInspection extends PyInspection {
       }
       final int problemStart = tokenStart + lastLF + 1;
       if (spaces > 0 && tabs > 0) {
-        reportProblem("Inconsistent indentation: mix of tabs and spaces", problemStart, length);
+        reportProblem(PyPsiBundle.message("INSP.inconsistent.indentation.mix.tabs.spaces"), problemStart, length);
         // don't know which one is correct => don't complain about inconsistent indentation on subsequent lines which use
         // either tabs or spaces
         myLastSpaces = 0;
@@ -102,10 +103,12 @@ public class PyInconsistentIndentationInspection extends PyInspection {
       }
       else {
         if (spaces > 0 && myLastTabs > 0) {
-          reportProblem("Inconsistent indentation: previous line used tabs, this line uses spaces", problemStart, length);
+          reportProblem(PyPsiBundle.message("INSP.inconsistent.indentation.previous.line.used.tabs.this.line.uses.spaces"),
+                        problemStart, length);
         }
         else if (tabs > 0 && myLastSpaces > 0) {
-          reportProblem("Inconsistent indentation: previous line used spaces, this line uses tabs", problemStart, length);
+          reportProblem(PyPsiBundle.message("INSP.inconsistent.indentation.previous.line.used.spaces.this.line.uses.tabs"),
+                        problemStart, length);
         }
         if (spaces > 0 || tabs > 0) {
           myLastTabs = tabs;
@@ -114,7 +117,7 @@ public class PyInconsistentIndentationInspection extends PyInspection {
       }
     }
 
-    private void reportProblem(final String descriptionTemplate, final int problemStart, final int problemLength) {
+    private void reportProblem(@InspectionMessage String descriptionTemplate, final int problemStart, final int problemLength) {
       PsiElement elt = myFile.findElementAt(problemStart);
       int startOffset = problemStart - elt.getTextRange().getStartOffset();
       int endOffset = startOffset + problemLength;

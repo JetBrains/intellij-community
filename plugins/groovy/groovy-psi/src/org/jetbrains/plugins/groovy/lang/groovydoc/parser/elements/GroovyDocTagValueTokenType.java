@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.groovydoc.parser.elements;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilderFactory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -17,8 +18,6 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -26,17 +25,17 @@ import java.util.Set;
  */
 public class GroovyDocTagValueTokenType extends GroovyDocChameleonElementType implements IGroovyDocElementType {
 
-  private static final Set<String> TAGS_WITH_REFERENCES = new HashSet<>();
-  private static final Set<String> INLINED_TAGS_WITH_REFERENCES = new HashSet<>();
-  private static final Set<String> BUILT_IN_TYPES = new HashSet<>();
+  private static final Set<@NlsSafe String> TAGS_WITH_REFERENCES;
+  private static final Set<@NlsSafe String> INLINED_TAGS_WITH_REFERENCES;
+  private static final Set<@NlsSafe String> BUILT_IN_TYPES;
 
   static {
-    BUILT_IN_TYPES.addAll(Arrays.asList("double", "long", "float", "short", "any", "char", "int", "byte", "boolean"));
+    BUILT_IN_TYPES = Set.of("double", "long", "float", "short", "any", "char", "int", "byte", "boolean");
   }
 
   static {
-    TAGS_WITH_REFERENCES.addAll(Arrays.asList("see", "throws", "exception"));
-    INLINED_TAGS_WITH_REFERENCES.addAll(Arrays.asList("link", "linkplain", "value"));
+    TAGS_WITH_REFERENCES = Set.of("see", "throws", "exception");
+    INLINED_TAGS_WITH_REFERENCES = Set.of("link", "linkplain", "value");
   }
 
   public GroovyDocTagValueTokenType() {

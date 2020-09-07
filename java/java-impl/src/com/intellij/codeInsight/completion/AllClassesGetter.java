@@ -23,7 +23,7 @@ import java.util.Set;
 
 public final class AllClassesGetter {
   private static final Logger LOG = Logger.getInstance(AllClassesGetter.class);
-  public static final InsertHandler<JavaPsiClassReferenceElement> TRY_SHORTENING = new InsertHandler<JavaPsiClassReferenceElement>() {
+  public static final InsertHandler<JavaPsiClassReferenceElement> TRY_SHORTENING = new InsertHandler<>() {
 
     private void _handleInsert(final InsertionContext context, final JavaPsiClassReferenceElement item) {
       final Editor editor = context.getEditor();
@@ -65,7 +65,8 @@ public final class AllClassesGetter {
         }
         else if (psiClass.isValid()) {
           try {
-            context.setTailOffset(psiReference.getRangeInElement().getEndOffset() + psiReference.getElement().getTextRange().getStartOffset());
+            context
+              .setTailOffset(psiReference.getRangeInElement().getEndOffset() + psiReference.getElement().getTextRange().getStartOffset());
             final PsiElement newUnderlying = psiReference.bindToElement(psiClass);
             if (newUnderlying != null) {
               final PsiElement psiElement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(newUnderlying);
@@ -99,7 +100,6 @@ public final class AllClassesGetter {
       _handleInsert(context, item);
       item.getTailType().processTail(context.getEditor(), context.getEditor().getCaretModel().getOffset());
     }
-
   };
 
   public static final InsertHandler<JavaPsiClassReferenceElement> INSERT_FQN = (context, item) -> {

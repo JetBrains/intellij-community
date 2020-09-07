@@ -7,7 +7,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
@@ -26,7 +26,6 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -36,13 +35,6 @@ import java.util.function.Supplier;
  */
 public final class FileWatcher {
   private static final Logger LOG = Logger.getInstance(FileWatcher.class);
-
-  public static final NotNullLazyValue<NotificationGroup> NOTIFICATION_GROUP = new NotNullLazyValue<NotificationGroup>() {
-    @Override
-    protected @NotNull NotificationGroup compute() {
-      return new NotificationGroup("File Watcher Messages", NotificationDisplayType.STICKY_BALLOON, true);
-    }
-  };
 
   final static class DirtyPaths {
     final Set<String> dirtyPaths = new HashSet<>();
@@ -74,7 +66,6 @@ public final class FileWatcher {
 
   private final ManagingFS myManagingFS;
   private final MyFileWatcherNotificationSink myNotificationSink;
-  private final AtomicBoolean myFailureShown = new AtomicBoolean(false);
   private final ExecutorService myFileWatcherExecutor = executor();
   private final AtomicReference<Future<?>> myLastTask = new AtomicReference<>(null);
 
@@ -175,16 +166,14 @@ public final class FileWatcher {
     }
   }
 
-  public void notifyOnFailure(@NotNull String cause, @Nullable NotificationListener listener) {
+  public void notifyOnFailure(@NotNull @NlsContexts.NotificationContent String cause, @Nullable NotificationListener listener) {
     LOG.warn(cause);
 
-    if (myFailureShown.compareAndSet(false, true)) {
-      NotificationGroup group = NOTIFICATION_GROUP.getValue();
-      String title = ApplicationBundle.message("watcher.slow.sync");
-      ApplicationManager.getApplication().invokeLater(
-        () -> Notifications.Bus.notify(group.createNotification(title, cause, NotificationType.WARNING, listener)),
-        ModalityState.NON_MODAL);
-    }
+    NotificationGroup group = NotificationGroupManager.getInstance().getNotificationGroup("File Watcher Messages");
+    String title = ApplicationBundle.message("watcher.slow.sync");
+    ApplicationManager.getApplication().invokeLater(
+      () -> Notifications.Bus.notify(group.createNotification(title, cause, NotificationType.WARNING, listener)),
+      ModalityState.NON_MODAL);
   }
 
   boolean belongsToWatchRoots(@NotNull String reportedPath, boolean isFile) {
@@ -307,7 +296,7 @@ public final class FileWatcher {
     }
 
     @Override
-    public void notifyUserOnFailure(@NotNull String cause, @Nullable NotificationListener listener) {
+    public void notifyUserOnFailure(@NotNull @NlsContexts.NotificationContent String cause, @Nullable NotificationListener listener) {
       notifyOnFailure(cause, listener);
     }
   }

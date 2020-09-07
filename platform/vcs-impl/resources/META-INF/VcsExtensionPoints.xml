@@ -53,6 +53,9 @@
       <with attribute="implementationClass" implements="com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory"/>
     </extensionPoint>
 
+    <extensionPoint name="openapi.vcs.impl.LocalLineStatusTrackerProvider"
+                    interface="com.intellij.openapi.vcs.impl.LocalLineStatusTrackerProvider"
+                    dynamic="true"/>
     <extensionPoint name="vcs.branchStateProvider"
                     interface="com.intellij.vcs.branch.BranchStateProvider"
                     area="IDEA_PROJECT"

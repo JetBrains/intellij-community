@@ -8,11 +8,11 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -81,7 +81,7 @@ public class MavenProjectResolver {
         MavenConfigParseException cause = findParseException(t);
         if (cause != null) {
           for (MavenProject mavenProject : mavenProjects) {
-            if (FileUtil.pathsEqual(mavenProject.getDirectory(), cause.getDirectory())) {
+            if (PathUtil.pathEqualsTo(mavenProject.getDirectoryFile(), cause.getDirectory())) {
               showNotificationInvalidConfig(project, mavenProject, cause.getMessage());
               mavenProject.setConfigFileError(cause.getMessage());
             }

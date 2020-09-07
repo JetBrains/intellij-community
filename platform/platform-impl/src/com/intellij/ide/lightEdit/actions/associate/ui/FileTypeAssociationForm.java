@@ -7,6 +7,7 @@ import com.intellij.openapi.fileTypes.FileNameMatcher;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
@@ -71,7 +72,7 @@ public class FileTypeAssociationForm {
       myCheckBox = new JBCheckBox(getName());
     }
 
-    private String getName() {
+    private @NlsSafe String getName() {
       StringBuilder nameBuilder = new StringBuilder();
       nameBuilder.append(myFileType.getDisplayName()).append(" (");
       List<FileNameMatcher> matchers = FileTypeManager.getInstance().getAssociations(myFileType);

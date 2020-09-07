@@ -12,7 +12,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.ui.SelectFilePathsDialog;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -218,7 +217,7 @@ public final class HgVFSListener extends VcsVFSListener {
   @NotNull
   @Override
   protected VcsDeleteType needConfirmDeletion(@NotNull final VirtualFile file) {
-    return ChangeListManagerImpl.getInstanceImpl(myProject).getUnversionedFiles().contains(file)
+    return ChangeListManager.getInstance(myProject).isUnversioned(file)
            ? VcsDeleteType.IGNORE
            : VcsDeleteType.CONFIRM;
   }
@@ -339,7 +338,10 @@ public final class HgVFSListener extends VcsVFSListener {
         });
         NotificationAction retryAction = NotificationAction.createSimpleExpiring(HgBundle.message("retry"), () -> performMoveRename(failedToMove));
         VcsNotifier.getInstance(myProject)
-          .notifyError(HgBundle.message("hg4idea.rename.error"), HgBundle.message("hg4idea.rename.error.msg"), viewFilesAction, retryAction);
+          .notifyError("hg.rename.failed",
+                       HgBundle.message("hg4idea.rename.error"),
+                       HgBundle.message("hg4idea.rename.error.msg"),
+                       viewFilesAction, retryAction);
       }
 
       @Override

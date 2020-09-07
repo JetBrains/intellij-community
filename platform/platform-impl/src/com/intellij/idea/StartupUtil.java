@@ -7,10 +7,7 @@ import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.ide.AssertiveRepaintManager;
-import com.intellij.ide.CliResult;
-import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.IdeRepaintManager;
+import com.intellij.ide.*;
 import com.intellij.ide.customize.AbstractCustomizeWizardStep;
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
@@ -47,10 +44,7 @@ import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.helpers.LogLog;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 import org.jetbrains.io.BuiltInServer;
 
 import javax.swing.*;
@@ -232,9 +226,8 @@ public final class StartupUtil {
       loadSystemLibraries(log);
     });
 
-    Activity subActivity = StartUpMeasurer.startActivity("process env fixing");
-    EnvironmentUtil.loadEnvironment(true)
-      .thenRun(subActivity::end);
+    Activity subActivity = StartUpMeasurer.startActivity("environment loading");
+    EnvironmentUtil.loadEnvironment(subActivity::end);
 
     if (!configImportNeeded) {
       runPreAppClass(log);
@@ -274,7 +267,7 @@ public final class StartupUtil {
         AppStarter appStarter = getAppStarter(appStarterFuture);
         appStarter.beforeImportConfigs();
         Path newConfigDir = PathManager.getConfigDir();
-        runInEdtAndWait(log, () -> ConfigImportHelper.importConfigsTo(agreementDialogWasShown, newConfigDir, log), initUiTask);
+        runInEdtAndWait(log, () -> ConfigImportHelper.importConfigsTo(agreementDialogWasShown, newConfigDir, Arrays.asList(args), log), initUiTask);
         appStarter.importFinished(newConfigDir);
 
         if (!ConfigImportHelper.isConfigImported()) {
@@ -431,14 +424,17 @@ public final class StartupUtil {
         Class.forName("com.sun.jdi.Field", false, StartupUtil.class.getClassLoader());  // trying to find a JDK class
       }
       catch (ClassNotFoundException | LinkageError e) {
-        String message = "Cannot load a JDK class: " + e.getMessage() + "\nPlease ensure you run the IDE on JDK rather than JRE.";
-        Main.showMessage("JDK Required", message, true);
+        String message = BootstrapBundle.message(
+          "bootstrap.error.title.cannot.load.jdk.class.reason.0.please.ensure.you.run.the.ide.on.jdk.rather.than.jre", e.getMessage()
+        );
+        Main.showMessage(BootstrapBundle.message("bootstrap.error.title.jdk.required"), message, true);
         return false;
       }
     }
 
     if ("true".equals(System.getProperty("idea.64bit.check")) && !SystemInfoRt.is64Bit && PlatformUtils.isCidr()) {
-      Main.showMessage("Unsupported JVM", "32-bit JVM is not supported. Please use a 64-bit version.", true);
+      Main.showMessage(BootstrapBundle.message("bootstrap.error.title.unsupported.jvm"),
+                       BootstrapBundle.message("bootstrap.error.message.use.64.jvm.instead.of.32"), true);
       return false;
     }
 
@@ -459,10 +455,10 @@ public final class StartupUtil {
 
   private static boolean checkSystemDirs(@NotNull Path configPath, @NotNull Path systemPath) {
     if (configPath.equals(systemPath)) {
-      String message = "Config and system paths seem to be equal.\n\n" +
-                       "If you have modified '" + PathManager.PROPERTY_CONFIG_PATH + "' or '" + PathManager.PROPERTY_SYSTEM_PATH + "' properties,\n" +
-                       "please make sure they point to different directories, otherwise please re-install the IDE.";
-      Main.showMessage("Invalid Config or System Path", message, true);
+      Main.showMessage(BootstrapBundle.message("bootstrap.error.title.invalid.config.or.system.path"),
+                       BootstrapBundle.message("bootstrap.error.message.config.0.and.system.1.paths.must.be.different",
+                                               PathManager.PROPERTY_CONFIG_PATH,
+                                               PathManager.PROPERTY_SYSTEM_PATH), true);
       return false;
     }
 
@@ -480,39 +476,40 @@ public final class StartupUtil {
     }
 
     Path tempPath = Paths.get(PathManager.getTempPath()).normalize();
-    return checkDirectory(tempPath, "Temp", PathManager.PROPERTY_SYSTEM_PATH, !tempPath.startsWith(systemPath), false, SystemInfoRt.isUnix && !SystemInfoRt.isMac);
+    return checkDirectory(tempPath, "Temp", PathManager.PROPERTY_SYSTEM_PATH, !tempPath.startsWith(systemPath),
+                          false, SystemInfoRt.isUnix && !SystemInfoRt.isMac);
   }
 
   private static boolean checkDirectory(@NotNull Path directory, String kind, String property, boolean checkWrite, boolean checkLock, boolean checkExec) {
-    String problem = null, reason = null;
+    @Nls String problem = null, reason = null;
     Path tempFile = null;
 
     try {
-      problem = "cannot create the directory";
-      reason = "path is incorrect";
+      problem = BootstrapBundle.message("bootstrap.error.message.check.ide.directory.problem.cannot.create.the.directory");
+      reason = BootstrapBundle.message("bootstrap.error.message.check.ide.directory.possible.reason.path.is.incorrect");
       if (!Files.isDirectory(directory)) {
-        problem = "cannot create the directory";
-        reason = "parent directory is read-only or the user lacks necessary permissions";
+        problem = BootstrapBundle.message("bootstrap.error.message.check.ide.directory.problem.cannot.create.the.directory");
+        reason = BootstrapBundle.message("bootstrap.error.message.check.ide.directory.possible.reason.directory.is.read.only.or.the.user.lacks.necessary.permissions");
         Files.createDirectories(directory);
       }
 
       if (checkWrite || checkLock || checkExec) {
-        problem = "cannot create a temporary file in the directory";
-        reason = "the directory is read-only or the user lacks necessary permissions";
+        problem = BootstrapBundle.message("bootstrap.error.message.check.ide.directory.problem.the.ide.cannot.create.a.temporary.file.in.the.directory");
+        reason = BootstrapBundle.message("bootstrap.error.message.check.ide.directory.possible.reason.directory.is.read.only.or.the.user.lacks.necessary.permissions");
         tempFile = directory.resolve("ij" + new Random().nextInt(Integer.MAX_VALUE) + ".tmp");
         OpenOption[] options = {StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE};
         Files.write(tempFile, "#!/bin/sh\nexit 0".getBytes(StandardCharsets.UTF_8), options);
 
         if (checkLock) {
-          problem = "cannot create a lock file in the directory";
-          reason = "the directory is located on a network disk";
+          problem = BootstrapBundle.message("bootstrap.error.message.check.ide.directory.problem.the.ide.cannot.create.a.lock.in.directory");
+          reason = BootstrapBundle.message("bootstrap.error.message.check.ide.directory.possible.reason.the.directory.is.located.on.a.network.disk");
           try (FileChannel channel = FileChannel.open(tempFile, StandardOpenOption.WRITE); FileLock lock = channel.tryLock()) {
             if (lock == null) throw new IOException("File is locked");
           }
         }
         else if (checkExec) {
-          problem = "cannot execute a test script in the directory";
-          reason = "the partition is mounted with 'no exec' option";
+          problem = BootstrapBundle.message("bootstrap.error.message.check.ide.directory.problem.the.ide.cannot.execute.test.script");
+          reason = BootstrapBundle.message("bootstrap.error.message.check.ide.directory.possible.reason.partition.is.mounted.with.no.exec.option");
           Files.getFileAttributeView(tempFile, PosixFileAttributeView.class).setPermissions(EnumSet.of(OWNER_READ, OWNER_WRITE, OWNER_EXECUTE));
           int ec = new ProcessBuilder(tempFile.toAbsolutePath().toString()).start().waitFor();
           if (ec != 0) {
@@ -524,14 +521,12 @@ public final class StartupUtil {
       return true;
     }
     catch (Exception e) {
-      String title = "Invalid " + kind + " Directory";
+      String title = BootstrapBundle.message("bootstrap.error.title.invalid.ide.directory.type.0.directory", kind);
       String advice = SystemInfoRt.isMac && PathManager.getSystemPath().contains(MAGIC_MAC_PATH)
-                      ? "The application seems to be trans-located by macOS and cannot be used in this state.\n" +
-                        "Please use Finder to move it to another location."
-                      : "If you have modified the '" + property + "' property, please make sure it is correct,\n" +
-                        "otherwise, please re-install the IDE.";
-      String message = "The IDE " + problem + ".\nPossible reason: " + reason + ".\n\n" + advice +
-                       "\n\n-----\nLocation: " + directory + "\n" + e.getClass().getName() + ": " + e.getMessage();
+                      ? BootstrapBundle.message("bootstrap.error.message.invalid.ide.directory.trans.located.macos.directory.advice")
+                      : BootstrapBundle.message("bootstrap.error.message.invalid.ide.directory.ensure.the.modified.property.0.is.correct", property);
+      String message = BootstrapBundle.message("bootstrap.error.message.invalid.ide.directory.problem.0.possible.reason.1.advice.2.location.3.exception.class.4.exception.message.5",
+                                               problem, reason, advice, directory, e.getClass().getName(), e.getMessage());
       Main.showMessage(title, message, true);
       return false;
     }
@@ -575,8 +570,8 @@ public final class StartupUtil {
       }
 
       case CANNOT_ACTIVATE: {
-        String message = "Only one instance of " + ApplicationNamesInfo.getInstance().getProductName() + " can be run at a time.";
-        Main.showMessage("Too Many Instances", message, true);
+        String message = BootstrapBundle.message("bootstrap.error.message.only.one.instance.of.0.can.be.run.at.a.time", ApplicationNamesInfo.getInstance().getProductName());
+        Main.showMessage(BootstrapBundle.message("bootstrap.error.title.too.many.instances"), message, true);
         System.exit(Main.INSTANCE_CHECK_FAILED);
       }
     }
@@ -712,12 +707,15 @@ public final class StartupUtil {
       provider = (CustomizeIDEWizardStepsProvider)providerClass.newInstance();
     }
     catch (Throwable e) {
-      Main.showMessage("Configuration Wizard Failed", e);
+      Main.showMessage(BootstrapBundle.message("bootstrap.error.title.configuration.wizard.failed"), e);
       return;
     }
 
     appStarter.beforeStartupWizard();
-    new CustomizeIDEWizardDialog(provider, appStarter, true, false).showIfNeeded();
+    //do not show Customize IDE Wizard [IDEA-249516]
+    if (Boolean.valueOf(System.getProperty("idea.show.customize.ide.wizard")).booleanValue()) {
+      new CustomizeIDEWizardDialog(provider, appStarter, true, false).showIfNeeded();
+    }
 
     PluginManagerCore.invalidatePlugins();
     appStarter.startupWizardFinished(provider);

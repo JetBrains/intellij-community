@@ -17,6 +17,7 @@ package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,11 +37,11 @@ public class FieldAccessor<E, T> {
   private final String myName;
   private final Class<T> myType;
 
-  public FieldAccessor(@NotNull Class<E> aClass, @NotNull String name) {
+  public FieldAccessor(@NotNull Class<E> aClass, @NotNull @NonNls String name) {
     this(aClass, name, null);
   }
 
-  public FieldAccessor(@NotNull Class<E> aClass, @NotNull String name, @Nullable Class<T> type) {
+  public FieldAccessor(@NotNull Class<E> aClass, @NotNull @NonNls String name, @Nullable Class<T> type) {
     myClass = aClass;
     myName = name;
     myType = type;

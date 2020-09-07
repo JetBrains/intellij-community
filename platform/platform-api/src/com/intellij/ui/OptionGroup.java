@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.border.IdeaTitledBorder;
 import com.intellij.util.ui.JBUI;
@@ -20,7 +21,7 @@ import static java.awt.GridBagConstraints.*;
  * This class creates a nicely formatted panel with components. Useful for option panels.
  */
 public class OptionGroup implements PanelWithAnchor {
-  private final String myTitle;
+  private final @NlsContexts.BorderTitle String myTitle;
   private final List<Object> myOptions = new ArrayList<>();
   private final BitSet myIndented = new BitSet();
   private JComponent myAnchor;
@@ -32,7 +33,7 @@ public class OptionGroup implements PanelWithAnchor {
     this(null);
   }
 
-  public OptionGroup(@Nullable String title) {
+  public OptionGroup(@Nullable @NlsContexts.BorderTitle String title) {
     myTitle = title;
   }
 

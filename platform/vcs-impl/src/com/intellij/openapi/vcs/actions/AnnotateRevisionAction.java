@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.function.Supplier;
 
 abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase implements DumbAware, UpToDateLineNumberListener {
   @NotNull protected final FileAnnotation myAnnotation;
@@ -29,9 +30,12 @@ abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase impleme
 
   private int currentLine;
 
-  AnnotateRevisionAction(@Nullable String text, @Nullable String description, @Nullable Icon icon,
-                                @NotNull FileAnnotation annotation, @NotNull AbstractVcs vcs) {
-    super(text, description, icon);
+  AnnotateRevisionAction(@NotNull Supplier<String> dynamicText,
+                         @NotNull Supplier<String> dynamicDescription,
+                         @Nullable Icon icon,
+                         @NotNull FileAnnotation annotation,
+                         @NotNull AbstractVcs vcs) {
+    super(dynamicText, dynamicDescription, icon);
     myAnnotation = annotation;
     myVcs = vcs;
   }

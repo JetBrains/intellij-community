@@ -55,7 +55,7 @@ public class TransientFieldInNonSerializableClassInspection extends BaseInspecti
         return;
       }
       final PsiClass aClass = field.getContainingClass();
-      if (SerializationUtils.isSerializable(aClass)) {
+      if (aClass != null && aClass.isRecord() || SerializationUtils.isSerializable(aClass)) {
         return;
       }
       registerModifierError(PsiModifier.TRANSIENT, field, field);

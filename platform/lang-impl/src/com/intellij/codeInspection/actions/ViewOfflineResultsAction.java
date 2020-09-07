@@ -47,6 +47,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -153,7 +154,7 @@ public class ViewOfflineResultsAction extends AnAction {
   public static InspectionResultsView showOfflineView(@NotNull Project project,
                                                       @Nullable String profileName,
                                                       @NotNull Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap,
-                                                      @NotNull String title) {
+                                                      @NotNull @NlsContexts.TabTitle String title) {
     InspectionProfileImpl profile;
     if (profileName != null) {
       profile = InspectionProjectProfileManager.getInstance(project).getProfile(profileName, false);
@@ -192,7 +193,7 @@ public class ViewOfflineResultsAction extends AnAction {
   public static InspectionResultsView showOfflineView(@NotNull Project project,
                                                       @NotNull Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap,
                                                       @NotNull InspectionProfileImpl inspectionProfile,
-                                                      @NotNull String title) {
+                                                      @NotNull @NlsContexts.TabTitle String title) {
     final AnalysisScope scope = new AnalysisScope(project);
     final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
     final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext();

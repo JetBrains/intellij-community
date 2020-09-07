@@ -1,11 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.OrderPanel;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 
@@ -27,10 +30,15 @@ public class SelectFilesDialog extends DialogWrapper implements ActionListener {
   private FilesList myFilesList;
   private JButton mySelectAllButton;
   private JButton myDeselectAllButton;
-  private final String myLabel;
-  private final String myHelpID;
+  private final @NlsContexts.Label String myLabel;
+  private final @NonNls String myHelpID;
 
-  public SelectFilesDialog(final Project project, String label, String title, String actionName, String[] paths, String helpID) {
+  public SelectFilesDialog(Project project,
+                           @NlsContexts.Label String label,
+                           @NlsContexts.DialogTitle String title,
+                           @NlsContexts.Button @NotNull String actionName,
+                           String[] paths,
+                           @NonNls String helpID) {
     super(project, true);
     myHelpID = helpID;
     setOKButtonText(actionName);

@@ -33,7 +33,7 @@ import org.zmlx.hg4idea.util.HgUtil;
 public class HgCloneDialog extends CloneDvcsDialog {
 
   public HgCloneDialog(@NotNull Project project) {
-    super(project, HgVcs.DISPLAY_NAME, HgUtil.DOT_HG);
+    super(project, HgVcs.DISPLAY_NAME.get(), HgUtil.DOT_HG);
   }
 
   @Override

@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -36,6 +37,7 @@ import git4idea.i18n.GitBundle;
 import git4idea.remote.GitDefineRemoteDialog;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,7 +80,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   @NotNull private final Project myProject;
 
   @Nullable private GitPushTarget myCurrentTarget;
-  @Nullable private String myError;
+  @Nullable @Nls private String myError;
   @Nullable private Runnable myFireOnChangeAction;
   private boolean myBranchWasUpdatedManually;
   private boolean myEventFromRemoteChooser;
@@ -322,6 +324,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     return myCurrentTarget;
   }
 
+  @NlsSafe
   @NotNull
   private static String getTextFieldText(@Nullable GitPushTarget target) {
     return (target != null ? target.getBranch().getNameForRemoteOperations() : "");
@@ -452,6 +455,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
       this.remote = remote;
     }
 
+    @Nls
     @NotNull
     String getPresentable() {
       return remote == null ? GitBundle.message("push.dialog.target.panel.define.remote") : remote.getName();

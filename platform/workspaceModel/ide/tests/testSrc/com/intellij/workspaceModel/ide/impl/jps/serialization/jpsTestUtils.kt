@@ -38,9 +38,7 @@ internal data class LoadedProjectData(
 }
 
 internal fun copyAndLoadProject(originalProjectFile: File, virtualFileManager: VirtualFileUrlManager): LoadedProjectData {
-  val projectDir = FileUtil.createTempDirectory("jpsProjectTest", null)
-  val originalProjectDir = if (originalProjectFile.isFile) originalProjectFile.parentFile else originalProjectFile
-  FileUtil.copyDir(originalProjectDir, projectDir)
+  val (projectDir, originalProjectDir) = copyProjectFiles(originalProjectFile)
   val originalBuilder = WorkspaceEntityStorageBuilder.create()
   val projectFile = if (originalProjectFile.isFile) File(projectDir, originalProjectFile.name) else projectDir
   val configLocation = toConfigLocation(projectFile.toPath(), virtualFileManager)
@@ -48,6 +46,13 @@ internal fun copyAndLoadProject(originalProjectFile: File, virtualFileManager: V
   val loadedProjectData = LoadedProjectData(originalBuilder.toStorage(), serializers, configLocation, originalProjectDir)
   serializers.checkConsistency(loadedProjectData.projectDirUrl, loadedProjectData.storage, virtualFileManager)
   return loadedProjectData
+}
+
+internal fun copyProjectFiles(originalProjectFile: File): Pair<File, File> {
+  val projectDir = FileUtil.createTempDirectory("jpsProjectTest", null)
+  val originalProjectDir = if (originalProjectFile.isFile) originalProjectFile.parentFile else originalProjectFile
+  FileUtil.copyDir(originalProjectDir, projectDir)
+  return projectDir to originalProjectDir
 }
 
 internal fun   loadProject(configLocation: JpsProjectConfigLocation, originalBuilder: WorkspaceEntityStorageBuilder, virtualFileManager: VirtualFileUrlManager): JpsProjectSerializers {
@@ -179,7 +184,7 @@ fun JpsProjectSerializersImpl.checkConsistency(projectBaseDirUrl: String, storag
     assertEquals(url, fileSerializer.fileUrl)
     val fileSerializers = moduleSerializers.getKeysByValue(fileSerializer) ?: emptyList()
     val urlsFromFactory = fileSerializer.loadFileList(CachingJpsFileContentReader(projectBaseDirUrl), virtualFileManager)
-    assertEquals(urlsFromFactory.map { it.url }.sorted(), fileSerializers.map { getNonNullActualFileUrl(it.internalEntitySource) }.sorted())
+    assertEquals(urlsFromFactory.map { it.first.url }.sorted(), fileSerializers.map { getNonNullActualFileUrl(it.internalEntitySource) }.sorted())
   }
 
   fileSerializersByUrl.keys.associateWith { fileSerializersByUrl.getValues(it) }.forEach { (url, serializers) ->

@@ -9,7 +9,7 @@ import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
 
 class EditorConfigRemoveOptionQuickFix : LocalQuickFix {
-  override fun getFamilyName() = EditorConfigBundle["quickfix.option.remove.description"]
+  override fun getFamilyName() = EditorConfigBundle.get("quickfix.option.remove.description")
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val element = descriptor.psiElement as? EditorConfigDescribableElement ?: return

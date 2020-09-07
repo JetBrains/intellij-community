@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.templates;
 
 import com.intellij.facet.ui.ValidationResult;
@@ -9,6 +9,7 @@ import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -111,7 +112,7 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
     return null;
   }
 
-  private static String getTemplateName(URL url) {
+  private static @NlsSafe String getTemplateName(URL url) {
     String fileName = new File(url.getPath()).getName();
     return fileName.substring(0, fileName.length() - ArchivedTemplatesFactory.ZIP.length()).replace('_', ' ');
   }
@@ -139,7 +140,7 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
           ZipEntry entry;
           while ((entry = stream.getNextEntry()) != null) {
             if (entry.getName().endsWith(endsWith)) {
-              return StreamUtil.readText(stream, StandardCharsets.UTF_8);
+              return new String(StreamUtil.readBytes(stream), StandardCharsets.UTF_8);
             }
           }
           return null;
@@ -171,7 +172,9 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
 
   @Override
   public <T> T processStream(@NotNull StreamProcessor<T> consumer) throws IOException {
-    return consumeZipStream(consumer, new ZipInputStream(myArchivePath.openStream()));
+    try (ZipInputStream zip = new ZipInputStream(myArchivePath.openStream())) {
+      return consumer.consume(zip);
+    }
   }
 
   public URL getArchivePath() {

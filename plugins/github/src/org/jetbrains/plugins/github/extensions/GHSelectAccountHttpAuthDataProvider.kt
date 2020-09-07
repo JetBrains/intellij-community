@@ -3,10 +3,10 @@ package org.jetbrains.plugins.github.extensions
 
 import com.intellij.openapi.project.Project
 import com.intellij.util.AuthData
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import git4idea.DialogManager
 import git4idea.i18n.GitBundle
 import git4idea.remote.InteractiveGitHttpAuthDataProvider
-import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.authentication.GHAccountAuthData
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -21,7 +21,7 @@ internal class GHSelectAccountHttpAuthDataProvider(
   private val potentialAccounts: Collection<GithubAccount>
 ) : InteractiveGitHttpAuthDataProvider {
 
-  @CalledInAwt
+  @RequiresEdt
   override fun getAuthData(parentComponent: Component?): AuthData? {
     val (account, setDefault) = chooseAccount(parentComponent) ?: return null
     val token = getOrRequestToken(account, project, parentComponent) ?: return null

@@ -14,12 +14,12 @@ class ImmutableSyntheticLibrary extends SyntheticLibrary {
   private final List<VirtualFile> mySourceRoots;
   private final List<VirtualFile> myBinaryRoots;
   private final Set<VirtualFile> myExcludedRoots;
-  private final Condition<VirtualFile> myExcludeCondition;
+  private final Condition<? super VirtualFile> myExcludeCondition;
 
-  ImmutableSyntheticLibrary(@NotNull List<VirtualFile> sourceRoots,
-                            @NotNull List<VirtualFile> binaryRoots,
-                            @NotNull Set<VirtualFile> excludedRoots,
-                            @Nullable Condition<VirtualFile> excludeCondition) {
+  ImmutableSyntheticLibrary(@NotNull List<? extends VirtualFile> sourceRoots,
+                            @NotNull List<? extends VirtualFile> binaryRoots,
+                            @NotNull Set<? extends VirtualFile> excludedRoots,
+                            @Nullable Condition<? super VirtualFile> excludeCondition) {
     mySourceRoots = immutableOrEmptyList(sourceRoots);
     myBinaryRoots = immutableOrEmptyList(binaryRoots);
     myExcludedRoots = ContainerUtil.unmodifiableOrEmptySet(excludedRoots);
@@ -47,7 +47,7 @@ class ImmutableSyntheticLibrary extends SyntheticLibrary {
   @Nullable
   @Override
   public Condition<VirtualFile> getExcludeFileCondition() {
-    return myExcludeCondition;
+    return (Condition<VirtualFile>)myExcludeCondition;
   }
 
   @Override

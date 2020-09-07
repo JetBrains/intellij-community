@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.application.options.codeStyle.properties.CodeStylePropertiesUtil.*;
 
-public class VisualGuidesAccessor extends CodeStylePropertyAccessor<List<Integer>> {
+public class VisualGuidesAccessor extends CodeStylePropertyAccessor<List<Integer>> implements CodeStyleValueList {
   private final CodeStyleSettings mySettings;
   @Nullable private final Language myLanguage;
 
@@ -37,11 +37,9 @@ public class VisualGuidesAccessor extends CodeStylePropertyAccessor<List<Integer
   @Override
   @Nullable
   public List<Integer> get() {
-    List<Integer> values =
-      myLanguage != null ?
-      mySettings.getCommonSettings(myLanguage).getSoftMargins() :
-      mySettings.getDefaultSoftMargins();
-    return !values.isEmpty() ? values : null;
+    return myLanguage != null ?
+         mySettings.getCommonSettings(myLanguage).getSoftMargins() :
+         mySettings.getDefaultSoftMargins();
   }
 
   @Override
@@ -56,6 +54,11 @@ public class VisualGuidesAccessor extends CodeStylePropertyAccessor<List<Integer
   @Override
   protected String valueToString(@NotNull List<Integer> value) {
     return toCommaSeparatedString(value);
+  }
+
+  @Override
+  public boolean isEmptyListAllowed() {
+    return true;
   }
 
   private static int safeToInt(@NotNull String s) {

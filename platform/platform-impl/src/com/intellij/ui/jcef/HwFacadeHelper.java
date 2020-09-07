@@ -42,7 +42,7 @@ public class HwFacadeHelper {
   private ComponentAdapter myTargetListener;
   private VolatileImage myBackBuffer;
 
-  @NotNull Consumer<JBCefBrowser> myOnBrowserMoveResizeCallback =
+  @NotNull Consumer<? super JBCefBrowser> myOnBrowserMoveResizeCallback =
     browser -> {
       if (!isActive()) activateIfNeeded(Collections.singletonList(browser.getCefBrowser()));
     };
@@ -209,7 +209,7 @@ public class HwFacadeHelper {
     }
   }
 
-  public void paint(Graphics g, Consumer<Graphics> targetPaint) {
+  public void paint(Graphics g, Consumer<? super Graphics> targetPaint) {
     if (isActive()) {
       Dimension size = myTarget.getSize();
       if (myBackBuffer == null || myBackBuffer.getWidth() != size.width || myBackBuffer.getHeight() != size.height) {

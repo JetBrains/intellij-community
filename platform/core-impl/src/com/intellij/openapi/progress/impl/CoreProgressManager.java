@@ -208,17 +208,22 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   // run in the current thread (?)
   @Override
   public void executeNonCancelableSection(@NotNull Runnable runnable) {
-    if (isInNonCancelableSection()) {
-      runnable.run();
+    try {
+      if (isInNonCancelableSection()) {
+        runnable.run();
+      }
+      else {
+        try {
+          isInNonCancelableSection.set(Boolean.TRUE);
+          executeProcessUnderProgress(runnable, NonCancelableIndicator.INSTANCE);
+        }
+        finally {
+          isInNonCancelableSection.remove();
+        }
+      }
     }
-    else {
-      try {
-        isInNonCancelableSection.set(Boolean.TRUE);
-        executeProcessUnderProgress(runnable, NonCancelableIndicator.INSTANCE);
-      }
-      finally {
-        isInNonCancelableSection.remove();
-      }
+    catch (ProcessCanceledException e) {
+      LOG.error("PCE is not expected in non-cancellable section execution", new Exception(e));
     }
   }
 

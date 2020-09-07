@@ -34,7 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SimpleSurroundDescriptor implements SurroundDescriptor {
-  private static final Surrounder[] SURROUNDERS = {
+  @SuppressWarnings("DialogTitleCapitalization") private static final Surrounder[] SURROUNDERS = {
     new GroupSurrounder(RegExpBundle.message("surrounder.capturing.group.pattern"), "("),
     new GroupSurrounder(RegExpBundle.message("surrounder.non.capturing.group.pattern"), "(?:"),
     new GroupSurrounder(RegExpBundle.message("surrounder.atomic.group.pattern"), "(?:"),

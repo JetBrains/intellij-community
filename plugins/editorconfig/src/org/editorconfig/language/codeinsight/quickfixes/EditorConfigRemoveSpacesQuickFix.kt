@@ -11,7 +11,7 @@ import org.editorconfig.language.psi.EditorConfigHeader
 import org.editorconfig.language.services.EditorConfigElementFactory
 
 class EditorConfigRemoveSpacesQuickFix(private val spaces: List<PsiWhiteSpace>) : LocalQuickFix {
-  override fun getFamilyName() = EditorConfigBundle["quickfix.header.remove.spaces.description"]
+  override fun getFamilyName() = EditorConfigBundle.get("quickfix.header.remove.spaces.description")
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val header = descriptor.psiElement as? EditorConfigHeader ?: return
     val manager = CodeStyleManager.getInstance(project)

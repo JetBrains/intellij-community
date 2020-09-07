@@ -92,7 +92,9 @@ internal class Generator(outputDir: String, private val rootPackage: String, req
         continue
       }
 
-      val fileUpdater = fileSet.createFileUpdater("${StringUtil.nullize(domain.domain()) ?: "protocol"}.kt")
+      val domainName = StringUtil.nullize(domain.domain())
+      val filePath = if (domainName != null) "${domainName.toLowerCase()}/$domainName.kt" else "protocol.kt"
+      val fileUpdater = fileSet.createFileUpdater(filePath)
       val out = fileUpdater.out
 
       out.append("// Generated source").newLine().append("package ").append(getPackageName(rootPackage, domain.domain())).newLine().newLine()

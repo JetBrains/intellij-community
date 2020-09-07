@@ -18,6 +18,7 @@ package com.intellij.psi.impl.file;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDirectoryContainer;
@@ -36,7 +37,7 @@ public abstract class PsiDirectoryFactory {
   public abstract PsiDirectory createDirectory(@NotNull VirtualFile file);
 
   @NotNull
-  public abstract String getQualifiedName(@NotNull PsiDirectory directory, final boolean presentable);
+  public abstract @NlsSafe String getQualifiedName(@NotNull PsiDirectory directory, final boolean presentable);
   
   @Nullable
   public abstract PsiDirectoryContainer getDirectoryContainer(@NotNull PsiDirectory directory);

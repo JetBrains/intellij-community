@@ -3,6 +3,7 @@ package com.intellij.refactoring.changeSignature;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
@@ -59,7 +60,7 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo, TableItem
     private TableCellRenderer myRenderer;
     private TableCellEditor myEditor;
 
-    public ColumnInfoBase(String name) {
+    public ColumnInfoBase(@NlsContexts.ColumnName String name) {
       super(name);
     }
 
@@ -114,7 +115,7 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo, TableItem
       this(project, fileType, RefactoringBundle.message("column.name.type"));
     }
 
-    public TypeColumn(Project project, FileType fileType, String title) {
+    public TypeColumn(Project project, FileType fileType, @NlsContexts.ColumnName String title) {
       super(title);
       myProject = project;
       myFileType = fileType;
@@ -148,7 +149,7 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo, TableItem
       this(project, RefactoringBundle.message("column.name.name"));
     }
 
-    public NameColumn(Project project, String title) {
+    public NameColumn(Project project, @NlsContexts.ColumnName String title) {
       super(title);
       myProject = project;
     }
@@ -194,7 +195,7 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo, TableItem
       this(project, fileType, RefactoringBundle.message("column.name.default.value"));
     }
 
-    public DefaultValueColumn(Project project, FileType fileType, String title) {
+    public DefaultValueColumn(Project project, FileType fileType, @NlsContexts.ColumnName String title) {
       super(title);
       myProject = project;
       myFileType = fileType;
@@ -249,7 +250,7 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo, TableItem
 
     @Override
     public TableCellEditor doCreateEditor(TableItem item) {
-      return new BooleanTableCellEditor(false);
+      return new BooleanTableCellEditor();
     }
 
     @Override

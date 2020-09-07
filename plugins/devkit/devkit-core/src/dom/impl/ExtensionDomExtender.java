@@ -18,6 +18,7 @@ import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.With;
@@ -76,7 +77,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     binding.visit(new ExtensionPointBinding.BindingVisitor() {
 
       @Override
-      public void visitAttribute(@NotNull PsiField field, @NotNull String attributeName, boolean required) {
+      public void visitAttribute(@NotNull PsiField field, @NotNull @NonNls String attributeName, boolean required) {
         final With withElement = findWithElement(elements, field);
         final PsiType fieldType = field.getType();
         Class<?> clazz = String.class;
@@ -107,7 +108,8 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
           }
 
           if ("language".equals(attributeName) ||
-              StringUtil.endsWith(attributeName, "Language")) {
+              StringUtil.endsWith(attributeName, "Language")) // NON-NLS
+          {
             extension.setConverter(LANGUAGE_CONVERTER);
           }
           else if ("action".equals(attributeName)) {
@@ -324,7 +326,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
 
       @Override
       public String getErrorMessage(@Nullable String s, ConvertContext context) {
-        return "Cannot resolve '" + s + "' in " + fieldPsiClass.getQualifiedName();
+        return DevKitBundle.message("plugin.xml.convert.enum.cannot.resolve", s, fieldPsiClass.getQualifiedName());
       }
 
       @NotNull
@@ -373,6 +375,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
   private static final Set<String> LEGACY_ENUM_NOTATION_CLASSES =
     ContainerUtil.immutableSet(
       "com.intellij.compiler.CompileTaskBean.CompileTaskExecutionPhase",
-      "com.intellij.plugins.jboss.arquillian.configuration.container.ArquillianContainerKind"
+      "com.intellij.plugins.jboss.arquillian.configuration.container.ArquillianContainerKind",
+      "com.intellij.notification.impl.NotificationGroupEP.DisplayType"
     );
 }

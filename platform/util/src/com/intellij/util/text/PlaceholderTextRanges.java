@@ -75,7 +75,7 @@ public final class PlaceholderTextRanges {
       }
       else if (nextPrefix < 0
                || nextSuffix <= nextPrefix
-               || nextPrefix + prefix.length() >= nextSuffix) { // support overlapping tokens
+               || nextPrefix + prefix.length() > nextSuffix) { // support overlapping tokens
         // suffix first
         int prefixPairPos = prefixes.pop();
 

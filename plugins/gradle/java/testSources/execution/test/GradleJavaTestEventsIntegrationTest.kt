@@ -1,3 +1,6 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.plugins.gradle.execution.test
+
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
@@ -75,7 +78,7 @@ open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
     val eventLog = mutableListOf<String>()
     val testListener = object : ExternalSystemTaskNotificationListenerAdapter() {
       override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
-        eventLog.add(text.trim('\r', '\n', ' '))
+        addEventLogLines(text, eventLog)
       }
     };
 
@@ -94,10 +97,10 @@ open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
 
     assertThat(eventLog)
       .contains(
-        "<descriptor name='testFail' className='my.pack.AClassTest' /><ijLogEol/>",
-        "<descriptor name='testSuccess' className='my.pack.AClassTest' /><ijLogEol/>")
+        "<descriptor name='testFail' className='my.pack.AClassTest' />",
+        "<descriptor name='testSuccess' className='my.pack.AClassTest' />")
       .doesNotContain(
-        "<descriptor name='testSuccess' className='my.otherpack.AClassTest' /><ijLogEol/>")
+        "<descriptor name='testSuccess' className='my.otherpack.AClassTest' />")
   }
 
   private fun `call build task does not produce test events`() {
@@ -105,7 +108,7 @@ open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
     val eventLog = mutableListOf<String>()
     val testListener = object : ExternalSystemTaskNotificationListenerAdapter() {
       override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
-        eventLog.add(text.trim('\r', '\n', ' '))
+        addEventLogLines(text, eventLog)
       }
     };
 
@@ -128,7 +131,7 @@ open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
     val eventLog = mutableListOf<String>()
     val testListener = object : ExternalSystemTaskNotificationListenerAdapter() {
       override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
-        eventLog.add(text.trim('\r', '\n', ' '))
+        addEventLogLines(text, eventLog)
       }
     };
 
@@ -148,9 +151,13 @@ open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
                                        testListener);
 
     assertThat(eventLog)
-      .contains("<descriptor name='testSuccess' className='my.otherpack.AClassTest' /><ijLogEol/>")
-      .doesNotContain("<descriptor name='testFail' className='my.pack.AClassTest' /><ijLogEol/>",
-                      "<descriptor name='testSuccess' className='my.pack.AClassTest' /><ijLogEol/>")
+      .contains("<descriptor name='testSuccess' className='my.otherpack.AClassTest' />")
+      .doesNotContain("<descriptor name='testFail' className='my.pack.AClassTest' />",
+                      "<descriptor name='testSuccess' className='my.pack.AClassTest' />")
+  }
+
+  private fun addEventLogLines(text: String, eventLog: MutableList<String>) {
+    text.split("<ijLogEol/>").mapTo(eventLog) { it.trim('\r', '\n', ' ') }
   }
 
 }

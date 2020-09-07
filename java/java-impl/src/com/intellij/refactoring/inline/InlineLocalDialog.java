@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.inline;
 
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
@@ -26,7 +27,7 @@ public class InlineLocalDialog extends AbstractInlineLocalDialog {
 
   @Override
   protected String getNameLabelText() {
-    return "Local variable " + myVariable.getName();
+    return LangBundle.message("label.local.variable", myVariable.getName());
   }
 
   @Override
@@ -41,7 +42,8 @@ public class InlineLocalDialog extends AbstractInlineLocalDialog {
 
   @Override
   protected String getInlineAllText() {
-    final String occurrencesString = myOccurrencesNumber > -1 ? " (" + myOccurrencesNumber + " occurrence" + (myOccurrencesNumber == 1 ? ")" : "s)") : "";
+    final String occurrencesString =
+      myOccurrencesNumber > -1 ? " " + RefactoringBundle.message("occurrences.string", myOccurrencesNumber) : "";
     return RefactoringBundle.message("all.references.and.remove.the.local") + occurrencesString;
   }
 

@@ -6,6 +6,8 @@ import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -34,7 +36,7 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
   public FileSaverDialogImpl(@NotNull FileSaverDescriptor descriptor, @NotNull Component parent) {
     super(descriptor, parent);
     myDescriptor = descriptor;
-    for (String ext : descriptor.getFileExtensions()) {
+    for (@NlsSafe String ext : descriptor.getFileExtensions()) {
       myExtensions.addItem(ext);
     }
     setTitle(getChooserTitle(descriptor));
@@ -43,13 +45,13 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
   public FileSaverDialogImpl(@NotNull FileSaverDescriptor descriptor, @Nullable Project project) {
     super(descriptor, project);
     myDescriptor = descriptor;
-    for (String ext : descriptor.getFileExtensions()) {
+    for (@NlsSafe String ext : descriptor.getFileExtensions()) {
       myExtensions.addItem(ext);
     }
     setTitle(getChooserTitle(descriptor));
   }
 
-  private static String getChooserTitle(final FileSaverDescriptor descriptor) {
+  private static @NlsContexts.DialogTitle String getChooserTitle(final FileSaverDescriptor descriptor) {
     final String title = descriptor.getTitle();
     return title != null ? title : UIBundle.message("file.chooser.save.dialog.default.title");
   }

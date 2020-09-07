@@ -22,6 +22,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.indexing.FileContent;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,8 +44,7 @@ public abstract class DuplicatesProfile {
   @NotNull
   public abstract DuplocatorState getDuplocatorState(@NotNull Language language);
 
-  @Nullable
-  public String getComment(@NotNull DupInfo info, int index) {
+  public @Nullable @Nls String getComment(@NotNull DupInfo info, int index) {
     return null;
   }
 

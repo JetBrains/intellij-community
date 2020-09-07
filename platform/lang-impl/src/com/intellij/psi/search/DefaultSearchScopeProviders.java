@@ -100,7 +100,7 @@ public final class DefaultSearchScopeProviders {
     int weight = namedScope instanceof WeighedItem ? ((WeighedItem)namedScope).getWeight() : -1;
     Color color = !colored ? null :
                   //namedScope instanceof ColoredItem ? ((ColoredItem)namedScope).getColor() :
-                  FileColorManager.getInstance(project).getScopeColor(namedScope.getName());
+                  FileColorManager.getInstance(project).getScopeColor(namedScope.getScopeId());
     return new MyWeightedScope(scope, weight, color);
   }
 

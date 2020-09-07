@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ex.ExternalAnnotatorBatchInspection;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
@@ -26,7 +27,7 @@ public class ShShellcheckInspection extends LocalInspectionTool implements Exter
   @NonNls public static final String SHORT_NAME = "ShellCheck";
   @NonNls private static final String SHELLCHECK_SETTINGS_TAG = "shellcheck_settings";
   private static final String DELIMITER = ",";
-  private final Set<String> myDisabledInspections = new TreeSet<>();
+  private final Set<@NlsSafe String> myDisabledInspections = new TreeSet<>();
   private JComponent myOptionsPanel;
 
   @Override
@@ -57,9 +58,7 @@ public class ShShellcheckInspection extends LocalInspectionTool implements Exter
 
     Project project = ProjectUtil.guessCurrentProject(myOptionsPanel);
     EditorNotifications editorNotifications = EditorNotifications.getInstance(project);
-    if (editorNotifications != null) {
-      editorNotifications.updateAllNotifications();
-    }
+    editorNotifications.updateAllNotifications();
   }
 
   @Nullable
@@ -70,7 +69,7 @@ public class ShShellcheckInspection extends LocalInspectionTool implements Exter
   }
 
   @NotNull
-  Set<String> getDisabledInspections() {
+  Set<@NlsSafe String> getDisabledInspections() {
     return new HashSet<>(myDisabledInspections);
   }
 

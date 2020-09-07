@@ -40,6 +40,6 @@ def unused_inner_function_with_unknown_decorator():
         pass
 
 def unused_inner_function_with_incomplete_decorator():
-    @<EOLError descr="expression expected"></EOLError>
+    @<EOLError descr="Expression expected"></EOLError>
     def func(): # pass
         pass

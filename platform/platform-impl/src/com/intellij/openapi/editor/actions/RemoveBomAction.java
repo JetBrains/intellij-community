@@ -84,7 +84,7 @@ public class RemoveBomAction extends AnAction implements DumbAware {
           ProgressManager.checkCanceled();
           VirtualFile virtualFile = filesToProcess.get(i);
           indicator.setFraction(i*1.0/filesToProcess.size());
-          indicator.setText2(StringUtil.shortenPathWithEllipsis(virtualFile.getPath(), 40));
+          indicator.setText2(StringUtil.shortenPathWithEllipsis(virtualFile.getPresentableUrl(), 40));
           byte[] bom = virtualFile.getBOM();
           if (virtualFile instanceof NewVirtualFile && bom != null) {
             if (isBOMMandatory(virtualFile) ) {

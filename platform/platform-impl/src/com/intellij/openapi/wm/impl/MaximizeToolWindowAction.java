@@ -17,7 +17,7 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.actions.ToolwindowFusEventFields;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.internal.statistic.eventLog.EventPair;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;

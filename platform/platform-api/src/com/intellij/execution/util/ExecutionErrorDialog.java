@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -20,7 +21,7 @@ public final class ExecutionErrorDialog {
   private ExecutionErrorDialog() {
   }
 
-  public static void show(final ExecutionException e, final String title, final Project project) {
+  public static void show(final ExecutionException e, final @NlsContexts.DialogTitle String title, final Project project) {
     if (e instanceof RunCanceledByUserException) {
       return;
     }

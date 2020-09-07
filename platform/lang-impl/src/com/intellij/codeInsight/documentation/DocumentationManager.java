@@ -70,6 +70,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -86,7 +87,10 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class DocumentationManager extends DockablePopupManager<DocumentationComponent> {
   public static final String JAVADOC_LOCATION_AND_SIZE = "javadoc.popup";
@@ -123,7 +127,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   public static final Key<SmartPsiElementPointer<?>> ORIGINAL_ELEMENT_KEY = Key.create("Original element");
 
   private boolean myCloseOnSneeze;
-  private String myPrecalculatedDocumentation;
+  private @Nls String myPrecalculatedDocumentation;
 
   private ActionCallback myLastAction;
   private DocumentationComponent myTestDocumentationComponent;
@@ -300,7 +304,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                               @NotNull PsiElement element,
                               @NotNull PsiElement original,
                               @Nullable Runnable closeCallback,
-                              @Nullable String documentation,
+                              @Nullable @Nls String documentation,
                               boolean closeOnSneeze,
                               boolean useStoredPopupSize) {
     myEditor = editor;
@@ -325,7 +329,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                               PsiElement original,
                               boolean requestFocus,
                               @Nullable Runnable closeCallback,
-                              @Nullable String documentation,
+                              @Nullable @Nls String documentation,
                               boolean useStoredPopupSize) {
     if (!element.isValid()) {
       return;
@@ -429,7 +433,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                                  @NotNull PopupUpdateProcessor updateProcessor,
                                  PsiElement originalElement,
                                  @Nullable Runnable closeCallback,
-                                 @Nullable String documentation,
+                                 @Nullable @Nls String documentation,
                                  boolean useStoredPopupSize) {
     if (!myProject.isOpen()) return;
 
@@ -724,7 +728,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return null;
   }
 
-  public String generateDocumentation(@NotNull PsiElement element, @Nullable PsiElement originalElement, boolean onHover) {
+  public @NlsSafe String generateDocumentation(@NotNull PsiElement element, @Nullable PsiElement originalElement, boolean onHover) {
     return new MyCollector(myProject, CompletableFuture.completedFuture(element), originalElement, null, onHover).getDocumentation();
   }
 
@@ -823,7 +827,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         Throwable finalFail = fail;
         GuiUtils.invokeLaterIfNeeded(() -> {
           String message = finalFail instanceof IndexNotReadyException
-                           ? "Documentation is not available until indices are built."
+                           ? CodeInsightBundle.message("documentation.message.documentation.is.not.available")
                            : CodeInsightBundle.message("javadoc.external.fetch.error.message");
           component.setText(message, null, collector.provider);
           component.clearHistory();
@@ -966,11 +970,15 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return collector instanceof MyCollector ? ((MyCollector)collector).originalElement : targetElement;
   }
 
-  public void navigateByLink(DocumentationComponent component, String url) {
+  public void navigateByLink(@NotNull DocumentationComponent component, @Nullable PsiElement context, @NotNull String url) {
+    myPrecalculatedDocumentation = null;
     component.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-    PsiElement psiElement = component.getElement();
+    PsiElement psiElement = context;
     if (psiElement == null) {
-      return;
+      psiElement = component.getElement();
+      if (psiElement == null) {
+        return;
+      }
     }
     PsiManager manager = PsiManager.getInstance(getProject(psiElement));
     if (url.equals("external_doc")) {
@@ -1015,10 +1023,11 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           ExternalDocumentationHandler externalHandler = (ExternalDocumentationHandler)p;
           if (externalHandler.canFetchDocumentationLink(url)) {
             String ref = externalHandler.extractRefFromLink(url);
-            cancelAndFetchDocInfo(component, new DocumentationCollector(psiElement, url, ref, p) {
+            PsiElement finalPsiElement = psiElement;
+            cancelAndFetchDocInfo(component, new DocumentationCollector(finalPsiElement, url, ref, p) {
               @Override
               public String getDocumentation() {
-                return externalHandler.fetchExternalDocumentation(url, psiElement);
+                return externalHandler.fetchExternalDocumentation(url, finalPsiElement);
               }
             });
             processed = true;
@@ -1271,10 +1280,10 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     for (NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(project)) {
       for (NamedScope scope : holder.getScopes()) {
         PackageSet packageSet = scope.getValue();
-        String name = scope.getName();
+        String name = scope.getScopeId();
         if (packageSet instanceof PackageSetBase && ((PackageSetBase)packageSet).contains(file, project, holder) &&
             colorManager.getScopeColor(name) == color) {
-          return "<p><span class='grayed'>Scope:</span> <span bgcolor='" + ColorUtil.toHex(color) + "'>" + scope.getName() + "</span>";
+          return "<p><span class='grayed'>Scope:</span> <span bgcolor='" + ColorUtil.toHex(color) + "'>" + scope.getPresentableName() + "</span>";
         }
       }
     }

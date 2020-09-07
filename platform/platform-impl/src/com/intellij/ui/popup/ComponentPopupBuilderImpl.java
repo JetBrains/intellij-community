@@ -41,7 +41,7 @@ import java.util.*;
  * @author anna
  */
 public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
-  private String myTitle = "";
+  private @NlsContexts.PopupTitle String myTitle = "";
   private boolean myResizable;
   private boolean myMovable;
   private final JComponent myComponent;
@@ -72,7 +72,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private boolean myModalContext = true;
   private Component[] myFocusOwners = new Component[0];
 
-  private String myAd;
+  private @NlsContexts.PopupAdvertisement String myAd;
   private boolean myShowShadow = true;
   private boolean myShowBorder = true;
   private boolean myFocusable = true;

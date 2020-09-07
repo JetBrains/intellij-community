@@ -26,8 +26,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +49,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
 
   @Nullable private MergeInnerDifferences myInnerFragments; // warning: might be out of date
 
-  @CalledInAwt
+  @RequiresEdt
   public TextMergeChange(int index,
                          @NotNull MergeLineFragment fragment,
                          @NotNull MergeConflictType conflictType,
@@ -63,7 +64,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     reinstallHighlighters();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void reinstallHighlighters() {
     destroyHighlighters();
     installHighlighters();
@@ -82,7 +83,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     return myIndex;
   }
 
-  @CalledInAwt
+  @RequiresEdt
   void setResolved(@NotNull Side side, boolean value) {
     myResolved[side.getIndex()] = value;
 
@@ -167,7 +168,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     return myFragment;
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void setInnerFragments(@Nullable MergeInnerDifferences innerFragments) {
     if (myInnerFragments == null && innerFragments == null) return;
     myInnerFragments = innerFragments;
@@ -183,7 +184,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   //
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void installOperations() {
     ContainerUtil.addIfNotNull(myOperations, createResolveOperation());
     ContainerUtil.addIfNotNull(myOperations, createAcceptOperation(Side.LEFT, OperationType.APPLY));
@@ -255,7 +256,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   }
 
   @NotNull
-  private static GutterIconRenderer createIconRenderer(@NotNull final String text,
+  private static GutterIconRenderer createIconRenderer(@NotNull final @NlsContexts.Tooltip String text,
                                                        @NotNull final Icon icon,
                                                        boolean ctrlClickVisible,
                                                        @NotNull final Runnable perform) {

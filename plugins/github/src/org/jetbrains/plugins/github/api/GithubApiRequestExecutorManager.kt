@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.api
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.CalledInAwt
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
@@ -27,17 +27,17 @@ class GithubApiRequestExecutorManager {
     else executors[account]?.token = token
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun getExecutor(account: GithubAccount, project: Project): GithubApiRequestExecutor.WithTokenAuth? {
     return getOrTryToCreateExecutor(account) { GithubAuthenticationManager.getInstance().requestNewToken(account, project) }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun getExecutor(account: GithubAccount, parentComponent: Component): GithubApiRequestExecutor.WithTokenAuth? {
     return getOrTryToCreateExecutor(account) { GithubAuthenticationManager.getInstance().requestNewToken(account, null, parentComponent) }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   @Throws(GithubMissingTokenException::class)
   fun getExecutor(account: GithubAccount): GithubApiRequestExecutor.WithTokenAuth {
     return getOrTryToCreateExecutor(account) { throw GithubMissingTokenException(account) }!!

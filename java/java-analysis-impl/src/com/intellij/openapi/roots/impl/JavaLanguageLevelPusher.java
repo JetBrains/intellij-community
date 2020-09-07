@@ -10,6 +10,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.pom.java.LanguageLevel;
@@ -108,8 +109,8 @@ public class JavaLanguageLevelPusher implements FileIntPropertyPusher<LanguageLe
   }
 
   @Nullable
-  public String getInconsistencyLanguageLevelMessage(@NotNull String message, @NotNull PsiElement element,
-                                                     @NotNull LanguageLevel level, @NotNull PsiFile file) {
+  public @NlsContexts.DetailedDescription String getInconsistencyLanguageLevelMessage(@NotNull String message, @NotNull PsiElement element,
+                                                                                      @NotNull LanguageLevel level, @NotNull PsiFile file) {
     return null;
   }
 

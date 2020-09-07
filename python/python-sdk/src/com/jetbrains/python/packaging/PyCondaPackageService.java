@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.PyCondaRunKt;
@@ -224,7 +225,7 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
     // "conda" module required for conda_packaging_tool.py is available only in a base interpreter
     final String condaPython = getCondaPython();
     if (condaPython == null) {
-      throw new PyExecutionException("Cannot find Python executable for conda",
+      throw new PyExecutionException(PySdkBundle.message("python.conda.cannot.find.python.executable"),
                                      "python", commandArgs, new ProcessOutput());
     }
     final ProcessOutput output = PyCondaRunKt.runCondaPython(condaPython, commandArgs);

@@ -5,14 +5,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBaseContentRevision;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.Revision;
@@ -21,12 +19,13 @@ import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.properties.PropertyConsumer;
 import org.jetbrains.idea.svn.properties.PropertyData;
-import org.jetbrains.idea.svn.properties.PropertyValue;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class SvnLazyPropertyContentRevision extends SvnBaseContentRevision implements PropertyRevision {
   private final static String ourPropertiesDelimiter = "\n";
@@ -71,10 +70,10 @@ public class SvnLazyPropertyContentRevision extends SvnBaseContentRevision imple
     };
     if (ApplicationManager.getApplication().isDispatchThread()) {
       boolean completed = ProgressManager.getInstance()
-        .runProcessWithProgressSynchronously(runnable, SvnBundle.message("progress.title.loading.file.properties"), true,
+        .runProcessWithProgressSynchronously(runnable, message("progress.title.loading.file.properties"), true,
                                              myVcs.getProject());
       if (!completed) {
-        throw new VcsException("Properties load for revision " + getRevisionNumber().asString() + " was canceled.");
+        throw new VcsException(message("error.properties.loading.for.revision.canceled", getRevisionNumber().asString()));
       }
     }
     else {
@@ -106,7 +105,7 @@ public class SvnLazyPropertyContentRevision extends SvnBaseContentRevision imple
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.checkCanceled();
-      indicator.setText(SvnBundle.message("show.properties.diff.progress.text.revision.information", revision.toString()));
+      indicator.setText(message("show.properties.diff.progress.text.revision.information", revision.toString()));
     }
 
     return new PropertyConsumer() {
@@ -120,15 +119,10 @@ public class SvnLazyPropertyContentRevision extends SvnBaseContentRevision imple
         registerProperty(property);
       }
 
-      @Override
-      public void handleProperty(long revision, PropertyData property) {
-        // revision properties here
-      }
-
       private void registerProperty(@NotNull PropertyData property) {
         if (indicator != null) {
           indicator.checkCanceled();
-          indicator.setText2(SvnBundle.message("show.properties.diff.progress.text2.property.information", property.getName()));
+          indicator.setText2(message("show.properties.diff.progress.text2.property.information", property.getName()));
         }
         lines.add(property);
       }
@@ -152,6 +146,6 @@ public class SvnLazyPropertyContentRevision extends SvnBaseContentRevision imple
     if (sb.length() != 0) {
       sb.append(ourPropertiesDelimiter);
     }
-    sb.append(property.getName()).append("=").append(StringUtil.notNullize(PropertyValue.toString(property.getValue())));
+    sb.append(property.getName()).append("=").append(property.getValue());
   }
 }

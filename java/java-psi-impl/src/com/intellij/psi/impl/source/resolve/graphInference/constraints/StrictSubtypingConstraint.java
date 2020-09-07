@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
@@ -56,7 +57,9 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
     final HashSet<InferenceVariable> dependencies = new HashSet<>();
     final boolean reduceResult = doReduce(session, dependencies, constraints);
     if (!reduceResult) {
-      session.registerIncompatibleErrorMessage(dependencies, session.getPresentableText(myS) + " conforms to " + session.getPresentableText(myT));
+      session.registerIncompatibleErrorMessage(dependencies,
+                                               JavaPsiBundle.message("type.conforms.to.constraint", 
+                                                                     session.getPresentableText(myS), session.getPresentableText(myT)));
     }
     return reduceResult;
   }

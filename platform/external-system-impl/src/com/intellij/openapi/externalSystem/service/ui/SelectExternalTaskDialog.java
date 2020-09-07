@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.service.ui;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.externalSystem.view.ModuleNode;
 import com.intellij.openapi.externalSystem.view.ProjectNode;
@@ -30,7 +31,7 @@ public class SelectExternalTaskDialog extends SelectExternalSystemNodeDialog {
   private Pair<String, TaskData> myResult;
 
   public SelectExternalTaskDialog(@NotNull ProjectSystemId systemId, Project project) {
-    super(systemId, project, String.format("Choose %s Task", systemId.getReadableName()), NODE_CLASSES, null);
+    super(systemId, project, ExternalSystemBundle.message("dialog.title.choose.task", systemId.getReadableName()), NODE_CLASSES, null);
     groupTasks = Boolean.FALSE;
     useTasksNode = Boolean.FALSE;
     init();

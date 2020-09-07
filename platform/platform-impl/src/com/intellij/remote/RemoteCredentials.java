@@ -1,19 +1,20 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remote;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface RemoteCredentials {
-  @NotNull String getHost();
+  @NlsSafe @NotNull String getHost();
 
   int getPort();
 
-  @NotNull String getLiteralPort();
+  @NlsSafe @NotNull String getLiteralPort();
 
   @Transient
-  @Nullable String getUserName();
+  @NlsSafe @Nullable String getUserName();
 
   @Nullable String getPassword();
 
@@ -22,7 +23,7 @@ public interface RemoteCredentials {
 
   @NotNull AuthType getAuthType();
 
-  @NotNull String getPrivateKeyFile();
+  @NlsSafe @NotNull String getPrivateKeyFile();
 
   boolean isStorePassword();
 

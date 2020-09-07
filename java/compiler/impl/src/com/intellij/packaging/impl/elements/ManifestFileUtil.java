@@ -22,7 +22,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -79,25 +78,27 @@ public final class ManifestFileUtil {
 
     final Ref<VirtualFile> sourceDir = Ref.create(null);
     final Ref<VirtualFile> sourceFile = Ref.create(null);
-    ArtifactUtil.processElementsWithSubstitutions(root.getChildren(), context, artifactType, PackagingElementPath.EMPTY, new PackagingElementProcessor<PackagingElement<?>>() {
-      @Override
-      public boolean process(@NotNull PackagingElement<?> element, @NotNull PackagingElementPath path) {
-        if (element instanceof FileCopyPackagingElement) {
-          final VirtualFile file = ((FileCopyPackagingElement)element).findFile();
-          if (file != null) {
-            sourceFile.set(file);
-          }
-        }
-        else if (element instanceof DirectoryCopyPackagingElement) {
-          final VirtualFile file = ((DirectoryCopyPackagingElement)element).findFile();
-          if (file != null) {
-            sourceDir.set(file);
-            return false;
-          }
-        }
-        return true;
-      }
-    });
+    ArtifactUtil.processElementsWithSubstitutions(root.getChildren(), context, artifactType, PackagingElementPath.EMPTY,
+                                                  new PackagingElementProcessor<>() {
+                                                    @Override
+                                                    public boolean process(@NotNull PackagingElement<?> element,
+                                                                           @NotNull PackagingElementPath path) {
+                                                      if (element instanceof FileCopyPackagingElement) {
+                                                        final VirtualFile file = ((FileCopyPackagingElement)element).findFile();
+                                                        if (file != null) {
+                                                          sourceFile.set(file);
+                                                        }
+                                                      }
+                                                      else if (element instanceof DirectoryCopyPackagingElement) {
+                                                        final VirtualFile file = ((DirectoryCopyPackagingElement)element).findFile();
+                                                        if (file != null) {
+                                                          sourceDir.set(file);
+                                                          return false;
+                                                        }
+                                                      }
+                                                      return true;
+                                                    }
+                                                  });
 
     if (!sourceDir.isNull()) {
       return sourceDir.get();
@@ -207,7 +208,7 @@ public final class ManifestFileUtil {
 
   public static List<String> getClasspathForElements(List<? extends PackagingElement<?>> elements, PackagingElementResolvingContext context, final ArtifactType artifactType) {
     final List<String> classpath = new ArrayList<>();
-    final PackagingElementProcessor<PackagingElement<?>> processor = new PackagingElementProcessor<PackagingElement<?>>() {
+    final PackagingElementProcessor<PackagingElement<?>> processor = new PackagingElementProcessor<>() {
       @Override
       public boolean process(@NotNull PackagingElement<?> element, @NotNull PackagingElementPath path) {
         if (element instanceof FileCopyPackagingElement) {
@@ -277,7 +278,7 @@ public final class ManifestFileUtil {
                                              final @NotNull CompositePackagingElement<?> element) {
     context.editLayout(context.getArtifact(), () -> {
       final VirtualFile file = findManifestFile(element, context, context.getArtifactType());
-      if (file == null || !FileUtil.pathsEqual(file.getPath(), path)) {
+      if (file == null || !PathUtil.pathEqualsTo(file, path)) {
         PackagingElementFactory.getInstance().addFileCopy(element, MANIFEST_DIR_NAME, path, MANIFEST_FILE_NAME);
       }
     });
@@ -289,7 +290,8 @@ public final class ManifestFileUtil {
     final GlobalSearchScope searchScope = GlobalSearchScope.allScope(project);
     final PsiClass aClass = initialClassName != null ? JavaPsiFacade.getInstance(project).findClass(initialClassName, searchScope) : null;
     final TreeClassChooser chooser =
-        chooserFactory.createWithInnerClassesScopeChooser("Select Main Class", searchScope, new MainClassFilter(), aClass);
+        chooserFactory.createWithInnerClassesScopeChooser(JavaCompilerBundle.message("dialog.title.manifest.select.main.class"),
+                                                          searchScope, new MainClassFilter(), aClass);
     chooser.showDialog();
     return chooser.getSelected();
   }

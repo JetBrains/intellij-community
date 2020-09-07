@@ -98,6 +98,7 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
    * If unspecified, will use {@link #bundle}, then plugin's {@code <resource-bundle>} as fallback.
    *
    * @see #groupKey
+   * @see #groupPathKey
    */
   @Attribute("groupBundle")
   public String groupBundle;
@@ -112,6 +113,12 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
    */
   @Attribute("groupPath") public @Nls(capitalization = Nls.Capitalization.Sentence) String groupPath;
 
+  /**
+   * Message key for {@link #groupPath}.
+   * @see #groupBundle
+   */
+  @Attribute("groupPathKey") public String groupPathKey;
+
   protected InspectionEP() {
   }
 
@@ -124,10 +131,17 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
   public String @Nullable [] getGroupPath() {
     String name = getGroupDisplayName();
     if (name == null) return null;
-    if (groupPath == null) {
+    String path = null;
+    if (groupPath != null) {
+      path = groupPath;
+    }
+    else if (groupPathKey != null) {
+      path = getLocalizedString(groupBundle, groupPathKey);
+    }
+    if (path == null) {
       return new String[]{name.isEmpty() ? InspectionProfileEntry.getGeneralGroupName() : name};
     }
-    return ArrayUtil.append(groupPath.split(","), name);
+    return ArrayUtil.append(path.split(","), name);
   }
 
   @Attribute("enabledByDefault")
@@ -174,7 +188,7 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
   @Attribute("hasStaticDescription")
   public boolean hasStaticDescription;
 
-  private @Nullable String getLocalizedString(@Nullable String bundleName, String key) {
+  private @Nullable @Nls String getLocalizedString(@Nullable String bundleName, String key) {
     String baseName = bundleName != null ? bundleName :
                       bundle == null ? getPluginDescriptor().getResourceBundleBaseName() : bundle;
     if (baseName == null || key == null) {

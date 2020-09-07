@@ -28,10 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -396,7 +393,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     return result.substring(0, result.length() - 1);
   }
 
-  private void showNotification(final String title) {
+  private void showNotification(@NlsContexts.PopupContent String title) {
     SwingUtilities.invokeLater(() -> {
       final Balloon b =
         JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(title, null, MessageType.INFO.getPopupBackground(), null)
@@ -440,7 +437,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
       List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, myModel.getChanges(), base, p.isReversePatch(), false);
       if (p.isToClipboard()) {
         writeAsPatchToClipboard(myProject, patches, base, new CommitContext());
-        showNotification("Patch copied to clipboard");
+        showNotification(message("message.patch.copied.to.clipboard"));
       }
       else {
         Path file = Paths.get(p.getFileName());
@@ -467,12 +464,12 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   }
 
 
-  public void showError(String s) {
+  public void showError(@NlsContexts.DialogMessage String s) {
     Messages.showErrorDialog(myProject, s, CommonBundle.getErrorTitle());
   }
 
   protected abstract class MyAction extends AnAction {
-    protected MyAction(String text, String description, Icon icon) {
+    protected MyAction(@NlsActions.ActionText String text, @NlsActions.ActionDescription String description, Icon icon) {
       super(text, description, icon);
     }
 

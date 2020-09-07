@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -23,7 +24,7 @@ public class RenameElementFix extends LocalQuickFixAndIntentionActionOnPsiElemen
   private static final Logger LOG = Logger.getInstance(RenameElementFix.class);
 
   private final String myNewName;
-  private final String myText;
+  private final @IntentionName String myText;
 
   public RenameElementFix(@NotNull PsiNamedElement element) {
     super(element);
@@ -37,7 +38,7 @@ public class RenameElementFix extends LocalQuickFixAndIntentionActionOnPsiElemen
     this(element, newName, CodeInsightBundle.message("rename.named.element.text", element.getName(), newName));
   }
 
-  public RenameElementFix(@NotNull PsiNamedElement element, @NotNull String newName, @NotNull String text) {
+  public RenameElementFix(@NotNull PsiNamedElement element, @NotNull String newName, @NotNull @IntentionName String text) {
     super(element);
     myNewName = newName;
     myText = text;

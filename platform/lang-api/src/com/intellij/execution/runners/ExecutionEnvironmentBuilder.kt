@@ -23,6 +23,7 @@ class ExecutionEnvironmentBuilder(private val project: Project, private var exec
   private var executionId: Long? = null
   private var dataContext: DataContext? = null
   private val userData = UserDataHolderBase()
+  private var modulePath: String? = null
 
   /**
    * Creates an execution environment builder initialized with a copy of the specified environment.
@@ -138,6 +139,11 @@ class ExecutionEnvironmentBuilder(private val project: Project, private var exec
     return this
   }
 
+  fun modulePath(modulePath: String): ExecutionEnvironmentBuilder {
+    this.modulePath = modulePath
+    return this
+  }
+
   @JvmOverloads
   fun build(callback: ProgramRunner.Callback? = null): ExecutionEnvironment {
     var environment: ExecutionEnvironment? = null
@@ -165,6 +171,9 @@ class ExecutionEnvironmentBuilder(private val project: Project, private var exec
     }
     if (dataContext != null) {
       environment.setDataContext(dataContext!!)
+    }
+    if (modulePath != null) {
+      environment.setModulePath(modulePath!!)
     }
     userData.copyUserDataTo(environment)
     return environment

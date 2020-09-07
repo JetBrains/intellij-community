@@ -43,7 +43,7 @@ class GrazieRulesTreeFilter(val tree: GrazieTreeComponent) : FilterComponent("GR
         }
         else {
           lang to categories.map { (category, rules) ->
-            if (category.category.getName(lang.jLanguage).contains(filterString, true)) {
+            if (category.category.name.contains(filterString, true)) {
               category to rules
             }
             else {

@@ -119,7 +119,7 @@ public final class DeployToServerConfigurationType extends ConfigurationTypeBase
 
   public final class SingletonTypeConfigurationFactory extends DeployToServerConfigurationFactory {
     private final String mySourceTypeId;
-    private final String myPresentableName;
+    private final @Nls String myPresentableName;
 
     public SingletonTypeConfigurationFactory(@NotNull SingletonDeploymentSourceType sourceType) {
       mySourceTypeId = sourceType.getId();

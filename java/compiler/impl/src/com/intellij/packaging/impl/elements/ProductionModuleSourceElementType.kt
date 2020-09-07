@@ -10,7 +10,7 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import javax.swing.Icon
 
 class ProductionModuleSourceElementType private constructor() : ModuleElementTypeBase<ProductionModuleSourcePackagingElement>(
-  "module-source", JavaCompilerBundle.message("element.type.name.module.source")) {
+  "module-source", JavaCompilerBundle.messagePointer("element.type.name.module.source")) {
 
   override fun isSuitableModule(modulesProvider: ModulesProvider, module: Module): Boolean {
     return modulesProvider.getRootModel(module).getSourceRootUrls(false).isNotEmpty()

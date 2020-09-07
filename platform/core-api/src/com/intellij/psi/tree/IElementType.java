@@ -239,7 +239,7 @@ public class IElementType {
   }
 
   public static class TombstoneElementType extends IElementType {
-    public TombstoneElementType(@NotNull String debugName) {
+    public TombstoneElementType(@NotNull @NonNls String debugName) {
       super(debugName, Language.ANY);
     }
   }

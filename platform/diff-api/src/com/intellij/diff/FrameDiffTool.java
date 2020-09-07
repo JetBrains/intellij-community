@@ -18,7 +18,7 @@ package com.intellij.diff;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
-import org.jetbrains.annotations.CalledInAwt;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +29,7 @@ public interface FrameDiffTool extends DiffTool {
   /**
    * Creates viewer for the given request. Clients should call {@link #canShow(DiffContext, DiffRequest)} first.
    */
-  @CalledInAwt
+  @RequiresEdt
   @NotNull
   DiffViewer createComponent(@NotNull DiffContext context, @NotNull DiffRequest request);
 
@@ -44,11 +44,11 @@ public interface FrameDiffTool extends DiffTool {
      * Should be called after adding {@link #getComponent()} to the components hierarchy.
      */
     @NotNull
-    @CalledInAwt
+    @RequiresEdt
     ToolbarComponents init();
 
     @Override
-    @CalledInAwt
+    @RequiresEdt
     void dispose();
   }
 

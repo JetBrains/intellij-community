@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class MockAbstractVcs extends AbstractVcs {
-  private static final String NAME = "mock";
+  private static final String NAME = "mock"; // NON-NLS
   private static final VcsKey ourKey = createKey(NAME);
   private boolean myMarkExternalChangesAsCurrent = false;
   private CheckinEnvironment myCheckinEnvironment;
@@ -50,7 +50,7 @@ public class MockAbstractVcs extends AbstractVcs {
   @Override
   @NotNull
   public String getDisplayName() {
-    return getName();
+    return getName(); //NON-NLS
   }
 
   @Override

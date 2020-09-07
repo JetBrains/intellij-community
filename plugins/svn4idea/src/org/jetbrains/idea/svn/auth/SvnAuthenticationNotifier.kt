@@ -19,7 +19,9 @@ import com.intellij.openapi.ui.Messages.showYesNoDialog
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NamedRunnable
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.text.HtmlChunk.link
 import com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces
 import com.intellij.openapi.vcs.impl.GenericNotifierImpl
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier.showOverChangesView
@@ -32,6 +34,7 @@ import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.exists
 import com.intellij.util.net.HttpConfigurable
 import com.intellij.util.proxy.CommonProxy
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.svn.RootsToWorkingCopies
 import org.jetbrains.idea.svn.SvnBundle.message
 import org.jetbrains.idea.svn.SvnConfigurable.selectConfigurationDirectory
@@ -57,15 +60,16 @@ import javax.swing.SwingUtilities
 
 private val LOG = logger<SvnAuthenticationNotifier>()
 
-private val AUTH_KINDS = listOf(SvnAuthenticationManager.PASSWORD, "svn.ssh", SvnAuthenticationManager.SSL, "svn.username",
-                                "svn.ssl.server", "svn.ssh.server")
+@NonNls
+private val AUTH_KINDS =
+  listOf(SvnAuthenticationManager.PASSWORD, "svn.ssh", SvnAuthenticationManager.SSL, "svn.username", "svn.ssl.server", "svn.ssh.server")
 
 @Service
 class SvnAuthenticationNotifier(project: Project) :
   GenericNotifierImpl<SvnAuthenticationNotifier.AuthenticationRequest, Url>(
     project,
     SvnVcs.VCS_DISPLAY_NAME,
-    "Not Logged In to Subversion",
+    message("notification.title.not.logged.into.subversion"),
     NotificationType.ERROR
   ),
   Disposable {
@@ -125,7 +129,7 @@ class SvnAuthenticationNotifier(project: Project) :
 
     SwingUtilities.convertPointToScreen(point, component)
     JBPopupFactory.getInstance()
-      .createHtmlTextBalloonBuilder("Already checking...", MessageType.WARNING, null)
+      .createHtmlTextBalloonBuilder(message("popup.content.already.checking"), MessageType.WARNING, null)
       .createBalloon()
       .show(RelativePoint(point), Balloon.Position.below)
   }
@@ -190,7 +194,12 @@ class SvnAuthenticationNotifier(project: Project) :
     return ThreeState.fromBoolean(calculatedResult)
   }
 
-  override fun getNotificationContent(obj: AuthenticationRequest) = "<a href=\"\">Click to fix.</a> Not logged In to Subversion '${obj.realm}' (${obj.url.toDecodedString()})"
+  override fun getNotificationContent(obj: AuthenticationRequest): @NlsContexts.NotificationContent String {
+    val action = link("", message("notification.action.click.to.fix")).toString()
+    val content = message("notification.content.not.logged.into.subversion", obj.realm, obj.url.toDecodedString())
+
+    return "$action $content"
+  }
 
   class AuthenticationRequest(val myProject: Project, val kind: String, val url: Url, val realm: String) {
     var wcUrl: Url? = null
@@ -308,7 +317,7 @@ class SvnAuthenticationNotifier(project: Project) :
     private fun showAuthenticationFailedWithHotFixes(project: Project, configuration: SvnConfiguration, e: SvnBindException) =
       getApplication().invokeLater(Runnable {
         showOverChangesView(
-          project, "Authentication failed: " + e.message, MessageType.ERROR,
+          project, message("notification.content.authentication.failed", e.message), MessageType.ERROR,
           object : NamedRunnable(message("confirmation.title.clear.authentication.cache")) {
             override fun run() = clearAuthenticationCache(project, null, configuration.configurationDirectory)
           },
@@ -344,11 +353,11 @@ class SvnAuthenticationNotifier(project: Project) :
         val process: () -> Unit = {
           val ind = ProgressManager.getInstance().progressIndicator
           ind?.isIndeterminate = true
-          ind?.text = "Clearing stored credentials in $authDir"
+          ind?.text = message("progress.text.clearing.stored.credentials", authDir)
 
           authDir.directoryStreamIfExists({ it.fileName.toString() in AUTH_KINDS }) {
             for (dir in it) {
-              ind?.text = "Deleting $dir"
+              ind?.text = message("progress.text.deleting", dir)
               dir.delete()
             }
           }
@@ -357,8 +366,8 @@ class SvnAuthenticationNotifier(project: Project) :
           process()
         }
         else {
-          ProgressManager.getInstance()
-            .runProcessWithProgressSynchronously(process, message("button.text.clear.authentication.cache"), false, configuration.project)
+          ProgressManager.getInstance().runProcessWithProgressSynchronously(
+            process, message("progress.title.clear.authentication.cache"), false, configuration.project)
         }
       }
     }

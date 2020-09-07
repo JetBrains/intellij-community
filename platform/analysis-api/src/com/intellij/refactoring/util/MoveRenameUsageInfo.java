@@ -164,7 +164,7 @@ public class MoveRenameUsageInfo extends UsageInfo implements Cloneable {
 
   private Object obtainBranchCopy(ModelBranch branch, Object fieldValue) {
     if (fieldValue instanceof PsiElement) {
-      return branch.obtainPsiCopy((PsiElement)fieldValue);
+      return isPackage((PsiElement)fieldValue) ? fieldValue : branch.obtainPsiCopy((PsiElement)fieldValue);
     }
     if (fieldValue instanceof PsiReference) {
       return branch.obtainReferenceCopy((PsiReference)fieldValue);
@@ -176,13 +176,17 @@ public class MoveRenameUsageInfo extends UsageInfo implements Cloneable {
           TextRange.create(Objects.requireNonNull(((SmartPsiFileRange)fieldValue).getRange())));
     }
     if (fieldValue instanceof SmartPsiElementPointer) {
-      return SmartPointerManager.createPointer(
-        branch.obtainPsiCopy(Objects.requireNonNull(((SmartPsiElementPointer<?>)fieldValue).getElement())));
+      PsiElement element = Objects.requireNonNull(((SmartPsiElementPointer<?>)fieldValue).getElement());
+      return isPackage(element) ? fieldValue : SmartPointerManager.createPointer(branch.obtainPsiCopy(element));
     }
     if (fieldValue instanceof RangeMarker) {
       return obtainMarkerCopy(branch, (RangeMarker)fieldValue);
     }
     return null;
+  }
+
+  private static boolean isPackage(PsiElement element) {
+    return element instanceof PsiDirectoryContainer && element.getContainingFile() == null;
   }
 
   private static RangeMarker obtainMarkerCopy(@NotNull ModelBranch branch, RangeMarker original) {

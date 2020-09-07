@@ -3,6 +3,7 @@
 package com.intellij.history.core;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 
@@ -53,20 +54,11 @@ public final class Paths {
   }
 
   public static Iterable<String> split(String path) {
-    //must be consistent with LocalFileSystemBase.extractRootPath()
-    int prefixLen = 0;
-    if (path.startsWith("//")) {
-      prefixLen = path.indexOf(DELIM, 2);
-      if (prefixLen == -1) prefixLen = path.length();
-    }
-    else if (StringUtil.startsWithChar(path, DELIM)) {
-      prefixLen = 1;
-    }
-    Iterable<String> result = StringUtil.tokenize(path.substring(prefixLen), String.valueOf(DELIM));
-    if (prefixLen > 0) {
-      result = ContainerUtil.concat(Collections.singleton(path.substring(0, prefixLen)), result);
-    }
-    return result;
+    String root = FileUtil.extractRootPath(path);
+    if (root == null) return StringUtil.tokenize(path, String.valueOf(DELIM));
+
+    Iterable<String> tail = StringUtil.tokenize(path.substring(root.length()), String.valueOf(DELIM));
+    return ContainerUtil.concat(Collections.singleton(root), tail);
   }
 
   public static boolean isParent(String parent, String path) {

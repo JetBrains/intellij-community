@@ -39,7 +39,7 @@ public class PyAbstractClassInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyClass(PyClass pyClass) {
+    public void visitPyClass(@NotNull PyClass pyClass) {
       if (isAbstract(pyClass) || PyProtocolsKt.isProtocol(pyClass, myTypeEvalContext)) {
         return;
       }
@@ -59,7 +59,7 @@ public class PyAbstractClassInspection extends PyInspection {
         }
 
         registerProblem(nameNode.getPsi(),
-                        PyPsiBundle.message("INSP.NAME.abstract.class.$0.must.implement", pyClass.getName()),
+                        PyPsiBundle.message("INSP.abstract.class.class.must.implement.all.abstract.methods", pyClass.getName()),
                         quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
       }
     }

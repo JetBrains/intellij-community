@@ -4,6 +4,7 @@ package com.jetbrains.python.console;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.components.JBCheckBox;
 import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.Nls;
@@ -50,7 +51,7 @@ public final class PyConsoleOptionsConfigurable extends SearchableConfigurable.P
     return result.toArray(new Configurable[0]);
   }
 
-  private static Configurable createConsoleChildConfigurable(final @Nls String name,
+  private static Configurable createConsoleChildConfigurable(final @NlsContexts.ConfigurableName String name,
                                                              final PyConsoleSpecificOptionsPanel panel,
                                                              final PyConsoleOptions.PyConsoleSettings settings, final String helpReference) {
     return new SearchableConfigurable() {

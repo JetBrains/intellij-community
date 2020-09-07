@@ -1,3 +1,5 @@
+__docformat__ = "numpy"
+
 def unique(ar, return_index=False, return_inverse=False, return_counts=False):
     """
     Find the unique elements of an array.

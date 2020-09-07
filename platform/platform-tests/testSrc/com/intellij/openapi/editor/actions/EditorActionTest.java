@@ -297,6 +297,12 @@ public class EditorActionTest extends AbstractEditorTest {
     checkResultByText("<selection>bar\nfoo\n<caret></selection>baz");
   }
 
+  public void testReverseLinesNoSelectionSpecialCase() {
+    initText("foo\nbar\n<caret>");
+    executeAction(IdeActions.ACTION_EDITOR_REVERSE_LINES);
+    checkResultByText("bar\nfoo\n<caret>");
+  }
+
   public void testLineStartForASpecificFoldingCase() {
     initText("\nabc<caret>");
     addCollapsedFoldRegion(0, 4, "...");
@@ -333,5 +339,11 @@ public class EditorActionTest extends AbstractEditorTest {
     initText("<selection>line1\nline2\n<caret></selection>line3");
     executeAction(IdeActions.ACTION_EDITOR_ADD_CARET_PER_SELECTED_LINE);
     checkResultByText("line1<caret>\nline2<caret>\nline3");
+  }
+
+  public void testAddCaretPerSelectedLineIncompleteSelection() {
+    initText("<selection>line1\nline2\nli<caret></selection>ne3");
+    executeAction(IdeActions.ACTION_EDITOR_ADD_CARET_PER_SELECTED_LINE);
+    checkResultByText("line1<caret>\nline2<caret>\nline3<caret>");
   }
 }

@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public abstract class SuppressIntentionAction implements Iconable, IntentionAction {
-  private String myText = "";
+  private @IntentionName String myText = "";
   public static final SuppressIntentionAction[] EMPTY_ARRAY = new SuppressIntentionAction[0];
 
   @Override

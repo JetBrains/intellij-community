@@ -25,11 +25,16 @@ public final class GitIntegrationEnabler extends VcsIntegrationEnabler {
     GitCommandResult result = Git.getInstance().init(myProject, projectDir);
     if (result.success()) {
       refreshVcsDir(projectDir, GitUtil.DOT_GIT);
-      vcsNotifier.notifySuccess(GitBundle.message("git.integration.created.git.repository.in", projectDir.getPresentableUrl()));
+      vcsNotifier.notifySuccess("git.repository.created",
+                                "",
+                                GitBundle.message("git.integration.created.git.repository.in", projectDir.getPresentableUrl()));
       return true;
     }
     else {
-      vcsNotifier.notifyError(GitBundle.message("git.integration.could.not.git.init", projectDir.getPresentableUrl()), result.getErrorOutputAsHtmlString(), true);
+      vcsNotifier.notifyError("git.init.error",
+                              GitBundle.message("git.integration.could.not.git.init", projectDir.getPresentableUrl()),
+                              result.getErrorOutputAsHtmlString(),
+                              true);
       LOG.info(result.getErrorOutputAsHtmlString());
       return false;
     }

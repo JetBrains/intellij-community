@@ -790,11 +790,10 @@ public final class ControlFlowUtils {
         usedDescriptors.addAll(getForeignVariableDescriptors((GrControlFlowOwner)element, instructionFilter));
       }
     }
-    Set<ResolvedVariableDescriptor> foreignDescriptors = usedDescriptors.stream()
+    return usedDescriptors.stream()
       .filter(descriptor -> descriptor.getVariable().getContext() != owner &&
                             PsiTreeUtil.getParentOfType(descriptor.getVariable(), GrControlFlowOwner.class) != owner)
-      .collect(Collectors.toSet());
-    return Collections.unmodifiableSet(foreignDescriptors);
+      .collect(Collectors.toUnmodifiableSet());
   }
 
   @Nullable

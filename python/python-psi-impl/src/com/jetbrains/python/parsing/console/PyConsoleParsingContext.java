@@ -178,7 +178,7 @@ public class PyConsoleParsingContext extends ParsingContext {
         else {
           expr.drop();
           command.drop();
-          myBuilder.error(PyPsiBundle.message("PARSE.console.identifier.expected"));
+          myBuilder.error(PyPsiBundle.message("PARSE.expected.identifier"));
           return false;
         }
         while (myBuilder.getTokenType() != null) {

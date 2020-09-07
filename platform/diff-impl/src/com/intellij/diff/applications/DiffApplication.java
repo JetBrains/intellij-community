@@ -51,7 +51,7 @@ final class DiffApplication extends DiffApplicationBase {
   @Override
   public Future<CliResult> processCommand(@NotNull List<String> args, @Nullable String currentDirectory) throws Exception {
     List<String> filePaths = args.subList(1, args.size());
-    List<VirtualFile> files = findFiles(filePaths, currentDirectory);
+    List<VirtualFile> files = findFilesOrThrow(filePaths, currentDirectory);
     Project project = guessProject(files);
 
     CompletableFuture<CliResult> future = new CompletableFuture<>();

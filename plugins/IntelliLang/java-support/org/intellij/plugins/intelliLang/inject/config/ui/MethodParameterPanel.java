@@ -39,6 +39,7 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.intellij.plugins.intelliLang.IntelliLangBundle;
 import org.intellij.plugins.intelliLang.inject.config.MethodParameterInjection;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jetbrains.annotations.NotNull;
@@ -370,7 +371,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
     @Override
     public void actionPerformed(ActionEvent e) {
       final TreeClassChooserFactory factory = TreeClassChooserFactory.getInstance(myProject);
-      final TreeClassChooser chooser = factory.createAllProjectScopeChooser("Select Class");
+      final TreeClassChooser chooser = factory.createAllProjectScopeChooser(IntelliLangBundle.message("dialog.title.select.class"));
       chooser.showDialog();
       final PsiClass psiClass = chooser.getSelected();
       if (psiClass != null) {

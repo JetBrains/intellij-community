@@ -1,8 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.ui.ValidationInfo;
-import org.jetbrains.annotations.CalledInAwt;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,7 +14,7 @@ import java.util.Collection;
 public interface CommitSession {
   CommitSession VCS_COMMIT = new CommitSession() {
     @Override
-    public void execute(@NotNull Collection<Change> changes, @Nullable String commitMessage) {
+    public void execute(@NotNull Collection<Change> changes, @Nullable @NlsSafe String commitMessage) {
     }
   };
 
@@ -27,15 +29,15 @@ public interface CommitSession {
   }
 
   @Nullable
-  default JComponent getAdditionalConfigurationUI(@NotNull Collection<Change> changes, @Nullable String commitMessage) {
+  default JComponent getAdditionalConfigurationUI(@NotNull Collection<Change> changes, @Nullable @NlsSafe String commitMessage) {
     return getAdditionalConfigurationUI();
   }
 
-  default boolean canExecute(Collection<Change> changes, String commitMessage) {
+  default boolean canExecute(Collection<Change> changes, @NlsSafe String commitMessage) {
     return true;
   }
 
-  void execute(@NotNull Collection<Change> changes, @Nullable String commitMessage);
+  void execute(@NotNull Collection<Change> changes, @Nullable @NlsSafe String commitMessage);
 
   default void executionCanceled() {
   }
@@ -44,11 +46,12 @@ public interface CommitSession {
    * @return the ID of the help topic to show for the dialog
    */
   @Nullable
+  @NonNls
   default String getHelpId() {
     return null;
   }
 
-  @CalledInAwt
+  @RequiresEdt
   default ValidationInfo validateFields() {
     return null;
   }

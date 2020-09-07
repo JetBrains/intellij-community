@@ -85,13 +85,15 @@ class LazyConcurrentCollection<T,V> implements Iterable<V> {
   @NotNull
   @Override
   public Iterator<V> iterator() {
-    return new Iterator<V>() {
+    return new Iterator<>() {
       private final Iterator<T> subClassIterator = subClasses.iterator(); // guarded by lock
+
       {
         synchronized (lock) {
           subClassIterator.next(); //skip the baseClass which stored in the subClasses first element
         }
       }
+
       @Override
       public boolean hasNext() {
         synchronized (lock) {

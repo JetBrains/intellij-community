@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages.showErrorDialog
 import com.intellij.openapi.vcs.CommittedChangesProvider
 import com.intellij.openapi.vcs.RepositoryLocation
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys.REMOTE_HISTORY_CHANGED_LISTENER
 import com.intellij.openapi.vcs.VcsDataKeys.REMOTE_HISTORY_LOCATION
 import com.intellij.openapi.vcs.VcsException
@@ -57,7 +58,7 @@ internal class RepositoryLocationCommittedChangesPanel<S : ChangeBrowserSettings
     isDisposed = true
   }
 
-  private inner class LoadCommittedChangesTask : Backgroundable(project, "Loading Changes", true) {
+  private inner class LoadCommittedChangesTask : Backgroundable(project, VcsBundle.message("changes.title.loading.changes"), true) {
     private var error: VcsException? = null
 
     init {
@@ -95,7 +96,8 @@ internal class RepositoryLocationCommittedChangesPanel<S : ChangeBrowserSettings
 
     override fun onSuccess() {
       error?.let {
-        showErrorDialog(myProject, "Error refreshing view: ${it.messages.joinToString("\n")}", "Committed Changes")
+        showErrorDialog(myProject, VcsBundle.message("changes.error.refreshing.view", it.messages.joinToString("\n")),
+                        VcsBundle.message("changes.committed.changes"))
       }
     }
 

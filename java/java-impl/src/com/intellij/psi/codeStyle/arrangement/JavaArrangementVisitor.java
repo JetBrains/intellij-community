@@ -42,7 +42,9 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     MODIFIERS.put(PsiModifier.ABSTRACT, ABSTRACT);
   }
 
+  @SuppressWarnings({"DialogTitleCapitalization", "HardCodedStringLiteral"}) // not visible in UI
   private static final ArrangementSettingsToken ANON_CLASS_PARAMETER_LIST = new ArrangementSettingsToken("Dummy", "not matchable anon class argument list");
+  @SuppressWarnings({"DialogTitleCapitalization", "HardCodedStringLiteral"})
   private static final ArrangementSettingsToken ANONYMOUS_CLASS_BODY = new ArrangementSettingsToken("Dummy", "not matchable anonymous class body");
 
   @NotNull private final Stack<JavaElementArrangementEntry>           myStack   = new Stack<>();

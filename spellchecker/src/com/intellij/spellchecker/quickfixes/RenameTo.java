@@ -8,19 +8,25 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.refactoring.actions.RenameElementAction;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
 import com.intellij.refactoring.rename.RenameHandlerRegistry;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
+import icons.SpellcheckerIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.HashMap;
 
-public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
+import static com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil.findInjectionHost;
+
+public class RenameTo extends LazySuggestions implements SpellCheckerQuickFix {
   public RenameTo(String wordWithTypo) {
     super(wordWithTypo);
   }
@@ -41,12 +47,6 @@ public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
     return null;
   }
 
-
-  @Override
-  @NotNull
-  public Anchor getPopupActionAnchor() {
-    return Anchor.FIRST;
-  }
 
   @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
@@ -91,5 +91,22 @@ public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
 
   public static String getFixName() {
     return SpellCheckerBundle.message("rename.to");
+  }
+
+  @Override
+  public Icon getIcon(int flags) {
+    return SpellcheckerIcons.Spellcheck;
+  }
+
+  @Nullable
+  protected Editor getEditor(PsiElement element, @NotNull Project project) {
+    return findInjectionHost(element) != null
+           ? InjectedLanguageUtil.openEditorFor(element.getContainingFile(), project)
+           : FileEditorManager.getInstance(project).getSelectedTextEditor();
+  }
+
+  @Override
+  public boolean startInWriteAction() {
+    return false;
   }
 }

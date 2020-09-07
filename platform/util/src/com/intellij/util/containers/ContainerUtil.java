@@ -5,10 +5,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.*;
 import com.intellij.util.*;
 import gnu.trove.*;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -619,30 +615,6 @@ public class ContainerUtil {
     };
   }
 
-  public static void trimMap(@NotNull Map<?,?> map) {
-    if (map instanceof Object2ObjectOpenHashMap<?, ?>) {
-      ((Object2ObjectOpenHashMap<?, ?>)map).trim();
-    }
-    else if (map instanceof THashMap) {
-      ((THashMap<?, ?>)map).trimToSize();
-    }
-    else if (map instanceof Object2ObjectOpenCustomHashMap) {
-      ((Object2ObjectOpenCustomHashMap<?, ?>)map).trim();
-    }
-  }
-
-  public static void trimSet(@NotNull Set<?> set) {
-    if (set instanceof ObjectOpenHashSet<?>) {
-      ((ObjectOpenHashSet<?>)set).trim();
-    }
-    else if (set instanceof THashSet) {
-      ((THashSet<?>)set).trimToSize();
-    }
-    else if (set instanceof ObjectOpenCustomHashSet) {
-      ((ObjectOpenCustomHashSet<?>)set).trim();
-    }
-  }
-
   public static final class ImmutableMapBuilder<K, V> {
     private final Map<K, V> myMap = new HashMap<>();
 
@@ -998,16 +970,16 @@ public class ContainerUtil {
   }
 
   @Contract(pure = true)
-  public static @NotNull <T, K, V> Map<K, V> map2Map(T @NotNull [] collection, @NotNull Function<? super T, ? extends Pair<K, V>> mapper) {
+  public static @NotNull <T, K, V> Map<K, V> map2Map(T @NotNull [] collection, @NotNull Function<? super T, ? extends Pair<? extends K, ? extends V>> mapper) {
     return map2Map(Arrays.asList(collection), mapper);
   }
 
   @Contract(pure = true)
   public static @NotNull <T, K, V> Map<K, V> map2Map(@NotNull Collection<? extends T> collection,
-                                                     @NotNull Function<? super T, ? extends Pair<K, V>> mapper) {
+                                                     @NotNull Function<? super T, ? extends Pair<? extends K, ? extends V>> mapper) {
     final Map<K, V> set = new THashMap<>(collection.size());
     for (T t : collection) {
-      Pair<K, V> pair = mapper.fun(t);
+      Pair<? extends K, ? extends V> pair = mapper.fun(t);
       set.put(pair.first, pair.second);
     }
     return set;
@@ -1015,16 +987,16 @@ public class ContainerUtil {
 
   @Contract(pure = true)
   public static @NotNull <T, K, V> Map<K, V> map2MapNotNull(T @NotNull [] collection,
-                                                            @NotNull Function<? super T, ? extends Pair<K, V>> mapper) {
+                                                            @NotNull Function<? super T, ? extends Pair<? extends K, ? extends V>> mapper) {
     return map2MapNotNull(Arrays.asList(collection), mapper);
   }
 
   @Contract(pure = true)
   public static @NotNull <T, K, V> Map<K, V> map2MapNotNull(@NotNull Collection<? extends T> collection,
-                                                            @NotNull Function<? super T, ? extends Pair<K, V>> mapper) {
+                                                            @NotNull Function<? super T, ? extends Pair<? extends K, ? extends V>> mapper) {
     final Map<K, V> set = new THashMap<>(collection.size());
     for (T t : collection) {
-      Pair<K, V> pair = mapper.fun(t);
+      Pair<? extends K, ? extends V> pair = mapper.fun(t);
       if (pair != null) {
         set.put(pair.first, pair.second);
       }
@@ -1142,7 +1114,7 @@ public class ContainerUtil {
   }
 
   @Contract(pure = true)
-  public static @NotNull <T, V> List<V> findAll(T @NotNull [] array, @NotNull Class<V> instanceOf) {
+  public static @NotNull <T, V extends T> List<V> findAll(T @NotNull [] array, @NotNull Class<V> instanceOf) {
     List<V> result = new SmartList<>();
     for (final T t : array) {
       if (instanceOf.isInstance(t)) {
@@ -1154,14 +1126,14 @@ public class ContainerUtil {
   }
 
   @Contract(pure=true)
-  public static <T, V> V @NotNull [] findAllAsArray(T @NotNull [] collection, @NotNull Class<V> instanceOf) {
+  public static <T, V extends T> V @NotNull [] findAllAsArray(T @NotNull [] collection, @NotNull Class<V> instanceOf) {
     List<V> list = findAll(collection, instanceOf);
     V[] array = ArrayUtil.newArray(instanceOf, list.size());
     return list.toArray(array);
   }
 
   @Contract(pure=true)
-  public static <T, V> V @NotNull [] findAllAsArray(@NotNull Collection<? extends T> collection, @NotNull Class<V> instanceOf) {
+  public static <T, V extends T> V @NotNull [] findAllAsArray(@NotNull Collection<? extends T> collection, @NotNull Class<V> instanceOf) {
     List<V> list = findAll(collection, instanceOf);
     V[] array = ArrayUtil.newArray(instanceOf, list.size());
     return list.toArray(array);
@@ -1178,7 +1150,7 @@ public class ContainerUtil {
   }
 
   @Contract(pure = true)
-  public static @NotNull <T, V> List<V> findAll(@NotNull Collection<? extends T> collection, @NotNull Class<V> instanceOf) {
+  public static @NotNull <T, V extends T> List<V> findAll(@NotNull Collection<? extends T> collection, @NotNull Class<V> instanceOf) {
     final List<V> result = new SmartList<>();
     for (final T t : collection) {
       if (instanceOf.isInstance(t)) {
@@ -1198,17 +1170,9 @@ public class ContainerUtil {
     return true;
   }
 
-  public static <T> void removeDuplicates(@NotNull Collection<T> collection) {
-    Set<T> collected = new HashSet<>();
-    for (Iterator<T> iterator = collection.iterator(); iterator.hasNext();) {
-      T t = iterator.next();
-      if (!collected.contains(t)) {
-        collected.add(t);
-      }
-      else {
-        iterator.remove();
-      }
-    }
+  public static void removeDuplicates(@NotNull Collection<?> collection) {
+    Set<Object> collected = new HashSet<>();
+    collection.removeIf(t -> !collected.add(t));
   }
 
   @Contract(pure = true)
@@ -1333,11 +1297,13 @@ public class ContainerUtil {
     };
   }
 
-  public static <E> void swapElements(@NotNull List<E> list, int index1, int index2) {
-    E e1 = list.get(index1);
-    E e2 = list.get(index2);
-    list.set(index1, e2);
-    list.set(index2, e1);
+  public static void swapElements(@NotNull List<?> list, int index1, int index2) {
+    Object e1 = list.get(index1);
+    Object e2 = list.get(index2);
+    //noinspection unchecked,rawtypes
+    ((List)list).set(index1, e2);
+    //noinspection unchecked,rawtypes
+    ((List)list).set(index2, e1);
   }
 
   public static @NotNull <T> List<T> collect(@NotNull Iterator<?> iterator, @NotNull FilteringIterator.InstanceOf<T> instanceOf) {
@@ -1747,7 +1713,7 @@ public class ContainerUtil {
   }
 
   @Contract(pure = true)
-  public static @NotNull <T,U> Iterator<U> mapIterator(final @NotNull Iterator<? extends T> iterator, final @NotNull Function<? super T, ? extends U> mapper) {
+  public static @NotNull <T, U> Iterator<U> mapIterator(final @NotNull Iterator<? extends T> iterator, final @NotNull Function<? super T, ? extends U> mapper) {
     return new Iterator<U>() {
       @Override
       public boolean hasNext() {
@@ -2002,7 +1968,7 @@ public class ContainerUtil {
    * @return read-only list consisting of the elements from the iterable converted by mapping
    */
   @Contract(pure = true)
-  public static @NotNull <T,V> List<V> map(@NotNull Iterable<? extends T> iterable, @NotNull Function<? super T, ? extends V> mapping) {
+  public static @NotNull <T, V> List<V> map(@NotNull Iterable<? extends T> iterable, @NotNull Function<? super T, ? extends V> mapping) {
     List<V> result = new ArrayList<>();
     for (T t : iterable) {
       result.add(mapping.fun(t));
@@ -2016,7 +1982,7 @@ public class ContainerUtil {
    * @return read-only list consisting of the elements from the input collection converted by mapping
    */
   @Contract(pure = true)
-  public static @NotNull <T,V> List<V> map(@NotNull Collection<? extends T> collection, @NotNull Function<? super T, ? extends V> mapping) {
+  public static @NotNull <T, V> List<V> map(@NotNull Collection<? extends T> collection, @NotNull Function<? super T, ? extends V> mapping) {
     if (collection.isEmpty()) return emptyList();
     List<V> list = new ArrayList<>(collection.size());
     for (final T t : collection) {
@@ -2552,6 +2518,17 @@ public class ContainerUtil {
     return -1;
   }
 
+  @Contract(pure=true)
+  public static <T> int lastIndexOfIdentity(@NotNull List<? extends T> list, T object) {
+    for (int i = list.size() - 1; i >= 0; i--) {
+      T t = list.get(i);
+      if (t == object) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
   @Contract(pure = true)
   public static <T, U extends T> U findLastInstance(@NotNull List<? extends T> list, final @NotNull Class<? extends U> clazz) {
     int i = lastIndexOf(list, (Condition<T>)clazz::isInstance);
@@ -2925,7 +2902,7 @@ public class ContainerUtil {
   }
 
   @Contract(pure = true)
-  public static @Nullable <T, C extends Collection<? extends T>> C nullize(@Nullable C collection) {
+  public static @Nullable <C extends Collection<?>> C nullize(@Nullable C collection) {
     return isEmpty(collection) ? null : collection;
   }
 
@@ -3076,17 +3053,15 @@ public class ContainerUtil {
    * Create an immutable copy of the {@code list}.
    * Modifications of the {@code list} have no effect on the returned copy.
    */
-  @SuppressWarnings("unchecked")
   @Contract(value = "_ -> new", pure = true)
   public static @NotNull <T> List<T> freeze(@NotNull List<? extends T> list) {
     if (list.isEmpty()) {
       return Collections.emptyList();
     }
-    else if (list.size() == 1) {
+    if (list.size() == 1) {
       return immutableSingletonList(list.get(0));
     }
-    else {
-      return immutableList((T[])list.toArray());
-    }
+    //noinspection unchecked
+    return immutableList((T[])list.toArray());
   }
 }

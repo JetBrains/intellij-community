@@ -123,6 +123,10 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doSingleFileTest();
   }
 
+  public void testDeleteMethodWithPropertyUsage() {
+    doTest("Foo");
+  }
+
   public void testParameterInHierarchy() {
     doTest("C2");
   }
@@ -272,7 +276,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
     doSingleFileTest();
   }
-  
+
   public void testLastResourceVariableConflictingVar() throws Exception {
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_7);
     doSingleFileTest();
@@ -382,6 +386,27 @@ public class SafeDeleteTest extends MultiFileTestCase {
 
   public void testUpdateContractOnParameterRemoval() throws Exception {
     doSingleFileTest();
+  }
+
+  public void testSealedParent() throws Exception {
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);
+    doSingleFileTest();
+  }
+
+  public void testSealedGrandParent() {
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);
+    doTest("Parent");
+  }
+
+  public void testNonAccessibleGrandParent() {
+    try {
+      doTest("foo.Parent");
+      fail("Conflict was not detected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      String message = e.getMessage();
+      assertEquals("class <b><code>foo.Parent</code></b> has 1 usage that is not safe to delete.", message);
+    }
   }
 
   private void doTest(@NonNls final String qClassName) {

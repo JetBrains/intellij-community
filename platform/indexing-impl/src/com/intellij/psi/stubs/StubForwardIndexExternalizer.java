@@ -28,7 +28,7 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState> im
 
   @NotNull
   public static StubForwardIndexExternalizer<?> getIdeUsedExternalizer() {
-    if (USE_SHAREABLE_STUBS) {
+    if (!USE_SHAREABLE_STUBS) {
       return new StubForwardIndexExternalizer.IdeStubForwardIndexesExternalizer();
     }
     return new FileLocalStubForwardIndexExternalizer();
@@ -87,7 +87,7 @@ public abstract class StubForwardIndexExternalizer<StubKeySerializationState> im
           }
         } else {
           // key is deleted, just properly skip bytes (used while index update)
-          assert indexKey == null;
+          assert indexKey == null : "indexKey '" + indexKey + "' is not a StubIndexKey";
           skipIndexValue(in);
         }
       }

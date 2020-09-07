@@ -140,7 +140,7 @@ public abstract class SelectLocationStep extends WizardStep {
     myNorthPanel.add(toolbarPanel, BorderLayout.NORTH);
     panel.add(myNorthPanel, BorderLayout.NORTH);
     panel.add(ScrollPaneFactory.createScrollPane(myFileSystemTree.getTree()), BorderLayout.CENTER);
-    JLabel dndLabel = new JLabel(FileChooserDialogImpl.DRAG_N_DROP_HINT, SwingConstants.CENTER);
+    JLabel dndLabel = new JLabel(FileChooserDialogImpl.DRAG_N_DROP_HINT.get(), SwingConstants.CENTER);
     dndLabel.setFont(JBUI.Fonts.miniFont());
     dndLabel.setForeground(UIUtil.getLabelDisabledForeground());
     panel.add(dndLabel, BorderLayout.SOUTH);

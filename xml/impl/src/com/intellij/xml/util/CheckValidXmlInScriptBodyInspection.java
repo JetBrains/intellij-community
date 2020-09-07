@@ -54,18 +54,15 @@ public class CheckValidXmlInScriptBodyInspection extends CheckValidXmlInScriptBo
     public String getText() {
       final String character = getXmlCharacter();
 
-      return XmlBundle.message(
-        "unescaped.xml.character.fix.message",
-        character.equals("&") ?
-        XmlBundle.message("unescaped.xml.character.fix.message.parameter") :
-        character
-      );
+      return character.equals("&")
+             ? XmlBundle.message("xml.quickfix.unescaped.xml.character.ampersand")
+             : XmlBundle.message("xml.quickfix.unescaped.xml.character.text", character);
     }
 
     @Override
     @NotNull
     public String getFamilyName() {
-      return getName();
+      return XmlBundle.message("xml.quickfix.unescaped.xml.character.family");
     }
 
     @Override
@@ -83,7 +80,7 @@ public class CheckValidXmlInScriptBodyInspection extends CheckValidXmlInScriptBo
 
       final String xmlCharacter = getXmlCharacter();
       String replacement = xmlCharacter.equals("&") ? AMP_ENTITY_REFERENCE : LT_ENTITY_REFERENCE;
-      replacement = startElement.getText().replace(xmlCharacter,replacement);
+      replacement = startElement.getText().replace(xmlCharacter, replacement);
 
       InjectedLanguageUtil.getTopLevelEditor(editor).getDocument().replaceString(
         range.getStartOffset(),

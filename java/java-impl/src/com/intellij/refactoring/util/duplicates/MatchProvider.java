@@ -41,6 +41,7 @@ public interface MatchProvider {
    */
   @Nullable Boolean hasDuplicates();
 
+  @NlsContexts.Label
   @Nullable String getConfirmDuplicatePrompt(Match match);
 
   @NlsContexts.DialogTitle String getReplaceDuplicatesTitle(int idx, int size);

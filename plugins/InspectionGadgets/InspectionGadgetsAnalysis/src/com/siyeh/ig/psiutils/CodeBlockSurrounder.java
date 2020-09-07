@@ -15,6 +15,7 @@ import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -326,7 +327,7 @@ public abstract class CodeBlockSurrounder {
 
     @Override
     @NotNull PsiStatement replace(@NotNull Project project, @NotNull PsiElementFactory factory) {
-      String replacementText = myVoidMode ? "{a;}" : "{return a;}";
+      @NonNls String replacementText = myVoidMode ? "{a;}" : "{return a;}";
       PsiCodeBlock newBody = factory.createCodeBlockFromText(replacementText, myLambda);
       LambdaUtil.extractSingleExpressionFromBody(newBody).replace(Objects.requireNonNull(myLambda.getBody()));
       newBody = (PsiCodeBlock)myLambda.getBody().replace(newBody);

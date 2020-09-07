@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
+import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.UISettings
 import com.intellij.jdkEx.JdkEx
@@ -8,9 +9,8 @@ import com.intellij.jna.JnaLoader
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.io.WindowsRegistryUtil
-import com.intellij.openapi.wm.impl.IdeMenuBar
-import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.Gray
@@ -63,31 +63,13 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
             return WindowsRegistryUtil.readRegistryValue("HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "ReleaseId")
         }
 
-        fun create(frame: JFrame, ideMenuBar: IdeMenuBar? = null): CustomHeader {
-            return ideMenuBar?.let {
-                createFrameHeader(frame, ideMenuBar)
-            } ?: create(frame as Window)
-        }
-
         fun create(window: Window): CustomHeader {
             return if (window is JFrame) {
-                if(window.rootPane is IdeRootPane) {
-                    createMainFrameHeader(window, null)
-                } else {
-                    createFrameHeader(window)
-                }
+                DefaultFrameHeader(window)
             } else {
                 DialogHeader(window)
             }
         }
-
-        private fun createFrameHeader(frame: JFrame, ideMenuBar: IdeMenuBar? = null): FrameHeader {
-            return ideMenuBar?.let {
-                FrameWithMenuHeader(frame, ideMenuBar)
-            } ?: DefaultFrameHeader(frame)
-        }
-        @JvmStatic
-        fun createMainFrameHeader(frame: JFrame, delegatingMenuBar: IdeMenuBar?): MainFrameHeader = MainFrameHeader(frame, delegatingMenuBar)
 
         private val windowBorderThicknessInPhysicalPx: Int = run {
             // Windows 10 (tested on 1809) determines the window border size by the main display scaling, rounded down. This value is
@@ -241,7 +223,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         background = JBUI.CurrentTheme.CustomFrameDecorations.titlePaneBackground(myActive)
     }
 
-    protected val myCloseAction: Action = CustomFrameAction("Close", AllIcons.Windows.CloseSmall) { close() }
+    protected val myCloseAction: Action = CustomFrameAction(CommonBundle.getCloseButtonText(), AllIcons.Windows.CloseSmall) { close() }
 
     protected fun close() {
         window.dispatchEvent(WindowEvent(window, WindowEvent.WINDOW_CLOSING))
@@ -250,7 +232,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     override fun dispose() {
     }
 
-    protected class CustomFrameAction(name: String, icon: Icon, val action: () -> Unit) : AbstractAction(name, icon) {
+    protected class CustomFrameAction(@NlsActions.ActionText name: String, icon: Icon, val action: () -> Unit) : AbstractAction(name, icon) {
         override fun actionPerformed(e: ActionEvent) = action()
     }
 
@@ -306,36 +288,48 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
             if (!colorizationAffectsBorders)
                 return defaultActiveBorder
 
-            Toolkit.getDefaultToolkit().apply {
-                val colorizationColor = getDesktopProperty("win.dwm.colorizationColor") as Color?
-                if (colorizationColor != null) {
-                    // The border color is a result of an alpha blend of colorization color and #D9D9D9 with the alpha value set by the
-                    // colorization color balance.
-                    var colorizationColorBalance = getDesktopProperty("win.dwm.colorizationColorBalance") as Int?
-                    if (colorizationColorBalance != null) {
-                        // If the desktop setting "Automatically pick an accent color from my background" is active, then the border color
-                        // should be the same as the colorization color read from the registry. To detect that setting, we use the fact that
-                        // colorization color balance is set to 0xfffffff3 when the setting is active.
-                        if (colorizationColorBalance < 0)
-                            colorizationColorBalance = 100
+            try {
+                Toolkit.getDefaultToolkit().apply {
+                    val colorizationColor = getDesktopProperty("win.dwm.colorizationColor") as Color?
+                    if (colorizationColor != null) {
+                        // The border color is a result of an alpha blend of colorization color and #D9D9D9 with the alpha value set by the
+                        // colorization color balance.
+                        var colorizationColorBalance = getDesktopProperty("win.dwm.colorizationColorBalance") as Int?
+                        if (colorizationColorBalance != null) {
+                            if (colorizationColorBalance > 100) {
+                                // May be caused by custom Windows themes installed.
+                                colorizationColorBalance = 100
+                            }
 
-                        return when (colorizationColorBalance) {
-                            0 -> Color(0xD9D9D9)
-                            100 -> colorizationColor
-                            else -> {
-                                val alpha = colorizationColorBalance / 100.0f
-                                val remainder = 1 - alpha
-                                val r = (colorizationColor.red * alpha + 0xD9 * remainder).roundToInt()
-                                val g = (colorizationColor.green * alpha + 0xD9 * remainder).roundToInt()
-                                val b = (colorizationColor.blue * alpha + 0xD9 * remainder).roundToInt()
-                                Color(r, g, b)
+                            // If the desktop setting "Automatically pick an accent color from my background" is active, then the border
+                            // color should be the same as the colorization color read from the registry. To detect that setting, we use the
+                            // fact that colorization color balance is set to 0xfffffff3 when the setting is active.
+                            if (colorizationColorBalance < 0)
+                                colorizationColorBalance = 100
+
+                            return when (colorizationColorBalance) {
+                                0 -> Color(0xD9D9D9)
+                                100 -> colorizationColor
+                                else -> {
+                                    val alpha = colorizationColorBalance / 100.0f
+                                    val remainder = 1 - alpha
+                                    val r = (colorizationColor.red * alpha + 0xD9 * remainder).roundToInt()
+                                    val g = (colorizationColor.green * alpha + 0xD9 * remainder).roundToInt()
+                                    val b = (colorizationColor.blue * alpha + 0xD9 * remainder).roundToInt()
+                                    Color(r, g, b)
+                                }
                             }
                         }
                     }
+
+                    return colorizationColor
+                           ?: getDesktopProperty("win.frame.activeBorderColor") as Color?
+                           ?: menuBarBorderColor
                 }
-                return colorizationColor
-                       ?: getDesktopProperty("win.frame.activeBorderColor") as Color?
-                       ?: menuBarBorderColor
+            } catch (t: Throwable) {
+                // Should be as fail-safe as possible, since any errors during border coloring could lead to an IDE being broken.
+                LOGGER.error(t)
+                return defaultActiveBorder
             }
         }
 

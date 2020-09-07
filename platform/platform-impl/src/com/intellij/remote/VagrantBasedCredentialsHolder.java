@@ -4,12 +4,13 @@ package com.intellij.remote;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class VagrantBasedCredentialsHolder {
-  private static final String VAGRANT_FOLDER = "VAGRANT_FOLDER";
-  private static final String MACHINE_NAME = "MACHINE_NAME";
+  private static final @NonNls String VAGRANT_FOLDER = "VAGRANT_FOLDER";
+  private static final @NonNls String MACHINE_NAME = "MACHINE_NAME";
 
   @NotNull
   private String myVagrantFolder;
@@ -86,6 +87,7 @@ public class VagrantBasedCredentialsHolder {
     return result;
   }
 
+  @NonNls
   @Override
   public String toString() {
     return "VagrantBasedCredentialsHolder{" +

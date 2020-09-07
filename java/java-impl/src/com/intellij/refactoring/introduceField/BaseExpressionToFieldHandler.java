@@ -48,6 +48,7 @@ import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.occurrences.OccurrenceManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -120,9 +121,16 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
     }
     else if (!classes.isEmpty()){
       PsiClass selection = AnonymousTargetClassPreselectionUtil.getPreselection(classes, myParentClass);
+      final @Nls String title;
+      if (myIsConstant) {
+        title = JavaRefactoringBundle.message("popup.title.choose.class.to.introduce.constant");
+      }
+      else {
+        title = JavaRefactoringBundle.message("popup.title.choose.class.to.introduce.field");
+      }
       NavigationUtil.getPsiElementPopup(classes.toArray(PsiClass.EMPTY_ARRAY), new PsiClassListCellRenderer(),
-                                        "Choose class to introduce " + (myIsConstant ? "constant" : "field"),
-                                        new PsiElementProcessor<PsiClass>() {
+                                        title,
+                                        new PsiElementProcessor<>() {
                                           @Override
                                           public boolean execute(@NotNull PsiClass aClass) {
                                             AnonymousTargetClassPreselectionUtil.rememberSelection(aClass, myParentClass);
@@ -441,7 +449,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
   protected abstract boolean accept(ElementToWorkOn elementToWorkOn);
 
   protected ElementToWorkOn.ElementsProcessor<ElementToWorkOn> getElementProcessor(final Project project, final Editor editor) {
-    return new ElementToWorkOn.ElementsProcessor<ElementToWorkOn>() {
+    return new ElementToWorkOn.ElementsProcessor<>() {
       @Override
       public boolean accept(ElementToWorkOn el) {
         return BaseExpressionToFieldHandler.this.accept(el);

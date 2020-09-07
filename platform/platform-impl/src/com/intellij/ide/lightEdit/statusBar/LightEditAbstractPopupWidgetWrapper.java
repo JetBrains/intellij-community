@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
@@ -23,7 +24,12 @@ public abstract class LightEditAbstractPopupWidgetWrapper
   private final NotNullLazyValue<EditorBasedStatusBarPopup> myOriginalInstance =
     NotNullLazyValue.createValue(() -> createOriginalWidget());
 
-  private @Nullable Editor myEditor;
+  private @Nullable      Editor  myEditor;
+  private final @NotNull Project myProject;
+
+  protected LightEditAbstractPopupWidgetWrapper(@NotNull Project project) {
+    myProject = project;
+  }
 
   protected DataContext getEditorDataContext(@NotNull DataContext originalContext) {
     return SimpleDataContext.getSimpleContext(CommonDataKeys.EDITOR.getName(), myEditor, originalContext);
@@ -63,5 +69,9 @@ public abstract class LightEditAbstractPopupWidgetWrapper
   @Override
   public JComponent getComponent() {
     return getOriginalWidget().getComponent();
+  }
+
+  protected @NotNull Project getProject() {
+    return myProject;
   }
 }

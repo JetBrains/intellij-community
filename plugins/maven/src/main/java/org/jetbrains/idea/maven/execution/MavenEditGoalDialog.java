@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
 import com.intellij.ui.EditorTextField;
@@ -112,7 +113,7 @@ public class MavenEditGoalDialog extends DialogWrapper {
     }
   }
 
-  public void setGoals(@NotNull String goals) {
+  public void setGoals(@NotNull @NlsSafe String goals) {
     if (goalsComboBox != null) {
       goalsComboBox.setSelectedItem(goals);
     }
@@ -125,7 +126,7 @@ public class MavenEditGoalDialog extends DialogWrapper {
     return workDirectoryField.getText();
   }
 
-  public void setWorkDirectory(@NotNull String path) {
+  public void setWorkDirectory(@NotNull @NlsSafe String path) {
     workDirectoryField.setText(path);
   }
 

@@ -4,6 +4,7 @@ package com.intellij.tasks.gitlab;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.config.BaseRepositoryEditor;
 import com.intellij.tasks.gitlab.model.GitlabProject;
 import com.intellij.tasks.impl.TaskUiUtil;
@@ -31,7 +32,7 @@ public class GitlabRepositoryEditor extends BaseRepositoryEditor<GitlabRepositor
 
   public GitlabRepositoryEditor(Project project, GitlabRepository repository, Consumer<? super GitlabRepository> changeListener) {
     super(project, repository, changeListener);
-    myPasswordLabel.setText("Token:");
+    myPasswordLabel.setText(TaskBundle.message("label.token"));
 
     // Hide unused login field
     myUsernameLabel.setVisible(false);
@@ -54,9 +55,9 @@ public class GitlabRepositoryEditor extends BaseRepositoryEditor<GitlabRepositor
   @Nullable
   @Override
   protected JComponent createCustomPanel() {
-    myProjectLabel = new JBLabel("Project:", SwingConstants.RIGHT);
+    myProjectLabel = new JBLabel(TaskBundle.message("label.project"), SwingConstants.RIGHT);
     myProjectComboBox = new ComboBox<>(300);
-    myProjectComboBox.setRenderer(SimpleListCellRenderer.create("Set server URL and token first", GitlabProject::getName));
+    myProjectComboBox.setRenderer(SimpleListCellRenderer.create(TaskBundle.message("label.set.server.url.token.first"), GitlabProject::getName));
     myProjectLabel.setLabelFor(myProjectComboBox);
     return new FormBuilder().addLabeledComponent(myProjectLabel, myProjectComboBox).getPanel();
   }
@@ -83,7 +84,7 @@ public class GitlabRepositoryEditor extends BaseRepositoryEditor<GitlabRepositor
 
   private final class FetchProjectsTask extends TaskUiUtil.ComboBoxUpdater<GitlabProject> {
     private FetchProjectsTask() {
-      super(GitlabRepositoryEditor.this.myProject, "Downloading Gitlab projects...", myProjectComboBox);
+      super(GitlabRepositoryEditor.this.myProject, TaskBundle.message("progress.title.downloading.gitlab.projects"), myProjectComboBox);
     }
 
     @Override

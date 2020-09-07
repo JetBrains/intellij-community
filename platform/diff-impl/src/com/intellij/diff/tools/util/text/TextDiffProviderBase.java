@@ -9,13 +9,12 @@ import com.intellij.diff.tools.util.base.TextDiffViewerUtil.IgnorePolicySettingA
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Separator;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
-
-import static com.intellij.openapi.util.text.StringUtil.notNullize;
 
 public class TextDiffProviderBase implements TextDiffProvider {
   private final IgnorePolicySettingAction myIgnorePolicySettingAction;
@@ -59,11 +58,13 @@ public class TextDiffProviderBase implements TextDiffProvider {
   }
 
 
+  @Nls
   @Nullable
   protected String getText(@NotNull IgnorePolicy option) {
     return null;
   }
 
+  @Nls
   @Nullable
   protected String getText(@NotNull HighlightPolicy option) {
     return null;
@@ -79,7 +80,9 @@ public class TextDiffProviderBase implements TextDiffProvider {
     @NotNull
     @Override
     protected String getText(@NotNull IgnorePolicy option) {
-      return notNullize(TextDiffProviderBase.this.getText(option), super.getText(option));
+      String text = TextDiffProviderBase.this.getText(option);
+      if (text != null) return text;
+      return super.getText(option);
     }
   }
 
@@ -92,7 +95,9 @@ public class TextDiffProviderBase implements TextDiffProvider {
     @NotNull
     @Override
     protected String getText(@NotNull HighlightPolicy option) {
-      return notNullize(TextDiffProviderBase.this.getText(option), super.getText(option));
+      String text = TextDiffProviderBase.this.getText(option);
+      if (text != null) return text;
+      return super.getText(option);
     }
   }
 

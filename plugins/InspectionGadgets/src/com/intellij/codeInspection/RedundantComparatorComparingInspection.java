@@ -14,6 +14,7 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.FunctionalExpressionUtils;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +48,7 @@ public class RedundantComparatorComparingInspection extends AbstractBaseJavaLoca
     staticCall(JAVA_UTIL_STREAM_COLLECTORS, "minBy", "maxBy").parameterTypes(JAVA_UTIL_COMPARATOR)
   );
 
-  private static final CallMapper<String> REPLACEMENTS = new CallMapper<String>()
+  private static final @NonNls CallMapper<String> REPLACEMENTS = new CallMapper<String>()
     .register(COMPARATOR_COMPARING, "thenComparing")
     .register(staticCall(JAVA_UTIL_COMPARATOR, "comparingInt").parameterCount(1), "thenComparingInt")
     .register(staticCall(JAVA_UTIL_COMPARATOR, "comparingLong").parameterCount(1), "thenComparingLong")

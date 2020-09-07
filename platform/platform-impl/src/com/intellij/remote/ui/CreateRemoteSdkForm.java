@@ -12,6 +12,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remote.CredentialsType;
 import com.intellij.remote.RemoteSdkAdditionalData;
@@ -27,10 +29,7 @@ import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.AncestorEvent;
@@ -433,7 +432,7 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
     myHelpersPathField.setText(data.getHelpersPath());
   }
 
-  public void updateHelpersPath(String helpersPath) {
+  public void updateHelpersPath(@NlsSafe String helpersPath) {
     myHelpersPathField.setText(helpersPath);
   }
 
@@ -442,10 +441,11 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
     return myCredentialsType2Handler.get(connectionType).getRadioButton().isSelected(); // TODO: may encapsutate
   }
 
-  public String getValidationError() {
+  public @NlsContexts.DialogMessage String getValidationError() {
     return myStatusPanel.getError();
   }
 
+  @NlsContexts.DialogMessage
   @Nullable
   public String validateFinal() {
     return myCredentialsType2Handler.get(myConnectionType).validateFinal();
@@ -475,13 +475,13 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
 
     void onSelected();
 
-    @Nullable String getInterpreterPath();
+    @NlsSafe @Nullable String getInterpreterPath();
 
     void setInterpreterPath(@Nullable String interpreterPath);
 
     @Nullable ValidationInfo validate();
 
-    @Nullable String validateFinal();
+    @NlsContexts.DialogMessage @Nullable String validateFinal();
 
     boolean isBrowsingAvailable();
   }
@@ -490,7 +490,7 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
     @NotNull private final JBRadioButton myTypeButton;
     @NotNull private final JPanel myPanel;
 
-    private UnsupportedCredentialsTypeHandler(@Nullable String credentialsTypeName) {
+    private UnsupportedCredentialsTypeHandler(@NlsContexts.RadioButton @Nullable String credentialsTypeName) {
       myTypeButton = new JBRadioButton(credentialsTypeName);
       myPanel = new JPanel(new BorderLayout());
       String errorMessage = ExecutionBundle.message("remote.interpreter.cannot.load.interpreter.message", credentialsTypeName);
@@ -528,6 +528,7 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
       return null;
     }
 
+    @NlsContexts.DialogMessage
     @Nullable
     @Override
     public String validateFinal() {
@@ -602,6 +603,7 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
       return myEditor.validate();
     }
 
+    @NlsContexts.DialogMessage
     @Nullable
     @Override
     public String validateFinal() {
@@ -847,7 +849,7 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
   }
 
   @TestOnly
-  public void setInterpreterPath(@NotNull String interpreterPath) {
+  public void setInterpreterPath(@NlsSafe @NotNull String interpreterPath) {
     myInterpreterPathField.setText(interpreterPath);
   }
 

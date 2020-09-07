@@ -60,7 +60,7 @@ public class TreeJavaClassChooserDialog extends AbstractTreeClassChooserDialog<P
       return null;
     }
     else {
-      return new Filter<PsiClass>() {
+      return new Filter<>() {
         @Override
         public boolean isAccepted(final PsiClass element) {
           return ReadAction.compute(() -> classFilter.isAccepted(element));

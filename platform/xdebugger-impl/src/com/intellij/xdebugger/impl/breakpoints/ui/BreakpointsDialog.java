@@ -12,6 +12,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.*;
 import com.intellij.ui.popup.util.DetailController;
 import com.intellij.ui.popup.util.DetailViewImpl;
@@ -262,7 +264,7 @@ public class BreakpointsDialog extends DialogWrapper {
             AnAction[] res = new AnAction[groups.size() + 3];
             int i = 0;
             res[i++] = new MoveToGroupAction(null);
-            for (String group : groups) {
+            for (@NlsSafe String group : groups) {
               res[i++] = new MoveToGroupAction(group);
             }
             res[i++] = new Separator();
@@ -321,8 +323,8 @@ public class BreakpointsDialog extends DialogWrapper {
         }
         return false;
       });
-    JPanel decoratorPanel = decorator.createPanel();
     myToggleRuleActions.forEach(decorator::addExtraAction);
+    JPanel decoratorPanel = decorator.createPanel();
 
     myTreeController.setTreeView(tree);
 
@@ -451,7 +453,7 @@ public class BreakpointsDialog extends DialogWrapper {
     private final String myGroup;
     private final boolean myNewGroup;
 
-    private MoveToGroupAction(String group) {
+    private MoveToGroupAction(@NlsActions.ActionText String group) {
       super(group == null ? XDebuggerBundle.message("breakpoints.dialog.no.group") : group);
       myGroup = group;
       myNewGroup = false;

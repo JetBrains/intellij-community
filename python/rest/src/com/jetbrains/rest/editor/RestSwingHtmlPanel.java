@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.rest.editor;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,7 +20,7 @@ public class RestSwingHtmlPanel implements RestPreviewPanel {
   }
 
   @Override
-  public void setHtml(@NotNull String html) {
+  public void setHtml(@NotNull @NlsSafe String html) {
     final int body = html.indexOf("<body>");
     if (body > 0) {
       html = "<html>" + html.substring(body);

@@ -39,7 +39,7 @@ final class HgIncomingOutgoingWidget extends EditorBasedWidget implements Status
   @NotNull private final Icon myEnabledIcon;
   @NotNull private final Icon myDisabledIcon;
 
-  private volatile String myTooltip = "";
+  private volatile @Nls String myTooltip = "";
   private Icon myCurrentIcon;
 
   public HgIncomingOutgoingWidget(@NotNull HgVcs vcs, boolean isIncoming) {

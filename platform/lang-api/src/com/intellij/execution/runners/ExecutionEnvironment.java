@@ -44,6 +44,7 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
   private final ProgramRunner<?> myRunner;
   private long myExecutionId = 0;
   @Nullable private DataContext myDataContext;
+  @Nullable private String myModulePath;
 
   @Nullable
   private ProgramRunner.Callback callback;
@@ -260,6 +261,16 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
   @Nullable
   public DataContext getDataContext() {
     return myDataContext;
+  }
+
+
+  void setModulePath(@NotNull String modulePath) {
+    this.myModulePath = modulePath;
+  }
+
+  @Nullable
+  public String getModulePath() {
+    return myModulePath;
   }
 
   private static final class CachingDataContext implements DataContext {

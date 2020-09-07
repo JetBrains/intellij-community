@@ -770,7 +770,7 @@ public final class FindManagerImpl extends FindManager {
         String content = stringToFind + " produced stack overflow when matching content of the file";
         LOG.info(content);
         GROUP.createNotification(FindBundle.message("notification.title.regular.expression.failed.to.match"),
-                                     content + " " + file.getPath(),
+                                     content + " " + file.getPresentableUrl(),
                                  NotificationType.ERROR,
                                  null
                                    ).notify(myProject);
@@ -1021,6 +1021,7 @@ public final class FindManagerImpl extends FindManager {
       }
       editor.getScrollingModel().scrollToCaret(scrollType);
       editor.putUserData(HIGHLIGHTER_WAS_NOT_FOUND_KEY, null);
+      EditorSearchSession.logSelectionUpdate();
       return true;
     }
 

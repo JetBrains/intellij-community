@@ -6,6 +6,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
@@ -28,7 +29,7 @@ public class LightEditNonExistentFileNotificationProvider extends EditorNotifica
                                                          @NotNull FileEditor fileEditor,
                                                          @NotNull Project project) {
     if (LightEdit.owns(project)) {
-      String creationMessage = file.getUserData(LightEditUtil.CREATION_MESSAGE);
+      @NlsSafe String creationMessage = file.getUserData(LightEditUtil.CREATION_MESSAGE);
       if (creationMessage != null) {
         EditorNotificationPanel notificationPanel = new EditorNotificationPanel().text(creationMessage);
         notificationPanel.createActionLabel(ApplicationBundle.message("light.edit.file.creation.failed.hide.message"), () -> {

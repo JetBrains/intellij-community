@@ -27,6 +27,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -169,7 +170,7 @@ public class TestStatusLine extends NonOpaquePanel {
     myProgressPanel.setPreferredSize(size);
   }
 
-  public void setText(String progressStatus_text) {
+  public void setText(@Nls String progressStatus_text) {
     UIUtil.invokeLaterIfNeeded(() -> {
       myState.clear();
       myState.append(progressStatus_text);

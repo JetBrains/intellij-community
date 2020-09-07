@@ -50,7 +50,7 @@ public class XmlEnclosingTagUnwrapper implements Unwrapper {
   @NotNull
   @Override
   public String getDescription(@NotNull PsiElement e) {
-    return XmlBundle.message("unwrap.enclosing.tag.name.action.name", ((XmlTag)e).getName());
+    return XmlBundle.message("xml.action.unwrap.enclosing.tag.name.description", ((XmlTag)e).getName());
   }
 
   @Override

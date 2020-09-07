@@ -35,9 +35,9 @@ public class DarculaButtonPainter implements Border, UIResource {
 
       boolean isSmallComboButton = isSmallVariant(c);
       int diam = HELP_BUTTON_DIAMETER.get();
-      float arc = BUTTON_ARC.getFloat();
       float lw = LW.getFloat();
       float bw = isSmallComboButton ? 0 : BW.getFloat();
+      float arc = isTag(c) ? height - bw * 2 - lw * 2: BUTTON_ARC.getFloat();
 
       Rectangle r = new Rectangle(x, y, width, height);
       boolean paintComboFocus = isSmallComboButton && c.isFocusable() && c.hasFocus();
@@ -57,6 +57,9 @@ public class DarculaButtonPainter implements Border, UIResource {
         if (c.hasFocus()) {
           if (UIUtil.isHelpButton(c)) {
             paintFocusOval(g2, (r.width - diam) / 2.0f, (r.height - diam) / 2.0f, diam, diam);
+          }
+          else if (isTag(c)) {
+            paintFocusTag(g2, r.width, r.height);
           }
           else {
             Outline type = isDefaultButton((JComponent)c) ? Outline.defaultButton : Outline.focus;

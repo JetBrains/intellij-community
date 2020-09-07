@@ -104,7 +104,7 @@ public final class TemplateResource implements Serializable {
     this.template = template;
   }
 
-  public String getFileName() {
+  public @NlsSafe String getFileName() {
     return fileName;
   }
 

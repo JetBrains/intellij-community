@@ -64,7 +64,7 @@ public abstract class AbstractJavaInplaceIntroduceTest extends AbstractInplaceIn
     return introduceHandler.getInplaceIntroducer();
   }
   
-  protected void doTestInsideInjection(Consumer<AbstractInplaceIntroducer> pass) {
+  protected void doTestInsideInjection(Consumer<? super AbstractInplaceIntroducer> pass) {
     MyTestInjector testInjector = new MyTestInjector(getPsiManager());
     testInjector.injectAll(getTestRootDisposable());
     doTest(pass);

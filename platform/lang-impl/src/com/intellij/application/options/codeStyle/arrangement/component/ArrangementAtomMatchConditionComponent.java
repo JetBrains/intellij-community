@@ -19,6 +19,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +69,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
   @NotNull private final Set<ArrangementSettingsToken> myAvailableTokens = new HashSet<>();
 
   @NotNull private final BorderStrategy myBorderStrategy;
-  @NotNull private final String myText;
+  @NotNull private final @Nls String myText;
   @NotNull private final ArrangementColorsProvider myColorsProvider;
   @NotNull private final RoundedLineBorder myBorder;
   @NotNull private final ArrangementAtomMatchCondition myCondition;

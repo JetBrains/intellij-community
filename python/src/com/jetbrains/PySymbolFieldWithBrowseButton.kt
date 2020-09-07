@@ -24,6 +24,7 @@ import com.jetbrains.extensions.python.toPsi
 import com.jetbrains.extensions.ContextAnchor
 import com.jetbrains.extensions.QNameResolveContext
 import com.jetbrains.extensions.resolveToElement
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyGotoSymbolContributor
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyTreeChooserDialog
@@ -140,7 +141,7 @@ private class PyNameCompletionProvider(private val contextAnchor: ContextAnchor,
 }
 
 private class PySymbolChooserDialog(project: Project, scope: GlobalSearchScope, private val filter: ((PsiElement) -> Boolean)?)
-  : PyTreeChooserDialog<PsiNamedElement>("Choose Symbol", PsiNamedElement::class.java,
+  : PyTreeChooserDialog<PsiNamedElement>(PyBundle.message("python.symbol.chooser.dialog.title"), PsiNamedElement::class.java,
                                          project,
                                          scope,
                                          TreeChooser.Filter { filter?.invoke(it) ?: true }, null) {

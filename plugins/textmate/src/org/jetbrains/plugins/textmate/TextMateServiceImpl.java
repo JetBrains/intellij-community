@@ -19,6 +19,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
 import gnu.trove.THashMap;
@@ -49,13 +50,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class TextMateServiceImpl extends TextMateService {
+public final class TextMateServiceImpl extends TextMateService {
   private boolean ourBuiltinBundlesDisabled;
 
   private final AtomicBoolean myInitialized = new AtomicBoolean(false);
 
-  private final Map<CharSequence, TextMateTextAttributesAdapter> myCustomHighlightingColors = new THashMap<>();
-  private final Map<String, CharSequence> myExtensionsMapping = new THashMap<>();
+  private final Map<CharSequence, TextMateTextAttributesAdapter> myCustomHighlightingColors = CollectionFactory.createSmallMemoryFootprintMap();
+  private final Map<String, CharSequence> myExtensionsMapping = CollectionFactory.createSmallMemoryFootprintMap();
 
   private final PlistReader myPlistReader = new CompositePlistReader();
   private final BundleFactory myBundleFactory = new BundleFactory(myPlistReader);
@@ -116,7 +117,7 @@ public class TextMateServiceImpl extends TextMateService {
       Runnable update = () -> {
         myExtensionsMapping.clear();
         myExtensionsMapping.putAll(newExtensionsMapping);
-        ContainerUtil.trimMap(myExtensionsMapping);
+        CollectionFactory.trimMap(myExtensionsMapping);
       };
 
       if (fireEvents) {
@@ -127,7 +128,7 @@ public class TextMateServiceImpl extends TextMateService {
       }
     }
     mySyntaxTable.compact();
-    ContainerUtil.trimMap(myCustomHighlightingColors);
+    CollectionFactory.trimMap(myCustomHighlightingColors);
   }
 
   private static void fireFileTypesChangedEvent(@NotNull Runnable update) {

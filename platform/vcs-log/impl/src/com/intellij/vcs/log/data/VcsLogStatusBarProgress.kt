@@ -15,12 +15,12 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.util.Alarm
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList
 import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
 import com.intellij.vcs.log.util.VcsLogUtil
-import org.jetbrains.annotations.CalledInAwt
 
 class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, VcsLogProvider>,
                               vcsLogProgress: VcsLogProgress) : Disposable {
@@ -37,7 +37,7 @@ class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, V
     vcsLogProgress.addProgressIndicatorListener(MyProgressListener(), this)
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun start() {
     alarm.value.addRequest(Runnable {
       if (progress == null) {
@@ -46,7 +46,7 @@ class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, V
     }, Registry.intValue("vcs.log.index.progress.delay.millis"))
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun stop() {
     if (alarm.isInitialized()) alarm.value.cancelAllRequests()
     progress?.let { it.finish(it.taskInfo) }

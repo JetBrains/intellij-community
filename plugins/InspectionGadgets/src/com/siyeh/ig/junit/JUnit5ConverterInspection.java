@@ -7,6 +7,7 @@ import com.intellij.codeInsight.intention.impl.AddOnDemandStaticImportAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.actions.CleanupInspectionUtil;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
@@ -48,7 +49,7 @@ public class JUnit5ConverterInspection extends BaseInspection {
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    return "#ref can be JUnit 5 test";
+    return InspectionGadgetsBundle.message("junit5.converter.problem");
   }
 
   @Override
@@ -179,8 +180,9 @@ public class JUnit5ConverterInspection extends BaseInspection {
               return true;
             });
             if (!inheritors.isEmpty()) {
-              conflicts.putValue(psiClass, "Class " + RefactoringUIUtil.getDescription(psiClass, true) + " can't be converted to JUnit 5, cause there are incompatible inheritor(s): " +
-                                           StringUtil.join(inheritors, aClass -> aClass.getQualifiedName(), ", "));
+              @Nls final String problem =
+                JavaBundle.message("cant.be.junit5.conflict.message", RefactoringUIUtil.getDescription(psiClass, true), StringUtil.join(inheritors, aClass -> aClass.getQualifiedName(), ", "));
+              conflicts.putValue(psiClass, problem);
             }
           }
         }
@@ -218,7 +220,8 @@ public class JUnit5ConverterInspection extends BaseInspection {
           }
         }
         super.performRefactoring(migrateUsages.toArray(UsageInfo.EMPTY_ARRAY));
-        CleanupInspectionUtil.getInstance().applyFixes(myProject, "Convert Assertions", descriptions, JUnit5AssertionsConverterInspection.ReplaceObsoleteAssertsFix.class, false);
+        CleanupInspectionUtil.getInstance().applyFixes(myProject, InspectionGadgetsBundle.message("junit5.converter.fixes.presentation.text"),
+                                                       descriptions, JUnit5AssertionsConverterInspection.ReplaceObsoleteAssertsFix.class, false);
       }
 
       @Override

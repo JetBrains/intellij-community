@@ -6,6 +6,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
@@ -70,7 +71,7 @@ public class ImageTagManager implements PersistentStateComponent<ImageTagManager
     @Property(surroundWithTag = false)
     @MapAnnotation(surroundKeyWithTag = false, surroundWithTag = false,
       entryTagName = "tag", keyAttributeName = "name", valueAttributeName = "values")
-    public final Map<String, Files> myTags = new LinkedHashMap<>();
+    public final Map<@NlsSafe String, Files> myTags = new LinkedHashMap<>();
 
     @Property(surroundWithTag = false)
     @Tag("files")

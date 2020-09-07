@@ -318,7 +318,7 @@ final class EventLogConsole {
   }
 
   private void highlightNotification(final Notification notification,
-                                     String message,
+                                     @NlsContexts.Tooltip String message,
                                      final int startLine,
                                      final int endLine,
                                      int titleOffset,

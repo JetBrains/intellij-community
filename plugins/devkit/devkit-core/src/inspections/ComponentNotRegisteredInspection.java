@@ -137,7 +137,7 @@ public class ComponentNotRegisteredInspection extends DevKitJvmInspection {
     // if directly implements BaseComponent, check that registered as some component
     if (checkedClass.isInheritor(baseComponentClass, false)) {
       if (findRegistrationType(checkedClass, RegistrationCheckerUtil.RegistrationType.ALL_COMPONENTS) == null && canFix(checkedClass)) {
-        sink.highlight(DevKitBundle.message("inspections.component.not.registered.message", "Component"));
+        sink.highlight(DevKitBundle.message("inspections.component.not.registered.message", "Component")); //NON-NLS
       }
       return;
     }

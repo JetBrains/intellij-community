@@ -56,7 +56,7 @@ public final class FileColorsModel implements Cloneable {
 
   private void initPredefinedAndGlobalScopes() {
     for (NamedScope scope : CustomScopesAggregator.getAllCustomScopes(myProject)) {
-      String scopeName = scope.getName();
+      String scopeName = scope.getScopeId();
       String colorName = scope.getDefaultColorName();
 
       if (StringUtil.isEmpty(colorName)) continue;

@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.*;
@@ -67,7 +68,7 @@ public class MethodGroupingRule extends SingleParentUsageGroupingRule {
 
   private static class MethodUsageGroup implements UsageGroup, TypeSafeDataProvider {
     private final SmartPsiElementPointer<PsiMethod> myMethodPointer;
-    private final String myName;
+    private final @NlsSafe String myName;
     private final Icon myIcon;
     private final Project myProject;
 

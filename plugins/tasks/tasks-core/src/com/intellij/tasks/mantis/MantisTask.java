@@ -8,6 +8,7 @@ import com.intellij.tasks.mantis.model.IssueData;
 import com.intellij.tasks.mantis.model.IssueHeaderData;
 import com.intellij.util.containers.ContainerUtil;
 import icons.TasksCoreIcons;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,8 +17,8 @@ import java.util.Date;
 
 public class MantisTask extends Task {
   private final String myId;
-  private final String mySummary;
-  private final String myDescription;
+  private final @Nls String mySummary;
+  private final @Nls String myDescription;
   private final Date myUpdated;
   private final Date myCreated;
   private final boolean myClosed;
@@ -51,9 +52,8 @@ public class MantisTask extends Task {
           return data1.getReporter().getName();
         }
 
-        @Nullable
         @Override
-        public Date getDate() {
+        public @NotNull Date getDate() {
           return data1.getDate_submitted().getTime();
         }
       });

@@ -15,15 +15,16 @@
  */
 package org.jetbrains.jps.model.ex;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsEventDispatcher;
 import org.jetbrains.jps.model.JpsNamedElement;
 
 public abstract class JpsNamedCompositeElementBase<Self extends JpsNamedCompositeElementBase<Self>> extends JpsCompositeElementBase<Self>
   implements JpsNamedElement {
-  private String myName;
+  private @NlsSafe String myName;
 
-  protected JpsNamedCompositeElementBase(@NotNull String name) {
+  protected JpsNamedCompositeElementBase(@NlsSafe @NotNull String name) {
     super();
     myName = name;
   }
@@ -46,7 +47,7 @@ public abstract class JpsNamedCompositeElementBase<Self extends JpsNamedComposit
   }
 
   @Override
-  public void setName(@NotNull String name) {
+  public void setName(@NlsSafe @NotNull String name) {
     if (!myName.equals(name)) {
       String oldName = myName;
       myName = name;

@@ -26,10 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
-import java.nio.file.PathMatcher;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -174,7 +171,13 @@ public final class JsonSchemaCatalogManager {
 
   private static @Nullable String findMatchedUrl(@NotNull List<FileMatcher> matchers, @Nullable String filePath) {
     if (filePath == null) return null;
-    Path path = Paths.get(filePath);
+    Path path;
+    try {
+      path = Paths.get(filePath);
+    }
+    catch (InvalidPathException e) {
+      return null;
+    }
     for (FileMatcher matcher : matchers) {
       if (matcher.matches(path)) {
         return matcher.myEntry.getUrl();

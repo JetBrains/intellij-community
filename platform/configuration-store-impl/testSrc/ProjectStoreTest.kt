@@ -17,10 +17,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.io.readChars
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
 import org.intellij.lang.annotations.Language
 import org.junit.ClassRule
 import org.junit.Rule
@@ -28,7 +25,6 @@ import org.junit.Test
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.nio.file.Paths
-import java.util.concurrent.TimeUnit
 import kotlin.properties.Delegates
 
 internal class ProjectStoreTest {
@@ -215,24 +211,6 @@ internal class ProjectStoreTest {
 </project>""".trimIndent()
       assertThat(project.stateStore.storageManager.expandMacro(PROJECT_CONFIG_DIR).resolve(obsoleteStorageBean.file)).isEqualTo(
         expected)
-    }
-  }
-
-  @Test
-  fun `save cancelled because project disposed`() = runBlocking {
-    withTimeout(TimeUnit.SECONDS.toMillis(10)) {
-      loadAndUseProjectInLoadComponentStateMode(tempDirManager, {
-        it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/misc.xml", iprFileContent)
-        Paths.get(it.path)
-      }) { project ->
-        val testComponent = test(project as ProjectEx)
-        testComponent.state!!.AAvalue = "s"
-        launch {
-          project.stateStore.save()
-        }
-
-        delay(50)
-      }
     }
   }
 

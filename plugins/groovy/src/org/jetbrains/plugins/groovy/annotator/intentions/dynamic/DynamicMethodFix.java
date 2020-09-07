@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -33,11 +33,11 @@ public class DynamicMethodFix implements IntentionAction, LowPriorityAction {
   @Override
   @NotNull
   public String getText() {
-    return GroovyBundle.message("add.dynamic.method") + mySignature;
+    return GroovyBundle.message("add.dynamic.method.0", mySignature);
   }
 
   private String calcSignature(final PsiType[] argTypes) {
-    StringBuilder builder = new StringBuilder(" '").append(myReferenceExpression.getReferenceName());
+    StringBuilder builder = new StringBuilder().append(myReferenceExpression.getReferenceName());
     builder.append("(");
 
     for (int i = 0; i < argTypes.length; i++) {
@@ -54,7 +54,6 @@ public class DynamicMethodFix implements IntentionAction, LowPriorityAction {
       }
     }
     builder.append(")");
-    builder.append("' ");
     return builder.toString();
   }
 

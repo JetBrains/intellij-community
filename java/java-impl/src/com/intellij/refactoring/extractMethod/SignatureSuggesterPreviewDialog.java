@@ -30,12 +30,16 @@ import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
 class SignatureSuggesterPreviewDialog extends DialogWrapper {
+  private static final @NonNls String DIFF_PLACE = "ExtractSignature";
+
   private final PsiMethod myOldMethod;
   private final PsiMethod myNewMethod;
   private final PsiMethodCallExpression myOldCall;
@@ -72,12 +76,15 @@ class SignatureSuggesterPreviewDialog extends DialogWrapper {
     final VirtualFile file = PsiUtilCore.getVirtualFile(myOldMethod);
 
     DiffContentFactory contentFactory = DiffContentFactory.getInstance();
-    DocumentContent oldContent = contentFactory.create(myOldMethod.getText() + "\n\n\nmethod call:\n " + myOldCall.getText(), file);
-    DocumentContent newContent = contentFactory.create(myNewMethod.getText() + "\n\n\nmethod call:\n " + myNewCall.getText(), file);
-    SimpleDiffRequest request = new SimpleDiffRequest(null, oldContent, newContent, "Before", "After");
+    @Nls String methodCallPrefix = JavaRefactoringBundle.message("suggest.signature.preview.method.call.prefix");
+    DocumentContent oldContent = contentFactory.create(myOldMethod.getText() + "\n\n\n" + methodCallPrefix + "\n " + myOldCall.getText(), file);
+    DocumentContent newContent = contentFactory.create(myNewMethod.getText() + "\n\n\n" + methodCallPrefix + "\n " + myNewCall.getText(), file);
+    SimpleDiffRequest request = new SimpleDiffRequest(null, oldContent, newContent,
+                                                      JavaRefactoringBundle.message("suggest.signature.preview.title.before"),
+                                                      JavaRefactoringBundle.message("suggest.signature.preview.after.title"));
 
     DiffRequestPanel diffPanel = DiffManager.getInstance().createRequestPanel(project, getDisposable(), null);
-    diffPanel.putContextHints(DiffUserDataKeys.PLACE, "ExtractSignature");
+    diffPanel.putContextHints(DiffUserDataKeys.PLACE, DIFF_PLACE);
     diffPanel.setRequest(request);
 
     final JPanel panel = new JPanel(new BorderLayout());

@@ -77,12 +77,11 @@ public final class ConstructorInsertHandler implements InsertHandler<LookupEleme
 
     OffsetKey insideRef = context.trackOffset(context.getTailOffset(), false);
 
-    final PsiElement position = SmartCompletionDecorator.getPosition(context, delegate);
+    PsiElement position = context.getFile().findElementAt(context.getStartOffset());
     if (position == null) return;
 
-    final PsiExpression enclosing = PsiTreeUtil.getContextOfType(position, PsiExpression.class, true);
-    final PsiAnonymousClass anonymousClass = PsiTreeUtil.getParentOfType(position, PsiAnonymousClass.class);
-    final boolean inAnonymous = anonymousClass != null && anonymousClass.getParent() == enclosing;
+    PsiAnonymousClass anonymousClass = PsiTreeUtil.getParentOfType(position, PsiAnonymousClass.class);
+    boolean inAnonymous = anonymousClass != null && PsiTreeUtil.isAncestor(anonymousClass.getBaseClassReference(), position, false);
     if (delegate instanceof PsiTypeLookupItem) {
       if (context.getDocument().getTextLength() > context.getTailOffset() &&
           context.getDocument().getCharsSequence().charAt(context.getTailOffset()) == '<') {
@@ -187,7 +186,7 @@ public final class ConstructorInsertHandler implements InsertHandler<LookupEleme
       return false;
     }
 
-    PsiElement position = SmartCompletionDecorator.getPosition(context, delegate);
+    PsiElement position = context.getFile().findElementAt(context.getStartOffset());
     return position != null &&
            ((PsiTypeLookupItem)delegate).calcGenerics(position, context).isEmpty() &&
            context.getCompletionChar() != '(';

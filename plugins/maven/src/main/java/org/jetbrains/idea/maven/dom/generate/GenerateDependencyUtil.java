@@ -8,6 +8,7 @@ import com.intellij.codeInsight.generation.PsiElementMemberChooserObject;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -39,7 +40,7 @@ public final class GenerateDependencyUtil {
       new MemberChooser<MavenDomProjectModelMember>(memberCandidates, true, true, project) {
         @Override
         protected ShowContainersAction getShowContainersAction() {
-          return new ShowContainersAction(MavenDomBundle.message("chooser.show.project.files"), MavenIcons.MavenProject);
+          return new ShowContainersAction(MavenDomBundle.messagePointer("chooser.show.project.files"), MavenIcons.MavenProject);
         }
 
         @Override
@@ -79,7 +80,7 @@ public final class GenerateDependencyUtil {
       append(sb, myDependency.getArtifactId().getStringValue());
       append(sb, myDependency.getVersion().getStringValue());
 
-      return sb.toString();
+      return sb.toString(); //NON-NLS
     }
 
     private static void append(StringBuffer sb, String str) {
@@ -115,7 +116,7 @@ public final class GenerateDependencyUtil {
 
     private static class MavenDomProjectModelFileMemberChooserObjectBase extends PsiElementMemberChooserObject {
 
-      MavenDomProjectModelFileMemberChooserObjectBase(@NotNull final PsiFile psiFile, @Nullable String projectName) {
+      MavenDomProjectModelFileMemberChooserObjectBase(@NotNull final PsiFile psiFile, @Nullable @NlsSafe String projectName) {
         super(psiFile, StringUtil.isEmptyOrSpaces(projectName) ? psiFile.getName() : projectName, MavenIcons.MavenProject);
       }
     }

@@ -20,7 +20,7 @@ final class JBProtocolCheckoutCommand extends JBProtocolCommand {
   private static final String REPOSITORY_NAME_KEY = "checkout.repo";
 
   JBProtocolCheckoutCommand() {
-    super("checkout");
+    super("checkout"); //NON-NLS
   }
 
 

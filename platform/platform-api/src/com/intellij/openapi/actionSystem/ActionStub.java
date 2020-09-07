@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartFMap;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +30,7 @@ public final class ActionStub extends AnAction implements ActionStubBase {
   private final PluginDescriptor myPlugin;
   private final String myIconPath;
   private SmartFMap<String, Supplier<String>> myActionTextOverrides = SmartFMap.emptyMap();
+  private final SmartList<Supplier<String>> mySynonyms = new SmartList<>();
 
   public ActionStub(@NotNull String actionClass,
                     @NotNull String id,
@@ -51,6 +53,11 @@ public final class ActionStub extends AnAction implements ActionStubBase {
 
   public void copyActionTextOverride(@NotNull String fromPlace, @NotNull String toPlace) {
     myActionTextOverrides = myActionTextOverrides.plus(toPlace, myActionTextOverrides.get(fromPlace));
+  }
+
+  @Override
+  public void addSynonym(@NotNull Supplier<String> text) {
+    mySynonyms.add(text);
   }
 
   @NotNull
@@ -99,6 +106,9 @@ public final class ActionStub extends AnAction implements ActionStubBase {
     targetAction.setShortcutSet(getShortcutSet());
     for (String place : myActionTextOverrides.keySet()) {
       targetAction.addTextOverride(place, Objects.requireNonNull(myActionTextOverrides.get(place)));
+    }
+    for (Supplier<String> synonym : mySynonyms) {
+      targetAction.addSynonym(synonym);
     }
   }
 

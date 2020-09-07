@@ -146,7 +146,7 @@ public final class OffsetMap implements Disposable {
 
   @ApiStatus.Internal
   @NotNull
-  public OffsetMap mapOffsets(@NotNull Document anotherDocument, @NotNull Function<Integer, Integer> mapping) {
+  public OffsetMap mapOffsets(@NotNull Document anotherDocument, @NotNull Function<? super Integer, Integer> mapping) {
     OffsetMap result = new OffsetMap(anotherDocument);
     for (OffsetKey key : getAllOffsets()) {
       result.addOffset(key, mapping.apply(getOffset(key)));

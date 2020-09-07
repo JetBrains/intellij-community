@@ -32,6 +32,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplates;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory;
@@ -87,7 +88,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     myTargetClass = defaultTargetClass;
     myDefaultTargetClass = defaultTargetClass;
 
-    setTitle(GrIntroduceConstantHandler.REFACTORING_NAME);
+    setTitle(GroovyBundle.message("introduce.constant.title"));
 
     myJavaVisibilityPanel.setVisibility(JavaRefactoringSettings.getInstance().INTRODUCE_CONSTANT_VISIBILITY);
 

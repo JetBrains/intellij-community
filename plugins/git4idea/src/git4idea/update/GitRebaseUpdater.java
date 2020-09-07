@@ -14,6 +14,7 @@ import git4idea.GitUtil;
 import git4idea.branch.GitBranchPair;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
+import git4idea.i18n.GitBundle;
 import git4idea.rebase.GitRebaser;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -70,7 +71,7 @@ public final class GitRebaseUpdater extends GitUpdater {
 
   public void cancel() {
     myRebaser.abortRebase(myRoot);
-    myProgressIndicator.setText2("Refreshing files for the root " + myRoot.getPath());
+    myProgressIndicator.setText2(GitBundle.message("progress.details.refreshing.files.for.root", myRoot.getPath()));
     myRoot.refresh(false, true);
   }
 
@@ -113,9 +114,9 @@ public final class GitRebaseUpdater extends GitUpdater {
       // so we just notify the user about problems with collecting the updated changes.
       LOG.info("Couldn't mark end for repository " + repository, e);
       VcsNotifier.getInstance(myProject).
-        notifyMinorWarning("Couldn't collect the updated files info",
-                           String.format("Update of %s was successful, but we couldn't collect the updated changes because of an error",
-                                         repository));
+        notifyMinorWarning("git.rebase.collect.updated.changes.error",
+                           GitBundle.message("notification.title.couldnt.collect.updated.files.info"),
+                           GitBundle.message("notification.content.couldnt.collect.updated.files.info", repository));
     }
     return result.success();
   }

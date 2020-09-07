@@ -22,6 +22,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -96,21 +97,21 @@ public final class InspectionUtil {
     public static List<SuppressIntentionAction> getSuppressActions(LocalInspectionTool inspection, final boolean isXPath) {
         final List<SuppressIntentionAction> actions = new ArrayList<>(4);
 
-        actions.add(new SuppressInspectionAction(inspection.getID(), "Suppress for Instruction") {
+        actions.add(new SuppressInspectionAction(inspection.getID(), XPathBundle.message("intention.name.suppress.for.instruction")) {
             @Override
             protected XmlTag getAnchor(@NotNull PsiElement element) {
                 return PsiTreeUtil.getContextOfType(element, XmlTag.class, isXPath);
             }
         });
 
-        actions.add(new SuppressInspectionAction(inspection.getID(), "Suppress for Template") {
+        actions.add(new SuppressInspectionAction(inspection.getID(), XPathBundle.message("intention.name.suppress.for.template")) {
             @Override
             protected XmlTag getAnchor(@NotNull PsiElement element) {
                 return XsltCodeInsightUtil.getTemplateTag(element, isXPath);
             }
         });
 
-        actions.add(new SuppressInspectionAction(inspection.getID(), "Suppress for Stylesheet") {
+        actions.add(new SuppressInspectionAction(inspection.getID(), XPathBundle.message("intention.name.suppress.for.stylesheet")) {
             @Override
             protected XmlTag getAnchor(@NotNull PsiElement element) {
                 final XmlDocument document = PsiTreeUtil.getContextOfType(element, XmlDocument.class, isXPath);
@@ -118,7 +119,7 @@ public final class InspectionUtil {
             }
         });
 
-        actions.add(new SuppressInspectionAction(ALL_ID, "Suppress all for Stylesheet") {
+        actions.add(new SuppressInspectionAction(ALL_ID, XPathBundle.message("intention.name.suppress.all.for.stylesheet")) {
             @Override
             protected XmlTag getAnchor(@NotNull PsiElement element) {
                 final XmlDocument document = PsiTreeUtil.getContextOfType(element, XmlDocument.class, isXPath);

@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.inspections.quickfix.ComparisonWithNoneQuickFix;
 import com.jetbrains.python.psi.*;
@@ -47,7 +48,7 @@ public class PyComparisonWithNoneInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyBinaryExpression(PyBinaryExpression node) {
+    public void visitPyBinaryExpression(@NotNull PyBinaryExpression node) {
       final PyExpression rightExpression = node.getRightExpression();
       if ((rightExpression instanceof PyReferenceExpression && PyNames.NONE.equals(rightExpression.getText())) ||
           rightExpression instanceof PyNoneLiteralExpression) {
@@ -57,7 +58,7 @@ public class PyComparisonWithNoneInspection extends PyInspection {
           assert reference != null;
           PsiElement result = reference.resolve();
           if (result == null || PyBuiltinCache.getInstance(node).isBuiltin(result)) {
-            registerProblem(node, "Comparison with None performed with equality operators", new ComparisonWithNoneQuickFix());
+            registerProblem(node, PyPsiBundle.message("INSP.comparison.with.none.performed.with.equality.operators"), new ComparisonWithNoneQuickFix());
           }
         }
       }

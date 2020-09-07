@@ -39,9 +39,9 @@ public class IssueLinkConfigurationDialog extends DialogWrapper {
     myIssueLinkTextField.getDocument().addDocumentListener(documentChangeListener);
     myExampleIssueIDTextField.getDocument().addDocumentListener(documentChangeListener);
 
-    myIssueIDTextField.setText("Task_([A-Za-z]+)_(\\d+)");
-    myIssueLinkTextField.setText("https://example.com/issue/$1/$2");
-    myExampleIssueIDTextField.setText("Task_DA_113");
+    myIssueIDTextField.setText("Task_([A-Za-z]+)_(\\d+)"); //NON-NLS // placeholder
+    myIssueLinkTextField.setText("https://example.com/issue/$1/$2"); //NON-NLS // placeholder
+    myExampleIssueIDTextField.setText("Task_DA_113"); //NON-NLS // placeholder
   }
 
   private void updateFeedback() {

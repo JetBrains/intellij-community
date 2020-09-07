@@ -58,7 +58,7 @@ internal class GitIgnoreChecker : VcsIgnoreChecker {
       }
 
       val gitIgnoreFile = VfsUtil.findRelativeFile(vcsRoot, *gitIgnoreRelPath.split("/").toTypedArray()) ?: continue
-      if (isPattern && path.equals(checkForIgnorePath, !SystemInfo.isFileSystemCaseSensitive)) {
+      if (isPattern && path.equals(checkForIgnorePath, !gitIgnoreFile.isCaseSensitive)) {
         return Ignored(virtualToIoFile(gitIgnoreFile), matchedPattern)
       }
       else if (!isPattern) {

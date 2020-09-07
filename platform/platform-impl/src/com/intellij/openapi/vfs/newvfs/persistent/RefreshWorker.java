@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
@@ -74,7 +75,7 @@ public final class RefreshWorker {
     }
     PersistentFS persistence = PersistentFS.getInstance();
 
-    FileAttributes attributes = fs.getAttributes(root);
+    FileAttributes attributes = VfsImplUtil.getAttributesWithCaseSensitivity(fs, root);
     if (attributes == null) {
       myHelper.scheduleDeletion(root);
       root.markClean();
@@ -146,7 +147,7 @@ public final class RefreshWorker {
     List<VirtualFile> children = snapshot.getSecond();
 
     String[] upToDateNames = VfsUtil.filterNames(fs.list(dir));
-    Set<String> newNames = CollectionFactory.createFilePathSet(upToDateNames, fs.isCaseSensitive());
+    Set<String> newNames = CollectionFactory.createFilePathSet(upToDateNames, dir.isCaseSensitive());
     if (dir.allChildrenLoaded() && children.size() < upToDateNames.length) {
       for (VirtualFile child : children) {
         newNames.remove(child.getName());
@@ -156,10 +157,10 @@ public final class RefreshWorker {
       newNames.removeAll(persistedNames);
     }
 
-    Set<String> deletedNames = CollectionFactory.createFilePathSet(persistedNames, fs.isCaseSensitive());
+    Set<String> deletedNames = CollectionFactory.createFilePathSet(persistedNames, dir.isCaseSensitive());
     ContainerUtil.removeAll(deletedNames, upToDateNames);
 
-    ObjectOpenCustomHashSet<String> actualNames = fs.isCaseSensitive() ? null : (ObjectOpenCustomHashSet<String>)CollectionFactory.createFilePathSet(upToDateNames, false);
+    ObjectOpenCustomHashSet<String> actualNames = dir.isCaseSensitive() ? null : (ObjectOpenCustomHashSet<String>)CollectionFactory.createFilePathSet(upToDateNames, false);
     if (LOG.isTraceEnabled()) {
       LOG.trace("current=" + persistedNames + " +" + newNames + " -" + deletedNames);
     }
@@ -176,11 +177,27 @@ public final class RefreshWorker {
       }
     }
 
-    List<Pair<VirtualFile, FileAttributes>> updatedMap = new ArrayList<>(children.size());
-    for (VirtualFile child : children) {
-      checkCancelled(dir);
-      if (!deletedNames.contains(child.getName())) {
-        updatedMap.add(new Pair<>(child, fs.getAttributes(child)));
+    var updatedMap = new ArrayList<Pair<VirtualFile, FileAttributes>>(children.size() - deletedNames.size());
+    var chs = ContainerUtil.filter(children, file -> !deletedNames.contains(file.getName()));
+
+    var map = fs instanceof BatchingFileSystem
+                                      ? ((BatchingFileSystem)fs).listWithAttributes(dir, ContainerUtil.map(chs, file -> file.getName()))
+                                      : null;
+    if (map != null) {
+      Map<String, VirtualFile> nameToFile = new HashMap<>();
+      for (var file : chs) {
+        nameToFile.put(file.getName(), file);
+      }
+      for (var e : map.entrySet()) {
+        String name = e.getKey();
+        FileAttributes attributes = e.getValue();
+        updatedMap.add(Pair.create(nameToFile.get(name), VfsImplUtil.getAttributesWithCaseSensitivity(fs, attributes)));
+      }
+    }
+    else {
+      for (VirtualFile child : chs) {
+        checkCancelled(dir);
+        updatedMap.add(new Pair<>(child, VfsImplUtil.getAttributesWithCaseSensitivity(fs, child)));
       }
     }
 
@@ -234,7 +251,7 @@ public final class RefreshWorker {
     List<String> wanted = snapshot.getSecond();
 
     ObjectOpenCustomHashSet<String> actualNames;
-    if (fs.isCaseSensitive() || cached.isEmpty()) {
+    if (dir.isCaseSensitive() || cached.isEmpty()) {
       actualNames = null;
     }
     else {
@@ -248,7 +265,7 @@ public final class RefreshWorker {
     List<Pair<VirtualFile, FileAttributes>> existingMap = new ArrayList<>(cached.size());
     for (VirtualFile child : cached) {
       checkCancelled(dir);
-      existingMap.add(new Pair<>(child, fs.getAttributes(child)));
+      existingMap.add(new Pair<>(child, VfsImplUtil.getAttributesWithCaseSensitivity(fs, child)));
     }
 
     List<ChildInfo> newKids = new ArrayList<>(wanted.size());
@@ -295,11 +312,11 @@ public final class RefreshWorker {
   @Nullable
   private static ChildInfo childRecord(@NotNull NewVirtualFileSystem fs, @NotNull VirtualFile dir, @NotNull String name) {
     FakeVirtualFile file = new FakeVirtualFile(dir, name);
-    FileAttributes attributes = fs.getAttributes(file);
+    FileAttributes attributes = VfsImplUtil.getAttributesWithCaseSensitivity(fs, file);
     if (attributes == null) return null;
     boolean isEmptyDir = attributes.isDirectory() && !fs.hasChildren(file);
     String symlinkTarget = attributes.isSymLink() ? fs.resolveSymLink(file) : null;
-    if (!fs.isCaseSensitive()) {
+    if (!dir.isCaseSensitive()) {
       // extra check if "suspicious name" differs from the actual name - we want actual names in the file events
       name = fs.getCanonicallyCasedName(file);
     }

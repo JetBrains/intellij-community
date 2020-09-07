@@ -15,9 +15,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.NotNull;
-
+import com.intellij.xml.XmlBundle;
 import java.util.HashSet;
+import org.jetbrains.annotations.NotNull;
 
 public class SurroundWithEmmetAction extends BaseCodeInsightAction {
   public SurroundWithEmmetAction() {
@@ -49,7 +49,7 @@ public class SurroundWithEmmetAction extends BaseCodeInsightAction {
         new WrapWithCustomTemplateAction(emmetCustomTemplate, editor, file, new HashSet<>()).perform();
       }
       else if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        HintManager.getInstance().showErrorHint(editor, "Cannot invoke Surround with Emmet in the current context");
+        HintManager.getInstance().showErrorHint(editor, XmlBundle.message("emmet.action.surround.error.hint"));
       }
     }
 

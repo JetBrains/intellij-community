@@ -7,6 +7,7 @@ import com.intellij.ide.actions.DeleteAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.IconUtil;
@@ -30,7 +31,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
   @Deprecated
   protected SelectFilesDialog(Project project,
                               @NotNull List<? extends VirtualFile> files,
-                              @Nullable String prompt,
+                              @Nullable @NlsContexts.Label String prompt,
                               @Nullable VcsShowConfirmationOption confirmationOption,
                               boolean selectableFiles,
                               boolean showDoNotAskOption,
@@ -40,7 +41,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
 
   protected SelectFilesDialog(Project project,
                               @NotNull List<? extends VirtualFile> files,
-                              @Nullable String prompt,
+                              @Nullable @NlsContexts.Label String prompt,
                               @Nullable VcsShowConfirmationOption confirmationOption,
                               boolean selectableFiles,
                               boolean deletableFiles) {
@@ -53,7 +54,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
   @Deprecated
   public static SelectFilesDialog init(Project project,
                                        @NotNull List<? extends VirtualFile> originalFiles,
-                                       @Nullable String prompt,
+                                       @Nullable @NlsContexts.Label String prompt,
                                        @Nullable VcsShowConfirmationOption confirmationOption,
                                        boolean selectableFiles,
                                        boolean showDoNotAskOption,
@@ -64,7 +65,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
   @NotNull
   public static SelectFilesDialog init(Project project,
                                        @NotNull List<? extends VirtualFile> originalFiles,
-                                       @Nullable String prompt,
+                                       @Nullable @NlsContexts.Label String prompt,
                                        @Nullable VcsShowConfirmationOption confirmationOption,
                                        boolean selectableFiles,
                                        boolean deletableFiles) {
@@ -76,12 +77,12 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
   @NotNull
   public static SelectFilesDialog init(Project project,
                                        @NotNull List<? extends VirtualFile> originalFiles,
-                                       @Nullable String prompt,
+                                       @Nullable @NlsContexts.Label String prompt,
                                        @Nullable VcsShowConfirmationOption confirmationOption,
                                        boolean selectableFiles,
                                        boolean deletableFiles,
-                                       @NotNull String okActionName,
-                                       @NotNull String cancelActionName) {
+                                       @NotNull @NlsContexts.Button String okActionName,
+                                       @NotNull @NlsContexts.Button String cancelActionName) {
     final SelectFilesDialog dlg = init(project, originalFiles, prompt, confirmationOption, selectableFiles, deletableFiles);
     dlg.setOKButtonText(okActionName);
     dlg.setCancelButtonText(cancelActionName);

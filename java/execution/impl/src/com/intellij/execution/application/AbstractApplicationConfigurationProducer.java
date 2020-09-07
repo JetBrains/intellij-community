@@ -10,7 +10,10 @@ import com.intellij.execution.junit.JavaRunConfigurationProducerBase;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +54,7 @@ public abstract class AbstractApplicationConfigurationProducer<T extends Applica
       return false;
     }
     PsiFile containingFile = aClass.getContainingFile();
-    if (containingFile instanceof PsiJavaFile && HighlightClassUtil.isJavaHashBangScript((PsiJavaFile)containingFile)) {
+    if (HighlightClassUtil.isJavaHashBangScript(containingFile)) {
       return false;
     }
     PsiMethod method = PsiMethodUtil.findMainInClass(aClass);

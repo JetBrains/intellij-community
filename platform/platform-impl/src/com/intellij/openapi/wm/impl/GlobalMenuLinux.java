@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.UISettings;
@@ -115,8 +116,6 @@ interface GlobalMenuLib extends Library {
 }
 
 public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Disposable {
-  private static final String TOGGLE_SWING_MENU_ACTION_NAME = "Toggle Global Menu Integration";
-  private static final String TOGGLE_SWING_MENU_ACTION_DESC = "Enable/disable global menu integration (in all frames)";
   private static final String TOGGLE_SWING_MENU_ACTION_ID = "ToggleGlobalLinuxMenu";
 
   private static final SimpleDateFormat ourDtf = new SimpleDateFormat("hhmmss.SSS"); // for debug only
@@ -241,7 +240,8 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
 
       // register toggle-swing-menu action (to be able to enable swing menu when system applet is died)
       actionManager
-        .registerAction(TOGGLE_SWING_MENU_ACTION_ID, new AnAction(TOGGLE_SWING_MENU_ACTION_NAME, TOGGLE_SWING_MENU_ACTION_DESC, null) {
+        .registerAction(TOGGLE_SWING_MENU_ACTION_ID, new AnAction(IdeBundle.message("action.toggle.global.menu.integration.text"),
+                                                                  IdeBundle.message("action.enable.disable.global.menu.integration.description"), null) {
           boolean enabled = false;
 
           @Override

@@ -96,7 +96,7 @@ public class JUnitEntryPoint extends EntryPointWithVisibilityLevel {
 
   @Override
   public String getTitle() {
-    return "Suggest package-private visibility level for junit 5 tests";
+    return JUnitBundle.message("junit.entry.point.suggest.package.private.visibility.junit5");
   }
 
   @Override

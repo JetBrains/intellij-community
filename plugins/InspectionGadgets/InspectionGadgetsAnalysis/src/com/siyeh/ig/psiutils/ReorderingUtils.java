@@ -118,7 +118,7 @@ public class ReorderingUtils {
   }
 
   @NotNull
-  private static ThreeState and(ThreeState state, Supplier<ThreeState> conjunct) {
+  private static ThreeState and(ThreeState state, Supplier<? extends ThreeState> conjunct) {
     if (state == ThreeState.NO) return ThreeState.NO;
     ThreeState state2 = conjunct.get();
     if (state2 == ThreeState.NO) return ThreeState.NO;

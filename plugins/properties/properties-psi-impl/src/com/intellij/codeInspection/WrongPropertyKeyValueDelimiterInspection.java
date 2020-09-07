@@ -72,7 +72,7 @@ public class WrongPropertyKeyValueDelimiterInspection extends PropertiesInspecti
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace property key/value delimiter according code style";
+      return PropertiesBundle.message("replace.key.value.delimiter.quick.fix.family.name");
     }
   }
 }

@@ -3,6 +3,7 @@ package com.intellij.usages;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +62,10 @@ public interface UsageView extends Disposable {
 
   void setAdditionalComponent(@Nullable JComponent component);
 
-  void addPerformOperationAction(@NotNull Runnable processRunnable, @NotNull String commandName, @NotNull String cannotMakeString, @NotNull String shortDescription);
+  void addPerformOperationAction(@NotNull Runnable processRunnable,
+                                 @NotNull @NlsContexts.Command String commandName,
+                                 @NotNull @NlsContexts.DialogMessage String cannotMakeString,
+                                 @NotNull @NlsContexts.Button String shortDescription);
 
   /**
    * @param checkReadOnlyStatus if false, check is performed inside processRunnable

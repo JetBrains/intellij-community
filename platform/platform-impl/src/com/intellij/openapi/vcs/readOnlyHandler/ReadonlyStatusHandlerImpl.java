@@ -12,6 +12,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -214,13 +215,13 @@ public final class ReadonlyStatusHandlerImpl extends ReadonlyStatusHandler imple
 
   private static final class OperationStatusImpl extends OperationStatus {
     private final VirtualFile[] myReadonlyFiles;
-    @NotNull private final String myReadOnlyReason;
+    @NotNull private final @NlsContexts.DialogMessage String myReadOnlyReason;
 
     OperationStatusImpl(VirtualFile @NotNull [] readonlyFiles) {
       this(readonlyFiles,"");
     }
 
-    private OperationStatusImpl(VirtualFile[] readonlyFiles, @NotNull String readOnlyReason) {
+    private OperationStatusImpl(VirtualFile[] readonlyFiles, @NotNull @NlsContexts.DialogMessage String readOnlyReason) {
       myReadonlyFiles = readonlyFiles;
       myReadOnlyReason = readOnlyReason;
     }

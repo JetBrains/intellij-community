@@ -145,7 +145,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     setVisible(myPresentation.isVisible());
     setEnabled(myPresentation.isEnabled());
     setMnemonic(myEnableMnemonics ? myPresentation.getMnemonic() : 0);
-    setText(myPresentation.getText());
+    setText(myPresentation.getText(true));
     final int mnemonicIndex = myEnableMnemonics ? myPresentation.getDisplayedMnemonicIndex() : -1;
 
     if (getText() != null && mnemonicIndex >= 0 && mnemonicIndex < getText().length()) {
@@ -362,7 +362,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
           setDisplayedMnemonicIndex(myPresentation.getDisplayedMnemonicIndex());
         }
         else if (Presentation.PROP_TEXT.equals(name)) {
-          setText(myPresentation.getText());
+          setText(myPresentation.getText(true));
           Window window = ComponentUtil.getWindow(ActionMenuItem.this);
           if (window != null) window.pack();
         }

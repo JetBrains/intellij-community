@@ -17,7 +17,6 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.table.JBTable;
 import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -27,31 +26,28 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
-import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.properties.PropertyConsumer;
 import org.jetbrains.idea.svn.properties.PropertyData;
 import org.jetbrains.idea.svn.properties.PropertyValue;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static com.intellij.openapi.util.io.FileUtil.filesEqual;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static java.util.Collections.emptyList;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnBundle.messagePointer;
 
 public class PropertiesComponent extends JPanel {
   @NonNls public static final @NotNull String ID = "SVN Properties";
 
-  private JTable myTable;
+  private final @NotNull PropertiesTableView myTable = new PropertiesTableView();
   private JTextArea myTextArea;
   private boolean myIsFollowSelection;
   private File myFile;
@@ -66,36 +62,20 @@ public class PropertiesComponent extends JPanel {
     init();
   }
 
-  public void init() {
+  private void init() {
     setLayout(new BorderLayout());
-    myTable = new JBTable();
+
     myTextArea = new JTextArea(0, 0);
     myTextArea.setEditable(false);
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
     mySplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, true, scrollPane, ScrollPaneFactory.createScrollPane(myTextArea));
     add(mySplitPane, BorderLayout.CENTER);
     add(createToolbar(), BorderLayout.WEST);
-    final DefaultTableModel model = new DefaultTableModel(createTableModel(new HashMap<>()), new Object[]{"Name", "Value"}) {
-      @Override
-      public boolean isCellEditable(final int row, final int column) {
-        return false;
-      }
-    };
-    myTable.setModel(model);
     myTable.setShowVerticalLines(true);
     myTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myTable.getSelectionModel().addListSelectionListener(e -> {
-      int index = myTable.getSelectedRow();
-      if (index >= 0) {
-        Object value = myTable.getValueAt(index, 1);
-        if (value instanceof String) {
-          myTextArea.setText(((String) value));
-        } else {
-          myTextArea.setText("");
-        }
-      } else {
-        myTextArea.setText("");
-      }
+      PropertyData property = myTable.getSelectedObject();
+      myTextArea.setText(property != null ? property.getValue().toString() : "");
     });
     ActionGroup popupActionGroup = createPopup();
     PopupHandler.installPopupHandler(myTable, popupActionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
@@ -105,31 +85,14 @@ public class PropertiesComponent extends JPanel {
   }
 
   public void setFile(SvnVcs vcs, File file) {
-    final Map<String, String> props = new TreeMap<>();
     boolean firstTime = myFile == null;
+
     if (file != null) {
       myFile = file;
       myVcs = vcs;
-      collectProperties(vcs, file, props);
     }
-    DefaultTableModel model = (DefaultTableModel) myTable.getModel();
-    model.setDataVector(createTableModel(props), new Object[] {"Name", "Value"});
+    myTable.setProperties(file != null ? collectProperties(vcs, file) : emptyList());
 
-    myTable.getColumnModel().setColumnSelectionAllowed(false);
-    myTable.getColumnModel().getColumn(1).setCellRenderer(new DefaultTableCellRenderer() {
-      @Override
-      protected void setValue(Object value) {
-        if (value != null) {
-          if (value.toString().indexOf('\r') >= 0) {
-            value = value.toString().substring(0, value.toString().indexOf('\r')) + " [...]";
-          }
-          if (value.toString().indexOf('\n') >= 0) {
-            value = value.toString().substring(0, value.toString().indexOf('\n')) + " [...]";
-          }
-        }
-        super.setValue(value);
-      }
-    });
     if (firstTime) {
       mySplitPane.setDividerLocation(.5);
     }
@@ -138,46 +101,23 @@ public class PropertiesComponent extends JPanel {
     }
   }
 
-  private static void collectProperties(@NotNull SvnVcs vcs, @NotNull File file, @NotNull final Map<String, String> props) {
+  private static @NotNull List<PropertyData> collectProperties(@NotNull SvnVcs vcs, @NotNull File file) {
     try {
+      List<PropertyData> properties = new ArrayList<>();
       PropertyConsumer handler = new PropertyConsumer() {
         @Override
         public void handleProperty(File path, PropertyData property) {
-          final PropertyValue value = property.getValue();
-          if (value != null) {
-            props.put(property.getName(), PropertyValue.toString(property.getValue()));
-          }
-        }
-
-        @Override
-        public void handleProperty(Url url, PropertyData property) {
-        }
-
-        @Override
-        public void handleProperty(long revision, PropertyData property) {
+          properties.add(property);
         }
       };
-      vcs.getFactory(file).createPropertyClient().list(Target.on(file, Revision.UNDEFINED), Revision.WORKING, Depth.EMPTY,
-                                                       handler);
+
+      vcs.getFactory(file).createPropertyClient().list(Target.on(file, Revision.UNDEFINED), Revision.WORKING, Depth.EMPTY, handler);
+
+      return properties;
     }
     catch (VcsException e) {
-      props.clear();
+      return emptyList();
     }
-  }
-
-  private static Object[][] createTableModel(Map<String, String> model) {
-    Object[][] result = new Object[model.size()][2];
-    int index = 0;
-    for (final String name : model.keySet()) {
-      String value = model.get(name);
-      if (value == null) {
-        value = "";
-      }
-      result[index][0] = name;
-      result[index][1] = value;
-      index++;
-    }
-    return result;
   }
 
   private JComponent createToolbar() {
@@ -206,12 +146,10 @@ public class PropertiesComponent extends JPanel {
     return group;
   }
 
+  @Nullable
   private String getSelectedPropertyName() {
-    int row = myTable.getSelectedRow();
-    if (row < 0) {
-      return null;
-    }
-    return (String) myTable.getValueAt(row, 0);
+    PropertyData property = myTable.getSelectedObject();
+    return property != null ? property.getName() : null;
   }
 
   private void updateFileStatus(boolean recursive) {

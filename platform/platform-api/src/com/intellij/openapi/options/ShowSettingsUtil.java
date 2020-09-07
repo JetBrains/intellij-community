@@ -1,9 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +27,7 @@ public abstract class ShowSettingsUtil {
 
   public abstract <T extends Configurable> void showSettingsDialog(@Nullable Project project, @NotNull Class<T> toSelect);
 
-  public abstract void showSettingsDialog(@Nullable Project project, @NotNull String nameToSelect);
+  public abstract void showSettingsDialog(@Nullable Project project, @NlsContexts.ConfigurableName @NotNull String nameToSelect);
 
   public abstract void showSettingsDialog(@NotNull Project project, @Nullable Configurable toSelect);
 
@@ -42,9 +45,9 @@ public abstract class ShowSettingsUtil {
 
   public abstract boolean editConfigurable(@Nullable Component parent, @NotNull Configurable configurable);
 
-  public abstract boolean editConfigurable(@Nullable Component parent, @NotNull String displayName);
+  public abstract boolean editConfigurable(@Nullable Component parent, @NlsContexts.ConfigurableName @NotNull String displayName);
 
-  public abstract boolean editConfigurable(@Nullable Component parent, @NotNull String displayName, @Nullable Runnable advancedInitialization);
+  public abstract boolean editConfigurable(@Nullable Component parent, @NlsContexts.ConfigurableName @NotNull String displayName, @Nullable Runnable advancedInitialization);
 
   public abstract boolean editConfigurable(Component parent, @NotNull Configurable configurable, Runnable advancedInitialization);
 
@@ -57,7 +60,7 @@ public abstract class ShowSettingsUtil {
   /**
    * OS-specific name.
    */
-  public static String getSettingsMenuName() {
-    return SystemInfo.isMac ? "Preferences" : "Settings";
+  public static @Nls String getSettingsMenuName() {
+    return SystemInfo.isMac ? CommonBundle.message("title.settings.mac") : CommonBundle.message("title.settings");
   }
 }

@@ -21,6 +21,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +37,12 @@ public class AddParameterFix extends AddParamBase {
     @Override
     @NotNull
     public String getText() {
-        return "Add Parameter '" + myName + "' to Template '" + myTemplate.getName() + "'";
+        return XPathBundle.message("intention.name.add.parameter.to.template", myName, myTemplate.getName());
+    }
+
+    @Override
+    public String getFamilyName() {
+        return XPathBundle.message("intention.family.name.add.parameter.to.template");
     }
 
     @Override

@@ -604,9 +604,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
   private static @NotNull PsiMethod findSpecificMethod(PsiElement context,
                                                        @NotNull PsiMethod method,
-                                                       @NotNull DfaMemoryState state,
-                                                       @Nullable DfaValue qualifier) {
-    if (qualifier == null || !PsiUtil.canBeOverridden(method)) return method;
+                                                       @Nullable PsiType qualifierType) {
+    if (qualifierType == null || !PsiUtil.canBeOverridden(method)) return method;
     PsiExpression qualifierExpression = null;
     if (context instanceof PsiMethodCallExpression) {
       qualifierExpression = ((PsiMethodCallExpression)context).getMethodExpression().getQualifierExpression();
@@ -614,8 +613,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       qualifierExpression = ((PsiMethodReferenceExpression)context).getQualifierExpression();
     }
     if (qualifierExpression instanceof PsiSuperExpression) return method; // non-virtual call
-    PsiType type = state.getPsiType(qualifier);
-    return MethodUtils.findSpecificMethod(method, type);
+    return MethodUtils.findSpecificMethod(method, qualifierType);
   }
 
   private static @NotNull DfaValue getMethodResultValue(MethodCallInstruction instruction,
@@ -659,16 +657,13 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       Mutability mutable = Mutability.UNKNOWN;
       if (targetMethod != null) {
         mutable = Mutability.getMutability(targetMethod);
-        PsiMethod realMethod = findSpecificMethod(instruction.getContext(), targetMethod, state, qualifierValue);
+        PsiType qualifierType = state.getPsiType(qualifierValue);
+        PsiMethod realMethod = findSpecificMethod(instruction.getContext(), targetMethod, qualifierType);
         if (realMethod != targetMethod) {
           nullability = DfaPsiUtil.getElementNullability(type, realMethod);
           mutable = Mutability.getMutability(realMethod);
-          PsiType returnType = realMethod.getReturnType();
-          if (returnType != null && TypeConversionUtil.erasure(type).isAssignableFrom(returnType)) {
-            // possibly covariant return type
-            type = returnType;
-          }
         }
+        type = narrowReturnType(type, qualifierType, realMethod);
         if (nullability == Nullability.UNKNOWN) {
           nullability = factory.suggestNullabilityForNonAnnotatedMember(targetMethod);
         }
@@ -691,6 +686,31 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       return factory.fromDfType(rangeClamped(range, PsiType.LONG.equals(type)));
     }
     return factory.getUnknown();
+  }
+
+  private static @NotNull PsiType narrowReturnType(@NotNull PsiType returnType, @Nullable PsiType qualifierType, 
+                                                   @NotNull PsiMethod realMethod) {
+    PsiClass containingClass = realMethod.getContainingClass();
+    PsiType realReturnType = realMethod.getReturnType();
+    if (containingClass != null && qualifierType instanceof PsiClassType) {
+      if (containingClass.hasTypeParameters() || containingClass.getContainingClass() != null) {
+        PsiClassType.ClassResolveResult classResolveResult = ((PsiClassType)qualifierType).resolveGenerics();
+        PsiClass subType = classResolveResult.getElement();
+        if (subType != null && !subType.equals(containingClass)) {
+          PsiSubstitutor substitutor = TypeConversionUtil
+            .getMaybeSuperClassSubstitutor(containingClass, subType, classResolveResult.getSubstitutor());
+          if (substitutor != null) {
+            realReturnType = substitutor.substitute(realReturnType);
+          }
+        }
+      }
+    }
+    if (realReturnType != null && !realReturnType.equals(returnType) && 
+        TypeConversionUtil.erasure(returnType).isAssignableFrom(realReturnType)) {
+      // possibly covariant return type
+      return realReturnType;
+    }
+    return returnType;
   }
 
   private static DfaValue getPrecalculatedResult(@Nullable DfaValue qualifierValue,

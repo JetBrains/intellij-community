@@ -1,0 +1,1 @@
+o('div','md-src-pos','0..41');o('p','md-src-pos','0..32');o('span','md-src-pos','0..32');t(`%DEV_IDEA_HOME%\\build\\update.cmd`);c('span');c('p');o('p','md-src-pos','34..41');o('span','md-src-pos','34..41');t(`\${some}`);c('span');c('p');c('div');

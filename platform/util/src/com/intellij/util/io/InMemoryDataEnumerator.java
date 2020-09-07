@@ -2,11 +2,11 @@
 package com.intellij.util.io;
 
 import com.intellij.util.containers.BiDirectionalEnumerator;
-import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class InMemoryDataEnumerator<Data> implements DataEnumeratorEx<Data> {
-  private final BiDirectionalEnumerator<Data> myEnumerator = new BiDirectionalEnumerator<>(16, ContainerUtil.canonicalStrategy());
+public final class InMemoryDataEnumerator<Data> implements DataEnumeratorEx<Data> {
+  private final BiDirectionalEnumerator<Data> myEnumerator = new BiDirectionalEnumerator<>(16);
 
   @Override
   public int tryEnumerate(Data name) {
@@ -18,9 +18,8 @@ public class InMemoryDataEnumerator<Data> implements DataEnumeratorEx<Data> {
     return myEnumerator.enumerate(value);
   }
 
-  @Nullable
   @Override
-  public Data valueOf(int idx) {
+  public @NotNull Data valueOf(int idx) {
     return myEnumerator.getValue(idx);
   }
 }

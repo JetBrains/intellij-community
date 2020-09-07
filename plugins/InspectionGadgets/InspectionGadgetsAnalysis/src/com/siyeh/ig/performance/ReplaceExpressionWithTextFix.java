@@ -11,13 +11,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class ReplaceExpressionWithTextFix extends InspectionGadgetsFix {
   private final @NotNull String myReplacementText;
   private final @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String myName;
 
-  public ReplaceExpressionWithTextFix(@NotNull String replacementText,
+  public ReplaceExpressionWithTextFix(@NotNull @NonNls String replacementText,
                                       @NotNull
                                       @Nls(capitalization = Nls.Capitalization.Sentence) String name) {
     myReplacementText = replacementText;

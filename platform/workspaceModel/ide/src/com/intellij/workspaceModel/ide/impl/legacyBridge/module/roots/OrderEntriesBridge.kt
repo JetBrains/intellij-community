@@ -22,6 +22,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeIm
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.moduleMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
+import org.jetbrains.annotations.Nls
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 internal abstract class OrderEntryBridge(
@@ -213,9 +214,10 @@ internal class LibraryOrderEntryBridge(
 
   override fun getPresentableName(): String = libraryName ?: getPresentableNameForUnnamedLibrary()
 
+  @Nls
   private fun getPresentableNameForUnnamedLibrary(): String {
     val url = getUrls(OrderRootType.CLASSES).firstOrNull()
-    return if (url != null) PathUtil.toPresentableUrl(url) else ProjectModelBundle.message("library.empty.library.item")
+    return if (url != null) PathUtil.toPresentableUrl(url) else ProjectModelBundle.message("empty.library.title")
   }
 
   override val rootProvider: RootProvider?

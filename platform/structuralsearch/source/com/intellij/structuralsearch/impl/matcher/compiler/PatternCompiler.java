@@ -50,6 +50,9 @@ public final class PatternCompiler {
   private static final Logger LOG = Logger.getInstance(PatternCompiler.class);
   private static String ourLastSearchPlan;
 
+  /**
+   * @return the compiled pattern, or null when there is no structural search profile found for the file type in the match options.
+   */
   public static CompiledPattern compilePattern(Project project, MatchOptions options, boolean checkForErrors, boolean optimizeScope)
     throws MalformedPatternException, NoMatchFoundException {
     return ReadAction.compute(() -> doCompilePattern(project, options, checkForErrors, optimizeScope));
@@ -585,7 +588,7 @@ public final class PatternCompiler {
       final String problem = ScriptSupport.checkValidScript(script, matchOptions);
       if (problem != null) {
         if (checkForErrors) {
-          throw new MalformedPatternException("Script constraint for " + constraint.getName() + " has problem " + problem);
+          throw new MalformedPatternException(SSRBundle.message("error.script.constraint.for.0.has.problem.1", constraint.getName(), problem));
         }
         else {
           return;

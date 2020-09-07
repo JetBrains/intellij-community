@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsActions;
@@ -88,7 +89,7 @@ public class CommittedChangeListPanel extends JPanel implements DataProvider {
     myCommitMessagePanel.setVisible(value);
   }
 
-  public void setDescription(@Nullable String description) {
+  public void setDescription(@Nullable @NlsContexts.Label String description) {
     myDescriptionLabel.setText(XmlStringUtil.wrapInHtml(StringUtil.notNullize(description)));
     myDescriptionLabel.setVisible(description != null);
   }

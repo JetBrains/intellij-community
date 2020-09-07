@@ -1,66 +1,71 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.ui.EditChangelistSupport;
 import com.intellij.openapi.vcs.ui.CommitMessage;
+import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.api.Url;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.text.MessageFormat;
+
+import static com.intellij.openapi.ui.Messages.showErrorDialog;
+import static org.jetbrains.idea.svn.SvnBundle.message;
+import static org.jetbrains.idea.svn.branchConfig.DefaultBranchConfig.TRUNK_NAME;
 
 public class ShareDialog extends RepositoryBrowserDialog {
   private String mySelectedURL;
-
-  private static final String ourExisting = "At selected repository location";
-  private static final String ourProject = "In new \"{0}\" folder at selected repository location";
-  private static final String ourStandart = "In new \"{0}/trunk\" folder at selected repository location";
-
-  private final String myName;
+  private final @NlsSafe @NotNull String myName;
   private JRadioButton myExisting;
   private JRadioButton mySameNameAsLocal;
   private JRadioButton myTrunk;
-  private JCheckBox myCreateStandard;
+  private JBCheckBox myCreateStandard;
   private CommitMessage myCommitMessage;
   private JComponent myPrefferedFocused;
 
-  public ShareDialog(Project project, final String name) {
-    super(project, false, "Point to repository location");
+  public ShareDialog(Project project, @NlsSafe @NotNull String name) {
+    super(project, false, message("label.point.to.repository.location"));
     myName = name;
-    updateOptionsTexts(null);
-    myExisting.setToolTipText(ourExisting);
-    mySameNameAsLocal.setToolTipText(MessageFormat.format(ourProject, myName));
-    myTrunk.setToolTipText(MessageFormat.format(ourStandart, myName));
+
+    myExisting.setToolTipText(message("radio.share.target.at.selected.repository.location"));
+    mySameNameAsLocal.setToolTipText(message("radio.share.target.in.new.folder", myName));
+    myTrunk.setToolTipText(message("radio.share.target.in.new.folder", myName + "/" + TRUNK_NAME));
+    updateTargetOptions(false);
 
     myRepositoriesLabel.setFont(myRepositoriesLabel.getFont().deriveFont(Font.BOLD));
-    myPrefferedFocused = (JComponent) getRepositoryBrowser().getPreferredFocusedComponent();
+    myPrefferedFocused = (JComponent)getRepositoryBrowser().getPreferredFocusedComponent();
   }
 
   @Override
   public void init() {
     super.init();
-    setTitle("Select Share Target");
-    setOKButtonText("Share");
+    setTitle(message("dialog.title.select.share.target"));
+    setOKButtonText(message("button.share"));
     getRepositoryBrowser().addChangeListener(e -> {
-      if (getOKAction() != null) {
-        final String selectedURL = getRepositoryBrowser().getSelectedURL();
-        updateOptionsTexts(selectedURL);
-        getOKAction().setEnabled(selectedURL != null);
-      }
+      Url url = getRepositoryBrowser().getSelectedSVNURL();
+      boolean enabled = url != null && setTarget(url);
+
+      updateTargetOptions(enabled);
+      getOKAction().setEnabled(enabled);
     });
     getOKAction().setEnabled(getRepositoryBrowser().getSelectedURL() != null);
-    ((RepositoryTreeModel) getRepositoryBrowser().getRepositoryTree().getModel()).setShowFiles(false);
+    ((RepositoryTreeModel)getRepositoryBrowser().getRepositoryTree().getModel()).setShowFiles(false);
     getRepositoryBrowser().getPreferredFocusedComponent().addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {
@@ -69,17 +74,26 @@ public class ShareDialog extends RepositoryBrowserDialog {
     });
   }
 
-  private void updateOptionsTexts(String selectedURL) {
-    final boolean enabled = selectedURL != null;
-    if (! enabled) {
-      myExisting.setText(ourExisting);
-      mySameNameAsLocal.setText(MessageFormat.format(ourProject, myName));
-      myTrunk.setText(MessageFormat.format(ourStandart, myName));
-    } else {
-      myExisting.setText(selectedURL);
-      final String corrected = selectedURL.endsWith("/") || selectedURL.endsWith("\\") ? selectedURL : (selectedURL + "/");
-      mySameNameAsLocal.setText(corrected + myName);
-      myTrunk.setText(corrected + myName + "/trunk");
+  private boolean setTarget(@NotNull Url url) {
+    try {
+      myExisting.setText(url.toDecodedString());
+      mySameNameAsLocal.setText(url.appendPath(myName, false).toDecodedString());
+      myTrunk.setText(url.appendPath(myName, false).appendPath(TRUNK_NAME, false).toDecodedString());
+
+      return true;
+    }
+    catch (SvnBindException e) {
+      showErrorDialog(myVCS.getProject(), e.getMessage(), message("dialog.title.error"));
+
+      return false;
+    }
+  }
+
+  private void updateTargetOptions(boolean enabled) {
+    if (!enabled) {
+      myExisting.setText(myExisting.getToolTipText());
+      mySameNameAsLocal.setText(mySameNameAsLocal.getToolTipText());
+      myTrunk.setText(myTrunk.getToolTipText());
     }
 
     myExisting.setEnabled(enabled);
@@ -95,8 +109,9 @@ public class ShareDialog extends RepositoryBrowserDialog {
 
   @Override
   protected Action @NotNull [] createActions() {
-    return new Action[] {getOKAction(), getCancelAction(), getHelpAction()};
+    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
+
   @Override
   protected void doOKAction() {
     mySelectedURL = getRepositoryBrowser().getSelectedURL();
@@ -116,7 +131,7 @@ public class ShareDialog extends RepositoryBrowserDialog {
 
   public static ActionPopupMenu createShortPopupForRepositoryDialog(RepositoryBrowserComponent browserComponent) {
     DefaultActionGroup group = new DefaultActionGroup();
-    DefaultActionGroup newGroup = DefaultActionGroup.createPopupGroup(() -> "_New");
+    DefaultActionGroup newGroup = DefaultActionGroup.createPopupGroup(ActionsBundle.messagePointer("group.NewGroup.text"));
     newGroup.add(new AddLocationAction(browserComponent));
     newGroup.add(new MkDirAction(browserComponent));
     group.add(newGroup);
@@ -190,7 +205,7 @@ public class ShareDialog extends RepositoryBrowserDialog {
     final GridBagConstraints gb = new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                                          JBUI.insets(1), 0, 0);
     gb.insets.top = 5;
-    final JLabel label = new JLabel("Define share target");
+    final JBLabel label = new JBLabel(message("label.define.share.target"));
     label.setFont(label.getFont().deriveFont(Font.BOLD));
     panel.add(label, gb);
     gb.insets.top = 1;
@@ -212,7 +227,7 @@ public class ShareDialog extends RepositoryBrowserDialog {
     ++ gb.gridy;
     gb.insets.top = 5;
     panel.add(myTrunk, gb);
-    myCreateStandard = new JCheckBox("Create /tags and /branches");
+    myCreateStandard = new JBCheckBox(message("checkbox.create.tags.branches"));
     myTrunk.addChangeListener(e -> myCreateStandard.setEnabled(myTrunk.isSelected()));
     myCreateStandard.setSelected(true);
     ++ gb.gridy;
@@ -232,7 +247,7 @@ public class ShareDialog extends RepositoryBrowserDialog {
     text = StringUtil.isEmptyOrSpaces(text) ? (list.hasDefaultName() ? "" : list.getName()) : text;
     myCommitMessage.setText(text);
     panel.add(myCommitMessage, gb);
-    myCommitMessage.setSeparatorText("Commit Comment Prefix");
+    myCommitMessage.setSeparatorText(message("separator.commit.comment.prefix"));
     for (EditChangelistSupport support : EditChangelistSupport.EP_NAME.getExtensions(project)) {
       support.installSearch(myCommitMessage.getEditorField(), myCommitMessage.getEditorField());
     }

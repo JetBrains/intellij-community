@@ -28,7 +28,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Maven:"/>
+              <text resource-bundle="messages/JavaUiBundle" key="label.maven"/>
             </properties>
           </component>
           <hspacer id="dd0b3">
@@ -81,7 +81,7 @@
                       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <text value="&amp;Version:"/>
+                      <text resource-bundle="messages/JavaUiBundle" key="label.version"/>
                     </properties>
                   </component>
                   <component id="3957d" class="com.intellij.openapi.ui.ComboBox" binding="versionSelector">
@@ -110,8 +110,8 @@
                       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <label value="Download sources"/>
-                      <text value="Download &amp;sources"/>
+                      <label resource-bundle="messages/JavaUiBundle" key="download.sources"/>
+                      <text resource-bundle="messages/JavaUiBundle" key="checkbox.download.sources"/>
                     </properties>
                   </component>
                   <hspacer id="7d6e5">
@@ -124,8 +124,8 @@
                       <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <label value="Download JavaDocs"/>
-                      <text value="Download &amp;JavaDocs"/>
+                      <label resource-bundle="messages/JavaUiBundle" key="download.javadocs"/>
+                      <text resource-bundle="messages/JavaUiBundle" key="checkbox.download.javadocs2"/>
                     </properties>
                   </component>
                   <grid id="2c1fe" binding="myTransitiveDependenciesPanel" layout-manager="FlowLayout" hgap="0" vgap="0" flow-align="1">
@@ -141,7 +141,7 @@
                       <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <text value="Download a&amp;nnotations"/>
+                      <text resource-bundle="messages/JavaUiBundle" key="checkbox.download.annotations"/>
                     </properties>
                   </component>
                 </children>
@@ -163,7 +163,7 @@
                 <properties>
                   <inheritsPopupMenu value="true"/>
                   <labelFor value="3957d"/>
-                  <text value="&amp;Loading available versions..."/>
+                  <text resource-bundle="messages/JavaUiBundle" key="label.loading.available.versions"/>
                 </properties>
               </component>
               <hspacer id="baffe">
@@ -191,7 +191,7 @@
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="Failed to load versions"/>
+                  <text resource-bundle="messages/JavaUiBundle" key="label.failed.to.load.versions"/>
                 </properties>
               </component>
               <hspacer id="51d3">
@@ -204,7 +204,7 @@
                   <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="&amp;Reload"/>
+                  <text resource-bundle="messages/JavaUiBundle" key="button.reload"/>
                 </properties>
               </component>
               <vspacer id="b36f9">

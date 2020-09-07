@@ -72,7 +72,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
 
 
     IntegerField minimalUsageCountEditor = new IntegerField(null, 1, Integer.MAX_VALUE);
-    minimalUsageCountEditor.getValueEditor().addListener(new ValueEditor.Listener<Integer>() {
+    minimalUsageCountEditor.getValueEditor().addListener(new ValueEditor.Listener<>() {
       @Override
       public void valueChanged(@NotNull Integer newValue) {
         minimalUsageCount = newValue;

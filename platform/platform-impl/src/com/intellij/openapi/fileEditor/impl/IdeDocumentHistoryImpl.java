@@ -30,6 +30,7 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -727,7 +728,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     }
   }
 
-  protected void executeCommand(Runnable runnable, String name, Object groupId) {
+  protected void executeCommand(Runnable runnable, @NlsContexts.Command String name, Object groupId) {
     CommandProcessor.getInstance().executeCommand(myProject, runnable, name, groupId);
   }
 

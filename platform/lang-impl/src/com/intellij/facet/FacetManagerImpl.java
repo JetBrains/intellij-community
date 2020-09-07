@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -128,14 +129,14 @@ public final class FacetManagerImpl extends FacetManagerBase implements ModuleCo
   private void addInvalidFacet(final FacetState state,
                                ModifiableFacetModel model,
                                final Facet<?> underlyingFacet,
-                               final String errorMessage) {
+                               final @NlsContexts.DialogMessage String errorMessage) {
     addInvalidFacet(state, model, underlyingFacet, errorMessage, false);
   }
 
   private void addInvalidFacet(final FacetState state,
                                ModifiableFacetModel model,
                                final Facet<?> underlyingFacet,
-                               final String errorMessage, boolean unknownType) {
+                               final @NlsContexts.DialogMessage String errorMessage, boolean unknownType) {
     model.addFacet(createInvalidFacet(getModule(), state, underlyingFacet, errorMessage, unknownType, true));
   }
 

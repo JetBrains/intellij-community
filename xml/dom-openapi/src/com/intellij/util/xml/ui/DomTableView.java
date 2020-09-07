@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.SmartList;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -37,7 +38,7 @@ public class DomTableView extends AbstractTableView<DomElement> {
     super(project);
   }
 
-  public DomTableView(final Project project, final String emptyPaneText, final String helpID) {
+  public DomTableView(final Project project, final @Nls String emptyPaneText, final String helpID) {
     super(project, emptyPaneText, helpID);
   }
 

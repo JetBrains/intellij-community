@@ -1,10 +1,11 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.mq;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.DateFormatUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
+import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.log.HgBaseLogParser;
 
 import java.util.Date;
@@ -14,7 +15,24 @@ import java.util.Map;
 @SuppressWarnings({"unused", "FieldCanBeLocal"})
 public class MqPatchDetails {
 
-  public enum MqPatchEnum {Name, Subject, Author, Branch, Date}
+  public enum MqPatchEnum {
+    Name("column.mq.patch.name"),
+    Subject("column.mq.patch.subject"),
+    Author("column.mq.patch.author"),
+    Branch("column.mq.patch.branch"),
+    Date("column.mq.patch.date");
+
+    private final String myId;
+
+    MqPatchEnum(@NotNull @NonNls @PropertyKey(resourceBundle = HgBundle.BUNDLE) String id) {
+      myId = id;
+    }
+
+    @NlsContexts.ColumnName
+    public String getColumnName() {
+      return HgBundle.message(myId);
+    }
+  }
 
   @NotNull private final Map<MqPatchEnum, String> myPatchDetailsPresentationMap = new EnumMap<>(MqPatchEnum.class);
 

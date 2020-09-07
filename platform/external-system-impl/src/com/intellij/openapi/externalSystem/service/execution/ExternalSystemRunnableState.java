@@ -220,6 +220,13 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
           }
 
           @Override
+          public void onCancel(@NotNull ExternalSystemTaskId id) {
+            eventDispatcher.onEvent(id, new FinishBuildEventImpl(id, null, System.currentTimeMillis(),
+                                                                 BuildBundle.message("build.status.cancelled"), new FailureResultImpl()));
+            processHandler.notifyProcessTerminated(1);
+          }
+
+          @Override
           public void onSuccess(@NotNull ExternalSystemTaskId id) {
             eventDispatcher.onEvent(id, new FinishBuildEventImpl(
               id, null, System.currentTimeMillis(), BuildBundle.message("build.event.message.successful"), new SuccessResultImpl()));

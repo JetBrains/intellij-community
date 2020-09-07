@@ -263,7 +263,7 @@ fun validateToken(request: HttpRequest, channel: Channel, isSignedRequest: Boole
           .yesNo("", BuiltInServerBundle.message("dialog.message.page", StringUtil.trimMiddle(url, 50)))
           .icon(Messages.getWarningIcon())
           .yesText(BuiltInServerBundle.message("dialog.button.copy.authorization.url.to.clipboard"))
-          .show() == Messages.YES) {
+          .guessWindowAndAsk()) {
         CopyPasteManager.getInstance().setContents(StringSelection(url + "?" + TOKEN_PARAM_NAME + "=" + acquireToken()))
       }
     }

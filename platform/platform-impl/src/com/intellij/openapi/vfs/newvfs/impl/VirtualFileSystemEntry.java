@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringFactory;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -39,14 +40,24 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   static final int IS_HIDDEN_FLAG = 0x0200_0000;
   private static final int INDEXED_FLAG = 0x0400_0000;
   static final int CHILDREN_CACHED = 0x0800_0000; // makes sense for directory only
+  /**
+   * true if the line separator for this file was detected to be equal to {@link com.intellij.util.LineSeparator#getSystemLineSeparator()}
+   */
   static final int SYSTEM_LINE_SEPARATOR_DETECTED = CHILDREN_CACHED; // makes sense for non-directory file only
   private static final int DIRTY_FLAG = 0x1000_0000;
   static final int IS_SYMLINK_FLAG = 0x2000_0000;
   private static final int HAS_SYMLINK_FLAG = 0x4000_0000;
-  static final int IS_SPECIAL_FLAG = 0x8000_0000;
+  static final int IS_SPECIAL_FLAG = 0x8000_0000; // makes sense for non-directory file only
+  /**
+   * true if this directory contains case-sensitive files. I.e. files "readme.txt" and "README.TXT" it can contain would be treated as different files.
+   */
+  static final int IS_CASE_SENSITIVE = IS_SPECIAL_FLAG; // makes sense for directory only
+
+  @MagicConstant(flags = {IS_WRITABLE_FLAG, IS_HIDDEN_FLAG, IS_SYMLINK_FLAG, IS_SPECIAL_FLAG, DIRTY_FLAG, HAS_SYMLINK_FLAG, SYSTEM_LINE_SEPARATOR_DETECTED, CHILDREN_CACHED, INDEXED_FLAG, IS_CASE_SENSITIVE})
+  @interface Flags {}
 
   static final int ALL_FLAGS_MASK =
-    DIRTY_FLAG | IS_SYMLINK_FLAG | HAS_SYMLINK_FLAG | IS_SPECIAL_FLAG | IS_WRITABLE_FLAG | IS_HIDDEN_FLAG | INDEXED_FLAG | CHILDREN_CACHED;
+    DIRTY_FLAG | IS_SYMLINK_FLAG | HAS_SYMLINK_FLAG | IS_SPECIAL_FLAG | IS_WRITABLE_FLAG | IS_HIDDEN_FLAG | INDEXED_FLAG | CHILDREN_CACHED | IS_CASE_SENSITIVE;
 
   @NotNull // except NULL_VIRTUAL_FILE
   private volatile VfsData.Segment mySegment;
@@ -103,7 +114,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   void registerLink(@NotNull VirtualFileSystem fs) {
     if (fs instanceof LocalFileSystemImpl && is(VFileProperty.SYMLINK) && isValid()) {
-      ((LocalFileSystemImpl)fs).symlinkUpdated(myId, myParent, getPath(), getCanonicalPath());
+      ((LocalFileSystemImpl)fs).symlinkUpdated(myId, myParent, getNameSequence(), getPath(), getCanonicalPath());
     }
   }
 
@@ -155,11 +166,11 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     getSegment().setModificationStamp(myId, modificationStamp);
   }
 
-  boolean getFlagInt(int mask) {
+  boolean getFlagInt(@Flags int mask) {
     return getSegment().getFlag(myId, mask);
   }
 
-  void setFlagInt(int mask, boolean value) {
+  void setFlagInt(@Flags int mask, boolean value) {
     getSegment().setFlag(myId, mask, value);
   }
 
@@ -343,6 +354,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   @Override
+  @NonNls
   public String toString() {
     if (isValid()) {
       return getUrl();
@@ -443,7 +455,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public boolean is(@NotNull VFileProperty property) {
-    if (property == VFileProperty.SPECIAL) return getFlagInt(IS_SPECIAL_FLAG);
+    if (property == VFileProperty.SPECIAL) return !isDirectory() && getFlagInt(IS_SPECIAL_FLAG);
     if (property == VFileProperty.HIDDEN) return getFlagInt(IS_HIDDEN_FLAG);
     if (property == VFileProperty.SYMLINK) return getFlagInt(IS_SYMLINK_FLAG);
     return super.is(property);

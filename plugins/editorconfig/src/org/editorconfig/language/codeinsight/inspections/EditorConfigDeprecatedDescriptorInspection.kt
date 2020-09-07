@@ -17,6 +17,7 @@ class EditorConfigDeprecatedDescriptorInspection : LocalInspectionTool() {
     override fun visitDescribableElement(element: EditorConfigDescribableElement) {
       val descriptor = element.getDescriptor(true) ?: return
       val deprecation = descriptor.deprecation ?: return
+      @Suppress("HardCodedStringLiteral")
       val message = MessageFormat.format(deprecation, ApplicationNamesInfo.getInstance().fullProductName)
       holder.registerProblem(
         element,

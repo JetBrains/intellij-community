@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.ui;
 
+import com.intellij.openapi.util.NlsSafe;
+
 /**
  * The validator for input dialogs.
  *
@@ -31,7 +33,7 @@ public interface InputValidator {
    * @param inputString the input to check
    * @return true if input string is valid
    */
-  boolean checkInput(String inputString);
+  boolean checkInput(@NlsSafe String inputString);
 
   /**
    * This method is invoked just before message dialog is closed with OK code.
@@ -40,5 +42,5 @@ public interface InputValidator {
    * @param inputString the input to check
    * @return true if the dialog could be closed, false otherwise.
    */
-  boolean canClose(String inputString);
+  boolean canClose(@NlsSafe String inputString);
 }

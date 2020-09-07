@@ -88,7 +88,8 @@ public class HtmlUnknownBooleanAttributeInspectionBase extends HtmlUnknownElemen
           if (!HtmlUtil.isBooleanAttribute(attributeDescriptor, null) && (!isCustomValuesEnabled() || !isCustomValue(name))) {
             final boolean html5 = HtmlUtil.isHtml5Context(tag);
             LocalQuickFix[] quickFixes = !html5 ? new LocalQuickFix[]{
-              new AddCustomHtmlElementIntentionAction(BOOLEAN_ATTRIBUTE_KEY, name, XmlAnalysisBundle.message("add.custom.html.boolean.attribute", name)),
+              new AddCustomHtmlElementIntentionAction(BOOLEAN_ATTRIBUTE_KEY, name, XmlAnalysisBundle.message(
+                "html.quickfix.add.custom.html.boolean.attribute", name)),
               XmlQuickFixFactory.getInstance().addAttributeValueFix(attribute),
               new RemoveAttributeIntentionFix(name),
             } : new LocalQuickFix[] {
@@ -100,10 +101,10 @@ public class HtmlUnknownBooleanAttributeInspectionBase extends HtmlUnknownElemen
             if (html5) {
               if (attributeDescriptor instanceof XmlEnumerationDescriptor &&
                   ((XmlEnumerationDescriptor)attributeDescriptor).getValueDeclaration(attribute, "") == null) {
-                error = XmlPsiBundle.message("wrong.value", "attribute");
+                error = XmlPsiBundle.message("xml.inspections.wrong.value", "attribute");
               }
             } else {
-              error = XmlAnalysisBundle.message("attribute.is.not.boolean", attribute.getName());
+              error = XmlAnalysisBundle.message("html.inspections.attribute.is.not.boolean", attribute.getName());
             }
             if (error != null) {
               registerProblemOnAttributeName(attribute, error, holder, quickFixes);

@@ -45,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -808,8 +809,8 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
   }
 
   public void testReadOnlyFsCachesLength() throws IOException {
-    String text = "<virtualFileSystem implementationClass=\"" + JarFileSystemTestWrapper.class.getName() + "\" key=\"jarwrapper\" physical=\"true\"/>";
-    Disposable disposable = DynamicPluginsTestUtilKt.loadExtensionWithText(text, JarFileSystemTestWrapper.class.getClassLoader());
+    String text = "<virtualFileSystem implementationClass=\"" + TracingJarFileSystemTestWrapper.class.getName() + "\" key=\"jarwrapper\" physical=\"true\"/>";
+    Disposable disposable = DynamicPluginsTestUtilKt.loadExtensionWithText(text, TracingJarFileSystemTestWrapper.class.getClassLoader());
 
     try {
       File testDir = getTempDir().createDir().toFile();
@@ -823,15 +824,12 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
       String content2 = "class Some { void mmm() {} }";
 
       File zipFile = createZipWithEntry(jarName, entryName, content0, testDir, generationDir);
-      assertTrue(zipFile.exists());
-
-      VfsUtil.markDirtyAndRefresh(false, true, true, zipFile);
 
       String url = "jarwrapper://" + FileUtil.toSystemIndependentName(zipFile.getPath()) + "!/" + entryName;
 
       VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
       file.refresh(false, false);
-      JarFileSystemTestWrapper fs = (JarFileSystemTestWrapper)file.getFileSystem();
+      TracingJarFileSystemTestWrapper fs = (TracingJarFileSystemTestWrapper)file.getFileSystem();
 
       assertTrue(file.isValid());
       assertEquals(content0, new String(file.contentsToByteArray(), StandardCharsets.UTF_8));
@@ -869,7 +867,46 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
     }
   }
 
-  public static class JarFileSystemTestWrapper extends JarFileSystemImpl {
+  public void testDoNotRecalculateLengthIfEndOfInputStreamIsNotReached() throws IOException {
+    String text = "<virtualFileSystem implementationClass=\"" + TracingJarFileSystemTestWrapper.class.getName() + "\" key=\"jarwrapper\" physical=\"true\"/>";
+    Disposable disposable = DynamicPluginsTestUtilKt.loadExtensionWithText(text, TracingJarFileSystemTestWrapper.class.getClassLoader());
+
+    try {
+      File testDir = getTempDir().createDir().toFile();
+      File generationDir = getTempDir().createDir().toFile();
+
+      String jarName = "test.jar";
+      String entryName = "Some.java";
+      String entryContent = "class Some {}";
+
+      File zipFile = createZipWithEntry(jarName, entryName, entryContent, testDir, generationDir);
+
+      String url = "jarwrapper://" + FileUtil.toSystemIndependentName(zipFile.getPath()) + "!/" + entryName;
+      VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
+      file.refresh(false, false);
+
+      TracingJarFileSystemTestWrapper fs = (TracingJarFileSystemTestWrapper)file.getFileSystem();
+      int attributeCallCount = fs.getAttributeCallCount();
+
+      try (InputStream stream = file.getInputStream()) {
+        // just read single byte
+        @SuppressWarnings("unused") int read = stream.read();
+      }
+      assertEquals(attributeCallCount, fs.getAttributeCallCount());
+
+      //noinspection EmptyTryBlock,unused
+      try (InputStream stream = file.getInputStream()) {
+        // just close
+      }
+      assertEquals(attributeCallCount, fs.getAttributeCallCount());
+
+    }
+    finally {
+      Disposer.dispose(disposable);
+    }
+  }
+
+  public static class TracingJarFileSystemTestWrapper extends JarFileSystemImpl {
     private final AtomicInteger myAttributeCallCount = new AtomicInteger();
     @Override
     public @Nullable FileAttributes getAttributes(@NotNull VirtualFile file) {
@@ -900,6 +937,10 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
 
     File outputFile = new File(outputPath, fileName);
     FileUtil.copy(zipFile, outputFile);
+
+    assertTrue(outputFile.exists());
+
+    VfsUtil.markDirtyAndRefresh(false, true, true, outputFile);
 
     return outputFile;
   }

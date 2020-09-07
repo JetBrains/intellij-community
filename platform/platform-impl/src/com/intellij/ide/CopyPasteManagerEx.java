@@ -90,6 +90,9 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
 
   @Override
   public void stopKillRings() {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Kill ring reset", new Throwable());
+    }
     for (Transferable data : myData) {
       if (data instanceof KillRingTransferable) {
         ((KillRingTransferable)data).setReadyToCombine(false);

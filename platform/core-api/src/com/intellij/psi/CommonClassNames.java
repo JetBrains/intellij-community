@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import org.jetbrains.annotations.NonNls;
@@ -47,6 +47,7 @@ public interface CommonClassNames {
   String JAVA_UTIL_MAP = "java.util.Map";
   String JAVA_UTIL_MAP_ENTRY = "java.util.Map.Entry";
   String JAVA_UTIL_HASH_MAP = "java.util.HashMap";
+  String JAVA_UTIL_LINKED_HASH_MAP = "java.util.LinkedHashMap";
   String JAVA_UTIL_CONCURRENT_HASH_MAP = "java.util.concurrent.ConcurrentHashMap";
   String JAVA_UTIL_LIST = "java.util.List";
   String JAVA_UTIL_ARRAY_LIST = "java.util.ArrayList";
@@ -72,7 +73,7 @@ public interface CommonClassNames {
   String JAVA_IO_FILE = "java.io.File";
 
   String JAVA_LANG_STRING = "java.lang.String";
-  String JAVA_LANG_STRING_SHORT = "String";
+  @NonNls String JAVA_LANG_STRING_SHORT = "String";
   String JAVA_LANG_NUMBER = "java.lang.Number";
   String JAVA_LANG_BOOLEAN = "java.lang.Boolean";
   String JAVA_LANG_BYTE = "java.lang.Byte";

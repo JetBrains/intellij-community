@@ -5,7 +5,6 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.psi.PsiAnnotation;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +45,7 @@ public interface AnnotationPackageSupport {
     return new AnnotationPackageSupport[]{
       new JetBrainsAnnotationSupport(), new FindBugsAnnotationSupport(), new AndroidAnnotationSupport(),
       new Jsr305Support(manager), new CheckerFrameworkSupport(), new EclipseAnnotationSupport(),
-      new CodeAnalysisAnnotationSupport(), new RxJavaAnnotationSupport()
+      new JSpecifyAnnotationSupport(), new RxJavaAnnotationSupport()
     };
   }
 }

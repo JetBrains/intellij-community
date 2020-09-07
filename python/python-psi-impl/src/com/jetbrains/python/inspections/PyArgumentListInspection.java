@@ -6,8 +6,10 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.ResolveResult;
@@ -54,44 +56,41 @@ public class PyArgumentListInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyArgumentList(final PyArgumentList node) {
+    public void visitPyArgumentList(final @NotNull PyArgumentList node) {
       inspectPyArgumentList(node, getHolder(), getResolveContext());
     }
 
     @Override
-    public void visitPyDecoratorList(final PyDecoratorList node) {
-      final PyDecorator[] decorators = node.getDecorators();
-      for (PyDecorator deco : decorators) {
-        if (deco.hasArgumentList()) continue;
-        final PyCallableType callableType = ContainerUtil.getFirstItem(deco.multiResolveCallee(getResolveContext()));
-        if (callableType != null) {
-          final PyCallable callable = callableType.getCallable();
-          if (callable == null) return;
-          final int firstParamOffset = callableType.getImplicitOffset();
-          final List<PyCallableParameter> params = callableType.getParameters(myTypeEvalContext);
-          if (params == null) return;
+    public void visitPyDecorator(@NotNull PyDecorator deco) {
+      if (deco.hasArgumentList()) return;
+      final PyCallableType callableType = ContainerUtil.getFirstItem(deco.multiResolveCallee(getResolveContext()));
+      if (callableType != null) {
+        final PyCallable callable = callableType.getCallable();
+        if (callable == null) return;
+        final int firstParamOffset = callableType.getImplicitOffset();
+        final List<PyCallableParameter> params = callableType.getParameters(myTypeEvalContext);
+        if (params == null) return;
 
-          final PyCallableParameter allegedFirstParam = ContainerUtil.getOrElse(params, firstParamOffset - 1, null);
-          if (allegedFirstParam == null || allegedFirstParam.isKeywordContainer()) {
-            // no parameters left to pass function implicitly, or wrong param type
-            registerProblem(deco, PyPsiBundle.message("INSP.func.$0.lacks.first.arg", callable.getName())); // TODO: better names for anon lambdas
-          }
-          else { // possible unfilled params
-            for (int i = firstParamOffset; i < params.size(); i++) {
-              final PyCallableParameter parameter = params.get(i);
-              if (parameter.getParameter() instanceof PySingleStarParameter || parameter.getParameter() instanceof PySlashParameter) {
-                continue;
-              }
-              // param tuples, non-starred or non-default won't do
-              if (!parameter.isKeywordContainer() && !parameter.isPositionalContainer() && !parameter.hasDefaultValue()) {
-                final String parameterName = parameter.getName();
-                registerProblem(deco, PyPsiBundle.message("INSP.parameter.$0.unfilled", parameterName == null ? "(...)" : parameterName));
-              }
+        final PyCallableParameter allegedFirstParam = ContainerUtil.getOrElse(params, firstParamOffset - 1, null);
+        if (allegedFirstParam == null || allegedFirstParam.isKeywordContainer()) {
+          // no parameters left to pass function implicitly, or wrong param type
+          registerProblem(deco, PyPsiBundle.message("INSP.function.lacks.positional.argument", callable.getName())); // TODO: better names for anon lambdas
+        }
+        else { // possible unfilled params
+          for (int i = firstParamOffset; i < params.size(); i++) {
+            final PyCallableParameter parameter = params.get(i);
+            if (parameter.getParameter() instanceof PySingleStarParameter || parameter.getParameter() instanceof PySlashParameter) {
+              continue;
+            }
+            // param tuples, non-starred or non-default won't do
+            if (!parameter.isKeywordContainer() && !parameter.isPositionalContainer() && !parameter.hasDefaultValue()) {
+              final String parameterName = parameter.getName();
+              registerProblem(deco, PyPsiBundle.message("INSP.parameter.unfilled", parameterName == null ? "(...)" : parameterName));
             }
           }
         }
-        // else: this case is handled by arglist visitor
       }
+      // else: this case is handled by arglist visitor
     }
   }
 
@@ -192,12 +191,12 @@ public class PyArgumentListInspection extends PyInspection {
           if (inside_type != null && !PyTypeChecker.isUnknown(inside_type, context)) {
             if (((PyStarArgument)arg).isKeyword()) {
               if (!PyABCUtil.isSubtype(inside_type, PyNames.MAPPING, context)) {
-                holder.registerProblem(arg, PyPsiBundle.message("INSP.expected.dict.got.$0", inside_type.getName()));
+                holder.registerProblem(arg, PyPsiBundle.message("INSP.expected.dict.got.type", inside_type.getName()));
               }
             }
             else { // * arg
               if (!PyABCUtil.isSubtype(inside_type, PyNames.ITERABLE, context)) {
-                holder.registerProblem(arg, PyPsiBundle.message("INSP.expected.iter.got.$0", inside_type.getName()));
+                holder.registerProblem(arg, PyPsiBundle.message("INSP.expected.iterable.got.type", inside_type.getName()));
               }
             }
           }
@@ -291,19 +290,20 @@ public class PyArgumentListInspection extends PyInspection {
               .of(mappings.get(0).getUnmappedParameters())
               .map(PyCallableParameter::getName)
               .filter(Objects::nonNull)
-              .forEach(name -> holder.registerProblem(psi, PyPsiBundle.message("INSP.parameter.$0.unfilled", name)));
+              .forEach(name -> holder.registerProblem(psi, PyPsiBundle.message("INSP.parameter.unfilled", name)));
           }
         }
       );
   }
 
+  @NlsSafe
   @NotNull
-  private static String addPossibleCalleesRepresentation(@NotNull String prefix,
+  private static String addPossibleCalleesRepresentation(@NotNull @InspectionMessage String prefix,
                                                          @NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
                                                          @NotNull TypeEvalContext context,
                                                          boolean isOnTheFly) {
-    final String separator = isOnTheFly ? "<br>" : " ";
-    final String possibleCalleesRepresentation = calculatePossibleCalleesRepresentation(mappings, context, isOnTheFly);
+    final @NlsSafe String separator = isOnTheFly ? "<br>" : " ";
+    final @NlsSafe String possibleCalleesRepresentation = calculatePossibleCalleesRepresentation(mappings, context, isOnTheFly);
 
     if (isOnTheFly) {
       return XmlStringUtil.wrapInHtml(
@@ -319,10 +319,11 @@ public class PyArgumentListInspection extends PyInspection {
     }
   }
 
+
   @NotNull
-  private static String calculatePossibleCalleesRepresentation(@NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
-                                                               @NotNull TypeEvalContext context,
-                                                               boolean isOnTheFly) {
+  private static @NlsSafe String calculatePossibleCalleesRepresentation(@NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
+                                                                        @NotNull TypeEvalContext context,
+                                                                        boolean isOnTheFly) {
     return StreamEx
       .of(mappings)
       .map(PyCallExpression.PyArgumentsMapping::getCallableType)
@@ -333,8 +334,8 @@ public class PyArgumentListInspection extends PyInspection {
   }
 
   @Nullable
-  private static String calculatePossibleCalleeRepresentation(@NotNull PyCallableType callableType,
-                                                              @NotNull TypeEvalContext context) {
+  private static @NlsSafe String calculatePossibleCalleeRepresentation(@NotNull PyCallableType callableType,
+                                                                       @NotNull TypeEvalContext context) {
     final String name = callableType.getCallable() != null ? callableType.getCallable().getName() : "";
     final List<PyCallableParameter> callableParameters = callableType.getParameters(context);
     if (callableParameters == null) return null;

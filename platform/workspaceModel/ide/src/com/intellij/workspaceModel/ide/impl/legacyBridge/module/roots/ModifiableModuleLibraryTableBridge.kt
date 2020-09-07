@@ -16,7 +16,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryT
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
-internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: ModifiableRootModelBridge)
+internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: ModifiableRootModelBridgeImpl)
   : ModuleLibraryTableBase(), ModuleLibraryTableBridge {
   private val copyToOriginal = HashMap<LibraryBridge, LibraryBridge>()
   init {
@@ -72,8 +72,7 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
       modifiableModel.diff.addLibraryPropertiesEntity(
         library = libraryEntity,
         libraryType = type.kindId,
-        propertiesXmlTag = LegacyBridgeModifiableBase.serializeComponentAsString(JpsLibraryTableSerializer.PROPERTIES_TAG, type.createDefaultProperties()),
-        source = libraryEntity.entitySource
+        propertiesXmlTag = LegacyBridgeModifiableBase.serializeComponentAsString(JpsLibraryTableSerializer.PROPERTIES_TAG, type.createDefaultProperties())
       )
     }
 
@@ -124,8 +123,7 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
       modifiableModel.diff.addLibraryPropertiesEntity(
         library = libraryEntity,
         libraryType = originalProperties.libraryType,
-        propertiesXmlTag = originalProperties.propertiesXmlTag,
-        source = libraryEntity.entitySource
+        propertiesXmlTag = originalProperties.propertiesXmlTag
       )
     }
     return createAndAddLibrary(libraryEntity, exported, scope)

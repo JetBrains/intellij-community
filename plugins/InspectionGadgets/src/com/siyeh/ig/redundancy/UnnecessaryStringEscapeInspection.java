@@ -20,6 +20,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,7 +91,7 @@ public class UnnecessaryStringEscapeInspection extends BaseInspection implements
           while (start >= 0) {
             newExpression.append(text, offset, start);
             offset = start + 2;
-            final String escape = text.substring(start, offset);
+            @NonNls final String escape = text.substring(start, offset);
             if ("\\n".equals(escape)) {
               final int indent = PsiLiteralUtil.getTextBlockIndent(literalExpression);
               if (indent < 0) return;

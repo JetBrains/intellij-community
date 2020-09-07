@@ -16,6 +16,7 @@
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.SmartList;
 import com.intellij.util.text.UniqueNameGenerator;
@@ -58,7 +59,7 @@ public abstract class MainConfigurationStateSplitter extends StateSplitterEx {
   }
 
   @NotNull
-  protected abstract String getComponentStateFileName();
+  protected abstract @NlsSafe String getComponentStateFileName();
 
   @NotNull
   protected abstract String getSubStateTagName();

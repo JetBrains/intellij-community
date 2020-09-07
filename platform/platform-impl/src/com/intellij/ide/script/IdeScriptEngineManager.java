@@ -3,6 +3,7 @@ package com.intellij.ide.script;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,7 +21,7 @@ public abstract class IdeScriptEngineManager {
   public abstract IdeScriptEngine getEngine(@NotNull EngineInfo engineInfo, @Nullable ClassLoader loader);
 
   @Nullable
-  public abstract IdeScriptEngine getEngineByName(@NotNull String engineName, @Nullable ClassLoader loader);
+  public abstract IdeScriptEngine getEngineByName(@NotNull @NonNls String engineName, @Nullable ClassLoader loader);
 
   @Nullable
   public abstract IdeScriptEngine getEngineByFileExtension(@NotNull String extension, @Nullable ClassLoader loader);
@@ -28,7 +29,7 @@ public abstract class IdeScriptEngineManager {
   public abstract boolean isInitialized();
 
   public static class EngineInfo {
-    public final String engineName;
+    public final @NonNls String engineName;
     public final String engineVersion;
     public final String languageName;
     public final String languageVersion;
@@ -36,7 +37,7 @@ public abstract class IdeScriptEngineManager {
     public final String factoryClass;
     public final PluginDescriptor plugin;
 
-    EngineInfo(@NotNull String engineName,
+    EngineInfo(@NotNull @NonNls String engineName,
                @Nullable String engineVersion,
                @NotNull String languageName,
                @Nullable String languageVersion,

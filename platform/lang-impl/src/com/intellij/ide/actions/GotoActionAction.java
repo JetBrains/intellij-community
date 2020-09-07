@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.gotoByName.GotoActionModel;
 import com.intellij.openapi.actionSystem.*;
@@ -22,7 +23,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 
-public class GotoActionAction extends SearchEverywhereBaseAction implements DumbAware {
+public class GotoActionAction extends SearchEverywhereBaseAction implements DumbAware, LightEditCompatible {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

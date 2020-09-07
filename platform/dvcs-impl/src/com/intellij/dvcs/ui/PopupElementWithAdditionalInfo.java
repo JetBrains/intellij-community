@@ -15,9 +15,11 @@
  */
 package com.intellij.dvcs.ui;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 public interface PopupElementWithAdditionalInfo {
+  @Nls
   @Nullable
   default String getInfoText() {return null;}
 }

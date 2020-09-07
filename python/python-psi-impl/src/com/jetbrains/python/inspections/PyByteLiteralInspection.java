@@ -19,6 +19,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
@@ -51,7 +52,7 @@ public class PyByteLiteralInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyStringLiteralExpression(PyStringLiteralExpression node) {
+    public void visitPyStringLiteralExpression(@NotNull PyStringLiteralExpression node) {
       String value = node.getStringValue();
       PsiFile file = node.getContainingFile(); // can't cache this in the instance, alas
       if (file == null) return;
@@ -85,7 +86,7 @@ public class PyByteLiteralInspection extends PyInspection {
       boolean isByte = first_char == 'b' || (default_bytes && first_char != 'u');
 
       if (hasNonAscii && isByte) {
-        registerProblem(node, "Byte literal contains characters > 255");
+        registerProblem(node, PyPsiBundle.message("INSP.byte.literal.contains.illegal.characters"));
       }
     }
   }

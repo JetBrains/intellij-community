@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -109,7 +110,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
   protected abstract CallerChooserBase<Method> createCallerChooser(@Nls String title, Tree treeToReuse, Consumer<Set<Method>> callback);
 
   @Nullable
-  protected abstract String validateAndCommitData();
+  protected abstract @NlsContexts.DialogMessage String validateAndCommitData();
 
   protected abstract String calculateSignature();
 
@@ -298,7 +299,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     final JComponent optionsPanel = createOptionsPanel();
 
     final JPanel subPanel = new JPanel(new BorderLayout());
-    final List<Pair<String, JPanel>> panels = createAdditionalPanels();
+    final List<Pair<@NlsContexts.TabTitle String, JPanel>> panels = createAdditionalPanels();
     if (myMethod.canChangeParameters()) {
       final JPanel parametersPanel = createParametersPanel(!panels.isEmpty());
       if (!panels.isEmpty()) {
@@ -319,7 +320,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     else {
       final TabbedPaneWrapper tabbedPane = new TabbedPaneWrapper(getDisposable());
       tabbedPane.addTab(RefactoringBundle.message("parameters.border.title"), panel);
-      for (Pair<String, JPanel> extraPanel : panels) {
+      for (Pair<@NlsContexts.TabTitle String, JPanel> extraPanel : panels) {
         tabbedPane.addTab(extraPanel.first, extraPanel.second);
       }
       main = new JPanel(new BorderLayout());
@@ -381,7 +382,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
 
 
   @NotNull
-  protected List<Pair<String, JPanel>> createAdditionalPanels() {
+  protected List<Pair<@NlsContexts.TabTitle String, JPanel>> createAdditionalPanels() {
     return Collections.emptyList();
   }
 

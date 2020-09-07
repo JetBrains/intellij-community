@@ -13,6 +13,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsIgnoreManager;
@@ -21,11 +22,11 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.vcsUtil.VcsUtil;
 import kotlin.Unit;
-import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +59,11 @@ public abstract class VcsVFSListener implements Disposable {
 
     @Override
     public String toString() {
-      return String.format("MovedFileInfo{[%s] -> [%s]}", myOldPath, myNewPath);
+      return String.format("MovedFileInfo{[%s] -> [%s]}", myOldPath, myNewPath);  //NON-NLS
+    }
+
+    public boolean isCaseSensitive() {
+      return myFile.isCaseSensitive();
     }
   }
 
@@ -197,7 +202,7 @@ public abstract class VcsVFSListener implements Disposable {
                                                                 !myMovedFiles.isEmpty());
     }
 
-    @CalledInBackground
+    @RequiresBackgroundThread
     private void process(@NotNull List<VFileEvent> events) {
       processEvents(events);
       withLock(PROCESSING_LOCK.writeLock(), () -> {
@@ -211,7 +216,7 @@ public abstract class VcsVFSListener implements Disposable {
 
       List<VcsException> exceptions = acquireExceptions();
       if (!exceptions.isEmpty()) {
-        AbstractVcsHelper.getInstance(myProject).showErrors(exceptions, myVcs.getDisplayName() + " operations errors");
+        AbstractVcsHelper.getInstance(myProject).showErrors(exceptions, VcsBundle.message("vcs.tab.title.vcs.name.operations.errors", myVcs.getDisplayName()));
       }
     }
 
@@ -408,7 +413,7 @@ public abstract class VcsVFSListener implements Disposable {
     return filePath != null && ReadAction.compute(() -> !myProject.isDisposed() && myVcsManager.getVcsFor(filePath) == myVcs);
   }
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   protected void executeAdd() {
     List<VirtualFile> addedFiles = myProcessor.acquireAddedFiles();
     LOG.debug("executeAdd. addedFiles: ", addedFiles);
@@ -454,7 +459,7 @@ public abstract class VcsVFSListener implements Disposable {
     executeAddCallback.executeAdd(addedFiles, copyFromMap);
   }
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   private void executeMoveRename() {
     List<MovedFileInfo> movedFiles = myProcessor.acquireMovedFiles();
     LOG.debug("executeMoveRename ", movedFiles);
@@ -463,7 +468,7 @@ public abstract class VcsVFSListener implements Disposable {
     }
   }
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   protected void executeDelete() {
     AllDeletedFiles allFiles = myProcessor.acquireAllDeletedFiles();
     List<FilePath> filesToDelete = allFiles.deletedWithoutConfirmFiles;
@@ -554,19 +559,25 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   @NotNull
+  @NlsContexts.DialogTitle
   protected abstract String getAddTitle();
 
   @NotNull
+  @NlsContexts.DialogTitle
   protected abstract String getSingleFileAddTitle();
 
   @NotNull
+  @NlsContexts.DialogMessage
   protected abstract String getSingleFileAddPromptTemplate();
 
   @NotNull
+  @NlsContexts.DialogTitle
   protected abstract String getDeleteTitle();
 
+  @NlsContexts.DialogTitle
   protected abstract String getSingleFileDeleteTitle();
 
+  @NlsContexts.DialogMessage
   protected abstract String getSingleFileDeletePromptTemplate();
 
   protected abstract void performAdding(@NotNull Collection<VirtualFile> addedFiles, @NotNull Map<VirtualFile, VirtualFile> copyFromMap);

@@ -62,11 +62,11 @@ public abstract class ArchiveHandler {
   public FileAttributes getAttributes(@NotNull String relativePath) {
     if (relativePath.isEmpty()) {
       FileAttributes attributes = FileSystemUtil.getAttributes(myPath);
-      return attributes != null ? new FileAttributes(true, false, false, false, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, false) : null;
+      return attributes != null ? new FileAttributes(true, false, false, false, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, false, FileAttributes.CaseSensitivity.SENSITIVE) : null;
     }
     else {
       EntryInfo entry = getEntryInfo(relativePath);
-      return entry != null ? new FileAttributes(entry.isDirectory, false, false, false, entry.length, entry.timestamp, false) : null;
+      return entry != null ? new FileAttributes(entry.isDirectory, false, false, false, entry.length, entry.timestamp, false, entry.isDirectory ? FileAttributes.CaseSensitivity.SENSITIVE: FileAttributes.CaseSensitivity.UNSPECIFIED) : null;
     }
   }
 

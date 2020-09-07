@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,9 +55,9 @@ public class TransactionGuardImpl extends TransactionGuard {
     Application app = ApplicationManager.getApplication();
     if (app.isWriteThread()) {
       if (!myWritingAllowed) {
-        String message = "Cannot run synchronous submitTransactionAndWait from invokeLater. " +
-                         "Please use asynchronous submit*Transaction. " +
-                         "See TransactionGuard FAQ for details.\nTransaction: " + runnable;
+        @NonNls String message = "Cannot run synchronous submitTransactionAndWait from invokeLater. " +
+                                 "Please use asynchronous submit*Transaction. " +
+                                 "See TransactionGuard FAQ for details.\nTransaction: " + runnable;
         if (!isWriteSafeModality(ModalityState.current())) {
           message += "\nUnsafe modality: " + ModalityState.current();
         }
@@ -145,7 +146,7 @@ public class TransactionGuardImpl extends TransactionGuard {
     }
   }
 
-  private static String reportWriteUnsafeContext(@NotNull ModalityState modality) {
+  private static @NonNls String reportWriteUnsafeContext(@NotNull ModalityState modality) {
     return "Write-unsafe context! Model changes are allowed from write-safe contexts only. " +
            "Please ensure you're using invokeLater/invokeAndWait with a correct modality state (not \"any\"). " +
            "See TransactionGuard documentation for details." +

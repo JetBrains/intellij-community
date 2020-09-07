@@ -19,9 +19,9 @@ import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.connections.CvsConnectionSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import org.jetbrains.annotations.CalledInBackground;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.ThreeState;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 
 public abstract class CvsLoginWorkerImpl<T extends CvsConnectionSettings> implements CvsLoginWorker {
@@ -33,7 +33,7 @@ public abstract class CvsLoginWorkerImpl<T extends CvsConnectionSettings> implem
     mySettings = settings;
   }
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   protected abstract void silentLoginImpl(boolean forceCheck) throws AuthenticationException;
 
   protected abstract void clearOldCredentials();

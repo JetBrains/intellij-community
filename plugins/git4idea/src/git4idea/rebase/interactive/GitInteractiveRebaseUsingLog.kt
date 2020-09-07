@@ -151,7 +151,7 @@ private class GitInteractiveRebaseUsingLogEditorHandler(
           Attachment("generated.txt", entriesGeneratedUsingLog.joinToString("\n")),
           Attachment("expected.txt", entries.joinToString("\n"))
         )
-        throw VcsException("Couldn't start Rebase using Log")
+        throw VcsException(GitBundle.message("rebase.using.log.couldnt.start.error"))
       }
     }
     processModel(rebaseTodoModel)

@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.net.NetUtils
@@ -170,7 +171,7 @@ private fun connectNio(bootstrap: Bootstrap,
       @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
       val cause = future.cause()
       if (cause == null) {
-        return ConnectToChannelResult("Cannot connect: unknown error")
+        return ConnectToChannelResult(IdeUtilIoBundle.message("error.message.cannot.connect.unknown.error"))
       }
       else {
         return ConnectToChannelResult(cause)
@@ -185,13 +186,14 @@ private fun sleep(time: Int): String? {
     Thread.sleep(time.toLong())
   }
   catch (ignored: InterruptedException) {
-    return "Interrupted"
+    return IdeUtilIoBundle.message("error.message.interrupted")
   }
 
   return null
 }
 
 val Channel.uriScheme: String
+  @NlsSafe
   get() = if (pipeline().get(SslHandler::class.java) == null) "http" else "https"
 
 val HttpRequest.host: String?
@@ -210,6 +212,7 @@ val HttpRequest.referrer: String?
   get() = headers().getAsString(HttpHeaderNames.REFERER)
 
 val HttpRequest.userAgent: String?
+  @NlsSafe
   get() = headers().getAsString(HttpHeaderNames.USER_AGENT)
 
 inline fun <T> ByteBuf.releaseIfError(task: () -> T): T {
@@ -263,7 +266,7 @@ fun HttpRequest.isLocalOrigin(onlyAnyOrLoopback: Boolean = true, hostsOnly: Bool
 }
 
 @Suppress("SpellCheckingInspection")
-private fun isTrustedChromeExtension(url: Url): Boolean {
+private fun isTrustedChromeExtension(@NlsSafe url: Url): Boolean {
   return url.scheme == "chrome-extension" &&
          (url.authority == "hmhgeddbohgjknpmjagkdomcpobmllji" ||
           url.authority == "offnedcbhjldheanlbojaefbfbllddna" ||
@@ -278,7 +281,7 @@ private val Url.host: String?
   }
 
 @JvmOverloads
-fun parseAndCheckIsLocalHost(uri: String?, onlyAnyOrLoopback: Boolean = true, hostsOnly: Boolean = false): Boolean {
+fun parseAndCheckIsLocalHost(@NlsSafe uri: String?, onlyAnyOrLoopback: Boolean = true, hostsOnly: Boolean = false): Boolean {
   if (uri == null || uri == "about:blank") {
     return true
   }

@@ -25,8 +25,11 @@ class GradleProjectReference(
   override fun resolveSingleTarget(): Symbol? {
     val gradleProject = GradleExtensionsSettings.getRootProject(myElement) ?: return null
     val rootProjectPath = GradleExtensionsSettings.getRootProjectPath(myElement) ?: return null
-    if (GradleProjectSymbol.qualifiedName(myQualifiedName) in gradleProject.extensions) {
-      return GradleProjectSymbol(myQualifiedName, rootProjectPath)
+    if (myQualifiedName.isEmpty()) {
+      return GradleRootProjectSymbol(rootProjectPath)
+    }
+    else if (GradleSubprojectSymbol.qualifiedNameString(myQualifiedName) in gradleProject.extensions) {
+      return GradleSubprojectSymbol(myQualifiedName, rootProjectPath)
     }
     return null
   }

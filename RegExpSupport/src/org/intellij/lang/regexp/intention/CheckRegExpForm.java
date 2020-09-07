@@ -102,7 +102,8 @@ public class CheckRegExpForm {
     };
     setupIcon(myRegExp, myRegExpIcon);
 
-    final String sampleText = PropertiesComponent.getInstance(project).getValue(LAST_EDITED_REGEXP, "Sample Text");
+    final String sampleText = PropertiesComponent.getInstance(project).getValue(LAST_EDITED_REGEXP,
+                                                                                RegExpBundle.message("checker.sample.text"));
     mySampleText = new EditorTextField(sampleText, project, PlainTextFileType.INSTANCE) {
       @Override
       protected EditorEx createEditor() {

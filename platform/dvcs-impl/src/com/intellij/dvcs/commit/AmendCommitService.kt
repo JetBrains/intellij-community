@@ -3,6 +3,7 @@ package com.intellij.dvcs.commit
 
 import com.intellij.CommonBundle
 import com.intellij.dvcs.repo.VcsRepositoryManager
+import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.PerformInBackgroundOption.ALWAYS_BACKGROUND
@@ -37,9 +38,9 @@ abstract class AmendCommitService(protected val project: Project) : AmendCommitA
   private val vcsLogObjectsFactory: VcsLogObjectsFactory get() = project.service()
 
   override fun getAmendCommitDetails(root: VirtualFile): CancellablePromise<EditedCommitDetails> {
-    val repository = VcsRepositoryManager.getInstance(project).getRepositoryForRootQuick(root) ?: return rejected("No repository for $root")
-    val logData = vcsLog.dataManager ?: return rejected("No VCS Log available")
-    val lastCommitId = repository.currentRevision ?: return rejected("Empty repository $root")
+    val repository = VcsRepositoryManager.getInstance(project).getRepositoryForRootQuick(root) ?: return rejected(DvcsBundle.message("error.message.amend.no.repository.for.root", root))
+    val logData = vcsLog.dataManager ?: return rejected(DvcsBundle.message("error.message.amend.no.vcs.log.available"))
+    val lastCommitId = repository.currentRevision ?: return rejected(DvcsBundle.message("error.message.amend.repository.is.empty.for.root", root))
 
     return getCommitDetails(logData, root, vcsLogObjectsFactory.createHash(lastCommitId))
   }
@@ -65,7 +66,7 @@ abstract class AmendCommitService(protected val project: Project) : AmendCommitA
 
 private fun AsyncPromise<EditedCommitDetails>.setCommit(hash: Hash, commit: VcsFullCommitDetails?, currentUser: VcsUser?) {
   if (commit == null) {
-    val message = "Failed to get commit details $hash"
+    val message = DvcsBundle.message("error.message.amend.commit.cant.get.details.for.hash", hash)
 
     LOG.debug(message)
     setError(message)

@@ -18,6 +18,7 @@ import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.statistics.StatisticsManager
@@ -249,4 +250,15 @@ public static void method(Runnable r) {}
     myFixture.type('\n')
   }
 
+  @NeedsIndex.Full
+  void testSealedClassInJavaModule() {
+    myFixture.addFileToProject('module-info.java', 'module Module1 {}')
+    myFixture.addFileToProject('bar/Child.java',
+            'package bar;\nimport foo.*;\npublic final class Child implements Foo {}')
+    myFixture.configureByText('foo/Foo.java',
+                              'package foo;\npublic sealed interface Foo permits <caret> {}')
+    myFixture.complete(CompletionType.BASIC)
+    myFixture.type('\n')
+    myFixture.checkResult('package foo;\n\nimport bar.Child;\n\npublic sealed interface Foo permits Child {}')
+  }
 }

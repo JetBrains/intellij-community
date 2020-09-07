@@ -40,21 +40,24 @@ public class AddSerialVersionUIDFix extends InspectionGadgetsFix {
     assert aClass != null;
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(aClass.getProject());
     final long serialVersionUID = SerialVersionUIDBuilder.computeDefaultSUID(aClass);
-    final PsiField field =
-      elementFactory.createFieldFromText("private static final long serialVersionUID = " + serialVersionUID + "L;", aClass);
-    if (PsiUtil.isLanguageLevel14OrHigher(descriptor.getPsiElement())) {
-      annotateFieldWithSerial(project, field);
+    final PsiField field = elementFactory.createFieldFromText(generateSerialVersionUIDFieldText(serialVersionUID), aClass);
+    if (PsiUtil.isLanguageLevel14OrHigher(field)) {
+      annotateFieldWithSerial(field);
     }
     aClass.add(field);
   }
 
-  private static void annotateFieldWithSerial(@NotNull Project project, @NotNull PsiField field) {
+  public static String generateSerialVersionUIDFieldText(long serialVersionUID) {
+    return "private static final long serialVersionUID = " + serialVersionUID + "L;";
+  }
+
+  public static void annotateFieldWithSerial(@NotNull PsiField field) {
     PsiModifierList modifierList = field.getModifierList();
     if (modifierList == null) return;
     PsiAnnotation annotation = AddAnnotationPsiFix
       .addPhysicalAnnotationIfAbsent(CommonClassNames.JAVA_IO_SERIAL, PsiNameValuePair.EMPTY_ARRAY, modifierList);
     if (annotation != null) {
-      JavaCodeStyleManager.getInstance(project).shortenClassReferences(annotation);
+      JavaCodeStyleManager.getInstance(field.getProject()).shortenClassReferences(annotation);
     }
   }
 }

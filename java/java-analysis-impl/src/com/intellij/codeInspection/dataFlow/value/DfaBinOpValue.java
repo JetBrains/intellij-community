@@ -4,6 +4,7 @@ package com.intellij.codeInspection.dataFlow.value;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.*;
+import com.intellij.lang.java.parser.ExpressionParser;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiPrimitiveType;
@@ -129,7 +130,7 @@ public final class DfaBinOpValue extends DfaValue {
       if (tokenType.equals(JavaTokenType.DIV)) {
         if (LongRangeSet.point(1).equals(rightRange)) return left;
       }
-      if (tokenType.equals(JavaTokenType.GTGT) || tokenType.equals(JavaTokenType.LTLT) || tokenType.equals(JavaTokenType.GTGTGT)) {
+      if (ExpressionParser.SHIFT_OPS.contains(tokenType)) {
         if (LongRangeSet.point(0).equals(rightRange)) return left;
       }
       LongRangeSet result = Objects.requireNonNull(leftRange.binOpFromToken(tokenType, rightRange, isLong));

@@ -1,13 +1,17 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.MethodInvocator;
@@ -19,7 +23,11 @@ import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.function.BiFunction;
+import java.util.function.Supplier;
 
 /**
  * @author tav
@@ -47,6 +55,13 @@ public final class HidpiInfo extends AnAction implements DumbAware {
      "> Appearance & Behaviour > Appearance > Override default font") +
            "</code></span></html>";
   }
+  private JBPopup popup;
+
+  private final int myCopyIconSize = AllIcons.General.CopyHovered.getIconWidth();
+  private final int myCopyIconPlateSize = myCopyIconSize * 2;
+  private Rectangle myCopyIconRect;
+  private boolean myDrawCopyIcon;
+  private boolean myIsCopyIconActive;
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent anActionEvent) {
@@ -118,7 +133,72 @@ public final class HidpiInfo extends AnAction implements DumbAware {
       public boolean isCellEditable(int row, int column) {
         return false;
       }
+
+      @Override
+      protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        if (myDrawCopyIcon) {
+          Rectangle rect = getBounds();
+          g.setColor(JBColor.background());
+          g.fillRect(rect.width - myCopyIconPlateSize, rect.height - myCopyIconPlateSize,
+                     myCopyIconPlateSize, myCopyIconPlateSize);
+          int offset = (myCopyIconPlateSize + myCopyIconSize) / 2;
+          AllIcons.General.CopyHovered.paintIcon(this, g, rect.width - offset, rect.height - offset);
+        }
+      }
     };
+
+    final Supplier<Rectangle> getCopyIconRect = () -> {
+      if (myCopyIconRect == null) {
+        myCopyIconRect = table.getBounds();
+        myCopyIconRect.x = myCopyIconRect.width - myCopyIconPlateSize;
+        myCopyIconRect.y = myCopyIconRect.height - myCopyIconPlateSize;
+        myCopyIconRect.width = myCopyIconRect.height = myCopyIconPlateSize;
+      }
+      return myCopyIconRect;
+    };
+    final String[][] _data = data;
+
+    table.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseEntered(MouseEvent e) {
+        myDrawCopyIcon = true;
+        table.repaint(getCopyIconRect.get());
+      }
+      @Override
+      public void mouseExited(MouseEvent e) {
+        myDrawCopyIcon = false;
+        table.repaint(getCopyIconRect.get());
+      }
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        if (myIsCopyIconActive) {
+          StringBuilder builder = new StringBuilder();
+          for (String[] datum : _data) {
+            builder.append(datum[0]).append(" : ").append(datum[1]).append("\n");
+          }
+          try {
+            CopyPasteManager.getInstance().setContents(new StringSelection(builder.toString()));
+          }
+          catch (Exception ignore) {}
+          popup.cancel();
+        }
+      }
+    });
+
+    table.addMouseMotionListener(new MouseAdapter() {
+      @Override
+      public void mouseMoved(MouseEvent e) {
+        if (getCopyIconRect.get().contains(e.getPoint())) {
+          myIsCopyIconActive = true;
+          table.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        }
+        else {
+          myIsCopyIconActive = false;
+          table.setCursor(Cursor.getDefaultCursor());
+        }
+      }
+    });
 
     BiFunction<Integer, Integer, Dimension> size = (row, col) -> label(exData[row][col]).getPreferredSize();
     int padding = JBUIScale.scale(10);
@@ -136,9 +216,12 @@ public final class HidpiInfo extends AnAction implements DumbAware {
     tablePanel.add(table, BorderLayout.CENTER);
     tablePanel.add(table.getTableHeader(), BorderLayout.NORTH);
 
-    JBPopupFactory.getInstance().createComponentPopupBuilder(tablePanel, null).
+    popup = JBPopupFactory.
+      getInstance().
+      createComponentPopupBuilder(tablePanel, null).
       setTitle("HiDPI Info").
-      createPopup().showInCenterOf(activeFrame);
+      createPopup();
+    popup.showInCenterOf(activeFrame);
   }
 
   private static JLabel label(String text) {

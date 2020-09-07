@@ -55,7 +55,7 @@ public class SerializableHasSerialVersionUIDFieldInspection extends Serializable
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      if (aClass.isInterface() || aClass.isAnnotationType() || aClass.isEnum()) {
+      if (aClass.isInterface() || aClass.isAnnotationType() || aClass.isEnum() || aClass.isRecord()) {
         return;
       }
       if (aClass instanceof PsiTypeParameter || aClass instanceof PsiEnumConstantInitializer) {

@@ -17,6 +17,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts.ListItem;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.GuiUtils;
@@ -273,7 +274,7 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
     return TemplateSettings.TAB_CHAR;
   }
 
-  private static String shortcutToString(char shortcut) {
+  private static @ListItem String shortcutToString(char shortcut) {
     if (shortcut == TemplateSettings.SPACE_CHAR) {
       return getSpace();
     }
@@ -283,15 +284,15 @@ public class PostfixTemplatesConfigurable implements SearchableConfigurable, Edi
     return getTab();
   }
 
-  private static String getSpace() {
+  private static @ListItem String getSpace() {
     return CodeInsightBundle.message("template.shortcut.space");
   }
 
-  private static String getTab() {
+  private static @ListItem String getTab() {
     return CodeInsightBundle.message("template.shortcut.tab");
   }
 
-  private static String getEnter() {
+  private static @ListItem String getEnter() {
     return CodeInsightBundle.message("template.shortcut.enter");
   }
 }

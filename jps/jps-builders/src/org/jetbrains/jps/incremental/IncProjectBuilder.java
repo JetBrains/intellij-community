@@ -2,16 +2,14 @@
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.LowMemoryWatcher;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.MappingFailedException;
 import gnu.trove.THashMap;
@@ -74,7 +72,7 @@ public final class IncProjectBuilder {
   private static final GlobalContextKey<Set<BuildTarget<?>>> TARGET_WITH_CLEARED_OUTPUT = GlobalContextKey.create("_targets_with_cleared_output_");
   public static final int MAX_BUILDER_THREADS;
   static {
-    int maxThreads = Math.min(6, Runtime.getRuntime().availableProcessors() - 1);
+    int maxThreads = Math.min(10, (75 * Runtime.getRuntime().availableProcessors()) / 100); // 75% of available logical cores, but not more than 10 threads
     try {
       maxThreads = Math.max(1, Integer.parseInt(System.getProperty(GlobalOptions.COMPILE_PARALLEL_MAX_THREADS_OPTION, Integer.toString(maxThreads))));
     }
@@ -292,7 +290,7 @@ public final class IncProjectBuilder {
     }
 
     if (estimatedWorkTime >= timeThreshold) {
-      final String message = "Too many modules require recompilation, forcing full project rebuild";
+      final String message = JpsBuildBundle.message("build.message.too.many.modules.require.recompilation.forcing.full.project.rebuild");
       LOG.info(message);
       LOG.info("Estimated build duration (linear): " + StringUtil.formatDuration(estimatedWorkTime));
       LOG.info("Last successful rebuild duration (linear): " + StringUtil.formatDuration(targetsState.getLastSuccessfulRebuildDuration()));
@@ -304,7 +302,7 @@ public final class IncProjectBuilder {
 
   private void requestRebuild(Exception e, Throwable cause) throws RebuildRequestedException {
     myMessageDispatcher.processMessage(new CompilerMessage(
-      "", BuildMessage.Kind.INFO, "Internal caches are corrupted or have outdated format, forcing project rebuild: " + e.getMessage())
+      "", BuildMessage.Kind.INFO, JpsBuildBundle.message("build.message.internal.caches.are.corrupted", e.getMessage()))
     );
     throw new RebuildRequestedException(cause);
   }
@@ -408,7 +406,7 @@ public final class IncProjectBuilder {
     context.addBuildListener(new BuildListener() {
       @Override
       public void filesGenerated(@NotNull FileGeneratedEvent event) {
-        final Set<File> outputs = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+        final Set<File> outputs = FileCollectionFactory.createCanonicalFileSet();
         for (Pair<String, String> pair : event.getPaths()) {
           outputs.add(new File(pair.getFirst()));
         }
@@ -435,15 +433,15 @@ public final class IncProjectBuilder {
       // clean roots for targets for which rebuild is forced
       cleanOutputRoots(context, context.isProjectRebuild() || forceCleanCaches);
 
-      context.processMessage(new ProgressMessage("Running 'before' tasks"));
+      context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.running.before.tasks")));
       runTasks(context, myBuilderRegistry.getBeforeTasks());
       TimingLog.LOG.debug("'before' tasks finished");
 
-      context.processMessage(new ProgressMessage("Checking sources"));
+      context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.checking.sources")));
       buildChunks(context, buildProgress);
       TimingLog.LOG.debug("Building targets finished");
 
-      context.processMessage(new ProgressMessage("Running 'after' tasks"));
+      context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.running.after.tasks")));
       runTasks(context, myBuilderRegistry.getAfterTasks());
       TimingLog.LOG.debug("'after' tasks finished");
       sendElapsedTimeMessages(context);
@@ -461,7 +459,7 @@ public final class IncProjectBuilder {
       for (ModuleLevelBuilder builder : myBuilderRegistry.getModuleLevelBuilders()) {
         builder.buildFinished(context);
       }
-      context.processMessage(new ProgressMessage("Finished, saving caches..."));
+      context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.finished.saving.caches")));
     }
 
   }
@@ -545,7 +543,7 @@ public final class IncProjectBuilder {
         }
         catch (IOException e) {
           if (ex == null) {
-            ex = new ProjectBuildException("Error cleaning timestamps storage", e);
+            ex = new ProjectBuildException(JpsBuildBundle.message("build.message.error.cleaning.timestamps.storage"), e);
           }
           else {
             LOG.info("Error cleaning timestamps storage", e);
@@ -557,7 +555,7 @@ public final class IncProjectBuilder {
           }
           catch (IOException e) {
             if (ex == null) {
-              ex = new ProjectBuildException("Error cleaning compiler storages", e);
+              ex = new ProjectBuildException(JpsBuildBundle.message("build.message.error.cleaning.compiler.storages"), e);
             }
             else {
               LOG.info("Error cleaning compiler storages", e);
@@ -586,7 +584,7 @@ public final class IncProjectBuilder {
     List<Pair<String, Integer>> targetIds = myProjectDescriptor.dataManager.getTargetsState().getStaleTargetIds(type);
     if (targetIds.isEmpty()) return;
 
-    context.processMessage(new ProgressMessage("Cleaning old output directories..."));
+    context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.cleaning.old.output.directories")));
     for (Pair<String, Integer> ids : targetIds) {
       String stringId = ids.first;
       try {
@@ -605,7 +603,9 @@ public final class IncProjectBuilder {
       }
       catch (IOException e) {
         LOG.warn(e);
-        myMessageDispatcher.processMessage(new CompilerMessage("", BuildMessage.Kind.WARNING, "Failed to delete output files from obsolete '" + stringId + "' target: " + e.toString()));
+        myMessageDispatcher.processMessage(new CompilerMessage("", BuildMessage.Kind.WARNING,
+                                                               JpsBuildBundle.message("build.message.failed.to.delete.output.files.from.obsolete.0.target.1",
+                                                                                      stringId, e.toString())));
       }
     }
   }
@@ -621,8 +621,7 @@ public final class IncProjectBuilder {
                                        SourceToOutputMapping mapping,
                                        BuildTargetType<?> targetType,
                                        int targetId) throws IOException {
-    final THashSet<File> dirsToDelete = targetType instanceof ModuleBasedBuildTargetType<?>
-                                        ? new THashSet<>(FileUtil.FILE_HASHING_STRATEGY) : null;
+    Set<File> dirsToDelete = targetType instanceof ModuleBasedBuildTargetType<?> ? FileCollectionFactory.createCanonicalFileSet() : null;
     OutputToTargetRegistry outputToTargetRegistry = context.getProjectDescriptor().dataManager.getOutputToTargetRegistry();
     for (String srcPath : mapping.getSources()) {
       final Collection<String> outs = mapping.getOutputs(srcPath);
@@ -694,7 +693,7 @@ public final class IncProjectBuilder {
   private void clearOutputs(CompileContext context) throws ProjectBuildException {
     final long cleanStart = System.nanoTime();
     final MultiMap<File, BuildTarget<?>> rootsToDelete = MultiMap.createSet();
-    final Set<File> allSourceRoots = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+    final Set<File> allSourceRoots = FileCollectionFactory.createCanonicalFileSet();
 
     final ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
     final List<? extends BuildTarget<?>> allTargets = projectDescriptor.getBuildTargetIndex().getAllTargets();
@@ -759,7 +758,8 @@ public final class IncProjectBuilder {
         }
         if (!okToDelete) {
           context.processMessage(new CompilerMessage(
-            "", BuildMessage.Kind.WARNING, "Output path " + outputRoot.getPath() + " intersects with a source root. Only files that were created by build will be cleaned.")
+            "", BuildMessage.Kind.WARNING,
+            JpsBuildBundle.message("build.message.output.path.0.intersects.with.a.source.root", outputRoot.getPath()))
           );
         }
       }
@@ -782,7 +782,7 @@ public final class IncProjectBuilder {
         registerTargetsWithClearedOutput(context, rootTargets);
       }
       else {
-        context.processMessage(new ProgressMessage("Cleaning output directories..."));
+        context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.cleaning.output.directories")));
         // clean only those files we are aware of
         for (BuildTarget<?> target : rootTargets) {
           if (compileScope.isBuildForced(target)) {
@@ -793,7 +793,7 @@ public final class IncProjectBuilder {
     }
 
     if (!filesToDelete.isEmpty()) {
-      context.processMessage(new ProgressMessage("Cleaning output directories..."));
+      context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.cleaning.output.directories")));
       if (SYNC_DELETE) {
         for (File file : filesToDelete) {
           context.checkCanceled();
@@ -822,7 +822,8 @@ public final class IncProjectBuilder {
       if (reason == null) {
         reason = e.getClass().getName();
       }
-      context.processMessage(new CompilerMessage("", BuildMessage.Kind.WARNING, "Problems clearing output files for target \"" + target.getPresentableName() + "\": " + reason));
+      context.processMessage(new CompilerMessage("", BuildMessage.Kind.WARNING, JpsBuildBundle
+        .message("build.message.problems.clearing.output.files.for.target.0.1", target.getPresentableName(), reason)));
     }
   }
 
@@ -1111,8 +1112,8 @@ public final class IncProjectBuilder {
           String targetsString = StringUtil.join(targets,
                                                  (Function<BuildTarget<?>, String>)target1 -> StringUtil.decapitalize(target1.getPresentableName()), ", ");
           context.processMessage(new CompilerMessage(
-            "", BuildMessage.Kind.ERROR, "Cannot build " + StringUtil.decapitalize(target.getPresentableName()) + " because it is included into a circular dependency (" +
-                                         targetsString + ")")
+            "", BuildMessage.Kind.ERROR, JpsBuildBundle.message("build.message.cannot.build.0.because.it.is.included.into.a.circular.dependency.1",
+                                                                StringUtil.decapitalize(target.getPresentableName()), targetsString))
           );
           return false;
         }
@@ -1212,7 +1213,7 @@ public final class IncProjectBuilder {
       throw e;
     }
     catch (Throwable e) {
-      final StringBuilder message = new StringBuilder();
+      @NlsSafe StringBuilder message = new StringBuilder();
       message.append(chunk.getPresentableName()).append(": ").append(e.getClass().getName());
       final String exceptionMessage = e.getMessage();
       if (exceptionMessage != null) {
@@ -1297,9 +1298,8 @@ public final class IncProjectBuilder {
       // cleanup outputs
       final Map<BuildTarget<?>, Collection<String>> targetToRemovedSources = new HashMap<>();
 
-      final THashSet<File> dirsToDelete = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+      Set<File> dirsToDelete = FileCollectionFactory.createCanonicalFileSet();
       for (BuildTarget<?> target : targets) {
-
         final Collection<String> deletedPaths = myProjectDescriptor.fsState.getAndClearDeletedPaths(target);
         if (deletedPaths.isEmpty()) {
           continue;
@@ -1452,7 +1452,8 @@ public final class IncProjectBuilder {
                 doneSomething |= (buildResult != ModuleLevelBuilder.ExitCode.NOTHING_DONE);
 
                 if (buildResult == ModuleLevelBuilder.ExitCode.ABORT) {
-                  throw new StopBuildException("Builder " + builder.getPresentableName() + " requested build stop");
+                  throw new StopBuildException(
+                    JpsBuildBundle.message("build.message.builder.0.requested.build.stop", builder.getPresentableName()));
                 }
                 context.checkCanceled();
                 if (buildResult == ModuleLevelBuilder.ExitCode.ADDITIONAL_PASS_REQUIRED) {
@@ -1516,13 +1517,14 @@ public final class IncProjectBuilder {
   }
 
   private static void notifyChunkRebuildRequested(CompileContext context, ModuleChunk chunk, ModuleLevelBuilder builder) {
-    String infoMessage = "Builder \"" + builder.getPresentableName() + "\" requested rebuild of module chunk \"" + chunk.getName() + "\"";
+    String infoMessage = JpsBuildBundle.message("builder.0.requested.rebuild.of.module.chunk.1", builder.getPresentableName(), chunk.getName());
     LOG.info(infoMessage);
     BuildMessage.Kind kind = BuildMessage.Kind.JPS_INFO;
     final CompileScope scope = context.getScope();
     for (ModuleBuildTarget target : chunk.getTargets()) {
       if (!scope.isWholeTargetAffected(target)) {
-        infoMessage += ".\nConsider building whole project or rebuilding the module.";
+        infoMessage += ".\n";
+        infoMessage += JpsBuildBundle.message("build.message.consider.building.whole.project.or.rebuilding.the.module");
         kind = BuildMessage.Kind.INFO;
         break;
       }

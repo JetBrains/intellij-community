@@ -3,11 +3,8 @@ package com.intellij.lang.properties.customizeActions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.ProjectView;
-import com.intellij.lang.properties.PropertiesBundle;
-import com.intellij.lang.properties.PropertiesImplUtil;
-import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
-import com.intellij.lang.properties.ResourceBundleManager;
+import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -134,7 +131,7 @@ public class CombinePropertiesFilesAction extends AnAction {
     @Nullable
     @Override
     public String getErrorText(String inputString) {
-      return checkInput(inputString) ? null : String.format("Base name must be valid for file '%s'", checkBaseName(inputString).getFailedFile());
+      return checkInput(inputString) ? null : PropertiesBundle.message("combine.properties.files.validation.error", checkBaseName(inputString).getFailedFile());
     }
 
     @Nullable

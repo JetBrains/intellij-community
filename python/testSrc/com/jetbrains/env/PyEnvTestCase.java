@@ -4,12 +4,8 @@ package com.jetbrains.env;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -23,7 +19,6 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.*;
 import org.junit.rules.TestName;
 import org.junit.rules.TestWatcher;
-import org.junit.runner.Description;
 
 import java.io.File;
 import java.io.IOException;
@@ -68,19 +63,13 @@ public abstract class PyEnvTestCase {
    */
   public static final Map<String, List<String>> envTags = new HashMap<>();
 
-  private boolean myStaging = false;
   /**
    * TODO: Move to {@link EnvTestTagsRequired} as well?
    */
 
   @Rule public TestName myTestName = new TestName();
 
-  @Rule public final TestWatcher myWatcher = new TestWatcher() {
-    @Override
-    protected void starting(Description description) {
-      myStaging = isStaging(description);
-    }
-  };
+  @Rule public final TestWatcher myWatcher = new TestWatcher(){};
 
   static {
     LOG.warn("Using following config\n" + SETTINGS.reportConfiguration());
@@ -91,29 +80,6 @@ public abstract class PyEnvTestCase {
    */
   public static String escapeTestMessage(@NotNull final String message) {
     return message.replace("##", "from test: \\[sharp][sharp]");
-  }
-
-  protected boolean isStaging(Description description) {
-    try {
-      Class<?> aClass = description.getTestClass();
-      if (aClass.isAnnotationPresent(Staging.class)) {
-        return true;
-      }
-      if (aClass.getMethod(description.getMethodName()).isAnnotationPresent(Staging.class)) {
-        return true;
-      }
-      else {
-        final StagingOn[] methodAnnotations = aClass.getMethod(description.getMethodName()).getAnnotationsByType(StagingOn.class);
-        final StagingOn[] classAnnotations = aClass.getAnnotationsByType(StagingOn.class);
-        if (Arrays.stream(ArrayUtil.mergeArrays(methodAnnotations, classAnnotations)).map(StagingOn::os).anyMatch(TestEnv::isThisOs)) {
-          return true;
-        }
-        return false;
-      }
-    }
-    catch (NoSuchMethodException e) {
-      return false;
-    }
   }
 
   /**
@@ -204,8 +170,6 @@ public abstract class PyEnvTestCase {
   private void runTest(@NotNull PyTestTask testTask, @NotNull String testName) {
     Assume.assumeFalse("Running under teamcity but not by Env configuration. Test seems to be launched by accident, skip it.",
                        UsefulTestCase.IS_UNDER_TEAMCITY && !SETTINGS.isEnvConfiguration());
-    checkStaging();
-
     List<String> roots = getPythonRoots();
 
     /*
@@ -230,14 +194,6 @@ public abstract class PyEnvTestCase {
                        roots.isEmpty());
 
     doRunTests(testTask, testName, roots);
-  }
-
-  protected final void checkStaging() {
-    if (!SETTINGS.isUnderTeamCity()) {
-      return; // Its ok to run staging tests locally
-    }
-    Assume.assumeTrue("Test is annotated as Staging and should only run on staging environment",
-                      myStaging == SETTINGS.isStagingMode());
   }
 
   protected void doRunTests(PyTestTask testTask, String testName, List<String> roots) {

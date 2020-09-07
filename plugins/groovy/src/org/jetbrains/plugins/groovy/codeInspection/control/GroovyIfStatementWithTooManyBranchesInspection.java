@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.control;
 
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.plugins.groovy.codeInspection.utils.SingleIntegerFieldOptionsPanel;
 
 import javax.swing.*;
@@ -23,6 +24,10 @@ public class GroovyIfStatementWithTooManyBranchesInspection extends GroovyIfStat
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel("Maximum number of branches:", this, "m_limit");
+    return new SingleIntegerFieldOptionsPanel(
+      InspectionGadgetsBundle.message("if.statement.with.too.many.branches.max.option"),
+      this,
+      "m_limit"
+    );
   }
 }

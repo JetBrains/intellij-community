@@ -14,6 +14,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import one.util.streamex.Joining;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -31,9 +32,9 @@ public class CreateSwitchBranchesUtil {
    */
   public static @NotNull @Nls String getActionName(Collection<String> names) {
     if (names.size() == 1) {
-      return "Create missing switch branch '" + names.iterator().next() + "'";
+      return InspectionGadgetsBundle.message("create.missing.switch.branch", names.iterator().next());
     }
-    return "Create missing branches: " + formatMissingBranches(names);
+    return InspectionGadgetsBundle.message("create.missing.switch.branches", formatMissingBranches(names));
   }
 
   /**
@@ -59,7 +60,7 @@ public class CreateSwitchBranchesUtil {
   public static List<PsiSwitchLabelStatementBase> createMissingBranches(@NotNull PsiSwitchBlock switchBlock,
                                                                         @NotNull List<String> allNames,
                                                                         @NotNull Collection<String> missingNames,
-                                                                        @NotNull Function<PsiSwitchLabelStatementBase, List<String>> caseExtractor) {
+                                                                        @NotNull Function<? super PsiSwitchLabelStatementBase, ? extends List<String>> caseExtractor) {
     boolean isRuleBasedFormat = SwitchUtils.isRuleFormatSwitch(switchBlock);
     final PsiCodeBlock body = switchBlock.getBody();
     if (body == null) {
@@ -151,7 +152,7 @@ public class CreateSwitchBranchesUtil {
     return elementsToReplace;
   }
 
-  private static List<String> generateStatements(String name, PsiSwitchBlock switchBlock, boolean isRuleBasedFormat) {
+  private static @NonNls List<String> generateStatements(String name, PsiSwitchBlock switchBlock, boolean isRuleBasedFormat) {
     if (switchBlock instanceof PsiSwitchExpression) {
       String value = TypeUtils.getDefaultValue(((PsiSwitchExpression)switchBlock).getType());
       if (isRuleBasedFormat) {

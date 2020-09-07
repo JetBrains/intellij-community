@@ -50,12 +50,6 @@ public class JpsDevKitModelSerializerExtension extends JpsModelSerializerExtensi
       }
       return JpsElementFactory.getInstance().createSimpleElement(new JpsIdeaSdkProperties(sandboxHome, jdkName));
     }
-
-    @Override
-    public void saveProperties(@NotNull JpsSimpleElement<JpsIdeaSdkProperties> properties, @NotNull Element element) {
-      JDOMExternalizerUtil.writeField(element, SANDBOX_HOME_FIELD, properties.getData().getSandboxHome());
-      element.setAttribute(JDK_NAME_ATTRIBUTE, properties.getData().getJdkName());
-    }
   }
 
   private static final class JpsPluginModulePropertiesSerializer extends JpsModulePropertiesSerializer<JpsSimpleElement<JpsPluginModuleProperties>> {
@@ -71,18 +65,6 @@ public class JpsDevKitModelSerializerExtension extends JpsModelSerializerExtensi
       String pluginXmlUrl = componentElement != null ? componentElement.getAttributeValue(URL_ATTRIBUTE) : null;
       String manifestFileUrl = componentElement != null ? componentElement.getAttributeValue(MANIFEST_ATTRIBUTE) : null;
       return JpsElementFactory.getInstance().createSimpleElement(new JpsPluginModuleProperties(pluginXmlUrl, manifestFileUrl));
-    }
-
-    @Override
-    public void saveProperties(@NotNull JpsSimpleElement<JpsPluginModuleProperties> element, @NotNull Element componentElement) {
-      String pluginXmlUrl = element.getData().getPluginXmlUrl();
-      if (pluginXmlUrl != null) {
-        componentElement.setAttribute(URL_ATTRIBUTE, pluginXmlUrl);
-      }
-      String manifestFileUrl = element.getData().getManifestFileUrl();
-      if (manifestFileUrl != null) {
-        componentElement.setAttribute(MANIFEST_ATTRIBUTE, manifestFileUrl);
-      }
     }
   }
 }

@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.keyFMap.KeyFMap;
@@ -14,6 +15,15 @@ import java.io.OutputStream;
 import java.nio.charset.Charset;
 
 public class StubVirtualFile extends VirtualFile {
+  private final VirtualFileSystem myFileSystem;
+
+  public StubVirtualFile() {
+    this(LocalFileSystem.getInstance());
+  }
+  public StubVirtualFile(@NotNull VirtualFileSystem fileSystem) {
+    myFileSystem = fileSystem;
+  }
+
   @Override
   public byte @NotNull [] contentsToByteArray() throws IOException {
     throw unsupported();
@@ -27,7 +37,7 @@ public class StubVirtualFile extends VirtualFile {
   @NotNull
   @Override
   public VirtualFileSystem getFileSystem() {
-    throw unsupported();
+    return myFileSystem;
   }
 
   @Override

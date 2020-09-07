@@ -16,16 +16,16 @@
 
 package com.intellij.lang.properties.psi;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class I18nizedTextGenerator {
-  public abstract @NotNull String getI18nizedText(@NotNull String propertyKey, final @Nullable PropertiesFile propertiesFile,
+  public abstract @NotNull String getI18nizedText(@NotNull @NlsSafe String propertyKey, final @Nullable PropertiesFile propertiesFile,
                                                   @Nullable PsiElement context);
 
-  public abstract @NotNull String getI18nizedConcatenationText(@NotNull String propertyKey, @NotNull String parametersString,
+  public abstract @NotNull String getI18nizedConcatenationText(@NotNull @NlsSafe String propertyKey, @NotNull @NlsSafe String parametersString,
                                                                final @Nullable PropertiesFile propertiesFile, @Nullable PsiElement context);
 
 }

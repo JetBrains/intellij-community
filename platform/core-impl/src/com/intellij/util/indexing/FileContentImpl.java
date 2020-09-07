@@ -112,7 +112,7 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
       throw new AssertionError("PSI can be created only for a file with LanguageFileType but actual is " + fileType.getClass()  + "." +
                                "\nPlease use a proper FileBasedIndexExtension#getInputFilter() implementation for the caller index");
     }
-    return createFileFromText(project, text, (LanguageFileType)fileType, myFile, myFileName);
+    return createFileFromText(project, text, (LanguageFileType)fileType, myFile, getFileName());
   }
 
   @NotNull
@@ -150,12 +150,6 @@ public class FileContentImpl extends IndexedFileImpl implements PsiDependentFile
   @Override
   public VirtualFile getFile() {
     return myFile;
-  }
-
-  @NotNull
-  @Override
-  public String getFileName() {
-    return myFileName;
   }
 
   @NotNull

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.references
 
 import com.intellij.psi.JavaPsiFacade
@@ -36,12 +36,16 @@ class GrMapConstructorPropertyReference(element: GrArgumentLabel) : GroovyProper
     fun getConstructorReference(argument: GrNamedArgument): GroovyConstructorReference? {
       val parent: PsiElement? = argument.parent
       if (parent is GrListOrMap) {
-        return parent.constructorReference
+        return parent.constructorReference ?: getReferenceFromDirectInvocation(parent.parent)
       }
-      else if (parent is GrArgumentList) {
-        val grandParent: PsiElement? = parent.getParent()
-        if (grandParent is GrConstructorCall) {
-          return grandParent.constructorReference
+      return getReferenceFromDirectInvocation(parent)
+    }
+
+    private fun getReferenceFromDirectInvocation(element: PsiElement?) : GroovyConstructorReference? {
+      if (element is GrArgumentList) {
+        val parent: PsiElement? = element.getParent()
+        if (parent is GrConstructorCall) {
+          return parent.constructorReference
         }
       }
       return null

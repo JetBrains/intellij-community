@@ -31,13 +31,13 @@ public class PyJoinIfIntention extends PyBaseIntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyPsiBundle.message("INTN.join.if");
+    return PyPsiBundle.message("INTN.NAME.join.if");
   }
 
   @Override
   @NotNull
   public String getText() {
-    return PyPsiBundle.message("INTN.join.if.text");
+    return PyPsiBundle.message("INTN.join.if");
   }
 
   @Override

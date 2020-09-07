@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInsight.intention.*;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,6 +13,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
@@ -32,9 +32,9 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
   private final List<IntentionAction> myOptionIntentions = new ArrayList<>();
   private final List<IntentionAction> myOptionErrorFixes = new ArrayList<>();
   private final List<IntentionAction> myOptionInspectionFixes = new ArrayList<>();
-  private final String myText;
+  private final @IntentionName String myText;
   private final IntentionAction myAction;
-  private final String myDisplayName;
+  private final @NlsContexts.PopupTitle String myDisplayName;
   private final Icon myIcon;
 
   IntentionActionWithTextCaching(@NotNull IntentionAction action){
@@ -45,18 +45,18 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
     this(descriptor.getAction(), descriptor.getDisplayName(), descriptor.getIcon(), markInvoked);
   }
 
-  private IntentionActionWithTextCaching(@NotNull IntentionAction action, String displayName, @Nullable Icon icon, @NotNull BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> markInvoked) {
+  private IntentionActionWithTextCaching(@NotNull IntentionAction action, @NlsContexts.PopupTitle String displayName, @Nullable Icon icon, @NotNull BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> markInvoked) {
     myIcon = icon;
     myText = action.getText();
     // needed for checking errors in user written actions
     //noinspection ConstantConditions
-    LOG.assertTrue(myText != null, "action "+action.getClass()+" text returned null");
+    LOG.assertTrue(myText != null, "action " + action.getClass() + " text returned null");
     myAction = new MyIntentionAction(action, markInvoked);
     myDisplayName = displayName;
   }
 
   @NotNull
-  public String getText() {
+  public @IntentionName String getText() {
     return myText;
   }
 
@@ -95,7 +95,7 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
     return ContainerUtil.concat(myOptionIntentions, myOptionErrorFixes, myOptionInspectionFixes);
   }
 
-  String getToolName() {
+  @NlsContexts.PopupTitle String getToolName() {
     return myDisplayName;
   }
 
@@ -139,8 +139,33 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
     return getAction();
   }
 
+  public boolean isShowSubmenu() {
+    IntentionAction action = IntentionActionDelegate.unwrap(getDelegate());
+    if (action instanceof CustomizableIntentionAction) {
+      return ((CustomizableIntentionAction)myAction).isShowSubmenu();
+    }
+    return true;
+  }
+
+  public boolean isSelectable() {
+    IntentionAction action = IntentionActionDelegate.unwrap(getDelegate());
+    if (action instanceof CustomizableIntentionAction) {
+      return ((CustomizableIntentionAction)myAction).isSelectable();
+    }
+    return true;
+  }
+
+  public boolean isShowIcon() {
+    IntentionAction action = IntentionActionDelegate.unwrap(getDelegate());
+    if (action instanceof CustomizableIntentionAction) {
+      return ((CustomizableIntentionAction)action).isShowIcon();
+    }
+    return true;
+  }
+
   // IntentionAction which wraps the original action and then marks it as executed to hide it from the popup to avoid invoking it twice accidentally
-  private class MyIntentionAction implements IntentionAction, IntentionActionDelegate, Comparable<MyIntentionAction>, ShortcutProvider, PossiblyDumbAware {
+  private class MyIntentionAction implements IntentionAction, CustomizableIntentionActionDelegate, Comparable<MyIntentionAction>,
+                                             ShortcutProvider, PossiblyDumbAware {
     private final IntentionAction myAction;
     @NotNull
     private final BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> myMarkInvoked;
@@ -155,7 +180,6 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
       return DumbService.isDumbAware(myAction);
     }
 
-    @Nls
     @NotNull
     @Override
     public String getText() {
@@ -164,7 +188,7 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
 
     @Override
     public String toString() {
-      return getDelegate().getClass()+": "+getDelegate();
+      return getDelegate().getClass() + ": " + getDelegate();
     }
 
     @Nls

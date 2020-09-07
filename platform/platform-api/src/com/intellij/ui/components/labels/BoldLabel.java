@@ -1,22 +1,10 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components.labels;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 
@@ -29,11 +17,11 @@ public class BoldLabel extends JLabel {
   public BoldLabel() {
   }
 
-  public BoldLabel(String text) {
+  public BoldLabel(@NlsContexts.Label String text) {
     super(toHtml(text));
   }
 
-  public BoldLabel(String text, @JdkConstants.HorizontalAlignment int horizontalAlignment) {
+  public BoldLabel(@NlsContexts.Label String text, @JdkConstants.HorizontalAlignment int horizontalAlignment) {
     super(toHtml(text), horizontalAlignment);
   }
 
@@ -45,19 +33,19 @@ public class BoldLabel extends JLabel {
     super(image, horizontalAlignment);
   }
 
-  public BoldLabel(String text, Icon icon, @JdkConstants.HorizontalAlignment int horizontalAlignment) {
+  public BoldLabel(@NlsContexts.Label String text, Icon icon, @JdkConstants.HorizontalAlignment int horizontalAlignment) {
     super(toHtml(text), icon, horizontalAlignment);
   }
 
   @Override
-  public void setText(String text) {
+  public void setText(@NlsContexts.Label String text) {
     super.setText(toHtml(text));
   }
 
-  private static String toHtml(String text) {
+  private static @Nls String toHtml(@Nls String text) {
     if (text.startsWith("<html>")) return text;
     return XmlStringUtil.wrapInHtml(
-      "<b>" + text.replaceAll("\\n", "<br>") + "</b>"
+      "<b>" + text.replaceAll("\\n", "<br>") + "</b>" //NON-NLS
     );
   }
 }

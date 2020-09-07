@@ -16,6 +16,7 @@ import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extension;
 
 import java.util.Collections;
@@ -59,7 +60,7 @@ class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
     @NotNull
     @Override
     public String getUnresolvedMessagePattern() {
-      return "Cannot resolve feature '" + getValue() + "'";
+      return DevKitBundle.message("code.convert.experimental.feature.id.cannot.resolve", getValue());
     }
 
     @Override
@@ -74,7 +75,8 @@ class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
 
         final boolean requireRestart = "true".equals(getAttributeValue(extension, "requireRestart"));
         final boolean isInternalFeature = "true".equals(getAttributeValue(extension, "internalFeature"));
-        final String description = " " + StringUtil.notNullize(getDescription(extension), "No Description");
+        final String description = " " + StringUtil.notNullize(getDescription(extension),
+                                                               DevKitBundle.message("code.convert.experimental.feature.no.description"));
         final String percentage = getAttributeValue(extension, "percentOfUsers");
 
         variants.add(LookupElementBuilder.create(extension.getXmlElement(), value)

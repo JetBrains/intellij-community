@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.remote.CredentialsType
 import com.intellij.remote.ext.CredentialsCase
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.remote.PyRemotePathMapper
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 import com.jetbrains.python.remote.PyRemoteSocketToLocalHostProvider
@@ -101,6 +102,6 @@ fun createRemoteConsoleProcess(commandLine: GeneralCommandLine,
     return result.get()
   }
   else {
-    throw ExecutionException("Python console for ${data.remoteConnectionType.name} interpreter is not supported")
+    throw ExecutionException(PyBundle.message("python.console.not.supported", data.remoteConnectionType.name))
   }
 }

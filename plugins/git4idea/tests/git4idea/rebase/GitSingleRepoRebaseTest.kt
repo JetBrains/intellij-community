@@ -219,7 +219,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     ensureUpToDateAndRebaseOnMaster()
 
-    assertErrorNotification("Rebase Failed",
+    assertErrorNotification("Rebase failed",
         """
         $UNKNOWN_ERROR_TEXT<br/>
         $LOCAL_CHANGES_WARNING
@@ -427,7 +427,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     repo.assertRebaseInProgress()
     repo.`assert feature not rebased on master`()
     repo.assertConflict("c.txt")
-    assertErrorNotification("Rebase Abort Failed",
+    assertErrorNotification("Rebase abort failed",
         """
         unknown error<br/>
         $LOCAL_CHANGES_WARNING
@@ -553,7 +553,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     rebaseInteractively()
 
-    assertSuccessfulNotification("Rebase Stopped for Editing", "")
+    assertSuccessfulNotification("Rebase stopped for editing", "")
     assertEquals("The repository must be in the 'SUSPENDED' state", repo, repositoryManager.ongoingRebaseSpec!!.ongoingRebase)
 
     GitRebaseUtils.continueRebase(project)

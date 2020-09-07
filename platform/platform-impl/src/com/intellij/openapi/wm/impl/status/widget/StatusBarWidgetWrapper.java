@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.status.widget;
 
 import com.intellij.ide.HelpTooltipManager;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -43,7 +44,7 @@ public interface StatusBarWidgetWrapper {
 
   void beforeUpdate();
 
-  default void setWidgetTooltip(JComponent widgetComponent, @Nullable String toolTipText, @Nullable String shortcutText) {
+  default void setWidgetTooltip(JComponent widgetComponent, @NlsContexts.Tooltip @Nullable String toolTipText, @Nullable String shortcutText) {
     widgetComponent.setToolTipText(toolTipText);
     if (Registry.is("ide.helptooltip.enabled")) {
       widgetComponent.putClientProperty(HelpTooltipManager.SHORTCUT_PROPERTY, shortcutText);

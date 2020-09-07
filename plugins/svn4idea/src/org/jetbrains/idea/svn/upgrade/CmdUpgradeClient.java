@@ -5,6 +5,7 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.Convertor;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
@@ -58,6 +59,7 @@ public class CmdUpgradeClient extends BaseSvnClient implements UpgradeClient {
   }
 
   private static class UpgradeStatusConvertor implements Convertor<Matcher, ProgressEvent> {
+    private static final @NonNls String UPGRADED_CODE = "Upgraded";
 
     @Override
     public ProgressEvent convert(@NotNull Matcher matcher) {
@@ -71,7 +73,7 @@ public class CmdUpgradeClient extends BaseSvnClient implements UpgradeClient {
     public static EventAction createAction(@NotNull String code) {
       EventAction result = null;
 
-      if ("Upgraded".equals(code)) {
+      if (UPGRADED_CODE.equals(code)) {
         result = EventAction.UPGRADED_PATH;
       }
 

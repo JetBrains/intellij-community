@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.cachedValueProfiler;
 
 import com.intellij.execution.filters.ExceptionFilter;
@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.EditorTextField;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +52,8 @@ class CVPTableCellEditor extends AbstractCellEditor implements TableCellEditor {
 
   @Override
   public Object getCellEditorValue() {
-    return myDocument.getText();
+    @NlsSafe String text = myDocument.getText();
+    return text;
   }
 
   private void addHyperLinks(@NotNull Editor editor, @NotNull String text) {

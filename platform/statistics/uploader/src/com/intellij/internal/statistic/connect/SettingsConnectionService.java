@@ -5,8 +5,8 @@ import com.intellij.internal.statistic.config.EventLogConfigParserException;
 import com.intellij.internal.statistic.config.EventLogExternalSendSettings;
 import com.intellij.internal.statistic.config.EventLogExternalSettings;
 import com.intellij.internal.statistic.config.bean.EventLogSendConfiguration;
-import com.intellij.internal.statistic.eventLog.EventLogBuildType;
 import com.intellij.internal.statistic.eventLog.EventLogApplicationInfo;
+import com.intellij.internal.statistic.eventLog.EventLogBuildType;
 import com.intellij.internal.statistic.service.request.StatsHttpRequests;
 import com.intellij.internal.statistic.service.request.StatsResponseException;
 import org.jetbrains.annotations.NotNull;
@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.function.Supplier;
 
 public abstract class SettingsConnectionService {
   @Nullable
@@ -24,12 +25,16 @@ public abstract class SettingsConnectionService {
   @NotNull
   private final EventLogApplicationInfo myApplicationInfo;
 
-  @Nullable
-  private EventLogExternalSendSettings myCachedExternalSettings;
+  @NotNull
+  private final Supplier<EventLogExternalSendSettings> myCachedExternalSettings;
 
-  protected SettingsConnectionService(@Nullable String settingsUrl, @NotNull EventLogApplicationInfo appInfo) {
+  protected SettingsConnectionService(@Nullable String settingsUrl, @NotNull EventLogApplicationInfo appInfo, long settingsCacheTimeoutMs) {
     myConfigUrl = settingsUrl;
     myApplicationInfo = appInfo;
+    myCachedExternalSettings = new StatisticsCachingSupplier<>(
+      () -> myConfigUrl != null ? loadSettings(myConfigUrl, myApplicationInfo.getProductVersion()) : null,
+      settingsCacheTimeoutMs
+    );
   }
 
   @Nullable
@@ -46,10 +51,7 @@ public abstract class SettingsConnectionService {
 
   @Nullable
   protected synchronized EventLogExternalSendSettings getExternalSettings() {
-    if (myCachedExternalSettings == null && myConfigUrl != null) {
-      myCachedExternalSettings = loadSettings(myConfigUrl, myApplicationInfo.getProductVersion());
-    }
-    return myCachedExternalSettings;
+    return myCachedExternalSettings.get();
   }
 
   @Nullable

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.incremental.messages;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 
@@ -25,19 +26,19 @@ public class ProgressMessage extends BuildMessage {
   private volatile float myDone;
   private final BuildTargetChunk myCurrentTargets;
 
-  public ProgressMessage(String messageText, BuildTargetChunk currentTargets) {
+  public ProgressMessage(@Nls(capitalization = Nls.Capitalization.Sentence) String messageText, BuildTargetChunk currentTargets) {
     this(messageText, -1.0f, currentTargets);
   }
 
-  public ProgressMessage(String messageText) {
+  public ProgressMessage(@Nls(capitalization = Nls.Capitalization.Sentence) String messageText) {
     this(messageText, -1.0f);
   }
 
-  public ProgressMessage(String messageText, float done) {
+  public ProgressMessage(@Nls(capitalization = Nls.Capitalization.Sentence) String messageText, float done) {
     this(messageText, done, null);
   }
 
-  private ProgressMessage(String messageText, float done, BuildTargetChunk currentTargets) {
+  private ProgressMessage(@Nls(capitalization = Nls.Capitalization.Sentence) String messageText, float done, BuildTargetChunk currentTargets) {
     super(messageText, Kind.PROGRESS);
     myDone = done;
     myCurrentTargets = currentTargets;

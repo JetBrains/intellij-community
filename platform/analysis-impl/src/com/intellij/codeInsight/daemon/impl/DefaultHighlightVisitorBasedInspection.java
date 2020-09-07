@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -36,21 +37,19 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
   }
 
   public static class AnnotatorBasedInspection extends DefaultHighlightVisitorBasedInspection {
-    private static final String ANNOTATOR_SHORT_NAME = "Annotator";
+    private static final @NonNls String ANNOTATOR_SHORT_NAME = "Annotator";
 
     public AnnotatorBasedInspection() {
       super(false, true);
     }
-    @Nls
-    @NotNull
+
     @Override
-    public String getDisplayName() {
-      return getShortName();
+    public @Nls @NotNull String getDisplayName() {
+      return AnalysisBundle.message("inspection.display.name.annotator");
     }
 
-    @NotNull
     @Override
-    public String getShortName() {
+    public @NotNull String getShortName() {
       return ANNOTATOR_SHORT_NAME;
     }
 

@@ -15,18 +15,20 @@
  */
 package com.intellij.framework.library;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.net.URL;
+import java.util.function.Supplier;
 
 /**
  * @deprecated use {@link DownloadableLibraryType} instead
  */
 @Deprecated
 public abstract class DownloadableLibraryTypeBase extends DownloadableLibraryType {
-  protected DownloadableLibraryTypeBase(@NotNull String libraryCategoryName,
+  protected DownloadableLibraryTypeBase(@NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Title) String> libraryCategoryName,
                                         @NotNull String libraryTypeId,
                                         @NotNull String groupId,
                                         @Nullable Icon icon,

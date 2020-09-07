@@ -3,18 +3,20 @@ package com.intellij.execution.ui;
 
 import com.intellij.compiler.options.CompileStepBeforeRun;
 import com.intellij.execution.BeforeRunTask;
+import com.intellij.execution.CommonJavaRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,10 +34,11 @@ public final class CommonJavaFragments {
     String run = ExecutionBundle.message("application.configuration.title.run");
     JLabel jLabel = new JLabel(buildAndRun);
     jLabel.setFont(JBUI.Fonts.label().deriveFont(Font.BOLD));
-    RunConfigurationEditorFragment<S, JLabel> fragment = new RunConfigurationEditorFragment<S, JLabel>("doNotBuildBeforeRun",
-                                                                                                       ExecutionBundle.message("do.not.build.before.run"),
-                                                                                                       ExecutionBundle.message("group.java.options"),
-                                                                                                       jLabel, -1) {
+    RunConfigurationEditorFragment<S, JLabel> fragment = new RunConfigurationEditorFragment<>("doNotBuildBeforeRun",
+                                                                                              ExecutionBundle
+                                                                                                .message("do.not.build.before.run"),
+                                                                                              ExecutionBundle.message("group.java.options"),
+                                                                                              jLabel, -1) {
       @Override
       public void resetEditorFrom(@NotNull RunnerAndConfigurationSettingsImpl s) {
         jLabel.setText(hasTask(s) ? buildAndRun : run);
@@ -89,26 +92,32 @@ public final class CommonJavaFragments {
   }
 
   public static <S extends ModuleBasedConfiguration<?,?>> SettingsEditorFragment<S, ModuleClasspathCombo> moduleClasspath(
-    ModuleClasspathCombo.Item option, Predicate<S> getter, BiConsumer<S, Boolean> setter) {
-    ModuleClasspathCombo comboBox = new ModuleClasspathCombo(option);
+    @Nullable ModuleClasspathCombo.Item option, Predicate<? super S> getter, BiConsumer<? super S, ? super Boolean> setter) {
+    ModuleClasspathCombo comboBox = option == null ? new ModuleClasspathCombo() : new ModuleClasspathCombo(option);
     String name = ExecutionBundle.message("application.configuration.use.classpath.and.jdk.of.module");
     comboBox.getAccessibleContext().setAccessibleName(name);
     setMinimumWidth(comboBox, 400);
-    UIUtil.setMonospaced(comboBox);
+    CommonParameterFragments.setMonospaced(comboBox);
     SettingsEditorFragment<S, ModuleClasspathCombo> fragment =
       new SettingsEditorFragment<>("module.classpath", name, ExecutionBundle.message("group.java.options"), comboBox, 10,
                                    (s, c) -> {
                                      comboBox.reset(s);
-                                     option.myOptionValue = getter.test(s);
+                                     if (option != null) {
+                                       option.myOptionValue = getter.test(s);
+                                     }
                                    },
                                    (s, c) -> {
                                      if (comboBox.isVisible()) {
                                        comboBox.applyTo(s);
-                                       setter.accept(s, option.myOptionValue);
+                                       if (option != null) {
+                                         setter.accept(s, option.myOptionValue);
+                                       }
                                      }
                                      else {
                                        s.setModule(s.getDefaultModule());
-                                       setter.accept(s, false);
+                                       if (option != null) {
+                                         setter.accept(s, false);
+                                       }
                                      }
                                    },
                                    s -> s.getDefaultModule() != s.getConfigurationModule().getModule() &&
@@ -118,42 +127,72 @@ public final class CommonJavaFragments {
   }
 
   @NotNull
-  public static SettingsEditorFragment<ApplicationConfiguration, JrePathEditor> createJrePath(DefaultJreSelector defaultJreSelector) {
+  public static <T extends CommonJavaRunConfigurationParameters> SettingsEditorFragment<T, JrePathEditor> createJrePath(DefaultJreSelector defaultJreSelector) {
     JrePathEditor jrePathEditor = new JrePathEditor(false);
     jrePathEditor.setDefaultJreSelector(defaultJreSelector);
     //noinspection unchecked
     ComboBox<JrePathEditor.JreComboBoxItem> comboBox = jrePathEditor.getComponent();
-    comboBox.setRenderer(new ColoredListCellRenderer<JrePathEditor.JreComboBoxItem>() {
+    comboBox.setRenderer(new ColoredListCellRenderer<>() {
       @Override
       protected void customizeCellRenderer(@NotNull JList<? extends JrePathEditor.JreComboBoxItem> list,
                                            JrePathEditor.JreComboBoxItem value,
                                            int index,
                                            boolean selected,
                                            boolean hasFocus) {
-        if (value != null) {
-          if (index == -1) {
-            append("java ");
-            if (value.getVersion() != null) {
-              JavaSdkVersion version = JavaSdkVersion.fromVersionString(value.getVersion());
-              if (version != null) {
-                append(version.getDescription());
-              }
-            }
-            String description = value.getDescription();
-            if (description != null) {
-              append(" " + description, SimpleTextAttributes.GRAYED_ATTRIBUTES);
-            }
+        if (value == null) {
+          return;
+        }
+
+        if (BundledJreProvider.BUNDLED.equals(value.getPresentableText())) {
+          if (index == -1) append("java ");
+          append(ExecutionBundle.message("bundled.jre.name"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          return;
+        }
+
+        if (value.getPathOrName() == null && value.getVersion() == null) {
+          append(StringUtil.notNullize(value.getDescription()));
+          return;
+        }
+        if (index == -1) {
+          append("java ");
+          String shortVersion = appendShortVersion(value);
+          if (value.getPathOrName() != null && !value.getPathOrName().equals(shortVersion)) {
+            append(value.getPathOrName() + " ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
           }
-          else value.render(this, selected);
+          else if (value.getDescription() != null) {
+            append(value.getDescription() + " ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          }
+        }
+        else {
+          if (value.getPathOrName() != null) {
+            append(value.getPathOrName() + " ");
+          }
+          else {
+            appendShortVersion(value);
+          }
+          if (value.getDescription() != null) {
+            append(value.getDescription() + " ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          }
         }
       }
+
+      private @Nullable @NlsSafe String appendShortVersion(JrePathEditor.JreComboBoxItem value) {
+        if (value.getVersion() != null) {
+          JavaSdkVersion version = JavaSdkVersion.fromVersionString(value.getVersion());
+          if (version != null) {
+            append(version.getDescription() + " ");
+            return version.getDescription();
+          }
+        }
+        return null;
+      }
     });
-    UIUtil.setMonospaced(comboBox);
+    CommonParameterFragments.setMonospaced(comboBox);
 
     setMinimumWidth(jrePathEditor, 200);
     jrePathEditor.getLabel().setVisible(false);
     jrePathEditor.getComponent().getAccessibleContext().setAccessibleName(jrePathEditor.getLabel().getText());
-    SettingsEditorFragment<ApplicationConfiguration, JrePathEditor> jrePath =
+    SettingsEditorFragment<T, JrePathEditor> jrePath =
       new SettingsEditorFragment<>("jrePath", ExecutionBundle.message("run.configuration.jre.name"), null, jrePathEditor, 5,
                                    (configuration, editor) -> editor.setPathOrName(configuration.getAlternativeJrePath(),
                                                                                    configuration.isAlternativeJrePathEnabled()),

@@ -4,6 +4,7 @@ package org.jetbrains.jps.incremental.fs;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,13 +96,13 @@ public final class FilesDelta {
         if (descriptor != null) {
           files = myFilesToRecompile.get(descriptor);
           if (files == null) {
-            files = CollectionFactory.createFileLinkedSet();
+            files = FileCollectionFactory.createCanonicalFileLinkedSet();
             myFilesToRecompile.put(descriptor, files);
           }
         }
         else {
           LOG.debug("Cannot find root by " + rootId + ", delta will be skipped");
-          files = CollectionFactory.createFileLinkedSet();
+          files = FileCollectionFactory.createCanonicalFileLinkedSet();
         }
         int filesCount = in.readInt();
         while (filesCount-- > 0) {
@@ -207,7 +208,7 @@ public final class FilesDelta {
   private boolean _addToRecompiled(BuildRootDescriptor root, Collection<? extends File> filesToAdd) {
     Set<File> files = myFilesToRecompile.get(root);
     if (files == null) {
-      files = CollectionFactory.createFileLinkedSet();
+      files = FileCollectionFactory.createCanonicalFileLinkedSet();
       myFilesToRecompile.put(root, files);
     }
     return files.addAll(filesToAdd);

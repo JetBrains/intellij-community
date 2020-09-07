@@ -3,6 +3,7 @@ package com.intellij.ide;
 
 import com.intellij.DynamicBundle;
 import com.intellij.UtilBundle;
+import com.intellij.core.CoreBundle;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.ui.UtilUiBundle;
 
@@ -17,5 +18,6 @@ public class LanguageBundleListener implements ApplicationInitializedListener {
     UtilUiBundle.loadBundleFromPlugin(pluginClassLoader);
 
     DynamicBundle.loadLocale(langBundle);
+    CoreBundle.clearCache();
   }
 }

@@ -5,7 +5,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
@@ -214,13 +213,8 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
         keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
         File cacertsFile = new File(path);
         if (cacertsFile.exists()) {
-          FileInputStream stream = null;
-          try {
-            stream = new FileInputStream(path);
+          try (FileInputStream stream = new FileInputStream(path)) {
             keyStore.load(stream, password.toCharArray());
-          }
-          finally {
-            StreamUtil.closeStream(stream);
           }
         }
         else {
@@ -470,12 +464,8 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
     }
 
     private void flushKeyStore() throws Exception {
-      FileOutputStream stream = new FileOutputStream(myPath);
-      try {
+      try (FileOutputStream stream = new FileOutputStream(myPath)) {
         myKeyStore.store(stream, myPassword.toCharArray());
-      }
-      finally {
-        StreamUtil.closeStream(stream);
       }
     }
   }

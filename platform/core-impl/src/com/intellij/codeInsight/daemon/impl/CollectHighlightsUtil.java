@@ -11,7 +11,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.Stack;
-import gnu.trove.TIntStack;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,7 +58,7 @@ public final class CollectHighlightsUtil {
     final List<PsiElement> result = new ArrayList<>();
     int offset = parent.getTextRange().getStartOffset();
 
-    final TIntStack starts = new TIntStack(STARTING_TREE_HEIGHT);
+    final IntStack starts = new IntArrayList(STARTING_TREE_HEIGHT);
     final Stack<PsiElement> elements = new Stack<>(STARTING_TREE_HEIGHT);
     final Stack<PsiElement> children = new Stack<>(STARTING_TREE_HEIGHT);
     PsiElement element = parent;
@@ -90,7 +91,7 @@ public final class CollectHighlightsUtil {
         }
 
         if (elements.isEmpty()) break;
-        int start = starts.pop();
+        int start = starts.popInt();
         if (startOffset <= start && offset <= endOffset) {
           assert element != null;
           assert element != PsiUtilCore.NULL_PSI_ELEMENT;

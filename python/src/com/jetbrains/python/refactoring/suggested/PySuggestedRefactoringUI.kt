@@ -10,6 +10,7 @@ import com.jetbrains.python.psi.PyExpressionStatement
 import com.jetbrains.python.psi.impl.ParamHelper
 import com.jetbrains.python.refactoring.changeSignature.PyExpressionCodeFragment
 import com.jetbrains.python.refactoring.suggested.PySuggestedRefactoringSupport.Companion.defaultValue
+import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
 internal object PySuggestedRefactoringUI : SuggestedRefactoringUI() {
@@ -62,6 +63,7 @@ internal object PySuggestedRefactoringUI : SuggestedRefactoringUI() {
     return SuggestedRefactoringExecution.NewParameterValue.Expression(expression)
   }
 
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   private fun placeholderText(shouldHaveDefaultValue: Boolean): String? {
     return if (shouldHaveDefaultValue) PyBundle.message("refactoring.change.signature.suggested.callSite.value")
     else PyBundle.message("refactoring.change.signature.suggested.callSite.value.optional")

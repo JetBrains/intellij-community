@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,7 +85,7 @@ public abstract class ModuleSourceRootEditHandler<P extends JpsElement> {
   public abstract String getUnmarkRootButtonText();
 
   @Nullable
-  public String getPropertiesString(@NotNull P properties) {
+  public @NlsSafe String getPropertiesString(@NotNull P properties) {
     return null;
   }
 

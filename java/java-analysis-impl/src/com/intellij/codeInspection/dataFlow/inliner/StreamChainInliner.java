@@ -61,6 +61,9 @@ public class StreamChainInliner implements CallInliner {
   private static final CallMatcher MIN_MAX_TERMINAL = instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "min", "max").parameterCount(1);
   private static final CallMatcher COLLECT_TERMINAL =
     instanceCall(JAVA_UTIL_STREAM_STREAM, "collect").parameterTypes("java.util.stream.Collector");
+  private static final CallMatcher COLLECT3_TERMINAL =
+    instanceCall(JAVA_UTIL_STREAM_STREAM, "collect").parameterTypes("java.util.function.Supplier", 
+                                                                    "java.util.function.BiConsumer", "java.util.function.BiConsumer");
 
   private static final CallMatcher COUNTING_COLLECTOR =
     staticCall(JAVA_UTIL_STREAM_COLLECTORS, "counting").parameterCount(0);
@@ -129,6 +132,7 @@ public class StreamChainInliner implements CallInliner {
     .register(MIN_MAX_TERMINAL, call -> new MinMaxTerminalStep(call))
     .register(OPTIONAL_TERMINAL, call -> new OptionalTerminalStep(call))
     .register(TO_ARRAY_TERMINAL, call -> new ToArrayStep(call))
+    .register(COLLECT3_TERMINAL, call -> new Collect3TerminalStep(call))
     .register(COLLECT_TERMINAL, call -> createTerminalFromCollector(call));
 
   private static final Step NULL_TERMINAL_STEP = new Step(null, null, null) {
@@ -312,6 +316,34 @@ public class StreamChainInliner implements CallInliner {
     @Override
     void iteration(CFGBuilder builder) {
       builder.pop().assignAndPop(myResult, myResultRange);
+    }
+  }
+
+  static class Collect3TerminalStep extends TerminalStep {
+    private final @NotNull PsiExpression mySupplier;
+    private final @NotNull PsiExpression myAccumulator;
+
+    Collect3TerminalStep(@NotNull PsiMethodCallExpression call) {
+      super(call, call.getArgumentList().getExpressions()[2]);
+      PsiExpression[] args = call.getArgumentList().getExpressions();
+      mySupplier = args[0];
+      myAccumulator = args[1];
+    }
+
+    @Override
+    void before(CFGBuilder builder) {
+      builder.evaluateFunction(mySupplier).evaluateFunction(myAccumulator);
+      super.before(builder);
+    }
+
+    @Override
+    void iteration(CFGBuilder builder) {
+      builder.push(myResult).swap().invokeFunction(2, myAccumulator).pop();
+    }
+
+    @Override
+    protected void pushInitialValue(CFGBuilder builder) {
+      builder.invokeFunction(0, mySupplier);
     }
   }
 

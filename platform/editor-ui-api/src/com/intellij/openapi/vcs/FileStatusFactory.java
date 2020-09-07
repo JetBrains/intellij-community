@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 public final class FileStatusFactory {
   private static final FileStatusFactory ourInstance = new FileStatusFactory();
@@ -20,11 +21,25 @@ public final class FileStatusFactory {
   private FileStatusFactory() {
   }
 
-  public synchronized FileStatus createFileStatus(@NonNls @NotNull String id, @Nls @NotNull String description) {
+  public FileStatus createFileStatus(@NonNls @NotNull String id,
+                                     @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String description) {
+    return createFileStatus(id, () -> description, null);
+  }
+
+  public FileStatus createFileStatus(@NonNls @NotNull String id,
+                                     @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String description,
+                                     @Nullable Color color) {
+    return createFileStatus(id, () -> description, color);
+  }
+
+  public FileStatus createFileStatus(@NonNls @NotNull String id,
+                                     @NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String> description) {
     return createFileStatus(id, description, null);
   }
 
-  public synchronized FileStatus createFileStatus(@NonNls @NotNull String id, @Nls @NotNull String description, @Nullable Color color) {
+  public synchronized FileStatus createFileStatus(@NonNls @NotNull String id,
+                                                  @NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String> description,
+                                                  @Nullable Color color) {
     FileStatusImpl result = new FileStatusImpl(id, ColorKey.createColorKey(FILESTATUS_COLOR_KEY_PREFIX + id, color), description);
     myStatuses.add(result);
     return result;
@@ -44,21 +59,24 @@ public final class FileStatusFactory {
   private static class FileStatusImpl implements FileStatus {
     private final String myStatus;
     private final ColorKey myColorKey;
-    private final String myText;
+    private final Supplier<@Nls(capitalization = Nls.Capitalization.Sentence) String> myTextSupplier;
 
-    FileStatusImpl(@NotNull String status, @NotNull ColorKey key, String text) {
+    FileStatusImpl(@NotNull String status,
+                   @NotNull ColorKey key,
+                   @NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Sentence) String> textSupplier) {
       myStatus = status;
       myColorKey = key;
-      myText = text;
+      myTextSupplier = textSupplier;
     }
 
+    @NonNls
     public String toString() {
       return myStatus;
     }
 
     @Override
     public String getText() {
-      return myText;
+      return myTextSupplier.get();
     }
 
     @Override

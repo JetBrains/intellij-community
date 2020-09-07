@@ -96,7 +96,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
       if (window == null) {
         for (ProjectFrameHelper frameHelper : windowManager.getProjectFrameHelpers()) {
-          if (frameHelper.getFrame().isActive()) {
+          IdeFrameImpl frame = frameHelper.getFrameOrNullIfDisposed();
+          if (frame != null && frame.isActive()) {
             window = frameHelper.getFrame();
             break;
           }

@@ -25,8 +25,8 @@ public interface DnDSupportBuilder {
   DnDSupportBuilder disableAsTarget();
   DnDSupportBuilder disableAsSource();
   DnDSupportBuilder enableAsNativeTarget();
-  DnDSupportBuilder setImageProvider(Function<DnDActionInfo, DnDImage> provider);
-  DnDSupportBuilder setBeanProvider(Function<DnDActionInfo, DnDDragStartBean> provider);
+  DnDSupportBuilder setImageProvider(Function<? super DnDActionInfo, ? extends DnDImage> provider);
+  DnDSupportBuilder setBeanProvider(Function<? super DnDActionInfo, ? extends DnDDragStartBean> provider);
   DnDSupportBuilder setDropHandler(DnDDropHandler handler);
   DnDSupportBuilder setDropHandlerWithResult(DnDDropHandler.WithResult handler);
   DnDSupportBuilder setTargetChecker(DnDTargetChecker checker);

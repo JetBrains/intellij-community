@@ -43,7 +43,7 @@ public abstract class SearchScope {
     return myDefaultHashCode;
   }
 
-  @Nls
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   public String getDisplayName() {
     return CoreBundle.message("search.scope.unknown");

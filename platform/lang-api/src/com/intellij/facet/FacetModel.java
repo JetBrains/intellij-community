@@ -2,6 +2,7 @@
 
 package com.intellij.facet;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,5 +61,5 @@ public interface FacetModel {
   <F extends Facet<?>> Collection<F> getFacetsByType(@NotNull Facet<?> underlyingFacet, FacetTypeId<F> typeId);
 
   @NotNull
-  String getFacetName(@NotNull Facet<?> facet);
+  @NlsSafe String getFacetName(@NotNull Facet<?> facet);
 }

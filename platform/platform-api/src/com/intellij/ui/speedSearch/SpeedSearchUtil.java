@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.speedSearch;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -81,7 +82,7 @@ public final class SpeedSearchUtil {
   }
 
   public static void appendFragmentsForSpeedSearch(@NotNull JComponent speedSearchEnabledComponent,
-                                                   @NotNull String text,
+                                                   @NotNull @NlsContexts.Label String text,
                                                    @NotNull SimpleTextAttributes attributes,
                                                    boolean selected,
                                                    @NotNull SimpleColoredComponent simpleColoredComponent) {
@@ -96,7 +97,7 @@ public final class SpeedSearchUtil {
     simpleColoredComponent.append(text, attributes);
   }
 
-  public static void appendColoredFragmentForMatcher(@NotNull String text,
+  public static void appendColoredFragmentForMatcher(@NotNull @NlsContexts.Label String text,
                                                      SimpleColoredComponent component,
                                                      @NotNull final SimpleTextAttributes attributes,
                                                      @Nullable Matcher matcher,
@@ -122,7 +123,7 @@ public final class SpeedSearchUtil {
   }
 
   public static void appendSpeedSearchColoredFragments(@NotNull SimpleColoredComponent simpleColoredComponent,
-                                                       @NotNull String text,
+                                                       @NotNull @NlsContexts.Label String text,
                                                        @NotNull Iterable<? extends TextRange> colored,
                                                        @NotNull SimpleTextAttributes attributes,
                                                        boolean selected) {
@@ -135,7 +136,7 @@ public final class SpeedSearchUtil {
   }
 
   public static void appendColoredFragments(final SimpleColoredComponent simpleColoredComponent,
-                                            final String text,
+                                            final @NlsContexts.Label String text,
                                             Iterable<? extends TextRange> colored,
                                             final SimpleTextAttributes plain, final SimpleTextAttributes highlighted) {
     final List<Pair<String, Integer>> searchTerms = new ArrayList<>();

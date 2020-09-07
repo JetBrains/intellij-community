@@ -4,6 +4,7 @@ package com.intellij.ui.components.fields.valueEditors;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,8 +37,7 @@ public interface ValueEditor<T> {
   /**
    * @return The value name used in validation messages.
    */
-  @Nullable
-  String getValueName();
+  @NlsSafe @Nullable String getValueName();
 
   /**
    * Check if the current component content is valid and throw ConfigurationException if not.
@@ -46,9 +46,9 @@ public interface ValueEditor<T> {
    */
   void validateContent() throws ConfigurationException;
 
-  String getValueText();
+  @NlsSafe String getValueText();
 
-  void setValueText(@NotNull String text);
+  void setValueText(@NlsSafe @NotNull String text);
 
   /**
    * Try parsing the text and convert it to the object of type T. Throw InvalidDataException if parsing fails.

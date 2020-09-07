@@ -321,9 +321,9 @@ public class CodeCompletionHandlerBase {
         completionFinished(indicator, hasModifiers);
       }
       catch (Throwable e) {
+        LOG.error(e);
         indicator.closeAndFinish(true);
         CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
-        LOG.error(e);
       }
       return;
     }

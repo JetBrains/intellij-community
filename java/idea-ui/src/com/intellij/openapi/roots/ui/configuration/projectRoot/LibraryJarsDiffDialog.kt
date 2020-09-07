@@ -5,6 +5,7 @@ import com.intellij.diff.DiffManager
 import com.intellij.diff.DiffRequestFactory
 import com.intellij.diff.DiffRequestPanel
 import com.intellij.diff.requests.ContentDiffRequest
+import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.diff.DirDiffSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -41,7 +42,8 @@ class LibraryJarsDiffDialog(libraryFile: VirtualFile,
     init()
   }
 
-  override fun createNorthPanel(): JBLabel = JBLabel(XmlStringUtil.wrapInHtml("${mavenCoordinates.mavenId} JARs differ from '$libraryName' library JARs."))
+  override fun createNorthPanel(): JBLabel = JBLabel(XmlStringUtil.wrapInHtml(
+    JavaUiBundle.message("library.jars.diff.dialog.0.jars.differ.from.1.library.jars", mavenCoordinates.mavenId, libraryName)))
 
   override fun createCenterPanel(): JComponent = panel.component
 
@@ -51,7 +53,7 @@ class LibraryJarsDiffDialog(libraryFile: VirtualFile,
     return arrayOf(okAction, ChangeCoordinatesAction(), cancelAction)
   }
 
-  private inner class ChangeCoordinatesAction : DialogWrapperAction("Change Coordinates...") {
+  private inner class ChangeCoordinatesAction : DialogWrapperAction(JavaUiBundle.message("library.jars.change.coordinates.action.title")) {
     override fun doAction(e: ActionEvent?) {
       close(CHANGE_COORDINATES_CODE)
     }

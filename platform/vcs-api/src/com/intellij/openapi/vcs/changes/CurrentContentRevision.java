@@ -23,6 +23,7 @@ public class CurrentContentRevision implements ByteBackedContentRevision {
 
   @Override
   @Nullable
+  @NonNls
   public String getContent() {
     final VirtualFile vFile = getVirtualFile();
     if (vFile == null) {

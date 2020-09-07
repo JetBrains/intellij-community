@@ -23,6 +23,7 @@ public class HidpiPropTest {
   @Test
   public void test() {
     TestScaleHelper.assumeStandalone();
+    TestScaleHelper.assumeHeadful();
 
     System.setProperty(HIDPI_PROP, "false");
     StartupUtil.test_checkHiDPISettings();

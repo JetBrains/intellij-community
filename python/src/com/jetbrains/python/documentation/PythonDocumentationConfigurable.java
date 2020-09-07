@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.documentation;
 
 import com.google.common.collect.ImmutableMap;
@@ -46,6 +46,7 @@ public class PythonDocumentationConfigurable implements SearchableConfigurable, 
 
   @Override
   public JComponent createComponent() {
+    SwingUtilities.updateComponentTreeUI(myPanel); // TODO: create Swing components in this method (see javadoc)
     return myPanel;
   }
 
@@ -75,7 +76,9 @@ public class PythonDocumentationConfigurable implements SearchableConfigurable, 
 
     @Override
     public String getColumnName(int columnIndex) {
-      return columnIndex == 0 ? "Module Name" : "URL/Path Pattern";
+      return columnIndex == 0
+             ? PyBundle.message("external.documentation.column.name.module")
+             : PyBundle.message("external.documentation.column.name.url.path.pattern");
     }
 
     @Override
@@ -138,5 +141,4 @@ public class PythonDocumentationConfigurable implements SearchableConfigurable, 
       return showEditor(o);
     }
   }
-
 }

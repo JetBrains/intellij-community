@@ -26,7 +26,7 @@ public interface BuildEventDispatcher extends Appendable, Closeable, BuildProgre
    *
    * @throws UnsupportedOperationException if underlying implementation doesn't support {@link #invokeOnCompletion}.
    */
-  default void invokeOnCompletion(@NotNull Consumer<Throwable> consumer) {
+  default void invokeOnCompletion(@NotNull Consumer<? super Throwable> consumer) {
     throw new UnsupportedOperationException("invokeOnCompletion is not supported by this BuildEventDispatcher");
   }
 

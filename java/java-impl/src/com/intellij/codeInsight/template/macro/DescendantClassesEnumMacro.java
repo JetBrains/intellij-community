@@ -80,7 +80,7 @@ public class DescendantClassesEnumMacro extends Macro {
     if (myBaseClass != null) {
       final List<PsiClass> classes = new ArrayList<>();
 
-      ClassInheritorsSearch.search(myBaseClass).forEach(new PsiElementProcessorAdapter<>(new PsiElementProcessor<PsiClass>() {
+      ClassInheritorsSearch.search(myBaseClass).forEach(new PsiElementProcessorAdapter<>(new PsiElementProcessor<>() {
         @Override
         public boolean execute(@NotNull PsiClass element) {
           if (isAllowAbstract || !isAbstractOrInterface(element)) {

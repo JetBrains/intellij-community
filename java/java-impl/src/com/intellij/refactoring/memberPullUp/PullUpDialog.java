@@ -26,6 +26,7 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import com.intellij.refactoring.util.classMembers.UsesAndInterfacesDependencyMemberInfoModel;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -48,7 +49,7 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
     }
   };
 
-  private static final String PULL_UP_STATISTICS_KEY = "pull.up##";
+  private static final @NonNls String PULL_UP_STATISTICS_KEY = "pull.up##";
 
   public interface Callback {
     boolean checkConflicts(PullUpDialog dialog);

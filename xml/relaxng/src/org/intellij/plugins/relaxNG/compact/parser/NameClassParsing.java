@@ -18,6 +18,7 @@ package org.intellij.plugins.relaxNG.compact.parser;
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
+import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.intellij.plugins.relaxNG.compact.RncElementTypes;
 
 import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.*;
@@ -40,7 +41,7 @@ public class NameClassParsing extends AbstractParsing {
       do {
         advance();
         if (!parseNameClassPart()) {
-          error("NameClass expected");
+          error(RelaxngBundle.message("relaxng.parse.error.name-class-expected"));
         }
       } while (currentToken() == PIPE);
       marker.done(RncElementTypes.NAME_CLASS_CHOICE);
@@ -66,7 +67,7 @@ public class NameClassParsing extends AbstractParsing {
     } else if (LPAREN == t) {
       advance();
       if (parseNameClass()) {
-        match(RPAREN, "')' expected");
+        match(RPAREN, RelaxngBundle.message("relaxng.parse.error.rparen-expected"));
       }
     } else {
       marker.drop();
@@ -80,7 +81,7 @@ public class NameClassParsing extends AbstractParsing {
     if (MINUS == currentToken()) {
       final PsiBuilder.Marker marker = begin();
       if (!parseNameClass()) {
-        error("NameClass expected");
+        error(RelaxngBundle.message("relaxng.parse.error.name-class-expected"));
       }
       marker.done(RncElementTypes.EXCEPT_NAME_CLASS);
     }

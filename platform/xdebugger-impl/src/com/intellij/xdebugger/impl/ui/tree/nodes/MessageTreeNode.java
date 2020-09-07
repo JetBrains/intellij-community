@@ -10,6 +10,7 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,18 +28,30 @@ public class MessageTreeNode extends XDebuggerTreeNode {
   private final boolean myEllipsis;
   private XDebuggerTreeNodeHyperlink myLink;
 
-  private MessageTreeNode(XDebuggerTree tree, @Nullable final XDebuggerTreeNode parent, final String message, final SimpleTextAttributes attributes,
+  private MessageTreeNode(XDebuggerTree tree,
+                          @Nullable final XDebuggerTreeNode parent,
+                          final @Nls String message,
+                          final SimpleTextAttributes attributes,
                           @Nullable Icon icon) {
     this(tree, parent, message, attributes, icon, null);
   }
 
-  private MessageTreeNode(XDebuggerTree tree, final XDebuggerTreeNode parent, final String message, final SimpleTextAttributes attributes,
-                          @Nullable Icon icon, final XDebuggerTreeNodeHyperlink link) {
+  private MessageTreeNode(XDebuggerTree tree,
+                          final XDebuggerTreeNode parent,
+                          final @Nls String message,
+                          final SimpleTextAttributes attributes,
+                          @Nullable Icon icon,
+                          final XDebuggerTreeNodeHyperlink link) {
     this(tree, parent, message, attributes, icon, false, link);
   }
 
-  private MessageTreeNode(XDebuggerTree tree, final XDebuggerTreeNode parent, final String message, final SimpleTextAttributes attributes,
-                          @Nullable Icon icon, final boolean ellipsis, final XDebuggerTreeNodeHyperlink link) {
+  private MessageTreeNode(XDebuggerTree tree,
+                          final XDebuggerTreeNode parent,
+                          final @Nls String message,
+                          final SimpleTextAttributes attributes,
+                          @Nullable Icon icon,
+                          final boolean ellipsis,
+                          final XDebuggerTreeNodeHyperlink link) {
     super(tree, parent, true);
     myEllipsis = ellipsis;
     myLink = link;
@@ -83,7 +96,7 @@ public class MessageTreeNode extends XDebuggerTreeNode {
     return new MessageTreeNode(tree, parent, message, SimpleTextAttributes.GRAYED_ATTRIBUTES, null, true, null);
   }
 
-  public static MessageTreeNode createMessageNode(XDebuggerTree tree, XDebuggerTreeNode parent, String message, @Nullable Icon icon) {
+  public static MessageTreeNode createMessageNode(XDebuggerTree tree, XDebuggerTreeNode parent, @Nls String message, @Nullable Icon icon) {
     return new MessageTreeNode(tree, parent, message, SimpleTextAttributes.REGULAR_ATTRIBUTES, icon);
   }
 
@@ -109,11 +122,13 @@ public class MessageTreeNode extends XDebuggerTreeNode {
     return messages;
   }
 
-  public static MessageTreeNode createInfoMessage(XDebuggerTree tree, @NotNull String message) {
+  public static MessageTreeNode createInfoMessage(XDebuggerTree tree, @NotNull @Nls String message) {
     return createInfoMessage(tree, message, null);
   }
 
-  public static MessageTreeNode createInfoMessage(XDebuggerTree tree, @NotNull String message, @Nullable HyperlinkListener hyperlinkListener) {
+  public static MessageTreeNode createInfoMessage(XDebuggerTree tree,
+                                                  @NotNull @Nls String message,
+                                                  @Nullable HyperlinkListener hyperlinkListener) {
     Matcher matcher = MessageTreeNodeWithLinks.HREF_PATTERN.matcher(message);
     if (hyperlinkListener == null || !matcher.find()) {
       return new MessageTreeNode(tree, null, message, SimpleTextAttributes.REGULAR_ATTRIBUTES,
@@ -165,7 +180,7 @@ public class MessageTreeNode extends XDebuggerTreeNode {
     private final HyperlinkListener hyperlinkListener;
     private final String href;
 
-    public HyperlinkListenerDelegator(@NotNull String linkText, @Nullable String href, @NotNull HyperlinkListener hyperlinkListener) {
+    public HyperlinkListenerDelegator(@NotNull @Nls String linkText, @Nullable String href, @NotNull HyperlinkListener hyperlinkListener) {
       super(linkText);
 
       this.hyperlinkListener = hyperlinkListener;

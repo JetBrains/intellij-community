@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
+import com.intellij.lang.Language;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -8,6 +9,8 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Predicate;
 
 /**
  * An interface used to support tracking of common PSI modifications. It has three main usage patterns:
@@ -118,6 +121,16 @@ public interface PsiModificationTracker extends ModificationTracker {
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   @NotNull
   ModificationTracker getJavaStructureModificationTracker();
+
+  /**
+   * @return modification tracker incremented on changes in files with the passed language.
+   */
+  @NotNull ModificationTracker forLanguage(@NotNull Language language);
+
+  /**
+   * @return modification tracker incremented on changes in files with language that matches the passed condition.
+   */
+  @NotNull ModificationTracker forLanguages(@NotNull Predicate<? super Language> condition);
 
   /**
    * A listener to be notified on any PSI modification count change (which happens on any physical PSI change).

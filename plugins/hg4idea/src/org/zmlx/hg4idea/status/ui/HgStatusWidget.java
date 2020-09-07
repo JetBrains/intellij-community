@@ -11,8 +11,10 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
-import org.jetbrains.annotations.CalledInAwt;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import java.util.Objects;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgBundle;
@@ -23,13 +25,11 @@ import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgUtil;
 
-import java.util.Objects;
-
 /**
  * Widget to display basic hg status in the status bar.
  */
 public class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
-  private static final String ID = "hg";
+  private static final @NonNls String ID = "hg";
 
   @NotNull private final HgVcs myVcs;
   @NotNull private final HgProjectSettings myProjectSettings;
@@ -54,7 +54,7 @@ public class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
 
   @Nullable
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected HgRepository guessCurrentRepository(@NotNull Project project) {
     return DvcsUtil.guessCurrentRepositoryQuick(project, HgUtil.getRepositoryManager(project),
                                                 HgProjectSettings.getInstance(project).getRecentRootPath());

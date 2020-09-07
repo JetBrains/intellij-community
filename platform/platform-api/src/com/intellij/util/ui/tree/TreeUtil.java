@@ -67,14 +67,14 @@ public final class TreeUtil {
    * @return a navigatable object that corresponds to the specified path,  or {@code null} otherwise
    */
   public static @Nullable Navigatable getNavigatable(@NotNull JTree tree, @Nullable TreePath path) {
-    Function<TreePath, Navigatable> supplier = UIUtil.getClientProperty(tree, NAVIGATABLE_PROVIDER);
+    Function<? super TreePath, ? extends Navigatable> supplier = UIUtil.getClientProperty(tree, NAVIGATABLE_PROVIDER);
     return supplier != null ? supplier.apply(path) : getLastUserObject(Navigatable.class, path);
   }
 
   /**
    * Sets the mapping function that provides a navigatable object for a tree path.
    */
-  public static void setNavigatableProvider(@NotNull JTree tree, @NotNull Function<TreePath, Navigatable> provider) {
+  public static void setNavigatableProvider(@NotNull JTree tree, @NotNull Function<? super TreePath, ? extends Navigatable> provider) {
     tree.putClientProperty(NAVIGATABLE_PROVIDER, provider);
   }
 

@@ -20,7 +20,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.openapi.util.registry.Registry
-import org.jetbrains.annotations.Nls
 import java.util.function.Consumer
 import javax.swing.JComponent
 
@@ -94,7 +93,7 @@ internal interface JdkDownloaderBase {
   fun newDownloadTask(request: JdkInstallRequest, project: Project?): SdkDownloadTask {
     return object : SdkDownloadTask {
       override fun getSuggestedSdkName() = request.item.suggestedSdkName
-      override fun getPlannedHomeDir() = request.javaHome.absolutePath
+      override fun getPlannedHomeDir() = request.javaHome.toString()
       override fun getPlannedVersion() = request.item.versionString
       override fun doDownload(indicator: ProgressIndicator) {
         JdkInstaller.getInstance().installJdk(request, indicator, project)

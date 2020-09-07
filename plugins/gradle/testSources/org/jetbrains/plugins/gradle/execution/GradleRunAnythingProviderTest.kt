@@ -106,7 +106,7 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
     withVariantsFor("") {
       assertCollection(it, getGradleOptions())
       assertCollection(it, getRootProjectTasks(), getRootProjectTasks(":"), !getRootProjectTasks(":module:"))
-      if (isGradleNewerOrSameThen("6.5.1")) {
+      if (isGradleNewerOrSameAs("6.5.1")) {
         assertCollection(it, getCommonTasks(), getCommonTasks(":"), getCommonTasks(":module:") - ":module:prepareKotlinBuildScriptModel")
       } else {
         assertCollection(it, getCommonTasks(), getCommonTasks(":"), getCommonTasks(":module:"))
@@ -119,7 +119,7 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
     withVariantsFor("", "project") {
       assertCollection(it, getGradleOptions())
       assertCollection(it, getRootProjectTasks(), getRootProjectTasks(":"), !getRootProjectTasks(":module:"))
-      if (isGradleNewerOrSameThen("6.5.1")) {
+      if (isGradleNewerOrSameAs("6.5.1")) {
         assertCollection(it, getCommonTasks(), getCommonTasks(":"), getCommonTasks(":module:") - ":module:prepareKotlinBuildScriptModel")
       } else {
         assertCollection(it, getCommonTasks(), getCommonTasks(":"), getCommonTasks(":module:"))
@@ -132,7 +132,7 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
     withVariantsFor("", "project.module") {
       assertCollection(it, getGradleOptions())
       assertCollection(it, !getRootProjectTasks(), !getRootProjectTasks(":"), !getRootProjectTasks(":module:"))
-      if (isGradleNewerOrSameThen("6.5.1")) {
+      if (isGradleNewerOrSameAs("6.5.1")) {
         assertCollection(it, getCommonTasks() - "prepareKotlinBuildScriptModel",
                          getCommonTasks(":") - ":prepareKotlinBuildScriptModel",
                          !getCommonTasks(":module:"))
@@ -147,7 +147,7 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
     withVariantsFor("", "composite") {
       assertCollection(it, getGradleOptions())
       assertCollection(it, getRootProjectTasks(), getRootProjectTasks(":"), !getRootProjectTasks(":module:"))
-      if (isGradleNewerOrSameThen("6.5.1")) {
+      if (isGradleNewerOrSameAs("6.5.1")) {
         assertCollection(it, getCommonTasks(), getCommonTasks(":"), getCommonTasks(":module:") - ":module:prepareKotlinBuildScriptModel")
       } else {
         assertCollection(it, getCommonTasks(), getCommonTasks(":"), getCommonTasks(":module:"))
@@ -160,7 +160,7 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
     withVariantsFor("", "composite.module") {
       assertCollection(it, getGradleOptions())
       assertCollection(it, !getRootProjectTasks(), !getRootProjectTasks(":"), !getRootProjectTasks(":module:"))
-      if (isGradleNewerOrSameThen("6.5.1")) {
+      if (isGradleNewerOrSameAs("6.5.1")) {
         assertCollection(it, getCommonTasks() - "prepareKotlinBuildScriptModel",
                          getCommonTasks(":") - ":prepareKotlinBuildScriptModel",
                          !getCommonTasks(":module:"))

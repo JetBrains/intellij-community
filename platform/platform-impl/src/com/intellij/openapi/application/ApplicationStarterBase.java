@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +24,7 @@ public abstract class ApplicationStarterBase implements ApplicationStarter {
   private final String myCommandName;
   private final int[] myArgsCount;
 
-  protected ApplicationStarterBase(@NotNull String commandName, int... possibleArgumentsCount) {
+  protected ApplicationStarterBase(@NotNull @NonNls String commandName, int... possibleArgumentsCount) {
     myCommandName = commandName;
     myArgsCount = possibleArgumentsCount;
   }

@@ -154,7 +154,7 @@ final class SmartCastProvider {
   }
 
   private static LookupElement createSmartCastElement(final CompletionParameters parameters, final boolean overwrite, final PsiType type) {
-    return AutoCompletionPolicy.ALWAYS_AUTOCOMPLETE.applyPolicy(new LookupElementDecorator<PsiTypeLookupItem>(
+    return AutoCompletionPolicy.ALWAYS_AUTOCOMPLETE.applyPolicy(new LookupElementDecorator<>(
       PsiTypeLookupItem.createLookupItem(type, parameters.getPosition())) {
 
       @Override

@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.*;
@@ -41,7 +42,7 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
    * Returns path to the module .iml file. This method isn't supposed to be used from plugins, see {@link #getModuleFile()} details.
    */
   @ApiStatus.Internal
-  @SystemIndependent
+  @SystemIndependent @NonNls 
   default @NotNull String getModuleFilePath() {
     return getModuleNioFile().toString().replace(File.separatorChar, '/');
   }
@@ -64,7 +65,7 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
    *
    * @return the module name.
    */
-  @NotNull String getName();
+  @NotNull @NlsSafe String getName();
 
   /**
    * Checks if the module instance has been disposed and unloaded.
@@ -94,6 +95,7 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
    * @deprecated Please store options in your own {@link com.intellij.openapi.components.PersistentStateComponent}
    */
   @Deprecated
+  @NonNls
   @Nullable
   String getOptionValue(@NotNull String key);
 
@@ -160,13 +162,13 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
   @NotNull
   GlobalSearchScope getModuleRuntimeScope(boolean includeTests);
 
-  @Nullable
+  @Nullable @NonNls
   default String getModuleTypeName() {
     //noinspection deprecation
     return getOptionValue(ELEMENT_TYPE);
   }
 
-  default void setModuleType(@NotNull String name) {
+  default void setModuleType(@NotNull @NonNls String name) {
     //noinspection deprecation
     setOption(ELEMENT_TYPE, name);
   }

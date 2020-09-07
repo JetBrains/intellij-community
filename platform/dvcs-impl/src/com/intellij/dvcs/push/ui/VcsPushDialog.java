@@ -21,20 +21,26 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import net.miginfocom.swing.MigLayout;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
@@ -76,8 +82,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
 
     init();
     updateOkActions();
-    setOKButtonText(DvcsBundle.getString("action.push"));
-    setOKButtonMnemonic('P');
+    setOKButtonText(DvcsBundle.message("action.push"));
     String title = allRepos.size() == 1
                    ? DvcsBundle.message("push.dialog.push.commits.to.title", DvcsUtil.getShortRepositoryName(getFirstItem(allRepos)))
                    : DvcsBundle.getString("push.dialog.push.commits.title");
@@ -235,7 +240,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   public void push(boolean forcePush) {
     executeAfterRunningPrePushHandlers(new Task.Backgroundable(myProject, DvcsBundle.getString("push.process.pushing"), true) {
       @Override
@@ -246,7 +251,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   public void executeAfterRunningPrePushHandlers(@NotNull Task.Backgroundable activity) {
     PrePushHandler.Result result = runPrePushHandlersInModalTask();
     if (result == PrePushHandler.Result.OK) {
@@ -261,7 +266,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public PrePushHandler.Result runPrePushHandlersInModalTask() {
     FileDocumentManager.getInstance().saveAllDocuments();
     AtomicReference<PrePushHandler.Result> result = new AtomicReference<>(PrePushHandler.Result.OK);
@@ -425,6 +430,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
       putValue(Action.SHORT_DESCRIPTION, myRealAction.getDescription(myDialog, enabled));
     }
 
+    @Nls
     @NotNull
     public String getName() {
       return requireNonNull(myRealAction.getTemplatePresentation().getTextWithMnemonic());

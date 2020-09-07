@@ -3,6 +3,7 @@ package com.intellij.sh.shellcheck;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessAdapter;
@@ -17,6 +18,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,6 +35,7 @@ import com.intellij.sh.shellcheck.intention.SuppressInspectionIntention;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,8 +53,8 @@ import static java.util.Arrays.asList;
 
 public class ShShellcheckExternalAnnotator extends ExternalAnnotator<ShShellcheckExternalAnnotator.CollectedInfo, ShShellcheckExternalAnnotator.ShellcheckResponse> {
   private static final Logger LOG = Logger.getInstance(ShShellcheckExternalAnnotator.class);
-  private static final List<String> KNOWN_SHELLS = asList("bash", "dash", "ksh", "sh");
-  private static final String DEFAULT_SHELL = "bash";
+  private static final List<@NlsSafe String> KNOWN_SHELLS = asList("bash", "dash", "ksh", "sh"); //NON-NLS
+  private static final @NlsSafe String DEFAULT_SHELL = "bash";
   private static final int TIMEOUT_IN_MILLISECONDS = 10_000;
 
   @Override
@@ -168,14 +171,14 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<ShShellchec
   }
 
   @NotNull
-  private static List<String> getShellcheckExecutionParams(@NotNull PsiFile file) {
+  private static List<@NlsSafe String> getShellcheckExecutionParams(@NotNull PsiFile file) {
     String interpreter = getInterpreter(file);
     List<String> params = new SmartList<>();
     ShShellcheckInspection inspection = ShShellcheckInspection.findShShellcheckInspection(file);
 
-    Collections.addAll(params, "--color=never", "--format=json", "--severity=style", "--shell=" + interpreter, "--wiki-link-count=10",
-                       "--exclude=SC1091", "-");
-    inspection.getDisabledInspections().forEach(setting -> params.add("--exclude=" + setting));
+    Collections.addAll(params, "--color=never", "--format=json", "--severity=style", "--shell=" + interpreter, "--wiki-link-count=10", //NON-NLS
+                       "--exclude=SC1091", "-"); //NON-NLS
+    inspection.getDisabledInspections().forEach(setting -> params.add("--exclude=" + setting));//NON-NLS
     return params;
   }
 
@@ -189,6 +192,7 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<ShShellchec
     }
   }
 
+  @Contract(pure = true)
   @NotNull
   private static String format(@NotNull String originalMessage) {
     return originalMessage.endsWith(".") ? originalMessage.substring(0, originalMessage.length() - 1) : originalMessage;
@@ -221,7 +225,7 @@ public class ShShellcheckExternalAnnotator extends ExternalAnnotator<ShShellchec
     int column;
     int endColumn;
     String level;
-    String message;
+    @InspectionMessage String message;
     long code;
     @Nullable Fix fix;
   }

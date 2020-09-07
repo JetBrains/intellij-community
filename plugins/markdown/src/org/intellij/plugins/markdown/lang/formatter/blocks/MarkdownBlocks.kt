@@ -33,7 +33,7 @@ internal object MarkdownBlocks {
       in MarkdownTokenTypeSets.LIST_MARKERS, in MarkdownTokenTypeSets.WHITE_SPACES, MarkdownTokenTypes.BLOCK_QUOTE -> {
         MarkdownRangedFormattingBlock.trimmed(node, settings, spacing, align(node), null)
       }
-      MarkdownElementTypes.PARAGRAPH -> {
+      MarkdownElementTypes.PARAGRAPH, MarkdownElementTypes.EMPH, MarkdownElementTypes.STRONG, MarkdownElementTypes.STRIKETHROUGH -> {
         //Blockquotes should not be wrapped
         if (node.parents().any { it.elementType == MarkdownTokenTypeSets.BLOCK_QUOTE }) {
           MarkdownFormattingBlock(node, settings, spacing, align(node))

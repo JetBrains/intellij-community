@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import org.jetbrains.annotations.CalledInAwt;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,7 +57,7 @@ public final class InitialScrollPositionSupport {
       return doGetVisiblePositions(getEditors());
     }
 
-    @CalledInAwt
+    @RequiresEdt
     protected boolean doScrollToPosition() {
       List<? extends Editor> editors = getEditors();
       if (myCaretPosition == null || myCaretPosition.length != editors.size()) return false;
@@ -104,7 +104,7 @@ public final class InitialScrollPositionSupport {
       request.putUserData(DiffUserDataKeysEx.NAVIGATION_CONTEXT, null);
     }
 
-    @CalledInAwt
+    @RequiresEdt
     public void onSlowRediff() {
       if (wasScrolled(getEditors())) myShouldScroll = false;
       if (myScrollToChange != null) return;
@@ -113,7 +113,7 @@ public final class InitialScrollPositionSupport {
       if (myShouldScroll) myShouldScroll = !doScrollToPosition();
     }
 
-    @CalledInAwt
+    @RequiresEdt
     public void onRediff() {
       if (wasScrolled(getEditors())) myShouldScroll = false;
       if (myShouldScroll) myShouldScroll = !doScrollToChange();
@@ -124,16 +124,16 @@ public final class InitialScrollPositionSupport {
       myShouldScroll = false;
     }
 
-    @CalledInAwt
+    @RequiresEdt
     protected abstract boolean doScrollToChange();
 
-    @CalledInAwt
+    @RequiresEdt
     protected abstract boolean doScrollToFirstChange();
 
-    @CalledInAwt
+    @RequiresEdt
     protected abstract boolean doScrollToContext();
 
-    @CalledInAwt
+    @RequiresEdt
     protected abstract boolean doScrollToLine();
   }
 
@@ -168,13 +168,13 @@ public final class InitialScrollPositionSupport {
       myShouldScroll = false;
     }
 
-    @CalledInAwt
+    @RequiresEdt
     protected abstract boolean doScrollToChange();
 
-    @CalledInAwt
+    @RequiresEdt
     protected abstract boolean doScrollToFirstChange();
 
-    @CalledInAwt
+    @RequiresEdt
     protected abstract boolean doScrollToLine();
   }
 

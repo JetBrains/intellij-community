@@ -25,7 +25,7 @@ import java.util.List;
 
 public class FileEditorManagerTest extends FileEditorManagerTestCase {
   public void testTabOrder() throws Exception {
-    openFiles(STRING.replaceAll("pinned=\"true\"", "pinned=\"false\""));
+    openFiles(STRING.replace("pinned=\"true\"", "pinned=\"false\""));
     assertOpenFiles("1.txt", "foo.xml", "2.txt", "3.txt");
 
     myManager.closeAllFiles();
@@ -68,7 +68,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     // note that foo.xml is pinned
     assertOpenFiles("foo.xml");
     myManager.openFile(getFile("/src/3.txt"), true);
-    assertOpenFiles("3.txt", "foo.xml");//limit is still 1 but pinned prevent closing tab and actual tab number may exceed the limit
+    assertOpenFiles("foo.xml", "3.txt");//limit is still 1 but pinned prevent closing tab and actual tab number may exceed the limit
 
     myManager.closeAllFiles();
 

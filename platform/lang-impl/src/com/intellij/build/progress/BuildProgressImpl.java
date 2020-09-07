@@ -10,6 +10,7 @@ import com.intellij.build.events.MessageEvent;
 import com.intellij.build.events.StartEvent;
 import com.intellij.build.events.impl.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -106,7 +107,7 @@ class BuildProgressImpl implements BuildProgress<BuildProgressDescriptor> {
         fileLink.append(":").append(filePosition.getStartColumn() + 1);
       }
     }
-    String detailedMessage = fileLink.toString() + '\n' + message;
+    @NlsSafe String detailedMessage = fileLink.toString() + '\n' + message;
     FileMessageEventImpl event = new FileMessageEventImpl(getId(), kind, null, title, detailedMessage, filePosition);
     myListener.onEvent(getBuildId(), event);
     return this;

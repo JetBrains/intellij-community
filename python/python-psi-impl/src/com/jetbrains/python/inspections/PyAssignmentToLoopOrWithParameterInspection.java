@@ -44,12 +44,12 @@ public class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyWithStatement(final PyWithStatement node) {
+    public void visitPyWithStatement(final @NotNull PyWithStatement node) {
       checkNotReDeclaringUpperLoopOrStatement(node);
     }
 
     @Override
-    public void visitPyForStatement(final PyForStatement node) {
+    public void visitPyForStatement(final @NotNull PyForStatement node) {
       checkNotReDeclaringUpperLoopOrStatement(node);
     }
 
@@ -67,7 +67,7 @@ public class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
             continue;
           }
           registerProblem(declaredVar,
-                          PyPsiBundle.message("INSP.NAME.assignment.to.loop.or.with.parameter.display.message", declaredVar.getText()));
+                          PyPsiBundle.message("INSP.assignment.to.loop.or.with.parameter", declaredVar.getText()));
         }
       }
     }

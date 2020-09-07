@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.transformations.impl;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -231,8 +232,8 @@ public class DelegateTransformationSupport implements AstTransformationSupport {
     }
   }
 
-  private static final Set<String> OBJECT_METHODS = ContainerUtil.newHashSet(
-    "equals", "hashCode", "getClass", "clone", "toString", "notify", "notifyAll", "wait", "finalize"
+  private static final Set<@NlsSafe String> OBJECT_METHODS = ContainerUtil.newHashSet(
+    "equals", "hashCode", "getClass", "clone", "toString", "notify", "notifyAll", "wait", "finalize" // NON-NLS
   );
   private static final Set<String> GROOVY_OBJECT_METHODS = ContainerUtil.newHashSet(
     "invokeMethod", "getProperty", "setProperty", "getMetaClass", "setMetaClass"

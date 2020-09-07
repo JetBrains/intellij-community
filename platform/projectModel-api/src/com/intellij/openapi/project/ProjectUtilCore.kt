@@ -9,6 +9,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.libraries.LibraryUtil
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileProvider
 import com.intellij.openapi.vfs.VirtualFile
@@ -16,7 +17,8 @@ import com.intellij.util.PathUtil
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.TestOnly
 
-fun displayUrlRelativeToProject(file: VirtualFile, url: String, project: Project, isIncludeFilePath: Boolean, moduleOnTheLeft: Boolean): String {
+@NlsSafe
+fun displayUrlRelativeToProject(file: VirtualFile, @NlsSafe url: String, project: Project, isIncludeFilePath: Boolean, moduleOnTheLeft: Boolean): String {
   var result = url
 
   if (isIncludeFilePath) {

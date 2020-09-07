@@ -15,7 +15,6 @@ import java.net.URL;
 
 @ApiStatus.Internal
 public final class SVGLoaderPrebuilt {
-
   @NotNull
   @ApiStatus.Internal
   public static String getPreBuiltImageURLSuffix(double scale) {
@@ -24,13 +23,14 @@ public final class SVGLoaderPrebuilt {
   }
 
   @Nullable
-  public static URL preBuiltImageURL(@Nullable URL url, double scale) {
-    if (url == null) return null;
+  public static URL preBuiltImageURL(@NotNull URL url, double scale) {
     try {
-      if (!url.getFile().endsWith("svg")) return null;
-      if (url.getQuery() != null) return null;
-      if (url.getRef() != null) return null;
-      if (!url.getProtocol().equalsIgnoreCase("jar") && !url.getProtocol().equalsIgnoreCase("file")) return null;
+      if (!url.getFile().endsWith("svg") ||
+          url.getQuery() != null ||
+          url.getRef() != null ||
+          !url.getProtocol().equalsIgnoreCase("jar") && !url.getProtocol().equalsIgnoreCase("file")) {
+        return null;
+      }
 
       return new URL(url, url.toString() + getPreBuiltImageURLSuffix(scale));
     }
@@ -41,13 +41,15 @@ public final class SVGLoaderPrebuilt {
 
   @Nullable
   @ApiStatus.Internal
-  public static BufferedImage loadUrlFromPreBuiltCache(@Nullable URL url,
+  public static BufferedImage loadUrlFromPreBuiltCache(@NotNull URL url,
                                                        double scale,
                                                        @NotNull ImageLoader.Dimension2DDouble docSize) {
     long start = StartUpMeasurer.isEnabled() ? StartUpMeasurer.getCurrentTime() : -1;
 
     URL lookupUrl = preBuiltImageURL(url, scale);
-    if (lookupUrl == null) return null;
+    if (lookupUrl == null) {
+      return null;
+    }
 
     try (InputStream is = lookupUrl.openStream()) {
       BufferedImage result = SVGLoaderCacheIO.readImageFile(FileUtil.loadBytes(is), docSize);

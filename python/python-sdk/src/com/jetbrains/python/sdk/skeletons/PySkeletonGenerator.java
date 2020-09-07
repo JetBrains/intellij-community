@@ -12,12 +12,14 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Time;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PySdkUtil;
@@ -246,7 +248,9 @@ public class PySkeletonGenerator {
         return myWorkingDir;
       }
       final String binaryPath = mySdk.getHomePath();
-      if (binaryPath == null) throw new InvalidSdkException("Broken home path for " + mySdk.getName());
+      if (binaryPath == null) {
+        throw new InvalidSdkException(PySdkBundle.message("python.skeleton.generator.broken.home.path", mySdk.getName()));
+      }
       return new File(binaryPath).getParent();
     }
 
@@ -294,11 +298,12 @@ public class PySkeletonGenerator {
           if (msgType.equals("progress") && indicator != null) {
             final JsonElement text = controlMessage.get("text");
             if (text != null) {
+              final @NlsSafe String progressText = text.getAsString();
               if (controlMessage.get("minor").getAsBoolean()) {
-                indicator.setText2(text.getAsString());
+                indicator.setText2(progressText);
               }
               else {
-                indicator.setText(text.getAsString());
+                indicator.setText(progressText);
               }
             }
             final JsonElement fraction = controlMessage.get("fraction");
@@ -400,7 +405,7 @@ public class PySkeletonGenerator {
   }
 
   @NotNull
-  private String formatGeneratorFailureMessage(@NotNull ProcessOutput process) {
+  private @NlsSafe String formatGeneratorFailureMessage(@NotNull ProcessOutput process) {
     final StringBuilder sb = new StringBuilder("failed to run ").append(GENERATOR3).append(" for ").append(mySdk.getHomePath());
     if (process.isTimeout()) {
       sb.append(": timed out.");
@@ -485,8 +490,8 @@ public class PySkeletonGenerator {
     // unreliable in case of remote interpreters where target and host OS might differ.
 
     // Closing the underlying input stream should be handled by its owner.
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-    final BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(input, StandardCharsets.UTF_8));
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") final BufferedWriter writer =
+      new BufferedWriter(new OutputStreamWriter(input, StandardCharsets.UTF_8));
     writer.write(line);
     writer.write('\n');
     writer.flush();

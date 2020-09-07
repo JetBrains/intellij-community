@@ -4,12 +4,13 @@ package com.intellij.openapi.application;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
-import gnu.trove.THashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.URI;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -18,7 +19,7 @@ import java.util.Map;
  */
 public final class JetBrainsProtocolHandler {
   public static final String PROTOCOL = "jetbrains://";
-  public static final String FRAGMENT_PARAM_NAME = "__fragment";
+  public static final @NonNls String FRAGMENT_PARAM_NAME = "__fragment";
   public static final String REQUIRED_PLUGINS_KEY = "idea.required.plugins.id";
 
   private static String ourMainParameter = null;
@@ -43,7 +44,7 @@ public final class JetBrainsProtocolHandler {
 
     ourCommand = urlParts.get(1);
     ourMainParameter = ContainerUtil.getOrElse(urlParts, 2, null);
-    Map<String, String> parameters = new THashMap<>();
+    Map<String, String> parameters = new HashMap<>();
     computeParameters(uri.getRawQuery(), parameters);
     parameters.put(FRAGMENT_PARAM_NAME, uri.getFragment());
     ourParameters = Collections.unmodifiableMap(parameters);
@@ -73,7 +74,7 @@ public final class JetBrainsProtocolHandler {
   }
 
   @Nullable
-  public static String getCommand() {
+  public static @NonNls String getCommand() {
     init();
     return ourCommand;
   }

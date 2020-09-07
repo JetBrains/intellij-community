@@ -3,13 +3,9 @@ package com.intellij.util;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.impl.TabbedContentImpl;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,21 +21,26 @@ import java.util.function.Supplier;
  * @author Konstantin Bulenkov
  */
 public final class ContentUtilEx extends ContentsUtil {
+  /**
+   * @deprecated use {@link ContentUtilEx#addTabbedContent(ContentManager, JComponent, String, Supplier, Supplier, boolean, Disposable)}
+   * as it allows to set tab group id separately from display name.
+   */
+  @Deprecated
   public static void addTabbedContent(@NotNull ContentManager manager,
                                       @NotNull JComponent contentComponent,
                                       @NotNull @NonNls String groupPrefix,
-                                      @NotNull @Nls String tabName,
+                                      @NotNull @NlsContexts.TabTitle String tabName,
                                       boolean select,
                                       @Nullable Disposable childDisposable) {
-    addTabbedContent(manager, new TabGroupId(groupPrefix, groupPrefix),
+    addTabbedContent(manager, new TabGroupId(groupPrefix, groupPrefix), //NON-NLS one value for id and display name, nothing to be done
                      new TabDescriptor(contentComponent, () -> tabName, childDisposable), select);
   }
 
   public static void addTabbedContent(@NotNull ContentManager manager,
                                       @NotNull JComponent contentComponent,
                                       @NotNull @NonNls String groupId,
-                                      @NotNull Supplier<@Nls String> groupDisplayName,
-                                      @NotNull Supplier<@Nls String> tabDisplayName,
+                                      @NotNull Supplier<@NlsContexts.TabTitle String> groupDisplayName,
+                                      @NotNull Supplier<@NlsContexts.TabTitle String> tabDisplayName,
                                       boolean select,
                                       @Nullable Disposable childDisposable) {
     addTabbedContent(manager, new TabGroupId(groupId, groupDisplayName),
@@ -48,7 +49,7 @@ public final class ContentUtilEx extends ContentsUtil {
 
   public static void addTabbedContent(@NotNull ContentManager manager, @NotNull TabGroupId tabGroupId, @NotNull TabDescriptor tab,
                                       boolean select) {
-    if (isSplitMode(tabGroupId.getId())) {
+    if (isSplitMode(tabGroupId)) {
       addSplitTabbedContent(manager, tabGroupId, tab, select);
     }
     else {
@@ -116,7 +117,8 @@ public final class ContentUtilEx extends ContentsUtil {
   }
 
   @NotNull
-  public static String getFullName(@NotNull String groupPrefix, @NotNull String tabName) {
+  @NlsContexts.TabTitle
+  public static String getFullName(@NotNull @NlsContexts.TabTitle String groupPrefix, @NotNull @NlsContexts.TabTitle String tabName) {
     if (tabName.isEmpty()) return groupPrefix;
     return groupPrefix + ": " + tabName;
   }
@@ -251,8 +253,12 @@ public final class ContentUtilEx extends ContentsUtil {
     mergedContent.forEach(Disposer::dispose);
   }
 
-  public static boolean isSplitMode(@NonNls @NotNull String groupId) {
-    return PropertiesComponent.getInstance().getBoolean(TabbedContent.SPLIT_PROPERTY_PREFIX + groupId, false);
+  public static boolean isSplitMode(@NotNull TabGroupId tabGroupId) {
+    return isSplitMode(tabGroupId.getId(), tabGroupId.getSplitByDefault());
+  }
+
+  public static boolean isSplitMode(@NonNls @NotNull String groupId, boolean defaultValue) {
+    return PropertiesComponent.getInstance().getBoolean(TabbedContent.SPLIT_PROPERTY_PREFIX + groupId, defaultValue);
   }
 
   public static void setSplitMode(@NonNls @NotNull String groupId, boolean value) {

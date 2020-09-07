@@ -16,12 +16,13 @@
 package com.intellij.util.config;
 
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.NlsActions;
 
 import javax.swing.*;
 
 public class DumbAwareToggleBooleanProperty extends ToggleBooleanProperty implements DumbAware {
-  public DumbAwareToggleBooleanProperty(String text,
-                                        String description,
+  public DumbAwareToggleBooleanProperty(@NlsActions.ActionText String text,
+                                        @NlsActions.ActionDescription String description,
                                         Icon icon,
                                         AbstractProperty.AbstractPropertyContainer properties, BooleanProperty property) {
     super(text, description, icon, properties, property);

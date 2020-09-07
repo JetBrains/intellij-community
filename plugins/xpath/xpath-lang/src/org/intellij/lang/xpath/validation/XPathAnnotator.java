@@ -46,6 +46,7 @@ import org.intellij.lang.xpath.psi.impl.PrefixedNameImpl;
 import org.intellij.lang.xpath.psi.impl.XPathChangeUtil;
 import org.intellij.lang.xpath.psi.impl.XPathNumberImpl;
 import org.intellij.lang.xpath.xslt.impl.XsltReferenceContributor;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -134,7 +135,8 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
       PsiElement number;
       if (leaf != null && (number = leaf.getParent()) instanceof XPathNumber && ((XPathNumber)number).getXPathVersion() == XPathVersion.V2) {
         AnnotationBuilder builder =
-          myHolder.newAnnotation(HighlightSeverity.ERROR, "Number literal must be followed by whitespace in XPath 2");
+          myHolder.newAnnotation(HighlightSeverity.ERROR,
+                                 XPathBundle.message("annotator.error.number.literal.must.be.followed.by.whitespace.in.xpath"));
 
         final XPathBinaryExpression expression = PsiTreeUtil.getParentOfType(number, XPathBinaryExpression.class, true);
         if (expression != null) {
@@ -175,7 +177,8 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
   @Override
   public void visitXPathNumber(XPathNumber number) {
     if (number.getXPathVersion() != XPathVersion.V2 && ((XPathNumberImpl)number).isScientificNotation()) {
-      myHolder.newAnnotation(HighlightSeverity.ERROR, "Number literals in scientific notation are not allowed in XPath 1.0")
+      myHolder.newAnnotation(HighlightSeverity.ERROR,
+                             XPathBundle.message("annotator.error.number.literals.in.scientific.notation.are.not.allowed.in.xpath"))
         .create();
     }
 
@@ -190,7 +193,8 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
 
       if (XPath2TokenTypes.COMP_OPS.contains(operator)) {
         if (operand instanceof XPathBinaryExpression && XPath2TokenTypes.COMP_OPS.contains(((XPathBinaryExpression)operand).getOperator())) {
-          AnnotationBuilder builder = myHolder.newAnnotation(HighlightSeverity.ERROR, "Consecutive comparison is not allowed in XPath 2");
+          AnnotationBuilder builder = myHolder.newAnnotation(HighlightSeverity.ERROR,
+                                                             XPathBundle.message("annotator.error.consecutive.comparison.not.allowed.in.xpath"));
 
           final XPathExpression rOperand = o.getROperand();
           if (rOperand != null) {
@@ -248,7 +252,8 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
         return;
       }
     }
-    myHolder.newAnnotation(HighlightSeverity.ERROR, "Operator '" + o.getOperationSign() + "' cannot be applied to expressions of type '" + leftType.getName() + "'").create();
+    myHolder.newAnnotation(HighlightSeverity.ERROR, XPathBundle.message("annotator.error.operator.cannot.be.applied.to.expressions.type",
+                                                                        o.getOperationSign(), leftType.getName())).create();
   }
 
   @Override
@@ -258,7 +263,7 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
 
   private static void checkString(AnnotationHolder holder, XPathString string) {
     if (!string.isWellFormed()) {
-      holder.newAnnotation(HighlightSeverity.ERROR, "Malformed string literal").create();
+      holder.newAnnotation(HighlightSeverity.ERROR, XPathBundle.message("annotator.error.malformed.string.literal")).create();
     }
   }
 
@@ -291,8 +296,10 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
     // missing name is already flagged by parser
     if (referencedName.length() > 0) {
       final TextRange range = reference.getTextRange().shiftRight(1).grown(-1);
-      AnnotationBuilder builder = holder.newAnnotation(HighlightSeverity.ERROR, "Unresolved variable '" + referencedName + "'").range(range)
-        .highlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+      AnnotationBuilder builder =
+        holder.newAnnotation(HighlightSeverity.ERROR, XPathBundle.message("annotator.error.unresolved.variable", referencedName))
+          .range(range)
+          .highlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
       final VariableContext variableContext = ContextProvider.getContextProvider(reference).getVariableContext();
       if (variableContext != null) {
         final IntentionAction[] fixes = variableContext.getUnresolvedVariableFixes(reference);
@@ -313,7 +320,8 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
         if (principalType != XPathNodeTest.PrincipalType.ELEMENT) {
           XPathNodeTest test = step.getNodeTest();
           if (test != null) {
-            holder.newAnnotation(HighlightSeverity.WARNING, "Silly location step on " + principalType.getType() + " axis").range(test).create();
+            holder.newAnnotation(HighlightSeverity.WARNING,
+                                 XPathBundle.message("annotator.warning.silly.location.step.on.axis", principalType.getType())).range(test).create();
           }
         }
       }
@@ -336,9 +344,8 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
       if (call.getQName().getPrefix() != null && contextProvider.getFunctionContext().allowsExtensions()) {
         final PsiReference[] references = call.getReferences();
         if (references.length > 1 && references[1].resolve() == null) {
-          holder.newAnnotation(HighlightSeverity.ERROR, "Extension namespace prefix '" +
-                                                                                               qName.getPrefix() +
-                                                                                               "' has not been declared")
+          holder.newAnnotation(HighlightSeverity.ERROR,
+                               XPathBundle.message("annotator.error.extension.namespace.prefix.has.not.been.declared", qName.getPrefix()))
             .range(qName.getPrefixNode())
           .highlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL).create();
         } else if (name != null){
@@ -349,18 +356,17 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
               // extension namespace is known
               final String uri = pair.first.getNamespaceURI();
               if (uri != null && uri.equals(extNS)) {
-                holder.newAnnotation(HighlightSeverity.WARNING, "Unknown function '" + name + "'").range(node).create();
+                holder.newAnnotation(HighlightSeverity.WARNING, XPathBundle.message("annotator.warning.unknown.function", name)).range(node).create();
               }
             }
           }
         }
       } else {
         if (name != null) {
-          holder.newAnnotation(HighlightSeverity.WARNING, "Unknown function '" + name + "'").range(node).create();
+          holder.newAnnotation(HighlightSeverity.WARNING, XPathBundle.message("annotator.warning.unknown.function", name)).range(node).create();
         } else if (qName.getPrefixNode() != null) {
-          holder.newAnnotation(HighlightSeverity.ERROR, "Extension namespace prefix '" +
-                                                                                               qName.getPrefix() +
-                                                                                               "' has not been declared")
+          holder.newAnnotation(HighlightSeverity.ERROR,
+                               XPathBundle.message("annotator.error.extension.namespace.prefix.has.not.been.declared", qName.getPrefix()))
             .range(qName.getPrefixNode())
           .highlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL).create();
         }
@@ -372,14 +378,14 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
       }
       if (arguments.length < functionDecl.getMinArity()) {
         if (functionDecl.getMinArity() == 1) {
-          holder.newAnnotation(HighlightSeverity.ERROR, "Missing argument for function '" + name + "'").range(node).create();
+          holder.newAnnotation(HighlightSeverity.ERROR,
+                               XPathBundle.message("annotator.error.missing.argument.for.function", name)).range(node).create();
         } else {
           final Parameter last = functionDecl.getParameters()[functionDecl.getParameters().length - 1];
-          final String atLeast =
-                  last.kind == Parameter.Kind.OPTIONAL ||
-                          last.kind == Parameter.Kind.VARARG ?
-                          "at least " : "";
-          holder.newAnnotation(HighlightSeverity.ERROR, "Function '" + name + "' requires " + atLeast + functionDecl.getMinArity() + " arguments").range(node).create();
+          holder.newAnnotation(HighlightSeverity.ERROR,
+                               XPathBundle.message("annotator.error.function.requires.choice.at.least.arguments", name,
+                                                   last.kind == Parameter.Kind.OPTIONAL || last.kind == Parameter.Kind.VARARG ? 0 : 1,
+                                                   functionDecl.getMinArity())).range(node).create();
         }
       }
     }
@@ -390,7 +396,7 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
       if (parameters.length > 0 && parameters[parameters.length - 1].kind == Parameter.Kind.VARARG) {
         // OK. Validate types against the last declared - vararg - param.
       } else {
-        holder.newAnnotation(HighlightSeverity.ERROR, "Too many arguments").range(argument).create();
+        holder.newAnnotation(HighlightSeverity.ERROR, XPathBundle.message("annotator.error.too.many.arguments")).range(argument).create();
       }
     }
   }
@@ -434,7 +440,8 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
                 return;
               }
             }
-            holder.newAnnotation(HighlightSeverity.ERROR, "element() or schema-element() expected").range(arguments[0]).create();
+            holder.newAnnotation(HighlightSeverity.ERROR,
+                                 XPathBundle.message("annotator.error.element.or.schema.element.expected")).range(arguments[0]).create();
           }
           break;
 
@@ -452,7 +459,8 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
                 }
               }
             }
-            holder.newAnnotation(HighlightSeverity.ERROR, "String literal or NCName expected").range(arguments[0]).create();
+            holder.newAnnotation(HighlightSeverity.ERROR,
+                                 XPathBundle.message("annotator.error.string.literal.or.ncname.expected")).range(arguments[0]).create();
           }
           break;
       }
@@ -462,11 +470,13 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
       }
       if (test.getNodeType() == NodeType.PROCESSING_INSTRUCTION && arguments.length == 1) {
         if (!(arguments[0] instanceof XPathString)) {
-          holder.newAnnotation(HighlightSeverity.ERROR, "String literal expected").range(arguments[0]).create();
+          holder.newAnnotation(HighlightSeverity.ERROR,
+                               XPathBundle.message("annotator.error.string.literal.expected")).range(arguments[0]).create();
         }
         return;
       }
-      holder.newAnnotation(HighlightSeverity.ERROR, "Invalid number of arguments for node type test '" + nodeType.getType() + "'").create();
+      holder.newAnnotation(HighlightSeverity.ERROR,
+                           XPathBundle.message("annotator.error.invalid.number.arguments.for.node.type.test", nodeType.getType())).create();
     }
   }
 
@@ -480,15 +490,15 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
       for (XPathExpression arg : arguments) {
         final PrefixedName argument = findQName(arg);
         if (argument == null) {
-          holder.newAnnotation(HighlightSeverity.ERROR, "QName expected").range(arg).create();
+          holder.newAnnotation(HighlightSeverity.ERROR, XPathBundle.message("annotator.error.qname.expected")).range(arg).create();
         } else {
           if (!wildcardAllowed && ("*".equals(argument.getPrefix()) || "*".equals(argument.getLocalName()))) {
-            holder.newAnnotation(HighlightSeverity.ERROR, "QName expected").range(arg).create();
+            holder.newAnnotation(HighlightSeverity.ERROR, XPathBundle.message("annotator.error.qname.expected")).range(arg).create();
           }
         }
       }
     } else {
-      holder.newAnnotation(HighlightSeverity.ERROR, "Missing argument for node kind test").create();
+      holder.newAnnotation(HighlightSeverity.ERROR, XPathBundle.message("annotator.error.missing.argument.for.node.kind.test")).create();
     }
 
     markExceedingArguments(holder, arguments, max);
@@ -496,7 +506,7 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
 
   private static void markExceedingArguments(AnnotationHolder holder, XPathExpression[] arguments, int start) {
     for (int i = start; i < arguments.length; i++) {
-      holder.newAnnotation(HighlightSeverity.ERROR, "Too many arguments").range(arguments[i]).create();
+      holder.newAnnotation(HighlightSeverity.ERROR, XPathBundle.message("annotator.error.too.many.arguments")).range(arguments[i]).create();
     }
   }
 
@@ -546,7 +556,8 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
         if (!pr.isSoft() && pr.isUnresolved()) {
           final TextRange range = pr.getRangeInElement().shiftRight(pr.getElement().getTextRange().getStartOffset());
           AnnotationBuilder builder =
-            holder.newAnnotation(HighlightSeverity.ERROR, "Unresolved namespace prefix '" + pr.getCanonicalText() + "'").range(range)
+            holder.newAnnotation(HighlightSeverity.ERROR,
+                                 XPathBundle.message("annotator.error.unresolved.namespace.prefix", pr.getCanonicalText())).range(range)
               .highlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
 
           final NamespaceContext namespaceContext = myProvider.getNamespaceContext();
@@ -567,7 +578,8 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
     if (nodeTest.getPrincipalType() != XPathNodeTest.PrincipalType.ELEMENT) {
       final XPathNodeTypeTest typeTest = PsiTreeUtil.getChildOfType(nodeTest, XPathNodeTypeTest.class);
       if (typeTest != null) {
-        holder.newAnnotation(HighlightSeverity.WARNING, "Silly node type test on axis '" + nodeTest.getPrincipalType().getType() + "'").range(typeTest).create();
+        holder.newAnnotation(HighlightSeverity.WARNING, XPathBundle.message("annotator.warning.silly.node.type.test.on.axis",
+                                                                            nodeTest.getPrincipalType().getType())).range(typeTest).create();
       }
     }
   }
@@ -578,7 +590,8 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
     if (expression instanceof XPathLocationPath) {
       final XPathExpression parentOfType = PsiTreeUtil.getParentOfType(o, XPathExpression.class, true);
       if (parentOfType != null && XPath2Type.ANYATOMICTYPE.isAssignableFrom(parentOfType.getType())) {
-        myHolder.newAnnotation(HighlightSeverity.ERROR, "Axis step cannot be used here: the context item is an atomic value").range(expression).create();
+        myHolder.newAnnotation(HighlightSeverity.ERROR,
+                               XPathBundle.message("annotator.error.axis.step.cannot.be.used.here.context.item.atomic.value")).range(expression).create();
       }
     }
     super.visitXPathPredicate(o);
@@ -588,7 +601,8 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
     final XPathType expectedType = ExpectedTypeUtil.getExpectedType(expression);
     final XPathType opType = ExpectedTypeUtil.mapType(expression, expression.getType());
     if (!XPathType.isAssignable(expectedType, opType)) {
-      holder.newAnnotation(HighlightSeverity.ERROR, "Expected type '" + expectedType.getName() + "', got '" + opType.getName() + "'").create();
+      holder.newAnnotation(HighlightSeverity.ERROR,
+                           XPathBundle.message("annotator.error.expected.type.got", expectedType.getName(), opType.getName())).create();
     }
   }
 }

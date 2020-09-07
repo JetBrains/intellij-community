@@ -15,6 +15,8 @@ public final class IndexDebugProperties {
     false
   );
 
+  public static volatile boolean IS_UNIT_TEST_MODE = false;
+
   public static final boolean EXTRA_SANITY_CHECKS = SystemProperties.getBooleanProperty(
     "intellij.idea.indices.debug.extra.sanity",
     false //DEBUG // todo https://youtrack.jetbrains.com/issue/IDEA-134916

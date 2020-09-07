@@ -18,6 +18,7 @@ package org.intellij.plugins.intelliLang.inject.config;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.JDOMExternalizer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.compiler.PatternCompiler;
@@ -25,6 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashMap;
+import org.intellij.plugins.intelliLang.IntelliLangBundle;
 import org.intellij.plugins.intelliLang.inject.java.JavaLanguageInjectionSupport;
 import org.jdom.Element;
 import org.jdom.IllegalDataException;
@@ -153,7 +155,7 @@ public class MethodParameterInjection extends BaseInjection {
   @NotNull
   public String getDisplayName() {
     final String className = getClassName();
-    if (StringUtil.isEmpty(className)) return "<unnamed>";
+    if (StringUtil.isEmpty(className)) return IntelliLangBundle.message("method.param.injection.unnamed.placeholder");
     MethodInfo singleInfo = null;
     for (MethodInfo info : myParameterMap.values()) {
       if (info.isEnabled()) {
@@ -276,10 +278,8 @@ public class MethodParameterInjection extends BaseInjection {
   }
 
   public static class MethodInfo {
-    @NotNull
-    final String methodSignature;
-    @NotNull
-    final String methodName;
+    final @NotNull String methodSignature;
+    final @NotNull @NlsSafe String methodName;
     final boolean @NotNull [] paramFlags;
 
     boolean returnFlag;

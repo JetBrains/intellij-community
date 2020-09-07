@@ -16,8 +16,9 @@
 package git4idea.branch
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.VcsNotifier
-import com.intellij.util.ui.UIUtil
 import git4idea.commands.Git
 import git4idea.commands.GitCompoundResult
 import git4idea.i18n.GitBundle
@@ -66,26 +67,30 @@ internal class GitCreateBranchOperation(
 
     val vcsNotifier = VcsNotifier.getInstance(myProject)
     if (deleteResult.totalSuccess()) {
-      vcsNotifier.notifySuccess(GitBundle.message("create.branch.operation.rollback.successful"),
+      vcsNotifier.notifySuccess("git.created.branch.rollback.successful",
+                                GitBundle.message("create.branch.operation.rollback.successful"),
                                 GitBundle.message("create.branch.operation.deleted.branch", branchName))
     }
     else {
-      vcsNotifier.notifyError(GitBundle.message("create.branch.operation.error.during.rollback"),
+      vcsNotifier.notifyError("git.created.branch.rollback.error",
+                              GitBundle.message("create.branch.operation.error.during.rollback"),
                               deleteResult.errorOutputWithReposIndication,
                               true)
     }
   }
 
   override fun getSuccessMessage(): String = GitBundle.message("create.branch.operation.branch.created",
-                                                                        bold(code(branchName)))
+                                                               bold(code(branchName)))
 
   override fun getRollbackProposal(): String =
-    GitBundle.message("create.branch.operation.however.the.branch.was.created.in.the.following.repositories",
-                      successfulRepositories.size) +
-    UIUtil.BR +
-    successfulRepositoriesJoined() +
-    UIUtil.BR +
-    GitBundle.message("create.branch.operation.you.may.rollback.not.to.let.branches.diverge", branchName)
+    HtmlBuilder()
+      .append(GitBundle.message("create.branch.operation.however.the.branch.was.created.in.the.following.repositories",
+                                successfulRepositories.size))
+      .br()
+      .appendRaw(successfulRepositoriesJoined())
+      .br()
+      .append(GitBundle.message("create.branch.operation.you.may.rollback.not.to.let.branches.diverge", branchName))
+      .toString()
 
   override fun getOperationName(): @Nls String = GitBundle.message("create.branch.operation.name")
 }

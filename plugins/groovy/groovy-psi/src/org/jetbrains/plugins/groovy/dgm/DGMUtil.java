@@ -3,7 +3,6 @@ package org.jetbrains.plugins.groovy.dgm;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 
@@ -18,6 +17,6 @@ public final class DGMUtil {
     PsiFile file = e.getContainingFile();
     return file instanceof PropertiesFile &&
            Comparing.equal(file.getName(), ORG_CODEHAUS_GROOVY_RUNTIME_EXTENSION_MODULE,
-                           SystemInfo.isFileSystemCaseSensitive);
+                           file.getViewProvider().getVirtualFile().isCaseSensitive());
   }
 }

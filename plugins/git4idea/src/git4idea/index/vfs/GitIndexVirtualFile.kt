@@ -27,6 +27,7 @@ import git4idea.commands.GitLineHandler
 import git4idea.i18n.GitBundle
 import git4idea.index.GitIndexUtil
 import git4idea.util.GitFileUtils
+import org.jetbrains.annotations.NonNls
 import java.io.*
 import java.util.concurrent.atomic.AtomicReference
 
@@ -91,23 +92,28 @@ class GitIndexVirtualFile(private val project: Project,
   }
 
   private fun write(requestor: Any?, newContent: ByteArray, newModificationStamp: Long) {
-    val newModStamp = if (newModificationStamp > 0) newModificationStamp else LocalTimeCounter.currentTime()
-    refresher.changeContent(this, requestor, modificationStamp) {
-      val oldCachedData = cachedData.get()
-      if (oldCachedData != readCachedData()) {
-        // TODO
-        LOG.warn("Skipping write for $this as it is not up to date")
-        return@changeContent
-      }
+    try {
+      val newModStamp = if (newModificationStamp > 0) newModificationStamp else LocalTimeCounter.currentTime()
+      refresher.changeContent(this, requestor, modificationStamp) {
+        val oldCachedData = cachedData.get()
+        if (oldCachedData != readCachedData()) {
+          // TODO
+          LOG.warn("Skipping write for $this as it is not up to date")
+          return@changeContent
+        }
 
-      val isExecutable = oldCachedData?.isExecutable ?: false
-      val newHash = GitIndexUtil.write(project, root, filePath, ByteArrayInputStream(newContent), isExecutable)
-      LOG.debug("Written $this. newHash=$newHash")
+        val isExecutable = oldCachedData?.isExecutable ?: false
+        val newHash = GitIndexUtil.write(project, root, filePath, ByteArrayInputStream(newContent), isExecutable)
+        LOG.debug("Written $this. newHash=$newHash")
 
-      modificationStamp = newModStamp
-      if (oldCachedData?.hash != newHash) {
-        cachedData.compareAndSet(oldCachedData, CachedData(newHash, calculateLength(newHash.asString()), isExecutable))
+        modificationStamp = newModStamp
+        if (oldCachedData?.hash != newHash) {
+          cachedData.compareAndSet(oldCachedData, CachedData(newHash, calculateLength(newHash.asString()), isExecutable))
+        }
       }
+    }
+    catch (e: Exception) {
+      throw IOException(e)
     }
   }
 
@@ -118,13 +124,18 @@ class GitIndexVirtualFile(private val project: Project,
 
   @Throws(IOException::class)
   override fun contentsToByteArray(): ByteArray {
-    if (ApplicationManager.getApplication().isDispatchThread) {
-      return ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable<ByteArray, IOException> {
-        contentToByteArrayImpl()
-      }, GitBundle.message("stage.vfs.read.process", name), false, project)
+    try {
+      if (ApplicationManager.getApplication().isDispatchThread) {
+        return ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable<ByteArray, IOException> {
+          contentToByteArrayImpl()
+        }, GitBundle.message("stage.vfs.read.process", name), false, project)
+      }
+      else {
+        return contentToByteArrayImpl()
+      }
     }
-    else {
-      return contentToByteArrayImpl()
+    catch (e: Exception) {
+      throw IOException(e)
     }
   }
 
@@ -171,7 +182,7 @@ class GitIndexVirtualFile(private val project: Project,
     return result
   }
 
-  override fun toString(): String {
+  override fun toString(): @NonNls String {
     return "GitIndexVirtualFile: [${root.name}]/${VcsFileUtil.relativePath(root, filePath)}"
   }
 
@@ -187,7 +198,7 @@ class GitIndexVirtualFile(private val project: Project,
       return cachedData.compareAndSet(oldCachedData, newCachedData)
     }
 
-    override fun toString(): String {
+    override fun toString(): @NonNls String {
       return "GitIndexVirtualFile.Refresh: ${this@GitIndexVirtualFile}"
     }
   }

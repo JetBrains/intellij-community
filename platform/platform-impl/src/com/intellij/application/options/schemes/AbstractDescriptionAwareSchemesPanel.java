@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.schemes;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.ui.AbstractPainter;
@@ -95,7 +96,7 @@ public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> ext
         if (myDescriptionTextField.isShowing()) {
           GraphicsUtil.setupAntialiasing(g);
           g.setColor(JBColor.GRAY);
-          g.drawString(EditableSchemesCombo.EDITING_HINT, 0, -JBUIScale.scale(5));
+          g.drawString(IdeBundle.message("hint.scheme.editing"), 0, -JBUIScale.scale(5));
         }
       }
     };

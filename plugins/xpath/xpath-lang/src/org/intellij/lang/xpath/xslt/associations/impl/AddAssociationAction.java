@@ -24,13 +24,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IconUtil;
 import org.intellij.lang.xpath.xslt.associations.FileAssociationsManager;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
 class AddAssociationAction extends AnAction {
   private final FileAssociationsManager myManager;
 
     AddAssociationAction(FileAssociationsManager manager) {
-        super("Add...", "Add File Association", IconUtil.getAddIcon());
+        super(XPathBundle.message("action.add.association.text"),
+              XPathBundle.message("action.add.file.association.description"),
+              IconUtil.getAddIcon());
         myManager = manager;
     }
 

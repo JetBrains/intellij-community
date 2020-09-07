@@ -5,6 +5,7 @@ import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
@@ -17,6 +18,7 @@ import org.jetbrains.yaml.YAMLFileType;
 import org.jetbrains.yaml.YAMLLanguage;
 import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
+import org.jetbrains.yaml.psi.YAMLSequence;
 import org.jetbrains.yaml.psi.YAMLSequenceItem;
 import org.jetbrains.yaml.psi.YAMLValue;
 
@@ -53,13 +55,20 @@ class YAMLFormattingContext {
   YAMLFormattingContext(@NotNull CodeStyleSettings settings, @NotNull PsiFile file) {
     mySettings = settings;
     myFile = file;
+    YAMLCodeStyleSettings custom = mySettings.getCustomSettings(YAMLCodeStyleSettings.class);
+    CommonCodeStyleSettings common = mySettings.getCommonSettings(YAMLLanguage.INSTANCE);
     mySpaceBuilder = new SpacingBuilder(mySettings, YAMLLanguage.INSTANCE)
-      .before(YAMLTokenTypes.COLON).spaces(0)
+      .before(YAMLTokenTypes.COLON).spaceIf(custom.SPACE_BEFORE_COLON)
+      .after(YAMLTokenTypes.COLON).spaces(1)
+      .after(YAMLTokenTypes.LBRACKET).spaceIf(common.SPACE_WITHIN_BRACKETS)
+      .before(YAMLTokenTypes.RBRACKET).spaceIf(common.SPACE_WITHIN_BRACKETS)
+      .after(YAMLTokenTypes.LBRACE).spaceIf(common.SPACE_WITHIN_BRACES)
+      .before(YAMLTokenTypes.RBRACE).spaceIf(common.SPACE_WITHIN_BRACES)
     ;
-    shouldIndentSequenceValue = mySettings.getCustomSettings(YAMLCodeStyleSettings.class).INDENT_SEQUENCE_VALUE;
-    shouldInlineSequenceIntoSequence = !mySettings.getCustomSettings(YAMLCodeStyleSettings.class).SEQUENCE_ON_NEW_LINE;
-    shouldInlineBlockMappingIntoSequence = !mySettings.getCustomSettings(YAMLCodeStyleSettings.class).BLOCK_MAPPING_ON_NEW_LINE;
-    getValueAlignment = mySettings.getCustomSettings(YAMLCodeStyleSettings.class).ALIGN_VALUES_PROPERTIES;
+    shouldIndentSequenceValue = custom.INDENT_SEQUENCE_VALUE;
+    shouldInlineSequenceIntoSequence = !custom.SEQUENCE_ON_NEW_LINE;
+    shouldInlineBlockMappingIntoSequence = !custom.BLOCK_MAPPING_ON_NEW_LINE;
+    getValueAlignment = custom.ALIGN_VALUES_PROPERTIES;
   }
 
   @Nullable
@@ -114,6 +123,16 @@ class YAMLFormattingContext {
   Alignment computeAlignment(@NotNull ASTNode node) {
     IElementType type = PsiUtilCore.getElementType(node);
     if (type == YAMLElementTypes.SEQUENCE_ITEM) {
+      if (node.getTreeParent().getElementType() == YAMLElementTypes.ARRAY) {
+        YAMLSequence sequence = (YAMLSequence)node.getTreeParent().getPsi();
+        for (YAMLSequenceItem child : sequence.getItems()) {
+          // do not align multiline elements in json-style arrays
+          if (child.textContains('\n')) {
+            return null;
+          }
+        }
+      }
+      // Anyway we need to align `-` symbols in block-style sequences
       return myChildIndentAlignments.get(node.getTreeParent());
     }
     if (type == YAMLElementTypes.KEY_VALUE_PAIR) {
@@ -251,9 +270,7 @@ class YAMLFormattingContext {
     boolean grandParentIsDocument = grandParentType == YAMLElementTypes.DOCUMENT;
 
     if (parentType == YAMLElementTypes.ARRAY) {
-      // such item should contain only one child and this child will decide indent
-      // here could be just none
-      return Indent.getNoneIndent();
+      return Indent.getNormalIndent();
     }
     else if (grandParentType == YAMLElementTypes.KEY_VALUE_PAIR) {
       if (shouldIndentSequenceValue) {

@@ -1,13 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.xml;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import org.jetbrains.annotations.ApiStatus.Experimental;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,15 +17,15 @@ public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTa
   XmlTag[] EMPTY = new XmlTag[0];
 
   @Override
-  @NotNull @NonNls String getName();
-  @NotNull @NonNls String getNamespace();
-  @NotNull @NonNls String getLocalName();
+  @NotNull @NlsSafe String getName();
+  @NotNull @NlsSafe String getNamespace();
+  @NotNull @NlsSafe String getLocalName();
 
   @Nullable XmlElementDescriptor getDescriptor();
 
   XmlAttribute @NotNull [] getAttributes();
 
-  @Nullable XmlAttribute getAttribute(@NonNls String name, @NonNls String namespace);
+  @Nullable XmlAttribute getAttribute(@NlsSafe String name, @NlsSafe String namespace);
 
   /**
    * Returns a tag attribute by qualified name.
@@ -34,9 +34,9 @@ public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTa
    * @return null if the attribute not exist.
    * @see #getAttribute(String, String)
    */
-  @Nullable XmlAttribute getAttribute(@NonNls String qname);
+  @Nullable XmlAttribute getAttribute(@NlsSafe String qname);
 
-  @Nullable String getAttributeValue(@NonNls String name, @NonNls String namespace);
+  @Nullable @NlsSafe String getAttributeValue(@NlsSafe String name, @NlsSafe String namespace);
 
   /**
    * Returns a tag attribute value by qualified name.
@@ -45,10 +45,10 @@ public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTa
    * @return null if the attribute not exist.
    * @see #getAttributeValue(String, String)
    */
-  @Nullable String getAttributeValue(@NonNls String qname);
+  @Nullable @NlsSafe String getAttributeValue(@NlsSafe String qname);
 
-  XmlAttribute setAttribute(@NonNls String name, @NonNls String namespace, @NonNls String value) throws IncorrectOperationException;
-  XmlAttribute setAttribute(@NonNls String qname, @NonNls String value) throws IncorrectOperationException;
+  XmlAttribute setAttribute(@NlsSafe String name, @NlsSafe String namespace, @NlsSafe String value) throws IncorrectOperationException;
+  XmlAttribute setAttribute(@NlsSafe String qname, @NlsSafe String value) throws IncorrectOperationException;
 
   /**
    * Creates a new child tag
@@ -58,23 +58,23 @@ public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTa
    * @param enforceNamespacesDeep if you pass some xml tags to {@code bodyText} parameter, this flag sets namespace prefixes for them
    * @return created tag. Use {@link #addSubTag(XmlTag, boolean)}} to add it to parent
    */
-  XmlTag createChildTag(@NonNls String localName, @NonNls String namespace, @Nullable @NonNls String bodyText, boolean enforceNamespacesDeep);
+  XmlTag createChildTag(@NlsSafe String localName, @NlsSafe String namespace, @Nullable @NlsSafe String bodyText, boolean enforceNamespacesDeep);
   XmlTag addSubTag(XmlTag subTag, boolean first);
 
   XmlTag @NotNull [] getSubTags();
-  XmlTag @NotNull [] findSubTags(@NonNls String qname);
+  XmlTag @NotNull [] findSubTags(@NlsSafe String qname);
 
   /**
    * @param localName non-qualified tag name.
    * @param namespace if null, name treated as qualified name to find.
    */
-  XmlTag @NotNull [] findSubTags(@NonNls String localName, @Nullable String namespace);
+  XmlTag @NotNull [] findSubTags(@NlsSafe String localName, @Nullable @NlsSafe String namespace);
 
-  @Nullable XmlTag findFirstSubTag(@NonNls String qname);
+  @Nullable XmlTag findFirstSubTag(@NlsSafe String qname);
 
-  @NotNull @NonNls String getNamespacePrefix();
-  @NotNull @NonNls String getNamespaceByPrefix(@NonNls String prefix);
-  @Nullable String getPrefixByNamespace(@NonNls String namespace);
+  @NotNull @NlsSafe String getNamespacePrefix();
+  @NotNull @NlsSafe String getNamespaceByPrefix(@NlsSafe String prefix);
+  @Nullable String getPrefixByNamespace(@NlsSafe String namespace);
   String[] knownNamespaces();
 
   boolean hasNamespaceDeclarations();
@@ -86,28 +86,28 @@ public interface XmlTag extends XmlElement, PsiNamedElement, PsiMetaOwner, XmlTa
 
   @NotNull XmlTagValue getValue();
 
-  @Nullable XmlNSDescriptor getNSDescriptor(@NonNls String namespace, boolean strict);
+  @Nullable XmlNSDescriptor getNSDescriptor(@NlsSafe String namespace, boolean strict);
 
   boolean isEmpty();
 
   void collapseIfEmpty();
 
-  @Nullable @NonNls
-  String getSubTagText(@NonNls String qname);
+  @Nullable @NlsSafe
+  String getSubTagText(@NlsSafe String qname);
 
   default boolean isCaseSensitive() {
     return true;
   }
 
   @Nullable
-  default String getRealNs(@Nullable String value) {
+  default @NlsSafe String getRealNs(@Nullable String value) {
     return value;
   }
 
   @Experimental
   @Nullable
   @Override
-  default String getHostName() {
+  default @NlsSafe String getHostName() {
     return getLocalName();
   }
 }

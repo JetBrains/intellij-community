@@ -12,35 +12,30 @@ import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public final class CommonMoveUtil {
 
-  private CommonMoveUtil() {
-  }
+  static final Comparator<UsageInfo> USAGE_INFO_COMPARATOR = (o1, o2) -> {
+    final VirtualFile file1 = o1.getVirtualFile();
+    final VirtualFile file2 = o2.getVirtualFile();
+    if (Comparing.equal(file1, file2)) {
+      final ProperTextRange rangeInElement1 = o1.getRangeInElement();
+      final ProperTextRange rangeInElement2 = o2.getRangeInElement();
+      if (rangeInElement1 != null && rangeInElement2 != null) {
+        return rangeInElement2.getStartOffset() - rangeInElement1.getStartOffset();
+      }
+      return 0;
+    }
+    if (file1 == null) return -1;
+    if (file2 == null) return 1;
+    return Comparing.compare(file1.getPath(), file2.getPath());
+  };
 
   private static final Logger LOG = Logger.getInstance(CommonMoveUtil.class);
 
-  public static NonCodeUsageInfo[] retargetUsages(final UsageInfo[] usages, final Map<PsiElement, PsiElement> oldToNewElementsMapping)
-    throws IncorrectOperationException {
-    Arrays.sort(usages, (o1, o2) -> {
-      final VirtualFile file1 = o1.getVirtualFile();
-      final VirtualFile file2 = o2.getVirtualFile();
-      if (Comparing.equal(file1, file2)) {
-        final ProperTextRange rangeInElement1 = o1.getRangeInElement();
-        final ProperTextRange rangeInElement2 = o2.getRangeInElement();
-        if (rangeInElement1 != null && rangeInElement2 != null) {
-          return rangeInElement2.getStartOffset() - rangeInElement1.getStartOffset();
-        }
-        return 0;
-      }
-      if (file1 == null) return -1;
-      if (file2 == null) return 1;
-      return Comparing.compare(file1.getPath(), file2.getPath());
-    });
+  public static NonCodeUsageInfo[] retargetUsages(UsageInfo[] usages, Map<PsiElement, PsiElement> oldToNewElementsMapping) {
+    Arrays.sort(usages, USAGE_INFO_COMPARATOR);
     List<NonCodeUsageInfo> nonCodeUsages = new ArrayList<>();
     for (UsageInfo usage : usages) {
       if (usage instanceof NonCodeUsageInfo) {

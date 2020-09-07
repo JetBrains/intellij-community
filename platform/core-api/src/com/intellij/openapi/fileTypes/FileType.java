@@ -3,6 +3,7 @@ package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.util.NlsContexts.Label;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +53,7 @@ public interface FileType extends Scheme {
    */
 
   @NotNull
-  @NonNls
+  @NlsSafe
   String getDefaultExtension();
 
   /**

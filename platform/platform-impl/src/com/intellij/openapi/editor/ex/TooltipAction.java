@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,8 +13,7 @@ import java.awt.event.InputEvent;
  */
 public interface TooltipAction {
 
-  @NotNull
-  String getText();
+  @NlsActions.ActionText @NotNull String getText();
 
   void execute(@NotNull Editor editor, @Nullable InputEvent event);
 

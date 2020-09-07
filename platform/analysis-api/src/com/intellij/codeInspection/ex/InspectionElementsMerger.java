@@ -4,6 +4,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +19,7 @@ import java.util.concurrent.ConcurrentMap;
  *
  * Used to preserve backward compatibility when merging several inspections into one, or replacing an inspection with a different
  * inspection. An inspection merger keeps existing @SuppressWarnings annotations working. It can also avoid the need to modify user
- * inspection profiles, because a new inspection can take one or more old inspection’s settings, without the user needing to configure
+ * inspection profiles, because a new inspection can take one or more old inspection's settings, without the user needing to configure
  * it again.
  *
  * {@see com.intellij.codeInspection.ex.InspectionElementsMergerBase} to provide more fine control over xml
@@ -61,8 +62,7 @@ public abstract class InspectionElementsMerger {
    * @return shortName of the new merged inspection.
    */
   @Contract(pure = true)
-  @NotNull
-  public abstract String getMergedToolName();
+  public abstract @NotNull @NonNls String getMergedToolName();
 
   /**
    * @return the shortNames of the inspections whose settings needs to be merged.
@@ -70,6 +70,7 @@ public abstract class InspectionElementsMerger {
    * when one of toolNames doesn't present in the profile, default settings for that tool are expected, e.g. by default the result would be enabled with min severity WARNING
    */
   @Contract(pure = true)
+  @NonNls
   public abstract String @NotNull [] getSourceToolNames();
 
   /**
@@ -78,6 +79,7 @@ public abstract class InspectionElementsMerger {
    * @return the suppressIds of the merged inspections.
    */
   @Contract(pure = true)
+  @NonNls
   public String @NotNull [] getSuppressIds() {
     return ArrayUtilRt.EMPTY_STRING_ARRAY;
   }

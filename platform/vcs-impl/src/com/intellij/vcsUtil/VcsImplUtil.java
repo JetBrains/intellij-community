@@ -5,6 +5,9 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsKey;
@@ -41,11 +44,12 @@ public final class VcsImplUtil {
    * @param message information message
    * @param title   Dialog title
    */
-  public static void showErrorMessage(final Project project, final String message, final String title) {
+  public static void showErrorMessage(final Project project, @DialogMessage String message, @DialogTitle String title) {
     Runnable task = () -> Messages.showErrorDialog(project, message, title);
     WaitForProgressToShow.runOrInvokeLaterAboveProgress(task, null, project);
   }
 
+  @NlsSafe
   @NotNull
   public static String getShortVcsRootName(@NotNull Project project, @NotNull VirtualFile root) {
     VirtualFile projectDir = project.getBaseDir();
@@ -103,7 +107,7 @@ public final class VcsImplUtil {
     ignoredFileGenerator.generateFile(ignoreFileRoot, vcs, notify);
   }
 
-  private static boolean isFileSharedInVcs(@NotNull Project project, @NotNull ChangeListManagerEx changeListManager, @NotNull String filePath) {
+  private static boolean isFileSharedInVcs(@NotNull Project project, @NotNull ChangeListManager changeListManager, @NotNull String filePath) {
     VirtualFile file = LocalFileSystem.getInstance().findFileByPath(filePath);
     if (file == null) return false;
     FileStatus fileStatus = changeListManager.getStatus(file);
@@ -115,7 +119,7 @@ public final class VcsImplUtil {
     return ReadAction.compute(() -> {
       if (project.isDisposed()) return false;
       @SystemIndependent String projectFilePath = project.getProjectFilePath();
-      ChangeListManagerEx changeListManager = (ChangeListManagerEx)ChangeListManager.getInstance(project);
+      ChangeListManagerEx changeListManager = ChangeListManagerEx.getInstanceEx(project);
       return !changeListManager.isInUpdate()
              && (projectFilePath != null && isFileSharedInVcs(project, changeListManager, projectFilePath));
     });

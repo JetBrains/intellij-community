@@ -17,6 +17,7 @@ package com.intellij.tasks;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.impl.CancellableRunnable;
 import com.intellij.util.Function;
@@ -97,7 +98,7 @@ public abstract class TaskRepository {
   /**
    * @return name of this repository, that will be shown in settings
    */
-  public String getPresentableName() {
+  public @NlsContexts.Label String getPresentableName() {
     return StringUtil.isEmpty(getUrl()) ? "<undefined>" : getUrl();
   }
 

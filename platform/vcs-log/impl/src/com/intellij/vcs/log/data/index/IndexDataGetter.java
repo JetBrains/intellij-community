@@ -421,7 +421,7 @@ public final class IndexDataGetter {
     return myLogStorage;
   }
 
-  private static <T> void processKeys(@NotNull PersistentMap<Integer, T> map, @NotNull Processor<Integer> processor) throws IOException {
+  private static <T> void processKeys(@NotNull PersistentMap<Integer, T> map, @NotNull Processor<? super Integer> processor) throws IOException {
     if (map instanceof PersistentHashMap) {
       ((PersistentHashMap<Integer, T>)map).processKeysWithExistingMapping(processor);
     }

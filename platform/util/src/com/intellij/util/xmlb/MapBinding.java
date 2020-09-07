@@ -8,7 +8,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.XMap;
-import gnu.trove.THashMap;
 import org.jdom.Attribute;
 import org.jdom.Content;
 import org.jdom.Element;
@@ -180,7 +179,7 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
 
       if (map == null) {
         if (mapClass == Map.class) {
-          map = new THashMap();
+          map = new HashMap();
         }
         else {
           try {
@@ -188,7 +187,7 @@ final class MapBinding implements MultiNodeBinding, NestedBinding {
           }
           catch (Exception e) {
             LOG.warn(e);
-            map = new THashMap();
+            map = new HashMap();
           }
         }
       }

@@ -16,12 +16,14 @@
 package com.jetbrains.python.validation;
 
 import com.google.common.collect.Lists;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyFStringFragment;
 import com.jetbrains.python.psi.PyFStringFragmentFormatPart;
 import com.jetbrains.python.psi.PyFormattedStringElement;
@@ -36,20 +38,20 @@ import java.util.List;
 public class FStringsAnnotator extends PyAnnotator {
 
   @Override
-  public void visitPyFStringFragment(PyFStringFragment node) {
+  public void visitPyFStringFragment(@NotNull PyFStringFragment node) {
     final List<PyFStringFragment> enclosingFragments = PsiTreeUtil.collectParents(node, PyFStringFragment.class, false,
                                                                                   PyStringLiteralExpression.class::isInstance);
     if (enclosingFragments.size() > 1) {
-      report(node, "Expression fragment inside f-string is nested too deeply");
+      report(node, PyBundle.message("ANN.fstrings.expression.fragment.inside.fstring.nested.too.deeply"));
     }
     final PsiElement typeConversion = node.getTypeConversion();
     if (typeConversion != null) {
       final String conversionChar = typeConversion.getText().substring(1);
       if (conversionChar.isEmpty()) {
-        report(typeConversion, "Conversion character is expected: should be one of 's', 'r', 'a'");
+        report(typeConversion, PyBundle.message("ANN.fstrings.missing.conversion.character"));
       }
       else if (conversionChar.length() > 1 || "sra".indexOf(conversionChar.charAt(0)) < 0) {
-        report(typeConversion, "Illegal conversion character '" + conversionChar + "': should be one of 's', 'r', 'a'");
+        report(typeConversion, PyBundle.message("ANN.fstrings.illegal.conversion.character", conversionChar));
       }
     }
 
@@ -65,7 +67,7 @@ public class FStringsAnnotator extends PyAnnotator {
         final TextRange range = fragment.getExpressionContentRange();
         for (int i = range.getStartOffset(); i < range.getEndOffset(); i++) {
           if (wholeNodeText.charAt(i) == '\\') {
-            reportCharacter(fragment, i, "Expression fragments inside f-strings cannot include backslashes");
+            reportCharacter(fragment, i, PyBundle.message("ANN.fstrings.expression.fragments.cannot.include.backslashes"));
           }
         }
       }
@@ -73,7 +75,7 @@ public class FStringsAnnotator extends PyAnnotator {
   }
 
   @Override
-  public void visitPyFormattedStringElement(PyFormattedStringElement node) {
+  public void visitPyFormattedStringElement(@NotNull PyFormattedStringElement node) {
     final String wholeNodeText = node.getText();
     for (TextRange textRange : node.getLiteralPartRanges()) {
       int i = textRange.getStartOffset();
@@ -89,7 +91,7 @@ public class FStringsAnnotator extends PyAnnotator {
             i += 2;
             continue;
           }
-          reportCharacter(node, i, "Single '}' is not allowed inside f-strings");
+          reportCharacter(node, i, PyBundle.message("ANN.fstrings.single.right.brace.not.allowed.inside.fstrings"));
         }
         i++;
       }
@@ -108,16 +110,16 @@ public class FStringsAnnotator extends PyAnnotator {
   public void visitComment(@NotNull PsiComment comment) {
     final boolean insideFragment = PsiTreeUtil.getParentOfType(comment, PyFStringFragment.class) != null;
     if (insideFragment) {
-      report(comment, "Expression fragments inside f-strings cannot include line comments");
+      report(comment, PyBundle.message("ANN.fstrings.expression.fragments.cannot.include.line.comments"));
     }
   }
 
-  public void reportCharacter(PsiElement element, int offset, String message) {
+  public void reportCharacter(@NotNull PsiElement element, int offset, @NotNull @InspectionMessage String message) {
     final int nodeStartOffset = element.getTextRange().getStartOffset();
     getHolder().newAnnotation(HighlightSeverity.ERROR, message).range(TextRange.from(offset, 1).shiftRight(nodeStartOffset)).create();
   }
 
-  public void report(PsiElement element, String error) {
+  public void report(@NotNull PsiElement element, @NotNull @InspectionMessage String error) {
     getHolder().newAnnotation(HighlightSeverity.ERROR, error).range(element).create();
   }
 }

@@ -26,10 +26,12 @@ import org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertie
 
 internal class ModifiableContentEntryBridge(
   private val diff: WorkspaceEntityStorageDiffBuilder,
-  private val modifiableRootModel: ModifiableRootModelBridge,
+  private val modifiableRootModel: ModifiableRootModelBridgeImpl,
   val contentEntryUrl: VirtualFileUrl
 ): ContentEntry {
-  private val LOG = Logger.getInstance(javaClass)
+  companion object {
+    private val LOG = Logger.getInstance(javaClass)
+  }
   private val virtualFileManager = VirtualFileUrlManager.getInstance(modifiableRootModel.project)
 
   private val currentContentEntry = CachedValueImpl<ContentEntryBridge> {
@@ -63,7 +65,7 @@ internal class ModifiableContentEntryBridge(
       source = entitySource
     )
 
-    SourceRootPropertiesHelper.addPropertiesEntity(diff, sourceRootEntity, entitySource, properties, serializer)
+    SourceRootPropertiesHelper.addPropertiesEntity(diff, sourceRootEntity, properties, serializer)
 
     return currentContentEntry.value.sourceFolders.firstOrNull {
       it.url == sourceFolderUrl.url && it.rootType == type

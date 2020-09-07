@@ -27,12 +27,7 @@ public final class CoreFormatterUtil {
                                            @NotNull TextRange range,
                                            @NotNull CodeStyleSettings settings,
                                            @NotNull FormattingMode mode) {
-    if (builder instanceof FormattingModelBuilderEx) {
-      return ((FormattingModelBuilderEx)builder).createModel(element, range, settings, mode);
-    }
-    else {
-      return builder.createModel(element, settings);
-    }
+      return builder.createModel(FormattingContext.create(element, range, settings, mode));
   }
 
   @NotNull
@@ -40,7 +35,7 @@ public final class CoreFormatterUtil {
                                            @NotNull PsiElement element,
                                            @NotNull CodeStyleSettings settings,
                                            @NotNull FormattingMode mode) {
-    return buildModel(builder, element, element.getTextRange(), settings, mode);
+    return builder.createModel(FormattingContext.create(element, settings, mode));
   }
 
   /**

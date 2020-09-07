@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.ui.NonEmptyInputValidator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.MultiMap;
@@ -85,7 +86,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     for (LibraryConfigurable configurable : getLibraryConfigurables()) {
       if (configurable.getDisplayName().isEmpty()) {
         ((LibraryProjectStructureElement)configurable.getProjectStructureElement()).navigate();
-        throw new ConfigurationException("Library name is not specified");
+        throw new ConfigurationException(JavaUiBundle.message("library.name.is.not.specified"));
       }
     }
   }
@@ -200,7 +201,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     };
   }
 
-  protected abstract String getAddText();
+  protected abstract @NlsActions.ActionText String getAddText();
 
   public abstract StructureLibraryTableModifiableModelProvider getModelProvider();
 
@@ -305,7 +306,8 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
         if (librariesWithUsages > 0) {
           String message;
           if (librariesWithUsages == 1) {
-            message = firstLibraryUsageDescription + ".\nAre you sure you want to delete this library?";
+            message = firstLibraryUsageDescription + ".\n" +
+                      JavaUiBundle.message("dialog.message.are.you.sure.you.want.to.delete.this.library");
           }
           else {
             message = JavaUiBundle.message("libraries.remove.confirmation.text", firstLibraryWithUsageName, librariesWithUsages-1);

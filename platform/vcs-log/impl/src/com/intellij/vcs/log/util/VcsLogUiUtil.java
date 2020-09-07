@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
@@ -133,7 +134,7 @@ public final class VcsLogUiUtil {
   public static void showTooltip(@NotNull JComponent component,
                                  @NotNull Point point,
                                  @NotNull Balloon.Position position,
-                                 @NotNull String text) {
+                                 @NotNull @NlsContexts.Tooltip String text) {
     JEditorPane tipComponent = IdeTooltipManager.initPane(text, new HintHint(component, point).setAwtTooltip(true), null);
     IdeTooltip tooltip = new IdeTooltip(component, point, new Wrapper(tipComponent)).setPreferredPosition(position).setToCenter(false)
       .setToCenterIfSmall(false);
@@ -152,8 +153,9 @@ public final class VcsLogUiUtil {
   }
 
   @NotNull
-  public static String shortenTextToFit(@NotNull String text, @NotNull FontMetrics fontMetrics, int availableWidth, int maxLength,
-                                        @NotNull String symbol) {
+  @Nls
+  public static String shortenTextToFit(@NotNull @Nls String text, @NotNull FontMetrics fontMetrics, int availableWidth, int maxLength,
+                                        @NotNull @Nls String symbol) {
     if (fontMetrics.stringWidth(text) <= availableWidth) return text;
 
     for (int i = text.length(); i > maxLength; i--) {

@@ -5,6 +5,7 @@ import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -26,10 +27,14 @@ import javax.swing.Icon
 abstract class ImplementationViewElement {
   abstract val project: Project
   abstract val isNamed: Boolean
+  @get:NlsSafe
   abstract val name: String?
+  @get:NlsSafe
   abstract val presentableText: String
   abstract val containingFile: VirtualFile?
+  @get:NlsSafe
   abstract val text: String?
+  @get:NlsSafe
   abstract val locationText: String?
   abstract val locationIcon: Icon?
   abstract val containingMemberOrSelf: ImplementationViewElement

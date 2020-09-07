@@ -323,7 +323,7 @@ public final class BootstrapClassLoaderUtil {
       }
       return true; // assume compatible of nothing is specified
     }
-    
+
     @Override
     public int compareTo(@NotNull SimpleVersion ver) {
       return myMajor != ver.myMajor? Integer.compare(myMajor, ver.myMajor) : Integer.compare(myMinor, ver.myMinor);

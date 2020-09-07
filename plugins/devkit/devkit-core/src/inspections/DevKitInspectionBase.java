@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -40,9 +40,13 @@ public abstract class DevKitInspectionBase extends AbstractBaseJavaLocalInspecti
 
   static boolean isAllowed(@NotNull ProblemsHolder holder,
                            @NotNull Predicate<? super ProblemsHolder> predicate) {
-    return ApplicationManager.getApplication().isUnitTestMode() /* always run in tests */ ||
-           (PsiUtil.isIdeaProject(holder.getProject()) && predicate.test(holder)) ||
-           isInPluginModule(holder);
+    if (ApplicationManager.getApplication().isUnitTestMode()) return true;  /* always run in tests */
+    if (PsiUtil.isIdeaProject(holder.getProject())) {
+      return predicate.test(holder);
+    }
+    else {
+      return isInPluginModule(holder);
+    }
   }
 
   private static boolean isInPluginModule(@NotNull ProblemsHolder holder) {

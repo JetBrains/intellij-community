@@ -16,6 +16,7 @@
 package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -99,7 +100,7 @@ public class PushDownConflicts {
                 if (resolvedClass != null && myClass.isInheritor(resolvedClass, true)) {
                   final PsiMethod methodBySignature = myClass.findMethodBySignature(resolvedMethod, false);
                   if (methodBySignature != null && !myMovedMembers.contains(methodBySignature)) {
-                    myConflicts.putValue(expression, "Super method call will resolve to another method");
+                    myConflicts.putValue(expression, JavaBundle.message("push.down.super.method.call.changed.conflict"));
                   }
                 }
               }
@@ -111,7 +112,9 @@ public class PushDownConflicts {
         Set<PsiClass> unrelatedDefaults = new LinkedHashSet<>();
         for (PsiMethod superMethod : ((PsiMethod)member).findSuperMethods()) {
           if (!isAbstract && superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
-            myConflicts.putValue(member, "Non abstract " + RefactoringUIUtil.getDescription(myClass, false) + " will miss implementation of " + RefactoringUIUtil.getDescription(superMethod, false));
+            myConflicts.putValue(member, JavaBundle
+              .message("push.down.missed.implementation.conflict", RefactoringUIUtil.getDescription(myClass, false),
+                       RefactoringUIUtil.getDescription(superMethod, false)));
             break;
           }
           if (superMethod.hasModifierProperty(PsiModifier.DEFAULT)) {
@@ -119,9 +122,12 @@ public class PushDownConflicts {
             if (unrelatedDefaults.size() > 1) {
               List<PsiClass> supers = new ArrayList<>(unrelatedDefaults);
               supers.sort(Comparator.comparing(PsiClass::getName));
+              PsiClass lastClass = supers.remove(supers.size() - 1);
               myConflicts.putValue(member, StringUtil
-                .capitalize(RefactoringUIUtil.getDescription(myClass, false) + " will inherit unrelated defaults from " +
-                            StringUtil.join(supers, aClass -> RefactoringUIUtil.getDescription(aClass, false), " and ")));
+                .capitalize(JavaRefactoringBundle
+                              .message("push.down.unrelated.defaults.conflict", RefactoringUIUtil.getDescription(myClass, false),
+                                       StringUtil.join(supers, aClass -> RefactoringUIUtil.getDescription(aClass, false), ", "),
+                                       RefactoringUIUtil.getDescription(lastClass, false))));
               break;
             }
           }
@@ -219,7 +225,9 @@ public class PushDownConflicts {
     if (movedMember.hasModifierProperty(PsiModifier.STATIC) &&
         PsiUtil.getEnclosingStaticElement(targetClass, null) == null &&
         !(targetClass.getParent() instanceof PsiFile)) {
-      myConflicts.putValue(movedMember, "Static " + RefactoringUIUtil.getDescription(movedMember, false) + " can't be pushed to non-static " + RefactoringUIUtil.getDescription(targetClass, false));
+      myConflicts.putValue(movedMember, JavaBundle
+        .message("push.down.static.nonstatic.conflict", RefactoringUIUtil.getDescription(movedMember, false),
+                 RefactoringUIUtil.getDescription(targetClass, false)));
     }
   }
 

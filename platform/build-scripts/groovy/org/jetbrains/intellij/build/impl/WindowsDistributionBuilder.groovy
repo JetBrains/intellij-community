@@ -71,12 +71,13 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       buildContext.bundledJreManager.repackageX86Jre(OsFamily.WINDOWS)
     }
 
-    def jreDirectoryPath = buildContext.bundledJreManager.extractJre(OsFamily.WINDOWS)
     if (customizer.buildZipArchive) {
-      buildWinZip([jreDirectoryPath], ".win", winDistPath)
+      def jreDirectoryPaths = customizer.zipArchiveWithBundledJre ? [buildContext.bundledJreManager.extractJre(OsFamily.WINDOWS)] : []
+      buildWinZip(jreDirectoryPaths, ".win", winDistPath)
     }
 
     buildContext.executeStep("Build Windows Exe Installer", BuildOptions.WINDOWS_EXE_INSTALLER_STEP) {
+      def jreDirectoryPath = buildContext.bundledJreManager.extractJre(OsFamily.WINDOWS)
       def productJsonDir = new File(buildContext.paths.temp, "win.dist.product-info.json.exe").absolutePath
       generateProductJson(productJsonDir, jreDirectoryPath != null)
       new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", [winDistPath, jreDirectoryPath], [])

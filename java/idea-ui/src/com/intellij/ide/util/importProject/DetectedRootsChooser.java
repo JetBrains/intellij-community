@@ -27,10 +27,10 @@ import java.util.*;
 
 public class DetectedRootsChooser {
   private static final int CHECKBOX_COLUMN_WIDTH = new JCheckBox().getPreferredSize().width + 4;
-  private final ColumnInfo<DetectedRootData,Boolean> myIncludedColumn = new ColumnInfo<DetectedRootData, Boolean>("") {
+  private final ColumnInfo<DetectedRootData,Boolean> myIncludedColumn = new ColumnInfo<>("") {
 
     @Override
-    public Class getColumnClass() {
+    public Class<Boolean> getColumnClass() {
       return Boolean.class;
     }
 
@@ -57,13 +57,13 @@ public class DetectedRootsChooser {
       }
     }
   };
-  private static final ColumnInfo<DetectedRootData, String> ROOT_COLUMN = new ColumnInfo<DetectedRootData, String>("") {
+  private static final ColumnInfo<DetectedRootData, String> ROOT_COLUMN = new ColumnInfo<>("") {
     @Override
     public String valueOf(DetectedRootData detectedRootData) {
       return detectedRootData.getDirectory().getAbsolutePath();
     }
   };
-  private static final ColumnInfo<DetectedRootData, DetectedProjectRoot> ROOT_TYPE_COLUMN = new ColumnInfo<DetectedRootData, DetectedProjectRoot>("") {
+  private static final ColumnInfo<DetectedRootData, DetectedProjectRoot> ROOT_TYPE_COLUMN = new ColumnInfo<>("") {
     @Override
     public DetectedProjectRoot valueOf(DetectedRootData detectedRootData) {
       return detectedRootData.getSelectedRoot();
@@ -72,7 +72,7 @@ public class DetectedRootsChooser {
     @Override
     public TableCellRenderer getRenderer(DetectedRootData detectedRootData) {
       if (isCellEditable(detectedRootData)) {
-        return new ComboBoxTableRenderer<DetectedProjectRoot>(detectedRootData.getAllRoots()) {
+        return new ComboBoxTableRenderer<>(detectedRootData.getAllRoots()) {
           @Override
           protected String getTextFor(@NotNull DetectedProjectRoot value) {
             return value.getRootTypeName();
@@ -98,7 +98,8 @@ public class DetectedRootsChooser {
 
     @Override
     public TableCellEditor getEditor(DetectedRootData o) {
-      ComboBox<DetectedProjectRoot> comboBox = new ComboBox<>(new CollectionComboBoxModel(Arrays.asList(o.getAllRoots()), o.getSelectedRoot()));
+      ComboBox<DetectedProjectRoot> comboBox =
+        new ComboBox<>(new CollectionComboBoxModel<>(Arrays.asList(o.getAllRoots()), o.getSelectedRoot()));
       comboBox.setRenderer(SimpleListCellRenderer.create("", DetectedProjectRoot::getRootTypeName));
       return new DefaultCellEditor(comboBox);
     }

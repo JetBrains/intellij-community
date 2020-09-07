@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -414,11 +415,11 @@ public final class CommandLineUtil {
     return "cmd.exe";
   }
 
-  private static boolean isWinShell(String command) {
+  private static boolean isWinShell(@NonNls String command) {
     return "cmd".equalsIgnoreCase(command) || "cmd.exe".equalsIgnoreCase(command);
   }
 
-  private static boolean isWinShellScript(String command) {
+  private static boolean isWinShellScript(@NonNls String command) {
     return endsWithIgnoreCase(command, ".cmd") || endsWithIgnoreCase(command, ".bat");
   }
 

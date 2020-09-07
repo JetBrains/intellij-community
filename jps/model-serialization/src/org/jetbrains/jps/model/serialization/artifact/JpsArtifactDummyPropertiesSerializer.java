@@ -30,8 +30,4 @@ public class JpsArtifactDummyPropertiesSerializer extends JpsArtifactPropertiesS
   public JpsDummyElement loadProperties(List<ArtifactPropertiesState> stateList) {
     return JpsElementFactory.getInstance().createDummyElement();
   }
-
-  @Override
-  public void saveProperties(JpsDummyElement properties, List<ArtifactPropertiesState> stateList) {
-  }
 }

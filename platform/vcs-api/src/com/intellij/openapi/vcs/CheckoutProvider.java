@@ -46,11 +46,11 @@ public interface CheckoutProvider {
   @Deprecated
   @NotNull
   default VcsCloneComponent buildVcsCloneComponent(@NotNull Project project, @NotNull ModalityState modalityState) {
-    return new VcsCloneComponentStub(this, "Clone");
+    return new VcsCloneComponentStub(this, VcsBundle.message("clone.dialog.clone.button"));
   }
 
   @NotNull
   default VcsCloneComponent buildVcsCloneComponent(@NotNull Project project, @NotNull ModalityState modalityState, @NotNull VcsCloneDialogComponentStateListener dialogStateListener) {
-    return new VcsCloneComponentStub(this, "Clone");
+    return new VcsCloneComponentStub(this, VcsBundle.message("clone.dialog.clone.button"));
   }
 }

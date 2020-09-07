@@ -17,6 +17,7 @@
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,10 +32,10 @@ import java.util.List;
  */
 abstract class FileTemplateTab {
   protected final List<FileTemplateBase> myTemplates = new ArrayList<>();
-  private final String myTitle;
+  private final @NlsContexts.TabTitle String myTitle;
   protected static final Color MODIFIED_FOREGROUND = JBColor.BLUE;
 
-  protected FileTemplateTab(String title) {
+  protected FileTemplateTab(@NlsContexts.TabTitle String title) {
     myTitle = title;
   }
 
@@ -74,8 +75,7 @@ abstract class FileTemplateTab {
 
   public abstract void addTemplate(FileTemplate newTemplate);
 
-  public String getTitle() {
+  public @NlsContexts.TabTitle String getTitle() {
     return myTitle;
   }
-
 }

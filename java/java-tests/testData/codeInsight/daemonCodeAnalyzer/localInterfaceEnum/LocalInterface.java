@@ -8,6 +8,10 @@ class X {
     Foo foo = () -> {};
   }
   
+  void annotation() {
+    @<error descr="Local annotations are not allowed">interface</error> Anno {}
+  }
+  
   void modifiers() {
     <error descr="Modifier 'static' not allowed here">static</error> interface Intf1 {}
     <error descr="Modifier 'private' not allowed here">private</error> interface Intf2 {}

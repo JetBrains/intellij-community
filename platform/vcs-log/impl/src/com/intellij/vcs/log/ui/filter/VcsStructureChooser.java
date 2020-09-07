@@ -13,6 +13,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ui.PlusMinus;
@@ -31,7 +33,7 @@ import com.intellij.util.treeWithCheckedNodes.TreeNodeState;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogBundle;
-import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +60,7 @@ public class VcsStructureChooser extends DialogWrapper {
 
   @NotNull private final Project myProject;
   @NotNull private final List<VirtualFile> myRoots;
-  @NotNull private final Map<VirtualFile, String> myModulesSet;
+  @NotNull private final Map<VirtualFile, @Nls String> myModulesSet;
   @NotNull private final Set<VirtualFile> mySelectedFiles = new HashSet<>();
 
   @NotNull private final SelectionManager mySelectionManager;
@@ -84,8 +86,8 @@ public class VcsStructureChooser extends DialogWrapper {
   }
 
   @NotNull
-  private Map<VirtualFile, String> calculateModules(@NotNull List<? extends VirtualFile> roots) {
-    Map<VirtualFile, String> result = new HashMap<>();
+  private Map<VirtualFile, @Nls String> calculateModules(@NotNull List<? extends VirtualFile> roots) {
+    Map<VirtualFile, @Nls String> result = new HashMap<>();
 
     final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
     // assertion for read access inside
@@ -237,10 +239,13 @@ public class VcsStructureChooser extends DialogWrapper {
           selectedLabel.setText("");
         }
         else {
-          String errorText = "<font color=red>(" +
-                             VcsLogBundle.message("vcs.log.filters.structure.max.selected.error.message", MAX_FOLDERS) +
-                             ")</font>";
-          selectedLabel.setText(XmlStringUtil.wrapInHtml(VcsLogBundle.message("vcs.log.filters.structure.label", errorText)));
+          HtmlChunk.Element errorText =
+            HtmlChunk.text("(" + VcsLogBundle.message("vcs.log.filters.structure.max.selected.error.message", MAX_FOLDERS) + ")")
+              .wrapWith(HtmlChunk.tag("font").attr("color", "red"));
+          selectedLabel.setText(new HtmlBuilder()
+                                  .appendRaw((VcsLogBundle.message("vcs.log.filters.structure.label", errorText)))
+                                  .wrapWith(HtmlChunk.html())
+                                  .toString());
         }
         selectedLabel.revalidate();
       }
@@ -272,14 +277,14 @@ public class VcsStructureChooser extends DialogWrapper {
     @NotNull private final WithModulesListCellRenderer myTextRenderer;
     @NotNull public final JCheckBox myCheckbox;
     @NotNull private final SelectionManager mySelectionManager;
-    @NotNull private final Map<VirtualFile, String> myModulesSet;
+    @NotNull private final Map<VirtualFile, @Nls String> myModulesSet;
     @NotNull private final Collection<VirtualFile> myRoots;
     @NotNull private final ColoredTreeCellRenderer myColoredRenderer;
     @NotNull private final JLabel myEmpty;
     @NotNull private final JList myFictive;
 
     private MyCheckboxTreeCellRenderer(@NotNull SelectionManager selectionManager,
-                                       @NotNull Map<VirtualFile, String> modulesSet,
+                                       @NotNull Map<VirtualFile, @Nls String> modulesSet,
                                        @NotNull Project project,
                                        @NotNull JTree tree,
                                        @NotNull Collection<VirtualFile> roots) {
@@ -297,6 +302,7 @@ public class VcsStructureChooser extends DialogWrapper {
                                           boolean leaf,
                                           int row,
                                           boolean hasFocus) {
+          //noinspection HardCodedStringLiteral
           append(value.toString());
         }
       };
@@ -372,9 +378,9 @@ public class VcsStructureChooser extends DialogWrapper {
   }
 
   private static class WithModulesListCellRenderer extends VirtualFileListCellRenderer {
-    @NotNull private final Map<VirtualFile, String> myModules;
+    @NotNull private final Map<VirtualFile, @Nls String> myModules;
 
-    private WithModulesListCellRenderer(@NotNull Project project, @NotNull Map<VirtualFile, String> modules) {
+    private WithModulesListCellRenderer(@NotNull Project project, @NotNull Map<VirtualFile, @Nls String> modules) {
       super(project, true);
       myModules = modules;
     }

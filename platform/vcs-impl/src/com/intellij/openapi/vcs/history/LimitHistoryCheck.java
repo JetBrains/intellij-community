@@ -49,8 +49,8 @@ public class LimitHistoryCheck {
     ++myCount;
     if (isOver()) {
       if (!myWarningShown) {
-        String path = isMac? VcsBundle.message("vcs.settings.path.mac") : VcsBundle.message("vcs.settings.path");
-        String message = VcsBundle.message("file.history.exceeded.limit.message", myLimit, myFilePath) + path;
+        String settingPath = isMac? VcsBundle.message("vcs.settings.path.mac") : VcsBundle.message("vcs.settings.path");
+        String message = VcsBundle.message("file.history.exceeded.limit.message", myLimit, myFilePath, settingPath);
         VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.WARNING);
         myWarningShown = true;
       }

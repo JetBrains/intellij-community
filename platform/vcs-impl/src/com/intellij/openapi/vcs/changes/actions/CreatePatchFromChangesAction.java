@@ -163,7 +163,9 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
       }
       catch (IOException | VcsException exception) {
         LOG.warn("Can't create patch", exception);
-        VcsNotifier.getInstance(project).notifyWeakError(VcsBundle.message("patch.creation.failed"), exception.getMessage());
+        VcsNotifier.getInstance(project).notifyWeakError("vcs.patch.creation.failed",
+                                                         VcsBundle.message("patch.creation.failed"),
+                                                         exception.getMessage());
       }
     }, VcsBundle.message("create.patch.commit.action.progress"), true, project);
   }

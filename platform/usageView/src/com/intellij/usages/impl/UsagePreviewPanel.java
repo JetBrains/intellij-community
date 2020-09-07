@@ -23,10 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -327,7 +324,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   }
 
   @Nullable
-  private String cannotPreviewMessage(@Nullable List<? extends UsageInfo> infos) {
+  private @NlsContexts.StatusText String cannotPreviewMessage(@Nullable List<? extends UsageInfo> infos) {
     if (infos == null || infos.isEmpty()) {
       return UsageViewBundle.message("select.the.usage.to.preview", myPresentation.getUsagesWord());
     }
@@ -369,16 +366,15 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   }
 
   private static class ReplacementView extends JPanel {
-    private static final String MALFORMED_REPLACEMENT_STRING = "Malformed replacement string";
 
     @Override
     protected void paintComponent(@NotNull Graphics graphics) {
     }
 
-    ReplacementView(@Nullable String replacement) {
+    ReplacementView(@Nullable @NlsSafe String replacement) {
       String textToShow = replacement;
       if (replacement == null) {
-        textToShow = MALFORMED_REPLACEMENT_STRING;
+        textToShow = UsageViewBundle.message("label.malformed.replacement.string");
       }
       JLabel jLabel = new JLabel(textToShow);
       jLabel.setForeground(replacement != null ? new JBColor(Gray._240, Gray._200) : JBColor.RED);

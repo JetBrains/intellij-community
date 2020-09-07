@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -15,9 +13,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.GrHighlightUtil;
 import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster;
-import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
@@ -32,16 +30,17 @@ import static org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrMo
  * @author Max Medvedev
  */
 public class AddReturnTypeFix implements IntentionAction {
+
   @NotNull
   @Override
   public String getText() {
-    return GroovyIntentionsBundle.message("add.return.type");
+    return GroovyBundle.message("add.return.type");
   }
 
   @NotNull
   @Override
   public String getFamilyName() {
-    return GroovyIntentionsBundle.message("add.return.type.to.method.declaration");
+    return GroovyBundle.message("add.return.type.to.method.declaration");
   }
 
   @Override

@@ -14,6 +14,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.panels.ValidatingComponent;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -192,6 +193,7 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
         T element = getElements().get(row);
         String errorText = getErrorText(element);
         setToolTipText(errorText);
+        //noinspection HardCodedStringLiteral
         append(String.valueOf(value), highlightIfNeeded(SimpleTextAttributes.REGULAR_ATTRIBUTES, errorText));
       }
     });

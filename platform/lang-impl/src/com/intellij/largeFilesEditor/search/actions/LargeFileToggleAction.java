@@ -5,6 +5,7 @@ import com.intellij.largeFilesEditor.search.LfeSearchManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 
 @SuppressWarnings("ComponentNotRegistered")
@@ -13,7 +14,7 @@ public class LargeFileToggleAction extends CheckboxAction implements DumbAware {
 
   private boolean isSelected;
 
-  public LargeFileToggleAction(LfeSearchManager searchManager, String name) {
+  public LargeFileToggleAction(LfeSearchManager searchManager, @NlsContexts.Checkbox String name) {
     super(name);
     this.searchManager = searchManager;
   }

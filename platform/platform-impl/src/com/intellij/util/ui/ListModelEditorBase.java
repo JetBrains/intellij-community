@@ -2,6 +2,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.MutableCollectionComboBoxModel;
@@ -35,7 +36,7 @@ public abstract class ListModelEditorBase<T> extends CollectionModelEditor<T, Li
     model.replaceAll(items);
   }
 
-  public final void ensureNonEmptyNames(@NotNull String errorMessage) throws ConfigurationException {
+  public final void ensureNonEmptyNames(@NotNull @NlsContexts.DialogMessage String errorMessage) throws ConfigurationException {
     List<T> items = getItems();
     for (int i = items.size() - 1; i >= 0; i--) {
       T item = items.get(i);

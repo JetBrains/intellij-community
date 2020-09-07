@@ -17,7 +17,7 @@ import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.cl.PluginClassLoader;
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.lang.ExternalLanguageAnnotators;
@@ -599,25 +599,27 @@ public final class DaemonListeners implements Disposable {
     for (RangeHighlighter highlighter: model.getAllHighlighters()) {
       if (!(highlighter instanceof RangeHighlighterEx && ((RangeHighlighterEx)highlighter).isPersistent())) {
         model.removeHighlighter(highlighter);
+        return;
+      }
+
+      ClassLoader pluginClassLoader = pluginDescriptor.getPluginClassLoader();
+      if (!(pluginClassLoader instanceof PluginAwareClassLoader)) {
+        return;
+      }
+
+      CustomHighlighterRenderer renderer = highlighter.getCustomRenderer();
+      if (renderer != null && renderer.getClass().getClassLoader() == pluginClassLoader) {
+        model.removeHighlighter(highlighter);
       }
       else {
-        ClassLoader pluginClassLoader = pluginDescriptor.getPluginClassLoader();
-        if (pluginClassLoader instanceof PluginClassLoader) {
-          CustomHighlighterRenderer renderer = highlighter.getCustomRenderer();
-          if (renderer != null && renderer.getClass().getClassLoader() == pluginClassLoader) {
-            model.removeHighlighter(highlighter);
-          }
-          else {
-            Object errorStripeTooltip = highlighter.getErrorStripeTooltip();
-            if (errorStripeTooltip instanceof HighlightInfo && ((HighlightInfo)errorStripeTooltip).quickFixActionMarkers != null) {
-              for (Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker> marker : ((HighlightInfo)errorStripeTooltip).quickFixActionMarkers) {
-                IntentionAction intentionAction = IntentionActionDelegate.unwrap(marker.first.getAction());
-                if (intentionAction.getClass().getClassLoader() == pluginClassLoader || 
-                    intentionAction instanceof QuickFixWrapper && ((QuickFixWrapper)intentionAction).getFix().getClass().getClassLoader() == pluginClassLoader) {
-                  model.removeHighlighter(highlighter);
-                  break;
-                }
-              }
+        Object errorStripeTooltip = highlighter.getErrorStripeTooltip();
+        if (errorStripeTooltip instanceof HighlightInfo && ((HighlightInfo)errorStripeTooltip).quickFixActionMarkers != null) {
+          for (Pair<HighlightInfo.IntentionActionDescriptor, RangeMarker> marker : ((HighlightInfo)errorStripeTooltip).quickFixActionMarkers) {
+            IntentionAction intentionAction = IntentionActionDelegate.unwrap(marker.first.getAction());
+            if (intentionAction.getClass().getClassLoader() == pluginClassLoader ||
+                intentionAction instanceof QuickFixWrapper && ((QuickFixWrapper)intentionAction).getFix().getClass().getClassLoader() == pluginClassLoader) {
+              model.removeHighlighter(highlighter);
+              break;
             }
           }
         }

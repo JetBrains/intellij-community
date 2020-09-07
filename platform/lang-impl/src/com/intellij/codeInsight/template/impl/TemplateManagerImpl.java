@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.impl;
 
-import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.OffsetKey;
 import com.intellij.codeInsight.completion.OffsetsInFile;
@@ -106,7 +106,8 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
     Editor topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
     TemplateState prevState = clearTemplateState(topLevelEditor);
     if (prevState != null) Disposer.dispose(prevState);
-    TemplateState state = new TemplateState(myProject, topLevelEditor);
+    TemplateState state = new TemplateState(myProject, topLevelEditor, topLevelEditor.getDocument(), new InteractiveTemplateStateProcessor()
+    );
     Disposer.register(this, state);
     TemplateManagerUtilBase.setTemplateState(topLevelEditor, state);
     return state;
@@ -167,7 +168,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
       myEventPublisher.templateStarted(templateState);
     };
     if (inSeparateCommand) {
-      CommandProcessor.getInstance().executeCommand(myProject, r, CodeInsightBundle.message("insert.code.template.command"), null);
+      CommandProcessor.getInstance().executeCommand(myProject, r, AnalysisBundle.message("insert.code.template.command"), null);
     }
     else {
       r.run();
@@ -462,7 +463,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
       }
       templateState.start(substituteTemplate(template, editor), processor, predefinedVarValues);
       myEventPublisher.templateStarted(templateState);
-    }, CodeInsightBundle.message("insert.code.template.command"), null);
+    }, AnalysisBundle.message("insert.code.template.command"), null);
   }
 
   private static List<TemplateImpl> filterApplicableCandidates(@NotNull TemplateActionContext templateActionContext,

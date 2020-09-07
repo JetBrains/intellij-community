@@ -7,6 +7,7 @@ import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.annotations.Property
+import org.jetbrains.annotations.Nls
 
 @State(name = "TerminalOptionsProvider", storages = [(Storage("terminal.xml"))])
 class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider.State> {
@@ -33,8 +34,9 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
   }
 
   var tabName: String
-    get() = myState.myTabName
-    set(tabName) {
+    @Nls
+    get() : String = myState.myTabName ?: TerminalBundle.message("local.terminal.default.name")
+    set(@Nls tabName) {
       myState.myTabName = tabName
     }
 
@@ -55,7 +57,9 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
   }
 
   class State {
-    var myTabName: String = "Local"
+    var myShellPath: String? = null
+    @Nls
+    var myTabName: String? = null
     var myCloseSessionOnLogout: Boolean = true
     var myReportMouse: Boolean = true
     var mySoundBell: Boolean = true
@@ -112,6 +116,12 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     myState.envDataOptions.set(envData)
   }
 
+  // replace with property delegate when Kotlin 1.4 arrives (KT-8658)
+  var shellPath: String?
+    get() = myState.myShellPath
+    set(value) {
+      myState.myShellPath = value
+    }
 
   companion object {
     val instance: TerminalOptionsProvider

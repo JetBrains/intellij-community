@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -20,23 +21,18 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-final class CompilerProjectExtensionImpl extends CompilerProjectExtension {
+final class CompilerProjectExtensionImpl extends CompilerProjectExtension implements Disposable {
   private static final String OUTPUT_TAG = "output";
   private static final String URL = "url";
 
   private VirtualFilePointer myCompilerOutput;
   private LocalFileSystem.WatchRequest myCompilerOutputWatchRequest;
-  private final Project myProject;
 
-  CompilerProjectExtensionImpl(@NotNull Project project) {
-    myProject = project;
-  }
-
-  private void readExternal(@NotNull Project project, @NotNull Element element) {
+  private void readExternal(@NotNull Element element) {
     Element pathElement = element.getChild(OUTPUT_TAG);
     if (pathElement != null) {
       String outputPath = pathElement.getAttributeValue(URL);
-      myCompilerOutput = outputPath != null ? VirtualFilePointerManager.getInstance().create(outputPath, project, null) : null;
+      myCompilerOutput = outputPath != null ? VirtualFilePointerManager.getInstance().create(outputPath, this, null) : null;
     }
   }
 
@@ -46,6 +42,11 @@ final class CompilerProjectExtensionImpl extends CompilerProjectExtension {
       pathElement.setAttribute(URL, myCompilerOutput.getUrl());
       element.addContent(pathElement);
     }
+  }
+
+  @Override
+  public void dispose() {
+    myCompilerOutput = null;
   }
 
   @Override
@@ -70,7 +71,7 @@ final class CompilerProjectExtensionImpl extends CompilerProjectExtension {
 
   @Override
   public void setCompilerOutputUrl(String compilerOutputUrl) {
-    VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(compilerOutputUrl, myProject, null);
+    VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(compilerOutputUrl, this, null);
     setCompilerOutputPointer(pointer);
     String path = VfsUtilCore.urlToPath(compilerOutputUrl);
     myCompilerOutputWatchRequest = LocalFileSystem.getInstance().replaceWatchedRoot(myCompilerOutputWatchRequest, path, true);
@@ -121,7 +122,7 @@ final class CompilerProjectExtensionImpl extends CompilerProjectExtension {
 
     @Override
     public void readExternal(@NotNull Element element) {
-      getImpl(myProject).readExternal(myProject, element);
+      getImpl(myProject).readExternal(element);
     }
 
     @Override

@@ -142,7 +142,7 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
   }
 
   public void compact() {
-    ContainerUtil.trimMap(myMap);
+    CollectionFactory.trimMap(myMap);
     for (Object eachValue : myMap.values()) {
       if (eachValue instanceof ValueList) {
         //noinspection unchecked

@@ -13,12 +13,9 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
-import com.intellij.model.ModelBranch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
-
-import java.util.Objects;
 
 abstract class FileIndexBase implements FileIndex {
   private final FileTypeRegistry myFileTypeRegistry;
@@ -98,10 +95,6 @@ abstract class FileIndexBase implements FileIndex {
       file = ((VirtualFileWindow)file).getDelegate();
     }
     file = BackedVirtualFile.getOriginFileIfBacked(file);
-    ModelBranch branch = ModelBranch.getFileBranch(file);
-    if (branch != null) {
-      file = Objects.requireNonNull(branch.findOriginalFile(file));
-    }
     return myDirectoryIndex.getInfoForFile(file);
   }
 

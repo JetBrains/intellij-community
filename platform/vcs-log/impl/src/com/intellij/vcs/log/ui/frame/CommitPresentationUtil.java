@@ -2,24 +2,24 @@
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.commit.message.CommitMessageInspectionProfile;
 import com.intellij.vcs.commit.message.SubjectLimitInspection;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import com.intellij.xml.CommonXmlStrings;
-import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,9 +40,9 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 public final class CommitPresentationUtil {
   @NotNull private static final Pattern HASH_PATTERN = Pattern.compile("[0-9a-f]{7,40}", Pattern.CASE_INSENSITIVE);
 
-  @NotNull private static final String GO_TO_HASH = "go-to-hash:"; // NON-NLS
-  @NotNull private static final String SHOW_HIDE_BRANCHES = "show-hide-branches"; // NON-NLS
-  private static final String ELLIPSIS = "..."; // NON-NLS
+  @NotNull @NlsSafe private static final String GO_TO_HASH = "go-to-hash:";
+  @NotNull @NlsSafe private static final String SHOW_HIDE_BRANCHES = "show-hide-branches";
+  @NlsSafe private static final String ELLIPSIS = "...";
   private static final int BIG_CUT_SIZE = 10;
   private static final double EPSILON = 1.5;
 
@@ -61,8 +61,9 @@ public final class CommitPresentationUtil {
   }
 
   @NotNull
-  private static String escapeMultipleSpaces(@NotNull String text) {
-    StringBuilder result = new StringBuilder();
+  @Nls
+  private static String escapeMultipleSpaces(@NotNull @Nls String text) {
+    @Nls StringBuilder result = new StringBuilder();
     for (int i = 0; i < text.length(); i++) {
       if (text.charAt(i) == ' ') {
         if (i == text.length() - 1 || text.charAt(i + 1) != ' ') {
@@ -80,7 +81,7 @@ public final class CommitPresentationUtil {
   }
 
   @NotNull
-  private static Set<String> findHashes(@NotNull String text) {
+  private static Set<@NlsSafe String> findHashes(@NotNull @NlsSafe String text) {
     Set<String> result = new HashSet<>();
     Matcher matcher = HASH_PATTERN.matcher(text);
     while (matcher.find()) {
@@ -90,15 +91,17 @@ public final class CommitPresentationUtil {
   }
 
   @NotNull
-  private static String replaceHashes(@NotNull String s, @NotNull Set<String> resolvedHashes) {
+  @NlsSafe
+  private static String replaceHashes(@NotNull @NlsSafe String s, @NotNull Set<@NlsSafe String> resolvedHashes) {
     Matcher matcher = HASH_PATTERN.matcher(s);
     StringBuffer result = new StringBuffer();
 
     while (matcher.find()) {
+      //noinspection HardCodedStringLiteral
       String hash = matcher.group();
 
       if (resolvedHashes.contains(hash)) {
-        hash = XmlStringUtil.formatLink(GO_TO_HASH + hash, hash);
+        hash = HtmlChunk.link(GO_TO_HASH + hash, hash).toString();
       }
       matcher.appendReplacement(result, hash);
     }
@@ -108,10 +111,10 @@ public final class CommitPresentationUtil {
   }
 
   @NotNull
-  private static Set<String> findHashes(@NotNull Project project,
-                                        @NotNull String message) {
+  private static Set<@NlsSafe String> findHashes(@NotNull Project project,
+                                                 @NotNull @NlsSafe String message) {
     Set<String> unresolvedHashes = new HashSet<>();
-    formatTextWithLinks(project, message, s -> {
+    formatTextWithLinks(project, message, (@NlsSafe var s) -> {
       unresolvedHashes.addAll(findHashes(s));
       return s;
     });
@@ -119,9 +122,10 @@ public final class CommitPresentationUtil {
   }
 
   @NotNull
+  @NlsSafe
   private static String formatCommitText(@NotNull Project project,
-                                         @NotNull String fullMessage,
-                                         @NotNull Set<String> resolvedHashes) {
+                                         @NotNull @NlsSafe String fullMessage,
+                                         @NotNull Set<@NlsSafe String> resolvedHashes) {
     fullMessage = VcsUtil.trimCommitMessageToSaneSize(fullMessage);
 
     Font font = getCommitMessageFont();
@@ -171,7 +175,7 @@ public final class CommitPresentationUtil {
 
   @NotNull
   private static String formatText(@NotNull Project project,
-                                   @NotNull String text,
+                                   @NotNull @Nls String text,
                                    @NotNull Font font,
                                    int style,
                                    @NotNull Convertor<? super String, String> convertor) {
@@ -188,65 +192,54 @@ public final class CommitPresentationUtil {
                                              DateFormatUtil.formatDate(authorTime),
                                              DateFormatUtil.formatTime(authorTime));
 
-    String committerText = null;
+    HtmlBuilder builder = new HtmlBuilder().appendRaw(authorText);
     if (!VcsUserUtil.isSamePerson(author, committer)) {
-      committerText = getCommitterText(committer, commitTime != authorTime ? commitTime : null);
+      builder.br().append(getCommitterHtml(committer, commitTime != authorTime ? commitTime : null));
     }
     else if (authorTime != commitTime) {
-      committerText = getCommitterText(null, commitTime);
-    }
-    authorText += (committerText != null ? "<br/>" + committerText : "");
-
-    return authorText;
-  }
-
-  @NotNull
-  @Nls
-  private static String getCommitterText(@Nullable VcsUser committer, @Nullable Long commitTime) {
-    if (committer == null && commitTime == null) {
-      return "";
+      builder.br().append(getCommitterHtml(null, commitTime));
     }
 
-    String graySpan = "<span style='color:#" + ColorUtil.toHex(JBColor.GRAY) + "'>";
-    StringBuilder builder = new StringBuilder(graySpan);
-
-    if (commitTime == null) {
-      boolean withEmail = !committer.getEmail().isEmpty();
-      String by = VcsUserUtil.getShortPresentation(committer) +
-                  (withEmail ? "</span>" + getEmailText(committer) + graySpan : "");
-      builder.append(VcsLogBundle.message("vcs.log.details.committer.info.user", by));
-      builder.append("</span>");
-      return builder.toString();
-    }
-
-    String date = DateFormatUtil.formatDate(commitTime);
-    String time = DateFormatUtil.formatTime(commitTime);
-
-    if (committer != null) {
-      boolean withEmail = !committer.getEmail().isEmpty();
-      String by = VcsUserUtil.getShortPresentation(committer) +
-                  (withEmail ? "</span>" + getEmailText(committer) + graySpan : "");
-      String committedBy = VcsLogBundle.message("vcs.log.details.committer.info.user.date.time", by, date, time);
-      builder.append(committedBy);
-    }
-    else {
-      String committed = VcsLogBundle.message("vcs.log.details.committer.info.date.time", date, time);
-      builder.append(committed);
-    }
-    builder.append("</span>");
     return builder.toString();
   }
 
   @NotNull
-  private static String getAuthorName(@NotNull VcsUser user) {
-    String username = VcsUserUtil.getShortPresentation(user);
-    return user.getEmail().isEmpty() ? username : username + getEmailText(user);
+  private static HtmlChunk getCommitterHtml(@Nullable VcsUser committer, @Nullable Long commitTime) {
+    if (committer == null && commitTime == null) {
+      return HtmlChunk.empty();
+    }
+
+    HtmlChunk.Element graySpan = HtmlChunk.span("color:#" + ColorUtil.toHex(JBColor.GRAY));
+
+    String committed;
+    if (committer == null) {
+      String date = DateFormatUtil.formatDate(commitTime);
+      String time = DateFormatUtil.formatTime(commitTime);
+      committed = VcsLogBundle.message("vcs.log.details.committer.info.date.time", date, time);
+    } else {
+      String by = VcsUserUtil.getShortPresentation(committer) +
+                  (!committer.getEmail().isEmpty() ? "</span> " + getEmailLink(committer) + graySpan : "");
+      if (commitTime == null) {
+        committed = VcsLogBundle.message("vcs.log.details.committer.info.user", by);
+      } else {
+        String date = DateFormatUtil.formatDate(commitTime);
+        String time = DateFormatUtil.formatTime(commitTime);
+        committed = VcsLogBundle.message("vcs.log.details.committer.info.user.date.time", by, date, time);
+      }
+    }
+    return new HtmlBuilder().appendRaw(committed).wrapWith(graySpan);
   }
 
   @NotNull
-  @NonNls
-  private static String getEmailText(@NotNull VcsUser user) {
-    return " " + XmlStringUtil.formatLink("mailto:" + user.getEmail(), CommonXmlStrings.LT + user.getEmail() + CommonXmlStrings.GT);
+  @NlsSafe
+  private static String getAuthorName(@NotNull VcsUser user) {
+    String username = VcsUserUtil.getShortPresentation(user);
+    return user.getEmail().isEmpty() ? username : username + " " + getEmailLink(user);
+  }
+
+  @NotNull
+  private static HtmlChunk.Element getEmailLink(@NotNull VcsUser user) {
+    return HtmlChunk.link("mailto:" + user.getEmail(), "<" + user.getEmail() + ">");
   }
 
   @NotNull
@@ -269,7 +262,7 @@ public final class CommitPresentationUtil {
 
   @NotNull
   @Nls
-  public static String getBranchesText(@Nullable List<String> branches, boolean expanded, int availableWidth,
+  public static String getBranchesText(@Nullable List<@NlsSafe String> branches, boolean expanded, int availableWidth,
                                        @NotNull FontMetrics metrics) {
     if (branches == null) {
       return VcsLogBundle.message("vcs.log.details.in.branches.loading");
@@ -279,30 +272,31 @@ public final class CommitPresentationUtil {
     String head = VcsLogBundle.message("vcs.log.details.in.branches", branches.size()) + " ";
 
     if (expanded) {
-      return head + XmlStringUtil.formatLink(SHOW_HIDE_BRANCHES, VcsLogBundle.message("vcs.log.details.in.branches.hide")) +
-             UIUtil.BR + StringUtil.join(branches, UIUtil.BR);
+      return new HtmlBuilder().append(head)
+        .append(HtmlChunk.link(SHOW_HIDE_BRANCHES, VcsLogBundle.message("vcs.log.details.in.branches.hide")))
+        .br()
+        .appendWithSeparators(HtmlChunk.br(), ContainerUtil.map(branches, s -> HtmlChunk.text(s))).toString();
     }
 
-    String tail = "… " + XmlStringUtil.formatLink(SHOW_HIDE_BRANCHES, VcsLogBundle.message("vcs.log.details.in.branches.show.all"));
-    int headWidth = metrics.stringWidth(head);
-    int tailWidth = metrics.stringWidth(StringUtil.removeHtmlTags(tail));
-    if (availableWidth <= headWidth + tailWidth) {
-      return head + tail; // oh well
+    String tail = "… " + HtmlChunk.link(SHOW_HIDE_BRANCHES, VcsLogBundle.message("vcs.log.details.in.branches.show.all")).toString();
+    int headAndTailWidth = metrics.stringWidth(head) + metrics.stringWidth(StringUtil.removeHtmlTags(tail));
+    if (availableWidth <= headAndTailWidth) {
+      return head + tail;
     }
+    availableWidth -= headAndTailWidth;
 
-    availableWidth -= headWidth;
     StringBuilder branchesText = new StringBuilder();
     for (int i = 0; i < branches.size(); i++) {
       String branch = branches.get(i) + (i != branches.size() - 1 ? ", " : "");
       int branchWidth = metrics.stringWidth(branch);
-      if (branchWidth + tailWidth < availableWidth) {
+      if (branchWidth < availableWidth) {
         branchesText.append(branch);
         availableWidth -= branchWidth;
       }
       else {
         StringBuilder shortenedBranch = new StringBuilder();
         for (char c : branch.toCharArray()) {
-          if (metrics.stringWidth(shortenedBranch.toString() + c) + tailWidth >= availableWidth) {
+          if (metrics.stringWidth(shortenedBranch.toString() + c) >= availableWidth) {
             break;
           }
           shortenedBranch.append(c);
@@ -335,8 +329,8 @@ public final class CommitPresentationUtil {
   private static class UnresolvedPresentation extends CommitPresentation {
     UnresolvedPresentation(@NotNull Project project,
                            @NotNull VirtualFile root,
-                           @NotNull String rawMessage,
-                           @NotNull String hashAndAuthor) {
+                           @NotNull @NlsSafe String rawMessage,
+                           @NotNull @Nls String hashAndAuthor) {
       super(project, root, rawMessage, hashAndAuthor, MultiMap.empty());
     }
 
@@ -354,16 +348,16 @@ public final class CommitPresentationUtil {
 
   public static class CommitPresentation {
     @NotNull protected final Project myProject;
-    @NotNull protected final String myRawMessage;
-    @NotNull protected final String myHashAndAuthor;
+    @NotNull @NlsSafe protected final String myRawMessage;
+    @NotNull @Nls protected final String myHashAndAuthor;
     @NotNull protected final VirtualFile myRoot;
-    @NotNull private final MultiMap<String, CommitId> myResolvedHashes;
+    @NotNull private final MultiMap<@NlsSafe String, CommitId> myResolvedHashes;
 
     public CommitPresentation(@NotNull Project project,
                               @NotNull VirtualFile root,
-                              @NotNull String rawMessage,
-                              @NotNull String hashAndAuthor,
-                              @NotNull MultiMap<String, CommitId> resolvedHashes) {
+                              @NotNull @NlsSafe String rawMessage,
+                              @NotNull @Nls String hashAndAuthor,
+                              @NotNull MultiMap<@NlsSafe String, CommitId> resolvedHashes) {
       myProject = project;
       myRoot = root;
       myRawMessage = rawMessage;
@@ -372,11 +366,13 @@ public final class CommitPresentationUtil {
     }
 
     @NotNull
+    @NlsSafe
     public String getText() {
       return formatCommitText(myProject, myRawMessage, myResolvedHashes.keySet());
     }
 
     @NotNull
+    @Nls
     public String getHashAndAuthor() {
       return myHashAndAuthor;
     }

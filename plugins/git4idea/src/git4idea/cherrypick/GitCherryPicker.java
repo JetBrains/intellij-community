@@ -18,6 +18,7 @@ import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandlerListener;
 import git4idea.config.GitVcsApplicationSettings;
 import git4idea.config.GitVcsSettings;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import kotlin.Unit;
@@ -45,16 +46,16 @@ public class GitCherryPicker extends VcsCherryPicker {
 
   @Override
   public void cherryPick(@NotNull List<? extends VcsFullCommitDetails> commits) {
-    GitApplyChangesProcess applyProcess = new GitApplyChangesProcess(myProject, commits, isAutoCommit(), "cherry-pick", "applied",
-                                                                     (repository, commit, autoCommit, listeners) ->
-      Git.getInstance().cherryPick(repository, commit.asString(), autoCommit, shouldAddSuffix(repository, commit),
-                                   listeners.toArray(new GitLineHandlerListener[0])),
-      result -> isNothingToCommitMessage(result),
-      (repository, commit) -> createCommitMessage(repository, commit),
-      true,
-      repository -> cancelCherryPick(repository)
-    );
-    applyProcess.execute();
+    new GitApplyChangesProcess(myProject, commits, isAutoCommit(),
+                               GitBundle.message("cherry.pick.name"), GitBundle.message("cherry.pick.applied"),
+                               (repository, commit, autoCommit, listeners) ->
+                                 Git.getInstance()
+                                   .cherryPick(repository, commit.asString(), autoCommit, shouldAddSuffix(repository, commit),
+                                               listeners.toArray(new GitLineHandlerListener[0])),
+                               result -> isNothingToCommitMessage(result),
+                               (repository, commit) -> createCommitMessage(repository, commit),
+                               true,
+                               repository -> cancelCherryPick(repository)).execute();
   }
 
   private static boolean isNothingToCommitMessage(@NotNull GitCommandResult result) {
@@ -65,7 +66,9 @@ public class GitCherryPicker extends VcsCherryPicker {
   @NotNull
   private String createCommitMessage(@NotNull GitRepository repository, @NotNull VcsFullCommitDetails commit) {
     String message = commit.getFullMessage();
-    if (shouldAddSuffix(repository, commit.getId())) message += "\n\n(cherry picked from commit " + commit.getId().asString() + ")";
+    if (shouldAddSuffix(repository, commit.getId())) {
+      message += String.format("\n\n(cherry picked from commit %s)", commit.getId().asString()); //NON-NLS Do not i18n commit template
+    }
     return message;
   }
 

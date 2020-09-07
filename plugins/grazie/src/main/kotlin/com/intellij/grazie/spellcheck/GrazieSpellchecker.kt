@@ -43,7 +43,7 @@ object GrazieSpellchecker : GrazieStateLifecycle {
   override fun init(state: GrazieConfig.State) {
     checkers = state.availableLanguages.filterNot { it.isEnglish() }.mapNotNull { lang ->
       val tool = LangTool.getTool(lang, state)
-      tool.spellingCheckRule?.let { SpellerTool(tool, lang, it, MAX_SUGGESTIONS_COUNT) }
+      tool.allSpellingCheckRules.firstOrNull()?.let { SpellerTool(tool, lang, it, MAX_SUGGESTIONS_COUNT) }
     }.toLinkedSet()
   }
 

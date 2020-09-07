@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -27,6 +28,7 @@ import com.jediterm.terminal.ui.TerminalAction;
 import com.jediterm.terminal.ui.TerminalActionPresentation;
 import com.jediterm.terminal.ui.settings.DefaultTabbedSettingsProvider;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,8 +36,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
-
-import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsProvider implements Disposable {
   private final MyColorsSchemeDelegate myColorsScheme;
@@ -133,9 +133,9 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
 
   @Override
   public @NotNull TerminalActionPresentation getCloseSessionActionPresentation() {
-    TerminalActionPresentation presentation = super.getCloseSessionActionPresentation();
-    return new TerminalActionPresentation(IdeBundle.message("terminal.action.CloseSession.text"),
-                                          presentation.getKeyStrokes());
+    List<KeyStroke> keyStrokes = ContainerUtil.concat(super.getCloseSessionActionPresentation().getKeyStrokes(),
+                                                      getKeyStrokesByActionId("CloseActiveTab"));
+    return new TerminalActionPresentation(IdeBundle.message("terminal.action.CloseSession.text"), keyStrokes);
   }
 
   @Override
@@ -155,7 +155,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
     return colorPalette;
   }
 
-  public static @NotNull String getGotoNextSplitTerminalActionText(boolean forward) {
+  public static @NotNull @Nls String getGotoNextSplitTerminalActionText(boolean forward) {
     return forward ? ActionsBundle.message("action.NextSplitter.text")
                    : ActionsBundle.message("action.PrevSplitter.text");
   }
@@ -171,9 +171,9 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
     });
   }
 
-  private static @NotNull List<KeyStroke> getKeyStrokesByActionId(@NotNull String actionId) {
+  public static @NotNull List<KeyStroke> getKeyStrokesByActionId(@NotNull String actionId) {
     List<KeyStroke> keyStrokes = new ArrayList<>();
-    Shortcut[] shortcuts = getActiveKeymapShortcuts(actionId).getShortcuts();
+    Shortcut[] shortcuts = KeymapUtil.getActiveKeymapShortcuts(actionId).getShortcuts();
     for (Shortcut sc : shortcuts) {
       if (sc instanceof KeyboardShortcut) {
         KeyStroke ks = ((KeyboardShortcut)sc).getFirstKeyStroke();

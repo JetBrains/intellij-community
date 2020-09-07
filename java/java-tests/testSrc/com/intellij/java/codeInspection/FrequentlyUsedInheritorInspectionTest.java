@@ -82,7 +82,7 @@ public class FrequentlyUsedInheritorInspectionTest extends CompilerReferencesTes
     myFixture.configureByFile(getTestName(false) + ".java");
     rebuildProject();
 
-    final Set<Pair<String, Integer>> actualSet = new HashSet<Pair<String, Integer>>();
+    final Set<Pair<String, Integer>> actualSet = new HashSet<>();
 
     for (Pair<String, Integer> pair : expectedResults) {
       IntentionAction action = myFixture.findSingleIntention("Make extends '" + pair.getFirst());

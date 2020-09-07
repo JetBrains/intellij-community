@@ -23,6 +23,6 @@ class GradleWrapperImplicitPropertyUsageProvider : ImplicitPropertyUsageProvider
 
   private fun nameEqual(file: VirtualFile?, name: String): Boolean {
     if (file == null) return false;
-    return Comparing.equal(file.name, name, SystemInfo.isFileSystemCaseSensitive)
+    return Comparing.equal(file.name, name, file.isCaseSensitive)
   }
 }

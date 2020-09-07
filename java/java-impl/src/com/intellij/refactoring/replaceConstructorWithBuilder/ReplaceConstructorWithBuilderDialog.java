@@ -180,7 +180,8 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
     myNewClassName.getDocument().addDocumentListener(validateButtonsListener);
     final PsiClass psiClass = myConstructors[0].getContainingClass();
     LOG.assertTrue(psiClass != null);
-    myNewClassName.setText(psiClass.getName() + "Builder");
+    @NlsSafe String builderDefaultName = psiClass.getName() + "Builder";
+    myNewClassName.setText(builderDefaultName);
 
     return splitter;
   }
@@ -199,22 +200,22 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
   protected void canRun() throws ConfigurationException {
     final PsiNameHelper nameHelper = PsiNameHelper.getInstance(myProject);
     for (ParameterData parameterData : myParametersMap.values()) {
-      if (!nameHelper.isIdentifier(parameterData.getFieldName())) throw new ConfigurationException("'" + parameterData.getFieldName() +
-                                                                                                   "' is not a valid field name");
-      if (!nameHelper.isIdentifier(parameterData.getSetterName())) throw new ConfigurationException("'" + parameterData.getSetterName() +
-                                                                                                    "' is not a valid setter name");
+      if (!nameHelper.isIdentifier(parameterData.getFieldName())) throw new ConfigurationException(
+        JavaRefactoringBundle.message("replace.constructor.builder.error.invalid.field.name", parameterData.getFieldName()));
+      if (!nameHelper.isIdentifier(parameterData.getSetterName())) throw new ConfigurationException(
+        JavaRefactoringBundle.message("replace.constructor.builder.error.invalid.setter.name", parameterData.getSetterName()));
     }
     if (myCreateBuilderClassRadioButton.isSelected()) {
       final String className = myNewClassName.getText().trim();
-      if (className.length() == 0 || !nameHelper.isQualifiedName(className)) throw new ConfigurationException("'" + className +
-                                                                                                              "' is invalid builder class name");
+      if (className.length() == 0 || !nameHelper.isQualifiedName(className)) throw new ConfigurationException(
+        JavaRefactoringBundle.message("replace.constructor.builder.error.invalid.builder.class.name", className));
       final String packageName = myPackageTextField.getText().trim();
-      if (packageName.length() > 0 && !nameHelper.isQualifiedName(packageName)) throw new ConfigurationException("'" + packageName +
-                                                                                                                 "' is invalid builder package name");
+      if (packageName.length() > 0 && !nameHelper.isQualifiedName(packageName)) throw new ConfigurationException(
+        JavaRefactoringBundle.message("replace.constructor.builder.error.invalid.builder.package.name", packageName));
     } else {
       final String qualifiedName = myExistentClassTF.getText().trim();
-      if (qualifiedName.length() == 0 || !nameHelper.isQualifiedName(qualifiedName)) throw new ConfigurationException("'" + qualifiedName +
-                                                                                                                      "' is invalid builder qualified class name");
+      if (qualifiedName.length() == 0 || !nameHelper.isQualifiedName(qualifiedName)) throw new ConfigurationException(
+        JavaRefactoringBundle.message("replace.constructor.builder.error.invalid.builder.qualified.class.name", qualifiedName));
     }
   }
 
@@ -282,7 +283,8 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
       @Override
       public void actionPerformed(ActionEvent e) {
         final TreeClassChooser chooser = TreeClassChooserFactory.getInstance(getProject())
-          .createWithInnerClassesScopeChooser("Select Builder Class", GlobalSearchScope.projectScope(myProject), null, null);
+          .createWithInnerClassesScopeChooser(
+            JavaRefactoringBundle.message("replace.constructor.builder.select.builder.class.chooser.title"), GlobalSearchScope.projectScope(myProject), null, null);
         final String classText = myExistentClassTF.getText();
         final PsiClass currentClass = JavaPsiFacade.getInstance(myProject).findClass(classText, GlobalSearchScope.allScope(myProject));
         if (currentClass != null) {
@@ -370,15 +372,15 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
     public String getColumnName(int column) {
       switch (column) {
         case PARAM:
-          return "Parameter";
+          return JavaRefactoringBundle.message("replace.constructor.builder.parameter.table.title");
         case FIELD:
-          return "Field Name";
+          return JavaRefactoringBundle.message("replace.constructor.builder.field.name.table.title");
         case SETTER:
-          return "Setter Name";
+          return JavaRefactoringBundle.message("replace.constructor.builder.setter.name.table.title");
         case DEFAULT_VALUE:
-          return "Default Value";
+          return JavaRefactoringBundle.message("replace.constructor.builder.default.value.table.title");
         case SKIP_SETTER:
-          return "Optional Setter";
+          return JavaRefactoringBundle.message("replace.constructor.builder.optional.setter.table.title");
       }
       assert false: "unknown column " + column;
       return null;
@@ -403,7 +405,7 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
         return null;
       }
       return !PsiNameHelper.getInstance(myProject).isIdentifier(inputString)
-             ? "Identifier '" + inputString + "' is invalid" : null;
+             ? JavaRefactoringBundle.message("replace.constructor.builder.error.identifier.invalid", inputString) : null;
     }
   }
 }

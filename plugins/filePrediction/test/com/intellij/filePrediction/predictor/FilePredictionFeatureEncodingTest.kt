@@ -6,6 +6,8 @@ import com.intellij.filePrediction.predictor.FilePredictionFeatureEncoder.encode
 import com.intellij.filePrediction.predictor.FilePredictionFeatureEncoder.encodeCategorical
 import com.intellij.filePrediction.predictor.model.FilePredictionDecisionFunction
 import com.intellij.filePrediction.predictor.model.FilePredictionModelProvider
+import com.intellij.filePrediction.predictor.model.getFilePredictionModel
+import com.intellij.filePrediction.predictor.model.setCustomTestFilePredictionModel
 import com.intellij.internal.ml.DecisionFunction
 import com.intellij.internal.ml.FeaturesInfo
 import com.intellij.internal.ml.ResourcesMetadataReader
@@ -30,9 +32,9 @@ class FilePredictionFeatureEncodingTest : CodeInsightFixtureTestCase<ModuleFixtu
     myFixture.addFileToProject("test.txt", "CURRENT FILE")
 
     val encoder = TestFilePredictionModelProvider(metadataDir)
-    //setCustomTestFilePredictionModel(testRootDisposable, encoder)
+    setCustomTestFilePredictionModel(testRootDisposable, encoder)
 
-    /*val model = getFilePredictionModel()
+    val model = getFilePredictionModel()
     assertNotNull("Cannot find prediction model", model)
 
     model!!.predict(features)
@@ -43,7 +45,7 @@ class FilePredictionFeatureEncodingTest : CodeInsightFixtureTestCase<ModuleFixtu
     assertEquals("Size of encoded features array is different from expected", expected.size, actual!!.size)
     for (i in actual.indices) {
       assertEquals("Encoded feature at position $i is different from expected", expected[i], actual[i])
-    }*/
+    }
   }
 
   fun `test binary features encoding`() {

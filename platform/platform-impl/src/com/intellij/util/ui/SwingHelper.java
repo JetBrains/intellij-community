@@ -18,6 +18,8 @@ import com.intellij.openapi.options.newEditor.SettingsDialog;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HyperlinkLabel;
@@ -424,12 +426,12 @@ public class SwingHelper {
   }
 
   @NotNull
-  public static HyperlinkLabel createWebHyperlink(@NotNull String url) {
+  public static HyperlinkLabel createWebHyperlink(@NlsSafe @NotNull String url) {
     return createWebHyperlink(url, url);
   }
 
   @NotNull
-  public static HyperlinkLabel createWebHyperlink(@NotNull String text, @NotNull String url) {
+  public static HyperlinkLabel createWebHyperlink(@NlsContexts.LinkLabel @NotNull String text, @NotNull String url) {
     HyperlinkLabel hyperlink = new HyperlinkLabel(text);
     hyperlink.setHyperlinkTarget(url);
 
@@ -630,7 +632,7 @@ public class SwingHelper {
 
   @NotNull
   public static TextFieldWithHistoryWithBrowseButton createTextFieldWithHistoryWithBrowseButton(@Nullable Project project,
-                                                                                                @NotNull String browseDialogTitle,
+                                                                                                @NotNull @NlsContexts.DialogTitle String browseDialogTitle,
                                                                                                 @NotNull FileChooserDescriptor fileChooserDescriptor,
                                                                                                 @Nullable NotNullProducer<? extends List<String>> historyProvider) {
     return ComponentsKt.textFieldWithHistoryWithBrowseButton(project, browseDialogTitle, fileChooserDescriptor, historyProvider == null ? null : () -> historyProvider.produce());
@@ -638,7 +640,7 @@ public class SwingHelper {
 
   @NotNull
   public static <C extends JComponent> ComponentWithBrowseButton<C> wrapWithInfoButton(@NotNull final C component,
-                                                                                       @NotNull String infoButtonTooltip,
+                                                                                       @NlsContexts.Tooltip @NotNull String infoButtonTooltip,
                                                                                        @NotNull ActionListener listener) {
     ComponentWithBrowseButton<C> comp = new ComponentWithBrowseButton<>(component, listener);
     FixedSizeButton uiHelpButton = comp.getButton();
@@ -692,7 +694,7 @@ public class SwingHelper {
 
   public final static String ELLIPSIS = "...";
   public static final String ERROR_STR = "www";
-  public static String truncateStringWithEllipsis(final String text, final int maxWidth, final FontMetrics fm) {
+  public static @Nls String truncateStringWithEllipsis(final @Nls String text, final int maxWidth, final FontMetrics fm) {
     return truncateStringWithEllipsis(text, maxWidth, new WidthCalculator() {
       @Override
       public int stringWidth(String s) {
@@ -711,7 +713,7 @@ public class SwingHelper {
     int charWidth(final char c);
   }
 
-  public static String truncateStringWithEllipsis(@NotNull final String text, final int maxWidth, final WidthCalculator fm) {
+  public static @Nls String truncateStringWithEllipsis(@Nls @NotNull final String text, final int maxWidth, final WidthCalculator fm) {
     final int error = fm.stringWidth(ERROR_STR);
     final int wholeWidth = fm.stringWidth(text) + error;
     if (wholeWidth <= maxWidth || text.isEmpty()) return text;

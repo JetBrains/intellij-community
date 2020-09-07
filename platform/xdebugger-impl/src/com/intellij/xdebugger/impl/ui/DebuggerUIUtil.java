@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -435,12 +436,13 @@ public final class DebuggerUIUtil {
   }
 
   @NotNull
-  public static String getSelectionShortcutsAdText(String... actionNames) {
+  public static @NlsContexts.PopupAdvertisement String getSelectionShortcutsAdText(String... actionNames) {
     return getShortcutsAdText("ad.extra.selection.shortcut", actionNames);
   }
 
   @NotNull
-  public static String getShortcutsAdText(@PropertyKey(resourceBundle = XDebuggerBundle.BUNDLE) String key, String... actionNames) {
+  public static @NlsContexts.PopupAdvertisement String getShortcutsAdText(@PropertyKey(resourceBundle = XDebuggerBundle.BUNDLE) String key,
+                                                                          String... actionNames) {
     String text = StreamEx.of(actionNames).map(DebuggerUIUtil::getActionShortcutText).nonNull()
       .joining(XDebuggerBundle.message("xdebugger.shortcuts.text.delimiter"));
     return StringUtil.isEmpty(text) ? "" : XDebuggerBundle.message(key, text);

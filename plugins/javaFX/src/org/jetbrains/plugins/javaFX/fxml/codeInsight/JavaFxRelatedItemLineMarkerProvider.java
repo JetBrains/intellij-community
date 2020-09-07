@@ -34,6 +34,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Function;
 import com.intellij.util.Functions;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
@@ -114,7 +115,8 @@ public class JavaFxRelatedItemLineMarkerProvider extends RelatedItemLineMarkerPr
         return;
       }
       final JBPopup popup = NavigationUtil
-        .getPsiElementPopup(relatedItems.toArray(PsiElement.EMPTY_ARRAY), "<html>Choose component with fx:id <b>" + fieldName.getText() + "<b></html>");
+        .getPsiElementPopup(relatedItems.toArray(PsiElement.EMPTY_ARRAY),
+                            JavaFXBundle.message("popup.title.choose.component.with.fx.id", fieldName.getText()));
       popup.show(new RelativePoint(e));
     }
   }

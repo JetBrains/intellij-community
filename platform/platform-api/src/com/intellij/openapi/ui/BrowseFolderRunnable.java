@@ -4,6 +4,7 @@ package com.intellij.openapi.ui;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -17,8 +18,8 @@ import javax.swing.*;
 
 @ApiStatus.Experimental
 public class BrowseFolderRunnable<T extends JComponent> implements Runnable {
-  private   final String myTitle;
-  private   final String myDescription;
+  private   final @NlsContexts.DialogTitle String myTitle;
+  private   final @NlsContexts.Label String myDescription;
   protected final TextComponentAccessor<? super T> myAccessor;
   protected final FileChooserDescriptor myFileChooserDescriptor;
 
@@ -98,7 +99,7 @@ public class BrowseFolderRunnable<T extends JComponent> implements Runnable {
   }
 
   @NotNull
-  protected String chosenFileToResultingText(@NotNull VirtualFile chosenFile) {
+  protected @NlsSafe String chosenFileToResultingText(@NotNull VirtualFile chosenFile) {
     return chosenFile.getPresentableUrl();
   }
 

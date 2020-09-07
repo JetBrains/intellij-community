@@ -4,6 +4,7 @@ package com.intellij.build;
 import com.intellij.build.events.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.lang.LangBundle;
 import com.intellij.notification.Notification;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -57,7 +58,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
   public AbstractViewManager(Project project) {
     myProject = project;
     myBuildContentManager = project.getService(BuildContentManager.class);
-    myBuildsViewValue = new AtomicClearableLazyValue<MultipleBuildsView>() {
+    myBuildsViewValue = new AtomicClearableLazyValue<>() {
       @Override
       protected @NotNull MultipleBuildsView compute() {
         MultipleBuildsView buildsView = new MultipleBuildsView(myProject, myBuildContentManager, AbstractViewManager.this);
@@ -117,9 +118,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
   private @Nullable MultipleBuildsView getMultipleBuildsView(@NotNull Object buildId) {
     MultipleBuildsView buildsView = myBuildsViewValue.getValue();
     if (!buildsView.shouldConsume(buildId)) {
-      buildsView = myPinnedViews.stream()
-        .filter(pinnedView -> pinnedView.shouldConsume(buildId))
-        .findFirst().orElse(null);
+      buildsView = ContainerUtil.find(myPinnedViews, pinnedView -> pinnedView.shouldConsume(buildId));
     }
     return buildsView;
   }
@@ -186,8 +185,8 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
 
   @ApiStatus.Internal
   static class BuildInfo extends DefaultBuildDescriptor {
-    String message;
-    String statusMessage;
+    @BuildEventsNls.Message String message;
+    @BuildEventsNls.Message String statusMessage;
     long endTime = -1;
     EventResult result;
     Content content;
@@ -224,7 +223,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
     }
   }
 
-  private String getPinnedTabName(MultipleBuildsView buildsView) {
+  private @NlsContexts.TabTitle String getPinnedTabName(MultipleBuildsView buildsView) {
     Map<BuildDescriptor, BuildView> buildsMap = buildsView.getBuildsMap();
 
     BuildDescriptor buildInfo = buildsMap.keySet()
@@ -232,11 +231,11 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
       .reduce((b1, b2) -> b1.getStartTime() <= b2.getStartTime() ? b1 : b2)
       .orElse(null);
     if (buildInfo != null) {
-      String title = buildInfo.getTitle();
-      String viewName = getViewName().split(" ")[0];
+      @BuildEventsNls.Title String title = buildInfo.getTitle();
+      @NlsContexts.TabTitle String viewName = getViewName().split(" ")[0];
       String tabName = viewName + ": " + StringUtil.trimStart(title, viewName);
       if (buildsMap.size() > 1) {
-        tabName += String.format(" and %d more", buildsMap.size() - 1);
+        return LangBundle.message("tab.title.more", tabName, buildsMap.size() - 1);
       }
       return tabName;
     }

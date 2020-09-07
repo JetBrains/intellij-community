@@ -78,6 +78,13 @@ public class ClsParameterListImpl extends ClsRepositoryPsiElement<PsiParameterLi
   }
 
   @Override
+  public String getText() {
+    StringBuilder builder = new StringBuilder();
+    appendMirrorText(0, builder);
+    return builder.toString();
+  }
+
+  @Override
   public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, null);
     setMirrors(getParameters(), SourceTreeToPsiMap.<PsiParameterList>treeToPsiNotNull(element).getParameters());

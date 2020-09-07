@@ -354,15 +354,16 @@ class AppUIExecutorTest : LightPlatformTestCase() {
       job.join()
       queue.add("end")
 
-      assertOrderedEquals(queue,
-                          "start",
-                          "coroutine start",
-                          "before yield",
-                          "disposing",
-                          "disposable.beforeTreeDispose()",
-                          "coroutine yield caught JobCancellationException",
-                          "disposable.dispose()",
-                          "end")
+      assertOrderedEquals(queue,(
+                          "start\n" +
+                          "coroutine start\n" +
+                          "before yield\n" +
+                          "disposing\n" +
+                          "disposable.beforeTreeDispose()\n" +
+                          "refuse to run already disposed\n" +
+                          "disposable.dispose()\n" +
+                          "coroutine yield caught JobCancellationException\n" +
+                          "end").split("\n"))
     }.joinNonBlocking()
   }
 

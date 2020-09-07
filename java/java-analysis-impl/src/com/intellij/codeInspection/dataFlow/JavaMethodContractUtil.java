@@ -5,6 +5,7 @@ import com.intellij.codeInsight.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -141,7 +142,7 @@ public final class JavaMethodContractUtil {
   }
 
   static @NotNull ContractInfo getContractInfo(@NotNull PsiMethod method) {
-    if (PsiUtil.isAnnotationMethod(method)) {
+    if (PsiUtil.isAnnotationMethod(method) || method instanceof LightRecordMethod) {
       return ContractInfo.PURE;
     }
     return CachedValuesManager.getCachedValue(method, () -> {

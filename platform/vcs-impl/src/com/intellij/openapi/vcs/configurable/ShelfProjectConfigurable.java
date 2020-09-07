@@ -61,6 +61,7 @@ public class ShelfProjectConfigurable implements SearchableConfigurable {
     return HELP_ID;
   }
 
+  @Nls
   public static String getDISPLAY_NAME() {
     return VcsBundle.message("shelf.tab");
   }

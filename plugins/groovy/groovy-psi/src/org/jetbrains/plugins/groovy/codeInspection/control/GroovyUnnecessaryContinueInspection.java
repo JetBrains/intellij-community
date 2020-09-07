@@ -22,6 +22,7 @@ import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
@@ -36,7 +37,7 @@ public class GroovyUnnecessaryContinueInspection extends BaseInspection {
   @Override
   @Nullable
   protected String buildErrorString(Object... args) {
-    return "#ref is unnecessary as the last statement in a loop #loc";
+    return GroovyBundle.message("inspection.message.ref.is.unnecessary.as.last.statement.in.loop");
 
   }
 
@@ -57,7 +58,7 @@ public class GroovyUnnecessaryContinueInspection extends BaseInspection {
     @Override
     @NotNull
     public String getFamilyName() {
-      return "Remove unnecessary continue";
+      return GroovyBundle.message("intention.family.name.remove.unnecessary.continue");
     }
 
     @Override

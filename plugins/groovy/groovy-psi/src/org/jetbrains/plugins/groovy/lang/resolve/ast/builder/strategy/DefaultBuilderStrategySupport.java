@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
@@ -115,6 +116,7 @@ public class DefaultBuilderStrategySupport extends BuilderAnnotationContributor 
       myContext.addInnerClass(builderClass);
     }
 
+    @NlsSafe
     @NotNull
     private static String getBuilderMethodName(@NotNull PsiAnnotation annotation) {
       final String builderMethodName = AnnotationUtil.getDeclaredStringAttributeValue(annotation, "builderMethodName");
@@ -122,10 +124,11 @@ public class DefaultBuilderStrategySupport extends BuilderAnnotationContributor 
     }
   }
 
+  @NlsSafe
   @NotNull
   public static String getBuilderClassName(@NotNull PsiAnnotation annotation, @NotNull GrTypeDefinition clazz) {
     final String builderClassName = AnnotationUtil.getDeclaredStringAttributeValue(annotation, "builderClassName");
-    return builderClassName == null ? String.format("%s%s", clazz.getName(), "Builder") : builderClassName;
+    return builderClassName == null ? clazz.getName() + "Builder" : builderClassName;
   }
 
   @NotNull

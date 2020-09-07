@@ -26,7 +26,7 @@ import java.util.stream.Stream;
 final class VfsEventsMerger {
   private static final boolean DEBUG = FileBasedIndexImpl.DO_TRACE_STUB_INDEX_UPDATE || SystemProperties.is("log.index.vfs.events");
   @Nullable
-  private static final Logger LOG = MyLoggerFactory.getLoggerInstance();
+  static final Logger LOG = MyLoggerFactory.getLoggerInstance();
 
   void recordFileEvent(@NotNull VirtualFile file, boolean contentChange) {
     if (LOG != null) LOG.info("Request build indices for file:" + file.getPath() + ", contentChange:" + contentChange);
@@ -219,14 +219,16 @@ final class VfsEventsMerger {
       PatternLayout pattern = new PatternLayout("%d [%7r] %6p - %m\n");
       myAppender = new RollingFileAppender(pattern, logPath.toFile().getAbsolutePath());
       myAppender.setMaxFileSize("20MB");
-      myAppender.setMaxBackupIndex(10);
+      myAppender.setMaxBackupIndex(50);
     }
 
 
     @Override
     public @NotNull Logger getLoggerInstance(@NotNull String category) {
       final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(category);
+      logger.removeAllAppenders();
       logger.addAppender(myAppender);
+      logger.setAdditivity(false);
       logger.setLevel(Level.INFO);
       return new Log4jBasedLogger(logger);
     }

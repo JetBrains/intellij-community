@@ -41,6 +41,7 @@ import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringMessageDialog;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -206,9 +207,9 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
     }
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      String occurencesString = RefactoringBundle.message("occurrences.string", occurrences.size());
+      String occurrencesString = RefactoringBundle.message("occurrences.string", occurrences.size());
       String question = JavaRefactoringBundle.message("inline.parameter.confirmation", psiParameter.getName(),
-                                                  constantExpression.getText()) + " " + occurencesString;
+                                                  constantExpression.getText()) + " " + occurrencesString;
       RefactoringMessageDialog dialog = new RefactoringMessageDialog(
         getRefactoringName(),
         question,
@@ -276,7 +277,7 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
   }
 
   @Nullable
-  private static String getCannotInlineMessage(final PsiParameter psiParameter, final PsiMethod method) {
+  private static @NlsContexts.DialogMessage String getCannotInlineMessage(final PsiParameter psiParameter, final PsiMethod method) {
     if (psiParameter.isVarArgs()) {
       return JavaRefactoringBundle.message("inline.parameter.error.varargs");
     }
@@ -286,7 +287,7 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
     }
 
     if (!method.getManager().isInProject(method)) {
-      return "Inline is not supported for non-project methods";
+      return JavaRefactoringBundle.message("inline.parameter.error.non.project.method");
     }
     return null;
   }
@@ -294,7 +295,7 @@ public class InlineParameterHandler extends JavaInlineActionHandler {
   @Nullable
   @Override
   public String getActionName(PsiElement element) {
-    return getRefactoringName() + "...";
+    return JavaRefactoringBundle.message("inline.parameter.action.name");
   }
 
   public static @NlsContexts.DialogTitle String getRefactoringName() {

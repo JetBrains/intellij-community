@@ -8,6 +8,7 @@ import com.intellij.ide.fileTemplates.FileTemplatesScheme;
 import com.intellij.ide.fileTemplates.InternalTemplateBean;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.extensions.DefaultPluginDescriptor;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.project.Project;
@@ -232,6 +233,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
   }
 
   public void testInternalTemplatePlugin() {
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
     ExtensionPoint<InternalTemplateBean> point = InternalTemplateBean.EP_NAME.getPoint();
     InternalTemplateBean bean = new InternalTemplateBean();
     bean.name = "Unknown";

@@ -24,8 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static com.intellij.structuralsearch.impl.matcher.iterators.SingleNodeIterator.newSingleNodeIterator;
-
 /**
  * GlobalMatchingVisitor does the walking of the pattern tree, and invokes the language specific MatchingVisitor on elements.
  * It also stores the current code element to match. MatchingVisitor visits pattern elements, not code elements.
@@ -46,7 +44,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
    */
   private boolean myResult;
 
-  private MatchContext matchContext;
+  private final MatchContext matchContext = new MatchContext(this);
 
   /**
    * @return the current code element to match.
@@ -71,17 +69,18 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
 
   @Override
   protected boolean doMatchInAnyOrder(@NotNull NodeIterator elements, @NotNull NodeIterator elements2) {
-    return MatchingHandler.matchInAnyOrder(
-      elements,
-      elements2,
-      matchContext
-    );
+    return MatchingHandler.matchInAnyOrder(elements, elements2, matchContext);
   }
 
   @Override
   public boolean matchOptionally(@Nullable PsiElement patternNode, @Nullable PsiElement matchNode) {
-    return patternNode == null && isLeftLooseMatching() ||
-           matchSequentially(newSingleNodeIterator(patternNode), newSingleNodeIterator(matchNode));
+    if (patternNode == null) {
+      return isLeftLooseMatching();
+    }
+    final MatchingHandler handler = matchContext.getPattern().getHandler(patternNode);
+    return matchNode != null
+           ? handler.match(patternNode, matchNode, matchContext) && handler.validate(matchContext, 1)
+           : handler.validate(matchContext, 0);
   }
 
   @NotNull
@@ -216,10 +215,6 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
       matchContext.setResult(saveResult);
       matchContext.restoreMatchedNodes();
     }
-  }
-
-  public void setMatchContext(@NotNull MatchContext matchContext) {
-    this.matchContext = matchContext;
   }
 
   @Override

@@ -1,12 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
+import com.intellij.Patches;
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.io.StreamReadingCallable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assume;
@@ -23,6 +26,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
@@ -35,7 +40,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public final class IoTestUtil {
-  public static final boolean isSymLinkCreationSupported = SystemInfo.isUnix || SystemInfo.isWinVistaOrNewer && canCreateSymlinks();
+  @ReviseWhenPortedToJDK("13")
+  private static final @Nullable Boolean symLinkMode =
+    SystemInfo.isUnix ? Boolean.TRUE : SystemInfo.isWinVistaOrNewer ? canCreateSymlinks() : null;  // `TRUE` == NIO, `FALSE` == "mklink"
+  public static final boolean isSymLinkCreationSupported = symLinkMode != null;
 
   private IoTestUtil() { }
 
@@ -72,26 +80,52 @@ public final class IoTestUtil {
     return file;
   }
 
-  @NotNull
-  public static File createSymLink(@NotNull String target, @NotNull String link) {
-    return createSymLink(target, link, true);
+  public static @NotNull File createSymLink(@NotNull String target, @NotNull String link) {
+    return createSymLink(target, link, Boolean.TRUE);
   }
 
-  @NotNull
-  public static File createSymLink(@NotNull String target, @NotNull String link, boolean shouldExist) {
-    File linkFile = getFullLinkPath(link);
+  public static @NotNull File createSymLink(@NotNull String target, @NotNull String link, boolean shouldExist) {
+    return createSymLink(target, link, Boolean.valueOf(shouldExist));
+  }
+
+  /** A drop-in replacement for `Files#createSymbolicLink` needed until `Patches.JDK_BUG_ID_JDK_8218418` is resolved */
+  public static @NotNull Path createSymbolicLink(@NotNull Path link, @NotNull Path target) throws IOException {
     try {
-      Files.createSymbolicLink(linkFile.toPath(), FileSystems.getDefault().getPath(target));
+      return createSymLink(target.toString(), link.toString(), null).toPath();
+    }
+    catch (UncheckedIOException e) {
+      throw e.getCause();
+    }
+  }
+
+  private static File createSymLink(String target, String link, @Nullable Boolean shouldExist) {
+    File linkFile = getFullLinkPath(link), targetFile = new File(target);
+    try {
+      if (!Patches.JDK_BUG_ID_JDK_8218418) {
+        Files.createSymbolicLink(linkFile.toPath(), targetFile.toPath());
+      }
+      else if (Files.isDirectory(targetFile.isAbsolute() ? targetFile.toPath() : linkFile.toPath().getParent().resolve(target))) {
+        runCommand("cmd", "/C", "mklink", "/D", linkFile.getPath(), targetFile.getPath());
+      }
+      else {
+        runCommand("cmd", "/C", "mklink", linkFile.getPath(), targetFile.getPath());
+      }
     }
     catch (IOException e) {
-      throw new RuntimeException(e);
+      throw new UncheckedIOException(e);
     }
-    assertEquals("target=" + target + ", link=" + linkFile, shouldExist, linkFile.exists());
+    if (shouldExist != null) {
+      assertEquals("target=" + target + ", link=" + linkFile, shouldExist, linkFile.exists());
+    }
     return linkFile;
   }
 
   public static void assumeSymLinkCreationIsSupported() throws AssumptionViolatedException {
-    Assume.assumeTrue("Can't create symlinks on " + SystemInfo.getOsNameAndVersion(), isSymLinkCreationSupported);
+    Assume.assumeTrue("Can't create symlinks on " + SystemInfo.OS_NAME, isSymLinkCreationSupported);
+  }
+
+  public static void assumeNioSymLinkCreationIsSupported() throws AssumptionViolatedException {
+    Assume.assumeTrue("Can't create symlinks via NIO2 on " + SystemInfo.OS_NAME, symLinkMode == Boolean.TRUE);
   }
 
   public static void assumeWindows() throws AssumptionViolatedException {
@@ -160,31 +194,17 @@ public final class IoTestUtil {
 
   private static void runCommand(String... command) {
     try {
-      ProcessBuilder builder = new ProcessBuilder(command);
-      builder.redirectErrorStream(true);
-
+      ProcessBuilder builder = new ProcessBuilder(command).redirectErrorStream(true);
       Process process = builder.start();
-      StringBuilder output = new StringBuilder();
-
-      Future<?> thread = ProcessIOExecutorService.INSTANCE.submit(() -> {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
-          String line;
-          while ((line = reader.readLine()) != null) {
-            output.append(line).append('\n');
-          }
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      });
-      int ret = process.waitFor();
-      thread.get();
-
+      Future<ByteArrayOutputStream> reader = ProcessIOExecutorService.INSTANCE.submit(new StreamReadingCallable(process));
+      boolean finished = process.waitFor(30, TimeUnit.SECONDS);
+      int ret = finished ? process.exitValue() : -1;
+      ByteArrayOutputStream output = reader.get(30, TimeUnit.SECONDS);
       if (ret != 0) {
-        throw new RuntimeException(builder.command() + "\nresult: " + ret + "\noutput:\n" + output);
+        throw new RuntimeException(builder.command() + "\nresult: " + ret + "\noutput:\n" + output.toString());
       }
     }
-    catch (IOException | InterruptedException | ExecutionException e) {
+    catch (IOException | InterruptedException | ExecutionException | TimeoutException e) {
       throw new RuntimeException(e);
     }
   }
@@ -326,14 +346,20 @@ public final class IoTestUtil {
     }
   }
 
-  private static boolean canCreateSymlinks() {
+  private static Boolean canCreateSymlinks() {
     try {
       Path target = Files.createTempFile("IOTestUtil_link_target.", ".txt");
       try {
         Path link = target.getParent().resolve("IOTestUtil_link");
         try {
-          Files.createSymbolicLink(link, target.getFileName());
-          return true;
+          try {
+            Files.createSymbolicLink(link, target.getFileName());
+            return Boolean.TRUE;
+          }
+          catch (IOException e) {
+            createSymbolicLink(link, target.getFileName());
+            return Boolean.FALSE;
+          }
         }
         finally {
           Files.deleteIfExists(link);
@@ -343,8 +369,10 @@ public final class IoTestUtil {
         Files.delete(target);
       }
     }
-    catch (IOException ignored) {
-      return false;
+    catch (Exception e) {
+      //noinspection SSBasedInspection
+      Logger.getInstance("#com.intellij.openapi.util.io.IoTestUtil").debug(e);
+      return null;
     }
   }
 

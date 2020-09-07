@@ -14,10 +14,10 @@
 
     <applicationService serviceImplementation="org.jetbrains.lang.manifest.header.HeaderParserRepository"/>
 
-    <localInspection language="Manifest" groupName="Manifest"
+    <localInspection language="Manifest" groupKey="inspection.group"
                      enabledByDefault="true" level="ERROR" implementationClass="org.jetbrains.lang.manifest.highlighting.MissingFinalNewlineInspection"
                      key="inspection.missing.final.newline.display.name" bundle="messages.ManifestBundle"/>
-    <localInspection language="Manifest" groupName="Manifest"
+    <localInspection language="Manifest" groupKey="inspection.group"
                      enabledByDefault="true" level="WEAK WARNING" implementationClass="org.jetbrains.lang.manifest.highlighting.MisspelledHeaderInspection"
                      key="inspection.misspelled.header.display.name" bundle="messages.ManifestBundle"/>
   </extensions>

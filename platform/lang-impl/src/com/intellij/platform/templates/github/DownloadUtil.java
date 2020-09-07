@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Producer;
@@ -102,8 +103,8 @@ public final class DownloadUtil {
 
   public static @NotNull <V> Outcome<V> provideDataWithProgressSynchronously(
     @Nullable Project project,
-    @NotNull String progressTitle,
-    final @NotNull String actionShortDescription,
+    @NotNull @NlsContexts.ProgressTitle String progressTitle,
+    final @NotNull @NlsContexts.ProgressText String actionShortDescription,
     final @NotNull Callable<? extends V> supplier,
     @Nullable Producer<Boolean> tryAgainProvider) {
     int attemptNumber = 1;
@@ -178,7 +179,7 @@ public final class DownloadUtil {
       });
   }
 
-  private static void substituteContentLength(@Nullable ProgressIndicator progress, @Nullable String text, int contentLengthInBytes) {
+  private static void substituteContentLength(@Nullable ProgressIndicator progress, @Nullable @NlsContexts.ProgressText String text, int contentLengthInBytes) {
     if (progress != null && text != null) {
       int ind = text.indexOf(CONTENT_LENGTH_TEMPLATE);
       if (ind != -1) {

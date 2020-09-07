@@ -7,6 +7,7 @@ import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
+import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -27,14 +28,14 @@ import com.intellij.util.ArrayUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.SystemProperties
 import com.intellij.util.ThreeState
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.xmlb.XmlSerializerUtil
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.util.*
@@ -175,7 +176,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   internal open fun commitComponents(isForce: Boolean, session: SaveSessionProducerManager, errors: MutableList<Throwable>) {
     if (components.isEmpty()) {
       return
@@ -185,7 +186,7 @@ abstract class ComponentStoreImpl : IComponentStore {
 
     val names = ArrayUtilRt.toStringArray(components.keys)
     Arrays.sort(names)
-    var timeLog: StringBuilder? = null
+    @NonNls var timeLog: StringBuilder? = null
 
     // well, strictly speaking each component saving takes some time, but +/- several seconds doesn't matter
     val nowInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()).toInt()
@@ -247,7 +248,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 
   @TestOnly
-  @CalledInAwt
+  @RequiresEdt
   override fun saveComponent(component: PersistentStateComponent<*>) {
     val stateSpec = getStateSpec(component)
     LOG.debug { "saveComponent is called for ${stateSpec.name}" }
@@ -632,6 +633,7 @@ private fun notifyUnknownMacros(store: IComponentStore, project: Project, compon
   }
 
   val macros = LinkedHashSet(immutableMacros)
+  @Suppress("IncorrectParentDisposable")
   AppUIExecutor.onUiThread().expireWith(project).submit {
     var notified: MutableList<String>? = null
     val manager = NotificationsManager.getNotificationsManager()
@@ -669,12 +671,11 @@ internal suspend fun ComponentStoreImpl.childlessSaveImplementation(result: Save
 }
 
 internal suspend inline fun <T> withEdtContext(disposable: ComponentManager?, crossinline task: suspend () -> T): T {
-  return withContext(storeEdtCoroutineDispatcher) {
-    @Suppress("NullableBooleanElvis")
-    if (disposable?.isDisposed ?: false) {
-      throw CancellationException()
-    }
-
+  var t = AppUIExecutor.onUiThread()
+  disposable?.let {
+    t = t.expireWith(it)
+  }
+  return withContext(t.coroutineDispatchingContext()) {
     task()
   }
 }

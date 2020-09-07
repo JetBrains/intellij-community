@@ -18,6 +18,7 @@ import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.EditorTextFieldWithBrowseButton
+import org.jetbrains.annotations.Nls
 
 abstract class DefaultJreSelector {
   companion object {
@@ -31,6 +32,10 @@ abstract class DefaultJreSelector {
     @JvmStatic
     fun fromModuleDependencies(moduleComboBox: ModuleDescriptionsComboBox, productionOnly: Boolean): DefaultJreSelector
         = SdkFromModuleDependencies(moduleComboBox, ModuleDescriptionsComboBox::getSelectedModule, {productionOnly})
+
+    @JvmStatic
+    fun fromModuleDependencies(moduleComboBox: ModuleClasspathCombo, productionOnly: Boolean): DefaultJreSelector
+        = SdkFromModuleDependencies(moduleComboBox, ModuleClasspathCombo::getSelectedModule, {productionOnly})
 
     @JvmStatic
     fun fromSourceRootsDependencies(moduleComboBox: ModulesComboBox, classSelector: EditorTextFieldWithBrowseButton): DefaultJreSelector
@@ -50,6 +55,7 @@ abstract class DefaultJreSelector {
   open fun addChangeListener(listener: Runnable) {
   }
 
+  @Nls
   fun getDescriptionString(): String {
     val (name, description) = getNameAndDescription()
     return " (${name ?: "<no JRE>"} - $description)"

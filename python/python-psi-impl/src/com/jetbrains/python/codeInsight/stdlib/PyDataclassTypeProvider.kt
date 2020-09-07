@@ -4,7 +4,6 @@
 package com.jetbrains.python.codeInsight.stdlib
 
 import com.intellij.openapi.util.Ref
-import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.containers.isNullOrEmpty
 import com.jetbrains.python.PyNames
@@ -12,19 +11,11 @@ import com.jetbrains.python.codeInsight.*
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyCallExpressionNavigator
-import com.jetbrains.python.psi.impl.PyOverridingTypeProvider
 import com.jetbrains.python.psi.impl.stubs.PyDataclassFieldStubImpl
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.stubs.PyDataclassFieldStub
 import com.jetbrains.python.psi.types.*
 import one.util.streamex.StreamEx
-
-class PyDataclassOverridingTypeProvider : PyTypeProviderBase(), PyOverridingTypeProvider {
-
-  override fun getReferenceType(referenceTarget: PsiElement, context: TypeEvalContext, anchor: PsiElement?): Ref<PyType>? {
-    return PyTypeUtil.notNullToRef(PyDataclassTypeProvider.getDataclassesReplaceType(referenceTarget, context, anchor))
-  }
-}
 
 class PyDataclassTypeProvider : PyTypeProviderBase() {
 
@@ -79,15 +70,6 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
           }
         }
         .firstOrNull { it != null }
-    }
-
-    internal fun getDataclassesReplaceType(referenceTarget: PsiElement, context: TypeEvalContext, anchor: PsiElement?): PyCallableType? {
-      return if (referenceTarget is PyCallable && anchor is PyCallExpression) {
-        getDataclassesReplaceType(referenceTarget, anchor, context)
-      }
-      else {
-        null
-      }
     }
 
     private fun getDataclassesReplaceType(referenceExpression: PyReferenceExpression, context: TypeEvalContext): PyCallableType? {

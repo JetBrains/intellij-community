@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
@@ -414,14 +414,14 @@ public interface Application extends ComponentManager {
    * <p></p>
    * Please avoid doing things differently depending on the result of this method, because this leads to
    * testing something synthetic instead of what really happens in production.
-   * So you'll be able to catch less of production bugs and might instead lose your time on debugging test-only issues. 
+   * So you'll be able to catch less of production bugs and might instead lose your time on debugging test-only issues.
    * It's more robust to write a bit more code in tests to accommodate for production behavior than vice versa.
    * For example:
    * <ul>
    *   <li>To wait for an {@code invokeLater} in tests, you can call {@code PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()}</li>
    *   <li>To wait for asynchronous non-blocking read operations, you can call {@code NonBlockingReadActionImpl.waitForAsyncTaskCompletion()}</li>
    *   <li>To wait for other asynchronous operations, you can track their {@link Future}/{@link org.jetbrains.concurrency.Promise Promise}/etc callbacks and call {@code PlatformTestUtil.waitFor*}</li>
-   *   <li>To emulate user interaction with a simple yes/no dialog, use {@code Messages.setTestDialog(...)}</li>
+   *   <li>To emulate user interaction with a simple yes/no dialog, use {@code TestDialogManager.setTestDialog(...)}</li>
    *   <li>For other UI interaction, try {@link com.intellij.ui.UiInterceptors UiInterceptors}</li>
    * </ul>
    *

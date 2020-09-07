@@ -22,6 +22,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
@@ -61,9 +63,10 @@ public abstract class GitAbstractRebaseAction extends GitOperationActionBase {
   @NotNull
   @Override
   protected String getOperationName() {
-    return "rebase";
+    return GitBundle.message("action.Git.Rebase.operation.name");
   }
 
+  @NlsContexts.ProgressTitle
   @NotNull
   protected abstract String getProgressTitle();
 

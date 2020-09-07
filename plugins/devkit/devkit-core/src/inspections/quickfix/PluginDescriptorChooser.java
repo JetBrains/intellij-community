@@ -15,6 +15,8 @@ import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -27,6 +29,7 @@ import com.intellij.util.xml.DomService;
 import com.intellij.xml.util.IncludedXmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extensions;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
@@ -68,7 +71,7 @@ public class PluginDescriptorChooser {
     elements = findAppropriateIntelliJModule(module.getName(), elements);
 
     if (elements.isEmpty()) {
-      HintManager.getInstance().showErrorHint(editor, "Cannot find plugin descriptor");
+      HintManager.getInstance().showErrorHint(editor, DevKitBundle.message("plugin.descriptor.chooser.cannot.find"));
       return;
     }
 
@@ -78,7 +81,7 @@ public class PluginDescriptorChooser {
     }
 
     final BaseListPopupStep<PluginDescriptorCandidate> popupStep =
-      new BaseListPopupStep<PluginDescriptorCandidate>("Choose Plugin Descriptor", createCandidates(module, elements)) {
+      new BaseListPopupStep<>(DevKitBundle.message("plugin.descriptor.chooser.popup.title"), createCandidates(module, elements)) {
 
         @Override
         public boolean isSpeedSearchEnabled() {
@@ -195,7 +198,7 @@ public class PluginDescriptorChooser {
   }
 
   public static List<DomFileElement<IdeaPlugin>> findAppropriateIntelliJModule(String moduleName,
-                                                                                List<DomFileElement<IdeaPlugin>> elements) {
+                                                                               List<DomFileElement<IdeaPlugin>> elements) {
     String extensionsFile = INTELLIJ_MODULES.get(moduleName);
     if (extensionsFile != null) {
       for (DomFileElement<IdeaPlugin> element : elements) {
@@ -218,6 +221,7 @@ public class PluginDescriptorChooser {
       myStartsNewGroup = startsNewGroup;
     }
 
+    @NlsContexts.ListItem
     public String getText() {
       final String name = myDomFileElement.getFile().getName();
       final String pluginId = getPluginId();
@@ -228,6 +232,7 @@ public class PluginDescriptorChooser {
       return getPluginId() != null ? AllIcons.Nodes.Plugin : EmptyIcon.create(AllIcons.Nodes.Plugin);
     }
 
+    @NlsContexts.Separator
     public String getSeparatorText() {
       if (!myStartsNewGroup) return null;
 
@@ -235,6 +240,7 @@ public class PluginDescriptorChooser {
       return module == null ? null : module.getName();
     }
 
+    @NlsSafe
     private String getPluginId() {
       return myDomFileElement.getRootElement().getPluginId();
     }

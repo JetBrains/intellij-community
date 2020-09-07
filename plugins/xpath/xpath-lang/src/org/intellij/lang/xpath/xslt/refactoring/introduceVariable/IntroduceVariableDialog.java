@@ -19,18 +19,18 @@ import com.intellij.lang.LanguageNamesValidation;
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.xslt.refactoring.BaseIntroduceDialog;
 import org.intellij.lang.xpath.xslt.refactoring.BaseIntroduceForm;
+import org.intellij.plugins.xpathView.XPathBundle;
 
 import javax.swing.*;
 
 public class IntroduceVariableDialog extends BaseIntroduceDialog implements IntroduceVariableOptions {
-    private static final String TITLE = "XSLT - Introduce Variable";
 
     private JPanel myContentPane;
     private BaseIntroduceForm myForm;
 
     public IntroduceVariableDialog(XPathExpression expression, int numberOfExpressions) {
         super(expression.getProject(), LanguageNamesValidation.INSTANCE.forLanguage(expression.getLanguage()));
-        init(expression, numberOfExpressions, TITLE);
+        init(expression, numberOfExpressions, XPathBundle.message("dialog.title.xslt.introduce.variable"));
     }
 
     @Override

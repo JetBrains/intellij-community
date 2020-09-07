@@ -1,8 +1,13 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.extensions
 
-import com.intellij.openapi.extensions.ExtensionPointName
+import org.intellij.markdown.ast.ASTNode
 
-interface MarkdownCodeFencePluginGeneratingProvider {
+/**
+ * Implementors of this interface will be automatically added
+ * to the list of extensions on the settings page.
+ */
+interface MarkdownCodeFencePluginGeneratingProvider : MarkdownExtension {
   /**
    * Check if plugin applicable for code fence language string
    */
@@ -12,8 +17,9 @@ interface MarkdownCodeFencePluginGeneratingProvider {
    * Consumes code fence content and generates appropriate html
    * [language] is a language that is stated in a code fence
    * [raw] is raw representation of text in code fence
+   * [node] is code fence AST node
    */
-  fun generateHtml(language: String, raw: String): String
+  fun generateHtml(language: String, raw: String, node: ASTNode): String
 
   /**
    * Will be called on Look and Feel change, but before rendering of new preview
@@ -22,12 +28,9 @@ interface MarkdownCodeFencePluginGeneratingProvider {
   fun onLAFChanged()
 
   companion object {
-    val EP_NAME: ExtensionPointName<MarkdownCodeFencePluginGeneratingProvider> = ExtensionPointName.create(
-      "org.intellij.markdown.codeFencePluginGeneratingProvider"
-    )
-
-    val all: Set<MarkdownCodeFencePluginGeneratingProvider>
-      get() = EP_NAME.extensions.toSet()
+    @JvmStatic
+    val all: List<MarkdownCodeFencePluginGeneratingProvider>
+      get() = MarkdownExtension.all.filterIsInstance<MarkdownCodeFencePluginGeneratingProvider>()
 
     /**
      * Notify all [MarkdownCodeFencePluginGeneratingProvider] that Look and Feel has been changed

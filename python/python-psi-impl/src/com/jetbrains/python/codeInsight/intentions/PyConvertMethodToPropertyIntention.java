@@ -50,13 +50,13 @@ public class PyConvertMethodToPropertyIntention extends PyBaseIntentionAction {
     final boolean[] available = {false};
     function.accept(new PyRecursiveElementVisitor() {
       @Override
-      public void visitPyReturnStatement(PyReturnStatement node) {
+      public void visitPyReturnStatement(@NotNull PyReturnStatement node) {
         if (node.getExpression() != null)
           available[0] = true;
       }
 
       @Override
-      public void visitPyYieldExpression(PyYieldExpression node) {
+      public void visitPyYieldExpression(@NotNull PyYieldExpression node) {
         available[0] = true;
       }
     });

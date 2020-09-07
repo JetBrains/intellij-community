@@ -363,7 +363,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     return addSimpleMessageElement(new SimpleMessageElement(kind, text, data));
   }
 
-  private ErrorTreeElement addSimpleMessageElement(ErrorTreeElement element) {
+  public ErrorTreeElement addSimpleMessageElement(ErrorTreeElement element) {
     synchronized (myLock) {
       List<ErrorTreeElement> elements = mySimpleMessages.get(element.getKind());
       if (elements == null) {
@@ -530,7 +530,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
           final Icon icon = myVf.getFileType().getIcon();
           renderer.setIcon(icon);
           final String[] messages = getText();
-          final String text = messages == null || messages.length == 0 ? vf.getPath() : messages[0];
+          final String text = messages == null || messages.length == 0 ? vf.getPresentableUrl() : messages[0];
           renderer.append(text);
         }
       };

@@ -275,7 +275,7 @@ public class JBUI {
     }
 
     @NotNull
-    public static JBFont create(String fontFamily, int size) {
+    public static JBFont create(@NonNls String fontFamily, int size) {
       return JBFont.create(new Font(fontFamily, Font.PLAIN, size));
     }
 

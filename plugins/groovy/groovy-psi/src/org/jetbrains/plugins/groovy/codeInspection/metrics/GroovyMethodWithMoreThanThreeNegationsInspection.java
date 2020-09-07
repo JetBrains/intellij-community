@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.codeInspection.metrics;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
@@ -25,7 +26,7 @@ public class GroovyMethodWithMoreThanThreeNegationsInspection extends BaseInspec
 
   @Override
   public String buildErrorString(Object... args) {
-    return "Method '#ref' has too many negations (" + args[0] + " > 3)";
+    return GroovyBundle.message("inspection.message.method.ref.has.too.many.negations", args[0]);
   }
 
   @NotNull

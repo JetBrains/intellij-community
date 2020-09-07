@@ -9,7 +9,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -21,7 +21,7 @@ import java.util.List;
 
 public final class Utils {
   private static final Logger LOG = Logger.getInstance(Utils.class);
-  @NonNls public static final String NOTHING_HERE = CommonBundle.message("empty.menu.filler");
+  @Nls public static final String NOTHING_HERE = CommonBundle.message("empty.menu.filler");
   public static final AnAction EMPTY_MENU_FILLER = new AnAction(CommonBundle.messagePointer("empty.menu.filler")) {
 
     {

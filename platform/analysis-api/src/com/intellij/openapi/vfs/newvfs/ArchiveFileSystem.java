@@ -5,6 +5,7 @@ import com.intellij.analysis.AnalysisBundle;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -19,6 +20,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.function.Function;
+
+import static com.intellij.openapi.util.Pair.pair;
 
 /**
  * Common interface of archive-based file systems (jar://, phar:// etc).
@@ -197,30 +200,21 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
     return ArchiveHandler.DEFAULT_LENGTH;
   }
 
-  private final Function<VirtualFile, byte[]> myContentGetter = ManagingFS.getInstance().accessDiskWithCheckCanceled(
+  private final Function<VirtualFile, Pair<byte[], IOException>> myContentGetter = ManagingFS.getInstance().accessDiskWithCheckCanceled(
     file -> {
       try {
-        return getHandler(file).contentsToByteArray(getRelativePath(file));
+        return pair(getHandler(file).contentsToByteArray(getRelativePath(file)), null);
       }
       catch (IOException e) {
-        throw new IOExceptionWrapper(e);
+        return pair(null, e);
       }
     });
 
-  private static class IOExceptionWrapper extends RuntimeException {
-    IOExceptionWrapper(IOException cause) {
-      super(cause);
-    }
-  }
-
   @Override
   public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file) throws IOException {
-    try {
-      return myContentGetter.apply(file);
-    }
-    catch (IOExceptionWrapper e) {
-      throw (IOException)e.getCause();
-    }
+    Pair<byte[], IOException> pair = myContentGetter.apply(file);
+    if (pair.second != null) throw pair.second;
+    return pair.first;
   }
 
   @NotNull

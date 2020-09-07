@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
+import com.intellij.openapi.application.AppUIExecutor
+import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.diagnostic.runAndLogException
@@ -13,7 +15,6 @@ import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 
 // A way to remove obsolete component data.
@@ -33,23 +34,6 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
       }
     })
     result
-  }
-
-  // todo do we really need this?
-  private val isSaveSettingsInProgress = AtomicBoolean()
-
-  final override suspend fun save(forceSavingAllSettings: Boolean) {
-    if (!isSaveSettingsInProgress.compareAndSet(false, true)) {
-      LOG.warn("save call is ignored because another save in progress", Throwable())
-      return
-    }
-
-    try {
-      super.save(forceSavingAllSettings)
-    }
-    finally {
-      isSaveSettingsInProgress.set(false)
-    }
   }
 
   final override fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId?) {
@@ -75,7 +59,7 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
                                                                        saveSessionProducerManager: SaveSessionProducerManager) {
     coroutineScope {
       // expects EDT
-      launch(storeEdtCoroutineDispatcher) {
+      launch(AppUIExecutor.onUiThread().expireWith(serviceContainer).coroutineDispatchingContext()) {
         @Suppress("Duplicates")
         val errors = SmartList<Throwable>()
         for (settingsSavingComponent in settingsSavingComponents) {

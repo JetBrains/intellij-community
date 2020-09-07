@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
@@ -404,10 +405,10 @@ public class AutomaticRenamingDialog extends DialogWrapper {
 
         @Nullable
         @Override
-        public String getErrorText(String inputString) {
+        public String getErrorText(@NlsSafe String inputString) {
           final int selectedRow = myTable.getSelectedRow();
           if (!isValidName(inputString, selectedRow)) {
-            return "Identifier '" + inputString + "' is invalid";
+            return RefactoringBundle.message("text.identifier.invalid", inputString);
           }
           return null;
         }

@@ -65,7 +65,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     if (titles.get(1) != null) titleWithCheckbox.addToCenter(titles.get(1));
     titleWithCheckbox.addToLeft(myExcludeAllCheckboxPanel);
 
-    return DiffUtil.createSyncHeightComponents(Arrays.asList(titles.get(0), titleWithCheckbox));
+    return Arrays.asList(titles.get(0), titleWithCheckbox);
   }
 
   @NotNull

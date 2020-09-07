@@ -263,7 +263,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     return super.isVisible() && (firstVisible() || innerVisible() || lastVisible());
   }
 
-  private boolean lastVisible() {
+  protected boolean lastVisible() {
     return !Splitter.isNull(myLastComponent) && myLastComponent.isVisible();
   }
 
@@ -271,7 +271,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     return !Splitter.isNull(myInnerComponent) && myInnerComponent.isVisible();
   }
 
-  private boolean firstVisible() {
+  protected boolean firstVisible() {
     return !Splitter.isNull(myFirstComponent) && myFirstComponent.isVisible();
   }
 

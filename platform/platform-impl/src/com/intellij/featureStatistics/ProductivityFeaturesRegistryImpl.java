@@ -59,7 +59,7 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
     }
   }
 
-  private void readFromXml(@NotNull String path) throws JDOMException, IOException {
+  private void readFromXml(@NotNull @NonNls String path) throws JDOMException, IOException {
     readFromXml(path, ProductivityFeaturesRegistryImpl.class);
   }
 
@@ -192,6 +192,7 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
   }
 
   @Override
+  @NonNls
   public String toString() {
     return super.toString() + "; myAdditionalFeaturesLoaded="+myAdditionalFeaturesLoaded;
   }

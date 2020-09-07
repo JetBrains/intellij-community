@@ -18,6 +18,7 @@ package com.intellij.notification.impl;
 import com.intellij.ide.IdeBundle;
 import com.intellij.notification.impl.ui.NotificationsConfigurableUi;
 import com.intellij.openapi.options.ConfigurableBase;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +34,7 @@ public class NotificationsConfigurable extends ConfigurableBase<NotificationsCon
   }
 
   @NotNull
-  public static String displayName() {
+  public static @NlsContexts.ConfigurableName String displayName() {
     return IdeBundle.message("notification.configurable.display.name.notifications");
   }
 

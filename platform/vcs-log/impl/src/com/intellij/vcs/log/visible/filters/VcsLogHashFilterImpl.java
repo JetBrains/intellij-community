@@ -4,6 +4,7 @@ package com.intellij.vcs.log.visible.filters;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.vcs.log.VcsLogHashFilter;
 import com.intellij.vcs.log.util.VcsLogUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -29,8 +30,9 @@ class VcsLogHashFilterImpl implements VcsLogHashFilter {
   }
 
   @Override
+  @NonNls
   public String toString() {
-    return "hashes:" + myHashes; // NON-NLS
+    return "hashes:" + myHashes;
   }
 
   @Override

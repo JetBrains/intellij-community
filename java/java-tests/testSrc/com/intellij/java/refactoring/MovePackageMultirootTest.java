@@ -19,7 +19,6 @@ import com.intellij.JavaTestUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.MultiFileTestCase;
 import com.intellij.refactoring.PackageWrapper;
@@ -27,6 +26,8 @@ import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackages
 import com.intellij.refactoring.move.moveClassesOrPackages.MultipleRootsMoveDestination;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 
 /**
  *  @author dsl
@@ -46,25 +47,25 @@ public class MovePackageMultirootTest extends MultiFileTestCase {
   }
 
   public void testMovePackage() {
-    doTest(createAction(new String[]{"pack1"}, "target"));
-  }
+    doTest((rootDir, rootAfter) -> {
+      JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
 
-  private PerformAction createAction(final String[] packageNames, final String targetPackageName) {
-    return (rootDir, rootAfter) -> {
-      final PsiManager manager = PsiManager.getInstance(myProject);
-      PsiPackage[] sourcePackages = new PsiPackage[packageNames.length];
-      for (int i = 0; i < packageNames.length; i++) {
-        String packageName = packageNames[i];
-        sourcePackages[i] = JavaPsiFacade.getInstance(manager.getProject()).findPackage(packageName);
-        assertNotNull(sourcePackages[i]);
-      }
-      PsiPackage targetPackage = JavaPsiFacade.getInstance(manager.getProject()).findPackage(targetPackageName);
-      assertNotNull(targetPackage);
+      PsiPackage pack1 = facade.findPackage("pack1");
+      assertSize(2, pack1.getDirectories());
+      assertSize(1, facade.findPackage("pack1.inside").getDirectories());
+      assertSize(1, facade.findPackage("pack1Unrelated").getDirectories());
+
+      PsiPackage[] sourcePackages = new PsiPackage[]{pack1};
+      PsiPackage targetPackage = facade.findPackage("target");
       new MoveClassesOrPackagesProcessor(myProject, sourcePackages,
                                          new MultipleRootsMoveDestination(new PackageWrapper(targetPackage)),
                                          true, true, null).run();
       FileDocumentManager.getInstance().saveAllDocuments();
-    };
+
+      assertSize(2, facade.findPackage("target.pack1").getDirectories());
+      assertSize(1, facade.findPackage("target.pack1.inside").getDirectories());
+      assertSize(1, facade.findPackage("pack1Unrelated").getDirectories());
+    });
   }
 
   @Override
@@ -72,8 +73,13 @@ public class MovePackageMultirootTest extends MultiFileTestCase {
     PsiTestUtil.addContentRoot(myModule, rootDir);
     final VirtualFile[] children = rootDir.getChildren();
     for (VirtualFile child : children) {
-      if (child.getName().startsWith("src")) {
-        PsiTestUtil.addSourceRoot(myModule, child);
+      String name = child.getName();
+      if (name.startsWith("src")) {
+        String prefix = name.equals("srcPrefix1") ? "pack1.inside" :
+                        name.equals("srcPrefix2") ? "pack1Unrelated" :
+                        "";
+        PsiTestUtil.addSourceRoot(myModule, child, JavaSourceRootType.SOURCE,
+                                  JpsJavaExtensionService.getInstance().createSourceRootProperties(prefix, false));
       }
     }
   }

@@ -82,7 +82,9 @@ public class HgMergeProvider implements MergeProvider {
         if (parts.size() < 2) {
           LOG.info("Couldn't parse result of debugancestor command execution " + arguments);
           new HgCommandResultNotifier(myProject)
-            .notifyError(null, HgBundle.message("hg4idea.error.debugancestor.command.execution"),
+            .notifyError("hg.debugancestor.error",
+                         null,
+                         HgBundle.message("hg4idea.error.debugancestor.command.execution"),
                          HgBundle.message("hg4idea.error.debugancestor.command.description"));
         }
         else {
@@ -92,7 +94,9 @@ public class HgMergeProvider implements MergeProvider {
       else {
         LOG.info(HgBundle.message("hg4idea.error.debugancestor.command.execution") + arguments);
         new HgCommandResultNotifier(myProject)
-          .notifyError(null, HgBundle.message("hg4idea.error.debugancestor.command.execution"),
+          .notifyError("hg.debugancestor.error",
+                       null,
+                       HgBundle.message("hg4idea.error.debugancestor.command.execution"),
                        HgBundle.message("hg4idea.error.debugancestor.command.description"));
       }
     }

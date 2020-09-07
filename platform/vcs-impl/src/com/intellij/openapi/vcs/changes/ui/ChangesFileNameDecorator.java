@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.awt.*;
@@ -29,6 +30,6 @@ public abstract class ChangesFileNameDecorator {
     return ServiceManager.getService(project, ChangesFileNameDecorator.class);
   }
 
-  public abstract void appendFileName(final ChangesBrowserNodeRenderer renderer, final VirtualFile vFile, final String fileName, 
+  public abstract void appendFileName(final ChangesBrowserNodeRenderer renderer, final VirtualFile vFile, @NlsSafe String fileName,
                                       final Color color, boolean highlightProblems);
 }

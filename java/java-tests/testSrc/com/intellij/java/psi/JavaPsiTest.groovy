@@ -196,16 +196,6 @@ class JavaPsiTest extends LightJavaCodeInsightFixtureTestCase {
     assert 1 == clazz.methods.size() // only constructor
   }
 
-  void "test record has members in dumb mode"() {
-    DumbServiceImpl.getInstance(getProject()).runInDumbMode {
-      def clazz = configureFile("record A(@Foo A... i)").classes[0]
-      def methods = clazz.findMethodsByName("i")
-      assert 1 == methods.size()
-      def method = methods.first()
-      assert method instanceof LightRecordMethod
-    }
-  }
-
   void "test add record component"() {
     def clazz = configureFile("record A(String s)").classes[0]
     def factory = JavaPsiFacade.getElementFactory(project)

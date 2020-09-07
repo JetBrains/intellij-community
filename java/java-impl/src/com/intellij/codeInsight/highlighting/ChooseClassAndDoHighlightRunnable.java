@@ -18,6 +18,7 @@ package com.intellij.codeInsight.highlighting;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import org.jetbrains.annotations.NotNull;
@@ -26,11 +27,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 abstract class ChooseClassAndDoHighlightRunnable extends ChooseOneOrAllRunnable<PsiClass> {
-  ChooseClassAndDoHighlightRunnable(PsiClassType @NotNull [] classTypes, @NotNull Editor editor, @NotNull String title) {
+  ChooseClassAndDoHighlightRunnable(PsiClassType @NotNull [] classTypes, @NotNull Editor editor, @NotNull @NlsContexts.PopupTitle String title) {
     super(resolveClasses(classTypes), editor, title, PsiClass.class);
   }
 
-  ChooseClassAndDoHighlightRunnable(@NotNull List<? extends PsiClass> classes, @NotNull Editor editor, @NotNull String title) {
+  ChooseClassAndDoHighlightRunnable(@NotNull List<? extends PsiClass> classes, @NotNull Editor editor, @NotNull @NlsContexts.PopupTitle String title) {
     super(classes, editor, title, PsiClass.class);
   }
 

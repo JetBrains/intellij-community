@@ -37,19 +37,19 @@ import com.intellij.util.Alarm
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.Semaphore
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.*
+import org.junit.After
+import org.junit.Assert.*
 import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNotSame
-import kotlin.test.assertTrue
 
 class FileWatcherTest : BareTestFixtureTestCase() {
   //<editor-fold desc="Set up / tear down">
@@ -99,8 +99,12 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     }
 
     runInEdtAndWait {
-      runWriteAction { root.delete(this) }
-      (fs as LocalFileSystemImpl).cleanupForNextTest()
+      if (this::root.isInitialized) {
+        runWriteAction { root.delete(this) }
+      }
+      if (this::fs.isInitialized) {
+        (fs as LocalFileSystemImpl).cleanupForNextTest()
+      }
     }
 
     LOG.debug("================== tearing down " + getTestName(false) + " ==================")
@@ -255,7 +259,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     val root = tempDir.newDirectory("root")
     val cDir = tempDir.newDirectory("root/A/B/C")
     val aLink = File(root, "aLink")
-    Files.createSymbolicLink(aLink.toPath(), Paths.get("${root.path}/A"))
+    IoTestUtil.createSymbolicLink(aLink.toPath(), Paths.get("${root.path}/A"))
     val flatWatchedFile = tempDir.newFile("root/aLink/test.txt")
     val fileOutsideFlatWatchRoot = tempDir.newFile("root/A/B/C/test.txt")
     refresh(root)
@@ -272,9 +276,9 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     val root = tempDir.newDirectory("root")
     val file = tempDir.newFile("root/A/B/C/test.txt")
     val bLink = File(root, "bLink")
-    Files.createSymbolicLink(bLink.toPath(), Paths.get("${root.path}/A/B"))
+    IoTestUtil.createSymbolicLink(bLink.toPath(), Paths.get("${root.path}/A/B"))
     val cLink = File(root, "cLink")
-    Files.createSymbolicLink(cLink.toPath(), Paths.get("${root.path}/A/B/C"))
+    IoTestUtil.createSymbolicLink(cLink.toPath(), Paths.get("${root.path}/A/B/C"))
     refresh(root)
     val bFilePath = File(bLink.path, "C/${file.name}")
     val cFilePath = File(cLink.path, file.name)
@@ -291,7 +295,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
     val top = tempDir.newDirectory("top")
     val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
-    val link = Files.createSymbolicLink(Paths.get(top.path, "link"), Paths.get("${top.path}/dir1/dir2")).toFile()
+    val link = IoTestUtil.createSymbolicLink(Paths.get(top.path, "link"), Paths.get("${top.path}/dir1/dir2")).toFile()
     val fileLink = File(top, "link/dir3/test.txt")
     refresh(top)
 
@@ -306,7 +310,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
     val top = tempDir.newDirectory("top")
     val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
-    val link = Files.createSymbolicLink(Paths.get(top.path, "link"), Paths.get("${top.path}/dir1/dir2")).toFile()
+    val link = IoTestUtil.createSymbolicLink(Paths.get(top.path, "link"), Paths.get("${top.path}/dir1/dir2")).toFile()
     val watchRoot = File(link, "dir3")
     val fileLink = File(watchRoot, file.name)
     refresh(top)
@@ -366,7 +370,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
     val top = tempDir.newDirectory("top")
     val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
-    val link = Files.createSymbolicLink(Paths.get(top.path, "link"), Paths.get("${top.path}/dir1/dir2")).toFile()
+    val link = IoTestUtil.createSymbolicLink(Paths.get(top.path, "link"), Paths.get("${top.path}/dir1/dir2")).toFile()
     val fileLink = File(link, "dir3/" + file.name)
     refresh(top)
     watch(top)
@@ -382,8 +386,8 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     val top = tempDir.newDirectory("top")
     val topA = tempDir.newDirectory("top/a")
     val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
-    val link = Files.createSymbolicLink(Paths.get(topA.path, "link"), Paths.get("${top.path}/dir1/dir2")).toFile()
-    val link2 = Files.createSymbolicLink(Paths.get(file.parent, "dir4"), Paths.get(topA.path)).toFile()
+    val link = IoTestUtil.createSymbolicLink(Paths.get(topA.path, "link"), Paths.get("${top.path}/dir1/dir2")).toFile()
+    val link2 = IoTestUtil.createSymbolicLink(Paths.get(file.parent, "dir4"), Paths.get(topA.path)).toFile()
     val fileLink = File(link, "dir3/" + file.name)
 
     refresh(top)
@@ -411,7 +415,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     watch(top)
 
     assertEvents({ file.writeText("new content") }, mapOf(file to 'U'))
-    assertEvents({ Files.createSymbolicLink(link.toPath(), Paths.get("${top.path}/dir1/dir2")) }, mapOf(link to 'C'))
+    assertEvents({ IoTestUtil.createSymbolicLink(link.toPath(), Paths.get("${top.path}/dir1/dir2")) }, mapOf(link to 'C'))
     refresh(top)
     assertEvents({ file.writeText("newer content") }, mapOf(fileLink to 'U', file to 'U'))
     assertEvents({ link.delete() }, mapOf(link to 'D'))
@@ -548,7 +552,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     val file2 = tempDir.newFile("top/root/2.txt")
     refresh(top)
     val fsRoot = File(if (SystemInfo.isUnix) "/" else top.path.substring(0, 3))
-    assertTrue(fsRoot.exists(), "can't guess root of $top")
+    assertTrue("can't guess root of $top", fsRoot.exists())
 
     val request = watch(root)
     assertEvents({ arrayOf(file1, file2).forEach { it.writeText("new content") } }, mapOf(file2 to 'U'))

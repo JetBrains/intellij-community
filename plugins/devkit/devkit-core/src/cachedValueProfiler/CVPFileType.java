@@ -6,6 +6,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 
 import javax.swing.*;
 
@@ -24,7 +25,7 @@ public final class CVPFileType implements FileType {
   @NotNull
   @Override
   public String getDescription() {
-    return "Cached value profiling snapshot";
+    return DevKitBundle.message("cached.value.profiler.file.description");
   }
 
   @NotNull

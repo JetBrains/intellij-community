@@ -26,6 +26,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser
 import com.intellij.openapi.util.InvalidDataException
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.KeyStrokeAdapter
 import com.intellij.util.ArrayUtilRt
@@ -35,6 +36,7 @@ import com.intellij.util.containers.mapSmart
 import com.intellij.util.containers.nullize
 import org.jdom.Element
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.KeyStroke
 import kotlin.collections.HashSet
 
@@ -53,20 +55,12 @@ private const val NAME_ATTRIBUTE = "name"
 private const val ID_ATTRIBUTE = "id"
 private const val MOUSE_SHORTCUT = "mouse-shortcut"
 
-private val LOG = logger<KeymapImpl>()
-
 fun KeymapImpl(name: String, dataHolder: SchemeDataHolder<KeymapImpl>): KeymapImpl {
   val result = KeymapImpl(dataHolder)
   result.name = name
   result.schemeState = SchemeState.UNCHANGED
   return result
 }
-
-private val NOTIFICATION_MANAGER by lazy {
-  // we use name "Password Safe" instead of "Credentials Store" because it was named so previously (and no much sense to rename it)
-  SingletonNotificationManager(NotificationGroup("Keymap", NotificationDisplayType.STICKY_BALLOON, true), NotificationType.ERROR)
-}
-
 
 open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDataHolder<KeymapImpl>? = null) : ExternalizableSchemeAdapter(), Keymap, SerializableScheme {
   private var parent: KeymapImpl? = null
@@ -482,7 +476,8 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
       if (parentScheme == null) {
         LOG.warn("Cannot find parent scheme $parentSchemeName for scheme $name")
         unknownParentName = parentSchemeName
-        notifyAboutMissingKeymap(parentSchemeName, "Cannot find parent keymap \"$parentSchemeName\" for \"$name\"", true)
+        notifyAboutMissingKeymap(parentSchemeName,
+                                 IdeBundle.message("notification.content.cannot.find.parent.keymap", parentSchemeName, name), true)
       }
       else {
         parent = parentScheme as KeymapImpl
@@ -707,6 +702,15 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
   }
 
   override fun hashCode(): Int = name.hashCode()
+
+  companion object {
+    private val LOG = logger<KeymapImpl>()
+
+    internal val NOTIFICATION_MANAGER by lazy {
+      // we use name "Password Safe" instead of "Credentials Store" because it was named so previously (and no much sense to rename it)
+      SingletonNotificationManager(NotificationGroup("Keymap", NotificationDisplayType.STICKY_BALLOON, true), NotificationType.ERROR)
+    }
+  }
 }
 
 private fun sortInRegistrationOrder(ids: MutableList<String>) {
@@ -742,11 +746,15 @@ private val visualAssistKeymap = "com.intellij.plugins.visualassistkeymap"
 private val riderKeymap = "com.intellij.plugins.riderkeymap"
 private val vsCodeKeymap = "com.intellij.plugins.vscodekeymap"
 
-internal fun notifyAboutMissingKeymap(keymapName: String, message: String, isParent: Boolean) {
+internal fun notifyAboutMissingKeymap(keymapName: String, @NlsContexts.NotificationContent message: String, isParent: Boolean) {
   val connection = ApplicationManager.getApplication().messageBus.connect()
+  val notificationScheduled = AtomicBoolean(false)
   connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
     override fun projectOpened(project: Project) {
-      connection.disconnect()
+      if (!notificationScheduled.compareAndSet(false, true)) {
+        return
+      }
+
       ApplicationManager.getApplication().invokeLater(
         {
           // TODO remove when PluginAdvertiser implements that
@@ -824,8 +832,12 @@ internal fun notifyAboutMissingKeymap(keymapName: String, message: String, isPar
               }
             }
           }
-          NOTIFICATION_MANAGER.notify(IdeBundle.message("notification.group.missing.keymap"), message, action = action)
+          KeymapImpl.NOTIFICATION_MANAGER.notify(IdeBundle.message("notification.group.missing.keymap"), message, action = action)
         }, ModalityState.NON_MODAL)
+    }
+
+    override fun projectClosed(project: Project) {
+      KeymapImpl.NOTIFICATION_MANAGER.clear()
     }
   }
   )

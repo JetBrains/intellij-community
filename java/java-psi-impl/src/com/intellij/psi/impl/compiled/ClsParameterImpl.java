@@ -7,7 +7,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.ElementPresentationUtil;
-import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiParameterStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiParameterStubImpl;
@@ -39,10 +38,7 @@ public class ClsParameterImpl extends ClsRepositoryPsiElement<PsiParameterStub> 
       @NotNull
       @Override
       protected PsiTypeElement compute() {
-        PsiParameterStub stub = getStub();
-        String typeText = TypeInfo.createTypeText(stub.getType(false));
-        assert typeText != null : stub;
-        return new ClsTypeElementImpl(ClsParameterImpl.this, typeText, ClsTypeElementImpl.VARIANCE_NONE);
+        return new ClsTypeElementImpl(ClsParameterImpl.this, getStub().getType(false));
       }
     };
   }

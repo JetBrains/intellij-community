@@ -50,7 +50,7 @@ import java.util.regex.Pattern;
  * (a java implementation: https://github.com/atteo/evo-inflector)
  *
  * @author gregsh
- * @noinspection SpellCheckingInspection
+ * @noinspection SpellCheckingInspection, HardCodedStringLiteral
  */
 final class Pluralizer {
   static final Pluralizer PLURALIZER;

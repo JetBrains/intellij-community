@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.CommonBundle;
@@ -17,6 +17,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.SearchTextField.FindAction;
 import com.intellij.util.ui.JBDimension;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +31,7 @@ import java.util.List;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_FIND;
 
 public class SettingsDialog extends DialogWrapper implements DataProvider {
-  public static final String DIMENSION_KEY = "SettingsEditor";
+  @NonNls public static final String DIMENSION_KEY = "SettingsEditor";
 
   private final String myDimensionServiceKey;
   private final AbstractEditor myEditor;
@@ -181,7 +182,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
   public void applyAndClose(boolean scheduleSave) {
     if (myEditor.apply()) {
       if (scheduleSave) {
-        SaveAndSyncHandler.getInstance().scheduleSave(new SaveAndSyncHandler.SaveTask(null, /* saveDocuments = */ false, /* forceSavingAllSettings = */ true), false);
+        SaveAndSyncHandler.getInstance().scheduleSave(new SaveAndSyncHandler.SaveTask(null, /* forceSavingAllSettings = */ true));
       }
       super.doOKAction();
     }

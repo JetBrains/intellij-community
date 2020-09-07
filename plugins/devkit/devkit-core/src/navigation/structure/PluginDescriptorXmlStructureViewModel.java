@@ -81,7 +81,7 @@ public class PluginDescriptorXmlStructureViewModel extends XmlStructureViewTreeM
         @Override
         public ActionPresentation getPresentation() {
           return new ActionPresentationData(DevKitBundle.message("structure.sort.alphabetically.in.groups"),
-                                            DevKitBundle.message("structure.sort.alphabetically.in.groups"),
+                                            DevKitBundle.message("structure.sort.alphabetically.in.groups.description"),
                                             AllIcons.ObjectBrowser.Sorted);
         }
 

@@ -16,6 +16,7 @@
 package com.intellij.refactoring.typeMigration.rules.guava;
 
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeEvaluator;
@@ -37,7 +38,7 @@ import java.util.Set;
  * @author Dmitry Batkovich
  */
 public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
-  private final SoftLazyValue<Map<String, TypeConversionDescriptorBase>> mySimpleDescriptors = new SoftLazyValue<Map<String, TypeConversionDescriptorBase>>() {
+  private final SoftLazyValue<Map<String, TypeConversionDescriptorBase>> mySimpleDescriptors = new SoftLazyValue<>() {
     @NotNull
     @Override
     protected Map<String, TypeConversionDescriptorBase> compute() {
@@ -47,13 +48,13 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
     }
   };
 
-  protected void fillSimpleDescriptors(Map<String, TypeConversionDescriptorBase> descriptorsMap) {}
+  protected void fillSimpleDescriptors(Map<@NlsSafe String, TypeConversionDescriptorBase> descriptorsMap) {}
 
   @Nullable
   protected TypeConversionDescriptorBase findConversionForMethod(PsiType from,
                                                                  PsiType to,
                                                                  @NotNull PsiMethod method,
-                                                                 @NotNull String methodName,
+                                                                 @NotNull @NlsSafe String methodName,
                                                                  PsiExpression context,
                                                                  TypeMigrationLabeler labeler) {
     return null;

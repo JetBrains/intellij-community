@@ -1,10 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint.actions;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.impl.PsiElementListNavigator;
 import com.intellij.codeInsight.hint.PsiImplementationViewSession;
 import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.ide.util.PsiClassListCellRenderer;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
@@ -35,13 +37,17 @@ public class ShowSiblingsAction extends ShowImplementationsAction {
     PsiElement element = pair != null ? pair.first : null;
     if (element == null) return;
 
-    final PsiElement[] superElements =findSuperElements(element);
+    final PsiElement[] superElements = findSuperElements(element);
     if (superElements.length == 0) return;
 
     final boolean isMethod = superElements[0] instanceof PsiMethod;
     NavigatablePsiElement[] navigatablePsiElements = ContainerUtil.findAllAsArray(superElements, NavigatablePsiElement.class);
-    final String title = "Choose super " + (isMethod ? "method" : "class or interface");
-    final String findUsagesTitle = "Super " + (isMethod ? "methods" : "classes/interfaces");
+    final String title = isMethod
+                         ? CodeInsightBundle.message("show.siblings.choose.super.method.title")
+                         : JavaBundle.message("show.siblings.choose.super.class.title");
+    final String findUsagesTitle = isMethod
+                                   ? JavaBundle.message("show.siblings.find.usages.method.title")
+                                   : JavaBundle.message("show.siblings.find.usages.class.title");
     final ListCellRenderer listRenderer = isMethod ? new MethodCellRenderer(false) : new PsiClassListCellRenderer();
     final JBPopup popup = PsiElementListNavigator
       .navigateOrCreatePopup(navigatablePsiElements, title, findUsagesTitle, listRenderer, null,
@@ -49,7 +55,8 @@ public class ShowSiblingsAction extends ShowImplementationsAction {
     if (popup != null) {
       if (editor != null) {
         popup.showInBestPositionFor(editor);
-      } else {
+      }
+      else {
         popup.showCenteredInCurrentWindow(project);
       }
     }

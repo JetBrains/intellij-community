@@ -22,7 +22,7 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel implements
 
   private final JBLabel myLabel = new JBLabel();
   private Comp myComponent;
-  private String myLabelConstraints = BorderLayout.NORTH;
+  private @NonNls String myLabelConstraints = BorderLayout.NORTH;
   private JComponent myAnchor;
 
   public LabeledComponent() {
@@ -151,7 +151,7 @@ public class LabeledComponent<Comp extends JComponent> extends JPanel implements
     private final @NlsContexts.Label String myText;
     private final int myMnemonicIndex;
 
-    public TextWithMnemonic(String text, int mnemonicIndex) {
+    public TextWithMnemonic(@NlsContexts.Label String text, int mnemonicIndex) {
       myText = text;
       myMnemonicIndex = mnemonicIndex;
     }

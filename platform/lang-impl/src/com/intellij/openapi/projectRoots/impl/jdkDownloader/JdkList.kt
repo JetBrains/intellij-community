@@ -14,18 +14,20 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.Decompressor
 import com.intellij.util.io.HttpRequests
+import com.intellij.util.io.write
 import com.intellij.util.lang.JavaVersion
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.jps.model.java.JdkVersionDetector
 import org.tukaani.xz.XZInputStream
 import java.io.ByteArrayInputStream
-import java.io.File
 import java.io.IOException
+import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -63,6 +65,7 @@ data class JdkItem(
   val isVisibleOnUI: Boolean,
 
   val jdkMajorVersion: Int,
+  @get:NlsSafe
   val jdkVersion: String,
   private val jdkVendorVersion: String?,
   val suggestedSdkName: String,
@@ -85,10 +88,10 @@ data class JdkItem(
 
   val sharedIndexAliases: List<String>,
 
-  private val saveToFile: (File) -> Unit
+  private val saveToFile: (Path) -> Unit
 ) {
 
-  fun writeMarkerFile(file: File) {
+  fun writeMarkerFile(file: Path) {
     saveToFile(file)
   }
 
@@ -136,7 +139,7 @@ data class JdkItem(
 enum class JdkPackageType(@NonNls val type: String) {
   @Suppress("unused")
   ZIP("zip") {
-    override fun openDecompressor(archiveFile: File): Decompressor {
+    override fun openDecompressor(archiveFile: Path): Decompressor {
       val decompressor = Decompressor.Zip(archiveFile)
       return when {
         SystemInfo.isWindows -> decompressor
@@ -147,10 +150,10 @@ enum class JdkPackageType(@NonNls val type: String) {
 
   @Suppress("SpellCheckingInspection", "unused")
   TAR_GZ("targz") {
-    override fun openDecompressor(archiveFile: File) = Decompressor.Tar(archiveFile).withSymlinks()
+    override fun openDecompressor(archiveFile: Path) = Decompressor.Tar(archiveFile).withSymlinks()
   };
 
-  abstract fun openDecompressor(archiveFile: File): Decompressor
+  abstract fun openDecompressor(archiveFile: Path): Decompressor
 
   companion object {
     fun findType(jsonText: String): JdkPackageType? = values().firstOrNull { it.type.equals(jsonText, ignoreCase = true) }
@@ -313,7 +316,7 @@ object JdkListParser {
 
                    sharedIndexAliases = (item["shared_index_aliases"] as? ArrayNode)?.mapNotNull { it.asText() } ?: listOf(),
 
-                   saveToFile = { file -> file.writeBytes(contents) }
+                   saveToFile = { file -> file.write(contents) }
     )
   }
 }

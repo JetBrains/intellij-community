@@ -44,8 +44,4 @@ public class JpsJavaCompilerOptionsSerializer extends JpsProjectExtensionSeriali
     JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(project);
     configuration.setCompilerOptions(myCompilerId, new JpsJavaCompilerOptions());
   }
-
-  @Override
-  public void saveExtension(@NotNull JpsProject project, @NotNull Element componentTag) {
-  }
 }

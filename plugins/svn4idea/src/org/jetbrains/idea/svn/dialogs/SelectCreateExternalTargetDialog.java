@@ -1,13 +1,15 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import java.util.HashSet;
+import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.Url;
@@ -15,7 +17,10 @@ import org.jetbrains.idea.svn.api.Url;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.HashSet;
 import java.util.Set;
+
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class SelectCreateExternalTargetDialog extends RepositoryBrowserDialog {
   private String mySelectedURL;
@@ -26,7 +31,7 @@ public class SelectCreateExternalTargetDialog extends RepositoryBrowserDialog {
   private final Set<String> myUsedNames;
 
   public SelectCreateExternalTargetDialog(Project project, final VirtualFile below) {
-    super(project, true, "Point to repository location");
+    super(project, true, message("label.point.to.repository.location"));
     final VirtualFile[] children = below.getChildren();
     myUsedNames = new HashSet<>();
     int maxCnt = 1000;  // maybe not take it too seriously ?
@@ -41,8 +46,8 @@ public class SelectCreateExternalTargetDialog extends RepositoryBrowserDialog {
   protected void init() {
     super.init();
     myFollowRemoteTarget = true;
-    setTitle("Select Target For External");
-    setOKButtonText("Select");
+    setTitle(message("dialog.title.select.target.for.external"));
+    setOKButtonText(message("button.select"));
     getRepositoryBrowser().addChangeListener(e -> {
       if (getOKAction() != null) {
         final String selectedURL = getRepositoryBrowser().getSelectedURL();
@@ -61,7 +66,7 @@ public class SelectCreateExternalTargetDialog extends RepositoryBrowserDialog {
     final boolean contains = myUsedNames.contains(text);
     final boolean enabled = selectedURL != null && !StringUtil.isEmptyOrSpaces(text) && !contains;
     if (contains) {
-      setErrorText("Target File Already Exists", myFolderName);
+      setErrorText(message("dialog.message.target.file.already.exists"), myFolderName);
     } else {
       setErrorText(null);
     }
@@ -86,7 +91,7 @@ public class SelectCreateExternalTargetDialog extends RepositoryBrowserDialog {
   @Override
   protected JPopupMenu createPopup(boolean toolWindow) {
     DefaultActionGroup group = new DefaultActionGroup();
-    DefaultActionGroup newGroup = DefaultActionGroup.createPopupGroup(() -> "_New");
+    DefaultActionGroup newGroup = DefaultActionGroup.createPopupGroup(ActionsBundle.messagePointer("group.NewGroup.text"));
     final RepositoryBrowserComponent browser = getRepositoryBrowser();
     newGroup.add(new AddLocationAction(browser));
     newGroup.add(new MkDirAction(browser));
@@ -108,7 +113,7 @@ public class SelectCreateExternalTargetDialog extends RepositoryBrowserDialog {
     gb.weighty = 1;
     gb.gridwidth = 2;
     wrapper.add(repositoryPanel, gb);
-    ++ gb.gridy;
+    ++gb.gridy;
     gb.fill = GridBagConstraints.NONE;
     gb.weightx = 0;
     gb.weighty = 0;
@@ -117,8 +122,8 @@ public class SelectCreateExternalTargetDialog extends RepositoryBrowserDialog {
     myFolderName = new JTextField();
     gb.insets.top = 5;
     gb.anchor = GridBagConstraints.WEST;
-    wrapper.add(new JLabel("Local Target:"), gb);
-    ++ gb.gridx;
+    wrapper.add(new JBLabel(message("label.local.target")), gb);
+    ++gb.gridx;
     gb.weightx = 1;
     gb.fill = GridBagConstraints.HORIZONTAL;
     wrapper.add(myFolderName, gb);
@@ -126,7 +131,7 @@ public class SelectCreateExternalTargetDialog extends RepositoryBrowserDialog {
     gb.weightx = 0;
     gb.fill = GridBagConstraints.NONE;
     gb.gridx = 0;
-    ++ gb.gridy;
+    ++gb.gridy;
 
     myFolderName.addFocusListener(new FocusAdapter() {
       @Override
@@ -155,7 +160,7 @@ public class SelectCreateExternalTargetDialog extends RepositoryBrowserDialog {
       }
     });
 
-    final JCheckBox checkout = new JCheckBox("Checkout");
+    final JBCheckBox checkout = new JBCheckBox(message("checkbox.checkout"));
     checkout.addActionListener(e -> myCheckout = checkout.isSelected());
     wrapper.add(checkout, gb);
     return wrapper;

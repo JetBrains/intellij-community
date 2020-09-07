@@ -65,6 +65,9 @@
     <toolWindow id="Pull Requests" icon="GithubIcons.PullRequestsToolWindow"
                 anchor="left" canCloseContents="true" doNotActivateOnStart="true"
                 factoryClass="org.jetbrains.plugins.github.pullrequest.GHPRToolWindowFactory"/>
+
+    <diff.actions.ShowDiffAction.ExtensionProvider
+      implementation="org.jetbrains.plugins.github.pullrequest.action.GHPRShowDiffActionProvider"/>
   </extensions>
 
   <applicationListeners>
@@ -161,6 +164,8 @@
       <reference id="Github.Open.In.Browser"/>
       <action id="Github.PullRequest.Branch.Create"
               class="org.jetbrains.plugins.github.pullrequest.action.GHPRCreateBranchAction"/>
+      <action id="Github.PullRequest.Branch.Update"
+              class="org.jetbrains.plugins.github.pullrequest.action.GHPRUpdateBranchAction"/>
       <action id="Github.PullRequest.Details.Reload"
               class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadDetailsAction" use-shortcut-of="Refresh"/>
     </group>
@@ -168,6 +173,22 @@
             class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadChangesAction" use-shortcut-of="Refresh"/>
     <action id="Github.PullRequest.Comments.Reload"
             class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadCommentsAction" use-shortcut-of="Refresh"/>
+
+    <action id="Github.PullRequest.Review.Submit"
+            class="org.jetbrains.plugins.github.pullrequest.action.GHPRReviewSubmitAction"/>
+
+    <group id="Github.PullRequest.Changes.Toolbar">
+      <reference id="Diff.ShowDiff"/>
+      <reference id="Github.PullRequest.Review.Submit"/>
+      <separator/>
+      <reference id="ChangesView.GroupBy"/>
+    </group>
+
+    <group id="Github.PullRequest.Changes.Popup">
+      <reference id="Diff.ShowDiff"/>
+      <reference id="Github.PullRequest.Changes.Reload"/>
+    </group>
+
     <group id="Github.PullRequest.Timeline.Popup">
       <action id="Github.PullRequest.Timeline.Update"
               class="org.jetbrains.plugins.github.pullrequest.action.GHPRUpdateTimelineAction" use-shortcut-of="Refresh"/>
@@ -183,5 +204,15 @@
       <separator/>
       <action id="Github.Accounts.AddGHEAccount" class="org.jetbrains.plugins.github.authentication.ui.AddGHEAccountAction"/>
     </group>
+
+    <action id="Github.PullRequest.Diff.Comment.Create"
+            class="org.jetbrains.plugins.github.pullrequest.comment.action.GHPRCreateDiffCommentAction">
+      <keyboard-shortcut first-keystroke="control shift X" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="control shift X" keymap="Eclipse" remove="true"/>
+      <keyboard-shortcut first-keystroke="control shift X" keymap="Eclipse (Mac OS X)" remove="true"/>
+      <keyboard-shortcut first-keystroke="meta shift X" keymap="Eclipse (Mac OS X)" remove="true"/>
+      <keyboard-shortcut first-keystroke="control shift X" keymap="Emacs" remove="true"/>
+      <add-to-group group-id="Diff.EditorPopupMenu"/>
+    </action>
   </actions>
 </idea-plugin>

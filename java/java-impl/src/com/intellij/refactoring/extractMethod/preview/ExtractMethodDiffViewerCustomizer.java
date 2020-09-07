@@ -5,14 +5,14 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.DiffExtension;
 import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.requests.DiffRequest;
-import org.jetbrains.annotations.CalledInAwt;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Pavel.Dolgov
  */
 public class ExtractMethodDiffViewerCustomizer extends DiffExtension {
-  @CalledInAwt
+  @RequiresEdt
   @Override
   public void onViewerCreated(@NotNull FrameDiffTool.DiffViewer viewer, @NotNull DiffContext context, @NotNull DiffRequest request) {
     if (request instanceof PreviewDiffRequest) {

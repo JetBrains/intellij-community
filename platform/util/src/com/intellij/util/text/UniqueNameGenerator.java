@@ -2,6 +2,7 @@
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
@@ -39,26 +40,31 @@ public class UniqueNameGenerator implements Condition<String> {
     return value(prefix + name + suffix);
   }
 
+  @NlsSafe
   @NotNull
   public static String generateUniqueName(@NotNull String defaultName, @NotNull Collection<String> existingNames) {
     return generateUniqueName(defaultName, "", "", existingNames);
   }
 
+  @NlsSafe
   @NotNull
   public static String generateUniqueName(@NotNull String defaultName, @NotNull String prefix, @NotNull String suffix, @NotNull Collection<String> existingNames) {
     return generateUniqueName(defaultName, prefix, suffix, s -> !existingNames.contains(s));
   }
 
+  @NlsSafe
   @NotNull
   public static String generateUniqueName(@NotNull String defaultName, @NotNull Condition<? super String> validator) {
     return generateUniqueName(defaultName, "", "", validator);
   }
 
+  @NlsSafe
   @NotNull
   public static String generateUniqueName(@NotNull String defaultName, @NotNull String prefix, @NotNull String suffix, @NotNull Condition<? super String> validator) {
     return generateUniqueName(defaultName, prefix, suffix, "", "", validator);
   }
 
+  @NlsSafe
   @NotNull
   public static String generateUniqueName(@NotNull String defaultName, @NotNull String prefix, @NotNull String suffix,
                                           @NotNull String beforeNumber, @NotNull String afterNumber,
@@ -76,11 +82,13 @@ public class UniqueNameGenerator implements Condition<String> {
     }
   }
 
+  @NlsSafe
   @NotNull
   public String generateUniqueName(@NotNull String defaultName, @NotNull String prefix, @NotNull String suffix) {
     return generateUniqueName(defaultName, prefix, suffix, "", "");
   }
 
+  @NlsSafe
   @NotNull
   public String generateUniqueName(@NotNull String defaultName, @NotNull String prefix, @NotNull String suffix, @NotNull String beforeNumber, @NotNull String afterNumber) {
     String result = generateUniqueName(defaultName, prefix, suffix, beforeNumber, afterNumber, this);
@@ -92,6 +100,7 @@ public class UniqueNameGenerator implements Condition<String> {
     myExistingNames.add(result);
   }
 
+  @NlsSafe
   @NotNull
   public String generateUniqueName(@NotNull String defaultName) {
     return generateUniqueName(defaultName, "", "");

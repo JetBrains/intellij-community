@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.wm.RegisterToolWindowTask;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -19,6 +20,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.scale.JBUIScale;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -27,7 +29,7 @@ import java.util.Map;
 @State(name = "CoverageViewManager", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 public final class CoverageViewManager implements PersistentStateComponent<CoverageViewManager.StateBean> {
   private static final Logger LOG = Logger.getInstance(CoverageViewManager.class);
-  public static final String TOOLWINDOW_ID = "Coverage";
+  public static final @NonNls String TOOLWINDOW_ID = "Coverage";
   private final Project myProject;
   private final ContentManager myContentManager;
   private StateBean myStateBean = new StateBean();
@@ -76,7 +78,7 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
     return ServiceManager.getService(project, CoverageViewManager.class);
   }
 
-  public void createToolWindow(String displayName, boolean defaultFileProvider) {
+  public void createToolWindow(@NlsSafe String displayName, boolean defaultFileProvider) {
     final CoverageView coverageView = new CoverageView(myProject, CoverageDataManager.getInstance(myProject), myStateBean);
     myViews.put(displayName, coverageView);
     Content content = myContentManager.getFactory().createContent(coverageView, displayName, true);

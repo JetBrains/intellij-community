@@ -35,7 +35,7 @@ public class ConvertSchemaDialog extends DialogWrapper implements PropertyChange
 
   protected ConvertSchemaDialog(Project project, SchemaType input, VirtualFile firstFile) {
     super(project, false);
-    setTitle(RelaxngBundle.message("convert.schema.file"));
+    setTitle(RelaxngBundle.message("relaxng.convert-schema.dialog.title"));
 
     mySettings = new ConvertSchemaSettingsImpl(project, input, firstFile);
     mySettings.addPropertyChangeListener(ConvertSchemaSettingsImpl.OUTPUT_TYPE, this);

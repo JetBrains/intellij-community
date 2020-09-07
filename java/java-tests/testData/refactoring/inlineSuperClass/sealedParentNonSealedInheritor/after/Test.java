@@ -1,0 +1,3 @@
+class Super {}
+
+class Test {}

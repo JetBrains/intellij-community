@@ -58,12 +58,6 @@ public class SaveTo implements SpellCheckerQuickFix, LowPriorityAction {
   }
 
   @Override
-  @NotNull
-  public Anchor getPopupActionAnchor() {
-    return Anchor.LAST;
-  }
-
-  @Override
   public boolean startInWriteAction() {
     return false;
   }

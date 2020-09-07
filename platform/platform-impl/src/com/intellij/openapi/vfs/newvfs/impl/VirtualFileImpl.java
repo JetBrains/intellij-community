@@ -204,4 +204,9 @@ public final class VirtualFileImpl extends VirtualFileSystemEntry {
   private boolean isTooLarge() {
     return FileUtilRt.isTooLarge(getLength());
   }
+
+  @Override
+  public boolean isCaseSensitive() {
+    return getParent().isCaseSensitive();
+  }
 }

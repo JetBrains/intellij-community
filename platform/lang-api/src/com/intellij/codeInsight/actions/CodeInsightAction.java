@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.EditorActivityManager;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
@@ -114,7 +115,7 @@ public abstract class CodeInsightAction extends AnAction implements UpdateInBack
   @NotNull
   protected abstract CodeInsightActionHandler getHandler();
 
-  protected String getCommandName() {
+  protected @NlsContexts.Command String getCommandName() {
     String text = getTemplatePresentation().getText();
     return text == null ? "" : text;
   }

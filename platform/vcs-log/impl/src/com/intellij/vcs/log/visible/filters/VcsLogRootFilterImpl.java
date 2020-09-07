@@ -4,6 +4,7 @@ package com.intellij.vcs.log.visible.filters;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.VcsLogRootFilter;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -22,8 +23,9 @@ class VcsLogRootFilterImpl implements VcsLogRootFilter {
   }
 
   @Override
+  @NonNls
   public String toString() {
-    return "roots:" + myRoots; // NON-NLS
+    return "roots:" + myRoots;
   }
 
   @Override

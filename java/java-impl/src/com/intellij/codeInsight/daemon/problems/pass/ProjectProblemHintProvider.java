@@ -190,7 +190,7 @@ public class ProjectProblemHintProvider implements InlayHintsProvider<NoSettings
 
   @Override
   public boolean isVisibleInSettings() {
-    return false;
+    return true;
   }
 
   static void openSettings(@NotNull Project project) {

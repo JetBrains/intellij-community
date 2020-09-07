@@ -7,12 +7,12 @@ import com.intellij.workspaceModel.storage.impl.containers.copy
 import org.jetbrains.annotations.TestOnly
 
 open class EntityStorageInternalIndex<T> private constructor(
-  internal open val index: BidirectionalMap<EntityId, T>
+  internal open val index: BidirectionalMap<EntityId, T>,
+  protected val oneToOneAssociation: Boolean
 ) {
-  constructor() : this(BidirectionalMap<EntityId, T>())
+  constructor(oneToOneAssociation: Boolean) : this(BidirectionalMap<EntityId, T>(), oneToOneAssociation)
 
-  internal fun getIdsByEntry(entitySource: T): List<EntityId>? =
-    index.getKeysByValue(entitySource)
+  internal fun getIdsByEntry(entry: T): List<EntityId>? = index.getKeysByValue(entry)
 
   internal fun getEntryById(id: EntityId): T? = index[id]
 
@@ -22,16 +22,24 @@ open class EntityStorageInternalIndex<T> private constructor(
 
   class MutableEntityStorageInternalIndex<T> private constructor(
     // Do not write to [index] directly! Create a method in this index and call [startWrite] before write.
-    override var index: BidirectionalMap<EntityId, T>
-  ) : EntityStorageInternalIndex<T>(index) {
+    override var index: BidirectionalMap<EntityId, T>,
+    oneToOneAssociation: Boolean
+  ) : EntityStorageInternalIndex<T>(index, oneToOneAssociation) {
 
     private var freezed = true
 
-    internal fun index(id: EntityId, entitySource: T? = null) {
+    internal fun index(id: EntityId, entry: T? = null) {
       startWrite()
-      index.remove(id)
-      if (entitySource == null) return
-      index[id] = entitySource
+      if (entry == null) {
+        index.remove(id)
+        return
+      }
+      index[id] = entry
+      if (oneToOneAssociation) {
+        if (index.getKeysByValue(entry)?.size ?: 0 > 1) {
+          error("One to one association is violated. Id: $id, Entity: $entry. This id is already associated with ${index.getKeysByValue(entry)}")
+        }
+      }
     }
 
     @TestOnly
@@ -49,19 +57,17 @@ open class EntityStorageInternalIndex<T> private constructor(
     private fun startWrite() {
       if (!freezed) return
       freezed = false
-      index = copyIndex()
+      index = index.copy()
     }
-
-    private fun copyIndex(): BidirectionalMap<EntityId, T> = index.copy()
 
     fun toImmutable(): EntityStorageInternalIndex<T> {
       freezed = true
-      return EntityStorageInternalIndex(index)
+      return EntityStorageInternalIndex(index, this.oneToOneAssociation)
     }
 
     companion object {
       fun <T> from(other: EntityStorageInternalIndex<T>): MutableEntityStorageInternalIndex<T> {
-        return MutableEntityStorageInternalIndex(other.index)
+        return MutableEntityStorageInternalIndex(other.index, other.oneToOneAssociation)
       }
     }
   }

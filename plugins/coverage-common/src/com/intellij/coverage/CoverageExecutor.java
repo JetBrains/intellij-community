@@ -5,13 +5,14 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.openapi.wm.ToolWindowId;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class CoverageExecutor extends Executor {
 
-  public static final String EXECUTOR_ID = "Coverage";
+  public static final @NonNls String EXECUTOR_ID = "Coverage";
 
   @Override
   @NotNull

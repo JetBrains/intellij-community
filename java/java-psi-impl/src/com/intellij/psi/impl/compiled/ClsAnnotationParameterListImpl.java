@@ -62,6 +62,13 @@ public class ClsAnnotationParameterListImpl extends ClsElementImpl implements Ps
   }
 
   @Override
+  public String getText() {
+    final StringBuilder buffer = new StringBuilder();
+    appendMirrorText(0, buffer);
+    return buffer.toString();
+  }
+
+  @Override
   public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, null);
     setMirrors(myAttributes, SourceTreeToPsiMap.<PsiAnnotationParameterList>treeToPsiNotNull(element).getAttributes());

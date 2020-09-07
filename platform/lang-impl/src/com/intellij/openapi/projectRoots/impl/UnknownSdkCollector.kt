@@ -78,8 +78,9 @@ private data class MissingSdkInfo(
 }
 
 class UnknownSdkCollector(private val myProject: Project) {
-  private val LOG = logger<UnknownSdkCollector>()
-
+  companion object {
+    private val LOG = logger<UnknownSdkCollector>()
+  }
   fun collectSdksPromise(onCompleted: Consumer<UnknownSdkSnapshot>) {
     ReadAction.nonBlocking<UnknownSdkSnapshot> { collectSdksUnderReadAction() }
       .expireWith(myProject)

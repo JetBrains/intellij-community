@@ -35,6 +35,7 @@ import java.awt.event.MouseEvent
 import java.io.BufferedReader
 import java.io.File
 
+@Suppress("HardCodedStringLiteral")
 class InstallVSCodePluginAction : AnAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return

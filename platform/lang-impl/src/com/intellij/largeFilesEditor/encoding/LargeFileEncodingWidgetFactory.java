@@ -19,7 +19,7 @@ public class LargeFileEncodingWidgetFactory extends StatusBarEditorBasedWidgetFa
   }
 
   @Override
-  public @Nls @NotNull String getDisplayName() {
+  public @Nls(capitalization = Nls.Capitalization.Title) @NotNull String getDisplayName() {
     return EditorBundle.message("large.file.editor.encoding.widget.name");
   }
 

@@ -19,23 +19,34 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.annotations.RequiresEdt
 
 class SimpleLocalLineStatusTracker(project: Project,
                                    document: Document,
-                                   virtualFile: VirtualFile,
-                                   mode: Mode
-) : LocalLineStatusTracker<Range>(project, document, virtualFile, mode) {
+                                   virtualFile: VirtualFile
+) : LocalLineStatusTrackerImpl<Range>(project, document, virtualFile) {
 
   override val renderer: LocalLineStatusMarkerRenderer = LocalLineStatusMarkerRenderer(this)
-  override fun Block.toRange(): Range = Range(this.start, this.end, this.vcsStart, this.vcsEnd, this.innerRanges)
+  override fun toRange(block: Block): Range = Range(block.start, block.end, block.vcsStart, block.vcsEnd, block.innerRanges)
+
+  @RequiresEdt
+  override fun setBaseRevision(vcsContent: CharSequence) {
+    setBaseRevision(vcsContent, null)
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  override var Block.innerRanges: List<Range.InnerRange>?
+    get() = data as List<Range.InnerRange>?
+    set(value) {
+      data = value
+    }
 
   companion object {
     @JvmStatic
     fun createTracker(project: Project,
                       document: Document,
-                      virtualFile: VirtualFile,
-                      mode: Mode): SimpleLocalLineStatusTracker {
-      return SimpleLocalLineStatusTracker(project, document, virtualFile, mode)
+                      virtualFile: VirtualFile): SimpleLocalLineStatusTracker {
+      return SimpleLocalLineStatusTracker(project, document, virtualFile)
     }
   }
 }

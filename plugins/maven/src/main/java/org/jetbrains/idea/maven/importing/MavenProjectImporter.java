@@ -271,7 +271,7 @@ public class MavenProjectImporter {
 
       List<MavenModuleConfigurer> configurers = MavenModuleConfigurer.getConfigurers();
 
-      MavenUtil.runInBackground(myProject, "Configuring projects", false, indicator -> {
+      MavenUtil.runInBackground(myProject, MavenProjectBundle.message("command.name.configuring.projects"), false, indicator -> {
         float count = 0;
         for (MavenProject mavenProject : myAllProjects) {
           Module module = myMavenProjectToModule.get(mavenProject);
@@ -279,7 +279,7 @@ public class MavenProjectImporter {
             continue;
           }
           indicator.setFraction(count++ / myAllProjects.size());
-          indicator.setText2("Configuring module " + module.getName());
+          indicator.setText2(MavenProjectBundle.message("progress.details.configuring.module", module.getName()));
           for (MavenModuleConfigurer configurer : configurers) {
             configurer.configure(mavenProject, myProject, module);
           }
@@ -517,7 +517,7 @@ public class MavenProjectImporter {
         @Override
         public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
           throws MavenProcessCanceledException {
-          indicator.setText("Refreshing files...");
+          indicator.setText(MavenProjectBundle.message("progress.text.refreshing.files"));
           doRefreshFiles(files);
         }
       });

@@ -22,7 +22,9 @@ Adds support for working with shell script files
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <fileType language="Shell Script" extensions="sh;bash;zsh" hashBangs="sh" fieldName="INSTANCE" name="Shell Script" implementationClass="com.intellij.sh.ShFileType"/>
+    <fileType language="Shell Script" extensions="sh;bash;zsh" hashBangs="sh;bash;zsh" fieldName="INSTANCE" name="Shell Script"
+              implementationClass="com.intellij.sh.ShFileType"/>
+    <backgroundPostStartupActivity implementation="com.intellij.sh.fileType.ShShebangFileTypeDetectorActivity"/>
     <lang.syntaxHighlighter language="Shell Script" implementationClass="com.intellij.sh.highlighter.ShSyntaxHighlighter"/>
     <lang.parserDefinition language="Shell Script" implementationClass="com.intellij.sh.parser.ShParserDefinition"/>
     <lang.commenter language="Shell Script" implementationClass="com.intellij.sh.editor.ShCommenter"/>
@@ -58,7 +60,7 @@ Adds support for working with shell script files
     <experimentalFeature id="com.intellij.sh.run.with.wsl" percentOfUsers="0">
       <description>Run shell scripts with WSL when needed</description>
     </experimentalFeature>
-    <runLineMarkerContributor language="Shell Script" implementationClass="com.intellij.sh.run.ShRunLineMarkerContributor"/>
+    <runLineMarkerContributor language="" implementationClass="com.intellij.sh.run.ShRunLineMarkerContributor"/>
 
     <defaultLiveTemplates file="liveTemplates/ShellScript.xml"/>
     <defaultLiveTemplates file="liveTemplates/ShellScriptArray.xml"/>
@@ -74,7 +76,8 @@ Adds support for working with shell script files
     <editorNotificationProvider implementation="com.intellij.sh.shellcheck.ShellcheckSetupNotificationProvider"/>
 
     <externalAnnotator language="Shell Script" implementationClass="com.intellij.sh.shellcheck.ShShellcheckExternalAnnotator"/>
-    <localInspection language="Shell Script" groupName="Shell script" shortName="ShellCheck" displayName="ShellCheck" enabledByDefault="true"
+    <localInspection language="Shell Script" shortName="ShellCheck" enabledByDefault="true"
+                     bundle="messages.ShBundle" groupKey="sh.shell.script" key="display.name.shell.check"
                      level="ERROR" unfair="true" implementationClass="com.intellij.sh.shellcheck.ShShellcheckInspection"/>
 
     <spellchecker.support language="Shell Script" implementationClass="com.intellij.sh.spellchecker.ShSpellcheckingStrategy"/>
@@ -94,7 +97,7 @@ Adds support for working with shell script files
       <className>com.intellij.sh.ShExplainShellIntention</className>
       <category>Shell script</category>
     </intentionAction>
-    <notificationAllowlist groupIds="Shell Script"/>
+    <notificationGroup id="Shell Script" displayType="BALLOON" bundle="messages.ShBundle" key="sh.shell.script"/>
   </extensions>
   <actions>
     <action id="runShellFileAction" class="com.intellij.sh.run.ShRunFileAction" use-shortcut-of="RunClass"/>

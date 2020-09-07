@@ -5,6 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.configurationStore.StoreUtil
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.lang.LangBundle
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
@@ -98,7 +99,9 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
     }
     catch (e: Exception) {
       LOG.info(e)
-      Messages.showErrorDialog(project, "Cannot attach project: ${e.message}", CommonBundle.getErrorTitle())
+      Messages.showErrorDialog(project,
+                               LangBundle.message("module.attach.dialog.message.cannot.attach.project", e.message),
+                               CommonBundle.getErrorTitle())
       return false
     }
 
@@ -110,8 +113,9 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
     }
 
     return Messages.showYesNoDialog(project,
-      "The project at $projectDir uses a non-standard layout and cannot be attached to this project. Would you like to open it in a new window?",
-      "Open Project", Messages.getQuestionIcon()) != Messages.YES
+                                    LangBundle.message("module.attach.dialog.message.project.uses.non.standard.layout", projectDir),
+                                    LangBundle.message("module.attach.dialog.title.open.project"),
+                                    Messages.getQuestionIcon()) != Messages.YES
   }
 
   override fun beforeDetach(module: Module) {

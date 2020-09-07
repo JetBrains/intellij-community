@@ -97,6 +97,7 @@ abstract class OutputEventSplitter(private val bufferTextUntilNewLine: Boolean =
       if (from < nextFrom) {
         flushInternal(text.substring(from, nextFrom), outputType)
       }
+      assert(from != nextFrom || from == 0) {"``from`` is $from and it hasn't been changed since last check. Loop is frozen"}
       from = nextFrom
       serviceMessageStarted = processServiceMessages && nextFrom == teamcityMessageStartInd
       if (serviceMessageStarted) {

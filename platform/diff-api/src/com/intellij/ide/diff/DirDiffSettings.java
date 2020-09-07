@@ -20,6 +20,7 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PatternUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -87,6 +88,7 @@ public class DirDiffSettings {
       myPresentableKey = presentableKey;
     }
 
+    @Nls
     public String getPresentableName() {
       return DiffBundle.message(myPresentableKey);
     }

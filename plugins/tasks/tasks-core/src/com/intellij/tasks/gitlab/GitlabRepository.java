@@ -217,6 +217,7 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
     return getHttpClient().execute(request, handler);
   }
 
+  @SuppressWarnings("HardCodedStringLiteral")
   @Override
   public String getPresentableName() {
     String name = getUrl();

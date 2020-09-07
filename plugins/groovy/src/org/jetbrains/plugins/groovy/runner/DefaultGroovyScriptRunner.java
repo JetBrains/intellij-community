@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.CantRunException;
@@ -19,6 +19,7 @@ import com.intellij.util.net.HttpConfigurable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.groovy.GroovycOutputParser;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import java.nio.charset.Charset;
@@ -36,11 +37,13 @@ public class DefaultGroovyScriptRunner extends GroovyScriptRunner {
   public void ensureRunnerConfigured(@NotNull GroovyScriptRunConfiguration configuration) throws RuntimeConfigurationException {
     Module module = configuration.getModule();
     if (module == null) {
-      throw new RuntimeConfigurationException("Module is not specified");
+      throw new RuntimeConfigurationException(GroovyBundle.message("script.runner.module.not.specified.message"));
     }
 
     if (LibrariesUtil.getGroovyHomePath(module) == null) {
-      RuntimeConfigurationException e = new RuntimeConfigurationException("Groovy is not configured for module '" + module.getName() + "'");
+      RuntimeConfigurationException e = new RuntimeConfigurationException(
+        GroovyBundle.message("script.runner.no.groovy.for.module", module.getName())
+      );
       e.setQuickFix(() -> ModulesConfigurator.showDialog(module.getProject(), module.getName(), ClasspathEditor.getName()));
       throw e;
     }

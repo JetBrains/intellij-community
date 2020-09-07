@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,7 @@ public class MavenDisablePanelCheckbox extends JCheckBox {
   private final JComponent myPanel;
   private Set<JComponent> myDisabledComponents;
 
-  public MavenDisablePanelCheckbox(String text, @NotNull JComponent panel) {
+  public MavenDisablePanelCheckbox(@NlsContexts.Label String text, @NotNull JComponent panel) {
     super(text);
     myPanel = panel;
 
@@ -83,7 +84,7 @@ public class MavenDisablePanelCheckbox extends JCheckBox {
     }
   }
 
-  public static Pair<JPanel, JCheckBox> createPanel(JComponent component, String title) {
+  public static Pair<JPanel, JCheckBox> createPanel(JComponent component, @NlsContexts.Label String title) {
     JPanel panel = new JPanel(new BorderLayout()) {
       @Override
       public void setEnabled(boolean enabled) {

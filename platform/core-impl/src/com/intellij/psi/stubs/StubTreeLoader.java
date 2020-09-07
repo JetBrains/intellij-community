@@ -16,6 +16,7 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,7 +64,7 @@ public abstract class StubTreeLoader {
 
     boolean canBePrebuilt = isPrebuilt(psiFile.getVirtualFile());
 
-    String msg = "PSI and index do not match.\nPlease report the problem to JetBrains with the files attached\n";
+    @NonNls String msg = "PSI and index do not match.\nPlease report the problem to JetBrains with the files attached\n";
 
     if (canBePrebuilt) {
       msg += "This stub can have pre-built origin\n";
@@ -153,7 +154,7 @@ public abstract class StubTreeLoader {
     return attachments.toArray(Attachment.EMPTY_ARRAY);
   }
 
-  public static String getFileViewProviderMismatchDiagnostics(@NotNull FileViewProvider provider) {
+  public static @NonNls String getFileViewProviderMismatchDiagnostics(@NotNull FileViewProvider provider) {
     Function<PsiFile, String> fileClassName = file -> file.getClass().getSimpleName();
     Function<Pair<IStubFileElementType, PsiFile>, String> stubRootToString =
       pair -> "(" + pair.first.toString() + ", " + pair.first.getLanguage() + " -> " + fileClassName.fun(pair.second) + ")";

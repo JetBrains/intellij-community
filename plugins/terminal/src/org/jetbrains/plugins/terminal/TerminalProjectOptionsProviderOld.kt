@@ -29,7 +29,6 @@ class TerminalProjectOptionsProviderOld(val project: Project) : PersistentStateC
 
   class State {
     var myStartingDirectory: String? = null
-    var myShellPath: String? = null
     @get:Property(surroundWithTag = false, flat = true)
     var envDataOptions = EnvironmentVariablesDataOptions()
   }

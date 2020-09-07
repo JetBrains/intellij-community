@@ -16,6 +16,7 @@ import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
@@ -40,16 +41,16 @@ public final class PsiElementListNavigator {
 
   public static <T extends NavigatablePsiElement> void openTargets(MouseEvent e,
                                                                    T[] targets,
-                                                                   @Nls String title,
-                                                                   @Nls final String findUsagesTitle,
+                                                                   @NlsContexts.PopupTitle String title,
+                                                                   @NlsContexts.TabTitle final String findUsagesTitle,
                                                                    ListCellRenderer<? super T> listRenderer) {
     openTargets(e, targets, title, findUsagesTitle, listRenderer, (BackgroundUpdaterTask)null);
   }
 
   public static <T extends NavigatablePsiElement> void openTargets(MouseEvent e,
                                                                    T[] targets,
-                                                                   @Nls String title,
-                                                                   @Nls final String findUsagesTitle,
+                                                                   @NlsContexts.PopupTitle String title,
+                                                                   @NlsContexts.TabTitle String findUsagesTitle,
                                                                    ListCellRenderer<? super T> listRenderer,
                                                                    @Nullable BackgroundUpdaterTask listUpdaterTask) {
     JBPopup popup = navigateOrCreatePopup(targets, title, findUsagesTitle, listRenderer, listUpdaterTask);
@@ -66,16 +67,16 @@ public final class PsiElementListNavigator {
 
   public static <T extends NavigatablePsiElement> void openTargets(Editor e,
                                                                    T[] targets,
-                                                                   @Nls String title,
-                                                                   @Nls final String findUsagesTitle,
+                                                                   @NlsContexts.PopupTitle String title,
+                                                                   @NlsContexts.TabTitle final String findUsagesTitle,
                                                                    ListCellRenderer<? super T> listRenderer) {
     openTargets(e, targets, title, findUsagesTitle, listRenderer, null);
   }
 
   public static <T extends NavigatablePsiElement> void openTargets(Editor e,
                                                                    T[] targets,
-                                                                   @Nls String title,
-                                                                   @Nls final String findUsagesTitle,
+                                                                   @NlsContexts.PopupTitle String title,
+                                                                   @NlsContexts.TabTitle final String findUsagesTitle,
                                                                    ListCellRenderer<? super T> listRenderer,
                                                                    @Nullable BackgroundUpdaterTask listUpdaterTask) {
     final JBPopup popup = navigateOrCreatePopup(targets, title, findUsagesTitle, listRenderer, listUpdaterTask);
@@ -99,8 +100,8 @@ public final class PsiElementListNavigator {
 
   @Nullable
   public static <T extends NavigatablePsiElement> JBPopup navigateOrCreatePopup(final T[] targets,
-                                                                                @Nls final String title,
-                                                                                @Nls final String findUsagesTitle,
+                                                                                final @NlsContexts.PopupTitle String title,
+                                                                                final @NlsContexts.TabTitle String findUsagesTitle,
                                                                                 final ListCellRenderer<? super T> listRenderer,
                                                                                 @Nullable final BackgroundUpdaterTask listUpdaterTask) {
     return navigateOrCreatePopup(targets, title, findUsagesTitle, listRenderer, listUpdaterTask, selectedElements -> {
@@ -118,8 +119,8 @@ public final class PsiElementListNavigator {
    */
   @Nullable
   public static <T extends NavigatablePsiElement> JBPopup navigateOrCreatePopup(final T @NotNull [] targets,
-                                                                                @Nls final String title,
-                                                                                @Nls final String findUsagesTitle,
+                                                                                final @NlsContexts.PopupTitle String title,
+                                                                                final @NlsContexts.TabTitle String findUsagesTitle,
                                                                                 final ListCellRenderer<? super T> listRenderer,
                                                                                 @Nullable final BackgroundUpdaterTask listUpdaterTask,
                                                                                 @NotNull final Consumer<? super T[]> consumer) {
@@ -136,12 +137,12 @@ public final class PsiElementListNavigator {
 
     private final T @NotNull [] myTargets;
 
-    private final String myTitle;
+    private final @NlsContexts.PopupTitle String myTitle;
 
     private Consumer<? super T[]> myTargetsConsumer;
 
     @Nullable
-    private String myFindUsagesTitle;
+    private @NlsContexts.TabTitle String myFindUsagesTitle;
 
     private @Nullable ListCellRenderer<? super T> myListRenderer;
 
@@ -151,7 +152,7 @@ public final class PsiElementListNavigator {
     @Nullable
     private Project myProject;
 
-    public NavigateOrPopupHelper(T @NotNull [] targets, @Nls String title) {
+    public NavigateOrPopupHelper(T @NotNull [] targets, @NlsContexts.PopupTitle String title) {
       myTargets = targets;
       myTitle = title;
       myTargetsConsumer = selectedElements -> {
@@ -164,7 +165,7 @@ public final class PsiElementListNavigator {
     }
 
     @NotNull
-    public NavigateOrPopupHelper setFindUsagesTitle(@Nls @Nullable String findUsagesTitle) {
+    public NavigateOrPopupHelper setFindUsagesTitle(@Nullable @NlsContexts.TabTitle String findUsagesTitle) {
       myFindUsagesTitle = findUsagesTitle;
       return this;
     }

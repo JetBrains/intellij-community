@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
+import com.intellij.build.events.BuildEventsNls;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -19,6 +20,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.PathUtil;
@@ -202,7 +204,7 @@ public class MavenServerCMDState extends CommandLineState {
     return processHandler;
   }
 
-  private void showInvalidMavenNotification(@Nullable String mavenVersion) {
+  private void showInvalidMavenNotification(@Nullable @NlsSafe String mavenVersion) {
     String message = invalidHomeMessageToShow(myDistribution, mavenVersion, myProject);
 
     NotificationListener listener = new NotificationListener() {
@@ -215,8 +217,9 @@ public class MavenServerCMDState extends CommandLineState {
     new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "", message, NotificationType.WARNING, listener).notify(myProject);
   }
 
+  @BuildEventsNls.Message
   private static String invalidHomeMessageToShow(@Nullable MavenDistribution mavenDistribution,
-                                                 String substitutedVersion,
+                                                 @NlsSafe String substitutedVersion,
                                                  Project project) {
     if (mavenDistribution != null && StringUtil.equals(MavenServerManager.BUNDLED_MAVEN_2, mavenDistribution.getName())) {
       if (project == null) {

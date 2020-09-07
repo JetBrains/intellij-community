@@ -1,13 +1,15 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.dialogs.WCInfo;
 
+import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.ensureStartSlash;
 import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
 
@@ -22,7 +24,6 @@ public class MergeContext {
   @NotNull private final WCInfo myWcInfo;
   @NotNull private final Url mySourceUrl;
   @NotNull private final SvnVcs myVcs;
-  @NotNull private final String myTitle;
   @NotNull private final String myRepositoryRelativeSourcePath;
   @NotNull private final String myRepositoryRelativeWorkingCopyPath;
 
@@ -37,7 +38,6 @@ public class MergeContext {
     myRoot = root;
     mySourceUrl = sourceUrl;
     myWcInfo = wcInfo;
-    myTitle = "Merge from " + myBranchName;
     myRepositoryRelativeSourcePath = ensureStartSlash(getRelativeUrl(myWcInfo.getRepoUrl(), mySourceUrl));
     myRepositoryRelativeWorkingCopyPath = ensureStartSlash(getRelativeUrl(myWcInfo.getRepoUrl(), myWcInfo.getUrl()));
   }
@@ -82,8 +82,9 @@ public class MergeContext {
     return myVcs;
   }
 
+  @DialogTitle
   @NotNull
-  public String getTitle() {
-    return myTitle;
+  public String getMergeTitle() {
+    return message("dialog.title.merge.from.branch", myBranchName);
   }
 }

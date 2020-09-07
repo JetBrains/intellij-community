@@ -9,7 +9,6 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -20,7 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.rt.coverage.data.*;
-import com.intellij.util.containers.SmartHashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -32,10 +31,9 @@ import java.util.*;
 /**
  * @author ven
  */
-public class PackageAnnotator {
-
+public final class PackageAnnotator {
   private static final Logger LOG = Logger.getInstance(PackageAnnotator.class);
-  private static final String DEFAULT_CONSTRUCTOR_NAME_SIGNATURE = "<init>()V";
+  private static final @NonNls String DEFAULT_CONSTRUCTOR_NAME_SIGNATURE = "<init>()V";
 
   private final PsiPackage myPackage;
   private final Project myProject;
@@ -156,7 +154,7 @@ public class PackageAnnotator {
                              .productionOnly()
                              .classes()
                              .getRoots());
-      final Set<VirtualFile> productionRootsSet = new SmartHashSet<>();
+      final Set<VirtualFile> productionRootsSet = new HashSet<>();
 
       if (productionRoots != null) {
         Map<VirtualFile, DirCoverageInfo> dirsMap = new HashMap<>();

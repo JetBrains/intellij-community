@@ -4,6 +4,8 @@ package com.intellij.openapi.fileTypes.impl;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
+import com.intellij.ide.lightEdit.LightEditFilePatterns;
+import com.intellij.ide.lightEdit.LightEditService;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,6 +24,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +36,7 @@ import java.util.*;
 
 import static com.intellij.openapi.util.Pair.pair;
 
-public final class FileTypeConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+public final class FileTypeConfigurable implements SearchableConfigurable, Configurable.NoScroll, FileTypeSelectable {
   private static final Insets TITLE_INSETS = JBUI.insetsTop(8);
 
   private RecognizedFileTypes myRecognizedFileType;
@@ -44,6 +47,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
   private FileTypeAssocTable<FileType> myTempPatternsTable;
   private FileTypeAssocTable<Language> myTempTemplateDataLanguages;
   private final Map<UserFileType, UserFileType> myOriginalToEditedMap = new HashMap<>();
+  private FileType myFileTypeToPreselect;
 
   @Override
   public String getDisplayName() {
@@ -60,6 +64,10 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     myHashBangs = new HashBangPanel(myFileTypePanel.myHashBangPanel);
     myRecognizedFileType.myFileTypesList.addListSelectionListener(__ -> updateExtensionList());
     myFileTypePanel.myIgnoreFilesField.setColumns(30);
+    myFileTypePanel.myOpenWithLightEditPanel.setBorder(
+      IdeBorderFactory.createTitledBorder(IdeBundle.message("editbox.open.in.light.edit.mode"), false, TITLE_INSETS).setShowLine(false));
+    myFileTypePanel.myLightEditHintLabel.setForeground(JBColor.GRAY);
+    myFileTypePanel.myLightEditHintLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
     return myFileTypePanel.myWholePanel;
   }
 
@@ -90,6 +98,9 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       fileTypeManager.setPatternsTable(myTempFileTypes, myTempPatternsTable);
       TemplateDataLanguagePatterns.getInstance().setAssocTable(myTempTemplateDataLanguages);
     });
+
+    LightEditService.getInstance().setSupportedFilePatterns(
+      LightEditFilePatterns.parse(myFileTypePanel.myLightEditPatternsField.getText()));
   }
 
   @Override
@@ -105,6 +116,12 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     updateExtensionList();
 
     myFileTypePanel.myIgnoreFilesField.setText(fileTypeManager.getIgnoredFilesList());
+    if (myFileTypeToPreselect != null) {
+      myRecognizedFileType.selectFileType(myFileTypeToPreselect);
+    }
+
+    myFileTypePanel.myLightEditPatternsField.setText(
+      LightEditService.getInstance().getSupportedFilePatterns().toString());
   }
 
   @Override
@@ -116,7 +133,8 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     return !myTempPatternsTable.equals(fileTypeManager.getExtensionMap()) ||
            !myTempFileTypes.equals(getRegisteredFilesTypes()) ||
            !myOriginalToEditedMap.isEmpty() ||
-           !myTempTemplateDataLanguages.equals(TemplateDataLanguagePatterns.getInstance().getAssocTable());
+           !myTempTemplateDataLanguages.equals(TemplateDataLanguagePatterns.getInstance().getAssocTable()) ||
+           !LightEditFilePatterns.parse(myFileTypePanel.myLightEditPatternsField.getText()).equals(LightEditService.getInstance().getSupportedFilePatterns());
   }
 
   @Override
@@ -451,6 +469,17 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     }
   }
 
+  @Override
+  public void selectFileType(@NotNull FileType fileType) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (myRecognizedFileType == null) {
+      myFileTypeToPreselect = fileType;
+    }
+    else {
+      myRecognizedFileType.selectFileType(fileType);
+    }
+  }
+
   class PatternsPanel {
     private final JBList<String> myList = new JBList<>(new DefaultListModel<>());
 
@@ -597,9 +626,8 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       return; //canceled or empty
     }
     HashBangConflict conflict = checkHashBangConflict(hashbang);
-    if (conflict != null) {
+    if (conflict != null && conflict.fileType != type) {
       FileType existingFileType = conflict.fileType;
-      if (existingFileType == type) return; // ignore duplicate
       if (!conflict.writeable) {
         String message = conflict.exact ? FileTypesBundle.message("filetype.edit.hashbang.exists.exact.error", existingFileType.getDescription())
                          : FileTypesBundle.message("filetype.edit.hashbang.exists.similar.error", existingFileType.getDescription(), conflict.existingHashBang);

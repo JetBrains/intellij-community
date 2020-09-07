@@ -18,10 +18,7 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.pico.DefaultPicoContainer;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -228,7 +225,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
 
   private void checkExtensionType(@NotNull T extension, @NotNull Class<T> extensionClass, @Nullable ExtensionComponentAdapter adapter) {
     if (!extensionClass.isInstance(extension)) {
-      String message = "Extension " + extension.getClass() + " does not implement " + extensionClass;
+      @NonNls String message = "Extension " + extension.getClass() + " does not implement " + extensionClass;
       if (adapter != null) {
         message += " (adapter=" + adapter + ")";
       }
@@ -1045,7 +1042,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     }
 
     if (isRequired) {
-      String message = "could not find extension implementation " + aClass;
+      @NonNls String message = "could not find extension implementation " + aClass;
       if (isInReadOnlyMode()) {
         message += " (point in read-only mode)";
       }

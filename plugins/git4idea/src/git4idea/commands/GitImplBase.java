@@ -1,5 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
+
+import static com.intellij.openapi.util.text.StringUtil.splitByLinesKeepSeparators;
+import static com.intellij.openapi.util.text.StringUtil.trimLeading;
+import static git4idea.commands.GitCommand.LockingPolicy.READ;
 
 import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -14,6 +18,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -21,22 +27,26 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.DialogManager;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.GitCommand.LockingPolicy;
-import git4idea.config.*;
+import git4idea.config.GitConfigUtil;
+import git4idea.config.GitExecutable;
+import git4idea.config.GitExecutableManager;
+import git4idea.config.GitExecutableProblemsNotifier;
+import git4idea.config.GitExecutableValidator;
+import git4idea.config.GitNotInstalledException;
+import git4idea.config.GitVcsApplicationSettings;
+import git4idea.config.GitVersion;
+import git4idea.config.GitVersionSpecialty;
 import git4idea.i18n.GitBundle;
 import git4idea.rebase.GitHandlerRebaseEditorManager;
 import git4idea.rebase.GitSimpleEditorHandler;
 import git4idea.rebase.GitUnstructuredEditor;
 import git4idea.util.GitVcsConsoleWriter;
-import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.CalledInBackground;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -44,10 +54,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
-
-import static com.intellij.openapi.util.text.StringUtil.splitByLinesKeepSeparators;
-import static com.intellij.openapi.util.text.StringUtil.trimLeading;
-import static git4idea.commands.GitCommand.LockingPolicy.READ;
+import java.util.regex.Pattern;
+import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Basic functionality for git handler execution.
@@ -200,7 +211,7 @@ public abstract class GitImplBase implements Git {
       handler.runInCurrentThread();
     }
     catch (IOException e) {
-      return GitCommandResult.error("Error processing input stream: " + e.getLocalizedMessage());
+      return GitCommandResult.error(GitBundle.message("git.error.cant.process.output", e.getLocalizedMessage()));
     }
     return new GitCommandResult(resultListener.myStartFailed,
                                 resultListener.myExitCode,
@@ -213,7 +224,7 @@ public abstract class GitImplBase implements Git {
    */
   @NotNull
   public static Map<String, String> getGitTraceEnvironmentVariables(@NotNull GitVersion version) {
-    Map<String, String> environment = new HashMap<>(5);
+    Map<@NonNls String, @NonNls String> environment = new HashMap<>(5);
     int logLevel = Registry.intValue("git.execution.trace");
     if (logLevel == 0) {
       environment.put("GIT_TRACE", "0");
@@ -233,12 +244,12 @@ public abstract class GitImplBase implements Git {
     return environment;
   }
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   public static boolean loadFileAndShowInSimpleEditor(@NotNull Project project,
                                                       @Nullable VirtualFile root,
                                                       @NotNull File file,
-                                                      @NotNull String dialogTitle,
-                                                      @NotNull String okButtonText) throws IOException {
+                                                      @NotNull @NlsContexts.DialogTitle String dialogTitle,
+                                                      @NotNull @NlsContexts.Button String okButtonText) throws IOException {
     String encoding = root == null ? CharsetToolkit.UTF8 : GitConfigUtil.getCommitEncoding(project, root);
     String initialText = trimLeading(ignoreComments(FileUtil.loadFile(file, encoding)));
 
@@ -255,9 +266,9 @@ public abstract class GitImplBase implements Git {
   @Nullable
   private static String showUnstructuredEditorAndWait(@NotNull Project project,
                                                       @Nullable VirtualFile root,
-                                                      @NotNull String initialText,
-                                                      @NotNull String dialogTitle,
-                                                      @NotNull String okButtonText) {
+                                                      @NotNull @NlsSafe String initialText,
+                                                      @NotNull @NlsContexts.DialogTitle String dialogTitle,
+                                                      @NotNull @NlsContexts.Button String okButtonText) {
     Ref<String> newText = Ref.create();
     ApplicationManager.getApplication().invokeAndWait(() -> {
       GitUnstructuredEditor editor = new GitUnstructuredEditor(project, root, initialText, dialogTitle, okButtonText);
@@ -293,7 +304,7 @@ public abstract class GitImplBase implements Git {
         myOutputCollector.outputLineReceived(line);
       }
       else if (outputType == ProcessOutputTypes.STDERR &&
-               !suppressStderrLine(line)) {
+               !looksLikeProgress(line)) {
         myOutputCollector.errorLineReceived(line);
       }
     }
@@ -396,39 +407,51 @@ public abstract class GitImplBase implements Git {
     };
   }
 
-  private static boolean suppressStderrLine(@NotNull String line) {
-    return ContainerUtil.exists(SUPPRESSED_PROGRESS_INDICATORS, indicator -> StringUtil.startsWith(line, indicator));
-  }
-
   public static boolean looksLikeProgress(@NotNull String line) {
-    return ContainerUtil.exists(SUPPRESSED_PROGRESS_INDICATORS, indicator -> StringUtil.startsWith(line, indicator)) ||
-           ContainerUtil.exists(PROGRESS_INDICATORS, indicator -> StringUtil.startsWith(line, indicator));
+    if (PROGRESS_PATTERN.matcher(line).matches()) return true;
+    return ContainerUtil.exists(SUPPRESSED_PROGRESS_INDICATORS, prefix -> {
+      if (StringUtil.startsWith(line, prefix)) return true;
+      if (StringUtil.startsWith(line, REMOTE_PROGRESS_PREFIX)) {
+        return StringUtil.startsWith(line, REMOTE_PROGRESS_PREFIX.length(), prefix);
+      }
+      return false;
+    });
   }
 
-  private static final String[] SUPPRESSED_PROGRESS_INDICATORS = {
-    "remote: Counting objects: ",
-    "remote: Enumerating objects: ",
-    "remote: Compressing objects: ",
-    "remote: Writing objects: ",
-    "remote: Receiving objects: ",
-    "remote: Resolving deltas: ",
-    "remote: Finding sources: ",
+  /**
+   * Pattern that matches most git progress messages.
+   * <p>
+   * 'remote: Finding sources:   1% (575/57489)   '
+   * 'Receiving objects: 100% (57489/57489), 50.03 MiB | 2.83 MiB/s, done.'
+   */
+  private static final Pattern PROGRESS_PATTERN = Pattern.compile(".*:\\s*\\d{1,3}% \\(\\d+/\\d+\\).*");
+
+  private static final @NonNls String REMOTE_PROGRESS_PREFIX = "remote: ";
+
+  /**
+   * 'remote: Counting objects: 198285, done'
+   * 'Expanding reachable commits in commit graph: 95907'
+   */
+  private static final @NonNls String[] SUPPRESSED_PROGRESS_INDICATORS = {
+    "Counting objects: ",
+    "Enumerating objects: ",
+    "Compressing objects: ",
+    "Writing objects: ",
     "Receiving objects: ",
     "Resolving deltas: ",
+    "Finding sources: ",
     "Updating files: ",
-    "Checking out files: "
+    "Checking out files: ",
+    "Expanding reachable commits in commit graph: ",
+    "Delta compression using up to "
   };
 
-  private static final String[] PROGRESS_INDICATORS = {
-    "remote: Total "
-  };
-
-  private static boolean looksLikeError(@NotNull final String text) {
+  private static boolean looksLikeError(@NotNull @NonNls String text) {
     return ContainerUtil.exists(ERROR_INDICATORS, indicator -> StringUtil.startsWithIgnoreCase(text.trim(), indicator));
   }
 
   // could be upper-cased, so should check case-insensitively
-  public static final String[] ERROR_INDICATORS = {
+  public static final @NonNls String[] ERROR_INDICATORS = {
     "warning:",
     "error:",
     "fatal:",

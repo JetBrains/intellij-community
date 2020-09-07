@@ -86,7 +86,7 @@ class MultiThreadSearcher implements SESearcher {
   @NotNull
   private static ProgressIndicator performSearch(@NotNull Collection<? extends SearchEverywhereContributor<?>> contributors,
                                                  @NotNull String pattern,
-                                                 @NotNull Function<ProgressIndicator, ResultsAccumulator> accumulatorSupplier) {
+                                                 @NotNull Function<? super ProgressIndicator, ? extends ResultsAccumulator> accumulatorSupplier) {
     ProgressIndicator indicator;
     ResultsAccumulator accumulator;
     if (!contributors.isEmpty()) {

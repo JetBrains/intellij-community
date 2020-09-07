@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs
 
 import com.intellij.diff.DiffTestCase
@@ -135,7 +135,7 @@ class LineStatusTrackerRevertAutoTest : BaseLineStatusTrackerTestCase() {
           tracker.doFrozen(Runnable {
             runWriteAction {
               tracker.document.setText(newText)
-              tracker.setBaseRevision(newTextVcs)
+              simpleTracker.setBaseRevision(newTextVcs)
             }
           })
         }
@@ -158,7 +158,7 @@ class LineStatusTrackerRevertAutoTest : BaseLineStatusTrackerTestCase() {
     }
   }
 
-  private fun Test.checkRevert(maxIterations: Int) {
+  private fun TrackerModificationsTest.checkRevert(maxIterations: Int) {
     var count = 0
     while (true) {
       if (count > maxIterations) throw Exception("Revert loop detected")
@@ -173,7 +173,7 @@ class LineStatusTrackerRevertAutoTest : BaseLineStatusTrackerTestCase() {
     assertEquals(document.text, vcsDocument.text)
   }
 
-  private fun Test.checkRevertComplex(iterations: Int) {
+  private fun TrackerModificationsTest.checkRevertComplex(iterations: Int) {
     val lines = BitSet()
 
     for (i in 0 until iterations) {
@@ -194,7 +194,7 @@ class LineStatusTrackerRevertAutoTest : BaseLineStatusTrackerTestCase() {
     assertEquals(document.text, vcsDocument.text)
   }
 
-  private fun Test.applyRandomChange(changeLength: Int) {
+  private fun TrackerModificationsTest.applyRandomChange(changeLength: Int) {
     val textLength = document.textLength
     val type = myRng.nextInt(3)
     val offset = if (textLength != 0) myRng.nextInt(textLength) else 0

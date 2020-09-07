@@ -20,6 +20,8 @@ import org.jetbrains.idea.svn.info.Info;
 
 import java.util.*;
 
+import static org.jetbrains.idea.svn.SvnBundle.message;
+
 public class SvnRevisionsNavigationMediator implements CommittedChangesNavigation {
   private static final Logger LOG = Logger.getInstance(SvnRevisionsNavigationMediator.class);
 
@@ -56,7 +58,7 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
 
     Info info = infoRef.get();
     if (info == null || !info.getRevision().isValid() || info.getRepositoryRootUrl() == null) {
-      throw new VcsException("Could not get head info for " + location);
+      throw new VcsException(message("error.could.not.get.head.info.for.url", location));
     }
 
     final Iterator<ChangesBunch> visualIterator = project.isDefault() ? null :
@@ -88,7 +90,7 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
 
   private void underProgress(final VcsException[] exception, final Runnable process) throws VcsException {
     final boolean succeeded = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      process, "Getting latest repository revision", true, myProject);
+      process, message("progress.title.getting.latest.repository.revision"), true, myProject);
 
     if (exception[0] != null) {
       throw exception[0];

@@ -18,7 +18,8 @@ class ResourcesMetadataReader(private val metadataHolder: Class<*>, private val 
   private fun resourceContent(fileName: String): String {
     val resource = "$featuresDirectory/$fileName"
     val fileStream = metadataHolder.classLoader.getResourceAsStream(resource)
-                     ?: throw InconsistentMetadataException("Metadata file not found: $resource")
+                     ?: throw InconsistentMetadataException(
+                       "Metadata file not found: $resource. Resources holder: ${metadataHolder.name}")
     return fileStream.bufferedReader().use { it.readText() }
   }
 }

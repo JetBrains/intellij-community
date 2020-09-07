@@ -28,6 +28,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,13 +36,13 @@ public class InlineXslAttribute implements IntentionAction {
     @Override
     @NotNull
     public String getText() {
-        return "Replace with Attribute Value Template";
+        return getFamilyName();
     }
 
     @Override
     @NotNull
     public String getFamilyName() {
-        return "Inline xsl:attribute";
+        return XPathBundle.message("intention.family.name.inline.xsl.attribute");
     }
 
     @Override

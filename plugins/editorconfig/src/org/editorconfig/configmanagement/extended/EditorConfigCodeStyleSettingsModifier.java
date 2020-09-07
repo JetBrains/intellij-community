@@ -2,10 +2,7 @@
 package org.editorconfig.configmanagement.extended;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper;
-import com.intellij.application.options.codeStyle.properties.CodeStyleFieldAccessor;
-import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
-import com.intellij.application.options.codeStyle.properties.GeneralCodeStylePropertyMapper;
+import com.intellij.application.options.codeStyle.properties.*;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationUtil;
@@ -162,7 +159,7 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
       String intellijName = EditorConfigIntellijNameUtil.toIntellijName(optionKey);
       CodeStylePropertyAccessor<?> accessor = findAccessor(mapper, intellijName, langPrefix);
       if (accessor != null) {
-        final String val = preprocessValue(context, optionKey, option.getVal());
+        final String val = preprocessValue(accessor, context, optionKey, option.getVal());
         if (DEPENDENCIES.containsKey(optionKey)) {
           for (String dependency : DEPENDENCIES.get(optionKey)) {
             if (!processed.contains(dependency)) {
@@ -186,9 +183,16 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
     return isModified;
   }
 
-  private static String preprocessValue(@NotNull MyContext context, @NotNull String optionKey, @NotNull String optionValue) {
+  private static String preprocessValue(@NotNull CodeStylePropertyAccessor accessor,
+                                        @NotNull MyContext context,
+                                        @NotNull String optionKey,
+                                        @NotNull String optionValue) {
     if ("indent_size".equals(optionKey) && "tab".equals(optionValue)) {
       return context.getTabSize();
+    }
+    else if (EditorConfigValueUtil.EMPTY_LIST_VALUE.equals(optionValue) &&
+             CodeStylePropertiesUtil.isAccessorAllowingEmptyList(accessor)) {
+      return "";
     }
     return optionValue;
   }

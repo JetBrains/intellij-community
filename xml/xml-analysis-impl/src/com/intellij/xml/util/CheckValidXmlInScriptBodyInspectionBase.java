@@ -94,7 +94,7 @@ public class CheckValidXmlInScriptBodyInspectionBase extends XmlSuppressableInsp
                     final int offsetInElement = offset - elementRange.getStartOffset();
                     holder.registerProblem(
                       psiElement,
-                      XmlAnalysisBundle.message("unescaped.xml.character"),
+                      XmlAnalysisBundle.message("xml.inspections.unescaped.xml.character"),
                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                       createFix(psiElement, offsetInElement)
                     );

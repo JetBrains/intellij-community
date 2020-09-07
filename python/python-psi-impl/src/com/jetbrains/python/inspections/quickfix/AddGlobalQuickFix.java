@@ -36,7 +36,7 @@ public class AddGlobalQuickFix implements LocalQuickFix {
           }
         }
         @Override
-        public void visitPyGlobalStatement(final PyGlobalStatement node) {
+        public void visitPyGlobalStatement(final @NotNull PyGlobalStatement node) {
           if (!added.get()){
             node.addGlobal(name);
             added.set(true);

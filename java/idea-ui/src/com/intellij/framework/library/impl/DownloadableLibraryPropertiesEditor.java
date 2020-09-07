@@ -21,6 +21,7 @@ import com.intellij.framework.library.DownloadableLibraryDescription;
 import com.intellij.framework.library.DownloadableLibraryType;
 import com.intellij.framework.library.FrameworkLibraryVersion;
 import com.intellij.framework.library.LibraryVersionProperties;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
@@ -42,7 +43,7 @@ public class DownloadableLibraryPropertiesEditor extends LibraryPropertiesEditor
   public DownloadableLibraryPropertiesEditor(DownloadableLibraryDescription description,
                                               LibraryEditorComponent<LibraryVersionProperties> editorComponent,
                                               DownloadableLibraryType libraryType) {
-    super(editorComponent, libraryType, "Change &Version...");
+    super(editorComponent, libraryType, JavaUiBundle.message("downloadable.library.properties.change.version.title"));
     myDescription = description;
     myLibraryType = libraryType;
     myCurrentVersionString = myEditorComponent.getProperties().getVersionString();
@@ -51,7 +52,7 @@ public class DownloadableLibraryPropertiesEditor extends LibraryPropertiesEditor
   @Override
   protected void edit() {
     final ModalityState current = ModalityState.current();
-    myDescription.fetchVersions(new DownloadableFileSetVersions.FileSetVersionsCallback<FrameworkLibraryVersion>() {
+    myDescription.fetchVersions(new DownloadableFileSetVersions.FileSetVersionsCallback<>() {
       @Override
       public void onSuccess(@NotNull final List<? extends FrameworkLibraryVersion> versions) {
         ApplicationManager.getApplication().invokeLater(() -> {

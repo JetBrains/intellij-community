@@ -13,6 +13,17 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
 
+/**
+ * To run a separate test from this suite with needed IndexingMode in an IDE, comment in {@link #suite()}
+ * <pre>
+ * if (!"Java Dumb Completion Tests".equals(System.getProperty("teamcity.buildConfName"))) {
+ *    return suite;
+ * }
+ * </pre>
+ * and make test's {@code getIndexingMode} return it, and run test from IDE as usual.
+ * Also, one can replace {@code System.setProperty("intellij.build.test.groups", "JAVA_TESTS");} in {@link #suite()}
+ * with {@code System.setProperty("intellij.build.test.patterns", "<needed package>");} and run just this package.
+ */
 @SkipSlowTestLocally
 public class JavaCompletionTestSuite extends TestSuite {
 

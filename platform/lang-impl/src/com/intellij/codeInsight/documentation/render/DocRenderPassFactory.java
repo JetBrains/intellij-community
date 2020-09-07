@@ -18,6 +18,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiModificationTracker;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +29,7 @@ import java.util.Map;
 public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRegistrar, TextEditorHighlightingPassFactory, DumbAware {
   private static final Logger LOG = Logger.getInstance(DocRenderPassFactory.class);
   private static final Key<Long> MODIFICATION_STAMP = Key.create("doc.render.modification.stamp");
+  private static final Key<Boolean> RESET_TO_DEFAULT = Key.create("doc.render.reset.to.default");
   private static final Key<Boolean> ICONS_ENABLED = Key.create("doc.render.icons.enabled");
 
   @Override
@@ -49,6 +51,7 @@ public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRe
 
   static void forceRefreshOnNextPass(@NotNull Editor editor) {
     editor.putUserData(MODIFICATION_STAMP, null);
+    editor.putUserData(RESET_TO_DEFAULT, Boolean.TRUE);
   }
 
   private static class DocRenderPass extends EditorBoundHighlightingPass implements DumbAware {
@@ -65,7 +68,9 @@ public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRe
 
     @Override
     public void doApplyInformationToEditor() {
-      applyItemsToRender(myEditor, myProject, items, false);
+      boolean resetToDefault = myEditor.getUserData(RESET_TO_DEFAULT) != null;
+      myEditor.putUserData(RESET_TO_DEFAULT, null);
+      applyItemsToRender(myEditor, myProject, items, resetToDefault && DocRenderManager.isDocRenderingEnabled(myEditor));
     }
   }
 
@@ -84,7 +89,7 @@ public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRe
     return items;
   }
 
-  static @NotNull String calcText(@Nullable PsiDocCommentBase comment) {
+  static @NotNull @Nls String calcText(@Nullable PsiDocCommentBase comment) {
     try {
       String text = comment == null ? null : DocumentationManager.getProviderFromElement(comment).generateRenderedDoc(comment);
       return text == null ? CodeInsightBundle.message("doc.render.not.available.text") : preProcess(text);
@@ -133,9 +138,9 @@ public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRe
 
   static final class Item {
     final TextRange textRange;
-    final String textToRender;
+    final @Nls String textToRender;
 
-    private Item(@NotNull TextRange textRange, @Nullable String textToRender) {
+    private Item(@NotNull TextRange textRange, @Nullable @Nls String textToRender) {
       this.textRange = textRange;
       this.textToRender = textToRender;
     }

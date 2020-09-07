@@ -3,12 +3,12 @@ package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.incremental.CharArrayCharSequence;
 
-import javax.tools.*;
+import javax.tools.JavaFileManager;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.CharBuffer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -45,7 +45,7 @@ public final class ZipFileObject extends JpsFileObject {
 
   @Override
   public InputStream openInputStream() throws IOException {
-    return myZip.getInputStream(myEntry);
+    return new BufferedInputStream(myZip.getInputStream(myEntry));
   }
 
   @Override
@@ -106,7 +106,7 @@ public final class ZipFileObject extends JpsFileObject {
     try {
       final InputStreamReader reader = myEncoding != null ? new InputStreamReader(in, myEncoding) : new InputStreamReader(in);
       try {
-        return new CharArrayCharSequence(FileUtilRt.loadText(reader, (int)myEntry.getSize()));  // todo
+        return CharBuffer.wrap(FileUtilRt.loadText(reader, (int)myEntry.getSize()));
       }
       finally {
         reader.close();

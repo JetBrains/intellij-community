@@ -3,14 +3,13 @@ package com.intellij.openapi.vcs.merge
 
 import com.intellij.diff.DiffEditorTitleCustomizer
 import com.intellij.openapi.diff.DiffBundle
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
 
 /**
  * Provides custom titles and messages used in the MultipleFileMergeDialog and DiffTools invoked from it.
@@ -33,9 +32,8 @@ open class MergeDialogCustomizer {
    *
    * @param file the file that is being merged.
    */
-  @Nls(capitalization = Nls.Capitalization.Title)
-  open fun getMergeWindowTitle(file: VirtualFile): String = VcsBundle.message("multiple.file.merge.request.title",
-                                                                              FileUtil.toSystemDependentName(file.presentableUrl))
+  open fun getMergeWindowTitle(file: VirtualFile): @NlsContexts.DialogTitle String =
+    VcsBundle.message("multiple.file.merge.request.title", FileUtil.toSystemDependentName(file.presentableUrl))
 
   /**
    * Returns the title that is shown above the left panel in the 3-way merge dialog.
@@ -43,8 +41,7 @@ open class MergeDialogCustomizer {
    * @param file the file that is being merged.
    * @see getTitleCustomizerList
    */
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  open fun getLeftPanelTitle(file: VirtualFile): String = DiffBundle.message("merge.version.title.our")
+  open fun getLeftPanelTitle(file: VirtualFile): @NlsContexts.Label String = DiffBundle.message("merge.version.title.our")
 
   /**
    * Returns the title that is shown above the center panel in the 3-way merge dialog.
@@ -52,8 +49,7 @@ open class MergeDialogCustomizer {
    * @param file the file that is being merged.
    * @see getTitleCustomizerList
    */
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  open fun getCenterPanelTitle(file: VirtualFile): String = DiffBundle.message("merge.version.title.base")
+  open fun getCenterPanelTitle(file: VirtualFile): @NlsContexts.Label String = DiffBundle.message("merge.version.title.base")
 
   /**
    * Returns the title that is shown above the right panel in the 3-way merge dialog.
@@ -62,12 +58,13 @@ open class MergeDialogCustomizer {
    * @param revisionNumber the revision number of the file at the right. Can be null if unknown.
    * @see getTitleCustomizerList
    */
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  open fun getRightPanelTitle(file: VirtualFile, revisionNumber: VcsRevisionNumber?): String =
-    if (revisionNumber != null)
+  open fun getRightPanelTitle(file: VirtualFile, revisionNumber: VcsRevisionNumber?): @NlsContexts.Label String =
+    if (revisionNumber != null) {
       DiffBundle.message("merge.version.title.their.with.revision", revisionNumber.asString())
-    else
+    }
+    else {
       DiffBundle.message("merge.version.title.their")
+    }
 
   /**
    * Returns the title of the multiple files merge dialog.
@@ -82,14 +79,13 @@ open class MergeDialogCustomizer {
    * Return the column names, matching the order of columns defined in the MergeSession.
    * Return `null` to use names from [MergeSession.getMergeInfoColumns].
    */
-  open fun getColumnNames(): List<@Nls String>? = null
+  open fun getColumnNames(): List<@NlsContexts.ColumnName String>? = null
 
   /**
    * Allows to customize diff editor titles in the 3-way merge dialog using [DiffEditorTitleCustomizer] for each editor.
    * This method takes precedence over methods like [getLeftPanelTitle].
    * If [DiffEditorTitleCustomizer] is null for the side, get(side)PanelTitle will be used as a fallback.
    */
-  @ApiStatus.Experimental
   open fun getTitleCustomizerList(file: FilePath): DiffEditorTitleCustomizerList = DEFAULT_CUSTOMIZER_LIST
 
   data class DiffEditorTitleCustomizerList(

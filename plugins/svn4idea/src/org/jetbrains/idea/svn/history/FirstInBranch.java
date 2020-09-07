@@ -18,6 +18,7 @@ import java.util.Objects;
 
 import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.util.containers.ContainerUtil.immutableList;
+import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.*;
 import static org.jetbrains.idea.svn.commandLine.CommandUtil.format;
 
@@ -138,13 +139,13 @@ public class FirstInBranch {
       client.doLog(myTarget, Revision.of(1), myTarget.getPegRevision(), true, true, false, 1, null, entry::set);
 
       if (entry.isNull()) {
-        throw new VcsException("No branch point found for " + myTarget);
+        throw new VcsException(message("error.no.branch.point.found.for.target", myTarget));
       }
 
       LogEntryPath path = entry.get().getChangedPaths().get(relativePath());
 
       if (path == null) {
-        throw new VcsException(myTarget + " not found in " + entry.get().getChangedPaths());
+        throw new VcsException(message("error.target.not.found.in.paths", myTarget, entry.get().getChangedPaths()));
       }
 
       return Pair.create(entry.get(), path);

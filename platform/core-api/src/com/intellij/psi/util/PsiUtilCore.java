@@ -502,7 +502,7 @@ public class PsiUtilCore {
     VirtualFile vDir = file.getParent();
     PsiDirectory psiDir = vDir == null ? null : PsiManager.getInstance(project).findDirectory(vDir);
     FileIndexFacade indexFacade = FileIndexFacade.getInstance(project);
-    StringBuilder sb = new StringBuilder();
+    @NonNls StringBuilder sb = new StringBuilder();
     sb.append("valid=").append(file.isValid()).
       append(" isDirectory=").append(file.isDirectory()).
       append(" hasDocument=").append(document != null).

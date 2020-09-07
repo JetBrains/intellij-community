@@ -3,13 +3,13 @@ package com.intellij.tasks.generic;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
@@ -24,18 +24,16 @@ class HighlightedSelectorsTable extends TableView<Selector> {
                                    @NotNull final Project project,
                                    @NotNull final List<Selector> selectors) {
     super(new ListTableModel<>(new ColumnInfo[]{
-      new ColumnInfo<Selector, String>("Name") {
-        @Nullable
+      new ColumnInfo<Selector, String>(TaskBundle.message("column.name.name")) {
         @Override
-        public String valueOf(Selector selector) {
+        public @NotNull String valueOf(Selector selector) {
           return selector.getName();
         }
       },
-      new ColumnInfo<Selector, String>("Path") {
+      new ColumnInfo<Selector, String>(TaskBundle.message("column.name.path")) {
 
-        @Nullable
         @Override
-        public String valueOf(Selector selector) {
+        public @NotNull String valueOf(Selector selector) {
           return selector.getPath();
         }
 
@@ -49,15 +47,13 @@ class HighlightedSelectorsTable extends TableView<Selector> {
           selector.setPath(value);
         }
 
-        @Nullable
         @Override
-        public TableCellRenderer getRenderer(Selector selector) {
+        public @NotNull TableCellRenderer getRenderer(Selector selector) {
           return new EditorTableCellViewer(valueFileType, project);
         }
 
-        @Nullable
         @Override
-        public TableCellEditor getEditor(Selector o) {
+        public @NotNull TableCellEditor getEditor(Selector o) {
           return new EditorTableCellViewer(valueFileType, project);
         }
       }

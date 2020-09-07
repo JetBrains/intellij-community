@@ -19,9 +19,10 @@ import com.intellij.codeInspection.naming.NamingConvention;
 import com.intellij.codeInspection.naming.NamingConventionBean;
 import com.intellij.psi.PsiClass;
 import com.siyeh.InspectionGadgetsBundle;
+import org.jetbrains.annotations.NonNls;
 
 public class ClassNamingConvention extends NamingConvention<PsiClass> {
-  public static final String CLASS_NAMING_CONVENTION_SHORT_NAME = "ClassNamingConvention";
+  public static final @NonNls String CLASS_NAMING_CONVENTION_SHORT_NAME = "ClassNamingConvention";
   private static final int DEFAULT_MIN_LENGTH = 8;
   private static final int DEFAULT_MAX_LENGTH = 64;
 

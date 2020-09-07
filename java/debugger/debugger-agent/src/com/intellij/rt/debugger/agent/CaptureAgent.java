@@ -274,6 +274,9 @@ public final class CaptureAgent {
               }
             }
             else { // insert
+              if (CONSTRUCTOR.equals(name)) {
+                throw new IllegalStateException("Unable to create insert point at " + methodDisplayName +". Constructors are not yet supported.");
+              }
               generateWrapper(access, name, desc, signature, exceptions, point, methodDisplayName);
               return super.visitMethod(access, getNewName(name), desc, signature, exceptions);
             }

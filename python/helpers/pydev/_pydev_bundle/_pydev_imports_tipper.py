@@ -4,6 +4,7 @@ import sys
 
 from _pydev_bundle._pydev_tipper_common import do_find
 from _pydevd_bundle.pydevd_constants import IS_PY2
+from _pydevd_bundle.pydevd_resolver import suppress_warnings
 
 if IS_PY2:
     from inspect import getargspec as _originalgetargspec
@@ -210,7 +211,8 @@ def generate_imports_tip_for_module(obj_to_complete, dir_comps=None, getattr=get
 
         try:
             # Fix for PY-38151: do not try to get `d` from the class, as it could be a descriptor
-            obj = getattr(obj_to_complete, d)
+            with suppress_warnings():
+                obj = getattr(obj_to_complete, d)
         except: #just ignore and get it without additional info
             ret.append((d, '', args, TYPE_BUILTIN))
         else:

@@ -312,7 +312,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   @Override
   public String getPresentableSubIdName(@NotNull String subId) {
     NamedScopeFilter filter = getFilter(subId);
-    return filter == null ? getTitle() : filter.getScope().getName();
+    return filter == null ? getTitle() : filter.getScope().getPresentableName();
   }
 
   @NotNull

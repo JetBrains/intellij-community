@@ -21,4 +21,8 @@ class JavaSupportTest : GrazieTestBase() {
   fun `test grammar check in string literals`() {
     runHighlightTestForFile("ide/language/java/StringLiterals.java")
   }
+
+  fun `test grammar check in comments`() {
+    runHighlightTestForFile("ide/language/java/Comments.java")
+  }
 }

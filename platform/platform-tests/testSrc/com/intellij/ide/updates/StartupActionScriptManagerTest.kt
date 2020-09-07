@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.updates
 
 import com.intellij.ide.startup.StartupActionScriptManager
@@ -50,8 +50,8 @@ class StartupActionScriptManagerTest : BareTestFixtureTestCase() {
   }
 
   @Test fun `executing "copy" command`() {
-    val source = tempDir.newFile("source.txt")
-    val destination = File(tempDir.root, "destination.txt")
+    val source = tempDir.newFile("source.txt").toPath()
+    val destination = File(tempDir.root, "destination.txt").toPath()
     assertTrue(source.exists())
     assertFalse(destination.exists())
     StartupActionScriptManager.addActionCommand(StartupActionScriptManager.CopyCommand(source, destination))
@@ -62,9 +62,9 @@ class StartupActionScriptManagerTest : BareTestFixtureTestCase() {
   }
 
   @Test fun `executing "unzip" command`() {
-    val source = IoTestUtil.createTestJar(tempDir.newFile("source.zip"), "zip/file.txt", "")
-    val destination = tempDir.newDirectory("dir")
-    val unpacked = File(destination, "zip/file.txt")
+    val source = IoTestUtil.createTestJar(tempDir.newFile("source.zip"), "zip/file.txt", "").toPath()
+    val destination = tempDir.newDirectory("dir").toPath()
+    val unpacked = destination.resolve("zip/file.txt")
     assertTrue(source.exists())
     assertFalse(unpacked.exists())
     StartupActionScriptManager.addActionCommand(StartupActionScriptManager.UnzipCommand(source, destination))
@@ -75,7 +75,7 @@ class StartupActionScriptManagerTest : BareTestFixtureTestCase() {
   }
 
   @Test fun `executing "delete" command`() {
-    val tempFile = tempDir.newFile("temp.txt")
+    val tempFile = tempDir.newFile("temp.txt").toPath()
     assertTrue(tempFile.exists())
     StartupActionScriptManager.addActionCommand(StartupActionScriptManager.DeleteCommand(tempFile))
     StartupActionScriptManager.executeActionScript()
@@ -84,22 +84,22 @@ class StartupActionScriptManagerTest : BareTestFixtureTestCase() {
   }
 
   @Test fun `executing commands with path mapping`() {
-    val oldTarget = tempDir.newDirectory("old/plugins")
-    val newTarget = tempDir.newDirectory("new/plugins")
-    val copySource = tempDir.newFile("source.txt")
-    val copyDestinationInOld = File(oldTarget, "destination.txt")
-    val copyDestinationInNew = File(newTarget, "destination.txt")
-    val unzipSource = IoTestUtil.createTestJar(tempDir.newFile("source.zip"), "zip/file.txt", "")
-    val unpackedInOld = File(oldTarget, "zip/file.txt")
-    val unpackedInNew = File(newTarget, "zip/file.txt")
-    val deleteInOld = tempDir.newFile("old/plugins/to_delete.txt")
-    val deleteInNew = tempDir.newFile("new/plugins/to_delete.txt")
+    val oldTarget = tempDir.newDirectory("old/plugins").toPath()
+    val newTarget = tempDir.newDirectory("new/plugins").toPath()
+    val copySource = tempDir.newFile("source.txt").toPath()
+    val copyDestinationInOld = oldTarget.resolve("destination.txt")
+    val copyDestinationInNew = newTarget.resolve("destination.txt")
+    val unzipSource = IoTestUtil.createTestJar(tempDir.newFile("source.zip"), "zip/file.txt", "").toPath()
+    val unpackedInOld = oldTarget.resolve("zip/file.txt")
+    val unpackedInNew = newTarget.resolve("zip/file.txt")
+    val deleteInOld = tempDir.newFile("old/plugins/to_delete.txt").toPath()
+    val deleteInNew = tempDir.newFile("new/plugins/to_delete.txt").toPath()
 
     StartupActionScriptManager.addActionCommands(listOf(
       StartupActionScriptManager.CopyCommand(copySource, copyDestinationInOld),
       StartupActionScriptManager.UnzipCommand(unzipSource, oldTarget),
       StartupActionScriptManager.DeleteCommand(deleteInOld)))
-    StartupActionScriptManager.executeActionScript(scriptFile.toFile(), oldTarget, newTarget)
+    StartupActionScriptManager.executeActionScript(scriptFile, oldTarget, newTarget)
 
     assertFalse(copyDestinationInOld.exists())
     assertTrue(copyDestinationInNew.exists())

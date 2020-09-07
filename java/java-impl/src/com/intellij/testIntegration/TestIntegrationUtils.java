@@ -135,7 +135,7 @@ public final class TestIntegrationUtils {
     }
     for (PsiClass aClass : classes) {
       if (CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) continue;
-      MemberInfo.extractClassMembers(aClass, result, new MemberInfo.Filter<PsiMember>() {
+      MemberInfo.extractClassMembers(aClass, result, new MemberInfo.Filter<>() {
         @Override
         public boolean includeMember(PsiMember member) {
           if (!(member instanceof PsiMethod)) return false;

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.types;
 
+import com.intellij.java.analysis.JavaAnalysisBundle;import com.intellij.psi.PsiKeyword;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,6 +49,6 @@ class DfDoubleNotValueType extends DfAntiConstantType<Double> implements DfDoubl
 
   @Override
   public String toString() {
-    return "double, not in " + myNotValues;
+    return JavaAnalysisBundle.message("type.presentation.except.values", PsiKeyword.DOUBLE, myNotValues);
   }
 }

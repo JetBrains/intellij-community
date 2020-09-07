@@ -37,8 +37,7 @@ class StructuralSearchUsageTarget implements ConfigurableUsageTarget, ItemPresen
 
   @Override
   public String getLocationString() {
-    //noinspection HardCodedStringLiteral
-    return "Do Not Know Where";
+    return null;
   }
 
   @Override
@@ -58,7 +57,6 @@ class StructuralSearchUsageTarget implements ConfigurableUsageTarget, ItemPresen
 
   @Override
   public String getName() {
-    //noinspection HardCodedStringLiteral
     return "my name";
   }
 
