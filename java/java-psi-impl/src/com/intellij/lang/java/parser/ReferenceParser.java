@@ -145,8 +145,8 @@ public class ReferenceParser {
       return null;
     }
 
+    type.done(JavaElementType.TYPE);
     while (true) {
-      type.done(JavaElementType.TYPE);
       myParser.getDeclarationParser().parseAnnotations(builder);
 
       PsiBuilder.Marker bracket = builder.mark();
@@ -160,15 +160,16 @@ public class ReferenceParser {
       }
       bracket.drop();
       typeInfo.isArray = true;
-
-      type = type.precede();
     }
 
     if (isSet(flags, ELLIPSIS) && builder.getTokenType() == JavaTokenType.ELLIPSIS) {
-      type = type.precede();
       builder.advanceLexer();
-      type.done(JavaElementType.TYPE);
       typeInfo.isVarArg = true;
+    }
+
+    if (typeInfo.isVarArg || typeInfo.isArray) {
+      type = type.precede();
+      type.done(JavaElementType.TYPE);
     }
 
     typeInfo.marker = type;

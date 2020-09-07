@@ -7,20 +7,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiNameHelper;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.compiled.TypeAnnotationContainer;
-import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
-import com.intellij.psi.impl.java.stubs.PsiAnnotationStub;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
-import com.intellij.psi.impl.java.stubs.PsiModifierListStub;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
-import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.SmartList;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -157,13 +151,21 @@ public class TypeInfo {
 
       assert typeElement != null : element + " in " + parentStub;
 
-      isEllipsis = LightTreeUtil.firstChildOfType(tree, typeElement, JavaTokenType.ELLIPSIS) != null;
+      LighterASTNode nested = LightTreeUtil.firstChildOfType(tree, typeElement, JavaElementType.TYPE);
 
-      while (true) {
-        LighterASTNode nested = LightTreeUtil.firstChildOfType(tree, typeElement, JavaElementType.TYPE);
-        if (nested == null) break;
+      if (nested != null) {
+        // Java-style array
+        for (LighterASTNode child : tree.getChildren(typeElement)) {
+          IElementType tokenType = child.getTokenType();
+          if (tokenType == JavaTokenType.LBRACKET) {
+            arrayCount++;
+          }
+          else if (tokenType == JavaTokenType.ELLIPSIS) {
+            arrayCount++;
+            isEllipsis = true;
+          }
+        }
         typeElement = nested;
-        arrayCount++;  // Java-style array
       }
 
       text = LightTreeUtil.toFilteredString(tree, typeElement, null);

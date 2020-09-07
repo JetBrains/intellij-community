@@ -26,9 +26,11 @@ import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Objects;
 
 public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement {
@@ -153,18 +155,56 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
       return null;
     }
     if (isArray()) {
-      return myVariance == VARIANCE_NONE
-             ? new ClsTypeElementImpl(this, myTypeText.substring(0, myTypeText.length() - 2), myVariance,
-                                      myAnnotations.forArrayElement())
-             : new ClsTypeElementImpl(this, myTypeText, VARIANCE_NONE,
-                                      myAnnotations.forBound());
+      if (myVariance == VARIANCE_NONE) {
+        return getDeepestArrayElement();
+      }
+      return new ClsTypeElementImpl(this, myTypeText, VARIANCE_NONE, myAnnotations.forBound());
     }
     if (isVarArgs()) {
-      return new ClsTypeElementImpl(this, myTypeText.substring(0, myTypeText.length() - 3), myVariance,
-                                    myAnnotations.forArrayElement());
+      return getDeepestArrayElement();
     }
     return myVariance == VARIANCE_INVARIANT ? null : 
            new ClsJavaCodeReferenceElementImpl(this, myTypeText, myVariance == VARIANCE_NONE ? myAnnotations : myAnnotations.forBound());
+  }
+  
+  int getArrayDepth() {
+    boolean varArgs = isVarArgs();
+    if (!varArgs && !isArray()) return 0;
+    int bracketPos = myTypeText.length() - (varArgs ? 3 : 2);
+    int depth = 1;
+    while (bracketPos > 2 && myTypeText.startsWith("[]", bracketPos - 2)) {
+      bracketPos -= 2;
+      depth++;
+    }
+    return depth;
+  }
+
+  @NotNull
+  private ClsElementImpl getDeepestArrayElement() {
+    int depth = getArrayDepth();
+    int bracketPos = myTypeText.length() - depth * 2 - (isVarArgs() ? 1 : 0);
+    TypeAnnotationContainer container = myAnnotations;
+    for (int i = 0; i < depth; i++) {
+      container = container.forArrayElement();
+    }
+    return new ClsTypeElementImpl(this, myTypeText.substring(0, bracketPos), myVariance, container);
+  }
+
+  @NotNull
+  private PsiType createArrayType(PsiTypeElement deepestChild) {
+    int depth = getArrayDepth();
+    List<TypeAnnotationContainer> containers =
+      StreamEx.iterate(myAnnotations, TypeAnnotationContainer::forArrayElement).limit(depth).toList();
+    PsiType type = deepestChild.getType();
+    for (int i = depth - 1; i >= 0; i--) {
+      if (i == 0 && isVarArgs()) {
+        type = new PsiEllipsisType(type);
+      } else {
+        type = type.createArrayType();
+      }
+      type = type.annotate(containers.get(i).getProvider(this));
+    }
+    return type;
   }
 
   @NotNull
@@ -182,7 +222,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
       if (isArray()) {
         switch (myVariance) {
           case VARIANCE_NONE:
-            return ((PsiTypeElement)childElement).getType().createArrayType();
+            return createArrayType((PsiTypeElement)childElement);
           case VARIANCE_EXTENDS:
             return PsiWildcardType.createExtends(getManager(), ((PsiTypeElement)childElement).getType());
           case VARIANCE_SUPER:
@@ -194,7 +234,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
       }
       else {
         assert isVarArgs() : this;
-        return new PsiEllipsisType(((PsiTypeElement)childElement).getType());
+        return createArrayType((PsiTypeElement)childElement);
       }
     }
     if (childElement instanceof ClsJavaCodeReferenceElementImpl) {

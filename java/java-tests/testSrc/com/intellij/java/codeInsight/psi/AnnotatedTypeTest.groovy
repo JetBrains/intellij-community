@@ -65,8 +65,14 @@ class AnnotatedTypeTest extends LightJavaCodeInsightFixtureTestCase {
 
   void testCStyleArrayType() {
     doTest("@A @TA(1) String @TA(2) [] f @TA(3) []",
-           "java.lang.String[][]", "java.lang.@pkg.TA(1) String @pkg.TA(2) [] @pkg.TA(3) []",
+           "java.lang.String[][]", "java.lang.@pkg.TA(1) String @pkg.TA(3) [] @pkg.TA(2) []",
            "String[][]", "@TA String @TA [] @TA []")
+  }
+
+  void testCStyleMultiArrayType() {
+    doTest("@A @TA(1) String @TA(2) [] @TA(3) [] f @TA(4) [] @TA(5) []",
+           "java.lang.String[][][][]", "java.lang.@pkg.TA(1) String @pkg.TA(4) [] @pkg.TA(5) [] @pkg.TA(2) [] @pkg.TA(3) []",
+           "String[][][][]", "@TA String @TA [] @TA [] @TA [] @TA []")
   }
 
   void testWildcardType() {

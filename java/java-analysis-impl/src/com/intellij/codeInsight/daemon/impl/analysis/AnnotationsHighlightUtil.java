@@ -388,12 +388,11 @@ public final class AnnotationsHighlightUtil {
             HighlightInfo info = checkReferenceTarget(annotation, ref);
             if (info != null) return info;
           }
-          PsiElement context = PsiTreeUtil.skipParentsOfType(typeElement, PsiTypeElement.class);
-          if (context instanceof PsiClassObjectAccessExpression) {
-            String message = JavaErrorBundle.message("annotation.not.allowed.class");
-            return annotationError(annotation, message);
-          }
         }
+      }
+      if (PsiTreeUtil.skipParentsOfType(annotation, PsiTypeElement.class) instanceof PsiClassObjectAccessExpression) {
+        String message = JavaErrorBundle.message("annotation.not.allowed.class");
+        return annotationError(annotation, message);
       }
     }
 

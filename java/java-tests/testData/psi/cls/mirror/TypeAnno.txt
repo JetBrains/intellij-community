@@ -21,9 +21,9 @@ public interface TypeAnno <@pkg.TA(value=10) T extends java.lang.@pkg.TA(11) Obj
 
     java.lang.@pkg.TA(0) String @pkg.TA(1) [] getArray();
 
-    java.lang.@pkg.TA(0) String @pkg.TA(2) [] @pkg.TA(1) [] getArray2D();
+    java.lang.@pkg.TA(0) String @pkg.TA(1) [] @pkg.TA(2) [] getArray2D();
 
-    java.lang.@pkg.TA(0) String @pkg.TA(3) [] @pkg.TA(2) [] @pkg.TA(1) [] getArray3D();
+    java.lang.@pkg.TA(0) String @pkg.TA(1) [] @pkg.TA(2) [] @pkg.TA(3) [] getArray3D();
 
     java.util.@pkg.TA(0) List<java.lang.@pkg.TA(1) String @pkg.TA(2) []> getArrayInList();
 

@@ -24,8 +24,11 @@ import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiAnnotationStub;
 import com.intellij.psi.impl.source.JavaStubPsiElement;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
+import com.intellij.psi.impl.source.PsiTypeElementImpl;
 import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -120,6 +123,27 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
   public PsiAnnotationOwner getOwner() {
     PsiElement parent = getParent();
 
+    if (parent instanceof PsiTypeElementImpl) {
+      PsiType type = ((PsiTypeElementImpl)parent).getType();
+      if (type instanceof PsiClassType) {
+        PsiJavaCodeReferenceElement origRef = ((PsiTypeElementImpl)parent).getInnermostComponentReferenceElement();
+        PsiJavaCodeReferenceElement ref = origRef;
+        while(ref != null && ref.isQualified()) {
+          ref = ObjectUtils.tryCast(ref.getQualifier(), PsiJavaCodeReferenceElement.class);
+        }
+        if (ref != null && ref != origRef) {
+          return new PsiClassReferenceType(ref, null).annotate(type.getAnnotationProvider());
+        }
+      } else if (type instanceof PsiArrayType) {
+        for (PsiElement sibling = getPrevSibling(); sibling != null; sibling = sibling.getPrevSibling()) {
+          if (PsiUtil.isJavaToken(sibling, JavaTokenType.LBRACKET)) {
+            type = ((PsiArrayType)type).getComponentType();
+          }
+        }
+      }
+      return type;
+    }
+    
     if (parent instanceof PsiAnnotationOwner) {
       return (PsiAnnotationOwner)parent;
     }
