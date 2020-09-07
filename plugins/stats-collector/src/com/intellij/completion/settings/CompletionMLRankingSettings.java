@@ -5,7 +5,7 @@ import com.intellij.stats.completion.sender.SenderPreloadingActivityKt;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @deprecated Use {@link com.intellij.completion.ml.settings.CompletionMLRankingSettings instead.}.
+ * @deprecated Use {@link com.intellij.completion.ml.settings.CompletionMLRankingSettings} instead.
  */
 @Deprecated
 public final class CompletionMLRankingSettings {
