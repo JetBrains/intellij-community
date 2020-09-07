@@ -140,7 +140,7 @@ internal fun loadLibrary(name: String, libraryElement: Element, libraryTableId: 
   }
   val libraryEntity = builder.addLibraryEntity(name, libraryTableId, roots, excludedRoots, source)
   if (type != null) {
-    builder.addLibraryPropertiesEntity(libraryEntity, type, properties, source)
+    builder.addLibraryPropertiesEntity(libraryEntity, type, properties)
   }
   return libraryEntity
 }

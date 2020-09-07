@@ -2,8 +2,8 @@
 package com.intellij.workspaceModel.storage.bridgeEntities
 
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
 import com.intellij.workspaceModel.storage.VirtualFileUrl
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
 import com.intellij.workspaceModel.storage.impl.EntityDataDelegation
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileUrlLibraryRootProperty
@@ -180,10 +180,15 @@ class ModifiableLibraryPropertiesEntity : ModifiableWorkspaceEntityBase<LibraryP
   var propertiesXmlTag: String? by EntityDataDelegation()
 }
 
+/**
+ * [LibraryPropertiesEntity] has the same entity source as [LibraryEntity].
+ * [LibraryPropertiesEntityData] contains assertion for that. Please update an assertion in case you need a different entity source for these
+ *   entities.
+ */
 fun WorkspaceEntityStorageDiffBuilder.addLibraryPropertiesEntity(library: LibraryEntity,
                                                                  libraryType: String,
-                                                                 propertiesXmlTag: String?, source: EntitySource) = addEntity(
-  ModifiableLibraryPropertiesEntity::class.java, source) {
+                                                                 propertiesXmlTag: String?) = addEntity(
+  ModifiableLibraryPropertiesEntity::class.java, library.entitySource) {
   this.library = library
   this.libraryType = libraryType
   this.propertiesXmlTag = propertiesXmlTag

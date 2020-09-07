@@ -202,8 +202,7 @@ class MavenRootModelAdapterBridge(private val myMavenProject: MavenProject,
                                                  roots,
                                                  emptyList(), entitySource)
 
-    builder.addLibraryPropertiesEntity(libraryEntity, "repository", "<properties maven-id=\"${artifact.mavenId}\" />",
-                                       MavenExternalSource.INSTANCE)
+    builder.addLibraryPropertiesEntity(libraryEntity, "repository", "<properties maven-id=\"${artifact.mavenId}\" />")
   }
 
   override fun addLibraryDependency(artifact: MavenArtifact,
@@ -229,8 +228,7 @@ class MavenRootModelAdapterBridge(private val myMavenProject: MavenProject,
     val libraryEntity = builder.addLibraryEntity(artifact.ideaLibraryName(), libraryTableId,
                                                  roots,
                                                  emptyList(), entitySource)
-    builder.addLibraryPropertiesEntity(libraryEntity, "repository", "<properties maven-id=\"${artifact.mavenId}\" />",
-                                       MavenExternalSource.INSTANCE)
+    builder.addLibraryPropertiesEntity(libraryEntity, "repository", "<properties maven-id=\"${artifact.mavenId}\" />")
 
     val libDependency = ModuleDependencyItem.Exportable.LibraryDependency(LibraryId(libraryEntity.name, libraryTableId), false,
                                                                           toEntityScope(scope))
