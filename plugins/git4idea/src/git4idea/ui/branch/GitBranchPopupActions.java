@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.ui.EmptyIcon;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
@@ -24,6 +25,7 @@ import git4idea.GitProtectedBranchesKt;
 import git4idea.GitRemoteBranch;
 import git4idea.actions.GitOngoingOperationAction;
 import git4idea.branch.*;
+import git4idea.config.GitVcsSettings;
 import git4idea.fetch.GitFetchSupport;
 import git4idea.i18n.GitBundle;
 import git4idea.push.GitPushSource;
@@ -31,6 +33,7 @@ import git4idea.rebase.GitRebaseSpec;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import git4idea.update.GitUpdateExecutionProcess;
 import icons.DvcsImplIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -436,8 +439,15 @@ public class GitBranchPopupActions {
 
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-      return new AnAction[]{new LocalBranchActions.RenameBranchAction(myProject, myRepositories, myBranchName),
-        new LocalBranchActions.PushBranchAction(myProject, myRepositories, myBranchName, hasOutgoingCommits())
+      return new AnAction[]{
+        new CheckoutAsNewBranch(myProject, myRepositories, myBranchName),
+        new Separator(),
+        new ShowDiffWithBranchAction(myProject, myRepositories, myBranchName),
+        new Separator(),
+        new UpdateCurrentBranchAction(myProject, myRepositories, myBranchName, hasIncomingCommits()),
+        new LocalBranchActions.PushBranchAction(myProject, myRepositories, myBranchName, hasOutgoingCommits()),
+        new Separator(),
+        new LocalBranchActions.RenameBranchAction(myProject, myRepositories, myBranchName),
       };
     }
   }
@@ -562,7 +572,7 @@ public class GitBranchPopupActions {
 
       private static boolean hasTrackingConflicts(@NotNull Map<GitRepository, GitLocalBranch> conflictingLocalBranches,
                                                   @NotNull String remoteBranchName) {
-        return of(conflictingLocalBranches.keySet()).anyMatch(r -> {
+        return or(conflictingLocalBranches.keySet(), r -> {
           GitBranchTrackInfo trackInfo = GitBranchUtil.getTrackInfoForBranch(r, conflictingLocalBranches.get(r));
           return trackInfo != null && !BRANCH_NAME_HASHING_STRATEGY.equals(remoteBranchName, trackInfo.getRemoteBranch().getName());
         });
@@ -769,11 +779,11 @@ public class GitBranchPopupActions {
   }
 
   private static class UpdateSelectedBranchAction extends DumbAwareAction implements CustomIconProvider {
-    private final Project myProject;
-    private final List<? extends GitRepository> myRepositories;
-    private final String myBranchName;
-    private final List<String> myBranchNameList;
-    private final boolean myHasIncoming;
+    protected final Project myProject;
+    protected final List<? extends GitRepository> myRepositories;
+    protected final String myBranchName;
+    protected final List<String> myBranchNameList;
+    protected final boolean myHasIncoming;
 
     UpdateSelectedBranchAction(@NotNull Project project,
                                @NotNull List<? extends GitRepository> repositories,
@@ -820,6 +830,43 @@ public class GitBranchPopupActions {
     @Override
     public Icon getRightIcon() {
       return myHasIncoming ? DvcsImplIcons.Incoming : null;
+    }
+  }
+
+  private static class UpdateCurrentBranchAction extends UpdateSelectedBranchAction {
+
+    UpdateCurrentBranchAction(@NotNull Project project,
+                              @NotNull List<? extends GitRepository> repositories,
+                              @NotNull String branchName,
+                              boolean hasIncoming) {
+      super(project, repositories, branchName, hasIncoming);
+    }
+
+    private static Map<GitRepository, GitBranchPair> calculateTracking(List<? extends GitRepository> repositories) {
+
+      Map<GitRepository, GitBranchPair> map = new LinkedHashMap<>();
+
+      for (GitRepository repo : repositories) {
+        GitLocalBranch localBranch = repo.getCurrentBranch();
+        if (localBranch != null) {
+          GitRemoteBranch trackedBranch = localBranch.findTrackedBranch(repo);
+          if (trackedBranch != null) {
+            map.put(repo, new GitBranchPair(localBranch, trackedBranch));
+          }
+        }
+      }
+
+      return map;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+
+      new GitUpdateExecutionProcess(myProject,
+                                    myRepositories,
+                                    calculateTracking(myRepositories),
+                                    GitVcsSettings.getInstance(myProject).getUpdateMethod(), false)
+        .execute();
     }
   }
 
