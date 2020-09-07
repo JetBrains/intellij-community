@@ -44,7 +44,7 @@ public final class LightEditFileEditorManagerImpl extends FileEditorManagerImpl 
   public @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileImpl2(@NotNull EditorWindow window,
                                                                          @NotNull VirtualFile file,
                                                                          boolean focusEditor) {
-    LightEditService.getInstance().openFile(file);
+    LightEditService.getInstance().openFile(file, true);
     return getEditorsWithProviders(file);
   }
 

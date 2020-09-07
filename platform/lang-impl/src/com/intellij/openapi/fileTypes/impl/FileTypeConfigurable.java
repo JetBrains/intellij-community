@@ -64,6 +64,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     myHashBangs = new HashBangPanel(myFileTypePanel.myHashBangPanel);
     myRecognizedFileType.myFileTypesList.addListSelectionListener(__ -> updateExtensionList());
     myFileTypePanel.myIgnoreFilesField.setColumns(30);
+    //noinspection DialogTitleCapitalization - it's an option label
     myFileTypePanel.myOpenWithLightEditPanel.setBorder(
       IdeBorderFactory.createTitledBorder(IdeBundle.message("editbox.open.in.light.edit.mode"), false, TITLE_INSETS).setShowLine(false));
     myFileTypePanel.myLightEditHintLabel.setForeground(JBColor.GRAY);

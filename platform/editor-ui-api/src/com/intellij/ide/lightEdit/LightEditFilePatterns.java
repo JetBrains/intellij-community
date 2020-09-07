@@ -15,49 +15,58 @@ public class LightEditFilePatterns {
   public static final String[] DEFAULT_PATTERNS = {
     "*.txt", "*.log", "*.md", "*.json", "*.xml", "*.sh", "*.ini", "*.yml", "*.conf"};
 
-  private final    Set<String>           myPatterns = new HashSet<>();
-  private volatile List<FileNameMatcher> myMatchers = null;
+  private final Set<String> myPatterns    = new HashSet<>();
+  private final Object      myPatternLock = new Object();
+
+  private volatile List<FileNameMatcher> myMatchers    = null;
 
   public LightEditFilePatterns() {
-    myPatterns.addAll(Arrays.asList(DEFAULT_PATTERNS));
+    this(Arrays.asList(DEFAULT_PATTERNS));
+  }
+
+  private LightEditFilePatterns(@NotNull List<String> filePatterns) {
+    myPatterns.addAll(filePatterns);
   }
 
   public static LightEditFilePatterns parse(@NotNull String patternString) {
-    LightEditFilePatterns filePatterns = new LightEditFilePatterns();
-    filePatterns.myPatterns.clear();
+    List<String> filePatterns = new ArrayList<>();
     for (String pattern : patternString.split(";")) {
       if (!StringUtil.isEmptyOrSpaces(pattern)) {
-        filePatterns.myPatterns.add(pattern);
+        filePatterns.add(pattern);
       }
     }
-    return filePatterns;
+    return new LightEditFilePatterns(filePatterns);
   }
 
   @Override
   public String toString() {
-    StringBuilder patternBuilder = new StringBuilder();
-    for (String pattern : getPatterns()) {
-      if (patternBuilder.length() > 0) patternBuilder.append(';');
-      patternBuilder.append(pattern);
-    }
-    return patternBuilder.toString();
+    return String.join(";", getPatterns());
   }
 
   @NotNull
   public List<String> getPatterns() {
-    return myPatterns.stream().sorted().collect(Collectors.toList());
+    synchronized (myPatternLock) {
+      return myPatterns.stream().sorted().collect(Collectors.toList());
+    }
   }
 
   public void setPatterns(@NotNull List<String> patterns) {
-    myPatterns.clear();
-    myPatterns.addAll(patterns);
-    myMatchers = null;
+    synchronized (myPatternLock) {
+      myPatterns.clear();
+      myPatterns.addAll(patterns);
+      myMatchers = null;
+    }
   }
 
   @Override
   public boolean equals(Object obj) {
     return obj instanceof LightEditFilePatterns &&
            myPatterns.equals(((LightEditFilePatterns)obj).myPatterns);
+  }
+
+  @Override
+  public int hashCode() {
+    return myPatterns.hashCode();
   }
 
   public boolean match(@NotNull VirtualFile file) {
@@ -71,7 +80,7 @@ public class LightEditFilePatterns {
     List<FileNameMatcher> matchers = myMatchers;
     if (matchers == null) {
       matchers = ContainerUtil.map(
-        myPatterns, pattern -> FileNameMatcherFactory.getInstance().createMatcher(pattern));
+        getPatterns(), pattern -> FileNameMatcherFactory.getInstance().createMatcher(pattern));
       myMatchers = matchers;
     }
     return matchers;
