@@ -15,6 +15,11 @@ import java.util.ResourceBundle;
 public class SchemeConvertorEPBase<T> extends BaseKeyedLazyInstance<T> {
   private static final Logger LOG = Logger.getInstance(SchemeExporterEP.class);
 
+  /**
+   * Use {@link #nameKey} for I18N.
+   *
+   * @see #getLocalizedName()
+   */
   @Attribute("name")
   @Nls(capitalization = Nls.Capitalization.Sentence)
   public String name;
