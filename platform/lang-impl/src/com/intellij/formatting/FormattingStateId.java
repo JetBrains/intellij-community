@@ -3,12 +3,13 @@ package com.intellij.formatting;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.EnumSet;
 import java.util.Set;
+import java.util.function.Supplier;
 
 /**
  * Enumerates formatting processing states.
@@ -25,35 +26,35 @@ public enum FormattingStateId {
    * blocks construction because most of our formatting models do that lazily, i.e. they define the
    * {@link FormattingModel#getRootBlock() root block} and build its sub-blocks only on the {@link Block#getSubBlocks() first request}.
    */
-  WRAPPING_BLOCKS(2),
+  WRAPPING_BLOCKS(2, "progress.reformat.stage.wrapping.blocks"),
 
   /**
    * This element corresponds to the state when formatter sequentially processes {@link AbstractBlockWrapper wrapped code blocks}
    * and modifies their {@link WhiteSpace white spaces} according to the current {@link CodeStyleSettings code style settings}.
    */
-  PROCESSING_BLOCKS(1),
+  PROCESSING_BLOCKS(1, "progress.reformat.stage.processing.blocks"),
 
-  EXPANDING_CHILDREN_INDENTS(5),
+  EXPANDING_CHILDREN_INDENTS(5, "progress.reformat.stage.expanding.children.indents"),
 
   /**
    * This element corresponds to formatting phase when all {@link AbstractBlockWrapper wrapped code blocks} are processed and it's
    * time to apply the changes to the underlying document.
    */
-  APPLYING_CHANGES(10);
+  APPLYING_CHANGES(10, "progress.reformat.stage.applying.changes");
   
-  private final @NlsContexts.ProgressText String myDescription;
+  private final Supplier<@NlsContexts.ProgressText String> myDescription;
   private final double myWeight;
 
-  FormattingStateId(double weight) {
+  FormattingStateId(double weight, @PropertyKey(resourceBundle = CodeInsightBundle.BUNDLE) String descriptionKey) {
     myWeight = weight;
-    myDescription = CodeInsightBundle.message("progress.reformat.stage." + StringUtil.toLowerCase(toString().replace('_', '.')));
+    myDescription = CodeInsightBundle.messagePointer(descriptionKey);
   }
 
   /**
    * @return    human-readable textual description of the current state id
    */
   public @NlsContexts.ProgressText String getDescription() {
-    return myDescription;
+    return myDescription.get();
   }
 
   /**
