@@ -1051,9 +1051,9 @@
     <notificationGroup id="Dynamic plugin installation" displayType="BALLOON" isLogByDefault="false"/>
     <notificationGroup id="Keymap" displayType="STICKY_BALLOON"/>
     <notificationGroup id="IDE and Plugin Updates" displayType="STICKY_BALLOON" notificationIds="plugins.updated.suggest.restart;
-    plugins.updated.without.restart;ide.update.installed;ide.update.channel.switched;ide.updated.by.snap;
-    plugins.updated.after.restart;ide.patch.download.failed;ide.update.suggest.restart;ide.update.available;plugins.update.available;
-    external.components.available;no.updates.available"/>
+        plugins.updated.without.restart;ide.update.installed;ide.update.channel.switched;ide.updated.by.snap;plugins.updated.after.restart;
+        ide.patch.download.failed;ide.update.suggest.restart;ide.update.available;plugins.update.available;external.components.available;
+        no.updates.available"/>
     <notificationGroup id="Built-in Server" displayType="STICKY_BALLOON"/>
     <notificationGroup id="Password Safe" displayType="STICKY_BALLOON"/>
     <notificationGroup id="Tutorials" displayType="BALLOON"/>

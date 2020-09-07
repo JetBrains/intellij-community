@@ -136,7 +136,7 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
   protected JComponent createCenterPanel() {
     String licenseInfo = myLicenseInfo != null ? myLicenseInfo.first : null;
     boolean licenseWarn = myLicenseInfo != null && myLicenseInfo.second;
-    return UpdateInfoPanelUI
+    return UpdateInfoPanel
       .create(myNewBuild, myPatches, myTestPatch, myWriteProtected, licenseInfo, licenseWarn, myEnableLink, myUpdatedChannel);
   }
 
@@ -239,7 +239,7 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
           Logger.getInstance(UpdateInstaller.class).warn(e);
 
           String title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
-          String downloadUrl = UpdateInfoPanelUI.downloadUrl(myNewBuild, myUpdatedChannel);
+          String downloadUrl = UpdateInfoPanel.downloadUrl(myNewBuild, myUpdatedChannel);
           String message = IdeBundle.message("update.downloading.patch.error", e.getMessage(), downloadUrl);
           UpdateChecker.getNotificationGroup().createNotification(
             title, message, NotificationType.ERROR, NotificationListener.URL_OPENING_LISTENER, "ide.patch.download.failed").notify(null);

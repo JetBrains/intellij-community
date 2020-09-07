@@ -33,7 +33,7 @@ import javax.swing.event.HyperlinkEvent
 import kotlin.math.max
 import kotlin.math.min
 
-internal object UpdateInfoPanelUI {
+internal object UpdateInfoPanel {
   private const val DEFAULT_MIN_HEIGHT = 300
   private const val DEFAULT_MAX_HEIGHT = 600
   private const val DEFAULT_WIDTH = 700
