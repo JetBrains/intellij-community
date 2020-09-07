@@ -46,9 +46,9 @@ public abstract class CoverageEngine {
    * @param conf Run Configuration
    * @return True if coverage for given run configuration is supported by this engine
    */
-  public abstract boolean isApplicableTo(@Nullable final RunConfigurationBase conf);
+  public abstract boolean isApplicableTo(@NotNull final RunConfigurationBase<?> conf);
 
-  public abstract boolean canHavePerTestCoverage(@Nullable final RunConfigurationBase conf);
+  public abstract boolean canHavePerTestCoverage(@NotNull final RunConfigurationBase<?> conf);
 
   /**
    * @return tests, which covered specified line. Names should be compatible with {@link CoverageEngine#findTestsByNames(String[], Project)}
@@ -83,7 +83,7 @@ public abstract class CoverageEngine {
    * @return Coverage enabled configuration with engine specific settings
    */
   @NotNull
-  public abstract CoverageEnabledConfiguration createCoverageEnabledConfiguration(@Nullable final RunConfigurationBase conf);
+  public abstract CoverageEnabledConfiguration createCoverageEnabledConfiguration(@NotNull final RunConfigurationBase<?> conf);
 
   /**
    * Coverage suite is coverage settings & coverage data gather by coverage runner (for suites provided by TeamCity server)
