@@ -38,6 +38,7 @@ import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.io.File;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -192,7 +193,7 @@ public final class LightEditUtil {
                 && OPEN_FILE_IN_PROJECT_HREF.equals(e.getDescription())) {
               VirtualFile file = LightEditService.getInstance().getSelectedFile();
               if (file != null) {
-                LightEditOpenInProjectIntention.performOn(file);
+                LightEditOpenInProjectIntention.performOn(Objects.requireNonNull(editor.getProject()), file);
               }
             }
           });
@@ -221,5 +222,14 @@ public final class LightEditUtil {
       }
     }
     return null;
+  }
+
+  @NotNull
+  public static Project requireLightEditProject(@Nullable Project project) {
+    if (project == null || !LightEdit.owns(project)) {
+      LOG.error("LightEdit project is expected while " + (project != null ? project.getName() : "no project") + " is used instead");
+      return getProject();
+    }
+    return project;
   }
 }

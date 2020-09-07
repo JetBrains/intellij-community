@@ -52,7 +52,7 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
   }
 
   private @Nullable LightEditorInfo doCreateEditor(@NotNull VirtualFile file) {
-    Project project = Objects.requireNonNull(LightEditUtil.getProject());
+    Project project = myLightEditService.getOrCreateProject();
     Pair<FileEditorProvider, FileEditor> pair = createFileEditor(project, file);
     if (pair == null) {
       return null;
