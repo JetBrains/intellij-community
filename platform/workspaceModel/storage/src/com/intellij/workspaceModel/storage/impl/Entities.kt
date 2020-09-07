@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl
 
+import com.intellij.util.ReflectionUtil
 import com.intellij.workspaceModel.storage.*
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KClass
@@ -220,20 +221,20 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {
     if (other == null) return false
     if (this::class != other::class) return false
 
-    return this.javaClass.declaredFields.filterNot { it.name == WorkspaceEntityData<*>::id.name }
+    return ReflectionUtil.collectFields(this.javaClass).filterNot { it.name == WorkspaceEntityData<*>::id.name }
       .onEach { it.isAccessible = true }
       .all { it.get(this) == it.get(other) }
   }
 
   override fun hashCode(): Int {
-    return this.javaClass.declaredFields.filterNot { it.name == WorkspaceEntityData<*>::id.name }
+    return ReflectionUtil.collectFields(this.javaClass).filterNot { it.name == WorkspaceEntityData<*>::id.name }
       .onEach { it.isAccessible = true }
       .mapNotNull { it.get(this)?.hashCode() }
       .fold(31) { acc, i -> acc * 17 + i }
   }
 
   override fun toString(): String {
-    val fields = this.javaClass.declaredFields.toList().onEach { it.isAccessible = true }
+    val fields = ReflectionUtil.collectFields(this.javaClass).toList().onEach { it.isAccessible = true }
       .joinToString(separator = ", ") { f -> "${f.name}=${f.get(this)}" }
     return "${this::class.simpleName}($fields, id=${this.id})"
   }
