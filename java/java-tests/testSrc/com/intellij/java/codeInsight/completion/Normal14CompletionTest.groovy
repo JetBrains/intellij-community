@@ -34,4 +34,12 @@ class Normal14CompletionTest extends NormalCompletionTestCase {
   void testTopLevelPublicRecord() { doTest() }
   void testTopLevelPublicRecordParenthesisExists() { doTest() }
   void testTopLevelPublicRecordBraceExists() { doTest() }
+
+  void testSealedClassDifferentPackageInheritor() {
+    myFixture.addClass("package bar;\nimport foo.*;\npublic final class Child2 extends Parent {}")
+    doTest()
+  }
+
+  void testSealedClassPermitsReference() { doTest() }
+  void testSecondPermitsReference() { doTest() }
 }
