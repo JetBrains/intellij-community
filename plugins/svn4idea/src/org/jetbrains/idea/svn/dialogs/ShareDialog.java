@@ -27,6 +27,7 @@ import java.awt.event.FocusEvent;
 
 import static com.intellij.openapi.ui.Messages.showErrorDialog;
 import static org.jetbrains.idea.svn.SvnBundle.message;
+import static org.jetbrains.idea.svn.branchConfig.DefaultBranchConfig.TRUNK_NAME;
 
 public class ShareDialog extends RepositoryBrowserDialog {
   private String mySelectedURL;
@@ -44,7 +45,7 @@ public class ShareDialog extends RepositoryBrowserDialog {
 
     myExisting.setToolTipText(message("radio.share.target.at.selected.repository.location"));
     mySameNameAsLocal.setToolTipText(message("radio.share.target.in.new.folder", myName));
-    myTrunk.setToolTipText(message("radio.share.target.in.new.folder", myName + "/trunk"));
+    myTrunk.setToolTipText(message("radio.share.target.in.new.folder", myName + "/" + TRUNK_NAME));
     updateTargetOptions(false);
 
     myRepositoriesLabel.setFont(myRepositoriesLabel.getFont().deriveFont(Font.BOLD));
@@ -77,7 +78,7 @@ public class ShareDialog extends RepositoryBrowserDialog {
     try {
       myExisting.setText(url.toDecodedString());
       mySameNameAsLocal.setText(url.appendPath(myName, false).toDecodedString());
-      myTrunk.setText(url.appendPath(myName, false).appendPath("trunk", false).toDecodedString());
+      myTrunk.setText(url.appendPath(myName, false).appendPath(TRUNK_NAME, false).toDecodedString());
 
       return true;
     }

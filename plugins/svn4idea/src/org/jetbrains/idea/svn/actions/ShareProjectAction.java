@@ -28,6 +28,7 @@ import static com.intellij.util.ArrayUtil.isEmpty;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.append;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
+import static org.jetbrains.idea.svn.branchConfig.DefaultBranchConfig.*;
 
 public class ShareProjectAction extends BasicAction {
 
@@ -143,11 +144,11 @@ public class ShareProjectAction extends BasicAction {
         return createRemoteFolder(vcs, parentUrl, file.getName(), commitText);
       default:
         Target projectRoot = createRemoteFolder(vcs, parentUrl, file.getName(), commitText);
-        Target trunk = createRemoteFolder(vcs, projectRoot.getUrl(), "trunk", commitText);
+        Target trunk = createRemoteFolder(vcs, projectRoot.getUrl(), TRUNK_NAME, commitText);
 
         if (createStandardStructure) {
-          createRemoteFolder(vcs, projectRoot.getUrl(), "branches", commitText);
-          createRemoteFolder(vcs, projectRoot.getUrl(), "tags", commitText);
+          createRemoteFolder(vcs, projectRoot.getUrl(), BRANCHES_NAME, commitText);
+          createRemoteFolder(vcs, projectRoot.getUrl(), TAGS_NAME, commitText);
         }
         return trunk;
     }

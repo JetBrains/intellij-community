@@ -73,6 +73,7 @@ import static com.intellij.util.ui.JBUI.size;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnBundle.messagePointer;
 import static org.jetbrains.idea.svn.SvnUtil.*;
+import static org.jetbrains.idea.svn.branchConfig.DefaultBranchConfig.TRUNK_NAME;
 
 public class RepositoryBrowserDialog extends DialogWrapper {
 
@@ -641,7 +642,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         final int folder = path.replace('\\', '/').lastIndexOf('/');
         if (folder != -1) {
           final String lastFolder = path.substring(folder + 1);
-          if (myMove && "trunk".equalsIgnoreCase(lastFolder)) {
+          if (myMove && TRUNK_NAME.equalsIgnoreCase(lastFolder)) {
             final int result =
               Messages.showOkCancelDialog(
                 myProject,

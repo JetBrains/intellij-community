@@ -30,10 +30,9 @@ import java.util.List;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
+import static org.jetbrains.idea.svn.branchConfig.DefaultBranchConfig.TRUNK_NAME;
 
 public final class SelectBranchPopup {
-  private static final @NlsSafe @NotNull String TRUNK_NAME = "trunk";
-
   private SelectBranchPopup() {
   }
 

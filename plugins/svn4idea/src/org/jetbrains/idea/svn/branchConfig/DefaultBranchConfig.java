@@ -3,11 +3,11 @@ package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
@@ -27,9 +27,9 @@ import static org.jetbrains.idea.svn.SvnUtil.removePathTail;
 public class DefaultBranchConfig {
   private static final Logger LOG = Logger.getInstance(DefaultBranchConfig.class);
 
-  private static final @NonNls String TRUNK_NAME = "trunk";
-  private static final @NonNls String BRANCHES_NAME = "branches";
-  private static final @NonNls String TAGS_NAME = "tags";
+  public static final @NlsSafe String TRUNK_NAME = "trunk";
+  public static final @NlsSafe String BRANCHES_NAME = "branches";
+  public static final @NlsSafe String TAGS_NAME = "tags";
 
   @Nullable
   public static SvnBranchConfigurationNew detect(@NotNull Project project, @NotNull VirtualFile root) {
