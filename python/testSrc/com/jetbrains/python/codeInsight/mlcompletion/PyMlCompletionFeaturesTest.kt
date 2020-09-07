@@ -11,7 +11,7 @@ class PyMlCompletionFeaturesTest: PyMlCompletionTestCase() {
 
   override fun setUp() {
     super.setUp()
-    setLanguageLevel(LanguageLevel.PYTHON35)
+    setLanguageLevel(LanguageLevel.getLatest())
   }
 
   // Context features
