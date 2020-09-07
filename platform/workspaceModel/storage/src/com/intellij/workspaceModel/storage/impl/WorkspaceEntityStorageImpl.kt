@@ -1131,8 +1131,18 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     val displayText = "Content of the workspace model in binary format"
     var _message = "$message\n\n!Please include all attachments to the report!"
     _message += "\n\nEntity source filter: $entitySourceFilter"
-    LOG.error(_message, e, Attachment("Left_Store", leftBytes, displayText), Attachment("Right_Store", rightBytes, displayText),
-              Attachment("Res_Store", resBytes, displayText))
+
+    val leftAttachment = createAttachment("Left_Store", leftBytes, displayText)
+    val rightAttachment = createAttachment("Right_Store", rightBytes, displayText)
+    val resAttachment = createAttachment("Res_Store", resBytes, displayText)
+
+    LOG.error(_message, e, leftAttachment, rightAttachment, resAttachment)
+  }
+
+  private fun createAttachment(path: String, leftBytes: ByteArray, displayText: String): Attachment {
+    val attachment = Attachment(path, leftBytes, displayText)
+    attachment.isIncluded = true
+    return attachment
   }
 
   private fun WorkspaceEntityStorage.makeSureItsStore(): WorkspaceEntityStorage {
