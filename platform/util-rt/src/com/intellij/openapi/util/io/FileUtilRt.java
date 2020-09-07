@@ -440,7 +440,7 @@ public class FileUtilRt {
     return fileName.subSequence(index + 1, fileName.length());
   }
 
-  public static boolean extensionEquals(@NonNls @NotNull String filePath, @NonNls @NotNull String extension) {
+  public static boolean extensionEquals(@NotNull @NonNls String filePath, @NotNull @NonNls String extension) {
     int extLen = extension.length();
     if (extLen == 0) {
       int lastSlash = Math.max(filePath.lastIndexOf('/'), filePath.lastIndexOf('\\'));
