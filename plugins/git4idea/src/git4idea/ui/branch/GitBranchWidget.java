@@ -27,7 +27,9 @@ import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import icons.DvcsImplIcons;
+
 import javax.swing.*;
+
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +44,6 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
   private static final Icon OUTGOING_LAYERED = new LayeredIcon(AllIcons.Vcs.Branch, DvcsImplIcons.OutgoingLayer);
   private static final @NonNls String ID = "git";
   private final GitVcsSettings mySettings;
-  private static final boolean showNewNavbarVCSGroup = UISettings.getInstance().getShowNewNavbarVCSGroup();
 
   public GitBranchWidget(@NotNull Project project) {
     super(project, GitVcs.DISPLAY_NAME.get());
@@ -146,10 +147,7 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
 
     @Override
     public boolean isEnabledByDefault() {
-      if(showNewNavbarVCSGroup){
-        return false;
-      }
-      return true;
+      return !UISettings.getInstance().getShowNewNavbarVcsGroup();
     }
 
     @Override

@@ -25,6 +25,7 @@ public class VcsQuickActionsToolbarPopup extends QuickSwitchSchemeAction impleme
 
   public VcsQuickActionsToolbarPopup() {
     myActionPlace = ActionPlaces.MAIN_TOOLBAR;
+    getTemplatePresentation().setText(VcsBundle.messagePointer("vcs.quicklist.popup.title"));
   }
 
   @Override
