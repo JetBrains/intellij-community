@@ -302,10 +302,24 @@ class JavaResourceRootEntity(
 fun SourceRootEntity.asJavaResourceRoot() = referrers(JavaResourceRootEntity::sourceRoot).firstOrNull()
 
 @Suppress("unused")
-class CustomSourceRootPropertiesEntityData : WorkspaceEntityData<CustomSourceRootPropertiesEntity>() {
+class CustomSourceRootPropertiesEntityData : WorkspaceEntityData<CustomSourceRootPropertiesEntity>(), WithAssertableConsistency {
   lateinit var propertiesXmlTag: String
   override fun createEntity(snapshot: WorkspaceEntityStorage): CustomSourceRootPropertiesEntity {
     return CustomSourceRootPropertiesEntity(propertiesXmlTag).also { addMetaData(it, snapshot) }
+  }
+
+  override fun assertConsistency(storage: WorkspaceEntityStorage) {
+    val thisEntity = this.createEntity(storage)
+    val attachedSourceRoot = thisEntity.sourceRoot
+    assert(thisEntity.entitySource == attachedSourceRoot.entitySource) {
+      """
+      |Entity source of source root entity and it's CustomSourceRootProperties entity differs. 
+      |   Source root entity source: ${attachedSourceRoot.entitySource}
+      |   CustomSourceRootProperties source: ${thisEntity.entitySource}
+      |   Source root entity: $attachedSourceRoot
+      |   CustomSourceRootProperties entity: $thisEntity
+      """.trimMargin()
+    }
   }
 }
 

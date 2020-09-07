@@ -138,9 +138,8 @@ class ModifiableCustomSourceRootPropertiesEntity : ModifiableWorkspaceEntityBase
   var propertiesXmlTag: String by EntityDataDelegation()
 }
 
-fun WorkspaceEntityStorageDiffBuilder.addCustomSourceRootPropertiesEntity(sourceRoot: SourceRootEntity,
-                                                                          propertiesXmlTag: String, source: EntitySource) = addEntity(
-  ModifiableCustomSourceRootPropertiesEntity::class.java, source) {
+fun WorkspaceEntityStorageDiffBuilder.addCustomSourceRootPropertiesEntity(sourceRoot: SourceRootEntity, propertiesXmlTag: String) = addEntity(
+  ModifiableCustomSourceRootPropertiesEntity::class.java, sourceRoot.entitySource) {
   this.sourceRoot = sourceRoot
   this.propertiesXmlTag = propertiesXmlTag
 }

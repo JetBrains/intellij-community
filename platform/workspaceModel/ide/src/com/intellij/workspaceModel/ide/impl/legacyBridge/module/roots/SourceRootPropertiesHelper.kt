@@ -2,7 +2,6 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
@@ -99,7 +98,6 @@ internal object SourceRootPropertiesHelper {
 
   internal fun <P : JpsElement?> addPropertiesEntity(diff: WorkspaceEntityStorageDiffBuilder,
                                                      sourceRootEntity: SourceRootEntity,
-                                                     entitySource: EntitySource,
                                                      properties: P,
                                                      serializer: JpsModuleSourceRootPropertiesSerializer<P>) {
     when (properties) {
@@ -120,8 +118,7 @@ internal object SourceRootPropertiesHelper {
       else -> {
         diff.addCustomSourceRootPropertiesEntity(
           sourceRoot = sourceRootEntity,
-          propertiesXmlTag = savePropertiesToString(serializer, properties),
-          source = entitySource
+          propertiesXmlTag = savePropertiesToString(serializer, properties)
         )
       }
     }

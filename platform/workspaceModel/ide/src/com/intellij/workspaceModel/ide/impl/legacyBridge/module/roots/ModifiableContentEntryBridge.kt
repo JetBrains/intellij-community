@@ -65,7 +65,7 @@ internal class ModifiableContentEntryBridge(
       source = entitySource
     )
 
-    SourceRootPropertiesHelper.addPropertiesEntity(diff, sourceRootEntity, entitySource, properties, serializer)
+    SourceRootPropertiesHelper.addPropertiesEntity(diff, sourceRootEntity, properties, serializer)
 
     return currentContentEntry.value.sourceFolders.firstOrNull {
       it.url == sourceFolderUrl.url && it.rootType == type
