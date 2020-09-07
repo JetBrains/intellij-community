@@ -31,6 +31,7 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import java.awt.Dimension
 import java.awt.event.*
@@ -48,7 +49,7 @@ class GHSubmittableTextFieldFactory(private val model: GHSubmittableTextFieldMod
     private val CANCEL_SHORTCUT_SET = CommonShortcuts.ESCAPE
   }
 
-  fun create(@NlsActions.ActionText actionName: String = "Comment",
+  fun create(@NlsActions.ActionText actionName: String = GithubBundle.message("action.comment.text"),
              onCancel: (() -> Unit)? = null): JComponent {
 
     val textField = createTextField(actionName)
@@ -59,7 +60,7 @@ class GHSubmittableTextFieldFactory(private val model: GHSubmittableTextFieldMod
   }
 
   fun create(avatarIconsProvider: GHAvatarIconsProvider, author: GHUser,
-             @NlsActions.ActionText actionName: String = "Comment",
+             @NlsActions.ActionText actionName: String = GithubBundle.message("action.comment.text"),
              onCancel: (() -> Unit)? = null): JComponent {
 
     val textField = createTextField(actionName)
