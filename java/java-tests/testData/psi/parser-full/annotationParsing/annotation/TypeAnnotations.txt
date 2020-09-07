@@ -1376,14 +1376,13 @@ PsiJavaFile:TypeAnnotations.java
             PsiModifierList:
               <empty list>
             PsiTypeElement:Document[] @Readonly []
-              PsiTypeElement:Document[]
-                PsiTypeElement:Document
-                  PsiJavaCodeReferenceElement:Document
-                    PsiIdentifier:Document('Document')
-                    PsiReferenceParameterList
-                      <empty list>
-                PsiJavaToken:LBRACKET('[')
-                PsiJavaToken:RBRACKET(']')
+              PsiTypeElement:Document
+                PsiJavaCodeReferenceElement:Document
+                  PsiIdentifier:Document('Document')
+                  PsiReferenceParameterList
+                    <empty list>
+              PsiJavaToken:LBRACKET('[')
+              PsiJavaToken:RBRACKET(']')
               PsiWhiteSpace(' ')
               PsiAnnotation
                 PsiJavaToken:AT('@')
