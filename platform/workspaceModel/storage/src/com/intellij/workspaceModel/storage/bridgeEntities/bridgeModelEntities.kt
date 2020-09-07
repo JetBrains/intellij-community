@@ -336,13 +336,30 @@ class CustomSourceRootPropertiesEntity(
 fun SourceRootEntity.asCustomSourceRoot() = referrers(CustomSourceRootPropertiesEntity::sourceRoot).firstOrNull()
 
 @Suppress("unused")
-class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>() {
+class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>(), WithAssertableConsistency {
   lateinit var url: VirtualFileUrl
   lateinit var excludedUrls: List<VirtualFileUrl>
   lateinit var excludedPatterns: List<String>
 
   override fun createEntity(snapshot: WorkspaceEntityStorage): ContentRootEntity {
     return ContentRootEntity(url, excludedUrls, excludedPatterns).also { addMetaData(it, snapshot) }
+  }
+
+  override fun assertConsistency(storage: WorkspaceEntityStorage) {
+    // Module can have a different entity source in case of OC
+    if (this.entitySource.toString() == "OCEntitySource") return
+
+    val thisEntity = this.createEntity(storage)
+    val attachedModule = thisEntity.module
+    assert(thisEntity.entitySource == attachedModule.entitySource) {
+      """
+      |Entity source of content root entity and it's module entity differs. 
+      |   Module entity source: ${attachedModule.entitySource}
+      |   Content root source: ${thisEntity.entitySource}
+      |   Module entity: $attachedModule
+      |   Content root entity: $thisEntity
+      """.trimMargin()
+    }
   }
 }
 

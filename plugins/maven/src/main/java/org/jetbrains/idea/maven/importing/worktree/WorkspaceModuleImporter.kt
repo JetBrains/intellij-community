@@ -31,8 +31,7 @@ class WorkspaceModuleImporter(private val project: Project,
     val dependencies = collectDependencies();
     moduleEntity = diff.addModuleEntity(mavenProject.displayName, dependencies, MavenExternalSource.INSTANCE)
     val contentRootEntity = diff.addContentRootEntity(virtualFileManager.fromPath(mavenProject.directory), emptyList(), emptyList(),
-                                                      moduleEntity,
-                                                      MavenExternalSource.INSTANCE)
+                                                      moduleEntity)
     importFolders(contentRootEntity)
     importLanguageLevel();
   }

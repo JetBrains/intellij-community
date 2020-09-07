@@ -154,6 +154,17 @@ class ModifiableContentRootEntity : ModifiableWorkspaceEntityBase<ContentRootEnt
 fun WorkspaceEntityStorageDiffBuilder.addContentRootEntity(url: VirtualFileUrl,
                                                            excludedUrls: List<VirtualFileUrl>,
                                                            excludedPatterns: List<String>,
+                                                           module: ModuleEntity): ContentRootEntity {
+  return addContentRootEntityWithCustomEntitySource(url, excludedUrls, excludedPatterns, module, module.entitySource)
+}
+
+/**
+ * Entity source of content root is *almost* the same as the entity source of the corresponding module.
+ * Please update assertConsistency in [ContentRootEntityData] if you're using this method.
+ */
+fun WorkspaceEntityStorageDiffBuilder.addContentRootEntityWithCustomEntitySource(url: VirtualFileUrl,
+                                                           excludedUrls: List<VirtualFileUrl>,
+                                                           excludedPatterns: List<String>,
                                                            module: ModuleEntity, source: EntitySource) = addEntity(
   ModifiableContentRootEntity::class.java, source) {
   this.url = url

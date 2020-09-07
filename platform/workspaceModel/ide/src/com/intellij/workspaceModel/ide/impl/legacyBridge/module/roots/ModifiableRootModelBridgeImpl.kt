@@ -121,8 +121,7 @@ class ModifiableRootModelBridgeImpl(
         module = moduleEntity,
         excludedUrls = emptyList(),
         excludedPatterns = emptyList(),
-        url = virtualFileManager.fromUrl(url),
-        source = moduleEntity.entitySource
+        url = virtualFileManager.fromUrl(url)
     )
 
     // TODO It's N^2 operations since we need to recreate contentEntries every time

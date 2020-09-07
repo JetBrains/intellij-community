@@ -157,7 +157,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
         .map { it.getAttributeValue(EXCLUDE_PATTERN_ATTRIBUTE) }
       val contentRootUrl = contentElement.getAttributeValueStrict(URL_ATTRIBUTE)
         .let { virtualFileManager.fromUrl(it) }
-      val contentRootEntity = builder.addContentRootEntity(contentRootUrl, excludeRootsUrls, excludePatterns, moduleEntity, entitySource)
+      val contentRootEntity = builder.addContentRootEntity(contentRootUrl, excludeRootsUrls, excludePatterns, moduleEntity)
 
       for (sourceRootElement in contentElement.getChildren(SOURCE_FOLDER_TAG)) {
         val url = sourceRootElement.getAttributeValueStrict(URL_ATTRIBUTE)

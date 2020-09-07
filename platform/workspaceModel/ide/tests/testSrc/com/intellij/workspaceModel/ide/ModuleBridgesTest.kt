@@ -94,7 +94,7 @@ class ModuleBridgesTest {
 
       WorkspaceModel.getInstance(project).updateProjectModel {
         val moduleEntity = it.findModuleEntity(module)!!
-        it.addContentRootEntity(contentRootUrl, emptyList(), emptyList(), moduleEntity, moduleEntity.entitySource)
+        it.addContentRootEntity(contentRootUrl, emptyList(), emptyList(), moduleEntity)
       }
 
       assertArrayEquals(
@@ -327,8 +327,7 @@ class ModuleBridgesTest {
       val virtualFileUrl = dir.toVirtualFileUrl(virtualFileManager)
       projectModel.updateProjectModel {
         val moduleEntity = it.addModuleEntity("name", emptyList(), JpsFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation))
-        val contentRootEntity = it.addContentRootEntity(virtualFileUrl, emptyList(), emptyList(), moduleEntity,
-                                                        moduleEntity.entitySource)
+        val contentRootEntity = it.addContentRootEntity(virtualFileUrl, emptyList(), emptyList(), moduleEntity)
         it.addSourceRootEntity(contentRootEntity, virtualFileUrl, false, "",
                                JpsFileEntitySource.FileInDirectory(moduleDirUrl, projectLocation))
       }
