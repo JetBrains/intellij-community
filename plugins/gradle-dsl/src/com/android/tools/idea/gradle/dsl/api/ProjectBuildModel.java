@@ -21,12 +21,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
-import org.jetbrains.plugins.gradle.settings.GradleSettings;
 
 /**
  * A model representing a whole project. Multiple {@link GradleBuildModel}s that are obtained via a {@link ProjectBuildModel} will present
@@ -66,40 +63,6 @@ public interface ProjectBuildModel {
     return GradleModelProvider.get().getProjectModel(hostProject, includedBuildRoot);
   }
 
-  /**
-   * This method returns a list of all participating {@link ProjectBuildModel} from a given {@link Project}. This includes any included
-   * builds. No ordering is guaranteed.
-   * <p>
-   * This method should never be called on the UI thread, it will cause the parsing of Gradle build files which can take a long time.
-   * The returned {@link ProjectBuildModel} is not thread safe.
-   *
-   * @param project the project to obtain all the {@link ProjectBuildModel}s for
-   * @return a list of all {@link ProjectBuildModel}s
-   */
-  @NotNull
-  static List<ProjectBuildModel> getForIncludedBuilds(@NotNull Project project) {
-    List<ProjectBuildModel> result = new ArrayList<>();
-    result.add(get(project));
-
-    String basePath = project.getBasePath();
-    if (basePath == null) {
-      return result;
-    }
-
-    GradleProjectSettings settings = GradleSettings.getInstance(project).getLinkedProjectSettings(basePath);
-    if (settings == null) {
-      return result;
-    }
-
-    GradleProjectSettings.CompositeBuild compositeBuild = settings.getCompositeBuild();
-    if (compositeBuild == null) {
-      return result;
-    }
-
-    compositeBuild.getCompositeParticipants().stream().map(build -> build.getRootPath())
-      .forEach(path -> result.add(getForCompositeBuild(project, path)));
-    return result;
-  }
 
   /**
    * Attempts to get the {@link ProjectBuildModel} for the given project, null if ANY (including unchecked) exceptions occurred.

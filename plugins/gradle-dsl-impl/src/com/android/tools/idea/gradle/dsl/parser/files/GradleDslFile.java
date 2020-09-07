@@ -47,6 +47,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -71,6 +72,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
  * Provides Gradle specific abstraction over a {@link GroovyFile}.
  */
 public abstract class GradleDslFile extends GradlePropertiesDslElement {
+  private static final Logger LOG = Logger.getInstance(GradleDslFile.class);
   @NotNull private final VirtualFile myFile;
   @NotNull private final Project myProject;
   @NotNull private final Set<GradleDslFile> myChildModuleDslFiles = new HashSet<GradleDslFile>();
@@ -102,9 +104,9 @@ public abstract class GradleDslFile extends GradlePropertiesDslElement {
   }
 
   protected GradleDslFile(@NotNull VirtualFile file,
-                         @NotNull Project project,
-                         @NotNull String moduleName,
-                         @NotNull BuildModelContext context) {
+                          @NotNull Project project,
+                          @NotNull String moduleName,
+                          @NotNull BuildModelContext context) {
     super(null, null, GradleNameElement.fake(moduleName));
     myFile = file;
     myProject = project;
@@ -112,27 +114,31 @@ public abstract class GradleDslFile extends GradlePropertiesDslElement {
 
     Application application = ApplicationManager.getApplication();
     PsiFile psiFile = application.runReadAction((Computable<PsiFile>)() -> PsiManager.getInstance(myProject).findFile(myFile));
+    List<GradleDslConverterFactory> extensionList = EXTENSION_POINT_NAME.getExtensionList();
 
-    // Pick the language that should be used by this GradleDslFile, we do this by selecting the parser implementation.
-    if (psiFile instanceof GroovyFile) {
-      GroovyFile groovyPsiFile = (GroovyFile)psiFile;
-      myGradleDslParser = new GroovyDslParser(groovyPsiFile, this);
-      myGradleDslWriter = new GroovyDslWriter();
-      setPsiElement(groovyPsiFile);
+    GradleDslParser parser = null;
+    GradleDslWriter writer = null;
+    for(GradleDslConverterFactory factory: extensionList) {
+      if (factory.canConvert(psiFile)) {
+        parser = factory.createParser(psiFile, this);
+        writer = factory.createWriter();
+        setPsiElement(psiFile);
+        break;
+      }
     }
-    else if (psiFile instanceof KtFile) {
-      KtFile ktFile = (KtFile)psiFile;
-      myGradleDslParser = new KotlinDslParser(ktFile, this);
-      myGradleDslWriter = new KotlinDslWriter();
-      setPsiElement(ktFile);
-    }
-    else {
+
+    if(parser !=null) {
+      myGradleDslParser = parser;
+      myGradleDslWriter = writer;
+    } else {
       // If we don't support the language we ignore the PsiElement and set stubs for the writer and parser.
       // This means this file will produce an empty model.
+      LOG.warn("cannot find converter factory for " + psiFile);
       myGradleDslParser = new GradleDslParser.Adapter();
       myGradleDslWriter = new GradleDslWriter.Adapter();
     }
   }
+
   /**
    * Parses the gradle file again. This is a convenience method when an already parsed gradle file needs to be parsed again
    * (for example, after making changes to the PSI elements.)
