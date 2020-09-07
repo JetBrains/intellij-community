@@ -24,11 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.*;
 
 @State(
   name = "ProjectCodeStyleConfiguration",
@@ -216,7 +212,7 @@ public final class ProjectCodeStyleSettingsManager extends CodeStyleSettingsMana
     @NotNull
     @Override
     protected String getSubStateFileName(@NotNull Element element) {
-      return element.getAttributeValue(CodeStyleScheme.CODE_STYLE_NAME_ATTR);
+      return Objects.requireNonNull(element.getAttributeValue(CodeStyleScheme.CODE_STYLE_NAME_ATTR));
     }
   }
 

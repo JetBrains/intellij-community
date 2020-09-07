@@ -107,7 +107,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
 
   protected void registerExtensionPointListeners(@Nullable Disposable disposable) {
     FileIndentOptionsProvider.EP_NAME.addChangeListener(this::notifyCodeStyleSettingsChanged, disposable);
-    FileTypeIndentOptionsProvider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<FileTypeIndentOptionsProvider>() {
+    FileTypeIndentOptionsProvider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull FileTypeIndentOptionsProvider extension,
                                  @NotNull PluginDescriptor pluginDescriptor) {
@@ -120,7 +120,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
         unregisterFileTypeIndentOptions(getAllSettings(), extension.getFileType());
       }
     }, disposable);
-    LanguageCodeStyleSettingsProvider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<LanguageCodeStyleSettingsProvider>() {
+    LanguageCodeStyleSettingsProvider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull LanguageCodeStyleSettingsProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
         LanguageCodeStyleSettingsProvider.registerSettingsPageProvider(extension);
@@ -135,7 +135,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
         unregisterCustomSettings(getAllSettings(), extension);
       }
     }, disposable);
-    CodeStyleSettingsProvider.EXTENSION_POINT_NAME.addExtensionPointListener(new ExtensionPointListener<CodeStyleSettingsProvider>() {
+    CodeStyleSettingsProvider.EXTENSION_POINT_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull CodeStyleSettingsProvider extension,
                                  @NotNull PluginDescriptor pluginDescriptor) {
@@ -233,7 +233,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
     Element result = new Element("state");
     try {
       //noinspection deprecation
-      DefaultJDOMExternalizer.writeExternal(this, result, new DifferenceFilter<CodeStyleSettingsManager>(this, new CodeStyleSettingsManager()){
+      DefaultJDOMExternalizer.writeExternal(this, result, new DifferenceFilter<>(this, new CodeStyleSettingsManager()) {
         @Override
         public boolean isAccept(@NotNull Field field) {
           return !isIgnoredOnSave(field.getName()) && super.isAccept(field);
