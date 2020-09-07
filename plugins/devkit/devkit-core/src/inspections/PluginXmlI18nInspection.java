@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.ConfigurableEP;
+import com.intellij.openapi.options.SchemeConvertorEPBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
@@ -92,6 +93,9 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       for (DomElement nestedConfigurable : DomUtil.getDefinedChildren(extension, true, false)) {
         checkNonLocalizableAttribute(holder, nestedConfigurable, "displayName", null);
       }
+    }
+    else if (InheritanceUtil.isInheritor(extensionPoint.getEffectiveClass(), SchemeConvertorEPBase.class.getName())) {
+      checkNonLocalizableAttribute(holder, extension, "name", null);
     }
   }
 
