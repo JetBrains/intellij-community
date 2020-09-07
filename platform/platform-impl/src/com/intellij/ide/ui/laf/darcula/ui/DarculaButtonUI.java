@@ -8,6 +8,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.actionSystem.impl.newToolbar.ControlBarActionComponent;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
@@ -102,7 +103,6 @@ public class DarculaButtonUI extends BasicButtonUI {
    * @return {@code true} if it is allowed to continue painting,
    * {@code false} if painting should be stopped
    */
-  @SuppressWarnings("UseJBColor")
   protected boolean paintDecorations(Graphics2D g, JComponent c) {
     if (!((AbstractButton)c).isContentAreaFilled()) {
       return true;
@@ -224,7 +224,7 @@ public class DarculaButtonUI extends BasicButtonUI {
 
     FontMetrics fm = UIUtilities.getFontMetrics(b, g);
     boolean isDotButton = isSquare(b) && b.getIcon() == AllIcons.General.Ellipsis;
-    String text = isDotButton ? "..." : b.getText();
+    @NlsSafe String text = isDotButton ? "..." : b.getText();
     Icon icon = isDotButton ? null : b.getIcon();
     text = layout(b, text, icon, fm, b.getWidth(), b.getHeight());
 
