@@ -77,7 +77,7 @@ class PositionDiffArrowInitializer : ProjectManagerListener {
   }
 
   class ArrowDecoratedIcon(private val arrowIcon: Icon, private val baseIcon: Icon?) :
-    com.intellij.ui.RowIcon(2, RowIcon.Alignment.CENTER), LookupCellRenderer.ItemPresentationCustomizer.IconDecorator {
+    com.intellij.ui.RowIcon(2, RowIcon.Alignment.CENTER), LookupCellRenderer.IconDecorator {
 
     init {
       super.setIcon(arrowIcon, 0)
@@ -85,7 +85,7 @@ class PositionDiffArrowInitializer : ProjectManagerListener {
     }
 
     override fun getDelegate(): Icon? = baseIcon
-    override fun withDelegate(icon: Icon): LookupCellRenderer.ItemPresentationCustomizer.IconDecorator = ArrowDecoratedIcon(arrowIcon, icon)
+    override fun withDelegate(icon: Icon?): LookupCellRenderer.IconDecorator = ArrowDecoratedIcon(arrowIcon, icon)
   }
 
   private fun iconWithRightMargin(icon: Icon, margin: Int = DIFF_ICON_RIGHT_MARGIN): IconUtil.IconSizeWrapper {

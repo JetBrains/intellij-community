@@ -412,8 +412,8 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   @NotNull
   private static Icon removeVisibilityIfNeeded(@Nullable Editor editor, @NotNull Icon icon, @NotNull Icon standard) {
     if (!Registry.is("ide.completion.show.visibility.icon")) {
-      if (icon instanceof ItemPresentationCustomizer.IconDecorator) {
-        ItemPresentationCustomizer.IconDecorator decoratorIcon = (ItemPresentationCustomizer.IconDecorator)icon;
+      if (icon instanceof IconDecorator) {
+        IconDecorator decoratorIcon = (IconDecorator)icon;
         Icon delegateIcon = decoratorIcon.getDelegate();
         if (delegateIcon != null) {
           icon = decoratorIcon.withDelegate(removeVisibility(editor, delegateIcon, standard));
@@ -643,20 +643,22 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     @NotNull
     LookupElementPresentation customizePresentation(@NotNull LookupElement item,
                                                     @NotNull LookupElementPresentation presentation);
+  }
+
+  /**
+   * Allows to extend the original icon
+   */
+  public interface IconDecorator extends Icon {
+    /**
+     * Returns the original icon
+     */
+    @Nullable
+    Icon getDelegate();
 
     /**
-     * Allows to extend the original icon
+     * Returns a new decorator with {@code icon} instead of the original icon
      */
-    interface IconDecorator extends Icon {
-      /**
-       * Returns the original icon
-       */
-      Icon getDelegate();
-
-      /**
-       * Returns a new decorator with {@code icon} instead of the original icon
-       */
-      IconDecorator withDelegate(Icon icon);
-    }
+    @NotNull
+    IconDecorator withDelegate(@Nullable Icon icon);
   }
 }
