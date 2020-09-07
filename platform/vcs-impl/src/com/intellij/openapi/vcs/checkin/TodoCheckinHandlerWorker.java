@@ -114,8 +114,8 @@ public class TodoCheckinHandlerWorker {
             return null;
           }
 
-          String beforeContent = partialCommitContent.getCurrentContent().toString();
-          String afterContent = partialCommitContent.getVcsContent().toString();
+          String beforeContent = partialCommitContent.getVcsContent().toString();
+          String afterContent = partialCommitContent.getCurrentContent().toString();
           List<Range> ranges = ContainerUtil.map(partialCommitContent.getRangesToCommit(), it -> {
             return new Range(it.getVcsLine1(), it.getVcsLine2(), it.getLine1(), it.getLine2());
           });
