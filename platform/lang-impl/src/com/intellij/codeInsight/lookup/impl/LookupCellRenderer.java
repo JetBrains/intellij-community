@@ -412,22 +412,21 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   @NotNull
   private static Icon removeVisibilityIfNeeded(@Nullable Editor editor, @NotNull Icon icon, @NotNull Icon standard) {
     if (!Registry.is("ide.completion.show.visibility.icon")) {
-      if (icon instanceof IconDecorator) {
-        IconDecorator decoratorIcon = (IconDecorator)icon;
-        Icon delegateIcon = decoratorIcon.getDelegate();
-        if (delegateIcon != null) {
-          icon = decoratorIcon.withDelegate(removeVisibility(editor, delegateIcon, standard));
-        }
-      } else {
-        icon = removeVisibility(editor, icon, standard);
-      }
+        return removeVisibility(editor, icon, standard);
     }
     return icon;
   }
 
   @NotNull
   private static Icon removeVisibility(@Nullable Editor editor, @NotNull Icon icon, @NotNull Icon standard) {
-    if (icon instanceof RowIcon) {
+    if (icon instanceof IconDecorator) {
+      IconDecorator decoratorIcon = (IconDecorator)icon;
+      Icon delegateIcon = decoratorIcon.getDelegate();
+      if (delegateIcon != null) {
+        return decoratorIcon.withDelegate(removeVisibility(editor, delegateIcon, standard));
+      }
+    }
+    else if (icon instanceof RowIcon) {
       RowIcon rowIcon = (RowIcon)icon;
       if (rowIcon.getIconCount() >= 1) {
         Icon firstIcon = rowIcon.getIcon(0);
