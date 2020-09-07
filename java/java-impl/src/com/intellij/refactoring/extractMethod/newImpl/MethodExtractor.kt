@@ -87,7 +87,7 @@ class MethodExtractor {
   fun doDialogExtract(options: ExtractOptions){
     val dialogOptions = mapFromDialog(options, RefactoringBundle.message("extract.method.title"), HelpID.EXTRACT_METHOD)
     if (dialogOptions != null) {
-      executeRefactoringCommand(dialogOptions.project) { doRefactoring(options) }
+      executeRefactoringCommand(dialogOptions.project) { doRefactoring(dialogOptions) }
     }
   }
 
