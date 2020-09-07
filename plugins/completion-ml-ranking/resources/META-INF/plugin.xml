@@ -70,6 +70,9 @@
     <registryKey key="completion.ml.enable.session.factors" defaultValue="true"
                  description="Use inside single session factors"/>
 
+    <registryKey key="completion.ml.override.experiment.group.number" defaultValue="-1" restartRequired="true"
+                 description="Set experiment bucket number. If value is negative, will be skipped."/>
+
     <completion.ml.contextFeatures language="" implementationClass="com.intellij.completion.ml.common.CommonLocationFeatures"/>
     <completion.ml.elementFeatures language="" implementationClass="com.intellij.completion.ml.common.CommonElementLocationFeatures"/>
 
