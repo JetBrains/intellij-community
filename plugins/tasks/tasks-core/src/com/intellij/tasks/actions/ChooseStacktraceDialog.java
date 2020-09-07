@@ -59,7 +59,8 @@ public class ChooseStacktraceDialog extends DialogWrapper {
 
     myList.setModel(new CollectionListModel<>(list));
     myList.setCellRenderer(SimpleListCellRenderer.create("", o ->
-      o instanceof Description ? TaskBundle.message("label.description") : TaskBundle.message("label.commented.by") + o.getAuthor() + " (" + o.getDate() + ")"));
+      o instanceof Description ? TaskBundle.message("label.description") :
+      TaskBundle.message("label.commented.by", o.getAuthor(), o.getDate())));
     myEditor = AnalyzeStacktraceUtil.createEditorPanel(project, myDisposable);
     myEditorPanel.add(myEditor, BorderLayout.CENTER);
     myList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {

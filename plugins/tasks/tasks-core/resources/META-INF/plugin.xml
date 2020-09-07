@@ -75,7 +75,7 @@
       <add-to-group group-id="ToolsMenu" anchor="first"/>
     </group>
 
-    <group id="tasks.toolbar.group">
+    <group id="tasks.toolbar">
       <separator/>
       <reference id="tasks.switch"/>
       <add-to-group group-id="MainToolBar" anchor="last"/>
