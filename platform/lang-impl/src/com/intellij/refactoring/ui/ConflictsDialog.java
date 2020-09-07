@@ -3,6 +3,7 @@
 package com.intellij.refactoring.ui;
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -42,7 +43,7 @@ public class ConflictsDialog extends DialogWrapper{
   private final Project myProject;
   private Runnable myDoRefactoringRunnable;
   private final boolean myCanShowConflictsInView;
-  private String myCommandName;
+  @NlsContexts.Command private String myCommandName;
 
   public ConflictsDialog(@NotNull Project project, @NotNull MultiMap<PsiElement, String> conflictDescriptions) {
     this(project, conflictDescriptions, null, true, true);
@@ -145,7 +146,7 @@ public class ConflictsDialog extends DialogWrapper{
     return panel;
   }
 
-  public void setCommandName(String commandName) {
+  public void setCommandName(@NlsContexts.Command String commandName) {
     myCommandName = commandName;
   }
 
@@ -221,7 +222,8 @@ public class ConflictsDialog extends DialogWrapper{
         usageView.addPerformOperationAction(
           doRefactoringRunnable,
           myCommandName != null ? myCommandName : RefactoringBundle.message("retry.command"),
-          "Unable to perform refactoring. There were changes in code after the usages have been found.", RefactoringBundle.message("usageView.doAction"));
+          LangBundle.message("conflicts.dialog.message.unable.to.perform.refactoring.changes.in.code.after.usages.have.been.found"),
+          RefactoringBundle.message("usageView.doAction"));
       }
       close(SHOW_CONFLICTS_EXIT_CODE);
     }

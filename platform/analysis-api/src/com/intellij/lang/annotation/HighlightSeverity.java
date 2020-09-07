@@ -62,7 +62,7 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
    *             if two annotations with different severity levels cover the same text range, only
    *             the annotation with a higher severity level is displayed.
    */
-  public HighlightSeverity(@NotNull String name, int val) {
+  public HighlightSeverity(@NlsSafe @NotNull String name, int val) {
     myName = name;
     myVal = val;
   }

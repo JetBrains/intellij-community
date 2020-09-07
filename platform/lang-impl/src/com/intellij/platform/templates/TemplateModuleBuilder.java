@@ -258,11 +258,11 @@ public class TemplateModuleBuilder extends ModuleBuilder {
             }
             else {
               StringBuilder dialogMessageBuilder = new StringBuilder();
-              dialogMessageBuilder.append("Failed to decode files: \n");
+              dialogMessageBuilder.append(LangBundle.message("dialog.message.failed.to.decode.files")).append('\n');
               for (Trinity<String, String, VelocityException> failure : myFailures) {
                 dialogMessageBuilder.append(failure.getFirst()).append("\n");
               }
-              dialogMessage = dialogMessageBuilder.toString();
+              dialogMessage = dialogMessageBuilder.toString(); //NON-NLS
             }
             Messages.showErrorDialog(dialogMessage, LangBundle.message("dialog.title.decoding.template"));
           }

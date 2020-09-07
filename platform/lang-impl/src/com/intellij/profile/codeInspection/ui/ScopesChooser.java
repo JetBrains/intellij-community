@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.ide.IdeBundle;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
@@ -29,8 +30,6 @@ import java.util.Set;
  * @author Dmitry Batkovich
  */
 public abstract class ScopesChooser extends ComboBoxAction implements DumbAware {
-  public static final String TITLE = "Select a Scope to Change Its Settings";
-
   private final List<Descriptor> myDefaultDescriptors;
   @NotNull
   private final InspectionProfileImpl myInspectionProfile;
@@ -45,7 +44,7 @@ public abstract class ScopesChooser extends ComboBoxAction implements DumbAware 
     myInspectionProfile = inspectionProfile;
     myProject = project;
     myExcludedScopeNames = excludedScopeNames == null ? Collections.emptySet() : ContainerUtil.newHashSet(excludedScopeNames);
-    setPopupTitle(TITLE);
+    setPopupTitle(LangBundle.message("scopes.chooser.popup.title.select.scope.to.change.its.settings"));
     getTemplatePresentation().setText(InspectionsBundle.messagePointer("action.presentation.ScopesChooser.text"));
   }
 

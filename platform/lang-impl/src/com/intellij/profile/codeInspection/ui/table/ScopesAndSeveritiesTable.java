@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
@@ -285,7 +286,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
         case SCOPE_ENABLED_COLUMN:
           return isEnabled(rowIndex);
         case SCOPE_NAME_COLUMN:
-          return rowIndex == lastRowIndex() ? "Everywhere else" : getScopeName(rowIndex);
+          return rowIndex == lastRowIndex() ? LangBundle.message("scopes.table.everywhere.else") : getScopeName(rowIndex);
         case SEVERITY_COLUMN:
           return getSeverityState(rowIndex);
         default:
@@ -456,7 +457,8 @@ public class ScopesAndSeveritiesTable extends JBTable {
       };
       DataContext dataContext = DataManager.getInstance().getDataContext(myTable);
       final ListPopup popup = JBPopupFactory.getInstance()
-        .createActionGroupPopup(ScopesChooser.TITLE, scopesChooser.createPopupActionGroup(myTable), dataContext,
+        .createActionGroupPopup(LangBundle.message("scopes.chooser.popup.title.select.scope.to.change.its.settings"),
+                                scopesChooser.createPopupActionGroup(myTable), dataContext,
                                 JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
       final RelativePoint point = new RelativePoint(myTable, new Point(myTable.getWidth() - popup.getContent().getPreferredSize().width, 0));
       popup.show(point);

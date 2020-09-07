@@ -3,6 +3,7 @@
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
@@ -260,7 +261,7 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
       }
       final UsageInfo[] filteredUsages = UsageViewUtil.removeDuplicatedUsages(preprocessedUsages);
       execute(filteredUsages);
-    }, "Delete Anyway", RefactoringBundle.message("usageView.need.reRun"), RefactoringBundle.message("usageView.doAction"));
+    }, LangBundle.message("command.name.delete.anyway"), RefactoringBundle.message("usageView.need.reRun"), RefactoringBundle.message("usageView.doAction"));
   }
 
   private UsageView showUsages(UsageInfo[] usages, UsageViewPresentation presentation, UsageViewManager manager) {

@@ -15,6 +15,7 @@ import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,9 +32,9 @@ import java.util.zip.ZipInputStream;
  */
 @Tag("template")
 public abstract class ArchivedProjectTemplate implements ProjectTemplate {
-  public static final String INPUT_FIELD = "input-field";
-  public static final String TEMPLATE = "template";
-  public static final String INPUT_DEFAULT = "default";
+  @NonNls public static final String INPUT_FIELD = "input-field";
+  @NonNls public static final String TEMPLATE = "template";
+  @NonNls public static final String INPUT_DEFAULT = "default";
 
   protected final @NlsContexts.Label String myDisplayName;
   @Nullable private final String myCategory;

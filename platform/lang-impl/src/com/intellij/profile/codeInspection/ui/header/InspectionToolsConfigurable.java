@@ -19,6 +19,7 @@ import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBInsets;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -27,7 +28,7 @@ import java.util.Arrays;
 
 public abstract class InspectionToolsConfigurable implements ErrorsConfigurable, SearchableConfigurable, Configurable.NoScroll {
   private static final Logger LOG = Logger.getInstance(InspectionToolsConfigurable.class);
-  public static final String ID = "Errors";
+  @NonNls public static final String ID = "Errors";
 
   protected final BaseInspectionProfileManager myApplicationProfileManager;
   protected final ProjectInspectionProfileManager myProjectProfileManager;
