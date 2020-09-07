@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.gdpr;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NonNls;
  */
 public final class Consent extends ConsentBase {
   private final @NlsSafe String myName;
-  private final String myText;
+  private final @NlsSafe String myText;
   private final boolean myAccepted;
   private final boolean myDeleted;
 
@@ -30,7 +30,7 @@ public final class Consent extends ConsentBase {
     return myName;
   }
 
-  public String getText() {
+  public @NlsSafe String getText() {
     return myText;
   }
 

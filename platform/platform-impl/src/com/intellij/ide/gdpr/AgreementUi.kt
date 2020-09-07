@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.gdpr
 
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.gdpr.ui.HtmlRtfPane
 import com.intellij.idea.Main
 import com.intellij.openapi.application.ApplicationManager
@@ -78,8 +79,8 @@ class AgreementUi private constructor(val htmlText: String) {
       override fun createSouthPanel(): JComponent {
         val panel = JPanel(BorderLayout(0, 0))
         val buttonPanel = JPanel()
-        declineButton = JButton("Exit")
-        acceptButton = JButton("Continue")
+        declineButton = JButton(IdeBundle.message("gdpr.exit.button"))
+        acceptButton = JButton(IdeBundle.message("gdpr.continue.button"))
 
         panel.add(buttonPanel, BorderLayout.EAST)
         buttonPanel.layout = BoxLayout(buttonPanel, BoxLayout.X_AXIS)
