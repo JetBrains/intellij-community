@@ -47,7 +47,6 @@ import java.util.*
 import javax.swing.JComponent
 import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
-import kotlin.collections.set
 
 /**
  * See XML file by [ApplicationInfoEx.getUpdateUrls] for reference.
