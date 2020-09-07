@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui.branch;
 
-import com.intellij.CommonBundle;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.ui.VcsPushDialog;
 import com.intellij.dvcs.repo.Repository;
@@ -529,9 +528,9 @@ public class GitBranchPopupActions {
         if (hasCommits) {
           int result =
             Messages.showYesNoCancelDialog(
-              GitBundle.message("branch.0.already.exists.and.has.commits.which.do.not.exist.in.1.would.you.like.to.rebase.or.reset.them",
+              GitBundle.message("local.branch.already.exists.and.has.commits.which.do.not.exist.in.remote",
                                 suggestedLocalName, remoteBranchName), GitBundle.message("checkout.0", remoteBranchName),
-              GitBundle.message("checkout.and.rebase"), CommonBundle.message("button.overwrite"),
+              GitBundle.message("checkout.and.rebase"), GitBundle.message("branches.drop.local.commits"),
               IdeBundle.message("button.cancel"), null);
           if (result == Messages.CANCEL) return;
           if (result == Messages.YES) {
