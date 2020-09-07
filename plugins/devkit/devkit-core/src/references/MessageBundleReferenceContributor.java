@@ -266,7 +266,12 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
           name.startsWith(TOOLWINDOW_STRIPE_PREFIX)) {
         PsiElement key = property.getFirstChild();
         PsiReference[] references = key == null ? PsiReference.EMPTY_ARRAY : key.getReferences();
-        return ContainerUtil.exists(references, reference -> reference.resolve() != null);
+        return ContainerUtil.exists(references, reference -> {
+          boolean unresolved = reference instanceof PsiPolyVariantReference
+                               ? ((PsiPolyVariantReference)reference).multiResolve(false).length == 0
+                               : reference.resolve() == null;
+          return !unresolved;
+        });
       }
 
       return name.startsWith(ICON_TOOLTIP_PREFIX) && name.endsWith(ICON_TOOLTIP_SUFFIX);
