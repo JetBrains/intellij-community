@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.fileChooser.ex;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,17 +30,16 @@ public interface FileLookup {
 
     String normalize(@NotNull final String path);
 
-    String getSeparator();
+    @NlsSafe String getSeparator();
   }
 
   interface LookupFile {
-
-    String getName();
+    @NlsSafe String getName();
     String getAbsolutePath();
     boolean isDirectory();
 
     void setMacro(String macro);
-    String getMacro();
+    @NlsSafe @Nullable String getMacro();
 
     List<LookupFile> getChildren(LookupFilter filter);
 

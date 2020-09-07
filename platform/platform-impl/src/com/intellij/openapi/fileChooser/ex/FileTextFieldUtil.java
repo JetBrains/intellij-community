@@ -4,12 +4,14 @@ package com.intellij.openapi.fileChooser.ex;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.ex.FileLookup.Finder;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -189,11 +191,11 @@ public final class FileTextFieldUtil {
     return lastFound;
   }
 
-  @NotNull
-  public static String getLookupString(@NotNull FileLookup.LookupFile file, @NotNull Finder finder, @Nullable FileTextFieldImpl.CompletionResult result) {
-    if (file.getMacro() != null) {
-      return file.getMacro();
-    }
+  public static @NlsSafe @NotNull String getLookupString(@NotNull FileLookup.LookupFile file,
+                                                         @NotNull Finder finder,
+                                                         @Nullable FileTextFieldImpl.CompletionResult result) {
+    String macro = file.getMacro();
+    if (macro != null) return macro;
     String prefix = result != null && result.myKidsAfterSeparator.contains(file) ? finder.getSeparator() : "";
     return prefix + file.getName();
   }

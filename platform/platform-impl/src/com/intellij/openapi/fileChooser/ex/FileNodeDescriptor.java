@@ -5,10 +5,11 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -23,7 +24,7 @@ public class FileNodeDescriptor extends NodeDescriptor {
                             NodeDescriptor parentDescriptor,
                             Icon closedIcon,
                             String name,
-                            String comment) {
+                            @NlsSafe String comment) {
     super(project, parentDescriptor);
     myOriginalIcon = closedIcon;
     myComment = comment;
@@ -64,7 +65,7 @@ public class FileNodeDescriptor extends NodeDescriptor {
     myFileElement = descriptor;
   }
 
-  public @Nls String getComment() {
+  public @NlsSafe @Nullable String getComment() {
     return myComment;
   }
 }
