@@ -31,7 +31,8 @@
         implementationClass="org.jetbrains.idea.eclipse.importer.EclipseCodeStyleSchemeImporter"
         schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"/>
     <schemeImporter 
-        name="Eclipse color theme (XML)"
+        nameKey="eclipse.color.theme.name"
+        nameBundle="messages.EclipseBundle"
         implementationClass="org.jetbrains.idea.eclipse.importer.colors.EclipseColorSchemeImporter"
         schemeClass="com.intellij.openapi.editor.colors.EditorColorsScheme"/>
 
