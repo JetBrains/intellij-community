@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,60 +24,36 @@ import java.util.ArrayList;
 import static org.jetbrains.idea.svn.SvnUtil.append;
 import static org.jetbrains.idea.svn.SvnUtil.removePathTail;
 
-public class DefaultBranchConfigInitializer implements Runnable {
+public class DefaultBranchConfig {
+  private static final Logger LOG = Logger.getInstance(DefaultBranchConfig.class);
 
-  private static final Logger LOG = Logger.getInstance(DefaultBranchConfigInitializer.class);
-
-  @NonNls private static final String DEFAULT_TRUNK_NAME = "trunk";
-  @NonNls private static final String DEFAULT_BRANCHES_NAME = "branches";
-  @NonNls private static final String DEFAULT_TAGS_NAME = "tags";
-
-  @NotNull private final Project myProject;
-  @NotNull private final NewRootBunch myBunch;
-  @NotNull private final VirtualFile myRoot;
-
-  public DefaultBranchConfigInitializer(@NotNull Project project, @NotNull NewRootBunch bunch, @NotNull VirtualFile root) {
-    myProject = project;
-    myRoot = root;
-    myBunch = bunch;
-  }
-
-  @Override
-  public void run() {
-    SvnBranchConfigurationNew configuration = getDefaultConfiguration();
-
-    if (configuration != null) {
-      for (Url url : configuration.getBranchLocations()) {
-        myBunch.reloadBranchesAsync(myRoot, url, InfoReliability.defaultValues);
-      }
-
-      myBunch.updateForRoot(myRoot, new InfoStorage<>(configuration, InfoReliability.defaultValues), false);
-    }
-  }
+  private static final @NonNls String TRUNK_NAME = "trunk";
+  private static final @NonNls String BRANCHES_NAME = "branches";
+  private static final @NonNls String TAGS_NAME = "tags";
 
   @Nullable
-  public SvnBranchConfigurationNew getDefaultConfiguration() {
+  public static SvnBranchConfigurationNew detect(@NotNull Project project, @NotNull VirtualFile root) {
     SvnBranchConfigurationNew result = null;
-    SvnVcs vcs = SvnVcs.getInstance(myProject);
-    Url rootUrl = SvnUtil.getUrl(vcs, VfsUtilCore.virtualToIoFile(myRoot));
+    SvnVcs vcs = SvnVcs.getInstance(project);
+    Url rootUrl = SvnUtil.getUrl(vcs, VfsUtilCore.virtualToIoFile(root));
 
     if (rootUrl != null) {
       try {
-        result = getDefaultConfiguration(vcs, rootUrl);
+        result = detect(vcs, rootUrl);
       }
       catch (VcsException e) {
         LOG.info(e);
       }
     }
     else {
-      LOG.info("Directory is not a working copy: " + myRoot.getPresentableUrl());
+      LOG.info("Directory is not a working copy: " + root.getPresentableUrl());
     }
 
     return result;
   }
 
   @NotNull
-  private static SvnBranchConfigurationNew getDefaultConfiguration(@NotNull SvnVcs vcs, @NotNull Url url) throws VcsException {
+  private static SvnBranchConfigurationNew detect(@NotNull SvnVcs vcs, @NotNull Url url) throws VcsException {
     SvnBranchConfigurationNew result = new SvnBranchConfigurationNew();
     result.setTrunk(url);
 
@@ -106,10 +82,7 @@ public class DefaultBranchConfigInitializer implements Runnable {
 
   private static boolean hasDefaultName(@NotNull Url url) {
     String name = url.getTail();
-
-    return name.equalsIgnoreCase(DEFAULT_TRUNK_NAME) ||
-           name.equalsIgnoreCase(DEFAULT_BRANCHES_NAME) ||
-           name.equalsIgnoreCase(DEFAULT_TAGS_NAME);
+    return name.equalsIgnoreCase(TRUNK_NAME) || name.equalsIgnoreCase(BRANCHES_NAME) || name.equalsIgnoreCase(TAGS_NAME);
   }
 
   @NotNull
@@ -118,7 +91,7 @@ public class DefaultBranchConfigInitializer implements Runnable {
       if (entry.isDirectory()) {
         Url childUrl = append(rootPath, entry.getName());
 
-        if (StringUtil.endsWithIgnoreCase(entry.getName(), DEFAULT_TRUNK_NAME)) {
+        if (StringUtil.endsWithIgnoreCase(entry.getName(), TRUNK_NAME)) {
           result.setTrunk(childUrl);
         }
         else {
