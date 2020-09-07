@@ -163,9 +163,4 @@ public final class PyTypeUtil {
   public static Collector<PyType, ?, PyType> toUnion() {
     return Collectors.collectingAndThen(Collectors.toList(), PyUnionType::union);
   }
-
-  @Nullable
-  public static PyType toNonWeakType(@Nullable PyType type) {
-    return type instanceof PyUnionType ? ((PyUnionType)type).excludeNull() : type;
-  }
 }

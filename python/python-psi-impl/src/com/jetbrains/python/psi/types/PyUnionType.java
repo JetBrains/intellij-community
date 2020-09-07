@@ -125,6 +125,11 @@ public class PyUnionType implements PyType {
     return union(type, null);
   }
 
+  @Nullable
+  public static PyType toNonWeakType(@Nullable PyType type) {
+    return type instanceof PyUnionType ? ((PyUnionType)type).excludeNull() : type;
+  }
+
   public boolean isWeak() {
     return myMembers.contains(null);
   }
@@ -167,7 +172,7 @@ public class PyUnionType implements PyType {
   /**
    * Returns {@code this} if the current type {@code isWeak()}, excludes {@code null} otherwise.
    *
-   * @see PyTypeUtil#toNonWeakType(PyType)
+   * @see PyUnionType#toNonWeakType(PyType)
    */
   @Nullable
   public PyType excludeNull() {

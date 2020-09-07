@@ -1529,7 +1529,7 @@ public final class PyUtil {
     }
 
     if (type instanceof PyUnionType) {
-      return PyTypeUtil.toNonWeakType(((PyUnionType)type).map(member -> getReturnType(member, context)), context);
+      return PyUnionType.toNonWeakType(((PyUnionType)type).map(member -> getReturnType(member, context)));
     }
 
     return null;
