@@ -31,7 +31,7 @@ import kotlin.math.roundToInt
 
 private val LOG = logger<UISettings>()
 
-@State(name = "UISettings", storages = [(Storage("ui.lnf.xml"))])
+@State(name = "UISettings", storages = [(Storage("ui.lnf.xml"))], useLoadedStateAsExisting = false)
 class UISettings @NonInjectable constructor(private val notRoamableOptions: NotRoamableUiSettings) : PersistentStateComponent<UISettingsState> {
   constructor() : this(ApplicationManager.getApplication().getService(NotRoamableUiSettings::class.java))
 
