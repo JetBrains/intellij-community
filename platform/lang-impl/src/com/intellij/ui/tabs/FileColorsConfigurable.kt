@@ -81,7 +81,7 @@ class FileColorsConfigurable(project: Project) : SearchableConfigurable, NoScrol
 
   private val useInProjectView = object : CheckBoxConfigurable() {
     override fun createCheckBox(): JCheckBox {
-      val checkBox = JCheckBox(message("settings.file.colors.use.in.project.vew"))
+      val checkBox = JCheckBox(message("settings.file.colors.use.in.project.view"))
       checkBox.isEnabled = false
       return checkBox
     }
