@@ -3,6 +3,7 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
@@ -28,7 +29,7 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
   protected AbstractUpdateDialog(boolean enableLink) {
     super(true);
     myEnableLink = enableLink;
-    setTitle(IdeBundle.message("update.notifications.title"));
+    setTitle(IdeBundle.message("updates.dialog.title", ApplicationNamesInfo.getInstance().getFullProductName()));
   }
 
   @Override

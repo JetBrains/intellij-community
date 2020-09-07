@@ -77,7 +77,7 @@ class UpdateInfoParsingTest : BareTestFixtureTestCase() {
 
     val channel = product.channels.find { it.id == "IDEA10EAP" }!!
     assertEquals(ChannelStatus.EAP, channel.status)
-    assertEquals(UpdateChannel.LICENSING_EAP, channel.licensing)
+    assertEquals(UpdateChannel.Licensing.EAP, channel.licensing)
     assertEquals(1, channel.builds.size)
 
     val build = channel.builds[0]

@@ -102,9 +102,9 @@ class ShowUpdateInfoDialogAction : DumbAwareAction() {
     override fun getPreferredFocusedComponent() = textArea
     override fun getDimensionServiceKey() = "TEST_UPDATE_INFO_DIALOG"
 
-    internal fun updateXmlText() = completeUpdateInfoXml(textArea.text?.trim() ?: "")
-    internal fun forceUpdate() = forceUpdate
-    internal fun patchFilePath() = fileField.field.text.nullize(nullizeSpaces = true)
+    fun updateXmlText() = completeUpdateInfoXml(textArea.text?.trim() ?: "")
+    fun forceUpdate() = forceUpdate
+    fun patchFilePath() = fileField.field.text.nullize(nullizeSpaces = true)
 
     private fun completeUpdateInfoXml(text: String) =
       when (JDOMUtil.load(text).name) {

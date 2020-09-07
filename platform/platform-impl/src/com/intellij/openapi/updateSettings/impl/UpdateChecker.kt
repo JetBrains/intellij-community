@@ -2,6 +2,7 @@
 package com.intellij.openapi.updateSettings.impl
 
 import com.google.common.annotations.VisibleForTesting
+import com.intellij.DynamicBundle
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.externalComponents.ExternalComponentManager
 import com.intellij.ide.plugins.*
@@ -50,28 +51,15 @@ import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
 import kotlin.collections.set
 
-private val LOG = logger<UpdateChecker>()
-
-private const val DISABLED_UPDATE = "disabled_update.txt"
-
-private enum class NotificationUniqueType {
-  PLATFORM, PLUGINS, EXTERNAL
-}
-
 /**
  * See XML file by [ApplicationInfoEx.getUpdateUrls] for reference.
  */
 object UpdateChecker {
-  private val notificationGroupRef by lazy {
-    NotificationGroup("IDE and Plugin Updates", NotificationDisplayType.STICKY_BALLOON, true, null, null, null, PluginManagerCore.CORE_ID)
-  }
+  private val LOG = logger<UpdateChecker>()
 
-  @JvmField
-  @Deprecated(level = DeprecationLevel.ERROR, replaceWith = ReplaceWith("getNotificationGroup()"), message = "Use getNotificationGroup()")
-  val NOTIFICATIONS = notificationGroupRef
+  private const val DISABLED_UPDATE = "disabled_update.txt"
 
-  @JvmStatic
-  fun getNotificationGroup() = notificationGroupRef
+  private enum class NotificationUniqueType { PLATFORM, PLUGINS, EXTERNAL }
 
   private var ourDisabledToUpdatePlugins: MutableSet<PluginId>? = null
   private val ourAdditionalRequestOptions = hashMapOf<String, String>()
@@ -87,6 +75,9 @@ object UpdateChecker {
 
   private val updateUrl: String
     get() = System.getProperty("idea.updates.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls!!.checkingUrl
+
+  @JvmStatic
+  fun getNotificationGroup(): NotificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("IDE and Plugin Updates")
 
   /**
    * For scheduled update checks.
@@ -416,30 +407,6 @@ object UpdateChecker {
     return result
   }
 
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @Deprecated("Use `checkAndPrepareToInstall` without `incompatiblePlugins` parameter", level = DeprecationLevel.ERROR)
-  @Throws(IOException::class)
-  @JvmStatic
-  fun checkAndPrepareToInstall(
-    downloader: PluginDownloader,
-    state: InstalledPluginsState,
-    toUpdate: MutableMap<PluginId, PluginDownloader>,
-    incompatiblePlugins: MutableCollection<IdeaPluginDescriptor>?,
-    indicator: ProgressIndicator?
-  ) {
-    checkAndPrepareToInstall(downloader, state, toUpdate, null as BuildNumber?, indicator)
-
-    val pluginId = downloader.id
-    if (PluginManagerCore.isDisabled(pluginId)) return
-    val installedPlugin = PluginManagerCore.getPlugin(pluginId)
-    // collect plugins that were not updated and would be incompatible with the new version
-    if (incompatiblePlugins != null && installedPlugin != null && installedPlugin.isEnabled &&
-        !toUpdate.containsKey(installedPlugin.pluginId) &&
-        !PluginManagerCore.isCompatible(installedPlugin, downloader.buildNumber)) {
-      incompatiblePlugins += installedPlugin
-    }
-  }
-
   @JvmStatic
   fun mergePluginsFromRepositories(
     marketplaceUpdates: List<IdeaPluginDescriptor>,
@@ -580,21 +547,18 @@ object UpdateChecker {
         }
         else {
           val names = updatedPlugins.joinToString { downloader -> StringUtil.wrapWithDoubleQuote(downloader.pluginName) }
-          val title = if (updatedPlugins.size == 1) IdeBundle.message("updates.plugin.ready.short.title.available", names)
-          else IdeBundle.message("updates.plugins.ready.short.title.available")
+          val title = if (updatedPlugins.size == 1) IdeBundle.message("updates.plugin.ready.short.title.available", names) else IdeBundle.message("updates.plugins.ready.short.title.available")
           val message = if (updatedPlugins.size == 1) "" else names
           showNotification(project, title, message, runnable, { notification ->
             notification.actions[0].templatePresentation.text = IdeBundle.message("plugin.settings.link.title")
-            notification.actions.add(0, object : NotificationAction(
-              IdeBundle.message(if (updatedPlugins.size == 1) "plugins.configurable.update.button" else "plugin.manager.update.all")) {
+            val text = if (updatedPlugins.size == 1) IdeBundle.message("plugins.configurable.update.button") else IdeBundle.message("plugin.manager.update.all")
+            notification.actions.add(0, object : NotificationAction(text) {
               override fun actionPerformed(e: AnActionEvent, notification: Notification) {
                 notification.expire()
                 PluginUpdateDialog.runUpdateAll(updatedPlugins, e.getData(PlatformDataKeys.CONTEXT_COMPONENT) as JComponent?)
               }
             })
-            val linkMessage = if (updatedPlugins.size == 1) IdeBundle.message("updates.ignore.update.link")
-            else IdeBundle.message("updates.ignore.updates.link")
-            notification.addAction(object : NotificationAction(linkMessage) {
+            notification.addAction(object : NotificationAction(IdeBundle.message("updates.ignore.updates.link", updatedPlugins.size)) {
               override fun actionPerformed(e: AnActionEvent, notification: Notification) {
                 notification.expire()
                 PluginUpdateDialog.ignorePlugins(updatedPlugins.map { downloader -> downloader.descriptor })
@@ -653,8 +617,8 @@ object UpdateChecker {
                                extraBuilder: ((Notification) -> Unit)?,
                                notificationType: NotificationUniqueType,
                                notificationDisplayId: String) {
-    val notification = getNotificationGroup().createNotification(title, if (message.isEmpty()) "" else XmlStringUtil.wrapInHtml(message),
-                                                                 NotificationType.INFORMATION, null, notificationDisplayId)
+    val content = if (message.isEmpty()) "" else XmlStringUtil.wrapInHtml(message)
+    val notification = getNotificationGroup().createNotification(title, content, NotificationType.INFORMATION, null, notificationDisplayId)
     notification.collapseActionsDirection = Notification.CollapseActionsDirection.KEEP_LEFTMOST
     notification.addAction(object : NotificationAction(IdeBundle.message("updates.notification.update.action")) {
       override fun actionPerformed(e: AnActionEvent, notification: Notification) {
@@ -683,19 +647,9 @@ object UpdateChecker {
     if (ApplicationInfoEx.getInstanceEx().isEAP) {
       addUpdateRequestParameter("eap", "")
     }
+    addUpdateRequestParameter("lang", DynamicBundle.getLocale().toLanguageTag())
     return url.addParameters(ourAdditionalRequestOptions)
   }
-
-  @Deprecated("Replaced", ReplaceWith("PermanentInstallationID.get()", "com.intellij.openapi.application.PermanentInstallationID"))
-  @JvmStatic
-  @Suppress("unused", "UNUSED_PARAMETER")
-  fun getInstallationUID(c: PropertiesComponent): String = PermanentInstallationID.get()
-
-  @Deprecated(message = "Use disabledToUpdate", replaceWith = ReplaceWith("disabledToUpdate"))
-  @JvmStatic
-  @Suppress("unused")
-  val disabledToUpdatePlugins: Set<String>
-    get() = disabledToUpdate.mapTo(TreeSet()) { it.idString }
 
   @JvmStatic
   val disabledToUpdate: Set<PluginId>
@@ -785,4 +739,48 @@ object UpdateChecker {
       NoUpdatesDialog(true).show()
     }
   }
+
+  //<editor-fold desc="Deprecated stuff.">
+  private val notificationGroupRef by lazy { getNotificationGroup() }
+
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated(level = DeprecationLevel.ERROR, replaceWith = ReplaceWith("getNotificationGroup()"), message = "Use getNotificationGroup()")
+  @JvmField val NOTIFICATIONS = notificationGroupRef
+
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated("Use `checkAndPrepareToInstall` without `incompatiblePlugins` parameter", level = DeprecationLevel.ERROR)
+  @JvmStatic
+  @Throws(IOException::class)
+  fun checkAndPrepareToInstall(
+    downloader: PluginDownloader,
+    state: InstalledPluginsState,
+    toUpdate: MutableMap<PluginId, PluginDownloader>,
+    incompatiblePlugins: MutableCollection<IdeaPluginDescriptor>?,
+    indicator: ProgressIndicator?)
+  {
+    checkAndPrepareToInstall(downloader, state, toUpdate, null as BuildNumber?, indicator)
+
+    val pluginId = downloader.id
+    if (PluginManagerCore.isDisabled(pluginId)) return
+    val installedPlugin = PluginManagerCore.getPlugin(pluginId)
+    // collect plugins that were not updated and would be incompatible with the new version
+    if (incompatiblePlugins != null && installedPlugin != null && installedPlugin.isEnabled &&
+        !toUpdate.containsKey(installedPlugin.pluginId) &&
+        !PluginManagerCore.isCompatible(installedPlugin, downloader.buildNumber)) {
+      incompatiblePlugins += installedPlugin
+    }
+  }
+
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated("Replaced", ReplaceWith("PermanentInstallationID.get()", "com.intellij.openapi.application.PermanentInstallationID"))
+  @JvmStatic
+  fun getInstallationUID(@Suppress("UNUSED_PARAMETER") c: PropertiesComponent): String = PermanentInstallationID.get()
+
+  @get:ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @get:Deprecated(message = "Use disabledToUpdate", replaceWith = ReplaceWith("disabledToUpdate"))
+  @Deprecated(message = "Use disabledToUpdate", replaceWith = ReplaceWith("disabledToUpdate"))
+  @JvmStatic
+  val disabledToUpdatePlugins: Set<String>
+    get() = disabledToUpdate.mapTo(TreeSet()) { it.idString }
+  //</editor-fold>
 }

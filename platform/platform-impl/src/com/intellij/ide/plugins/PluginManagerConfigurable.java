@@ -1352,7 +1352,7 @@ public class PluginManagerConfigurable
 
   @Messages.YesNoResult
   public static int showRestartDialog() {
-    return showRestartDialog(IdeBundle.message("update.notifications.title"));
+    return showRestartDialog(IdeBundle.message("updates.dialog.title", ApplicationNamesInfo.getInstance().getFullProductName()));
   }
 
   @Messages.YesNoResult
@@ -1370,7 +1370,7 @@ public class PluginManagerConfigurable
   }
 
   public static void shutdownOrRestartApp() {
-    shutdownOrRestartApp(IdeBundle.message("update.notifications.title"));
+    shutdownOrRestartApp(IdeBundle.message("updates.dialog.title", ApplicationNamesInfo.getInstance().getFullProductName()));
   }
 
   public static void shutdownOrRestartApp(@NotNull @NlsContexts.DialogTitle String title) {
@@ -1380,7 +1380,7 @@ public class PluginManagerConfigurable
   }
 
   public static void shutdownOrRestartAppAfterInstall(@NotNull String plugin) {
-    String title = IdeBundle.message("update.notifications.title");
+    String title = IdeBundle.message("updates.dialog.title", ApplicationNamesInfo.getInstance().getFullProductName());
     Function<String, String> message = action -> IdeBundle
       .message("plugin.installed.ide.restart.required.message", plugin, action, ApplicationNamesInfo.getInstance().getFullProductName());
 

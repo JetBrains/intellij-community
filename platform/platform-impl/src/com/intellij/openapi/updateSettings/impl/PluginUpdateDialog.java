@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.ide.plugins.newui.*;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -44,6 +45,8 @@ import java.util.*;
  * @author Alexander Lobas
  */
 public class PluginUpdateDialog extends DialogWrapper {
+  private static final LinkListener<Object> NULL_LISTENER = (source, linkData) -> { };
+
   private final Collection<PluginDownloader> myDownloaders;
 
   private final MyPluginModel myPluginModel;
@@ -60,8 +63,7 @@ public class PluginUpdateDialog extends DialogWrapper {
 
     myDownloaders = updatedPlugins;
 
-    myIgnoreAction = new AbstractAction(
-      IdeBundle.message(updatedPlugins.size() == 1 ? "updates.ignore.update.button" : "updates.ignore.updates.button")) {
+    myIgnoreAction = new AbstractAction(IdeBundle.message("updates.ignore.updates.button", updatedPlugins.size())) {
       @Override
       public void actionPerformed(ActionEvent e) {
         close(CANCEL_EXIT_CODE);
@@ -95,10 +97,9 @@ public class PluginUpdateDialog extends DialogWrapper {
       }
     });
 
-    myDetailsPage = new PluginDetailsPageComponent(myPluginModel, emptyListener(), false) {
+    myDetailsPage = new PluginDetailsPageComponent(myPluginModel, NULL_LISTENER, false) {
       @Override
-      public void showProgress() {
-      }
+      public void showProgress() { }
     };
     myDetailsPage.setOnlyUpdateMode();
 
@@ -197,7 +198,8 @@ public class PluginUpdateDialog extends DialogWrapper {
   }
 
   public static void runUpdateAll(@NotNull Collection<PluginDownloader> toDownloads, @Nullable JComponent ownerComponent) {
-    new Task.Backgroundable(null, IdeBundle.message("update.notifications.title"), true, PerformInBackgroundOption.DEAF) {
+    String message = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
+    new Task.Backgroundable(null, message, true, PerformInBackgroundOption.DEAF) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         List<PluginDownloader> downloaders = UpdateInstaller.downloadPluginUpdates(toDownloads, indicator);
@@ -214,15 +216,8 @@ public class PluginUpdateDialog extends DialogWrapper {
                 }
               }
               else {
-                String message;
-                if (result.getPluginsInstalled().size() == 1) {
-                  final IdeaPluginDescriptor installedPlugin = result.getPluginsInstalled().get(0);
-                  message = IdeBundle.message("notification.content.updated.plugin.to.version", installedPlugin.getName(), installedPlugin.getVersion());
-                }
-                else {
-                  message = IdeBundle.message("notification.content.updated.plugins", result.getPluginsInstalled());
-                }
-                UpdateChecker.NOTIFICATIONS.createNotification(message, NotificationType.INFORMATION).notify(myProject);
+                String message = PluginUpdateInfoDialog.notificationText(result);
+                UpdateChecker.getNotificationGroup().createNotification(message, NotificationType.INFORMATION).notify(myProject);
               }
             }
           });
@@ -267,10 +262,9 @@ public class PluginUpdateDialog extends DialogWrapper {
   private ListPluginComponent createListComponent(IdeaPluginDescriptor updateDescriptor) {
     IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(updateDescriptor.getPluginId());
     assert descriptor != null : updateDescriptor;
-    ListPluginComponent component = new ListPluginComponent(myPluginModel, descriptor, emptyListener(), false) {
+    ListPluginComponent component = new ListPluginComponent(myPluginModel, descriptor, NULL_LISTENER, false) {
       @Override
-      public void updateErrors() {
-      }
+      public void updateErrors() { }
 
       @Override
       public void showProgress() {
@@ -367,11 +361,5 @@ public class PluginUpdateDialog extends DialogWrapper {
   @NotNull
   private static String getIdVersionValue(@NotNull IdeaPluginDescriptor descriptor) {
     return descriptor.getPluginId().getIdString() + "+" + descriptor.getVersion();
-  }
-
-  @NotNull
-  private static <T> LinkListener<T> emptyListener() {
-    return (__, ___) -> {
-    };
   }
 }

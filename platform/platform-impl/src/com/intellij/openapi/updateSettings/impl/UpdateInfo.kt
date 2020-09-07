@@ -5,10 +5,10 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.BuildRange
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import org.jdom.Element
 import org.jdom.JDOMException
-import org.jetbrains.annotations.NonNls
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
@@ -19,7 +19,7 @@ class UpdatesInfo(node: Element) {
 }
 
 class Product internal constructor(node: Element) {
-  val name: String = node.getMandatoryAttributeValue("name")
+  @NlsSafe val name: String = node.getMandatoryAttributeValue("name")
   val codes: Set<String> = node.getChildren("code").map { it.value.trim() }.toSet()
   val channels: List<UpdateChannel> = node.getChildren("channel").map(::UpdateChannel)
 
@@ -27,14 +27,11 @@ class Product internal constructor(node: Element) {
 }
 
 class UpdateChannel internal constructor(node: Element) {
-  companion object {
-    @NonNls const val LICENSING_EAP: String = "eap"
-    @NonNls const val LICENSING_RELEASE: String = "release"
-  }
+  enum class Licensing { EAP, RELEASE; }
 
   val id: String = node.getMandatoryAttributeValue("id")
   val status: ChannelStatus = ChannelStatus.fromCode(node.getAttributeValue("status"))
-  val licensing: String = node.getAttributeValue("licensing", LICENSING_RELEASE)
+  val licensing: Licensing = if (node.getAttributeValue("licensing") == "eap") Licensing.EAP else Licensing.RELEASE
   val evalDays: Int = node.getAttributeValue("evalDays")?.toInt() ?: 30
   val url: String? = node.getAttributeValue("url")
   val builds: List<BuildInfo> = node.getChildren("build").map(::BuildInfo)
@@ -46,12 +43,13 @@ class BuildInfo internal constructor(node: Element) {
   val number: BuildNumber = parseBuildNumber(node.getMandatoryAttributeValue("fullNumber", "number"))
   val apiVersion: BuildNumber = node.getAttributeValue("apiVersion")?.let { BuildNumber.fromStringWithProductCode(it, number.productCode) } ?: number
   val version: String = node.getAttributeValue("version") ?: ""
-  val message: String = node.getChild("message")?.value ?: ""
+  @NlsSafe val message: String = node.getChild("message")?.value ?: ""
   val blogPost: String? = node.getChild("blogPost")?.getAttributeValue("url")
   val releaseDate: Date? = parseDate(node.getAttributeValue("releaseDate"))
   val target: BuildRange? = BuildRange.fromStrings(node.getAttributeValue("targetSince"), node.getAttributeValue("targetUntil"))
-  val buttons: List<ButtonInfo> = node.getChildren("button").map(::ButtonInfo)
   val patches: List<PatchInfo> = node.getChildren("patch").map(::PatchInfo)
+
+  private val buttons: List<ButtonInfo> = node.getChildren("button").map(::ButtonInfo)
 
   private fun parseBuildNumber(value: String): BuildNumber {
     var buildNumber = BuildNumber.fromString(value)!!
@@ -75,14 +73,12 @@ class BuildInfo internal constructor(node: Element) {
     get() = buttons.find(ButtonInfo::isDownload)?.url
 
   override fun toString(): String = "${number}/${version}"
-}
 
-class ButtonInfo internal constructor(node: Element) {
-  val name: String = node.getMandatoryAttributeValue("name")
-  val url: String = node.getMandatoryAttributeValue("url")
-  val isDownload: Boolean = node.getAttributeValue("download") != null  // a button marked with this attribute is hidden when a patch is available
-
-  override fun toString(): String = name
+  private class ButtonInfo constructor(node: Element) {
+    // "name" is no longer used
+    val url: String = node.getMandatoryAttributeValue("url")
+    val isDownload: Boolean = node.getAttributeValue("download") != null
+  }
 }
 
 class PatchInfo internal constructor(node: Element) {

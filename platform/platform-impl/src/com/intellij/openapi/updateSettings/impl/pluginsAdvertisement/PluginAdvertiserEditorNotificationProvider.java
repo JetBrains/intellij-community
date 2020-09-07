@@ -103,6 +103,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
       }
       panel.setText(IdeBundle.message("plugins.advertiser.extensions.supported.in.ultimate", extensionOrFileName));
 
+      //noinspection DialogTitleCapitalization
       panel.createActionLabel(IdeBundle.message("plugins.advertiser.action.try.ultimate"), () -> {
         pluginAdvertiserExtensionsState.addEnabledExtensionOrFileNameAndInvalidateCache(extensionOrFileName);
         FeatureUsageData data = new FeatureUsageData().addData("source", "editor");

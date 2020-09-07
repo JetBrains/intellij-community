@@ -159,7 +159,7 @@ final class UpdateCheckerComponent {
       settings.setSelectedChannelStatus(ChannelStatus.EAP);
       LOG.info("channel forced to 'eap'");
       if (!ConfigImportHelper.isFirstSession()) {
-        String title = IdeBundle.message("update.notifications.title");
+        String title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
         String message = IdeBundle.message("update.channel.enforced", ChannelStatus.EAP);
         UpdateChecker.getNotificationGroup().createNotification(title, message, NotificationType.INFORMATION, null, "ide.update.channel.switched").notify(null);
       }
@@ -236,7 +236,7 @@ final class UpdateCheckerComponent {
       }
     }
 
-    String title = IdeBundle.message("update.notifications.title");
+    String title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
     String message = blogPost == null ? IdeBundle.message("update.snap.message")
                                       : IdeBundle.message("update.snap.message.with.blog.post", StringUtil.escapeXmlEntities(blogPost));
     UpdateChecker.getNotificationGroup().createNotification(
@@ -293,25 +293,18 @@ final class UpdateCheckerComponent {
 
     String title = IdeBundle.message("update.installed.notification.title");
     String message = new HtmlBuilder()
-      .appendWithSeparators(HtmlChunk.text(", "), ContainerUtil.map(
-        descriptors, descriptor -> HtmlChunk.link(descriptor.getPluginId().getIdString(), descriptor.getName())))
+      .appendWithSeparators(HtmlChunk.text(", "), ContainerUtil.map(descriptors, d -> HtmlChunk.link(d.getPluginId().getIdString(), d.getName())))
       .wrapWith("html").toString();
 
     UpdateChecker.getNotificationGroup().createNotification(title, message, NotificationType.INFORMATION, (notification, event) -> {
       String id = event.getDescription();
-      if (id == null) {
-        return;
-      }
+      if (id == null) return;
 
       PluginId pluginId = PluginId.findId(id);
-      if (pluginId == null) {
-        return;
-      }
+      if (pluginId == null) return;
 
       IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(pluginId);
-      if (descriptor == null) {
-        return;
-      }
+      if (descriptor == null) return;
 
       InputEvent inputEvent = event.getInputEvent();
       Component component = inputEvent == null ? null : inputEvent.getComponent();

@@ -60,9 +60,9 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
     }
   }
 
-  private void run(@NotNull Project project) throws IOException {
+  private static void run(Project project) throws IOException {
     Set<UnknownFeature> unknownFeatures = UnknownFeaturesCollector.getInstance(project).getUnknownFeatures();
-    final PluginsAdvertiser.KnownExtensions extensions = PluginsAdvertiser.loadExtensions();
+    PluginsAdvertiser.KnownExtensions extensions = PluginsAdvertiser.loadExtensions();
     if (extensions != null && unknownFeatures.isEmpty()) {
       return;
     }
@@ -77,7 +77,7 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
       if (project.isDisposed()) return;
       EditorNotifications.getInstance(project).updateAllNotifications();
     }
-    final Map<PluginId, PluginsAdvertiser.Plugin> ids = new HashMap<>();
+    Map<PluginId, PluginsAdvertiser.Plugin> ids = new HashMap<>();
     for (UnknownFeature feature : unknownFeatures) {
       ProgressManager.checkCanceled();
       PluginFeatureService.FeaturePluginData bundledPlugin = PluginFeatureService.getInstance().getPluginForFeature(feature.getFeatureType(),
@@ -88,7 +88,7 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
         features.putValue(id, feature);
       }
       else {
-        final List<PluginsAdvertiser.Plugin> pluginId = PluginsAdvertiser.retrieve(feature);
+        List<PluginsAdvertiser.Plugin> pluginId = PluginsAdvertiser.retrieve(feature);
         if (!pluginId.isEmpty()) {
           for (PluginsAdvertiser.Plugin plugin : pluginId) {
             PluginId id = PluginId.getId(plugin.myPluginId);
@@ -103,7 +103,7 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
     for (PluginId id : ids.keySet()) {
       PluginsAdvertiser.Plugin plugin = ids.get(id);
       if (PluginManagerCore.isDisabled(id)) {
-        final IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(id);
+        IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(id);
         if (pluginDescriptor != null) {
           disabledPlugins.put(plugin, pluginDescriptor);
         }
@@ -184,6 +184,7 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
       }
       else if (bundledPlugin != null && !PropertiesComponent.getInstance().isTrueValue(PluginsAdvertiser.IGNORE_ULTIMATE_EDITION)) {
         message = IdeBundle.message("plugins.advertiser.ultimate.features.detected", StringUtil.join(bundledPlugin, ", "));
+        //noinspection DialogTitleCapitalization
         notificationActions.add(NotificationAction.createSimpleExpiring(
           IdeBundle.message("plugins.advertiser.action.try.ultimate"), () -> {
             FeatureUsageData data = new FeatureUsageData().addData("source", "notification");
@@ -209,38 +210,29 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
     }, ModalityState.NON_MODAL);
   }
 
-  @NotNull
-  private static @NlsContexts.NotificationContent String getAddressedMessagePresentation(@NotNull Set<PluginDownloader> plugins,
-                                                                                         @NotNull Map<PluginsAdvertiser.Plugin, IdeaPluginDescriptor> disabledPlugins,
-                                                                                         @NotNull MultiMap<PluginId, UnknownFeature> features) {
-    final MultiMap<String, String> addressedFeatures = MultiMap.createSet();
-    final Set<PluginId> ids = new LinkedHashSet<>();
-    for (PluginDownloader plugin : plugins) {
-      ids.add(plugin.getId());
-    }
-    for (PluginsAdvertiser.Plugin plugin : disabledPlugins.keySet()) {
-      ids.add(PluginId.getId(plugin.myPluginId));
-    }
+  private static @NlsContexts.NotificationContent String getAddressedMessagePresentation(Set<PluginDownloader> plugins,
+                                                                                         Map<PluginsAdvertiser.Plugin, IdeaPluginDescriptor> disabledPlugins,
+                                                                                         MultiMap<PluginId, UnknownFeature> features) {
+    Set<PluginId> ids = new LinkedHashSet<>();
+    for (PluginDownloader plugin : plugins) ids.add(plugin.getId());
+    for (PluginsAdvertiser.Plugin plugin : disabledPlugins.keySet()) ids.add(PluginId.getId(plugin.myPluginId));
+
+    MultiMap<String, String> addressedFeatures = MultiMap.createSet();
     for (PluginId id : ids) {
       for (UnknownFeature feature : features.get(id)) {
         addressedFeatures.putValue(feature.getFeatureDisplayName(), feature.getImplementationDisplayName());
       }
     }
-    final String addressedFeaturesPresentation = StringUtil.join(addressedFeatures.entrySet(),
-            entry -> entry.getKey() + ": " + StringUtil.join(entry.getValue(), ", "), "; ");
-    final int addressedFeaturesNumber = addressedFeatures.keySet().size();
-    final int pluginsNumber = ids.size();
 
+    int addressedFeaturesNumber = addressedFeatures.size(), pluginsNumber = ids.size(), repoPluginsNumber = plugins.size();
     if (addressedFeaturesNumber == 1) {
       Map.Entry<String, Collection<String>> feature = addressedFeatures.entrySet().iterator().next();
-      String featureName = StringUtil.join(feature.getValue(), ", ");
-      if (plugins.isEmpty()) {
-        return IdeBundle.message("plugins.advertiser.notification.disabled", pluginsNumber, feature.getKey(), featureName);
-      }
-      return IdeBundle.message("plugins.advertiser.notification.not.installed", pluginsNumber, feature.getKey(), featureName);
+      String name = feature.getKey(), text = StringUtil.join(feature.getValue(), ", ");
+      return IdeBundle.message("plugins.advertiser.missing.feature", pluginsNumber, name, text, repoPluginsNumber);
     }
-
-    return StringUtil.pluralize("Plugin", pluginsNumber) + " supporting " + StringUtil.pluralize("feature", addressedFeaturesNumber) +
-           " (" + addressedFeaturesPresentation + ") " + (pluginsNumber == 1 ? "is" : "are") + " currently " + (plugins.isEmpty() ? "disabled" : "not installed") + ".<br>";
+    else {
+      String text = StringUtil.join(addressedFeatures.entrySet(), e -> e.getKey() + ": " + StringUtil.join(e.getValue(), ", "), "; ");
+      return IdeBundle.message("plugins.advertiser.missing.features", pluginsNumber, text, repoPluginsNumber);
+    }
   }
 }
