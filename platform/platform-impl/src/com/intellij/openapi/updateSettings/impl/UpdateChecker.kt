@@ -2,7 +2,6 @@
 package com.intellij.openapi.updateSettings.impl
 
 import com.google.common.annotations.VisibleForTesting
-import com.intellij.DynamicBundle
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.externalComponents.ExternalComponentManager
 import com.intellij.ide.plugins.*
@@ -647,7 +646,6 @@ object UpdateChecker {
     if (ApplicationInfoEx.getInstanceEx().isEAP) {
       addUpdateRequestParameter("eap", "")
     }
-    addUpdateRequestParameter("lang", DynamicBundle.getLocale().toLanguageTag())
     return url.addParameters(ourAdditionalRequestOptions)
   }
 
