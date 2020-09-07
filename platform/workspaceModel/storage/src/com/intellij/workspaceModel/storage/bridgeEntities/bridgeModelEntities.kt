@@ -227,12 +227,27 @@ open class SourceRootEntity(
 }
 
 @Suppress("unused")
-class JavaSourceRootEntityData : WorkspaceEntityData<JavaSourceRootEntity>() {
+class JavaSourceRootEntityData : WorkspaceEntityData<JavaSourceRootEntity>(), WithAssertableConsistency {
   var generated: Boolean = false
   lateinit var packagePrefix: String
 
   override fun createEntity(snapshot: WorkspaceEntityStorage): JavaSourceRootEntity = JavaSourceRootEntity(generated, packagePrefix).also {
     addMetaData(it, snapshot)
+  }
+
+  override fun assertConsistency(storage: WorkspaceEntityStorage) {
+    val thisEntity = this.createEntity(storage)
+    val attachedSourceRoot = thisEntity.sourceRoot
+    assert(thisEntity.entitySource == attachedSourceRoot.entitySource) {
+      """
+      |Entity source of source root entity and it's java source root entity differs. 
+      |   Source root entity source: ${attachedSourceRoot.entitySource}
+      |   Java source root source: ${thisEntity.entitySource}
+      |   Source root entity: $attachedSourceRoot
+      |   Java root entity: $thisEntity
+      """.trimMargin()
+    }
+    println()
   }
 }
 
