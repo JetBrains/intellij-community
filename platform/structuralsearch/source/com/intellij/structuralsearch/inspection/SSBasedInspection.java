@@ -6,6 +6,8 @@ import com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithReporterName;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.dupLocator.iterators.CountingNodeIterator;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType;
 import com.intellij.openapi.project.Project;
@@ -405,7 +407,9 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
         catch (StructuralSearchException e) {
           if (myProblemsReported.add(configuration.getName())) { // don't overwhelm the user with messages
             final String message = e.getMessage().replace(ScriptSupport.UUID, "");
-            UIUtil.SSR_NOTIFICATION_GROUP.createNotification(NotificationType.ERROR)
+            final NotificationGroup notificationGroup =
+              NotificationGroupManager.getInstance().getNotificationGroup(UIUtil.SSR_NOTIFICATION_GROUP_ID);
+            notificationGroup.createNotification(NotificationType.ERROR)
               .setContent(SSRBundle.message("inspection.script.problem", message, configuration.getName()))
               .setImportant(true)
               .notify(element.getProject());

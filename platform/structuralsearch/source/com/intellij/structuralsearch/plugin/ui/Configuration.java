@@ -111,7 +111,7 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     this.uuid = uuid;
   }
 
-  public @Nullable String getDescription() {
+  public @NlsSafe @Nullable String getDescription() {
     return description;
   }
 
