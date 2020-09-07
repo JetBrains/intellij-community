@@ -211,6 +211,7 @@ public class JBScrollPane extends JScrollPane {
     private final MouseWheelListener myDelegate;
     private MouseWheelSmoothScroll mySmoothScroll;
     private TouchScroll myTouchScroll;
+    private LatchingScroll myLatchingScroll;
 
     private JBMouseWheelListener(MouseWheelListener delegate) {
       this.myDelegate = delegate;
@@ -241,8 +242,16 @@ public class JBScrollPane extends JScrollPane {
               });
             }
             mySmoothScroll.processMouseWheelEvent(event, myDelegate::mouseWheelMoved);
-          } else if (!(bar instanceof JBScrollBar && ((JBScrollBar)bar).handleMouseWheelEvent(event))) {
-            myDelegate.mouseWheelMoved(event);
+          } else {
+            if (LatchingScroll.isEnabled()) {
+              if (myLatchingScroll == null) myLatchingScroll = new LatchingScroll();
+              if (!myLatchingScroll.test(event)) {
+                event.consume();
+              }
+            }
+            if (!event.isConsumed() && !(bar instanceof JBScrollBar && ((JBScrollBar)bar).handleMouseWheelEvent(event))) {
+              myDelegate.mouseWheelMoved(event);
+            }
           }
         }
 
