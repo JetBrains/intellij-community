@@ -17,6 +17,7 @@
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.PerFileMappingsEx;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -169,7 +170,7 @@ class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
   @Nullable
   @Override
   protected String getClearValueText(@Nullable Object target) {
-    if (target == null) return "<System Default>";
+    if (target == null) return LangBundle.message("action.set.system.default.encoding.text");
     return super.getClearValueText(target);
   }
 
@@ -190,7 +191,7 @@ class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
   @Override
   public JComponent createComponent() {
     myTablePanel.add(super.createComponent(), BorderLayout.CENTER);
-    JPanel p = createActionPanel(null, new Value<Charset>() {
+    JPanel p = createActionPanel(null, new Value<>() {
       @Override
       public void commit() {}
 
@@ -265,7 +266,7 @@ class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
   @NotNull
   private static PerFileMappingsEx<Charset> createMappings(@NotNull Project project) {
     EncodingProjectManagerImpl prjManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(project);
-    return new PerFileMappingsEx<Charset>() {
+    return new PerFileMappingsEx<>() {
       @NotNull
       @Override
       public Map<VirtualFile, Charset> getMappings() {

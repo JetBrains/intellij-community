@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.libraries.ui.impl;
 
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -29,8 +30,8 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.io.File;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * This dialog allows selecting paths inside selected archives or directories.
@@ -46,7 +47,7 @@ import java.util.List;
  */
 public class DetectedRootsChooserDialog extends DialogWrapper {
   private static final ColumnInfo ROOT_COLUMN = new TreeColumnInfo("");
-  private static final ColumnInfo<VirtualFileCheckedTreeNode, String> ROOT_TYPE_COLUMN = new ColumnInfo<VirtualFileCheckedTreeNode, String>("") {
+  private static final ColumnInfo<VirtualFileCheckedTreeNode, String> ROOT_TYPE_COLUMN = new ColumnInfo<>("") {
     @Override
     public String valueOf(VirtualFileCheckedTreeNode node) {
       final SuggestedChildRootInfo rootInfo = node.getRootInfo();
@@ -106,9 +107,9 @@ public class DetectedRootsChooserDialog extends DialogWrapper {
   }
 
   private void init(Collection<SuggestedChildRootInfo> suggestedRoots) {
-    myDescription = XmlStringUtil.wrapInHtml(ApplicationNamesInfo.getInstance().getFullProductName() +
-                    " just scanned files and detected the following " + StringUtil.pluralize("root", suggestedRoots.size()) + ".<br>" +
-                    "Select items in the tree below or press Cancel to cancel operation.");
+    myDescription = XmlStringUtil.wrapInHtml(LangBundle.message("detected.roots.chooser.description", 
+                                                                ApplicationNamesInfo.getInstance().getFullProductName(), 
+                                                                suggestedRoots.size()));
     myTreeTable = createTreeTable(suggestedRoots);
     myPane = ScrollPaneFactory.createScrollPane(myTreeTable);
     setTitle(ProjectBundle.message("dialog.title.detected.roots"));
@@ -184,8 +185,7 @@ public class DetectedRootsChooserDialog extends DialogWrapper {
 
   private static CheckedTreeNode createRoot(Collection<SuggestedChildRootInfo> suggestedRoots) {
     SuggestedChildRootInfo[] sortedRoots = suggestedRoots.toArray(new SuggestedChildRootInfo[0]);
-    Arrays.sort(sortedRoots,
-                (o1, o2) -> o1.getDetectedRoot().getFile().getPresentableUrl().compareTo(o2.getDetectedRoot().getFile().getPresentableUrl()));
+    Arrays.sort(sortedRoots, Comparator.comparing(o -> o.getDetectedRoot().getFile().getPresentableUrl()));
 
     CheckedTreeNode root = new CheckedTreeNode(null);
     Map<VirtualFile, CheckedTreeNode> rootCandidateNodes = new HashMap<>();

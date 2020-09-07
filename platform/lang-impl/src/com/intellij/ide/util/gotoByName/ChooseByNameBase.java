@@ -41,6 +41,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
@@ -376,15 +378,19 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     String checkBoxName = myModel.getCheckBoxName();
     Color fg = UIUtil.getLabelDisabledForeground();
     Color color = StartupUiUtil.isUnderDarcula() ? ColorUtil.shift(fg, 1.2) : ColorUtil.shift(fg, 0.7);
-    String text = checkBoxName == null
-                  ? ""
-                  : "<html>" + checkBoxName +
-                    (myCheckBoxShortcut != null && myCheckBoxShortcut.getShortcuts().length > 0
-                     ? " <b color='" + ColorUtil.toHex(color) + "'>" +
-                       KeymapUtil.getShortcutsText(myCheckBoxShortcut.getShortcuts()) +
-                       "</b>"
-                     : "") +
-                    "</html>";
+    String text;
+    if (checkBoxName == null) {
+      text = "";
+    }
+    else {
+      HtmlBuilder builder = new HtmlBuilder().append(checkBoxName);
+      if (myCheckBoxShortcut != null && myCheckBoxShortcut.getShortcuts().length > 0) {
+        builder.append(" ")
+          .append(HtmlChunk.tag("b")
+                    .attr("color", ColorUtil.toHex(color)).addText(KeymapUtil.getShortcutsText(myCheckBoxShortcut.getShortcuts())));
+      }
+      text = builder.wrapWith("html").toString();
+    }
     myCheckBox.setText(text);
     myCheckBox.setAlignmentX(SwingConstants.RIGHT);
     myCheckBox.setBorder(null);
