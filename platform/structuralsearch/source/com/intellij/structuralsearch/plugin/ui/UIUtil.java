@@ -9,6 +9,8 @@ import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -26,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -56,7 +59,9 @@ import java.util.function.Supplier;
 public final class UIUtil {
   @NonNls private static final String SS_GROUP = "structuralsearchgroup";
 
-  @NonNls public static final String SSR_NOTIFICATION_GROUP_ID = "Structural Search";
+  public static final NotificationGroup SSR_NOTIFICATION_GROUP =
+    new NotificationGroup("Structural Search", NotificationDisplayType.STICKY_BALLOON, true, ToolWindowId.FIND, null,
+                          SSRBundle.message("structural.search.title"), null);
 
   @NonNls public static final String TEXT = "TEXT";
   @NonNls public static final String TEXT_HIERARCHY = "TEXT HIERARCHY";
