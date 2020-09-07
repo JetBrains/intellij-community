@@ -58,7 +58,9 @@ internal fun setCustomCandidateProviderModel(disposable: Disposable? = null, var
 
 internal fun unregisterCandidateProvider(provider: FilePredictionCandidateProvider) {
   val ep: ExtensionPoint<FilePredictionCandidateProvider> = Extensions.getRootArea().getExtensionPoint(CANDIDATE_EP_NAME)
-  ep.unregisterExtension(provider.javaClass)
+  if (CANDIDATE_EP_NAME.extensions.map { it.javaClass }.contains(provider.javaClass)) {
+    ep.unregisterExtension(provider.javaClass)
+  }
 }
 
 private class FilePredictionTestCandidateProvider(private val providers: List<FilePredictionCandidateProvider>) : CompositeCandidateProvider() {
