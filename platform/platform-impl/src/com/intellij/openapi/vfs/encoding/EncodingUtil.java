@@ -185,7 +185,10 @@ public final class EncodingUtil {
     }
   }
 
-  // returns file type description if the charset is hard-coded or null if file type does not restrict encoding
+  /**
+   * @param virtualFile file to check
+   * @return true if the charset is hard-coded, false if file type does not restrict encoding
+   */
   private static boolean checkHardcodedCharsetFileType(@NotNull VirtualFile virtualFile) {
     FileType fileType = virtualFile.getFileType();
     // in lesser IDEs all special file types are plain text so check for that first
