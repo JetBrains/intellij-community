@@ -3,13 +3,13 @@ package com.intellij.util.indexing.diagnostic.dump
 
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ConcurrentBitSet
-import com.intellij.util.indexing.*
+import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.FileBasedIndexImpl
+import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.diagnostic.dump.paths.IndexedFilePath
 import com.intellij.util.indexing.diagnostic.dump.paths.IndexedFilePaths
 import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePaths
-import kotlin.streams.asSequence
 
 object IndexContentDiagnosticDumper {
 
@@ -53,12 +53,4 @@ object IndexContentDiagnosticDumper {
       providerNameToOriginalFileIds
     )
   }
-
-  fun doesFileHaveProvidedIndex(file: VirtualFile, extension: FileBasedIndexExtension<*, *>, project: Project): Boolean {
-    val fileId = FileBasedIndex.getFileId(file)
-    return FileBasedIndexInfrastructureExtension.EP_NAME.extensions().asSequence()
-      .mapNotNull { it.createFileIndexingStatusProcessor(project) }
-      .any { it.hasIndexForFile(file, fileId, extension) }
-  }
-
 }
