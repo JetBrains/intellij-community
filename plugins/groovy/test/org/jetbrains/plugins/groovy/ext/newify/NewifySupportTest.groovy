@@ -268,7 +268,7 @@ class B {
 
   void 'test newify should not throw on incorrect regex'() {
     testHighlighting """
-@Newify(pattern = "*")
+@Newify(pattern = "<error>*</error>")
 class B {
   def a = <warning descr="Cannot resolve symbol 'A'">A</warning>()
 }"""
