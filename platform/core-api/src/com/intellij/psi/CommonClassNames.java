@@ -71,6 +71,12 @@ public interface CommonClassNames {
   String JAVA_IO_EXTERNALIZABLE = "java.io.Externalizable";
   String JAVA_IO_SERIAL = "java.io.Serial";
   String JAVA_IO_FILE = "java.io.File";
+  String JAVA_IO_FILE_INPUT_STREAM = "java.io.FileInputStream";
+  String JAVA_IO_FILE_OUTPUT_STREAM = "java.io.FileOutputStream";
+  String JAVA_IO_FILE_READER = "java.io.FileReader";
+  String JAVA_IO_FILE_WRITER = "java.io.FileWriter";
+  String JAVA_IO_PRINT_STREAM = "java.io.PrintStream";
+  String JAVA_IO_PRINT_WRITER = "java.io.PrintWriter";
 
   String JAVA_LANG_STRING = "java.lang.String";
   @NonNls String JAVA_LANG_STRING_SHORT = "String";
@@ -104,6 +110,8 @@ public interface CommonClassNames {
   String JAVA_UTIL_CONCURRENT_CALLABLE = "java.util.concurrent.Callable";
   String JAVA_UTIL_CONCURRENT_COMPLETABLE_FUTURE = "java.util.concurrent.CompletableFuture";
   String JAVA_UTIL_CONCURRENT_COMPLETION_STAGE = "java.util.concurrent.CompletionStage";
+
+  String JAVA_UTIL_FORMATTER = "java.util.Formatter";
 
   String JAVA_UTIL_STREAM_BASE_STREAM = "java.util.stream.BaseStream";
   String JAVA_UTIL_STREAM_STREAM = "java.util.stream.Stream";

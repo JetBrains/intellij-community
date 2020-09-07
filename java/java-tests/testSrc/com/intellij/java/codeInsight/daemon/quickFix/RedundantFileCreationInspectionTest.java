@@ -4,6 +4,9 @@ package com.intellij.java.codeInsight.daemon.quickFix;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.RedundantFileCreationInspection;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -18,5 +21,10 @@ public class RedundantFileCreationInspectionTest extends LightQuickFixParameteri
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/redundantFileCreation";
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk(JavaVersion.compose(11));
   }
 }
