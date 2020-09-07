@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -77,12 +78,20 @@ public interface Query<Result> extends Iterable<Result> {
   }
 
   /**
+   * @param transformation pure function
+   */
+  @Experimental
+  default <R> @NotNull Query<R> transforming(@NotNull Function<? super Result, ? extends Collection<? extends R>> transformation) {
+    return Queries.getInstance().transforming(this, transformation);
+  }
+
+  /**
    * @param mapper pure function
    */
   @Experimental
   @NotNull
   default <R> Query<R> mapping(@NotNull Function<? super Result, ? extends R> mapper) {
-    return Queries.getInstance().mapping(this, mapper);
+    return transforming(value -> Collections.singletonList(mapper.apply(value)));
   }
 
   /**
@@ -91,7 +100,7 @@ public interface Query<Result> extends Iterable<Result> {
   @Experimental
   @NotNull
   default Query<Result> filtering(@NotNull Predicate<? super Result> predicate) {
-    return Queries.getInstance().filtering(this, predicate);
+    return transforming(value -> predicate.test(value) ? Collections.singletonList(value) : Collections.emptyList());
   }
 
   /**
