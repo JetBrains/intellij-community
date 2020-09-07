@@ -8,13 +8,13 @@ import com.intellij.lang.ASTFactory
 import com.intellij.openapi.project.Project
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
 import com.intellij.psi.tree.IElementType
-import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle.message
+import org.jetbrains.plugins.groovy.GroovyBundle
 
 class ReplaceDotFix(val oldDot: IElementType, private val newDot: IElementType) : LocalQuickFix {
 
   private val myName: @IntentionFamilyName String
     get() {
-      return message("replace.something.with", oldDot, newDot)
+      return GroovyBundle.message("intention.family.name.replace.something.with", oldDot, newDot)
     }
 
   override fun getFamilyName(): String = myName
