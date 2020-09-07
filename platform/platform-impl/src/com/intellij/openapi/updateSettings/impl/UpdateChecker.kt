@@ -29,7 +29,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrameUpdater
-import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.HttpRequests
@@ -61,7 +60,6 @@ object UpdateChecker {
   private enum class NotificationUniqueType { PLATFORM, PLUGINS, EXTERNAL }
 
   private var ourDisabledToUpdatePlugins: MutableSet<PluginId>? = null
-  private val ourAdditionalRequestOptions = hashMapOf<String, String>()
   private val ourUpdatedPlugins = hashMapOf<PluginId, PluginDownloader>()
   private val ourShownNotifications = MultiMap<NotificationUniqueType, Notification>()
 
@@ -74,6 +72,18 @@ object UpdateChecker {
 
   private val updateUrl: String
     get() = System.getProperty("idea.updates.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls!!.checkingUrl
+
+  init {
+    UpdateRequestParameters.addParameter("build", ApplicationInfo.getInstance().build.asString())
+    UpdateRequestParameters.addParameter("uid", PermanentInstallationID.get())
+    UpdateRequestParameters.addParameter("os", SystemInfo.OS_NAME + ' ' + SystemInfo.OS_VERSION)
+    if (ExternalUpdateManager.ACTUAL != null) {
+      UpdateRequestParameters.addParameter("manager", ExternalUpdateManager.ACTUAL.toolName)
+    }
+    if (ApplicationInfoEx.getInstanceEx().isEAP) {
+      UpdateRequestParameters.addParameter("eap", "")
+    }
+  }
 
   @JvmStatic
   fun getNotificationGroup(): NotificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("IDE and Plugin Updates")
@@ -167,7 +177,7 @@ object UpdateChecker {
     val updateInfo = try {
       var updateUrl = Urls.newFromEncoded(updateUrl)
       if (updateUrl.scheme != URLUtil.FILE_PROTOCOL) {
-        updateUrl = prepareUpdateCheckArgs(updateUrl)
+        updateUrl = UpdateRequestParameters.amendUpdateRequest(updateUrl)
       }
       LogUtil.debug(LOG, "load update xml (UPDATE_URL='%s')", updateUrl)
       HttpRequests.request(updateUrl).connect { UpdatesInfo(JDOMUtil.load(it.reader)) }
@@ -632,24 +642,6 @@ object UpdateChecker {
   }
 
   @JvmStatic
-  fun addUpdateRequestParameter(name: String, value: String) {
-    ourAdditionalRequestOptions[name] = value
-  }
-
-  private fun prepareUpdateCheckArgs(url: Url): Url {
-    addUpdateRequestParameter("build", ApplicationInfo.getInstance().build.asString())
-    addUpdateRequestParameter("uid", PermanentInstallationID.get())
-    addUpdateRequestParameter("os", SystemInfo.OS_NAME + ' ' + SystemInfo.OS_VERSION)
-    if (ExternalUpdateManager.ACTUAL != null) {
-      addUpdateRequestParameter("manager", ExternalUpdateManager.ACTUAL.toolName)
-    }
-    if (ApplicationInfoEx.getInstanceEx().isEAP) {
-      addUpdateRequestParameter("eap", "")
-    }
-    return url.addParameters(ourAdditionalRequestOptions)
-  }
-
-  @JvmStatic
   val disabledToUpdate: Set<PluginId>
     get() {
       var result = ourDisabledToUpdatePlugins
@@ -739,11 +731,11 @@ object UpdateChecker {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  private val notificationGroupRef by lazy { getNotificationGroup() }
-
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated(level = DeprecationLevel.ERROR, replaceWith = ReplaceWith("getNotificationGroup()"), message = "Use getNotificationGroup()")
-  @JvmField val NOTIFICATIONS = notificationGroupRef
+  @Suppress("DEPRECATION")
+  @JvmField val NOTIFICATIONS =
+    NotificationGroup("IDE and Plugin Updates", NotificationDisplayType.STICKY_BALLOON, true, null, null, null, PluginManagerCore.CORE_ID)
 
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   @Deprecated("Use `checkAndPrepareToInstall` without `incompatiblePlugins` parameter", level = DeprecationLevel.ERROR)
