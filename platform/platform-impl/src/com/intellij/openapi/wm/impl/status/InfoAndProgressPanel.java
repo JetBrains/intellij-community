@@ -339,7 +339,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     }
   }
 
-  public @NotNull Pair<String, String> setText(@Nullable @NlsContexts.StatusBarText String text, @Nullable String requestor) {
+  public @NotNull Pair<@NlsContexts.StatusBarText String, String> setText(@Nullable @NlsContexts.StatusBarText String text, @Nullable String requestor) {
     if (StringUtil.isEmpty(text) && !Objects.equals(requestor, myCurrentRequestor) && !EventLog.LOG_REQUESTOR.equals(requestor)) {
       return new Pair<>(myInfoPanel.getText(), myCurrentRequestor);
     }

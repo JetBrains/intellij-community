@@ -114,7 +114,7 @@ public final class EventLog {
     getProjectService(project).doClear();
   }
 
-  public static @Nullable Trinity<Notification, String, Long> getStatusMessage(@Nullable Project project) {
+  public static @Nullable Trinity<Notification, @NlsContexts.StatusBarText String, Long> getStatusMessage(@Nullable Project project) {
     return getLogModel(project).getStatusMessage();
   }
 
@@ -405,7 +405,7 @@ public final class EventLog {
 
   public static class LogEntry {
     public final String message;
-    public final @NlsContexts.Tooltip String status;
+    public final @NlsContexts.StatusBarText String status;
     public final List<Pair<TextRange, HyperlinkInfo>> links;
     public final int titleLength;
 
