@@ -33,6 +33,7 @@ import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.add.PyAddSdkGroupPanel;
 import com.jetbrains.python.sdk.add.PyAddSdkPanel;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -226,10 +227,11 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     return true;
   }
 
-  private static String validateFrameworkSupportsPython3(@NotNull PyFrameworkProjectGenerator generator, @NotNull Sdk sdk) {
+  private static @Nls String validateFrameworkSupportsPython3(@NotNull PyFrameworkProjectGenerator generator, @NotNull Sdk sdk) {
     final String frameworkName = generator.getFrameworkTitle();
     final boolean isPy3k = PythonSdkType.getLanguageLevelForSdk(sdk).isPy3K();
-    return isPy3k && !generator.supportsPython3() ? frameworkName + " is not supported for the selected interpreter" : null;
+    return isPy3k && !generator.supportsPython3() ? PyBundle.message("framework.not.supported.for.the.selected.interpreter", frameworkName)
+                                                  : null;
   }
 
   @NotNull
