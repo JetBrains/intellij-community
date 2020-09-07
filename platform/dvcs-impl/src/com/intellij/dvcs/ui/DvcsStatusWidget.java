@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.ui;
 
+import com.intellij.dvcs.branch.DvcsBranchUtil;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener;
@@ -165,10 +166,7 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
     Project project = getProject();
     T repository = guessCurrentRepository(project);
     if (repository == null) return;
-
-    // -1, because there are arrows indicating that it is a popup
-    int maxLength = DvcsBundle.message("branch.popup.maximum.branch.length.sample").length() - 1;
-    myText = StringUtil.shortenTextWithEllipsis(getFullBranchName(repository), maxLength, 5);
+    myText = DvcsBranchUtil.getShortenBranchName(getFullBranchName(repository));
     myTooltip = getToolTip(repository);
     myIcon = getIcon(repository);
     if (myStatusBar != null) {

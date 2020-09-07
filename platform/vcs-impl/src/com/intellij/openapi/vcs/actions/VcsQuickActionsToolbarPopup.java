@@ -21,18 +21,15 @@ import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.Objects;
 
-public class VCSQuickActionsToolbarPopup extends QuickSwitchSchemeAction implements DumbAware {
+public class VcsQuickActionsToolbarPopup extends QuickSwitchSchemeAction implements DumbAware {
 
-  public enum SupportedVCS {VCS, NOT_IN_VCS}
-
-  public VCSQuickActionsToolbarPopup() {
-    getTemplatePresentation().setText(VcsBundle.messagePointer("vcs.quicklist.popup.title"));
+  public VcsQuickActionsToolbarPopup() {
     myActionPlace = ActionPlaces.MAIN_TOOLBAR;
   }
 
   @Override
   protected String getPopupTitle(@NotNull AnActionEvent e) {
-    return VcsBundle.message("vcs.quicklist.popup.title");
+    return VcsBundle.message("action.Vcs.Toolbar.QuickListPopupAction.text");
   }
 
   @Override

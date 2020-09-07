@@ -1,13 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.actions;
 
-import com.intellij.execution.*;
+import com.intellij.dvcs.branch.DvcsBranchUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import git4idea.branch.GitBranchUtil;
 
 import git4idea.repo.GitRepository;
@@ -24,34 +23,22 @@ public class GitBranchesComboBoxAction extends ComboBoxAction {
     var project = e.getProject();
     Presentation presentation = e.getPresentation();
     if (project == null || project.isDisposed() || !project.isOpen()) {
-      updatePresentation(null, presentation);
+      presentation.setEnabledAndVisible(false);
+      return;
     }
-    else {
-      updatePresentation(project, presentation);
-    }
-  }
 
-  private static void updatePresentation(
-    @Nullable Project project,
-    @NotNull Presentation presentation
-  ) {
-    if (project != null) {
-      GitRepository repo = GitBranchUtil.getCurrentRepository(project);
-      if (repo != null) {
-        String branchName = GitBranchUtil.getDisplayableBranchText(repo);
-        String name = Executor.shortenNameIfNeeded(branchName);
-        presentation.setText(name);
-        presentation.setIcon(AllIcons.Vcs.Branch);
-      }
-      else {
-        presentation.setText(ExecutionBundle.messagePointer("action.presentation.GitBranchesComboBoxAction.text"));
-        presentation.setIcon(AllIcons.Vcs.Clone);
-      }
-      presentation.setEnabled(true);
+    GitRepository repo = GitBranchUtil.getCurrentRepository(project);
+    if (repo != null) {
+      String branchName = GitBranchUtil.getDisplayableBranchText(repo);
+      String name = DvcsBranchUtil.getShortenBranchName(branchName);
+      presentation.setText(name);
+      presentation.setIcon(AllIcons.Vcs.Branch);
     }
     else {
-      presentation.setEnabled(false);
+      presentation.setEnabledAndVisible(false);
+      return;
     }
+    presentation.setEnabledAndVisible(true);
   }
 
   @Override
@@ -63,17 +50,11 @@ public class GitBranchesComboBoxAction extends ComboBoxAction {
   @NotNull
   protected ListPopup createActionPopup(@NotNull DataContext context, @NotNull JComponent component, @Nullable Runnable disposeCallback) {
     Project project = context.getData(CommonDataKeys.PROJECT);
-    ListPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>() {
-    });
-    if (project == null) {
-      return popup;
-    }
-
+    assert project != null;
     GitRepository repo = GitBranchUtil.getCurrentRepository(project);
-    if (repo == null) {
-      return popup;
-    }
-    popup = GitBranchPopup.getInstance(project, repo).asListPopup();
+    assert repo != null;
+
+    ListPopup popup = GitBranchPopup.getInstance(project, repo).asListPopup();
     popup.addListener(new JBPopupListener() {
       @Override
       public void onClosed(@NotNull LightweightWindowEvent event) {

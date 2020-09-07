@@ -352,7 +352,7 @@
     </group>
 
     <action id="Vcs.Toolbar.QuickListPopupAction"
-            class="com.intellij.openapi.vcs.actions.VCSQuickActionsToolbarPopup" icon="AllIcons.Actions.More"/>
+            class="com.intellij.openapi.vcs.actions.VcsQuickActionsToolbarPopup" icon="AllIcons.Actions.More"/>
 
     <!-- New light VCS toolbar for the root toolbar instead of navbar -->
     <group id="VcsNavBarToolbarActionsLight">
