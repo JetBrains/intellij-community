@@ -620,7 +620,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     PsiAnnotation tupleConstructor = containingClass.getAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR);
     if (tupleConstructor == null) return;
     if (!Boolean.FALSE.equals(GrAnnotationUtil.inferBooleanAttribute(tupleConstructor, TupleConstructorAttributes.DEFAULTS))) return;
-    AffectedMembersCache cache = new AffectedMembersCache(tupleConstructor);
+    AffectedMembersCache cache = GrGeneratedConstructorUtils.getAffectedMembersCache(tupleConstructor);
     if (!cache.arePropertiesHandledByUser() && cache.getAffectedMembers().contains(field)) {
       myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("initializers.are.forbidden.with.defaults"))
         .range(initializer)

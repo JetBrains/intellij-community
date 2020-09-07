@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.AffectedMembersCache;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.GrGeneratedConstructorUtils;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.TupleConstructorAttributes;
 
 import java.util.List;
@@ -96,7 +97,8 @@ public class GroovyConstructorNamedArgumentsInspection extends BaseInspection {
     private void checkGeneratedMapConstructor(@NotNull GrNamedArgumentsOwner owner,
                                               @NotNull PsiClass containingClass,
                                               @NotNull PsiAnnotation annotation) {
-      Lazy<Set<String>> affectedMembers = LazyKt.lazy(LazyThreadSafetyMode.NONE, () -> new AffectedMembersCache(annotation)
+      Lazy<Set<String>> affectedMembers = LazyKt.lazy(LazyThreadSafetyMode.NONE, () ->
+        GrGeneratedConstructorUtils.getAffectedMembersCache(annotation)
         .getAffectedMembers().stream()
         .map(AffectedMembersCache::getExternalName)
         .filter(Objects::nonNull)

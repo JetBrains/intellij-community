@@ -14,6 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrNamedArgumentsOwner
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_MAP_CONSTRUCTOR
 import org.jetbrains.plugins.groovy.lang.resolve.ast.AffectedMembersCache
 import org.jetbrains.plugins.groovy.lang.resolve.ast.TupleConstructorAttributes
+import org.jetbrains.plugins.groovy.lang.resolve.ast.getAffectedMembersCache
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrMapConstructorPropertyReference
 
 class MapConstructorAttributesFix : SetAnnotationAttributesFix() {
@@ -22,10 +23,8 @@ class MapConstructorAttributesFix : SetAnnotationAttributesFix() {
     val namedArgument = place.parentOfType<GrNamedArgument>() ?: return null
     val annotatedClass = GrMapConstructorPropertyReference.getConstructorReference(namedArgument)?.resolveClass()?.element as? GrTypeDefinition ?: return null
     val mapConstructorAnno = annotatedClass.getAnnotation(GROOVY_TRANSFORM_MAP_CONSTRUCTOR) as? GrAnnotation ?: return null
-    val affectedIdentifiers: Set<String> = run {
-      val cache = AffectedMembersCache(mapConstructorAnno)
-      cache.getAffectedMembers().mapNotNullTo(LinkedHashSet(), AffectedMembersCache.Companion::getExternalName)
-    }
+    val affectedIdentifiers: Set<String> =
+      getAffectedMembersCache(mapConstructorAnno).getAffectedMembers().mapNotNullTo(LinkedHashSet(), AffectedMembersCache.Companion::getExternalName)
     val collector = mutableMapOf<String, Any?>()
     val labels = run {
       val namedArgOwner = place.parentOfType<GrNamedArgumentsOwner>() ?: return null

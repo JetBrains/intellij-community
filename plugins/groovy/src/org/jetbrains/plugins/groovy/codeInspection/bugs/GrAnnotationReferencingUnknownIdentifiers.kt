@@ -12,6 +12,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyStringLiteralManipulator
 import org.jetbrains.plugins.groovy.lang.resolve.ast.AffectedMembersCache
 import org.jetbrains.plugins.groovy.lang.resolve.ast.constructorGeneratingAnnotations
+import org.jetbrains.plugins.groovy.lang.resolve.ast.getAffectedMembersCache
 
 class GrAnnotationReferencingUnknownIdentifiers : BaseInspection() {
 
@@ -57,7 +58,7 @@ class GrAnnotationReferencingUnknownIdentifiers : BaseInspection() {
     override fun visitAnnotation(annotation: GrAnnotation) {
       super.visitAnnotation(annotation)
       if (!constructorGeneratingAnnotations.contains(annotation.qualifiedName)) return
-      val cache = AffectedMembersCache(annotation)
+      val cache = getAffectedMembersCache(annotation)
       val affectedMembers = cache.getAllAffectedMembers().mapNotNullTo(mutableSetOf(), AffectedMembersCache.Companion::getExternalName)
       processAttribute(affectedMembers, annotation, "includes")
       processAttribute(affectedMembers, annotation, "excludes")

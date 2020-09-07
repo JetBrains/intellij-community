@@ -5,6 +5,8 @@ package org.jetbrains.plugins.groovy.lang.resolve.ast
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.*
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PropertyUtilBase
 import com.intellij.psi.util.parentOfType
 import groovy.transform.Undefined
@@ -51,10 +53,14 @@ fun getIdentifierList(annotation: PsiAnnotation, @NlsSafe attributeName: String)
 private fun inferStringArrayValueShallow(anno: PsiAnnotation, attributeName: String) : List<String>? =
   anno.findAttributeValue(attributeName)?.getArrayValue(GrAnnotationUtil::getString) ?: emptyList()
 
+fun getAffectedMembersCache(annotation: PsiAnnotation) : AffectedMembersCache = CachedValuesManager.getCachedValue(annotation) {
+  CachedValueProvider.Result(AffectedMembersCache(annotation), annotation)
+}
+
 /**
  * For specific annotation (@MapConstructor/@TupleConstructor) this class computes all actually affected members
  */
-class AffectedMembersCache(anno: PsiAnnotation) {
+class AffectedMembersCache internal constructor(anno: PsiAnnotation) {
   private val order: List<PsiNamedElement>
   private val hasPropertyOptions: Boolean
   private val referencedFromExcludes: List<PsiNamedElement>

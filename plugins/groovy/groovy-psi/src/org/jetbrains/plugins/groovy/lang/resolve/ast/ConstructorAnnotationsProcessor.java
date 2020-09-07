@@ -138,7 +138,7 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
       boolean optional = !immutable && PsiUtil.getAnnoAttributeValue(tupleConstructor, TupleConstructorAttributes.DEFAULTS, true);
       Visibility visibility = getVisibility(tupleConstructor, fieldsConstructor, Visibility.PUBLIC);
       fieldsConstructor.addModifier(visibility.toString());
-      AffectedMembersCache cache = new AffectedMembersCache(tupleConstructor);
+      AffectedMembersCache cache = GrGeneratedConstructorUtils.getAffectedMembersCache(tupleConstructor);
       for (PsiNamedElement element : cache.getAffectedMembers()) {
         GrLightParameter parameter;
         if (element instanceof PsiField) {
