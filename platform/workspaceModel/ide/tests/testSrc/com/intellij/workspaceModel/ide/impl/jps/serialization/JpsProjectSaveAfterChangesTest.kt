@@ -3,14 +3,14 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.ApplicationRule
-import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.VirtualFileUrlManager
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
-import com.intellij.workspaceModel.storage.impl.VirtualFileUrlManagerImpl
+import com.intellij.workspaceModel.storage.EntityChange
+import com.intellij.workspaceModel.storage.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.append
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.impl.VirtualFileUrlManagerImpl
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.Before
 import org.junit.ClassRule
@@ -89,7 +89,7 @@ class JpsProjectSaveAfterChangesTest {
                                                            module, source)
       val sourceRootEntity = builder.addSourceRootEntity(contentRootEntity, configLocation.baseDirectoryUrl.append("new"), false,
                                                          "java-source", source)
-      builder.addJavaSourceRootEntity(sourceRootEntity, false, "", source)
+      builder.addJavaSourceRootEntity(sourceRootEntity, false, "")
       builder.addJavaModuleSettingsEntity(true, true, null, null, module, source)
     }
   }

@@ -165,7 +165,7 @@ class WorkspaceModuleImporter(private val project: Project,
                                                       serializer.typeId,
                                                       MavenExternalSource.INSTANCE)
       when (entry.value) {
-        is JavaSourceRootType -> diff.addJavaSourceRootEntity(sourceRootEntity, false, "", MavenExternalSource.INSTANCE)
+        is JavaSourceRootType -> diff.addJavaSourceRootEntity(sourceRootEntity, false, "")
         is JavaResourceRootType -> diff.addJavaResourceRootEntity(sourceRootEntity, false, "", MavenExternalSource.INSTANCE)
         else -> TODO()
       }

@@ -106,8 +106,7 @@ internal object SourceRootPropertiesHelper {
       is JavaSourceRootProperties -> diff.addJavaSourceRootEntity(
         sourceRoot = sourceRootEntity,
         generated = properties.isForGeneratedSources,
-        packagePrefix = properties.packagePrefix,
-        source = entitySource
+        packagePrefix = properties.packagePrefix
       )
 
       is JavaResourceRootProperties -> diff.addJavaResourceRootEntity(

@@ -88,7 +88,7 @@ internal class SourceFolderBridge(private val entry: ContentEntryBridge, val sou
       if (javaResourceRoot != null) return
 
       updater { diff ->
-        diff.addJavaSourceRootEntity(sourceRootEntity, false, packagePrefix, sourceRootEntity.entitySource)
+        diff.addJavaSourceRootEntity(sourceRootEntity, false, packagePrefix)
       }
     }
     else {

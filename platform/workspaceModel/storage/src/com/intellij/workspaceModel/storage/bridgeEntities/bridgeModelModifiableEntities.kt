@@ -104,10 +104,15 @@ class ModifiableJavaSourceRootEntity : ModifiableWorkspaceEntityBase<JavaSourceR
   var packagePrefix: String by EntityDataDelegation()
 }
 
+/**
+ * [JavaSourceRootEntity] has the same entity source as [SourceRootEntity].
+ * [JavaSourceRootEntityData] contains assertion for that. Please update an assertion in case you need a different entity source for these
+ *   entities.
+ */
 fun WorkspaceEntityStorageDiffBuilder.addJavaSourceRootEntity(sourceRoot: SourceRootEntity,
                                                               generated: Boolean,
-                                                              packagePrefix: String, source: EntitySource) = addEntity(
-  ModifiableJavaSourceRootEntity::class.java, source) {
+                                                              packagePrefix: String) = addEntity(
+  ModifiableJavaSourceRootEntity::class.java, sourceRoot.entitySource) {
   this.sourceRoot = sourceRoot
   this.generated = generated
   this.packagePrefix = packagePrefix
