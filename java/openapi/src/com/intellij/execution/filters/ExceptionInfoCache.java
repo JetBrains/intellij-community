@@ -86,6 +86,7 @@ public class ExceptionInfoCache {
         element = element.getNavigationElement();
         PsiFile file = element.getContainingFile();
         VirtualFile virtualFile = file.getVirtualFile();
+        if (virtualFile == null) continue;
         if (index.isInContent(virtualFile)) {
           if (library) {
             library = false;
