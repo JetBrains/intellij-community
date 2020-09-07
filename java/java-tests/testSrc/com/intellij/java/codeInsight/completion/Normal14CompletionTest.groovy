@@ -32,14 +32,20 @@ class Normal14CompletionTest extends NormalCompletionTestCase {
   }
 
   void testTopLevelPublicRecord() { doTest() }
+
   void testTopLevelPublicRecordParenthesisExists() { doTest() }
+
   void testTopLevelPublicRecordBraceExists() { doTest() }
 
+  @NeedsIndex.Full(reason = "AllClassesGetter.processJavaClasses uses indices, see 0a72bf3a7baa7dc1550e8e4308431d78eb753eb6 commit")
   void testSealedClassDifferentPackageInheritor() {
     myFixture.addClass("package bar;\nimport foo.*;\npublic final class Child2 extends Parent {}")
     doTest()
   }
 
+  @NeedsIndex.Full(reason = "AllClassesGetter.processJavaClasses uses indices, see 0a72bf3a7baa7dc1550e8e4308431d78eb753eb6 commit")
   void testSealedClassPermitsReference() { doTest() }
+
+  @NeedsIndex.Full(reason = "AllClassesGetter.processJavaClasses uses indices, see 0a72bf3a7baa7dc1550e8e4308431d78eb753eb6 commit")
   void testSecondPermitsReference() { doTest() }
 }
