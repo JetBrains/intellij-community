@@ -365,10 +365,24 @@ open class ContentRootEntity(
  * unnecessary modifications of file.
  */
 @Suppress("unused")
-class SourceRootOrderEntityData : WorkspaceEntityData<SourceRootOrderEntity>() {
+class SourceRootOrderEntityData : WorkspaceEntityData<SourceRootOrderEntity>(), WithAssertableConsistency {
   lateinit var orderOfSourceRoots: List<VirtualFileUrl>
   override fun createEntity(snapshot: WorkspaceEntityStorage): SourceRootOrderEntity {
     return SourceRootOrderEntity(orderOfSourceRoots).also { addMetaData(it, snapshot) }
+  }
+
+  override fun assertConsistency(storage: WorkspaceEntityStorage) {
+    val thisEntity = this.createEntity(storage)
+    val attachedContentRoot = thisEntity.contentRootEntity
+    assert(thisEntity.entitySource == attachedContentRoot.entitySource) {
+      """
+      |Entity source of content root entity and it's SourceRootOrderEntity entity differs. 
+      |   Content root entity source: ${attachedContentRoot.entitySource}
+      |   SourceRootOrderEntity source: ${thisEntity.entitySource}
+      |   Content root entity: $attachedContentRoot
+      |   SourceRootOrderEntity entity: $thisEntity
+      """.trimMargin()
+    }
   }
 }
 
