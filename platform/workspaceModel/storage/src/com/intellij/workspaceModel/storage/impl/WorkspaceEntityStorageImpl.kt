@@ -243,9 +243,6 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
     indexes.entitySourceIndex.index(copiedData.createPid(), newSource)
 
-    // Assert consistency
-    this.assertConsistencyInStrictMode()
-
     return copiedData.createEntity(this)
   }
 
