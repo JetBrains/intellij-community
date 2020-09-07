@@ -293,6 +293,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
         )
         row {
           checkBox(cdWidescreenToolWindowLayout)
+          ContextHelpLabel.create(message("checkbox.widescreen.tool.window.layout.description"))()
         }
       }
       titledRow(message("group.presentation.mode")) {
