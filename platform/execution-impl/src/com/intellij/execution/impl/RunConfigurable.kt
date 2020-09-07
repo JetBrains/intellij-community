@@ -1320,7 +1320,8 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
           toMove = true
         }
       }
-      e.presentation.text = ExecutionBundle.message("run.configuration.create.folder.description${if (toMove) ".move" else ""}")
+      e.presentation.text = if (toMove) ExecutionBundle.message("run.configuration.create.folder.description.move")
+                            else ExecutionBundle.message("run.configuration.create.folder.description")
       e.presentation.isEnabled = isEnabled
     }
   }
