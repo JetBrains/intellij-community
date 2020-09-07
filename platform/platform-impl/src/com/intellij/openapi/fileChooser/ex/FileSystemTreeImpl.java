@@ -246,7 +246,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
       return myDescriptor.isShowHiddenFiles();
     }
     else {
-      return myTreeStructure.areHiddensShown();
+      return myTreeStructure.areHiddenShown();
     }
   }
 
@@ -257,7 +257,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
       if (myFileTreeModel != null) myFileTreeModel.invalidate();
     }
     else {
-      myTreeStructure.showHiddens(showHidden);
+      myTreeStructure.showHidden(showHidden);
     }
     updateTree();
   }

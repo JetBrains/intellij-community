@@ -13,8 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class FileNodeDescriptor extends NodeDescriptor {
-
+public class FileNodeDescriptor extends NodeDescriptor<FileElement> {
   private FileElement myFileElement;
   private final Icon myOriginalIcon;
   private final String myComment;
@@ -44,20 +43,21 @@ public class FileNodeDescriptor extends NodeDescriptor {
     }
 
     VirtualFile file = myFileElement.getFile();
-
     if (file == null) return true;
 
     setIcon(myOriginalIcon);
     if (myFileElement.isHidden()) {
-      setIcon(IconLoader.getTransparentIcon(getIcon()));
+      Icon icon = getIcon();
+      if (icon != null) {
+        setIcon(IconLoader.getTransparentIcon(icon));
+      }
     }
     myColor = myFileElement.isHidden() ? SimpleTextAttributes.DARK_TEXT.getFgColor() : null;
     return changed;
   }
 
   @Override
-  @NotNull
-  public final FileElement getElement() {
+  public final @NotNull FileElement getElement() {
     return myFileElement;
   }
 
