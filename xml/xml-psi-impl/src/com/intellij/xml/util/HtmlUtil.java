@@ -12,6 +12,7 @@ import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.XmlTypedHandlersAdditionalSupport;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
@@ -607,14 +608,7 @@ public final class HtmlUtil {
   }
 
   public static boolean supportsXmlTypedHandlers(@NotNull PsiFile file) {
-    Language language = file.getLanguage();
-    while (language != null) {
-      if ("JavaScript".equals(language.getID())) return true;
-      if ("Dart".equals(language.getID())) return true;
-      language = language.getBaseLanguage();
-    }
-
-    return false;
+    return XmlTypedHandlersAdditionalSupport.supportsTypedHandlers(file);
   }
 
   public static boolean hasHtmlPrefix(@NotNull String url) {
