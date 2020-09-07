@@ -301,8 +301,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     return s != null && s.contains(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED);
   }
 
-  public void updateLookupWidth(LookupElement item) {
-    myCellRenderer.updateLookupWidthFromVisibleItems(item, LookupElementPresentation.renderElement(item));
+  public void updateLookupWidth() {
+    myCellRenderer.scheduleUpdateLookupWidthFromVisibleItems();
   }
 
   public void requestResize() {
@@ -834,11 +834,12 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       }
     }.installOn(myList);
 
-    myList.addListSelectionListener(e -> {
-      markSelectionTouched();
-
-      myCellRenderer.updateLookupWidthFromVisibleItems();
-    });
+    addPrefixChangeListener(new PrefixChangeListener() {
+      @Override
+      public void afterAppend(char c) {
+        myCellRenderer.scheduleUpdateLookupWidthFromVisibleItems();
+      }
+    }, this);
   }
 
   protected boolean suppressHidingOnDocumentChanged() {
@@ -1049,6 +1050,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   List<LookupElement> getVisibleItems() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
     var itemsCount = myList.getItemsCount();
     if (!myShown || itemsCount == 0) return Collections.emptyList();
 

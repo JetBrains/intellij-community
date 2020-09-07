@@ -130,6 +130,11 @@ class LookupUi {
         updateHint();
       }
     });
+
+    myScrollPane.getVerticalScrollBar().addAdjustmentListener(e -> {
+      if (myLookup.myUpdating || myLookup.isLookupDisposed()) return;
+      myLookup.myCellRenderer.scheduleUpdateLookupWidthFromVisibleItems();
+    });
   }
 
   private void updateHint() {

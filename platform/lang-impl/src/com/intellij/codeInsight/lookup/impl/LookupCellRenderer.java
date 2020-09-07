@@ -81,7 +81,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   private int myMaxWidth = -1;
   private volatile int myLookupTextWidth = 50;
   private final Object myWidthLock = ObjectUtils.sentinel("lookup width lock");
-  private final SingleAlarm myWidthChangeAlarm;
+  private final SingleAlarm myLookupWidthUpdateAlarm;
   private final boolean myShrinkLookup;
 
   private final AsyncRendering myAsyncRendering;
@@ -116,11 +116,8 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     myBoldMetrics = myLookup.getTopLevelEditor().getComponent().getFontMetrics(myBoldFont);
     myAsyncRendering = new AsyncRendering(myLookup);
 
-    myWidthChangeAlarm = new SingleAlarm(() -> {
-      myLookup.requestResize();
-      myLookup.refreshUi(false, false);
-    }, 50);
-    Disposer.register(lookup, () -> Disposer.dispose(myWidthChangeAlarm));
+    myLookupWidthUpdateAlarm = new SingleAlarm(this::updateLookupWidthFromVisibleItems, 50);
+    Disposer.register(lookup, () -> Disposer.dispose(myLookupWidthUpdateAlarm));
 
     myShrinkLookup = Registry.is("ide.lookup.shrink");
   }
@@ -483,24 +480,6 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     return font == null ? null : bold ? font.deriveFont(Font.BOLD) : font;
   }
 
-  boolean updateLookupWidthFromVisibleItems(LookupElement item, LookupElementPresentation presentation) {
-    List<LookupElement> visibleItems = myLookup.getVisibleItems();
-    if (!visibleItems.contains(item)) return false;
-
-    final Font customFont = getFontAbleToDisplay(presentation);
-    if (customFont != null) {
-      item.putUserData(CUSTOM_FONT_KEY, customFont);
-    }
-    int maxWidth = updateMaximumWidth(presentation, item);
-    synchronized (myWidthLock) {
-      if (maxWidth > myLookupTextWidth) {
-        myLookupTextWidth = maxWidth;
-        return true;
-      }
-      return false;
-    }
-  }
-
   /**
    * Update lookup width due to visible in lookup items
    */
@@ -525,19 +504,22 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     synchronized (myWidthLock) {
       if (myShrinkLookup || maxWidth > myLookupTextWidth) {
         myLookupTextWidth = maxWidth;
-        scheduleLookupUpdate();
+        myLookup.requestResize();
+        myLookup.refreshUi(false, false);
       }
     }
   }
 
-  private void scheduleLookupUpdate() {
-    if (!myWidthChangeAlarm.isDisposed()) {
-      myWidthChangeAlarm.cancelAndRequest();
+  void scheduleUpdateLookupWidthFromVisibleItems(){
+    synchronized (myLookupWidthUpdateAlarm) {
+      if (!myLookupWidthUpdateAlarm.isDisposed()) {
+        myLookupWidthUpdateAlarm.request();
+      }
     }
   }
 
   void itemAdded(@NotNull LookupElement element, @NotNull LookupElementPresentation fastPresentation) {
-    updateLookupWidthFromVisibleItems(element, fastPresentation);
+    scheduleUpdateLookupWidthFromVisibleItems();
     AsyncRendering.rememberPresentation(element, fastPresentation);
 
     updateItemPresentation(element);
