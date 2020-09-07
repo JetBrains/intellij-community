@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.unneededThrows;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
@@ -15,13 +16,14 @@ import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import one.util.streamex.StreamEx;
@@ -29,11 +31,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclarationLocalInspection.isGenericException;
 
 public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspectionTool {
   public boolean IGNORE_ENTRY_POINTS = false;
@@ -191,6 +193,8 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
 
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiManager.getProject());
 
+      fixTryStatements(psiMethod, problems);
+
       final Set<PsiElement> refsToDelete = Arrays.stream(problems)
         .map(problem -> (ProblemDescriptor)problem)
         .map(ProblemDescriptor::getPsiElement)
@@ -208,6 +212,166 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
           new CommentTracker().deleteAndRestoreComments(element);
         }
       });
+
+    }
+
+    private static void fixTryStatements(final @NotNull PsiMethod method, final CommonProblemDescriptor @NotNull [] problems) {
+      final PsiManager psiManager = method.getManager();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiManager.getProject());
+
+      final Set<PsiClassType> redundantTypes = getRedundantExceptionTypes(method, problems);
+
+      final Set<PsiCatchSection> redundantCatches = getRedundantCatchesOfMethod(method, redundantTypes);
+
+      final Set<PsiCatchSection> catchesOfMultipleCalls = getCatchesOfMultipleCalls(redundantCatches);
+
+      final List<PsiTryStatement> tryStatements = ContainerUtil.map(redundantCatches, PsiCatchSection::getTryStatement);
+
+      if (!FileModificationService.getInstance().preparePsiElementsForWrite(tryStatements)) return;
+
+      WriteAction.run(() -> {
+        for (final PsiCatchSection aCatch : redundantCatches) {
+          if (catchesOfMultipleCalls.contains(aCatch)) continue;
+
+          final PsiTryStatement tryStatement = aCatch.getTryStatement();
+          final PsiType catchType = aCatch.getCatchType();
+
+          if (catchType instanceof PsiDisjunctionType) {
+            final PsiTypeElement catchParamType = getCatchTypeElement(aCatch);
+            if (catchParamType == null) continue;
+
+            final PsiDisjunctionType disjunctionType = (PsiDisjunctionType)catchType;
+            final List<PsiType> neededTypes = ContainerUtil.filter(disjunctionType.getDisjunctions(),
+                                                                   typ -> isGenericException(typ) ||
+                                                                          !ContainerUtil.exists(redundantTypes, typ::isAssignableFrom)
+            );
+
+            if (!neededTypes.isEmpty()) {
+              final PsiType newDisjunctionType = PsiDisjunctionType.createDisjunction(neededTypes, psiManager);
+              final PsiTypeElement newDisjunctionTypeElement = factory.createTypeElement(newDisjunctionType);
+              final PsiElement element = new CommentTracker().replaceAndRestoreComments(catchParamType, newDisjunctionTypeElement);
+              JavaCodeStyleManager.getInstance(method.getProject()).shortenClassReferences(element);
+            }
+            else {
+              new CommentTracker().deleteAndRestoreComments(aCatch);
+            }
+          }
+          else {
+            new CommentTracker().deleteAndRestoreComments(aCatch);
+          }
+
+          if (tryStatement.getCatchSections().length != 0 ||
+              tryStatement.getFinallyBlock() != null ||
+              tryStatement.getResourceList() != null) {
+            CodeStyleManager.getInstance(method.getProject()).reformat(tryStatement);
+            continue;
+          }
+
+          deleteTryStatement(tryStatement);
+        }
+      });
+    }
+
+    private static void deleteTryStatement(PsiTryStatement tryStatement) {
+      final PsiCodeBlock parentCodeBlock = (PsiCodeBlock)tryStatement.getParent();
+      final PsiCodeBlock block = tryStatement.getTryBlock();
+
+      if (block == null) return;
+      for (PsiStatement statement : block.getStatements()) {
+        parentCodeBlock.addBefore(statement, tryStatement);
+      }
+      new CommentTracker().deleteAndRestoreComments(tryStatement);
+    }
+
+    @Nullable
+    private static PsiTypeElement getCatchTypeElement(PsiCatchSection aCatch) {
+      final PsiParameter catchParam = PsiTreeUtil.getChildOfType(aCatch, PsiParameter.class);
+      if (catchParam == null) return null;
+      final PsiTypeElement catchParamType = PsiTreeUtil.getChildOfType(catchParam, PsiTypeElement.class);
+      if (catchParamType == null) return null;
+      return catchParamType;
+    }
+
+    @NotNull
+    private static Set<PsiCatchSection> getCatchesOfMultipleCalls(Set<PsiCatchSection> redundantCatches) {
+      final Set<PsiCatchSection> catchesOfMultipleCalls = new HashSet<>(redundantCatches.size());
+      for (final PsiCatchSection aCatch : redundantCatches) {
+        final PsiType catchType = aCatch.getCatchType();
+        if (catchType == null) continue;
+
+        final PsiTryStatement tryStatement = aCatch.getTryStatement();
+        final PsiCodeBlock block = tryStatement.getTryBlock();
+        final PsiResourceList resourceList = tryStatement.getResourceList();
+
+        final Set<PsiMethod> methodsOfCatch = getMethodsOfCatch(catchType, block);
+        methodsOfCatch.addAll(getMethodsOfCatch(catchType, resourceList));
+
+        // one of the elements is always the method that is currently under the investigation
+        if (methodsOfCatch.size() > 1) catchesOfMultipleCalls.add(aCatch);
+      }
+      return catchesOfMultipleCalls;
+    }
+
+    private static Set<PsiClassType> getRedundantExceptionTypes(final @NotNull PsiMethod method, final CommonProblemDescriptor @NotNull [] problems) {
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
+      return StreamEx.of(problems)
+        .select(ProblemDescriptor.class)
+        .map(ProblemDescriptor::getPsiElement)
+        .select(PsiJavaCodeReferenceElement.class)
+        .map(factory::createType)
+        .toSet();
+    }
+
+    @NotNull
+    private static Set<PsiCatchSection> getRedundantCatchesOfMethod(@NotNull PsiMethod method, Set<PsiClassType> redundantTypes) {
+      final Set<PsiCatchSection> redundantCatches = new HashSet<>();
+
+      final Collection<PsiReference> references = ReferencesSearch.search(method).findAll();
+      for (final PsiReference reference : references) {
+        if (!(reference instanceof PsiElement)) continue;
+        final PsiElement element = (PsiElement)reference;
+        final PsiClass clazz = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+
+        PsiTreeUtil.treeWalkUp(element, clazz, (curr, prev) -> {
+          if (!(curr instanceof PsiTryStatement)) return true;
+          final PsiTryStatement tryStatement = (PsiTryStatement)curr;
+
+          final List<PsiCatchSection> catchSections = ContainerUtil.filter(tryStatement.getCatchSections(), catchSection -> {
+            final PsiType catchType = catchSection.getCatchType();
+
+            if (catchType == null || isGenericException(catchType)) return false;
+
+            return ContainerUtil.exists(redundantTypes, catchType::isAssignableFrom);
+          });
+
+          redundantCatches.addAll(catchSections);
+
+          return true;
+        });
+      }
+      return redundantCatches;
+    }
+
+    @NotNull
+    private static Set<PsiMethod> getMethodsOfCatch(final @NotNull PsiType catchType, final @Nullable PsiElement block) {
+      if (block == null) return Collections.emptySet();
+
+      final Set<PsiMethod> calls = new HashSet<>(1);
+
+      block.accept(new JavaRecursiveElementVisitor() {
+        @Override
+        public void visitCallExpression(PsiCallExpression callExpression) {
+          final JavaResolveResult result = PsiDiamondType.getDiamondsAwareResolveResult(callExpression);
+          final PsiElement element = result.getElement();
+          final PsiMethod resolvedMethod = element instanceof PsiMethod ? (PsiMethod)element : null;
+
+          final List<PsiClassType> exceptionTypes = ExceptionUtil.getUnhandledExceptions(callExpression, block);
+          final boolean isHandled = ContainerUtil.exists(exceptionTypes, catchType::isAssignableFrom);
+          if (isHandled) calls.add(resolvedMethod);
+        }
+      });
+
+      return calls;
     }
 
     private StreamEx<PsiElement> removeException(@Nullable final RefMethod refMethod,
@@ -218,23 +382,14 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
         .map(ThrowRefType::getReference)
         .flatMap(ref -> appendRelatedJavadocThrows(refMethod, psiMethod, ref));
 
-      final Stream<PsiElement> tail;
       if (refMethod != null) {
-        tail = refMethod.getDerivedMethods().stream()
-          .filter(refDerived -> refDerived.getPsiElement() instanceof PsiMethod)
-          .flatMap(refDerived -> removeException(refDerived, exceptionType, (PsiMethod)refDerived.getPsiElement()));
-
         ProblemDescriptionsProcessor.resolveAllProblemsInElement(myProcessor, refMethod);
-      } else {
-        final Query<PsiMethod> query = OverridingMethodsSearch.search(psiMethod);
-        tail = query.findAll().stream()
-          .flatMap(method -> removeException(null, exceptionType, method));
       }
-      return elements.append(tail);
+      return elements;
     }
 
     /**
-     * The method constructs a {@link StreamEx} or {@link PsiElement} by concatenating
+     * The method constructs a {@link StreamEx} of {@link PsiElement} by concatenating
      * a singleton {@link Stream} that contains the current throws list's element and the related javadoc.
      * Related javadoc are the ones that can be assigned to any of the redundant throws list elements
      *
