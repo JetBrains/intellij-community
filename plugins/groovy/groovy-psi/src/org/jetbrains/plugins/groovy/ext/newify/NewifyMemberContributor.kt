@@ -32,11 +32,11 @@ internal const val newifyOriginInfo = "by @Newify"
 interface GrNewifyAttributes {
   companion object {
     @NlsSafe
-    public const val VALUE = "value"
+    const val VALUE = "value"
     @NlsSafe
-    public const val AUTO = "auto"
+    const val AUTO = "auto"
     @NlsSafe
-    public const val NEW = "new"
+    const val NEW = "new"
   }
 }
 

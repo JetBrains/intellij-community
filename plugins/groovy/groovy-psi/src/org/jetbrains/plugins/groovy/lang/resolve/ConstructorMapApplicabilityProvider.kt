@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.CommonClassNames
@@ -21,6 +21,6 @@ open class ConstructorMapApplicabilityProvider : GroovyApplicabilityProvider() {
     if (parameters.isNotEmpty()) return null
     val argument = arguments.singleOrNull() ?: return null
     val argumentType = argument.type
-    return if (isInheritor(argumentType, CommonClassNames.JAVA_UTIL_MAP)) applicable else inapplicable
+    return if (isInheritor(argumentType, CommonClassNames.JAVA_UTIL_MAP) && (method.containingClass?.constructors?.size ?: 0) <= 1) applicable else inapplicable
   }
 }
