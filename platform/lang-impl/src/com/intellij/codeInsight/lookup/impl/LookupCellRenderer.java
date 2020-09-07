@@ -412,7 +412,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   @NotNull
   private static Icon removeVisibilityIfNeeded(@Nullable Editor editor, @NotNull Icon icon, @NotNull Icon standard) {
     if (!Registry.is("ide.completion.show.visibility.icon")) {
-        return removeVisibility(editor, icon, standard);
+      return removeVisibility(editor, icon, standard);
     }
     return icon;
   }
@@ -421,7 +421,10 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   private static Icon removeVisibility(@Nullable Editor editor, @NotNull Icon icon, @NotNull Icon standard) {
     if (icon instanceof IconDecorator) {
       IconDecorator decoratorIcon = (IconDecorator)icon;
-      return decoratorIcon.withDelegate(removeVisibility(editor, decoratorIcon.getDelegate(), standard));
+      Icon delegateIcon = decoratorIcon.getDelegate();
+      if (delegateIcon != null) {
+        return decoratorIcon.withDelegate(removeVisibility(editor, delegateIcon, standard));
+      }
     }
     else if (icon instanceof RowIcon) {
       RowIcon rowIcon = (RowIcon)icon;
@@ -446,6 +449,9 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     }
     if (icon == null) {
       return standard;
+    } else if (icon instanceof IconDecorator ) {
+      IconDecorator decoratorIcon = (IconDecorator)icon;
+      return decoratorIcon.withDelegate(augmentIcon(editor, decoratorIcon.getDelegate(), standard));
     }
 
     icon = removeVisibilityIfNeeded(editor, icon, standard);
@@ -648,13 +654,13 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     /**
      * Returns the original icon
      */
-    @NotNull
+    @Nullable
     Icon getDelegate();
 
     /**
      * Returns a new decorator with {@code icon} instead of the original icon
      */
     @NotNull
-    IconDecorator withDelegate(@NotNull Icon icon);
+    IconDecorator withDelegate(@Nullable Icon icon);
   }
 }
