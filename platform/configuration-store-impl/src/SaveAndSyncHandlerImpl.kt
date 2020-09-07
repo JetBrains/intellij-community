@@ -323,7 +323,7 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
 
 private val saveAppAndProjectsSettingsTask = SaveAndSyncHandler.SaveTask()
 
-@NlsContexts.ProgressTitle
+@NlsContexts.DialogTitle
 private fun getProgressTitle(componentManager: ComponentManager): String {
   return when {
     componentManager is Application -> CommonBundle.message("title.save.app")

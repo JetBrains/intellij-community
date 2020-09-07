@@ -35,6 +35,7 @@ import com.intellij.util.ExceptionUtil
 import com.intellij.util.SingleAlarm
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
@@ -324,12 +325,10 @@ fun askToRestart(store: IComponentStore, notReloadableComponents: Collection<Str
     ConfigurationStoreBundle.message("configuration.project.files.changed.reload.project.proposal")
   }
 
-  val message = """
-    $firstMessage
-
-    $nonReloadableComponentsJoined
-    $question
-  """.trimIndent()
+  @Nls val message = ConfigurationStoreBundle.message(
+    "configuration.project.ask.to.restart.message.0.non.reloadable.components.1.question.2",
+    firstMessage, nonReloadableComponentsJoined, question
+  )
 
   val title = if (store is IProjectStore)
     ConfigurationStoreBundle.message("configuration.project.files.changed.restart.prompt.title", store.projectName)
