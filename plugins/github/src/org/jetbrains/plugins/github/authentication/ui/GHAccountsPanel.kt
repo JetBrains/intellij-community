@@ -159,7 +159,7 @@ internal class GHAccountsPanel(
       return
     }
     val executor = executorFactory.create(token)
-    progressManager.run(object : Task.Backgroundable(project, "Not Visible") {
+    progressManager.run(object : Task.Backgroundable(project, GithubBundle.message("progress.title.not.visible")) {
       lateinit var loadedDetails: GithubAuthenticatedUser
       var correctScopes: Boolean = true
 
