@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vfs.encoding;
 
@@ -18,7 +18,6 @@ import com.intellij.ui.IconDeferrer;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.ui.EmptyIcon;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,9 +42,9 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   public abstract void update(@NotNull final AnActionEvent e);
 
   private void fillCharsetActions(@NotNull DefaultActionGroup group,
-                                  @Nullable final VirtualFile virtualFile,
+                                  @Nullable VirtualFile virtualFile,
                                   @NotNull List<? extends Charset> charsets,
-                                  @NotNull final Function<? super Charset, String> descriptionSupplier) {
+                                  @NotNull Function<? super Charset, @NlsActions.ActionDescription String> descriptionSupplier) {
     for (final Charset charset : charsets) {
       AnAction action = new CharsetAction(charset.displayName(), null, EmptyIcon.ICON_16) {
         @Override
@@ -118,7 +117,7 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   @NotNull
   protected DefaultActionGroup createCharsetsActionGroup(@Nullable @NlsActions.ActionText String clearItemText,
                                                          @Nullable Charset alreadySelected,
-                                                         @NotNull Function<? super Charset, @Nls String> descriptionSupplier) {
+                                                         @NotNull Function<? super Charset, @NlsActions.ActionDescription String> descriptionSupplier) {
     DefaultActionGroup group = new DefaultActionGroup();
     List<Charset> favorites = new ArrayList<>(EncodingManager.getInstance().getFavorites());
     Collections.sort(favorites);
