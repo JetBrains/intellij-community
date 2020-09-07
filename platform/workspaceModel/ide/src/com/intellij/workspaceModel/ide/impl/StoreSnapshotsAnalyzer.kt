@@ -24,7 +24,7 @@ fun main() {
 
   val leftStore = serializer.deserializeCache(leftFile.inputStream())!!
   val rightStore = serializer.deserializeCache(rightFile.inputStream())!!
-  val resStore = serializer.deserializeCache(resFile.inputStream())!!
+  //val resStore = serializer.deserializeCache(resFile.inputStream())!!
 
   val allEntitySources = leftStore.entitiesBySource { true }.map { it.key }.toHashSet()
   allEntitySources.addAll(rightStore.entitiesBySource { true }.map { it.key })
