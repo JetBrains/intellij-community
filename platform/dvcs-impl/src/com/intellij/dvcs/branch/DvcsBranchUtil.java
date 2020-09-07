@@ -44,7 +44,7 @@ public final class DvcsBranchUtil {
   }
 
   @NotNull
-  public static String getShortenedBranchName(@NotNull String fullBranchName) {
+  public static String shortenBranchName(@NotNull String fullBranchName) {
     // -1, because there are arrows indicating that it is a popup
     int maxLength = DvcsBundle.message("branch.popup.maximum.branch.length.sample").length() - 1;
     return StringUtil.shortenTextWithEllipsis(fullBranchName, maxLength, 5);

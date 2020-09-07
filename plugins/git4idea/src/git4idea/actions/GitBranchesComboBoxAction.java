@@ -30,7 +30,7 @@ public class GitBranchesComboBoxAction extends ComboBoxAction {
     GitRepository repo = GitBranchUtil.getCurrentRepository(project);
     if (repo != null) {
       String branchName = GitBranchUtil.getDisplayableBranchText(repo);
-      String name = DvcsBranchUtil.getShortenedBranchName(branchName);
+      String name = DvcsBranchUtil.shortenBranchName(branchName);
       presentation.setText(name);
       presentation.setIcon(AllIcons.Vcs.Branch);
     }

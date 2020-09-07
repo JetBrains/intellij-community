@@ -166,7 +166,7 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
     Project project = getProject();
     T repository = guessCurrentRepository(project);
     if (repository == null) return;
-    myText = DvcsBranchUtil.getShortenedBranchName(getFullBranchName(repository));
+    myText = DvcsBranchUtil.shortenBranchName(getFullBranchName(repository));
     myTooltip = getToolTip(repository);
     myIcon = getIcon(repository);
     if (myStatusBar != null) {
