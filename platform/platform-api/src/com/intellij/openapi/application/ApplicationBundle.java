@@ -2,6 +2,7 @@
 package com.intellij.openapi.application;
 
 import com.intellij.DynamicBundle;
+import com.intellij.ide.IdeDeprecatedMessagesBundle;
 import org.jetbrains.annotations.*;
 
 import java.util.function.Supplier;
@@ -18,10 +19,16 @@ public final class ApplicationBundle extends DynamicBundle {
   }
 
   public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
-    return INSTANCE.getMessage(key, params);
+    if (INSTANCE.containsKey(key)) {
+      return INSTANCE.getMessage(key, params);
+    }
+    return IdeDeprecatedMessagesBundle.message(key, params);
   }
 
   public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
-    return INSTANCE.getLazyMessage(key, params);
+    if (INSTANCE.containsKey(key)) {
+      return INSTANCE.getLazyMessage(key, params);
+    }
+    return IdeDeprecatedMessagesBundle.messagePointer(key, params);
   }
 }
