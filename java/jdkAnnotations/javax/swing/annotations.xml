@@ -542,5 +542,8 @@
   <item name='javax.swing.UIManager java.lang.String getSystemLookAndFeelClassName()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='javax.swing.UIManager.LookAndFeelInfo java.lang.String getName()'>
+    <annotation name='org.jetbrains.annotations.Nls'/>
+  </item>
 </root>
 
