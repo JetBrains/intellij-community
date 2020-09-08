@@ -687,7 +687,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     } else if (uastParent instanceof UBinaryExpression &&
                (((UBinaryExpression)uastParent).getOperator() == UastBinaryOperator.ASSIGN ||
                 ((UBinaryExpression)uastParent).getOperator() == UastBinaryOperator.PLUS_ASSIGN) &&
-               NlsInfo.expressionsAreEquivalent(((UBinaryExpression)uastParent).getRightOperand(), passThrough)){
+               AnnotationContext.expressionsAreEquivalent(((UBinaryExpression)uastParent).getRightOperand(), passThrough)){
       UExpression left = ((UBinaryExpression)uastParent).getLeftOperand();
       if (left instanceof UResolvable) {
         PsiElement target = ((UResolvable)left).resolve();
@@ -716,7 +716,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
           return ContainerUtil.mapNotNull(refs, ref -> {
             UExpression expr = UastContextKt.toUElement(ref.getElement(), UExpression.class);
             if (expr != null && expr.getUastParent() instanceof UBinaryExpression &&
-                NlsInfo.expressionsAreEquivalent(((UBinaryExpression)expr.getUastParent()).getLeftOperand(), expr)) {
+                AnnotationContext.expressionsAreEquivalent(((UBinaryExpression)expr.getUastParent()).getLeftOperand(), expr)) {
               return null;
             }
             return expr;
