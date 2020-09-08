@@ -28,6 +28,7 @@ import com.intellij.util.io.exists
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.text.trimMiddle
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
@@ -181,7 +182,7 @@ fun doGetProjectFileName(presentableUrl: String?,
 }
 
 @JvmOverloads
-fun Project.getProjectCachePath(cacheDirName: String, isForceNameUse: Boolean = false, extensionWithDot: String = ""): Path {
+fun Project.getProjectCachePath(@NonNls cacheDirName: String, isForceNameUse: Boolean = false, extensionWithDot: String = ""): Path {
   return appSystemDir.resolve(cacheDirName).resolve(getProjectCacheFileName(isForceNameUse, extensionWithDot = extensionWithDot))
 }
 
