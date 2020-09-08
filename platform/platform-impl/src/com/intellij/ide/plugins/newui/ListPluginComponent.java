@@ -178,13 +178,10 @@ public class ListPluginComponent extends JPanel {
           myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
         }
         else {
-          boolean isEnabled = isEnabledState();
-          updateEnabledStateIcon(isEnabled);
-
           myLayout.addButtonComponent(myEnableDisableButton = enableDisableButton);
           myEnableDisableButton.setOpaque(false);
-          myEnableDisableButton.setSelected(isEnabled);
           myEnableDisableButton.addActionListener(e -> myPluginModel.changeEnableDisable(myPlugin));
+          updateEnabledStateUI();
         }
       }
 
@@ -546,24 +543,21 @@ public class ListPluginComponent extends JPanel {
   }
 
   public void updateEnabledState() {
-    boolean isEnabled = isEnabledState();
-    if (!myUninstalled && myEnableDisableButton != null) {
-      myEnableDisableButton.setSelected(isEnabled);
+    if (!myUninstalled) {
+      updateEnabledStateUI();
     }
-    updateEnabledStateIcon(isEnabled);
 
     updateErrors();
     setSelection(mySelection, false);
   }
 
-  private void updateEnabledStateIcon(boolean isEnabled) {
-    boolean isEnabledForProject = isEnabled &&
-                                  !myPlugin.isEnabled();
+  private void updateEnabledStateUI() {
+    PluginEnabledState state = myPluginModel.getState(myPlugin);
 
-    Icon icon = isEnabledForProject ?
-                AllIcons.General.ProjectConfigurable :
-                null;
-    myNameComponent.setIcon(icon);
+    if (myEnableDisableButton != null) {
+      myEnableDisableButton.setSelected(state.isEnabled());
+    }
+    myNameComponent.setIcon(UIUtilsKt.perProjectIcon(state));
   }
 
   public void updateAfterUninstall(boolean needRestartForUninstall) {

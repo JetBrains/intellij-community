@@ -16,7 +16,6 @@ import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.VersionComparatorUtil;
@@ -115,7 +114,7 @@ final class CheckRequiredPluginsActivity implements StartupActivity {
                StringUtil.join(pluginsToEnableWithoutRestart, (plugin) -> plugin.getPluginId().toString(), ", "));
       for (IdeaPluginDescriptor descriptor : pluginsToEnableWithoutRestart) {
         ProjectPluginTracker.getInstance(project)
-          .registerProjectPlugin(descriptor);
+          .changeEnableDisable(descriptor, PluginEnabledState.ENABLED_FOR_PROJECT);
       }
       ApplicationManager.getApplication().invokeLater(() -> PluginEnabler.enablePlugins(project, pluginsToEnableWithoutRestart, true));
     }

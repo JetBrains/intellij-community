@@ -24,9 +24,13 @@ public class InstalledPluginsTableModel {
   private final Map<PluginId, Boolean> myEnabled = new HashMap<>();
   private final Map<PluginId, Set<PluginId>> myDependentToRequiredListMap = new HashMap<>();
   private final @Nullable Project myProject;
+  private final @Nullable ProjectPluginTracker myPluginTracker;
 
   public InstalledPluginsTableModel(@Nullable Project project) {
     myProject = project;
+    myPluginTracker = project != null ?
+                      ProjectPluginTracker.getInstance(project) :
+                      null;
 
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
     for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins()) {
@@ -50,6 +54,10 @@ public class InstalledPluginsTableModel {
     return myProject;
   }
 
+  protected final @Nullable ProjectPluginTracker getPluginTracker() {
+    return myPluginTracker;
+  }
+
   protected @NotNull List<IdeaPluginDescriptor> getAllPlugins() {
     return new ArrayList<>(view);
   }
@@ -65,18 +73,13 @@ public class InstalledPluginsTableModel {
 
   protected final void setEnabled(@NotNull IdeaPluginDescriptor ideaPluginDescriptor) {
     PluginId pluginId = ideaPluginDescriptor.getPluginId();
-    boolean enabled = ideaPluginDescriptor.isEnabled() ||
-                      isEnabledForProject(ideaPluginDescriptor);
 
-    setEnabled(
-      pluginId,
-      enabled || PluginManagerCore.isDisabled(pluginId) ? enabled : null
-    );
-  }
+    boolean enabled = myPluginTracker == null ?
+                      ideaPluginDescriptor.isEnabled() :
+                      myPluginTracker.isEnabled(ideaPluginDescriptor) ||
+                      (!myPluginTracker.isDisabled(ideaPluginDescriptor) && ideaPluginDescriptor.isEnabled());
 
-  public boolean isEnabledForProject(@NotNull IdeaPluginDescriptor ideaPluginDescriptor) {
-    return myProject != null &&
-           ProjectPluginTracker.getInstance(myProject).isRegistered(ideaPluginDescriptor);
+    setEnabled(pluginId, enabled);
   }
 
   protected final void setEnabled(@NotNull PluginId pluginId,

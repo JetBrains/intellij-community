@@ -800,6 +800,17 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     return enabled == null || enabled;
   }
 
+  public @NotNull PluginEnabledState getState(@NotNull IdeaPluginDescriptor descriptor) {
+    ProjectPluginTracker pluginTracker = getPluginTracker();
+    boolean perProject = pluginTracker != null &&
+                         (pluginTracker.isEnabled(descriptor) || pluginTracker.isDisabled(descriptor));
+
+    return PluginEnabledState.getState(
+      isEnabled(descriptor),
+      perProject
+    );
+  }
+
   void changeEnableDisable(@NotNull IdeaPluginDescriptor plugin) {
     changeEnableDisable(new IdeaPluginDescriptor[]{plugin}, !isEnabled(plugin));
   }

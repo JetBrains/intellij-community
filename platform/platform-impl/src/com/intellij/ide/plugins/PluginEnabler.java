@@ -39,7 +39,7 @@ public final class PluginEnabler {
     Set<PluginId> disabledIds = DisabledPluginsState.getDisabledIds();
     for (IdeaPluginDescriptor descriptor : pluginsToEnable) {
       if (pluginTracker == null ||
-          !pluginTracker.isRegistered(descriptor)) {
+          !pluginTracker.isEnabled(descriptor)) {
         descriptor.setEnabled(true);
         disabledIds.remove(descriptor.getPluginId());
       }
@@ -50,8 +50,12 @@ public final class PluginEnabler {
         // don't try to unload plugin which wasn't loaded
         pluginDescriptorsToDisable.removeIf(plugin -> plugin.getPluginId().equals(descriptor.getPluginId()));
       }
-      descriptor.setEnabled(false);
-      disabledIds.add(descriptor.getPluginId());
+
+      if (pluginTracker == null ||
+          !pluginTracker.isDisabled(descriptor)) {
+        descriptor.setEnabled(false);
+        disabledIds.add(descriptor.getPluginId());
+      }
     }
 
     try {

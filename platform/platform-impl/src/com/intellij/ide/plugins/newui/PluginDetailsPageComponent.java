@@ -768,20 +768,9 @@ public class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private void updateEnabledForProject() {
-    boolean isEnabled = myPluginModel.isEnabled(myPlugin);
-    boolean isEnabledForProject = myPluginModel.isEnabledForProject(myPlugin);
-
-    String text = isEnabled ?
-                  (isEnabledForProject ?
-                   IdeBundle.message("plugins.configurable.enabled.for.current.project") :
-                   IdeBundle.message("plugins.configurable.enabled.for.all.projects")) :
-                  null;
-    myEnabledForProject.setText(text);
-
-    Icon icon = isEnabled && isEnabledForProject ?
-                AllIcons.General.ProjectConfigurable :
-                null;
-    myEnabledForProject.setIcon(icon);
+    PluginEnabledState state = myPluginModel.getState(myPlugin);
+    myEnabledForProject.setText(state.toString());
+    myEnabledForProject.setIcon(UIUtilsKt.perProjectIcon(state));
   }
 
   public void startLoading() {
@@ -872,7 +861,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
       Project project = e.getProject();
       if (project != null) {
         ProjectPluginTracker.getInstance(project)
-          .unregisterProjectPlugin(myPlugin);
+          .changeEnableDisable(myPlugin, PluginEnabledState.ENABLED);
       }
 
       enablePlugin();
@@ -888,8 +877,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     @Override
     public void update(@NotNull AnActionEvent e) {
       boolean isVisible = e.getProject() != null &&
-                          !myPluginModel.isEnabled(myPlugin) &&
-                          !myPluginModel.isEnabledForProject(myPlugin);
+                          !myPluginModel.getState(myPlugin).isEnabled();
       e.getPresentation().setVisible(isVisible);
     }
 
@@ -899,7 +887,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
       assert project != null;
 
       ProjectPluginTracker.getInstance(project)
-        .registerProjectPlugin(myPlugin);
+        .changeEnableDisable(myPlugin, PluginEnabledState.ENABLED_FOR_PROJECT);
 
       enablePlugin();
     }
@@ -922,7 +910,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
       Project project = e.getProject();
       if (project != null) {
         ProjectPluginTracker.getInstance(project)
-          .unregisterProjectPlugin(myPlugin);
+          .changeEnableDisable(myPlugin, PluginEnabledState.DISABLED);
       }
 
       disablePlugin();
@@ -938,8 +926,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     @Override
     public void update(@NotNull AnActionEvent e) {
       boolean visible = e.getProject() != null &&
-                        myPluginModel.isEnabled(myPlugin) &&
-                        myPluginModel.isEnabledForProject(myPlugin);
+                        myPluginModel.getState(myPlugin).isEnabled();
       e.getPresentation().setVisible(visible);
     }
 
@@ -949,7 +936,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
       assert project != null;
 
       ProjectPluginTracker.getInstance(project)
-        .unregisterProjectPlugin(myPlugin);
+        .changeEnableDisable(myPlugin, PluginEnabledState.DISABLED_FOR_PROJECT);
 
       myPluginModel.disablePlugins(Set.of(myPlugin));
     }
