@@ -6409,6 +6409,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertReceiverToParameter/usedInAnonymousObject.kt");
         }
 
+        @TestMetadata("usedWithTypeArgumentAndLambdaArgument.kt")
+        public void testUsedWithTypeArgumentAndLambdaArgument() throws Exception {
+            runTest("idea/testData/intentions/convertReceiverToParameter/usedWithTypeArgumentAndLambdaArgument.kt");
+        }
+
         @TestMetadata("validOverload.kt")
         public void testValidOverload() throws Exception {
             runTest("testData/intentions/convertReceiverToParameter/validOverload.kt");
