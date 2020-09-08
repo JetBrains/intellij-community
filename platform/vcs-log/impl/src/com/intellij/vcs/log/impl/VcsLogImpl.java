@@ -79,7 +79,7 @@ public class VcsLogImpl implements VcsLog {
 
   @NotNull
   @Override
-  public Future<Boolean> jumpToReference(final String reference) {
+  public Future<Boolean> jumpToReference(@NotNull String reference) {
     if (StringUtil.isEmptyOrSpaces(reference)) return new FutureResult<>(false);
     SettableFuture<Boolean> future = SettableFuture.create();
     VcsLogRefs refs = myUi.getDataPack().getRefs();

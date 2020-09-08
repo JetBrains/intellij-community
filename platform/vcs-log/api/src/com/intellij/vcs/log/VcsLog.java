@@ -73,9 +73,11 @@ public interface VcsLog {
    * Asynchronously selects the commit node defined by the given reference (commit hash, branch or tag).
    * Returns a {@link Future future} that allows to check if the commit was selected, wait for the selection while log is being loaded,
    * or cancel commit selection.
+   *
+   * @param reference target reference (commit hash, branch or tag)
    */
   @NotNull
-  Future<Boolean> jumpToReference(String reference);
+  Future<Boolean> jumpToReference(@NotNull String reference);
 
   /**
    * Returns {@link VcsLogProvider VcsLogProviders} which are active in this log, i.e. which VCS roots are shown in the log.
