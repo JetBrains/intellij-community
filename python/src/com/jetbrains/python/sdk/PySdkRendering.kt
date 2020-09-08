@@ -28,8 +28,8 @@ fun name(sdk: Sdk, name: String): Triple<String?, String, String?> {
     !LanguageLevel.SUPPORTED_LEVELS.contains(PythonSdkType.getLanguageLevelForSdk(sdk)) -> "unsupported"
     else -> null
   }
-  val providedForSdk = PySdkRenderingExtension.EP_NAME.extensions
-    .mapNotNull { it.getAdditionalData(sdk) }
+  val providedForSdk = PySdkProvider.EP_NAME.extensions
+    .mapNotNull { it.getSdkAdditionalText(sdk) }
     .firstOrNull()
 
   val secondary = providedForSdk ?: if (PythonSdkType.isRunAsRootViaSudo(sdk)) "[sudo]" else null
@@ -69,8 +69,8 @@ fun icon(sdk: Sdk): Icon? {
   val flavor = PythonSdkFlavor.getPlatformIndependentFlavor(sdk.homePath)
   val icon = if (flavor != null) flavor.icon else (sdk.sdkType as? SdkType)?.icon ?: return null
 
-  val providedIcon = PySdkRenderingExtension.EP_NAME.extensions
-    .mapNotNull { it.getIcon(sdk) }
+  val providedIcon = PySdkProvider.EP_NAME.extensions
+    .mapNotNull { it.getSdkIcon(sdk) }
     .firstOrNull()
 
   return when {

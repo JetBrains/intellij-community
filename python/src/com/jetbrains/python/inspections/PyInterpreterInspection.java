@@ -74,7 +74,7 @@ public final class PyInterpreterInspection extends PyInspection {
 
       final List<LocalQuickFix> fixes = new ArrayList<>();
       if (sdk == null) {
-        Optional<PyInterpreterInspectionQuickFixData> fixData = PyInterpreterInspectionExtension.EP_NAME.extensions()
+        Optional<PyInterpreterInspectionQuickFixData> fixData = PySdkProvider.EP_NAME.extensions()
           .map(ext -> ext.createMissingSdkFix(module, node))
           .filter(it -> it != null)
           .findFirst();
@@ -96,7 +96,7 @@ public final class PyInterpreterInspection extends PyInspection {
       else {
         final @NlsSafe String associatedModulePath = PySdkExtKt.getAssociatedModulePath(sdk);
         if (associatedModulePath == null || PySdkExtKt.isAssociatedWithAnotherModule(sdk, module)) {
-          PyInterpreterInspectionExtension.EP_NAME.extensions()
+          PySdkProvider.EP_NAME.extensions()
             .map(ext -> ext.createEnvironmentAssociationFix(module, sdk, pyCharm, associatedModulePath))
             .filter(it -> it != null)
             .findFirst().ifPresent(fixData ->  {

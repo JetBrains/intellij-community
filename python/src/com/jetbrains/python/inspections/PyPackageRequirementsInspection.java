@@ -40,6 +40,7 @@ import com.jetbrains.python.packaging.ui.PyChooseRequirementsDialog;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.sdk.PySdkExtKt;
+import com.jetbrains.python.sdk.PySdkProvider;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.ui.PyUiUtil;
 import one.util.streamex.StreamEx;
@@ -129,7 +130,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
                                                                 requirementsList, unsatisfied.size());
             final List<LocalQuickFix> quickFixes = new ArrayList<>();
 
-            Optional<LocalQuickFix> providedFix = PyInterpreterInspectionExtension.EP_NAME.extensions()
+            Optional<LocalQuickFix> providedFix = PySdkProvider.EP_NAME.extensions()
               .map(ext -> ext.createInstallPackagesQuickFix(module))
               .filter(fix -> fix != null)
               .findFirst();
