@@ -4,6 +4,8 @@ package com.intellij.structuralsearch.plugin.ui;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindSettings;
 import com.intellij.find.impl.FindManagerImpl;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -146,13 +148,14 @@ public class SearchCommand {
     }
     catch (StructuralSearchException e) {
       myProcessPresentation.setShowNotFoundMessage(false);
+      final NotificationGroup notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup(UIUtil.SSR_NOTIFICATION_GROUP_ID);
       //noinspection InstanceofCatchParameter
-      UIUtil.SSR_NOTIFICATION_GROUP.createNotification(NotificationType.ERROR)
-                                   .setContent(e instanceof StructuralSearchScriptException
-                                               ? SSRBundle.message("search.script.problem", e.getCause())
-                                               : SSRBundle.message("search.template.problem", e.getMessage()))
-                                   .setImportant(true)
-                                   .notify(mySearchContext.getProject());
+      notificationGroup.createNotification(NotificationType.ERROR)
+        .setContent(e instanceof StructuralSearchScriptException
+                    ? SSRBundle.message("search.script.problem", e.getCause())
+                    : SSRBundle.message("search.template.problem", e.getMessage()))
+        .setImportant(true)
+        .notify(mySearchContext.getProject());
     }
   }
 

@@ -15,6 +15,8 @@ import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
@@ -1032,7 +1034,8 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       }
     }
     if (scripts > 0) {
-      UIUtil.SSR_NOTIFICATION_GROUP.createNotification(NotificationType.WARNING)
+      final NotificationGroup notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup(UIUtil.SSR_NOTIFICATION_GROUP_ID);
+      notificationGroup.createNotification(NotificationType.WARNING)
         .setTitle(SSRBundle.message("import.template.script.warning.title"))
         .setContent(SSRBundle.message("import.template.script.warning", ApplicationNamesInfo.getInstance().getFullProductName(), scripts))
         .notify(mySearchContext.getProject());
