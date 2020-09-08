@@ -8,6 +8,7 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.util.ui.FormBuilder
+import com.jetbrains.python.sdk.PySdkProvider
 import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.add.PyAddNewCondaEnvPanel
 import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
@@ -94,8 +95,8 @@ class PyAddNewEnvironmentPanel(existingSdks: List<Sdk>, newProjectPath: String?,
     val condaPanel = PyAddNewCondaEnvPanel(null, null, existingSdks, newProjectPath, context)
     val venvPanel = PyAddNewVirtualEnvPanel(null, null, existingSdks, newProjectPath, context)
 
-    val envPanelsFromProviders = PyAddNewEnvironmentPanelProvider.EP_NAME.extensions()
-      .map { it.createPanel(null, null, existingSdks, newProjectPath, context) }
+    val envPanelsFromProviders = PySdkProvider.EP_NAME.extensions()
+      .map { it.createNewEnvironmentPanel(null, null, existingSdks, newProjectPath, context) }
       .toList().toTypedArray()
 
     return if (PyCondaSdkCustomizer.instance.preferCondaEnvironments) {
