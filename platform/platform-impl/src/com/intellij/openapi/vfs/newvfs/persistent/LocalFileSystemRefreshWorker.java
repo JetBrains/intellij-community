@@ -27,7 +27,10 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.*;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
@@ -113,7 +116,7 @@ final class LocalFileSystemRefreshWorker {
   private abstract static class RefreshContext {
     final NewVirtualFileSystem fs;
     final PersistentFS persistence;
-    final BlockingQueue<NewVirtualFile> filesToBecomeDirty = new LinkedBlockingQueue<>();
+    final Queue<NewVirtualFile> filesToBecomeDirty = new LinkedBlockingQueue<>();
 
     RefreshContext(@NotNull NewVirtualFileSystem fs, @NotNull PersistentFS persistence) {
       this.fs = fs;
@@ -187,12 +190,12 @@ final class LocalFileSystemRefreshWorker {
     });
   }
 
-  static boolean areChildrenOrNamesChanged(@NotNull VirtualDirectoryImpl dir, @NotNull List<String> names, @NotNull List<VirtualFile> children) {
+  static boolean areChildrenOrNamesChanged(@NotNull VirtualDirectoryImpl dir, @NotNull List<String> names, @NotNull List<? extends VirtualFile> children) {
     VirtualFile[] currentChildren = dir.getChildren();
     return !children.equals(Arrays.asList(currentChildren)) || !names.equals(getNames(currentChildren));
   }
 
-  private static List<String> getNames(VirtualFile[] children) {
+  private static @NotNull List<String> getNames(VirtualFile @NotNull [] children) {
     return ContainerUtil.map(children, VirtualFile::getName);
   }
 

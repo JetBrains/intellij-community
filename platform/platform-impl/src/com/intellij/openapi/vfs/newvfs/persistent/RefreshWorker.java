@@ -101,7 +101,7 @@ public final class RefreshWorker {
     }
   }
 
-  private void queueDirectory(NewVirtualFile root) {
+  private void queueDirectory(@NotNull NewVirtualFile root) {
     if (root instanceof VirtualDirectoryImpl) {
       myRefreshQueue.addLast(root);
     }
@@ -233,7 +233,9 @@ public final class RefreshWorker {
     return !isFullScanDirectoryChanged(dir, persistedNames, children);
   }
 
-  private boolean isFullScanDirectoryChanged(VirtualDirectoryImpl dir, List<String> names, List<VirtualFile> children) {
+  private boolean isFullScanDirectoryChanged(@NotNull VirtualDirectoryImpl dir,
+                                             @NotNull List<String> names,
+                                             @NotNull List<? extends VirtualFile> children) {
     return ReadAction.compute(() -> {
       checkCancelled(dir);
       return LocalFileSystemRefreshWorker.areChildrenOrNamesChanged(dir, names, children);
