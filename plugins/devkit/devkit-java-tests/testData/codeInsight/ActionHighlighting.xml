@@ -82,6 +82,10 @@
         <synonym key="my.key"/>
         <synonym key="<error descr="Cannot resolve property key">INVALID_KEY</error>"/>
       </action>
+      <reference ref="myGroup">
+        <synonym key="my.key"/>
+        <synonym key="<error descr="Cannot resolve property key">INVALID_KEY</error>"/>
+      </reference>
     </group>
   </actions>
   <actions resource-bundle="AnotherBundle">
