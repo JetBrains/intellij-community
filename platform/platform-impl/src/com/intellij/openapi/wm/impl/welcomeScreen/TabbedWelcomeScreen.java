@@ -1,9 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.WelcomeScreenCustomization;
 import com.intellij.openapi.wm.WelcomeScreenTab;
 import com.intellij.openapi.wm.WelcomeTabFactory;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
@@ -15,6 +15,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.createActionLink;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.createSmallLogo;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getMainTabListBackground;
 
@@ -47,10 +47,9 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     leftPanel.add(logoComponent, BorderLayout.NORTH);
     leftPanel.add(tabList, BorderLayout.CENTER);
 
-    JComponent helpLink =
-      createActionLink(this, IdeBundle.message("action.help"), IdeActions.GROUP_WELCOME_SCREEN_HELP, null, centralPanel);
-    leftPanel.add(JBUI.Panels.simplePanel().andTransparent().addToLeft(helpLink).withBorder(JBUI.Borders.empty(5, 10)), BorderLayout.SOUTH);
-
+    JComponent quickAccessPanel = createQuickAccessPanel(this);
+    quickAccessPanel.setBorder(JBUI.Borders.empty(5, 10));
+    leftPanel.add(quickAccessPanel, BorderLayout.SOUTH);
     leftPanel.setPreferredSize(new Dimension(JBUI.scale(196), leftPanel.getPreferredSize().height));
 
     add(leftPanel, BorderLayout.WEST);
@@ -78,6 +77,15 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     tabList.setBorder(JBUI.Borders.emptyLeft(16));
     tabList.setCellRenderer(new MyCellRenderer());
     return tabList;
+  }
+
+  private static JComponent createQuickAccessPanel(@NotNull Disposable parentDisposable) {
+    JPanel quickAccessPanel = new NonOpaquePanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+    StreamEx.of(WelcomeScreenCustomization.WELCOME_SCREEN_CUSTOMIZATION.getExtensionsIfPointIsRegistered())
+      .map(c -> c.createQuickAccessComponent(parentDisposable))
+      .nonNull()
+      .forEach(quickAccessPanel::add);
+    return quickAccessPanel;
   }
 
   @NotNull
