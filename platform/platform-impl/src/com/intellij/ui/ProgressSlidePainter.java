@@ -19,13 +19,14 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
 
 final class ProgressSlidePainter {
   private static final int PREFETCH_PARALLEL_COUNT = 5;
+  private static final int PREFETCH_BUFFER_SIZE = 32;
   private static final Logger ourLogger = Logger.getInstance(ProgressSlidePainter.class);
 
   private final List<ProgressSlide> myProgressSlides;
 
   private final AtomicReferenceArray<Slide> myPrefetchedSlides;
   private final AtomicInteger myPrefetchSlideIndex;
-  private int myNextSlideIndex = 0;
+  private volatile int myNextSlideIndex = 0;
 
   private static class Slide {
     private static final Slide Empty = new Slide(0, null);
@@ -50,7 +51,7 @@ final class ProgressSlidePainter {
     myPrefetchSlideIndex = new AtomicInteger(0);
   }
 
-  private boolean isFinish() {
+  private boolean isFinished() {
     return myNextSlideIndex >= myPrefetchedSlides.length();
   }
 
@@ -69,6 +70,9 @@ final class ProgressSlidePainter {
             continue;
           }
 
+          while (slideIndex > myNextSlideIndex + PREFETCH_BUFFER_SIZE)
+            Thread.onSpinWait();
+
           var slide = myProgressSlides.get(slideIndex);
           var image = ImageLoader.loadFromUrl(slide.url, Splash.class, ImageLoader.ALLOW_FLOAT_SCALING, null, ScaleContext.create());
 
@@ -85,7 +89,7 @@ final class ProgressSlidePainter {
   }
 
   public void paintSlides(@NotNull Graphics g, double currentProgress) {
-    if (isFinish()) return;
+    if (isFinished()) return;
 
     do {
       var newSlide = tryGetNextSlide();
@@ -112,11 +116,13 @@ final class ProgressSlidePainter {
       var slide = myPrefetchedSlides.get(index);
       if (slide != null) {
         myPrefetchedSlides.set(index, Slide.Empty);
+        //noinspection NonAtomicOperationOnVolatileField
         myNextSlideIndex++;
         return slide;
-      } else if (System.currentTimeMillis() - start > 10) {
-        ourLogger.warn("Cannot get the next slide for 10 ms");
+      } else if (System.currentTimeMillis() - start > 1) {
+        ourLogger.warn("Cannot get the next slide for 1 ms");
         myPrefetchedSlides.set(index, Slide.Empty);
+        //noinspection NonAtomicOperationOnVolatileField
         myNextSlideIndex++;
         return Slide.Empty;
       }
