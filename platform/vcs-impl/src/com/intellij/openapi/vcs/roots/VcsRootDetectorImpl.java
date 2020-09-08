@@ -99,8 +99,11 @@ final class VcsRootDetectorImpl implements VcsRootDetector {
     return detectedRoots;
   }
 
-  private void scanForRootsInsideDir(@NotNull Project project, @NotNull VirtualFile root, @Nullable Set<VirtualFile> skipDirs, @NotNull Set<VcsRoot> result) {
-    VcsRootScanner.visitDirsRecursivelyWithoutExcluded(project, ProjectRootManager.getInstance(project), root, dir -> {
+  private void scanForRootsInsideDir(@NotNull Project project,
+                                     @NotNull VirtualFile root,
+                                     @Nullable Set<VirtualFile> skipDirs,
+                                     @NotNull Set<VcsRoot> result) {
+    VcsRootScanner.visitDirsRecursivelyWithoutExcluded(project, root, false, dir -> {
       if (skipDirs != null && skipDirs.contains(dir)) {
         return SKIP_CHILDREN;
       }
