@@ -22,8 +22,6 @@ import com.intellij.completion.ml.personalization.session.SessionFactorsUtils
 import com.intellij.completion.ml.storage.MutableLookupStorage
 import java.util.*
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
 
 @Suppress("DEPRECATION")
 class MLSorterFactory : CompletionFinalSorter.Factory {
@@ -126,6 +124,7 @@ class MLSorter : CompletionFinalSorter() {
     val rankingModel = lookupStorage.model
 
     lookupStorage.initUserFactors(lookup.project)
+    val meaningfulRelevanceExtractor = MeaningfulFeaturesExtractor()
     val relevanceObjects = lookup.getRelevanceObjects(items, false)
     val calculatedElementFeatures = mutableListOf<ElementFeatures>()
     for (element in items) {
@@ -136,9 +135,11 @@ class MLSorter : CompletionFinalSorter() {
       lookupStorage.performanceTracker.trackElementFeaturesCalculation(PrefixMatchingUtil.baseName) {
         PrefixMatchingUtil.calculateFeatures(element, prefix, additional)
       }
+      meaningfulRelevanceExtractor.processFeatures(relevance)
       calculatedElementFeatures.add(ElementFeatures(relevance, additional))
     }
 
+    val meaningfulRelevance = meaningfulRelevanceExtractor.meaningfulFeatures()
     val lookupFeatures = mutableMapOf<String, Any>()
     for (elementFeatureProvider in LookupFeatureProvider.forLanguage(lookupStorage.language)) {
       val features = elementFeatureProvider.calculateFeatures(calculatedElementFeatures)
@@ -155,7 +156,7 @@ class MLSorter : CompletionFinalSorter() {
 
       val score = tracker.measure {
         val position = positionsBefore.getValue(element)
-        val elementFeatures = features.withElementFeatures(relevance, additional)
+        val elementFeatures = features.withElementFeatures(relevance, additional, meaningfulRelevance)
         val score = calculateElementScore(rankingModel, element, position, elementFeatures, queryLength)
         sortingRestrictions.itemScored(elementFeatures)
         return@measure score
@@ -251,6 +252,27 @@ class MLSorter : CompletionFinalSorter() {
     cachedScore[element] = info
 
     return info.mlRank
+  }
+
+  /**
+   * Extracts features that have different values
+   */
+  private class MeaningfulFeaturesExtractor {
+    private val meaningful = mutableSetOf<String>()
+    private val values = mutableMapOf<String, Any>()
+
+    fun processFeatures(features: Map<String, Any>) {
+      for (feature in features) {
+        if (feature.key in meaningful) continue
+        if (feature.key !in values) {
+          values[feature.key] = feature.value
+        } else if (values[feature.key] != feature.value) {
+          meaningful.add(feature.key)
+        }
+      }
+    }
+
+    fun meaningfulFeatures(): Set<String> = meaningful
   }
 
   /*

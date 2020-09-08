@@ -7,12 +7,13 @@ class RankingFeatures(private val user: Map<String, Any>,
                       private val lookup: Map<String, Any>) {
   private var relevance: Map<String, Any> = emptyMap()
   private var additional: Map<String, Any> = emptyMap()
+  private var meaningful: Set<String> = emptySet()
 
   /*
    * Names of features that affect default ranking
    */
   fun relevanceFeatures(): Set<String> {
-    return relevance.keys
+    return relevance.keys.intersect(meaningful)
   }
 
   fun featureValue(name: String): Any? {
@@ -23,9 +24,12 @@ class RankingFeatures(private val user: Map<String, Any>,
     return name in relevance || name in additional || name in context || name in commonSession || name in user || name in lookup
   }
 
-  fun withElementFeatures(defaultRelevance: Map<String, Any>, additionalRelevance: Map<String, Any>): RankingFeatures {
+  fun withElementFeatures(defaultRelevance: Map<String, Any>,
+                          additionalRelevance: Map<String, Any>,
+                          meaningfulRelevance: Set<String>): RankingFeatures {
     this.relevance = defaultRelevance
     this.additional = additionalRelevance
+    this.meaningful = meaningfulRelevance
 
     return this
   }
