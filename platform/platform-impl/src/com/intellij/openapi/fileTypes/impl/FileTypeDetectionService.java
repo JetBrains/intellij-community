@@ -6,7 +6,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
@@ -353,7 +352,7 @@ final class FileTypeDetectionService implements Disposable {
       if (files.size() == CHUNK_SIZE) {
         awakeReDetectExecutor();
       }
-      reDetect(files);
+      ProgressManager.getInstance().executeNonCancelableSection(() -> reDetect(files));
     });
   }
 
@@ -364,7 +363,15 @@ final class FileTypeDetectionService implements Disposable {
       submitted = filesToRedetect.remove(file);
     }
     if (submitted) {
-      reDetect(Collections.singleton(file));
+      try {
+        reDetect(Collections.singleton(file));
+      }
+      catch (ProcessCanceledException e) {
+        synchronized (filesToRedetect) {
+          filesToRedetect.offer(file);
+        }
+        throw e;
+      }
     }
   }
 
@@ -376,76 +383,71 @@ final class FileTypeDetectionService implements Disposable {
 
   private void reDetect(@NotNull Collection<? extends VirtualFile> files) {
     if (files.isEmpty()) return;
-    try {
-      List<VirtualFile> changed = new ArrayList<>();
-      List<VirtualFile> crashed = new ArrayList<>();
-      for (VirtualFile file : files) {
-        if (FileTypeManagerImpl.toLog()) {
-          FileTypeManagerImpl.log("F: reDetect(" + file.getName() + ") " + file.getName());
+    List<VirtualFile> changed = new ArrayList<>();
+    List<VirtualFile> crashed = new ArrayList<>();
+    for (VirtualFile file : files) {
+      if (FileTypeManagerImpl.toLog()) {
+        FileTypeManagerImpl.log("F: reDetect(" + file.getName() + ") " + file.getName());
+      }
+      int id = ((VirtualFileWithId)file).getId();
+      long flags = packedFlags.get(id);
+
+      FileType before = ObjectUtils.notNull(textOrBinaryFromCachedFlags(flags),
+                                            ObjectUtils.notNull(getFileTypeDetectedFromContent(file),
+                                                                PlainTextFileType.INSTANCE));
+      FileType after = myFileTypeManager.getByFile(file);
+
+      if (FileTypeManagerImpl.toLog()) {
+        FileTypeManagerImpl.log("F: reDetect(" + file.getName() + ") prepare to redetect. flags: " + readableFlags(flags) +
+                                "; beforeType: " + before.getName() + "; afterByFileType: " + (after == null ? null : after.getName()));
+      }
+
+      if (after == null || FileTypeManagerImpl.mightBeReplacedByDetectedFileType(after)) {
+        try {
+          after = detectFromContentAndCache(file, null);
         }
-        int id = ((VirtualFileWithId)file).getId();
-        long flags = packedFlags.get(id);
-
-        FileType before = ObjectUtils.notNull(textOrBinaryFromCachedFlags(flags),
-                                              ObjectUtils.notNull(getFileTypeDetectedFromContent(file),
-                                                                  PlainTextFileType.INSTANCE));
-        FileType after = myFileTypeManager.getByFile(file);
-
-        if (FileTypeManagerImpl.toLog()) {
-          FileTypeManagerImpl.log("F: reDetect(" + file.getName() + ") prepare to redetect. flags: " + readableFlags(flags) +
-                                  "; beforeType: " + before.getName() + "; afterByFileType: " + (after == null ? null : after.getName()));
-        }
-
-        if (after == null || FileTypeManagerImpl.mightBeReplacedByDetectedFileType(after)) {
-          try {
-            after = detectFromContentAndCache(file, null);
+        catch (IOException e) {
+          crashed.add(file);
+          if (FileTypeManagerImpl.toLog()) {
+            FileTypeManagerImpl
+              .log("F: reDetect(" + file.getName() + ") " + "before: " + before.getName() + "; after: crashed with " + e.getMessage() +
+                   "; now getFileType()=" + file.getFileType().getName() +
+                   "; getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY): " + file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY));
           }
-          catch (IOException e) {
-            crashed.add(file);
-            if (FileTypeManagerImpl.toLog()) {
-              FileTypeManagerImpl
-                .log("F: reDetect(" + file.getName() + ") " + "before: " + before.getName() + "; after: crashed with " + e.getMessage() +
-                     "; now getFileType()=" + file.getFileType().getName() +
-                     "; getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY): " + file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY));
-            }
-            continue;
-          }
+          continue;
         }
-        else {
-          // back to standard file type
-          // detected by conventional methods, no need to run detect-from-content
-          file.putUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY, null);
-          flags = 0;
-          packedFlags.set(id, flags);
-        }
-        if (FileTypeManagerImpl.toLog()) {
-          FileTypeManagerImpl.log("F: reDetect(" +
-                                  file.getName() +
-                                  ") " +
-                                  "before: " +
-                                  before.getName() +
-                                  "; after: " +
-                                  after.getName() +
-                                  "; now getFileType()=" +
-                                  file.getFileType().getName() +
-                                  "; getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY): " +
-                                  file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY));
-        }
+      }
+      else {
+        // back to standard file type
+        // detected by conventional methods, no need to run detect-from-content
+        file.putUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY, null);
+        flags = 0;
+        packedFlags.set(id, flags);
+      }
+      if (FileTypeManagerImpl.toLog()) {
+        FileTypeManagerImpl.log("F: reDetect(" +
+                                file.getName() +
+                                ") " +
+                                "before: " +
+                                before.getName() +
+                                "; after: " +
+                                after.getName() +
+                                "; now getFileType()=" +
+                                file.getFileType().getName() +
+                                "; getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY): " +
+                                file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY));
+      }
 
-        if (before != after) {
-          changed.add(file);
-        }
+      if (before != after) {
+        changed.add(file);
       }
-      if (!changed.isEmpty()) {
-        reparseLater(changed);
-      }
-      if (!crashed.isEmpty()) {
-        // do not re-scan locked or invalid files too often to avoid constant disk thrashing if that condition is permanent
-        AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> reparseLater(crashed), 10, TimeUnit.SECONDS);
-      }
-    } catch (ProcessCanceledException e) {
-      LOG.error("ProcessCanceledException should not be thrown while re-detection", new Attachment("pce", e));
-      throw e;
+    }
+    if (!changed.isEmpty()) {
+      reparseLater(changed);
+    }
+    if (!crashed.isEmpty()) {
+      // do not re-scan locked or invalid files too often to avoid constant disk thrashing if that condition is permanent
+      AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> reparseLater(crashed), 10, TimeUnit.SECONDS);
     }
   }
 
