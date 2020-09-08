@@ -340,7 +340,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
       return null;
     }
     if (methodName == null) return null;
-    String text;
+    @NonNls String text;
     if (!methodName.startsWith("comparing")) {
       text = "java.util.Comparator." + methodName + "()";
     }

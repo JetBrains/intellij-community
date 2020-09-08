@@ -391,9 +391,9 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
   }
 
   private static class SingletonContainsHandler implements RedundantCollectionOperationHandler {
-    @NotNull
+
     @Override
-    public String getReplacement() {
+    public @NonNls @NotNull String getReplacement() {
       return "Objects.equals()";
     }
 
@@ -425,9 +425,8 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
       myReplacementMethod = method;
     }
 
-    @NotNull
     @Override
-    public String getReplacement() {
+    public @NonNls @NotNull String getReplacement() {
       return "Map." + myReplacementMethod + "()";
     }
 

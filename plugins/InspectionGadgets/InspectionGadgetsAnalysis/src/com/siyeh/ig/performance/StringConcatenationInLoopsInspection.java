@@ -41,10 +41,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -358,8 +355,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       myNullSafe = safe;
     }
 
-    @NotNull
-    String generateNewStringBuilder(PsiExpression initializer, CommentTracker ct) {
+    @NonNls @NotNull String generateNewStringBuilder(PsiExpression initializer, CommentTracker ct) {
       if (ExpressionUtils.isNullLiteral(initializer)) {
         return ct.text(initializer);
       }
@@ -474,7 +470,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
         }
         if (operands.length > 1 && operands[0] == ref && TypeUtils.isJavaLangString(operands[1].getType())) return;
       }
-      String text = builderVariable.getName() + ".toString()";
+      @NonNls String text = builderVariable.getName() + ".toString()";
       if (myNullables.contains(ref) && !isNotNullContext(ref)) {
         text = builderVariable.getName() + "==null?null:" + text;
         if (parent instanceof PsiExpression) {
@@ -511,7 +507,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       PsiMethod method = call.resolveMethod();
       if(method != null) {
         PsiExpression[] args = call.getArgumentList().getExpressions();
-        String name = method.getName();
+        @NonNls String name = method.getName();
         switch(name) {
           case "length":
           case "chars":
@@ -680,7 +676,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       StringBuilderReplacer replacer = new StringBuilderReplacer(myTargetType, myNullSafe);
       replacer.replaceAll(variable, builderVariable, loop, ct);
       String convertToString = myNullSafe ? CommonClassNames.JAVA_LANG_STRING + ".valueOf(" + newName + ")" : newName + ".toString()";
-      String toString = variable.getName() + " = " + convertToString + ";";
+      @NonNls String toString = variable.getName() + " = " + convertToString + ";";
 
       PsiExpression initializer = variable.getInitializer();
       switch (status) {

@@ -103,7 +103,7 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
   }
 
   @Nullable
-  public static NamedScope getScope(@NotNull Project project, String scopeName) {
+  public static NamedScope getScope(@NotNull Project project,  @NonNls String scopeName) {
     for (NamedScopesHolder holder : getAllNamedScopeHolders(project)) {
       NamedScope scope = holder.getScope(scopeName);
       if (scope != null) {
@@ -177,7 +177,7 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
   }
 
   @Nullable
-  public NamedScope getScope(@Nullable String scopeId) {
+  public NamedScope getScope(@Nullable @NonNls String scopeId) {
     if (scopeId == null) return null;
     for (NamedScope scope : myScopes) {
       if (scopeId.equals(scope.getScopeId())) return scope;

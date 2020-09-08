@@ -4,6 +4,7 @@ package com.siyeh.ig.performance;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -39,9 +40,9 @@ public class KeySetIterationMayUseEntrySetInspection extends BaseInspection {
   private enum ReplacementMode {
     FOR_EACH("Map.forEach()"), VALUES("values()"), ENTRY_SET("entrySet()");
 
-    private final String myDisplayName;
+    private final @NlsSafe String myDisplayName;
 
-    ReplacementMode(String displayName) {
+    ReplacementMode(@NlsSafe String displayName) {
       myDisplayName = displayName;
     }
   }

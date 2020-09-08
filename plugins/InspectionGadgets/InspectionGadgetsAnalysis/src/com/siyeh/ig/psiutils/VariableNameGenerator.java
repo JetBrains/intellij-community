@@ -117,7 +117,8 @@ public final class VariableNameGenerator {
   public List<String> generateAll(boolean lookForward) {
     List<String> suffixed = new ArrayList<>();
     List<String> result = new ArrayList<>();
-    for (String candidate : candidates.isEmpty() ? Collections.singleton("v") : candidates) {
+    final @NonNls String defaultVariableName = "v";
+    for (String candidate : candidates.isEmpty() ? Collections.singleton(defaultVariableName) : candidates) {
       String name = myManager.suggestUniqueVariableName(candidate, myContext, lookForward);
       if (name.equals(candidate)) result.add(name);
       else suffixed.add(name);

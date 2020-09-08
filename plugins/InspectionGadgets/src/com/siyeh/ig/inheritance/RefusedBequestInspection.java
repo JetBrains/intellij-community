@@ -20,6 +20,7 @@ import com.siyeh.ig.psiutils.*;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -110,7 +111,7 @@ public class RefusedBequestInspection extends BaseInspection {
         return;
       }
       final PsiType returnType = method.getReturnType();
-      final StringBuilder statementText = new StringBuilder();
+      final @NonNls StringBuilder statementText = new StringBuilder();
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       if (returnType != null && !PsiType.VOID.equals(returnType)) {
         if (JavaCodeStyleSettings.getInstance(method.getContainingFile()).GENERATE_FINAL_LOCALS) {
