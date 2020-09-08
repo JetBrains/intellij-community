@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,7 +12,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NamedRunnable;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -132,22 +130,6 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
       if (model.getRowCount() <= r) return -1;
       return r;
     }, SettableFuture.create(), silently);
-  }
-
-  @NotNull
-  @Override
-  public ListenableFuture<Boolean> jumpToHash(@NotNull String commitHash) {
-    SettableFuture<Boolean> future = SettableFuture.create();
-    String trimmed = StringUtil.trim(commitHash, ch -> !StringUtil.containsChar("()'\"`", ch));
-    if (!VcsLogUtil.HASH_REGEX.matcher(trimmed).matches()) {
-      VcsBalloonProblemNotifier.showOverChangesView(myProject,
-                                                    VcsLogBundle.message("vcs.log.commit.or.reference.not.found", commitHash),
-                                                    MessageType.WARNING);
-      future.set(false);
-      return future;
-    }
-    jumpTo(trimmed, GraphTableModel::getRowOfCommitByPartOfHash, future, false);
-    return future;
   }
 
   @Override

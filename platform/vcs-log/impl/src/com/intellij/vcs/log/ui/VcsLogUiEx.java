@@ -51,8 +51,14 @@ public interface VcsLogUiEx extends VcsLogUi, Disposable {
 
   void jumpToRow(int row, boolean silently);
 
+  /**
+   * @deprecated use {@link VcsLog#jumpToReference(String)} instead
+   */
   @NotNull
-  ListenableFuture<Boolean> jumpToHash(@NotNull String commitHash);
+  @Deprecated
+  default ListenableFuture<Boolean> jumpToHash(@NotNull String commitHash) {
+    return ((ListenableFuture<Boolean>)getVcsLog().jumpToReference(commitHash));
+  }
 
   <T> void jumpTo(@NotNull T commitId,
                   @NotNull PairFunction<GraphTableModel, T, Integer> rowGetter,
