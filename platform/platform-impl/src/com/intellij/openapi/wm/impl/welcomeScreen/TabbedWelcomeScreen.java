@@ -14,7 +14,6 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -22,8 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
-import java.util.List;
 
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.createActionLink;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.createSmallLogo;
@@ -66,14 +63,6 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
       UiNotifyConnector.doWhenFirstShown(firstShownPanel, () -> IdeFocusManager.getGlobalInstance()
         .requestFocus(IdeFocusTraversalPolicy.getPreferredFocusedComponent(firstShownPanel), true));
     }
-    setFocusTraversalPolicyProvider(true);
-    setFocusTraversalPolicy(new ComponentsListFocusTraversalPolicy() {
-
-      @Override
-      protected @NotNull List<Component> getOrderedComponents() {
-        return Arrays.asList(helpLink, tabList, centralPanel);
-      }
-    });
   }
 
   @NotNull
