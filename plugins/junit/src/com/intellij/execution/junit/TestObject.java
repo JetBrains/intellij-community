@@ -88,7 +88,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   protected <T> void addClassesListToJavaParameters(Collection<? extends T> elements,
                                                     Function<? super T, String> nameFunction,
                                                     String packageName,
-                                                    boolean createTempFile, JavaParameters javaParameters) throws CantRunException {
+                                                    boolean createTempFile, JavaParameters javaParameters) {
     JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     addClassesListToJavaParameters(elements, nameFunction, packageName, createTempFile, javaParameters,
                                    JUnitConfiguration.TEST_PATTERN.equals(data.TEST_OBJECT) ? data.getPatternPresentation() : "");
@@ -99,7 +99,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
                                                     String packageName,
                                                     boolean createTempFile,
                                                     JavaParameters javaParameters,
-                                                    String filters) throws CantRunException {
+                                                    String filters) {
     try {
       if (createTempFile) {
         createTempFiles(javaParameters);
@@ -375,7 +375,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
                                                        RepositoryLibraryProperties properties) throws CantRunException {
     Collection<OrderRoot> roots = JarRepositoryManager.loadDependenciesModal(project, properties, false, false, null, null);
     if (roots.isEmpty()) {
-      throw new CantRunException("Failed to resolve " + properties.getMavenId());
+      throw new CantRunException(JUnitBundle.message("dialog.message.failed.to.resolve.maven.id", properties.getMavenId()));
     }
     for (OrderRoot root : roots) {
       if (root.getType() == OrderRootType.CLASSES) {
@@ -481,7 +481,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
     }
     if (element instanceof Location) {
-      return ((Location)element).getPsiElement();
+      return ((Location<?>)element).getPsiElement();
     }
     return element instanceof PsiElement ? (PsiElement)element : null;
   }
@@ -576,7 +576,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
 
     if (DumbService.isDumb(project)) {
-      return findCustomJUnit5TestEngineUsingClassLoader(globalSearchScope, project, psiFacade);
+      return findCustomJUnit5TestEngineUsingClassLoader(globalSearchScope, psiFacade);
     }
     else {
       return findCustomJunit5TestEngineUsingPsi(globalSearchScope, project, psiFacade);
@@ -584,7 +584,6 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   }
 
   private boolean findCustomJUnit5TestEngineUsingClassLoader(@NotNull GlobalSearchScope globalSearchScope,
-                                                             @NotNull Project project,
                                                              @NotNull JavaPsiFacade psiFacade) {
     boolean hasPlatformEngine = ReadAction.compute(() -> {
         PsiPackage aPackage = psiFacade.findPackage(JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE);
