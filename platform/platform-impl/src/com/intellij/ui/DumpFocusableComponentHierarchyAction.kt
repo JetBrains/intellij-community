@@ -1,11 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.internal.focus
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.ui
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBScrollPane
 import java.awt.*
 import java.awt.datatransfer.StringSelection
