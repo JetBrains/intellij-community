@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.extension;
 
+import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
@@ -8,10 +9,7 @@ import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import de.plushnikov.intellij.plugin.handler.BuilderHandler;
-import de.plushnikov.intellij.plugin.handler.EqualsAndHashCodeCallSuperHandler;
-import de.plushnikov.intellij.plugin.handler.LazyGetterHandler;
-import de.plushnikov.intellij.plugin.handler.OnXAnnotationHandler;
+import de.plushnikov.intellij.plugin.handler.*;
 import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -140,6 +138,18 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
       @Override
       public boolean accept(@NotNull PsiElement highlightedElement) {
         return !LazyGetterHandler.isLazyGetterHandled(highlightedElement);
+      }
+    },
+
+    CONSTANT_EXPRESSION_REQUIRED(HighlightSeverity.ERROR, CodeInsightColors.ERRORS_ATTRIBUTES) {
+      @Override
+      public boolean descriptionCheck(@Nullable String description) {
+        return JavaErrorBundle.message("constant.expression.required").equals(description);
+      }
+
+      @Override
+      public boolean accept(@NotNull PsiElement highlightedElement) {
+        return !FieldNameConstantsHandler.isFiledNameConstants(highlightedElement);
       }
     },
 
