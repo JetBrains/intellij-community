@@ -33,12 +33,11 @@ public class GitBranchesComboBoxAction extends ComboBoxAction {
       String name = DvcsBranchUtil.shortenBranchName(branchName);
       presentation.setText(name);
       presentation.setIcon(AllIcons.Vcs.Branch);
+      presentation.setEnabledAndVisible(true);
     }
     else {
       presentation.setEnabledAndVisible(false);
-      return;
     }
-    presentation.setEnabledAndVisible(true);
   }
 
   @Override
