@@ -20,6 +20,7 @@ import com.android.tools.idea.gradle.dsl.api.ProjectBuildModelHandler
 import com.google.common.annotations.VisibleForTesting
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
+import com.intellij.serviceContainer.NonInjectable
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -83,6 +84,7 @@ class ProjectBuildModelHandlerImpl(val project: Project) : ProjectBuildModelHand
    * DO NOT use outside of tests.
    */
   @VisibleForTesting
+  @NonInjectable
   constructor(project: Project, projectModel: ProjectBuildModel) : this(project) {
     projectBuildModel = projectModel
     UpToDateChecker.EXTENSION_POINT_NAME.extensionList.forEach{it.setUpToDate(project)}

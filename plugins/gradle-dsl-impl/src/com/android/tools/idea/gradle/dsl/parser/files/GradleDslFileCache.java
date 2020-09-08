@@ -21,6 +21,7 @@ import static com.android.tools.idea.gradle.dsl.GradleUtil.getGradleSettingsFile
 import com.android.tools.idea.gradle.dsl.model.GradleBuildModelImpl;
 import com.android.tools.idea.gradle.dsl.parser.BuildModelContext;
 import com.google.common.base.Charsets;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import java.io.IOException;
@@ -41,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
  * file hundreds of times.
  */
 public class GradleDslFileCache {
+  public static final Logger LOG = Logger.getInstance(GradleDslFileCache.class);
   @NotNull private Project myProject;
   @NotNull private Map<String, GradleDslFile> myParsedBuildFiles = new HashMap<>();
   @NotNull private Deque<VirtualFile> myParsingStack = new ArrayDeque<>();
@@ -124,7 +126,7 @@ public class GradleDslFileCache {
         myParsedBuildFiles.put(file.getUrl(), dslFile);
       }
       catch (IOException e) {
-        //LOG.warn("Failed to process properties file " + file.getPath(), e);
+        LOG.warn("Failed to process properties file " + file.getPath(), e);
         return null;
       }
     }

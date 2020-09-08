@@ -33,6 +33,13 @@ import org.jetbrains.annotations.Nullable;
 
 public class GradleModelSource extends GradleModelProvider {
 
+  public static class GradleModelProviderFactoryImpl implements GradleModelProviderFactory {
+    @Override
+    public GradleModelProvider get() {
+      return new GradleModelSource();
+    }
+  }
+
   @NotNull
   @Override
   public ProjectBuildModel getProjectModel(@NotNull Project project) {

@@ -13,6 +13,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.android.tools.idea.gradle.dsl.api.ProjectBuildModelHandler" serviceImplementation="com.android.tools.idea.gradle.dsl.ProjectBuildModelHandlerImpl" />
+    <applicationService serviceInterface="com.android.tools.idea.gradle.dsl.api.GradleModelProvider$GradleModelProviderFactory" serviceImplementation="com.android.tools.idea.gradle.dsl.GradleModelSource$GradleModelProviderFactoryImpl" />
   </extensions>
 
   <extensionPoints>

@@ -17,25 +17,27 @@ package com.android.tools.idea.gradle.dsl.api;
 
 import com.android.tools.idea.gradle.dsl.api.dependencies.ArtifactDependencyModel;
 import com.android.tools.idea.gradle.dsl.api.dependencies.ArtifactDependencySpec;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import java.lang.reflect.InvocationTargetException;
 
 public abstract class GradleModelProvider {
 
+  /**
+   * The purpose if this class is to simplify moving DSL out of android and avoid depencency dsl-api on dsl-impl
+   */
+  @ApiStatus.Internal
+  public interface GradleModelProviderFactory {
+    GradleModelProvider get();
+  }
+
   @NotNull
   public static GradleModelProvider get() {
-    //TODO
-    try {
-      return (GradleModelProvider)Class.forName("com.android.tools.idea.gradle.dsl.GradleModelSource").getDeclaredConstructor().newInstance();
-    }
-    catch (Exception e) {
-      e.printStackTrace();
-      throw new RuntimeException();
-    }
+    return ApplicationManager.getApplication().getService(GradleModelProviderFactory.class).get();
   }
 
   @NotNull
