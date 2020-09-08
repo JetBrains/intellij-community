@@ -86,21 +86,22 @@ public abstract class ActionManagerEx extends ActionManager {
 
   public abstract boolean isTransparentOnlyActionsUpdateNow();
 
-  public void fireBeforeActionPerformed(@NotNull String actionId, @NotNull InputEvent event) {
-    fireActionPerformed(actionId, event, this::fireBeforeActionPerformed);
+  public void fireBeforeActionPerformed(@NotNull String actionId, @NotNull InputEvent event, @NotNull String place) {
+    fireActionPerformed(actionId, event, place, this::fireBeforeActionPerformed);
   }
 
-  public void fireAfterActionPerformed(@NotNull String actionId, @NotNull InputEvent event) {
-    fireActionPerformed(actionId, event, this::fireAfterActionPerformed);
+  public void fireAfterActionPerformed(@NotNull String actionId, @NotNull InputEvent event, @NotNull String place) {
+    fireActionPerformed(actionId, event, place, this::fireAfterActionPerformed);
   }
 
   private void fireActionPerformed(@NotNull String actionId,
                                    @NotNull InputEvent event,
+                                   @NotNull String place,
                                    TriConsumer<AnAction, DataContext, AnActionEvent> firingFunction) {
     DataManager.getInstance().getDataContextFromFocusAsync().onSuccess(dataContext -> {
       final AnAction action = getAction(actionId);
       if (action != null) {
-        AnActionEvent e = AnActionEvent.createFromAnAction(action, event, ActionPlaces.UNKNOWN, dataContext);
+        AnActionEvent e = AnActionEvent.createFromAnAction(action, event, place, dataContext);
         firingFunction.accept(action, dataContext, e);
       }
     });
