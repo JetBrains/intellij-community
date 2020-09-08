@@ -762,8 +762,8 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   /**
-   * @return if this directory (or, if this is a file, its parent directory) supports case-sensitive file names
-   * (i.e. treats README.txt and readme.txt as different files).
+   * @return if this directory (or, if this is a file, its parent directory) supports case-sensitive children file names
+   * (i.e. treats "README.TXT" and "readme.txt" as different files).
    * Examples of these directories include regular directories on Linux, directories in case-sensitive volumes on Mac and
    * NTFS directories configured with "fsutil.exe file setCaseSensitiveInfo" on Windows 10+.
    */

@@ -180,25 +180,20 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       for (ChildInfo currentChild : currentChildren) {
         toAddNames.remove(currentChild.getName().toString());
       }
-      
-      var toAddChildren = new ArrayList<ChildInfo>(toAddNames.size());
-      var map = fs instanceof BatchingFileSystem ?
-                                        ((BatchingFileSystem)fs).listWithAttributes(file, toAddNames) :
-                                        null;
-      if (map != null) {
-        for (var entry : map.entrySet()) {
-          var attributes = VfsImplUtil.getAttributesWithCaseSensitivity(fs, entry.getValue());
-          var newName = entry.getKey();
-          // copy paste from getChildData
-          var symlinkTarget = attributes.isSymLink() ? fs.resolveSymLink(new FakeVirtualFile(file, newName)) : null;
-          var childData = pair(attributes, symlinkTarget);
+
+      List<ChildInfo> toAddChildren = new ArrayList<>(toAddNames.size());
+      if (fs instanceof BatchingFileSystem) {
+        Map<String, FileAttributes> map = ((BatchingFileSystem)fs).listWithAttributes(file, toAddNames);
+        for (Map.Entry<String, FileAttributes> entry : map.entrySet()) {
+          String newName = entry.getKey();
+          Pair<@NotNull FileAttributes, String> childData = getChildData(fs, file, newName, entry.getValue(), null);
           ChildInfo newChild = justCreated.computeIfAbsent(newName, name -> makeChildRecord(file, id, name, childData, fs, null));
           toAddChildren.add(newChild);
         }
       }
       else {
         for (String newName : toAddNames) {
-          var childData = getChildData(fs, file, newName, null, null);
+          Pair<@NotNull FileAttributes, String> childData = getChildData(fs, file, newName, null, null);
           if (childData != null) {
             ChildInfo newChild = justCreated.computeIfAbsent(newName, name -> makeChildRecord(file, id, name, childData, fs, null));
             toAddChildren.add(newChild);

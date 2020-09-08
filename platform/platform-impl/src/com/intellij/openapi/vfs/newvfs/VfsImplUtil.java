@@ -291,8 +291,7 @@ public final class VfsImplUtil {
     return state;
   }
 
-  public static FileAttributes getAttributesWithCaseSensitivity(@NotNull NewVirtualFileSystem fs,
-                                                                @NotNull VirtualFile file) {
+  public static FileAttributes getAttributesWithCaseSensitivity(@NotNull NewVirtualFileSystem fs, @NotNull VirtualFile file) {
     FileAttributes attributes = fs.getAttributes(file);
     if (attributes != null && !attributes.hasCaseSensitivityInformation()) {
       LOG.warn("File system " + fs + " returned file attributes without case sensitivity info: " +
@@ -302,8 +301,7 @@ public final class VfsImplUtil {
   }
 
   @Contract("_, null -> null")
-  public static FileAttributes getAttributesWithCaseSensitivity(@NotNull NewVirtualFileSystem fs,
-                                                                @Nullable FileAttributes attributes) {
+  public static FileAttributes getAttributesWithCaseSensitivity(@NotNull NewVirtualFileSystem fs, @Nullable FileAttributes attributes) {
     if (attributes != null && !attributes.hasCaseSensitivityInformation()) {
       return attributes.withCaseSensitivity(fs.isCaseSensitive());
     }
