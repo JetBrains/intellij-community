@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.config;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnApplicationSettings;
 
 import java.util.ArrayList;
@@ -10,12 +11,15 @@ import java.util.List;
 
 public class RepositoryUrlFilter implements PatternsListener {
   private final RepositoryUrlsListener myListener;
-  private final DefaultRepositoryUrlFilter myDefaultFilter;
+  private final SvnConfigureProxiesComponent myComponent;
+  private final RepositoryUrlsListener myDefaultGroupListener;
 
-  public RepositoryUrlFilter(final RepositoryUrlsListener listener, final SvnConfigureProxiesComponent component,
-                             final RepositoryUrlsListener defaultGroupListener) {
+  public RepositoryUrlFilter(@NotNull RepositoryUrlsListener listener,
+                             @NotNull SvnConfigureProxiesComponent component,
+                             @NotNull RepositoryUrlsListener defaultGroupListener) {
     myListener = listener;
-    myDefaultFilter = new DefaultRepositoryUrlFilter(component, defaultGroupListener);
+    myComponent = component;
+    myDefaultGroupListener = defaultGroupListener;
   }
 
   @Override
@@ -30,9 +34,15 @@ public class RepositoryUrlFilter implements PatternsListener {
     }
 
     Collections.sort(result);
-
     myListener.onListChanged(result);
 
-    myDefaultFilter.execute(urls);
+    notifyDefaultGroup(urls);
+  }
+
+  private void notifyDefaultGroup(@NotNull Collection<String> urls) {
+    List<String> filtered = myComponent.getGlobalGroupRepositories(urls);
+    Collections.sort(filtered);
+
+    myDefaultGroupListener.onListChanged(filtered);
   }
 }
