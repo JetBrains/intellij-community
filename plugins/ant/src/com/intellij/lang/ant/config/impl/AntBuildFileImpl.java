@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -21,6 +22,7 @@ import com.intellij.util.NewInstanceFactory;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.config.*;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -193,7 +195,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
   }
 
   @Override
-  public @NotNull String getPresentableName() {
+  public @NotNull @Nls String getPresentableName() {
     AntBuildModel model = myAntConfiguration.getModelIfRegistered(this);
     String name = model != null ? model.getName() : null;
     if (StringUtil.isEmptyOrSpaces(name)) {
@@ -204,7 +206,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
 
   @Override
   @Nullable
-  public String getName() {
+  public @NlsSafe String getName() {
     final VirtualFile vFile = getVirtualFile();
     return vFile != null ? vFile.getName() : null;
   }
@@ -265,7 +267,7 @@ public final class AntBuildFileImpl implements AntBuildFileBase {
 
   @Override
   @Nullable
-  public String getPresentableUrl() {
+  public @NlsSafe String getPresentableUrl() {
     final VirtualFile file = getVirtualFile();
     return (file == null) ? null : file.getPresentableUrl();
   }

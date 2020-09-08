@@ -15,6 +15,8 @@
  */
 package com.intellij.lang.ant.config.execution;
 
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -28,11 +30,11 @@ public interface AntOutputView {
   void startBuild(AntMessage message);
   void startTarget(AntMessage message);
   void startTask(AntMessage message);
-  void finishBuild(String messageText);
+  void finishBuild(@Nls String messageText);
   void finishTarget();
   void finishTask();
 
-  Object getData(@NotNull String dataId);
+  Object getData(@NotNull @NonNls String dataId);
 
   void buildFailed(AntMessage message);
 

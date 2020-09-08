@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBSplitter;
 import com.intellij.util.config.AbstractProperty;
@@ -279,9 +280,9 @@ public class AntSetPanel {
       final ListModel model = myForm.getAntsList().getModel();
       for (int idx = 0; idx  < model.getSize(); idx++) {
         final AntInstallation inst = (AntInstallation)model.getElementAt(idx);
-        final String name = AntInstallation.NAME.get(myForm.getProperties(inst));
+        @NlsSafe final String name = AntInstallation.NAME.get(myForm.getProperties(inst));
         if (names.contains(name)) {
-          Messages.showErrorDialog("Duplicate ant installation name: \"" + name+ "\"", getTitle());
+          Messages.showErrorDialog(AntBundle.message("dialog.message.duplicate.ant.installation.name", name), getTitle());
           return;
         }
         names.add(name);

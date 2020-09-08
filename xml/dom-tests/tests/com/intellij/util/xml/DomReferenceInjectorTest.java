@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -399,7 +400,7 @@ public class DomReferenceInjectorTest extends DomHardCoreTestCase {
     }
 
     @Override
-    public String resolveString(@Nullable String unresolvedText, @NotNull ConvertContext context) {
+    public @Nullable @NlsSafe String resolveString(@Nullable @NonNls String unresolvedText, @NotNull ConvertContext context) {
       return unresolvedText == null ? null : unresolvedText.replaceAll("\\$\\{prop\\}", "FOO");
     }
 

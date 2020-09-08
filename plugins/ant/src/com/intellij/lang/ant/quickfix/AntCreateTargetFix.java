@@ -21,6 +21,7 @@ import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.dom.AntDomTarget;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -28,14 +29,15 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class AntCreateTargetFix implements LocalQuickFix {
-  private static final String TAG_NAME = "target";
-  private static final String NAME_ATTR = "name";
-  private final String myCanonicalText;
+  private static final @NonNls String TAG_NAME = "target";
+  private static final @NonNls String NAME_ATTR = "name";
+  private final @NlsSafe String myCanonicalText;
 
-  public AntCreateTargetFix(String canonicalText) {
+  public AntCreateTargetFix(@NlsSafe String canonicalText) {
     myCanonicalText = canonicalText;
   }
 

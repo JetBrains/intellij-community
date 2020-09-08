@@ -1,17 +1,19 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.segments;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.rt.ant.execution.PoolOfDelimiters;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 
 public class SegmentReader {
-  private final String myString;
+  private final @NonNls String myString;
   private final char[] myChars;
   private int myPosition = 0;
 
-  public SegmentReader(final String packet) {
+  public SegmentReader(final @NonNls String packet) {
     myString = packet;
     myChars = packet.toCharArray();
   }
@@ -38,7 +40,7 @@ public class SegmentReader {
     return result;
   }
 
-  public String readLimitedString() {
+  public @NlsSafe String readLimitedString() {
     final int symbolCount = readInt();
     return advanceTo(myPosition + symbolCount);
   }

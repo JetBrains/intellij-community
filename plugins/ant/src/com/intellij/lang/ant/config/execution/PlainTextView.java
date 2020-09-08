@@ -25,8 +25,11 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +41,7 @@ public final class PlainTextView implements AntOutputView {
 
   private final ConsoleView myConsole;
   private final Project myProject;
-  private String myCommandLine;
+  private @NlsSafe String myCommandLine;
   private final LightProcessHandler myProcessHandler = new LightProcessHandler();
 
   public PlainTextView(Project project) {
@@ -55,7 +58,7 @@ public final class PlainTextView implements AntOutputView {
   }
 
   @Override
-  public String getId() {
+  public @NonNls String getId() {
     return "_text_view_";
   }
 
@@ -82,7 +85,7 @@ public final class PlainTextView implements AntOutputView {
   }
 
   @Override
-  public void addJavacMessage(AntMessage message, String url) {
+  public void addJavacMessage(AntMessage message, @NlsSafe String url) {
     if (message.getLine() > 0) {
       String msg = TreeView.printMessage(message, url);
       print(msg, ProcessOutputTypes.STDOUT);
@@ -129,7 +132,7 @@ public final class PlainTextView implements AntOutputView {
   }
 
   @Override
-  public void finishBuild(String messageText) {
+  public void finishBuild(@Nls String messageText) {
     print("\n" + messageText + "\n", ProcessOutputTypes.SYSTEM);
   }
 
@@ -143,11 +146,11 @@ public final class PlainTextView implements AntOutputView {
 
   @Override
   @Nullable
-  public Object getData(@NotNull String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     return null;
   }
 
-  public void setBuildCommandLine(String commandLine) {
+  public void setBuildCommandLine(@NlsSafe String commandLine) {
     myCommandLine = commandLine;
   }
 

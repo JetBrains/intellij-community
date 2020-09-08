@@ -2,6 +2,7 @@
 package com.intellij.lang.ant.dom;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,7 @@ public final class AntStringResolver extends PropertyProviderFinder{
   }
 
   @NotNull
-  public static String computeString(@NotNull final DomElement context, @NotNull String valueString) {
+  public static String computeString(@NotNull final DomElement context, @NotNull @NlsSafe String valueString) {
     PropertyExpander expander = new PropertyExpander(valueString);
     if (!expander.hasPropertiesToExpand()) {
       return valueString;

@@ -37,6 +37,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -253,7 +254,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       }
       if (ignoredFiles.size() != 0) {
         String messageText;
-        final StringBuilder message = new StringBuilder();
+        @NlsSafe final StringBuilder message = new StringBuilder();
         String separator = "";
         for (final VirtualFile virtualFile : ignoredFiles) {
           message.append(separator);
@@ -273,8 +274,9 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
         removeBuildFile(files.iterator().next());
       }
       else {
-        final int result = Messages.showYesNoDialog(
-          myProject, "Do you want to remove references to " +files.size() + " build files?", AntBundle.message("confirm.remove.dialog.title"), Messages.getQuestionIcon()
+        String dialogTitle = AntBundle.message("dialog.title.confirm.remove");
+        String message = AntBundle.message("dialog.message.remove.build.files.references", files.size());
+        final int result = Messages.showYesNoDialog(myProject, message, dialogTitle, Messages.getQuestionIcon()
         );
         if (result == Messages.YES) {
           for (AntBuildFileBase file : files) {
@@ -296,7 +298,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   private void removeBuildFile(AntBuildFile buildFile) {
     final String fileName = buildFile.getPresentableUrl();
     final int result = Messages.showYesNoDialog(myProject, AntBundle.message("remove.the.reference.to.file.confirmation.text", fileName),
-                                                AntBundle.message("confirm.remove.dialog.title"), Messages.getQuestionIcon());
+                                                AntBundle.message("dialog.title.confirm.remove"), Messages.getQuestionIcon());
     if (result != Messages.YES) {
       return;
     }
@@ -358,7 +360,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     return true;
   }
 
-  private static List<String> getTargetNamesFromPaths(TreePath[] paths) {
+  private static List<@NlsSafe String> getTargetNamesFromPaths(TreePath[] paths) {
     if (paths == null || paths.length == 0) {
       return Collections.emptyList();
     }

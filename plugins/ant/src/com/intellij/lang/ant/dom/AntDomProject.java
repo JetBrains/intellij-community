@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -84,7 +85,7 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
   }
 
   @Nullable
-  public final String getProjectBasedirPath() {
+  public final @NlsSafe String getProjectBasedirPath() {
     final String basedir = getBasedir().getStringValue();
     if (basedir != null) {
       final File file = new File(basedir);
@@ -113,13 +114,13 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
   }
 
   @Nullable
-  public final String getContainingFileDir() {
+  public final @NlsSafe String getContainingFileDir() {
     final VirtualFile containingFile = getXmlTag().getContainingFile().getOriginalFile().getVirtualFile();
     if (containingFile == null) {
       return null;
     }
     final VirtualFile parent = containingFile.getParent();
-    return parent != null? parent.getPath() : null;
+    return parent != null ? parent.getPath() : null;
   }
 
   @SubTagList("target")

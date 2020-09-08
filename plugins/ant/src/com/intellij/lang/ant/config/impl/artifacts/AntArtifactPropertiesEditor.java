@@ -158,10 +158,10 @@ public class AntArtifactPropertiesEditor extends ArtifactPropertiesEditor {
 
   private void updatePanel() {
     if (myTarget != null) {
-      myRunTargetCheckBox.setText(AntBundle.message("AntArtifactPropertiesEditor.checkbox.run.ant.target", myTarget.getName()));
+      myRunTargetCheckBox.setText(AntBundle.message("checkbox.run.named.ant.target", myTarget.getDisplayName()));
     }
     else {
-      myRunTargetCheckBox.setText(AntBundle.message("AntArtifactPropertiesEditor.checkbox.run.ant.target.none"));
+      myRunTargetCheckBox.setText(AntBundle.message("checkbox.run.unknown.ant.target"));
     }
     final boolean enabled = myTarget != null && myRunTargetCheckBox.isSelected();
     UIUtil.setEnabled(myPropertiesPanel, enabled, true);

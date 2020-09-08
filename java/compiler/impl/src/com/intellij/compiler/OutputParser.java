@@ -16,8 +16,10 @@
 package com.intellij.compiler;
 
 import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nls;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,11 +30,11 @@ public abstract class OutputParser {
   public interface Callback {
     String getNextLine();        
     String getCurrentLine();
-    void pushBack(String line);
-    void setProgressText(String text);
-    void fileProcessed(String path);
-    void fileGenerated(String path);
-    void message(CompilerMessageCategory category, String message, @NonNls String url, int lineNum, int columnNum);
+    void pushBack(@Nls String line);
+    void setProgressText(@NlsContexts.ProgressText String text);
+    void fileProcessed(@NlsSafe String path);
+    void fileGenerated(@NlsSafe String path);
+    void message(CompilerMessageCategory category, @Nls String message, @NlsSafe String url, int lineNum, int columnNum);
   }
 
   public boolean processMessageLine(Callback callback) {
@@ -61,7 +63,7 @@ public abstract class OutputParser {
     addMessage(callback, type, message, null, -1, -1);
   }
 
-  protected static void addMessage(Callback callback, CompilerMessageCategory type, String text, String url, int line, int column){
+  protected static void addMessage(Callback callback, CompilerMessageCategory type, @Nls String text, @NlsSafe String url, int line, int column){
     callback.message(type, text, url, line, column);
   }
 }
