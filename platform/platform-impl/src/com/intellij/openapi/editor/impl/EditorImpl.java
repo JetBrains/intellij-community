@@ -386,8 +386,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     };
 
     ErrorStripeMarkersModel errorStripeMarkersModel = myMarkupModel.getErrorStripeMarkersModel();
-    myDocumentMarkupModel.addMarkupModelListener(myCaretModel, errorStripeMarkersModel);
-    myMarkupModel.addMarkupModelListener(myCaretModel, errorStripeMarkersModel);
+    myDocumentMarkupModel.addMarkupModelListener(myCaretModel, errorStripeMarkersModel.createMarkupListener(true));
+    myMarkupModel.addMarkupModelListener(myCaretModel, errorStripeMarkersModel.createMarkupListener(false));
     myMarkupModel.addErrorMarkerListener(new ErrorStripeListener() {
       @Override
       public void errorMarkerChanged(@NotNull ErrorStripeEvent e) {
@@ -3459,11 +3459,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       boolean newAvailable = filter == null || filter.value(highlighter);
       if (oldAvailable != newAvailable) {
         boolean styleOrColorChanged = EditorUtil.attributesImpactFontStyleOrColor(highlighter.getTextAttributes(getColorsScheme()));
-        myMarkupModelListener.attributesChanged((RangeHighlighterEx)highlighter, true,
-                                                styleOrColorChanged);
-        myMarkupModel.getErrorStripeMarkersModel().attributesChanged(
-          (RangeHighlighterEx)highlighter, true,
-          styleOrColorChanged);
+        myMarkupModelListener.attributesChanged((RangeHighlighterEx)highlighter, true, styleOrColorChanged);
+        myMarkupModel.getErrorStripeMarkersModel().attributesChanged((RangeHighlighterEx)highlighter, true);
       }
     }
   }

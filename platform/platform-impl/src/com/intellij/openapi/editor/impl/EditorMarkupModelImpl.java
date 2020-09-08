@@ -815,13 +815,16 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   private void rebuildErrorStripeMarksModel() {
     ErrorStripeMarkersModel errorStripeMarkersModel = myErrorStripeMarkersModel;
     errorStripeMarkersModel.clear();
-    Processor<RangeHighlighterEx> processor = ex -> {
-      errorStripeMarkersModel.afterAdded(ex);
-      return true;
-    };
+
     int textLength = myEditor.getDocument().getTextLength();
-    processRangeHighlightersOverlappingWith(0, textLength, processor);
-    myEditor.getFilteredDocumentMarkupModel().processRangeHighlightersOverlappingWith(0, textLength, processor);
+    processRangeHighlightersOverlappingWith(0, textLength, ex -> {
+      errorStripeMarkersModel.afterAdded(ex, false);
+      return true;
+    });
+    myEditor.getFilteredDocumentMarkupModel().processRangeHighlightersOverlappingWith(0, textLength, ex -> {
+      errorStripeMarkersModel.afterAdded(ex, true);
+      return true;
+    });
   }
 
   void repaint() {
