@@ -857,13 +857,18 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  private void processReferenceNode(final Element element, final PluginId pluginId) {
+  private void processReferenceNode(final Element element,
+                                    final PluginId pluginId,
+                                    @Nullable ResourceBundle bundle) {
     final AnAction action = processReferenceElement(element, pluginId);
     if (action == null) return;
 
     for (Element child : element.getChildren()) {
       if (ADD_TO_GROUP_ELEMENT_NAME.equals(child.getName())) {
         processAddToGroupNode(action, child, pluginId, isSecondary(child));
+      }
+      else if (SYNONYM_ELEMENT_NAME.equals(child.getName())) {
+        processSynonymNode(action, child, pluginId, bundle);
       }
     }
   }
@@ -954,19 +959,19 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  private static void processSynonymNode(ActionStub stub, Element element, PluginId pluginId, @Nullable ResourceBundle bundle) {
+  private static void processSynonymNode(AnAction action, Element element, PluginId pluginId, @Nullable ResourceBundle bundle) {
     if (!SYNONYM_ELEMENT_NAME.equals(element.getName())) {
       reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
       return;
     }
     String text = element.getAttributeValue(TEXT_ATTR_NAME, "");
     if (!text.isEmpty()) {
-      stub.addSynonym(() -> text);
+      action.addSynonym(() -> text);
     }
     else {
       String key = element.getAttributeValue(KEY_ATTR_NAME);
       if (key != null && bundle != null) {
-        stub.addSynonym(() -> BundleBase.message(bundle, key));
+        action.addSynonym(() -> BundleBase.message(bundle, key));
       }
       else {
         reportActionError(pluginId, "Can't process synonym: neither text nor resource bundle key is specified");
@@ -1124,7 +1129,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         processSeparatorNode(null, child, plugin.getPluginId(), bundle);
         break;
       case REFERENCE_ELEMENT_NAME:
-        processReferenceNode(child, plugin.getPluginId());
+        processReferenceNode(child, plugin.getPluginId(), bundle);
         break;
       case UNREGISTER_ELEMENT_NAME:
         processUnregisterNode(child, plugin.getPluginId());
