@@ -173,7 +173,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     private static boolean checkQualifier(PsiReferenceExpression lhs, PsiLoopStatement commonLoop) {
       while (true) {
         PsiExpression qualifierExpression = PsiUtil.skipParenthesizedExprDown(lhs.getQualifierExpression());
-        if (qualifierExpression == null || qualifierExpression instanceof PsiThisExpression) return true;
+        if (qualifierExpression == null || qualifierExpression instanceof PsiQualifiedExpression) return true;
         PsiReferenceExpression ref = ObjectUtils.tryCast(qualifierExpression, PsiReferenceExpression.class);
         if (ref == null) return false;
         PsiVariable varRef = ObjectUtils.tryCast(ref.resolve(), PsiVariable.class);
