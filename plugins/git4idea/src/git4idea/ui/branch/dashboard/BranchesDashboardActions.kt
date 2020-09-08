@@ -66,7 +66,7 @@ internal object BranchesDashboardActions {
     : GitBranchPopupActions.CurrentBranchActions(project, repositories, branchName, currentRepository) {
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-      val children = arrayListOf<AnAction>(NewBranchAction(), *super.getChildren(e))
+      val children = arrayListOf<AnAction>(*super.getChildren(e))
       if (myRepositories.diverged()) {
         children.add(1, CheckoutAction(myProject, myRepositories, myBranchName))
       }
