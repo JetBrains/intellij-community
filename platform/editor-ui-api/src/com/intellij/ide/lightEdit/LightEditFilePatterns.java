@@ -2,6 +2,7 @@
 package com.intellij.ide.lightEdit;
 
 import com.intellij.openapi.fileTypes.FileNameMatcher;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -15,10 +16,12 @@ public class LightEditFilePatterns {
   public static final String[] DEFAULT_PATTERNS = {
     "*.txt", "*.log", "*.md", "*.json", "*.xml", "*.sh", "*.ini", "*.yml", "*.conf"};
 
-  private final Set<String> myPatterns    = new HashSet<>();
-  private final Object      myPatternLock = new Object();
+  public static final String PATTERN_SEPARATOR = ";";
 
-  private volatile List<FileNameMatcher> myMatchers    = null;
+  private final Set<String> myPatterns = new HashSet<>();
+  private final Object myPatternLock = new Object();
+
+  private volatile List<FileNameMatcher> myMatchers = null;
 
   public LightEditFilePatterns() {
     this(Arrays.asList(DEFAULT_PATTERNS));
@@ -30,7 +33,7 @@ public class LightEditFilePatterns {
 
   public static LightEditFilePatterns parse(@NotNull String patternString) {
     List<String> filePatterns = new ArrayList<>();
-    for (String pattern : patternString.split(";")) {
+    for (String pattern : patternString.split(PATTERN_SEPARATOR)) {
       if (!StringUtil.isEmptyOrSpaces(pattern)) {
         filePatterns.add(pattern);
       }
@@ -38,9 +41,9 @@ public class LightEditFilePatterns {
     return new LightEditFilePatterns(filePatterns);
   }
 
-  @Override
-  public String toString() {
-    return String.join(";", getPatterns());
+  @NlsSafe
+  public String toSeparatedString() {
+    return String.join(PATTERN_SEPARATOR, getPatterns());
   }
 
   @NotNull
@@ -61,12 +64,12 @@ public class LightEditFilePatterns {
   @Override
   public boolean equals(Object obj) {
     return obj instanceof LightEditFilePatterns &&
-           myPatterns.equals(((LightEditFilePatterns)obj).myPatterns);
+           getPatterns().equals(((LightEditFilePatterns)obj).getPatterns());
   }
 
   @Override
   public int hashCode() {
-    return myPatterns.hashCode();
+    return getPatterns().hashCode();
   }
 
   public boolean match(@NotNull VirtualFile file) {

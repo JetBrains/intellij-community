@@ -122,7 +122,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     }
 
     myFileTypePanel.myLightEditPatternsField.setText(
-      LightEditService.getInstance().getSupportedFilePatterns().toString());
+      LightEditService.getInstance().getSupportedFilePatterns().toSeparatedString());
   }
 
   @Override
