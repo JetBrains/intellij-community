@@ -16,6 +16,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
@@ -201,7 +202,9 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       try {
         val output = CapturingProcessHandler.Silent(command).runProcess(10000, false)
         if (!output.checkSuccess(LOG) && output.exitCode == 1) {
-          showError(output.stderrLines.firstOrNull(), browser, project, null, fix)
+          @NlsSafe
+          val error = output.stderrLines.firstOrNull()
+          showError(error, browser, project, null, fix)
         }
       }
       catch (e: ExecutionException) {
