@@ -59,18 +59,17 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     }
 
     val problems = getProblems(tooltipText)
-    val text = StringBuilder()
-    StringUtil.join(problems, { param ->
-      val ref = getLinkRef(param)
+    @NlsSafe val text = problems.joinToString(UIUtil.BORDER_LINE) {
+      val ref = getLinkRef(it)
       if (ref != null) {
-        getHtmlForProblemWithLink(param!!)
+        getHtmlForProblemWithLink(it)
       }
       else {
-        UIUtil.getHtmlBody(Html(param).setKeepFont(true))
+        UIUtil.getHtmlBody(Html(it).setKeepFont(true))
       }
-    }, UIUtil.BORDER_LINE, text)
+    }
 
-    return text.toString()
+    return text
   }
 
   override fun getHtmlForProblemWithLink(@NlsContexts.Tooltip problem: String): @NlsContexts.Tooltip String {
@@ -78,7 +77,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
 
     val html = Html(problem).setKeepFont(true)
     val extendMessage = DaemonBundle.message("inspection.extended.description")
-    var textToProcess = UIUtil.getHtmlBody(html)
+    @NlsSafe var textToProcess = UIUtil.getHtmlBody(html)
     val indexOfMore = textToProcess.indexOf(extendMessage)
     if (indexOfMore < 0) return textToProcess
     val keymapStartIndex = textToProcess.indexOf("(", indexOfMore)
@@ -88,8 +87,8 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
         textToProcess = textToProcess.substring(0, keymapStartIndex) + textToProcess.substring(keymapEndIndex + 1, textToProcess.length)
       }
     }
-
-    return textToProcess.replace(extendMessage, "")
+    textToProcess = textToProcess.replace(extendMessage, "")
+    return textToProcess
   }
 
   override fun createHint(editor: Editor,
