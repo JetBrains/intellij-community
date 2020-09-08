@@ -40,15 +40,16 @@ public class RedundantFileCreationInspection extends AbstractBaseJavaLocalInspec
         }
 
         final PsiMethod constructor = newExpression.resolveConstructor();
-        if (constructor == null || !canReplacedWithConstructorTakesFilename(constructor)) return;
+        if (constructor == null) return;
         final PsiParameter[] params = constructor.getParameterList().getParameters();
 
-        if (!TypeUtils.typeEquals(CommonClassNames.JAVA_IO_FILE, params[0].getType())) return;
+        if (params.length == 0 || !TypeUtils.isJavaIoFile(params[0].getType())) return;
 
         final PsiExpressionList argList = newExpression.getArgumentList();
         if (argList == null) return;
 
         final PsiExpression[] args = argList.getExpressions();
+        if (args.length == 0) return;
 
         PsiNewExpression arg = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(args[0]), PsiNewExpression.class);
         if (arg == null) return;
@@ -63,6 +64,8 @@ public class RedundantFileCreationInspection extends AbstractBaseJavaLocalInspec
 
         PsiExpressionList fileArgList = arg.getArgumentList();
         if (fileArgList == null) return;
+
+        if (!canReplacedWithConstructorTakesFilename(constructor)) return;
 
         holder.registerProblem(arg,
                                JavaBundle.message("inspection.redundant.file.creation.description"),
@@ -79,12 +82,14 @@ public class RedundantFileCreationInspection extends AbstractBaseJavaLocalInspec
     if (containingClass == null) return false;
 
     List<PsiType> methodParams = ContainerUtil.map(method.getParameterList().getParameters(), param -> param.getType());
+    assert !methodParams.isEmpty();
 
     for (final PsiMethod candidate : containingClass.getMethods()) {
-      if (!candidate.isConstructor()) continue;
+      if (!candidate.isConstructor() || candidate.equals(method)) continue;
       List<PsiType> candidateParams = ContainerUtil.map(candidate.getParameterList().getParameters(), param -> param.getType());
       if (candidateParams.size() != methodParams.size()) continue;
-      if (methodParams.subList(1, methodParams.size()).equals(candidateParams.subList(1, candidateParams.size()))) {
+      if (TypeUtils.isJavaLangString(candidateParams.get(0)) &&
+          methodParams.subList(1, methodParams.size()).equals(candidateParams.subList(1, candidateParams.size()))) {
         return true;
       }
     }
