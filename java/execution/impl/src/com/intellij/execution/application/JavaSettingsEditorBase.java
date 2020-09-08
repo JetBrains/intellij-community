@@ -45,6 +45,7 @@ public abstract class JavaSettingsEditorBase<T extends JavaRunConfigurationBase>
     String group = ExecutionBundle.message("group.java.options");
     RawCommandLineEditor vmOptions = new RawCommandLineEditor();
     setMinimumWidth(vmOptions, 400);
+    CommonParameterFragments.setMonospaced(vmOptions.getTextField());
     String message = ExecutionBundle.message("run.configuration.java.vm.parameters.empty.text");
     vmOptions.getEditorField().getAccessibleContext().setAccessibleName(message);
     vmOptions.getEditorField().getEmptyText().setText(message);
