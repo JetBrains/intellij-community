@@ -108,7 +108,7 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
 
   void testExtensionI18n() {
     doHighlightingTest("extensionI18n.xml",
-                       "extensionI18nBundle.properties", "extensionI18nAnotherBundle.properties")
+            "MyBundle.properties", "AnotherBundle.properties")
   }
 
   void testExtensionsHighlighting() {
@@ -584,6 +584,8 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
   @SuppressWarnings("ComponentNotRegistered")
   void testActionHighlighting() {
     configureByFile()
+    myFixture.copyFileToProject("MyBundle.properties")
+    myFixture.copyFileToProject("AnotherBundle.properties")
     myFixture.addClass("package foo.bar; public class BarAction extends com.intellij.openapi.actionSystem.AnAction { }")
     myFixture.addClass("""package foo; class PackagePrivateActionBase extends com.intellij.openapi.actionSystem.AnAction {
                                         PackagePrivateActionBase() {}

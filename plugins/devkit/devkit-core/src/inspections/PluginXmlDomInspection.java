@@ -194,6 +194,9 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
       else if (element instanceof Action) {
         annotateAction((Action)element, holder, componentModuleRegistrationChecker);
       }
+      else if (element instanceof Synonym) {
+        annotateSynonym((Synonym)element, holder);
+      }
       else if (element instanceof Group) {
         annotateGroup((Group)element, holder);
       }
@@ -901,6 +904,22 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     Module module = action.getModule();
     if (componentModuleRegistrationChecker.isIdeaPlatformModule(module)) {
       componentModuleRegistrationChecker.checkProperXmlFileForClass(action, action.getClazz().getValue());
+    }
+  }
+
+  private static void annotateSynonym(Synonym synonym, DomElementAnnotationHolder holder) {
+    boolean hasKey = DomUtil.hasXml(synonym.getKey());
+    boolean hasText = DomUtil.hasXml(synonym.getText());
+
+    if (!hasKey && !hasText) {
+      holder.createProblem(synonym, ProblemHighlightType.GENERIC_ERROR,
+                           DevKitBundle.message("inspections.plugin.xml.synonym.missing.key.and.text"), null,
+                           new AddDomElementQuickFix<>(synonym.getKey()),
+                           new AddDomElementQuickFix<>(synonym.getText()));
+    }
+    else if (hasKey && hasText) {
+      holder.createProblem(synonym, ProblemHighlightType.GENERIC_ERROR,
+                           DevKitBundle.message("inspections.plugin.xml.synonym.both.key.and.text"), null);
     }
   }
 
