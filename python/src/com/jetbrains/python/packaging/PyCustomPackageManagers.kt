@@ -5,9 +5,7 @@ package com.jetbrains.python.packaging
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
