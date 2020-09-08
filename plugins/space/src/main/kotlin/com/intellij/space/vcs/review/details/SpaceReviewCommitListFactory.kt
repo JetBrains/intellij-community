@@ -1,7 +1,6 @@
 package com.intellij.space.vcs.review.details
 
 import circlet.code.api.CodeReviewRecord
-import circlet.code.api.GitCommitWithGraph
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ListSpeedSearch
 import com.intellij.ui.ScrollPaneFactory
@@ -16,7 +15,7 @@ import javax.swing.ScrollPaneConstants
 
 object SpaceReviewCommitListFactory {
   internal fun createCommitList(reviewDetailsVm: CrDetailsVm<out CodeReviewRecord>): JComponent {
-    val listModel: CollectionListModel<GitCommitWithGraph> = CollectionListModel()
+    val listModel: CollectionListModel<ReviewCommitListItem> = CollectionListModel()
 
     val commitList = JBList(listModel).apply {
       selectionMode = ListSelectionModel.SINGLE_SELECTION
@@ -30,21 +29,18 @@ object SpaceReviewCommitListFactory {
       ListUiUtil.Selection.installSelectionOnFocus(it)
       ListUiUtil.Selection.installSelectionOnRightClick(it)
 
-      ListSpeedSearch(it) { commit -> commit.commit.message }
+      ListSpeedSearch(it) { commit -> commit.commitWithGraph.commit.message }
     }
 
-    when (reviewDetailsVm) {
-      is MergeRequestDetailsVm -> {
-        reviewDetailsVm.commits.forEach(reviewDetailsVm.lifetime) { commits ->
-          listModel.removeAll()
-          val flatMap = commits?.map { it.commits }?.flatten() ?: emptyList()
-          listModel.add(flatMap)
-        }
+    reviewDetailsVm.commits.forEach(reviewDetailsVm.lifetime) { commits ->
+      listModel.removeAll()
+      if (commits != null) {
+        listModel.add(commits)
       }
     }
 
     commitList.addListSelectionListener {
-      reviewDetailsVm.selectedCommit.value = commitList.selectedValue
+      reviewDetailsVm.selectedCommit.value = commitList.selectedValue.commitWithGraph
     }
 
     return ScrollPaneFactory.createScrollPane(commitList, true).apply {

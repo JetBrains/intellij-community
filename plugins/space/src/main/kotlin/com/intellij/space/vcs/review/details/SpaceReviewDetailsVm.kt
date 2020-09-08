@@ -62,6 +62,20 @@ internal open class CrDetailsVm<R : CodeReviewRecord>(
     client.codeReview.getReviewDetails(review.value.project.identifier, review.value.identifier)
   }
 
+  val commits = mapInit(detailedInfo, null) { detailedInfo ->
+    val spaceReposByName = spaceReposInfo.associateBy(SpaceRepoInfo::name)
+
+    detailedInfo?.commits?.flatMap { revInReview ->
+      val repo = revInReview.repository
+      val repoInfo = spaceReposByName[repo.name]
+      val commitsInRepository = revInReview.commits.size
+
+      revInReview.commits.mapIndexed { index, gitCommitWithGraph ->
+        ReviewCommitListItem(gitCommitWithGraph, repo, index, commitsInRepository, repoInfo)
+      }
+    }
+  }
+
   val selectedCommit: MutableProperty<GitCommitWithGraph?> = Property.createMutable(null)
 }
 
@@ -80,15 +94,11 @@ internal class MergeRequestDetailsVm(
   val targetBranchInfo = cellProperty { branchPair.live.targetBranchInfo }
   val sourceBranchInfo = cellProperty { branchPair.live.sourceBranchInfo }
 
-  val commits = mapInit(detailedInfo, null) { detailedInfo ->
-    detailedInfo?.commits
-  }
-
   val changes = mapInit(commits, selectedCommit, null) { allCommits, selectedCommit ->
     val revisions = if (selectedCommit != null) {
       listOf(RevisionInReview(selectedCommit.repositoryName, selectedCommit.commit.id))
     }
-    else allCommits?.map { it.commits }?.flatten()?.toList()?.map { RevisionInReview(it.repositoryName, it.commit.id) }
+    else allCommits?.map { RevisionInReview(it.repositoryInReview.name, it.commitWithGraph.commit.id) }
 
     revisions?.let { client.codeReview.getReviewChanges(BatchInfo("0", 1024), projectKey.identifier, reviewId, it).data }
   }
@@ -102,7 +112,7 @@ internal class CommitSetReviewDetailsVm(
   refMrRecord: Ref<CommitSetReviewRecord>,
   client: KCircletClient
 ) : CrDetailsVm<CommitSetReviewRecord>(lifetime, ideaProject, spaceProjectInfo, spaceReposInfo, refMrRecord, client) {
-  val commitsByRepos = mapInit(detailedInfo, null) { _detailedInfo ->
+  val commitsByRepos: Property<Map<RepositoryInReview, List<GitCommitWithGraph>>?> = mapInit(detailedInfo, null) { _detailedInfo ->
     _detailedInfo?.commits?.associateBy(
       RevisionsInReview::repository,
       RevisionsInReview::commits
@@ -163,4 +173,14 @@ internal fun createReviewDetailsVm(lifetime: Lifetime,
     )
     else -> throw IllegalArgumentException("Unable to resolve CodeReviewRecord")
   }
+}
+
+data class ReviewCommitListItem(
+  val commitWithGraph: GitCommitWithGraph,
+  val repositoryInReview: RepositoryInReview,
+  val index: Int,
+  val commitsInRepository: Int,
+  val spaceRepoInfo: SpaceRepoInfo?
+) {
+  val inCurrentProject: Boolean = spaceRepoInfo != null
 }
