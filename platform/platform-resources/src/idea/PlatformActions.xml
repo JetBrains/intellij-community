@@ -977,8 +977,6 @@
           <action id="MacMessagesSequencesTest" internal="true" class="com.intellij.internal.validation.TestMacMessagesSequencesAction"/>
         </group>
         <action id="FocusDebugger" internal="true" class="com.intellij.internal.focus.FocusDebuggerAction"/>
-        <action id="DumpFocusableComponentHierarchyAction" internal="true"
-                class="com.intellij.internal.focus.DumpFocusableComponentHierarchyAction"/>
         <action id="FocusTracer" internal="true" class="com.intellij.internal.focus.FocusTracesAction">
           <keyboard-shortcut first-keystroke="control shift F11" keymap="$default"/>
         </action>
@@ -1034,6 +1032,9 @@
       <action id="ShowEditorHighlighterTokens" internal="true" class="com.intellij.openapi.editor.actions.ShowEditorHighlighterTokensAction"/>
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
+
+    <action id="DumpFocusableComponentHierarchyAction" internal="false"
+            class="com.intellij.ui.DumpFocusableComponentHierarchyAction"/>
 
     <group id="EditorContextBarMenu">
       <action id="EditorToggleUseSoftWrapsInPreview" class="com.intellij.openapi.editor.actions.ToggleUseSoftWrapsInPreviewAction"
