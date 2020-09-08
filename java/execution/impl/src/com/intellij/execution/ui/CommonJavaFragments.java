@@ -144,7 +144,7 @@ public final class CommonJavaFragments {
         }
 
         if (BundledJreProvider.BUNDLED.equals(value.getPresentableText())) {
-          if (index == -1) append("java ");
+          if (index == -1) append("java "); //NON-NLS
           append(ExecutionBundle.message("bundled.jre.name"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
           return;
         }
@@ -154,7 +154,7 @@ public final class CommonJavaFragments {
           return;
         }
         if (index == -1) {
-          append("java ");
+          append("java "); //NON-NLS
           String shortVersion = appendShortVersion(value);
           if (value.getPathOrName() != null && !value.getPathOrName().equals(shortVersion)) {
             append(value.getPathOrName() + " ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
