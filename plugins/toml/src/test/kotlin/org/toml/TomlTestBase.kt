@@ -5,10 +5,15 @@
 
 package org.toml
 
+import com.intellij.TestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.intellij.lang.annotations.Language
 
 abstract class TomlTestBase : BasePlatformTestCase() {
+    open val dataPath: String = ""
+
+    override fun getTestDataPath(): String = "${TestCase.testResourcesPath}/$dataPath"
+
     @Suppress("TestFunctionName")
     protected fun InlineFile(@Language("TOML") text: String, name: String = "example.toml") {
         myFixture.configureByText(name, text)
@@ -22,5 +27,13 @@ abstract class TomlTestBase : BasePlatformTestCase() {
         InlineFile(before)
         action()
         myFixture.checkResult(after)
+    }
+
+    protected val testName: String
+        get() = getTestName(true)
+
+    override fun getTestName(lowercaseFirstLetter: Boolean): String {
+        val camelCase = super.getTestName(lowercaseFirstLetter)
+        return TestCase.camelOrWordsToSnake(camelCase)
     }
 }

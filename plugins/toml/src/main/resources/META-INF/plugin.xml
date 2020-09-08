@@ -41,6 +41,9 @@
         <langCodeStyleSettingsProvider
             implementation="org.toml.ide.formatter.settings.TomlLanguageCodeStyleSettingsProvider"/>
 
+        <!-- Folding -->
+        <lang.foldingBuilder language="TOML" implementationClass="org.toml.ide.folding.TomlFoldingBuilder"/>
+
         <colorSettingsPage implementation="org.toml.ide.colors.TomlColorSettingsPage"/>
         <indexPatternBuilder implementation="org.toml.ide.todo.TomlTodoIndexPatternBuilder"/>
         <todoIndexer filetype="TOML" implementationClass="org.toml.ide.todo.TomlTodoIndexer"/>
