@@ -1,5 +1,5 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.svn
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.idea.svn.config
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Couple
@@ -16,17 +16,15 @@ import org.ini4j.spi.IniFormatter
 import org.jetbrains.idea.svn.SvnUtil.createUrl
 import org.jetbrains.idea.svn.api.Url
 import org.jetbrains.idea.svn.commandLine.SvnBindException
-import org.jetbrains.idea.svn.config.DefaultProxyGroup
-import org.jetbrains.idea.svn.config.ProxyGroup
 import java.io.IOException
 import java.io.PrintWriter
 import java.io.Writer
 import java.nio.file.Path
 import java.util.*
 
-private val LOG = logger<IdeaSVNConfigFile>()
+private val LOG = logger<SvnIniFile>()
 
-class IdeaSVNConfigFile(private val myPath: Path) {
+class SvnIniFile(private val myPath: Path) {
 
   private val myPatternsMap = mutableMapOf<String, String?>()
   private var myLatestUpdate = -1L
@@ -128,7 +126,7 @@ class IdeaSVNConfigFile(private val myPath: Path) {
     const val GROUPS_GROUP_NAME: String = "groups"
 
     @JvmStatic
-    fun getNewGroupName(host: String, configFile: IdeaSVNConfigFile): String {
+    fun getNewGroupName(host: String, configFile: SvnIniFile): String {
       var groupName = host
       val groups = configFile.allGroups
       while (StringUtil.isEmptyOrSpaces(groupName) || groups.containsKey(groupName)) {
@@ -138,7 +136,7 @@ class IdeaSVNConfigFile(private val myPath: Path) {
     }
 
     @JvmStatic
-    fun getPropertyIdea(host: String, serversFile: Couple<IdeaSVNConfigFile>, name: String): String? {
+    fun getPropertyIdea(host: String, serversFile: Couple<SvnIniFile>, name: String): String? {
       val groupName = getGroupName(getValues(serversFile, GROUPS_GROUP_NAME), host)
       if (groupName != null) {
         val hostProps = getValues(serversFile, groupName)
@@ -174,7 +172,7 @@ class IdeaSVNConfigFile(private val myPath: Path) {
     }
 
     @JvmStatic
-    fun getGroupForHost(host: String, serversFile: IdeaSVNConfigFile): String? {
+    fun getGroupForHost(host: String, serversFile: SvnIniFile): String? {
       val groups = serversFile.allGroups
       for ((key, value) in groups) {
         if (matches(value.patterns, host)) return key
@@ -193,11 +191,11 @@ class IdeaSVNConfigFile(private val myPath: Path) {
     fun isTurned(value: String?): Boolean = value == null || "yes".equals(value, true) || "on".equals(value, true) || "true".equals(value, true)
 
     @JvmStatic
-    fun getValue(files: Couple<IdeaSVNConfigFile>, groupName: String, propertyName: String): String? =
+    fun getValue(files: Couple<SvnIniFile>, groupName: String, propertyName: String): String? =
       files.second.getValue(groupName, propertyName) ?: files.first.getValue(groupName, propertyName)
 
     @JvmStatic
-    fun getValues(files: Couple<IdeaSVNConfigFile>, groupName: String): Map<String, String?> =
+    fun getValues(files: Couple<SvnIniFile>, groupName: String): Map<String, String?> =
       union(files.first.getValues(groupName), files.second.getValues(groupName))
   }
 }

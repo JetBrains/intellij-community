@@ -1,17 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.svn;
-
-import org.jetbrains.idea.svn.config.DefaultProxyGroup;
-import org.jetbrains.idea.svn.config.ProxyGroup;
+package org.jetbrains.idea.svn.config;
 
 import java.util.*;
 
-public class SvnServerFileManagerImpl {
+public class ServersFileManager {
   private final DefaultProxyGroup myDefaultGroup;
   private final Map<String, ProxyGroup> myGroups;
-  private final IdeaSVNConfigFile myFile;
+  private final SvnIniFile myFile;
 
-  public SvnServerFileManagerImpl(final IdeaSVNConfigFile file) {
+  public ServersFileManager(final SvnIniFile file) {
     myFile = file;
     myFile.updateGroups();
 

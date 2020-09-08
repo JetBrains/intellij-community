@@ -37,15 +37,15 @@ public class ProxyGroup {
   }
 
   public String getPort() {
-    return myProperties.get(SvnServerFileKeys.PORT);
+    return myProperties.get(ServersFileKeys.PORT);
   }
 
   public String getTimeout() {
-    return myProperties.get(SvnServerFileKeys.TIMEOUT);
+    return myProperties.get(ServersFileKeys.TIMEOUT);
   }
 
   public void setTimeout(final String value) {
-    myProperties.put(SvnServerFileKeys.TIMEOUT, value);
+    myProperties.put(ServersFileKeys.TIMEOUT, value);
   }
 
   public String getPatterns() {

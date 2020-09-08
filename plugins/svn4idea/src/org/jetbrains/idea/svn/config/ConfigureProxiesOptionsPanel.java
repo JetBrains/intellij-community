@@ -138,16 +138,16 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
   }
 
   private void fillMappings() {
-    addToKeyMappings(myServerField, SvnServerFileKeys.SERVER);
-    addToKeyMappings(myUserField, SvnServerFileKeys.USER);
-    addToKeyMappings(myPortField, SvnServerFileKeys.PORT);
-    addToKeyMappings(myPasswordField, SvnServerFileKeys.PASSWORD);
-    addToKeyMappings(myExceptions, SvnServerFileKeys.EXCEPTIONS);
-    addToKeyMappings(myTimeoutField, SvnServerFileKeys.TIMEOUT);
-    addToKeyMappings(myTrustDefaultCAsCheckBox, SvnServerFileKeys.SSL_TRUST_DEFAULT_CA);
-    addToKeyMappings(myClientCertificatePasswordField, SvnServerFileKeys.SSL_CLIENT_CERT_PASSWORD);
-    addToKeyMappings(myPathToCertificatesField, SvnServerFileKeys.SSL_AUTHORITY_FILES);
-    addToKeyMappings(myClientCertificatePathField, SvnServerFileKeys.SSL_CLIENT_CERT_FILE);
+    addToKeyMappings(myServerField, ServersFileKeys.SERVER);
+    addToKeyMappings(myUserField, ServersFileKeys.USER);
+    addToKeyMappings(myPortField, ServersFileKeys.PORT);
+    addToKeyMappings(myPasswordField, ServersFileKeys.PASSWORD);
+    addToKeyMappings(myExceptions, ServersFileKeys.EXCEPTIONS);
+    addToKeyMappings(myTimeoutField, ServersFileKeys.TIMEOUT);
+    addToKeyMappings(myTrustDefaultCAsCheckBox, ServersFileKeys.SSL_TRUST_DEFAULT_CA);
+    addToKeyMappings(myClientCertificatePasswordField, ServersFileKeys.SSL_CLIENT_CERT_PASSWORD);
+    addToKeyMappings(myPathToCertificatesField, ServersFileKeys.SSL_AUTHORITY_FILES);
+    addToKeyMappings(myClientCertificatePathField, ServersFileKeys.SSL_CLIENT_CERT_FILE);
   }
 
   private void addToKeyMappings(final JComponent component, final String key) {
@@ -234,7 +234,7 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
   }
 
   private static boolean booleanPropertySelected(final String value) {
-    return value != null && SvnServerFileKeys.YES_OPTIONS.contains(StringUtil.toLowerCase(value));
+    return value != null && ServersFileKeys.YES_OPTIONS.contains(StringUtil.toLowerCase(value));
   }
 
   public boolean isDefault() {

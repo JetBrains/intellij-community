@@ -13,7 +13,6 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnServerFileManagerImpl;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
@@ -23,7 +22,7 @@ import java.awt.event.KeyEvent;
 import java.util.*;
 
 public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
-  private final SvnServerFileManagerImpl myManager;
+  private final ServersFileManager myManager;
 
   private final CompositeRunnable myTreeUpdaterValidator;
   private final Runnable myValidator;
@@ -31,7 +30,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
   private final TestConnectionPerformer myTestConnectionPerformer;
   private ConfigureProxiesOptionsPanel myDefaultGroupPanel;
 
-  public SvnConfigureProxiesComponent(final SvnServerFileManagerImpl manager, final GroupsValidator validator, final TestConnectionPerformer testConnectionPerformer) {
+  public SvnConfigureProxiesComponent(final ServersFileManager manager, final GroupsValidator validator, final TestConnectionPerformer testConnectionPerformer) {
     myTestConnectionPerformer = testConnectionPerformer;
     myValidator = validator;
     myTreeUpdaterValidator = new CompositeRunnable(TREE_UPDATER, myValidator);

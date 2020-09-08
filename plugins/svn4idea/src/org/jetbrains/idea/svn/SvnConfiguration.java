@@ -14,7 +14,9 @@ import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.auth.*;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager;
-import org.jetbrains.idea.svn.config.SvnServerFileKeys;
+import org.jetbrains.idea.svn.config.ServersFileKeys;
+import org.jetbrains.idea.svn.config.ServersFileManager;
+import org.jetbrains.idea.svn.config.SvnIniFile;
 import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.jetbrains.idea.svn.update.MergeRootInfo;
 import org.jetbrains.idea.svn.update.UpdateRootInfo;
@@ -24,10 +26,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-import static org.jetbrains.idea.svn.IdeaSVNConfigFile.CONFIG_FILE_NAME;
-import static org.jetbrains.idea.svn.IdeaSVNConfigFile.SERVERS_FILE_NAME;
 import static org.jetbrains.idea.svn.SvnUtil.SYSTEM_CONFIGURATION_PATH;
 import static org.jetbrains.idea.svn.SvnUtil.USER_CONFIGURATION_PATH;
+import static org.jetbrains.idea.svn.config.SvnIniFile.CONFIG_FILE_NAME;
+import static org.jetbrains.idea.svn.config.SvnIniFile.SERVERS_FILE_NAME;
 
 @State(name = "SvnConfiguration", storages = @Storage(StoragePathMacros.WORKSPACE_FILE), reportStatistic = false)
 public class SvnConfiguration implements PersistentStateComponent<SvnConfigurationState>, Disposable {
@@ -50,8 +52,8 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
   private final Map<File, MergeRootInfo> myMergeRootInfos = new HashMap<>();
   private final Map<File, UpdateRootInfo> myUpdateRootInfos = new HashMap<>();
   private SvnInteractiveAuthenticationProvider myInteractiveProvider;
-  private IdeaSVNConfigFile myServersFile;
-  private IdeaSVNConfigFile myConfigFile;
+  private SvnIniFile myServersFile;
+  private SvnIniFile myConfigFile;
 
   @NotNull
   @Override
@@ -79,9 +81,9 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
   }
 
   @NotNull
-  private IdeaSVNConfigFile getServersFile() {
+  private SvnIniFile getServersFile() {
     if (myServersFile == null) {
-      myServersFile = new IdeaSVNConfigFile(getConfigurationPath().resolve(SERVERS_FILE_NAME));
+      myServersFile = new SvnIniFile(getConfigurationPath().resolve(SERVERS_FILE_NAME));
     }
     myServersFile.updateGroups();
 
@@ -89,9 +91,9 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
   }
 
   @NotNull
-  public IdeaSVNConfigFile getConfigFile() {
+  public SvnIniFile getConfigFile() {
     if (myConfigFile == null) {
-      myConfigFile = new IdeaSVNConfigFile(getConfigurationPath().resolve(CONFIG_FILE_NAME));
+      myConfigFile = new SvnIniFile(getConfigurationPath().resolve(CONFIG_FILE_NAME));
     }
 
     return myConfigFile;
@@ -111,7 +113,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
   // uses configuration directory property - it should be saved first
   public void setHttpTimeout(final long value) {
     long cut = value / 1000;
-    getServersFile().setValue("global", SvnServerFileKeys.TIMEOUT, String.valueOf(cut));
+    getServersFile().setValue("global", ServersFileKeys.TIMEOUT, String.valueOf(cut));
     getServersFile().save();
   }
 
@@ -356,9 +358,9 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
     return myInteractiveManager;
   }
 
-  public void getServerFilesManagers(final Ref<SvnServerFileManagerImpl> systemManager, final Ref<SvnServerFileManagerImpl> userManager) {
-    systemManager.set(new SvnServerFileManagerImpl(new IdeaSVNConfigFile(SYSTEM_CONFIGURATION_PATH.getValue().resolve(SERVERS_FILE_NAME))));
-    userManager.set(new SvnServerFileManagerImpl(getServersFile()));
+  public void getServerFilesManagers(final Ref<ServersFileManager> systemManager, final Ref<ServersFileManager> userManager) {
+    systemManager.set(new ServersFileManager(new SvnIniFile(SYSTEM_CONFIGURATION_PATH.getValue().resolve(SERVERS_FILE_NAME))));
+    userManager.set(new ServersFileManager(getServersFile()));
   }
 
   public boolean isAutoUpdateAfterCommit() {
