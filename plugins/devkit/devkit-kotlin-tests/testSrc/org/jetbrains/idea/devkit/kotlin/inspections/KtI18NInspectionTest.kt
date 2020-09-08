@@ -222,6 +222,26 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
   
+  fun testStringBuilder2() {
+    val inspection = I18nInspection()
+    inspection.setIgnoreForAllButNls(true)
+    inspection.setReportUnannotatedReferences(true)
+    myFixture.enableInspections(inspection)
+    myFixture.configureByText("Foo.kt", """
+        import org.jetbrains.annotations.*
+
+        fun foo() {
+          @Nls val buffer = StringBuilder()
+          fill(buffer)
+          consume(buffer.<error descr="[MISSING_DEPENDENCY_SUPERCLASS] Cannot access 'java.lang.Appendable' which is a supertype of 'java.lang.StringBuilder'. Check your module classpath for missing or conflicting dependencies">toString</error>())
+        }
+        
+        fun consume(@Nls <warning descr="[UNUSED_PARAMETER] Parameter 's' is never used">s</warning> : String) {}
+        fun fill(<warning descr="[UNUSED_PARAMETER] Parameter 'sb' is never used">sb</warning>: StringBuilder) {}
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+  
   fun testFunctionReturn() {
     myFixture.enableInspections(I18nInspection())
     myFixture.configureByText("Foo.kt", """

@@ -533,9 +533,10 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
           if (receiver instanceof UResolvable) {
             PsiElement receiverTarget = ((UResolvable)receiver).resolve();
             if (receiverTarget instanceof PsiModifierListOwner) {
-              NlsInfo stringBuilderNlsStatus = NlsInfo.forModifierListOwner((PsiModifierListOwner)receiverTarget);
-              if (stringBuilderNlsStatus.canBeUsedInLocalizedContext()) return false;
+              if (NlsInfo.forModifierListOwner((PsiModifierListOwner)receiverTarget).canBeUsedInLocalizedContext()) return false;
             }
+            ULocalVariable uVar = UastContextKt.toUElement(receiverTarget, ULocalVariable.class);
+            if (uVar != null && NlsInfo.fromUVariable(uVar).canBeUsedInLocalizedContext()) return false;
           }
         }
       }
