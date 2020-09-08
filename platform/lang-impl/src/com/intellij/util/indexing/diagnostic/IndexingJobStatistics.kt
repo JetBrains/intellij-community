@@ -28,6 +28,7 @@ class IndexingJobStatistics(val fileSetName: String) {
   data class StatsPerIndexer(
     val indexingTime: TimeStats,
     var numberOfFiles: Int,
+    var numberOfFilesIndexedByExtensions: Int,
     var totalBytes: BytesNumber
   )
 
@@ -47,10 +48,13 @@ class IndexingJobStatistics(val fileSetName: String) {
     numberOfIndexedFiles++
     fileStatistics.perIndexerTimes.forEach { (indexId, time) ->
       val stats = statsPerIndexer.getOrPut(indexId.name) {
-        StatsPerIndexer(TimeStats(), 0, 0)
+        StatsPerIndexer(TimeStats(), 0, 0, 0)
       }
       stats.indexingTime.addTime(time)
       stats.numberOfFiles++
+      if (indexId in fileStatistics.indexesProvidedByExtensions) {
+        stats.numberOfFilesIndexedByExtensions++
+      }
       stats.totalBytes += fileSize
     }
     val fileTypeName = fileStatistics.fileType.name

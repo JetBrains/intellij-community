@@ -1194,7 +1194,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           indexingResult = doIndexFileContent(project, resurrectedFileContent);
         }
         else {
-          indexingResult = new FileIndexingResult(true, Collections.emptyMap(), Collections.emptyMap(), file.getFileType());
+          indexingResult = new FileIndexingResult(true,
+                                                  Collections.emptyMap(),
+                                                  Collections.emptyMap(),
+                                                  file.getFileType(),
+                                                  Collections.emptySet());
         }
       }
       else {
@@ -1219,6 +1223,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         indexingResult.deletionTimesPerIndexer.values().stream().mapToLong(e -> e).sum();
       return new FileIndexingStatistics(indexingTime,
                                         indexingResult.fileType,
+                                        indexingResult.indexesProvidedByExtensions,
                                         ContainerUtil.union(indexingResult.updateTimesPerIndexer, indexingResult.deletionTimesPerIndexer));
     }
     finally {
@@ -1231,23 +1236,28 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     public final Map<ID<?, ?>, Long> updateTimesPerIndexer;
     public final Map<ID<?, ?>, Long> deletionTimesPerIndexer;
     public final FileType fileType;
+    public final Set<ID<?, ?>> indexesProvidedByExtensions;
 
     private FileIndexingResult(boolean setIndexedStatus,
                                @NotNull Map<ID<?, ?>, Long> updateTimesPerIndexer,
                                @NotNull Map<ID<?, ?>, Long> deletionTimesPerIndexer,
-                               @NotNull FileType type) {
+                               @NotNull FileType type,
+                               @NotNull Set<ID<?, ?>> indexesProvidedByExtensions) {
       this.setIndexedStatus = setIndexedStatus;
       this.updateTimesPerIndexer = updateTimesPerIndexer;
       this.deletionTimesPerIndexer = deletionTimesPerIndexer;
       fileType = type;
+      this.indexesProvidedByExtensions = indexesProvidedByExtensions;
     }
   }
 
   private static final class SingleIndexUpdateStats {
     public final long mapInputTime;
+    public final boolean indexWasProvidedByExtension;
 
-    private SingleIndexUpdateStats(long mapInputTime) {
+    private SingleIndexUpdateStats(long mapInputTime, boolean indexWasProvidedByExtension) {
       this.mapInputTime = mapInputTime;
+      this.indexWasProvidedByExtension = indexWasProvidedByExtension;
     }
   }
 
@@ -1258,6 +1268,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     Ref<Boolean> setIndexedStatus = Ref.create(Boolean.TRUE);
     Map<ID<?, ?>, Long> perIndexerUpdateTimes = new HashMap<>();
     Map<ID<?, ?>, Long> perIndexerDeletionTimes = new HashMap<>();
+    Set<ID<?,?>> indexesProvidedByExtensions = new HashSet<>();
     Ref<FileType> fileTypeRef = Ref.create();
 
     getFileTypeManager().freezeFileTypeTemporarilyIn(file, () -> {
@@ -1296,6 +1307,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
             }
             else {
               perIndexerUpdateTimes.put(indexId, updateStats.mapInputTime);
+              if (updateStats.indexWasProvidedByExtension) {
+                indexesProvidedByExtensions.add(indexId);
+              }
             }
             currentIndexedStates.remove(indexId);
           }
@@ -1329,7 +1343,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     });
 
     file.putUserData(IndexingDataKeys.REBUILD_REQUESTED, null);
-    return new FileIndexingResult(setIndexedStatus.get(), perIndexerUpdateTimes, perIndexerDeletionTimes, fileTypeRef.get());
+    return new FileIndexingResult(setIndexedStatus.get(),
+                                  perIndexerUpdateTimes,
+                                  perIndexerDeletionTimes,
+                                  fileTypeRef.get(),
+                                  indexesProvidedByExtensions);
   }
 
   private static byte @NotNull[] getBytesOrNull(@NotNull CachedFileContent content) {
@@ -1407,7 +1425,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           }
         });
       }
-      return new SingleIndexUpdateStats(mapInputTime);
+      boolean indexWasProvidedByExtension = storageUpdate instanceof IndexExtensionAwareIndexUpdateComputation &&
+                                            ((IndexExtensionAwareIndexUpdateComputation)storageUpdate).indexWasProvidedByExtension;
+      return new SingleIndexUpdateStats(mapInputTime, indexWasProvidedByExtension);
     }
     catch (RuntimeException exception) {
       Throwable causeToRebuildIndex = getCauseToRebuildIndex(exception);
