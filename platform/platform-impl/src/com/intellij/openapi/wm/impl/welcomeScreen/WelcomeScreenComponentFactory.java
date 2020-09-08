@@ -16,7 +16,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.BalloonLayout;
@@ -33,6 +32,7 @@ import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +44,7 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
+import java.util.Objects;
 
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenFocusManager.installFocusable;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.*;
@@ -208,13 +209,9 @@ public class WelcomeScreenComponentFactory {
     }
   }
 
-  static JComponent createActionLink(@NotNull Container parentContainer,
-                                     @Nls String text,
-                                     final String groupId,
-                                     Icon icon,
-                                     @Nullable Component focusOnLeft) {
-    final Ref<ActionLink> ref = new Ref<>(null);
-    AnAction action = new AnAction() {
+  @NotNull
+  public static AnAction createShowPopupAction(@NonNls @NotNull String groupId) {
+    return new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         ActionGroup configureGroup = (ActionGroup)ActionManager.getInstance().getAction(groupId);
@@ -223,24 +220,30 @@ public class WelcomeScreenComponentFactory {
           false, false, false, false, null, -1, null,
           ActionPlaces.WELCOME_SCREEN,
           new MenuItemPresentationFactory(true), false);
-        popup.showUnderneathOfLabel(ref.get());
+        popup.showUnderneathOf(Objects.requireNonNull(e.getInputEvent().getComponent()));
       }
     };
-    JComponent panel = createActionLink(text, icon, ref, action);
+  }
+
+  static JComponent createActionLink(@NotNull Container parentContainer,
+                                     @Nls String text,
+                                     final String groupId,
+                                     Icon icon,
+                                     @Nullable Component focusOnLeft) {
+    AnAction action = createShowPopupAction(groupId);
+    JComponent panel = wrapActionLink(new ActionLink(text, icon, action));
     installFocusable(parentContainer, panel, action, KeyEvent.VK_DOWN, KeyEvent.VK_UP, focusOnLeft);
     return panel;
   }
 
-  static JComponent createActionLink(@Nls String text, Icon icon, Ref<? super ActionLink> ref, AnAction action) {
-    ActionLink link = new ActionLink(text, icon, action);
-    ref.set(link);
+  static JComponent wrapActionLink(@NotNull ActionLink link) {
     // Don't allow focus, as the containing panel is going to be focusable.
     link.setFocusable(false);
     link.setPaintUnderline(false);
     link.setNormalColor(getLinkNormalColor());
     JActionLinkPanel panel = new JActionLinkPanel(link);
     panel.setBorder(JBUI.Borders.empty(4, 6));
-    if (!StringUtil.isEmptyOrSpaces(text)) {
+    if (!StringUtil.isEmptyOrSpaces(link.getText())) {
       panel.add(createArrow(link), BorderLayout.EAST);
     }
     return panel;
@@ -256,8 +259,7 @@ public class WelcomeScreenComponentFactory {
 
   @NotNull
   public static Component createEventLink(@NotNull @Nls String linkText, @NotNull Disposable parentDisposable) {
-    final Ref<ActionLink> actionLinkRef = new Ref<>();
-    final JComponent panel = createActionLink(linkText, AllIcons.Ide.Notification.NoEvents, actionLinkRef, new AnAction() {
+    final AnAction action = new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         BalloonLayout balloonLayout = WelcomeFrame.getInstance().getBalloonLayout();
@@ -269,12 +271,14 @@ public class WelcomeScreenComponentFactory {
           welcomeBalloonLayout.showPopup();
         }
       }
-    });
+    };
+    ActionLink actionLink = new ActionLink(linkText, AllIcons.Ide.Notification.NoEvents, action);
+    final JComponent panel = wrapActionLink(actionLink);
     panel.setVisible(false);
     Topics.subscribe(WelcomeBalloonLayoutImpl.BALLOON_NOTIFICATION_TOPIC, parentDisposable, types -> {
       if (!types.isEmpty()) {
         NotificationType type = Collections.max(types);
-        actionLinkRef.get().setIcon(IdeNotificationArea.createIconWithNotificationCount(actionLinkRef.get(), type, types.size(), false));
+        actionLink.setIcon(IdeNotificationArea.createIconWithNotificationCount(panel, type, types.size(), false));
       }
       panel.setVisible(!types.isEmpty());
     });
