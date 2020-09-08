@@ -22,8 +22,8 @@ import java.util.NoSuchElementException;
 
 /**
  * A mirror of highlighters which should be rendered on the error stripe.
- * */
-class ErrorStripeMarkersModel implements MarkupModelListener {
+ */
+class ErrorStripeMarkersModel {
   private static final Logger LOG = Logger.getInstance(ErrorStripeMarkersModel.class);
 
   private final EditorImpl myEditor;
@@ -47,29 +47,46 @@ class ErrorStripeMarkersModel implements MarkupModelListener {
     myListeners.forEach(listener -> listener.errorMarkerClicked(event));
   }
 
-  @Override
-  public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
-    if (isAvailable(highlighter))
-    if (highlighter.getErrorStripeMarkColor(myEditor.getColorsScheme()) != null) {
-      createErrorStripeMarker(highlighter);
+  public MarkupModelListener createMarkupListener(boolean documentMarkupModel) {
+    return new MarkupModelListener() {
+      @Override
+      public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
+        ErrorStripeMarkersModel.this.afterAdded(highlighter, documentMarkupModel);
+      }
+
+      @Override
+      public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
+        ErrorStripeMarkersModel.this.beforeRemoved(highlighter, documentMarkupModel);
+      }
+
+      @Override
+      public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleOrColorChanged) {
+        ErrorStripeMarkersModel.this.attributesChanged(highlighter, documentMarkupModel);
+      }
+    };
+  }
+
+  public void afterAdded(@NotNull RangeHighlighterEx highlighter, boolean documentMarkupModel) {
+    if (isAvailable(highlighter, documentMarkupModel)) {
+      if (highlighter.getErrorStripeMarkColor(myEditor.getColorsScheme()) != null) {
+        createErrorStripeMarker(highlighter);
+      }
     }
   }
 
-  @Override
-  public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
+  public void beforeRemoved(@NotNull RangeHighlighterEx highlighter, boolean documentMarkupModel) {
     ErrorStripeMarkerImpl errorStripeMarker = findErrorStripeMarker(highlighter);
     if (errorStripeMarker != null) {
       removeErrorStripeMarker(errorStripeMarker);
     }
     else {
-      LOG.assertTrue(!isAvailable(highlighter));
+      LOG.assertTrue(!isAvailable(highlighter, documentMarkupModel));
     }
   }
 
-  @Override
-  public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleOrColorChanged) {
+  public void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean documentMarkupModel) {
     ErrorStripeMarkerImpl existingErrorStripeMarker = findErrorStripeMarker(highlighter);
-    boolean hasErrorStripe = isAvailable(highlighter);
+    boolean hasErrorStripe = isAvailable(highlighter, documentMarkupModel);
 
     if (existingErrorStripeMarker == null) {
       if (hasErrorStripe) {
@@ -91,10 +108,11 @@ class ErrorStripeMarkersModel implements MarkupModelListener {
     myListeners.forEach(l -> l.errorMarkerChanged(new ErrorStripeEvent(myEditor, null, highlighter)));
   }
 
-  private boolean isAvailable(@NotNull RangeHighlighterEx highlighter) {
-    return highlighter.getEditorFilter().avaliableIn(myEditor) &&
-           myEditor.isHighlighterAvailable(highlighter) &&
-           highlighter.getErrorStripeMarkColor(myEditor.getColorsScheme()) != null;
+  private boolean isAvailable(@NotNull RangeHighlighterEx highlighter, boolean documentMarkupModel) {
+    if (documentMarkupModel) {
+      if (!highlighter.getEditorFilter().avaliableIn(myEditor) || !myEditor.isHighlighterAvailable(highlighter)) return false;
+    }
+    return highlighter.getErrorStripeMarkColor(myEditor.getColorsScheme()) != null;
   }
 
   private void createErrorStripeMarker(@NotNull RangeHighlighterEx highlighter) {
@@ -103,7 +121,7 @@ class ErrorStripeMarkersModel implements MarkupModelListener {
     RangeHighlighterEx ex = marker.getHighlighter();
     boolean isStickingToRight = (ex instanceof RangeMarkerImpl) && ((RangeMarkerImpl)highlighter).isStickingToRight();
     treeFor(ex).addInterval(marker, ex.getStartOffset(), ex.getEndOffset(),
-                                      ex.isGreedyToLeft(), ex.isGreedyToRight(), isStickingToRight, ex.getLayer());
+                            ex.isGreedyToLeft(), ex.isGreedyToRight(), isStickingToRight, ex.getLayer());
     myListeners.forEach(l -> l.errorMarkerChanged(new ErrorStripeEvent(myEditor, null, highlighter)));
   }
 
