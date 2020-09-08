@@ -62,9 +62,9 @@ public class XsltStackFrame extends XStackFrame {
   private void _customizePresentation(ColoredTextContainer component) {
     final Debugger.Frame frame = myFrame;
     if (frame instanceof Debugger.StyleFrame) {
-      component.append(((Debugger.StyleFrame)frame).getInstruction(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      component.append(((Debugger.StyleFrame)frame).getInstruction(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES); //NON-NLS
     } else if (frame instanceof Debugger.SourceFrame) {
-      component.append(((Debugger.SourceFrame)frame).getXPath(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      component.append(((Debugger.SourceFrame)frame).getXPath(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES); //NON-NLS
     }
     component.append(" ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
 
@@ -78,10 +78,10 @@ public class XsltStackFrame extends XStackFrame {
 
         component.setToolTipText(file.getPresentableUrl());
       } else {
-        component.append(frame.getURI() + ":" + frame.getLineNumber(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        component.append(frame.getURI() + ":" + frame.getLineNumber(), SimpleTextAttributes.REGULAR_ATTRIBUTES); //NON-NLS
       }
     } catch (Exception ignored) {
-      component.append(frame.getURI() + ":" + frame.getLineNumber(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      component.append(frame.getURI() + ":" + frame.getLineNumber(), SimpleTextAttributes.REGULAR_ATTRIBUTES); //NON-NLS
     }
   }
 
