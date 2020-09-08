@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.SearchTopHitProvider;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.Nls;
 
 public class SearchEverywhereCommandInfo {
@@ -27,6 +28,7 @@ public class SearchEverywhereCommandInfo {
     return contributor;
   }
 
+  @NlsSafe
   public String getCommandWithPrefix() {
     return SearchTopHitProvider.getTopHitAccelerator() + command;
   }

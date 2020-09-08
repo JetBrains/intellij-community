@@ -33,6 +33,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -62,6 +63,7 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -519,7 +521,7 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
     }
 
     private void updateTooltip() {
-      String shortcut = myShortcutSupplier.apply(getID());
+      @NlsSafe String shortcut = myShortcutSupplier.apply(getID());
       if (shortcut != null) {
         setToolTipText(shortcut);
       }
@@ -1097,7 +1099,7 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
       add(topPanel, BorderLayout.NORTH);
     }
 
-    public GroupTitleRenderer withDisplayedData(String title, Component itemContent) {
+    public GroupTitleRenderer withDisplayedData(@Nls String title, Component itemContent) {
       titleLabel.clear();
       titleLabel.append(title, SMALL_LABEL_ATTRS);
       Component prevContent = ((BorderLayout)getLayout()).getLayoutComponent(BorderLayout.CENTER);
@@ -1564,6 +1566,7 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
     }
   }
 
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   private String getNotFoundText() {
     return mySelectedTab.getContributor()
       .map(c -> IdeBundle.message("searcheverywhere.nothing.found.for.contributor.anywhere",

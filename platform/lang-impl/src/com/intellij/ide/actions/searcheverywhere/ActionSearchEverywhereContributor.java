@@ -19,6 +19,7 @@ import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions;
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.Processor;
@@ -68,6 +69,7 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
     return "Press " + altEnter + " to assign a shortcut";
   }
 
+  @NlsContexts.Checkbox
   public String includeNonProjectItemsText() {
     return IdeBundle.message("checkbox.disabled.included");
   }

@@ -34,6 +34,7 @@ public class OptionDescription implements Comparable<OptionDescription> {
     myGroupName = groupName;
   }
 
+  @Nls
   public String getOption() {
     return myOption;
   }

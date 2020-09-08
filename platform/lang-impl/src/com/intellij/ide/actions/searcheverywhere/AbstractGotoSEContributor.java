@@ -33,6 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -154,7 +155,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
   }
 
   @NotNull
-  protected List<AnAction> doGetActions(@NotNull String everywhereText,
+  protected List<AnAction> doGetActions(@NotNull @NlsContexts.Checkbox String everywhereText,
                                         @Nullable PersistentSearchEverywhereContributorFilter<?> filter,
                                         @NotNull Runnable onChanged) {
     if (myProject == null || filter == null) return Collections.emptyList();

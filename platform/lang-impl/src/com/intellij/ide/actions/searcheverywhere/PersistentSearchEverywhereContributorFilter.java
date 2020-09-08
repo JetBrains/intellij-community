@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.util.gotoByName.ChooseByNameFilterConfiguration;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -42,6 +43,7 @@ public class PersistentSearchEverywhereContributorFilter<T> {
     myPersistentConfiguration.setVisible(element, selected);
   }
 
+  @Nls
   public String getElementText(T element) {
     return myTextExtractor.apply(element);
   }
