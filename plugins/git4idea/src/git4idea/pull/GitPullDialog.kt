@@ -35,6 +35,7 @@ import git4idea.GitVcs
 import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitBranchUtil.equalBranches
 import git4idea.config.GitExecutableManager
+import git4idea.config.GitPullSettings
 import git4idea.config.GitVersionSpecialty.NO_VERIFY_SUPPORTED
 import git4idea.fetch.GitFetchSupport
 import git4idea.i18n.GitBundle
@@ -86,10 +87,14 @@ class GitPullDialog(private val project: Project,
 
   private val fetchSupport = project.service<GitFetchSupport>()
 
+  private val pullSettings = project.service<GitPullSettings>()
+
   init {
     updateTitle()
     setOKButtonText(GitBundle.message("pull.button"))
+    loadSettings()
     updateRemotesField()
+    updateUi()
     init()
   }
 
@@ -116,6 +121,15 @@ class GitPullDialog(private val project: Project,
     return mutableListOf()
   }
 
+  override fun doOKAction() {
+    try {
+      saveSettings()
+    }
+    finally {
+      super.doOKAction()
+    }
+  }
+
   fun gitRoot() = getSelectedRepository().root
 
   fun getSelectedRemote(): GitRemote = remoteField.item
@@ -127,6 +141,16 @@ class GitPullDialog(private val project: Project,
   }
 
   fun isCommitAfterMerge() = GitPullOption.NO_COMMIT !in selectedOptions
+
+  private fun loadSettings() {
+    branchField.item = pullSettings.branch
+    selectedOptions += pullSettings.options
+  }
+
+  private fun saveSettings() {
+    pullSettings.branch = branchField.item
+    pullSettings.options = selectedOptions
+  }
 
   private fun collectBranches() = repositories.associateWith { repository -> getBranchesInRepo(repository) }
 
@@ -160,24 +184,26 @@ class GitPullDialog(private val project: Project,
   }
 
   private fun updateBranchesField() {
-    val repository = getSelectedRepository()
-    val remote = getSelectedRemote()
+    var branchToSelect = branchField.item
 
-    val branches = GitBranchUtil.sortBranchNames(getRemoteBranches(repository, remote))
+    val repository = getSelectedRepository()
+
+    val branches = GitBranchUtil.sortBranchNames(getRemoteBranches(repository, getSelectedRemote()))
 
     val model = branchField.model as MutableCollectionComboBoxModel
-
     model.update(branches)
 
-    val matchingBranch = repository.currentBranch?.findTrackedBranch(repository)?.nameForRemoteOperations
-                         ?: branches.find { branch -> branch == repository.currentBranchName }
-                         ?: ""
+    if (branchToSelect == null || branchToSelect !in branches) {
+      branchToSelect = repository.currentBranch?.findTrackedBranch(repository)?.nameForRemoteOperations
+                       ?: branches.find { branch -> branch == repository.currentBranchName }
+                       ?: ""
+    }
 
-    if (matchingBranch.isEmpty()) {
+    if (branchToSelect.isEmpty()) {
       startTrackingValidation()
     }
 
-    model.selectedItem = matchingBranch
+    model.selectedItem = branchToSelect
   }
 
   private fun getRemoteBranches(repository: GitRepository, remote: GitRemote): List<String> {
