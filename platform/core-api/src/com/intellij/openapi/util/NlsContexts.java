@@ -20,7 +20,7 @@ public class NlsContexts {
 
   @NlsContext(prefix = "dialog.message")
   @Nls(capitalization = Nls.Capitalization.Sentence)
-  @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD})
+  @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD, ElementType.LOCAL_VARIABLE})
   public @interface DialogMessage {
   }
 
