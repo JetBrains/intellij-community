@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Objects;
 
 public class GitBranchesComboBoxAction extends ComboBoxAction {
 
@@ -26,18 +27,17 @@ public class GitBranchesComboBoxAction extends ComboBoxAction {
       presentation.setEnabledAndVisible(false);
       return;
     }
-
     GitRepository repo = GitBranchUtil.getCurrentRepository(project);
-    if (repo != null) {
-      String branchName = GitBranchUtil.getDisplayableBranchText(repo);
-      String name = DvcsBranchUtil.shortenBranchName(branchName);
-      presentation.setText(name);
-      presentation.setIcon(AllIcons.Vcs.Branch);
-      presentation.setEnabledAndVisible(true);
-    }
-    else {
+    if (repo == null) {
       presentation.setEnabledAndVisible(false);
+      return;
     }
+
+    String branchName = GitBranchUtil.getDisplayableBranchText(repo);
+    String name = DvcsBranchUtil.shortenBranchName(branchName);
+    presentation.setText(name);
+    presentation.setIcon(AllIcons.Vcs.Branch);
+    presentation.setEnabledAndVisible(true);
   }
 
   @Override
@@ -46,12 +46,11 @@ public class GitBranchesComboBoxAction extends ComboBoxAction {
   }
 
   @Override
-  @NotNull
-  protected ListPopup createActionPopup(@NotNull DataContext context, @NotNull JComponent component, @Nullable Runnable disposeCallback) {
-    Project project = context.getData(CommonDataKeys.PROJECT);
-    assert project != null;
-    GitRepository repo = GitBranchUtil.getCurrentRepository(project);
-    assert repo != null;
+  protected @NotNull ListPopup createActionPopup(@NotNull DataContext context,
+                                                 @NotNull JComponent component,
+                                                 @Nullable Runnable disposeCallback) {
+    Project project = Objects.requireNonNull(context.getData(CommonDataKeys.PROJECT));
+    GitRepository repo = Objects.requireNonNull(GitBranchUtil.getCurrentRepository(project));
 
     ListPopup popup = GitBranchPopup.getInstance(project, repo).asListPopup();
     popup.addListener(new JBPopupListener() {
@@ -62,7 +61,6 @@ public class GitBranchesComboBoxAction extends ComboBoxAction {
         }
       }
     });
-
     return popup;
   }
 }
