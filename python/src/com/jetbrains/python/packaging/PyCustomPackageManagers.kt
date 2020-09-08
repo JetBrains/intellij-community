@@ -26,17 +26,6 @@ interface PyPackageManagerProvider {
   }
 }
 
-@ApiStatus.Experimental
-interface PyPackageManagementServiceProvider {
-
-  fun tryCreateForSdk(project: Project, sdk: Sdk): PyPackageManagementService?
-
-  companion object {
-    @JvmField
-    val EP_NAME = ExtensionPointName.create<PyPackageManagementServiceProvider>("Pythonid.packageManagementServiceProvider")
-  }
-}
-
 private val LOG: Logger = Logger.getInstance("#com.jetbrains.python.packaging.PyCustomPackageManagers")
 
 /**

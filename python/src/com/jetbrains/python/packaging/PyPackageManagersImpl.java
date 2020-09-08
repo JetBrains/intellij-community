@@ -9,6 +9,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.packaging.ui.PyCondaManagementService;
 import com.jetbrains.python.packaging.ui.PyPackageManagementService;
+import com.jetbrains.python.sdk.PySdkProvider;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
@@ -70,8 +71,8 @@ public class PyPackageManagersImpl extends PyPackageManagers implements Disposab
 
   @Override
   public PyPackageManagementService getManagementService(Project project, Sdk sdk) {
-    Optional<PyPackageManagementService> provided = PyPackageManagementServiceProvider.EP_NAME.extensions()
-      .map(ext -> ext.tryCreateForSdk(project, sdk))
+    Optional<PyPackageManagementService> provided = PySdkProvider.EP_NAME.extensions()
+      .map(ext -> ext.tryCreatePackageManagementServiceForSdk(project, sdk))
       .filter(service -> service != null)
       .findFirst();
 

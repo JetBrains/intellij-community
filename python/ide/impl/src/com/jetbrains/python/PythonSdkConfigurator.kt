@@ -128,9 +128,9 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
 
     if (indicator.isCanceled) return
 
-    PyConfigureSdkExtension.EP_NAME.extensions().asSequence().forEach { extension ->
-      indicator.text = extension.progressText
-      LOGGER.debug(extension.progressText)
+    PySdkProvider.EP_NAME.extensions().asSequence().forEach { extension ->
+      indicator.text = extension.configureSdkProgressText
+      LOGGER.debug(extension.configureSdkProgressText)
       guardIndicator(indicator) { extension.configureSdk(project, module, existingSdks) }?.let {
         onEdt(project) {
           SdkConfigurationUtil.addSdk(it)

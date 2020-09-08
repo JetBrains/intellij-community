@@ -433,24 +433,9 @@
                     interface="com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer"
                     dynamic="true"/>
 
-    <!-- Experimental packaging EP, avoid using them -->
-    <extensionPoint qualifiedName="Pythonid.configureSdkExtension"
-                    interface="com.jetbrains.python.sdk.PyConfigureSdkExtension"
-                    dynamic="true"/>
-    <extensionPoint qualifiedName="Pythonid.addNewEnvironmentPanelProvider"
-                    interface="com.jetbrains.python.newProject.steps.PyAddNewEnvironmentPanelProvider"
-                    dynamic="true"/>
-    <extensionPoint qualifiedName="Pythonid.interpreterInspectionExtension"
-                    interface="com.jetbrains.python.inspections.PyInterpreterInspectionExtension"
-                    dynamic="true"/>
-    <extensionPoint qualifiedName="Pythonid.sdkRendering"
-                    interface="com.jetbrains.python.sdk.PySdkRenderingExtension"
-                    dynamic="true"/>
-    <extensionPoint qualifiedName="Pythonid.packageManagementServiceProvider"
-                    interface="com.jetbrains.python.packaging.PyPackageManagementServiceProvider"
-                    dynamic="true"/>
-    <extensionPoint qualifiedName="Pythonid.sdkAdditionalDataLoader"
-                    interface="com.jetbrains.python.sdk.PySdkAdditionalDataLoader"
+    <!-- Experimental sdk EP, avoid using it -->
+    <extensionPoint qualifiedName="Pythonid.pySdkProvider"
+                    interface="com.jetbrains.python.sdk.PySdkProvider"
                     dynamic="true"/>
   </extensionPoints>
 
@@ -529,13 +514,8 @@
     <condaSdkCustomizer implementation="com.jetbrains.python.sdk.conda.PyCondaSdkDefaultCustomizer"/>
 
     <!-- Experimental packaging extensions-->
-    <addNewEnvironmentPanelProvider implementation="com.jetbrains.python.sdk.pipenv.PyPipEnvAddNewEnvironmentPanel"/>
-    <configureSdkExtension implementation="com.jetbrains.python.sdk.pipenv.PyPipenvConfigureSdkExtension"/>
-    <interpreterInspectionExtension implementation="com.jetbrains.python.sdk.pipenv.PyPipenvInterpreterInspectionExtension"/>
-    <sdkRendering implementation="com.jetbrains.python.sdk.pipenv.PyPipenvSdkRendering"/>
+    <pySdkProvider implementation="com.jetbrains.python.sdk.pipenv.PyPipEnvSdkProvider"/>
     <packageManagerProvider implementation="com.jetbrains.python.sdk.pipenv.PyPipenvPackageManagerProvider"/>
-    <packageManagementServiceProvider implementation="com.jetbrains.python.packaging.pipenv.PyPipEnvPackageManagementServiceProvider"/>
-    <sdkAdditionalDataLoader implementation="com.jetbrains.python.sdk.pipenv.PyPipenvSdkAdditionalDataLoader"/>
   </extensions>
 
   <actions>

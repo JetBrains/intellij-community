@@ -283,8 +283,8 @@ public final class PythonSdkType extends SdkType {
       }
       // TODO we should have "remote" SDK data with unknown credentials anyway!
     }
-    return PySdkAdditionalDataLoader.EP_NAME.extensions()
-      .map(ext -> ext.loadForSdk(additional))
+    return PySdkProvider.EP_NAME.extensions()
+      .map(ext -> ext.loadAdditionalDataForSdk(additional))
       .filter(data -> data != null)
       .findFirst()
       .orElseGet(() -> PythonSdkAdditionalData.load(currentSdk, additional));
