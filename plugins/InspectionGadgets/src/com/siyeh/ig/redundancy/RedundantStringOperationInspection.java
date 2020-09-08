@@ -849,7 +849,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiNewExpression expression = (PsiNewExpression)descriptor.getPsiElement();
       final PsiExpressionList argList = expression.getArgumentList();
-      assert argList != null;
+      if (argList == null) return;
       final PsiExpression[] args = argList.getExpressions();
       CommentTracker commentTracker = new CommentTracker();
       final String argText = (args.length == 1) ? commentTracker.text(args[0]) : "\"\"";
