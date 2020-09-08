@@ -134,9 +134,8 @@ class PersistentThreeComponentSplitter(
     lastSize = (lastProportion * (totalSize - 2 * dividerWidth)).roundToInt()
   }
 
-  private fun dump(): String {
-    return "totalMinSize=$totalMinSize, totalSize=$totalSize, firstSize=($firstSize, visible=${firstVisible()}), lastSize=($lastSize, visible=${lastVisible()})"
-  }
+  @NonNls private fun dump() =
+    "totalMinSize=$totalMinSize, totalSize=$totalSize, firstSize=($firstSize, visible=${firstVisible()}), lastSize=($lastSize, visible=${lastVisible()})"
 
   private fun checkSize(): Boolean {
     return totalMinSize < totalSize && (firstSize > 0 || !firstVisible()) && (lastSize > 0 || !lastVisible())

@@ -67,7 +67,7 @@ class NonProportionalOnePixelSplitter(
     }
   }
 
-  private fun dump() = "$size=$size, minSize=${minSize}"
+  @NonNls private fun dump() = "$size=$size, minSize=${minSize}"
 
   private fun checkSize() = size != 0 && minSize < size
 
