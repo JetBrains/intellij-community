@@ -15,6 +15,7 @@ import com.intellij.ui.table.TableView;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,8 +96,10 @@ public class FileNestingInProjectViewDialog extends DialogWrapper {
   }
 
   private static TableView<CombinedNestingRule> createTable() {
+    @Nls String childColumn = LangBundle.message("child.file.suffix.column.name");
+    @Nls String parentColumn = LangBundle.message("parent.file.suffix.column.name");
     final ListTableModel<CombinedNestingRule> model = new ListTableModel<>(
-      new ColumnInfo<CombinedNestingRule, String>("Parent file suffix") {
+      new ColumnInfo<CombinedNestingRule, String>(parentColumn) {
         @Override
         public int getWidth(JTable table) {
           return JBUIScale.scale(125);
@@ -117,7 +120,7 @@ public class FileNestingInProjectViewDialog extends DialogWrapper {
           rule.parentSuffix = value.trim();
         }
       },
-      new ColumnInfo<CombinedNestingRule, String>("Child file suffix") {
+      new ColumnInfo<CombinedNestingRule, String>(childColumn) {
         @Override
         public boolean isCellEditable(CombinedNestingRule rule) {
           return true;
