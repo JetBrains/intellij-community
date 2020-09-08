@@ -231,6 +231,7 @@ public interface IdeActions {
   @NonNls String GROUP_EDITOR_BIDI_TEXT_DIRECTION = "EditorBidiTextDirection";
 
   @NonNls String ACTION_TOGGLE_LINE_BREAKPOINT = "ToggleLineBreakpoint";
+  @NonNls String ACTION_RUN_TO_CURSOR = "RunToCursor";
 
   @NonNls String ACTION_REFRESH = "Refresh";
 

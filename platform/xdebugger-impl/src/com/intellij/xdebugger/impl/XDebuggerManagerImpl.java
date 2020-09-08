@@ -20,6 +20,8 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -468,7 +470,10 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
         if (session != null && lineNumber >= 0) {
           XSourcePositionImpl position = XSourcePositionImpl.create(((EditorEx)e.getEditor()).getVirtualFile(), lineNumber);
           if (position != null) {
+            ActionManagerEx am = ActionManagerEx.getInstanceEx();
+            am.fireBeforeActionPerformed(IdeActions.ACTION_RUN_TO_CURSOR, e.getMouseEvent());
             session.runToPosition(position, false);
+            am.fireAfterActionPerformed(IdeActions.ACTION_RUN_TO_CURSOR, e.getMouseEvent());
             e.consume();
           }
         }

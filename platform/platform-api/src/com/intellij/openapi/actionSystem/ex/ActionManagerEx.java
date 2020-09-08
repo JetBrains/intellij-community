@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandlerBean;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.util.TriConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,11 +87,23 @@ public abstract class ActionManagerEx extends ActionManager {
   public abstract boolean isTransparentOnlyActionsUpdateNow();
 
   public void fireBeforeActionPerformed(@NotNull String actionId, @NotNull InputEvent event) {
-    final AnAction action = getAction(actionId);
-    if (action != null) {
-      AnActionEvent e = AnActionEvent.createFromAnAction(action, event, ActionPlaces.UNKNOWN, DataManager.getInstance().getDataContext());
-      fireBeforeActionPerformed(action, DataManager.getInstance().getDataContext(), e);
-    }
+    fireActionPerformed(actionId, event, this::fireBeforeActionPerformed);
+  }
+
+  public void fireAfterActionPerformed(@NotNull String actionId, @NotNull InputEvent event) {
+    fireActionPerformed(actionId, event, this::fireAfterActionPerformed);
+  }
+
+  private void fireActionPerformed(@NotNull String actionId,
+                                   @NotNull InputEvent event,
+                                   TriConsumer<AnAction, DataContext, AnActionEvent> firingFunction) {
+    DataManager.getInstance().getDataContextFromFocusAsync().onSuccess(dataContext -> {
+      final AnAction action = getAction(actionId);
+      if (action != null) {
+        AnActionEvent e = AnActionEvent.createFromAnAction(action, event, ActionPlaces.UNKNOWN, dataContext);
+        firingFunction.accept(action, dataContext, e);
+      }
+    });
   }
 
   /**
