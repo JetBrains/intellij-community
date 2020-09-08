@@ -16,8 +16,10 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
@@ -42,13 +44,13 @@ public final class GrPullUpConflictsUtil {
     return checkConflicts(infos, subclass, superClass, targetPackage, targetDirectory, interfaceContainmentVerifier, true);
   }
 
-  public static MultiMap<PsiElement, String> checkConflicts(final MemberInfoBase<? extends GrMember>[] infos,
-                                                            @NotNull final PsiClass subclass,
-                                                            @Nullable PsiClass superClass,
-                                                            @NotNull final PsiPackage targetPackage,
-                                                            @NotNull PsiDirectory targetDirectory,
-                                                            final InterfaceContainmentVerifier interfaceContainmentVerifier,
-                                                            boolean movedMembers2Super) {
+  public static MultiMap<PsiElement, @Nls String> checkConflicts(final MemberInfoBase<? extends GrMember>[] infos,
+                                                                 @NotNull final PsiClass subclass,
+                                                                 @Nullable PsiClass superClass,
+                                                                 @NotNull final PsiPackage targetPackage,
+                                                                 @NotNull PsiDirectory targetDirectory,
+                                                                 final InterfaceContainmentVerifier interfaceContainmentVerifier,
+                                                                 boolean movedMembers2Super) {
     final PsiElement targetRepresentativeElement;
     final boolean isInterfaceTarget;
     if (superClass != null) {
@@ -88,7 +90,7 @@ public final class GrPullUpConflictsUtil {
       }
     }
 
-    final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    final MultiMap<PsiElement, @Nls String> conflicts = new MultiMap<>();
 
     GrRefactoringConflictsUtil.analyzeAccessibilityConflicts(movedMembers, superClass, conflicts, VisibilityUtil.ESCALATE_VISIBILITY, targetRepresentativeElement,
                                                              allAbstractMethods);
@@ -104,7 +106,10 @@ public final class GrPullUpConflictsUtil {
         assert qualifiedName != null;
         if (superClass.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
           if (!Comparing.strEqual(StringUtil.getPackageName(qualifiedName), targetPackage.getQualifiedName())) {
-            conflicts.putValue(superClass, RefactoringUIUtil.getDescription(superClass, true) + " won't be accessible from " +RefactoringUIUtil.getDescription(targetPackage, true));
+            conflicts.putValue(superClass,
+                               GroovyBundle.message("pull.up.wont.be.accessible.from",
+                                                    RefactoringUIUtil.getDescription(superClass, true),
+                                                    RefactoringUIUtil.getDescription(targetPackage, true)));
           }
         }
       }
@@ -155,22 +160,18 @@ public final class GrPullUpConflictsUtil {
               isAccessible = true;
             }
             if (isAccessible) {
-              String message = RefactoringUIUtil.getDescription(abstractMethod, false) +
-                               " uses " +
-                               RefactoringUIUtil.getDescription(classMember, true) +
-                               " which won't be accessible from the subclass.";
-              message = StringUtil.capitalize(message);
-              conflicts.putValue(classMember, message);
+              String message =
+                GroovyBundle.message("pull.up.wont.be.accessible.from.the.subclass", RefactoringUIUtil.getDescription(abstractMethod, false), RefactoringUIUtil.getDescription(classMember, true));
+              conflicts.putValue(classMember, StringUtil.capitalize(message));
             }
           }
         }
       });
       if (abstractMethod.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) && toDifferentPackage) {
         if (!isInterfaceTarget) {
-          String message = "Can't make " + RefactoringUIUtil.getDescription(abstractMethod, false) +
-                           " abstract as it won't be accessible from the subclass.";
-          message = StringUtil.capitalize(message);
-          conflicts.putValue(abstractMethod, message);
+          String message =
+            GroovyBundle.message("pull.up.abstract.wont.be.accessible.from", RefactoringUIUtil.getDescription(abstractMethod, false));
+          conflicts.putValue(abstractMethod, StringUtil.capitalize(message));
         }
       }
     }
@@ -356,6 +357,4 @@ public final class GrPullUpConflictsUtil {
       return methodBySignature != null;
     }
   }
-
-
 }

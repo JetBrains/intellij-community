@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.java18StreamApi;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.reference.SoftLazyValue;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -27,22 +28,22 @@ import java.util.Set;
 public interface StreamApiConstants {
   String JAVA_UTIL_STREAM_STREAM = "java.util.stream.Stream";
 
-  String ANY_MATCH = "anyMatch";
-  String ALL_MATCH = "allMatch";
-  String MAP = "map";
-  String FILTER = "filter";
-  String FOR_EACH = "forEach";
-  String FIND_FIRST = "findFirst";
-  String LIMIT = "limit";
-  String FLAT_MAP = "flatMap";
+  @NlsSafe String ANY_MATCH = "anyMatch";
+  @NlsSafe String ALL_MATCH = "allMatch";
+  @NlsSafe String MAP = "map";
+  @NlsSafe String FILTER = "filter";
+  @NlsSafe String FOR_EACH = "forEach";
+  @NlsSafe String FIND_FIRST = "findFirst";
+  @NlsSafe String LIMIT = "limit";
+  @NlsSafe String FLAT_MAP = "flatMap";
 
-  String FAKE_FIND_MATCHED = "#findMatched";
-  String FAKE_FIND_MATCHED_PATTERN = "filter(%s).findFirst().get()";
-  String FAKE_FIND_MATCHED_WITH_DEFAULT_PATTERN = "filter(%s).findFirst().orElseGet(() -> %s)";
+  @NlsSafe String FAKE_FIND_MATCHED = "#findMatched";
+  @NlsSafe String FAKE_FIND_MATCHED_PATTERN = "filter(%s).findFirst().get()";
+  @NlsSafe String FAKE_FIND_MATCHED_WITH_DEFAULT_PATTERN = "filter(%s).findFirst().orElseGet(() -> %s)";
 
-  String JAVA_UTIL_STREAM_COLLECTORS = "java.util.stream.Collectors";
+  @NlsSafe String JAVA_UTIL_STREAM_COLLECTORS = "java.util.stream.Collectors";
 
-  SoftLazyValue<Set<String>> STREAM_STREAM_API_METHODS = new SoftLazyValue<Set<String>>() {
+  SoftLazyValue<Set<String>> STREAM_STREAM_API_METHODS = new SoftLazyValue<>() {
     @NotNull
     @Override
     protected Set<String> compute() {
@@ -50,6 +51,6 @@ public interface StreamApiConstants {
     }
   };
 
-  String SKIP = "skip";
-  String TO_ARRAY = "toArray";
+  @NlsSafe String SKIP = "skip";
+  @NlsSafe String TO_ARRAY = "toArray";
 }

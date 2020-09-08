@@ -24,6 +24,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
@@ -474,8 +475,8 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     }
     Collection<PsiStatement> exitPoints = tb.findExitPoints(controlFlow);
     if (exitPoints == null) return null;
-    boolean onlyNonLabeledContinue = StreamEx.of(exitPoints)
-      .allMatch(statement -> statement instanceof PsiContinueStatement && ((PsiContinueStatement)statement).getLabelIdentifier() == null);
+    boolean onlyNonLabeledContinue = ContainerUtil.and(
+      exitPoints, statement -> statement instanceof PsiContinueStatement && ((PsiContinueStatement)statement).getLabelIdentifier() == null);
     if (onlyNonLabeledContinue && nonFinalVariables.isEmpty()) {
       boolean shouldWarn = suggestForeach &&
                            (replaceTrivialForEach ||
@@ -536,25 +537,27 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
   private static BaseStreamApiMigration findMigrationForReturn(PsiStatement statement, TerminalBlock tb, boolean replaceTrivialForEach) {
     boolean shouldWarn = replaceTrivialForEach || tb.hasOperations();
     PsiReturnStatement returnStatement = (PsiReturnStatement)tb.getSingleStatement();
-    PsiExpression value = returnStatement.getReturnValue();
+    if (returnStatement == null) return null;
+    PsiExpression value = PsiUtil.skipParenthesizedExprDown(returnStatement.getReturnValue());
     PsiReturnStatement nextReturnStatement = ControlFlowUtils.getNextReturnStatement(statement);
-    if (nextReturnStatement != null &&
-        (ExpressionUtils.isLiteral(value, Boolean.TRUE) || ExpressionUtils.isLiteral(value, Boolean.FALSE))) {
-      boolean foundResult = (boolean)((PsiLiteralExpression)value).getValue();
-      String methodName;
-      if (foundResult) {
-        methodName = "anyMatch";
-      }
-      else {
-        methodName = "noneMatch";
-        FilterOp lastFilter = tb.getLastOperation(FilterOp.class);
-        if (lastFilter != null && (lastFilter.isNegated() ^ BoolUtils.isNegation(lastFilter.getExpression()))) {
-          methodName = "allMatch";
+    if (nextReturnStatement != null && value instanceof PsiLiteralExpression) {
+      Boolean foundResult = tryCast(((PsiLiteralExpression)value).getValue(), Boolean.class);
+      if (foundResult != null) {
+        String methodName;
+        if (foundResult) {
+          methodName = "anyMatch";
         }
-      }
-      if (nextReturnStatement.getParent() == statement.getParent() ||
-          ExpressionUtils.isLiteral(nextReturnStatement.getReturnValue(), !foundResult)) {
-        return new MatchMigration(shouldWarn, methodName);
+        else {
+          methodName = "noneMatch";
+          FilterOp lastFilter = tb.getLastOperation(FilterOp.class);
+          if (lastFilter != null && (lastFilter.isNegated() ^ BoolUtils.isNegation(lastFilter.getExpression()))) {
+            methodName = "allMatch";
+          }
+        }
+        if (nextReturnStatement.getParent() == statement.getParent() ||
+            ExpressionUtils.isLiteral(nextReturnStatement.getReturnValue(), !foundResult)) {
+          return new MatchMigration(shouldWarn, methodName);
+        }
       }
     }
     if (!VariableAccessUtils.variableIsUsed(tb.getVariable(), value)) {
@@ -1022,7 +1025,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
       }
       PsiMethodCallExpression maybeReadLines = tryCast(PsiUtil.skipParenthesizedExprDown(lineVar.getInitializer()), PsiMethodCallExpression.class);
       if (!BUFFERED_READER_READ_LINE.test(maybeReadLines)) return null;
-      PsiExpression reader = maybeReadLines.getMethodExpression().getQualifierExpression();
+      PsiExpression reader = PsiUtil.skipParenthesizedExprDown(maybeReadLines.getMethodExpression().getQualifierExpression());
       PsiReferenceExpression readerRef = tryCast(reader, PsiReferenceExpression.class);
       if (readerRef == null) return null;
       PsiVariable readerVar = tryCast(readerRef.resolve(), PsiVariable.class);

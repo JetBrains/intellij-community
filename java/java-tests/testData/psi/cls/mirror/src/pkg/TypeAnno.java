@@ -37,6 +37,8 @@ public interface TypeAnno<@TA(10) T extends @TA(11) Object> extends @TA(12) Seri
   <M extends @TA(0) CharSequence & @TA(1) Serializable> @TA(2) M getTypeParameter2();
   
   <M extends @TA(0) Object & @TA(1) List<@TA(2) ? super @TA(3) String @TA(4) []>, N extends @TA(5) Object, P extends Object> @TA(6) M getTypeParameterComplex();
+  
+  <@TA(0) @TP(1) M extends @TA(2) CharSequence, @TA(3) N extends @TA(4) Number, @TP(5) P> @TA(6) P getTypeParametersAnnotated();
 
   @TA(0) Outer.@TA(1) Middle.@TA(2) Inner getInner();
   
@@ -70,4 +72,9 @@ class Outer<O> {
 @Target(ElementType.TYPE_USE)
 @interface TA {
   int value() default 0;
+}
+
+@Target(ElementType.TYPE_PARAMETER)
+@interface TP {
+  int value();
 }

@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -12,13 +13,14 @@ import javax.swing.*;
 /**
  * @author Bas Leijdekkers
  */
-public class ToolbarLabel extends AnAction implements CustomComponentAction {
+class ToolbarLabel extends AnAction implements CustomComponentAction {
 
-  private final String myText;
+  @NlsContexts.Label private final String myText;
 
-  public ToolbarLabel(String text) {
+  ToolbarLabel(@NlsContexts.Label String text) {
     myText = text;
   }
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {}
 

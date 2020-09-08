@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -29,7 +31,7 @@ public abstract class PanelWithButtons extends JPanel {
     JComponent mainComponent = createMainComponent();
     JButton[] buttons = createButtons();
 
-    String labelText = getLabelText();
+    @Nls String labelText = getLabelText();
     if (labelText != null) {
       setBorder(IdeBorderFactory.createTitledBorder(labelText, false));
     }
@@ -50,7 +52,7 @@ public abstract class PanelWithButtons extends JPanel {
   }
 
   @Nullable
-  protected abstract String getLabelText();
+  protected abstract @NlsContexts.Label String getLabelText();
 
   protected abstract JButton[] createButtons();
 

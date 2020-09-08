@@ -20,6 +20,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -55,13 +56,13 @@ abstract class SafeDeleteJavaCalleeChooser extends CallerChooserBase<PsiElement>
   protected abstract ArrayList<SafeDeleteMemberCalleeUsageInfo> getTopLevelItems();
 
   @Override
-  protected String getEmptyCallerText() {
-    return "Caller text with highlighted callee would be shown here";
+  protected @NlsContexts.Label String getEmptyCallerText() {
+    return JavaRefactoringBundle.message("java.safe.delete.caller.text");
   }
 
   @Override
-  protected String getEmptyCalleeText() {
-    return "Callee text would be shown here";
+  protected @NlsContexts.Label String getEmptyCalleeText() {
+    return JavaRefactoringBundle.message("java.safe.delete.empty.callee.text");
   }
   
   @Override
@@ -102,7 +103,9 @@ abstract class SafeDeleteJavaCalleeChooser extends CallerChooserBase<PsiElement>
                   .map(result -> result.getElement())
                   .filter(e -> !(e instanceof PsiMember))
                   .toArray(PsiElement[]::new);
-                ContainerUtil.addAllNotNull(elementsToCheck, nonMembers);
+                if (nonMembers.length < 10) {
+                  ContainerUtil.addAllNotNull(elementsToCheck, nonMembers);
+                }
               }
               else {
                 PsiElement resolve = reference.resolve();
@@ -202,7 +205,7 @@ abstract class SafeDeleteJavaCalleeChooser extends CallerChooserBase<PsiElement>
   }
 
   private static boolean usedOnlyIn(@NotNull PsiElement explored, @NotNull PsiMember place) {
-    CommonProcessors.FindProcessor<PsiReference> findProcessor = new CommonProcessors.FindProcessor<PsiReference>() {
+    CommonProcessors.FindProcessor<PsiReference> findProcessor = new CommonProcessors.FindProcessor<>() {
       @Override
       protected boolean accept(PsiReference reference) {
         final PsiElement element = reference.getElement();

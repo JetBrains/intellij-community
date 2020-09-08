@@ -6,6 +6,7 @@ import com.intellij.codeInsight.documentation.DocumentationComponent;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.documentation.QuickDocUtil;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
@@ -54,6 +55,7 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseEvent;
 import java.awt.font.TextAttribute;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.ImageObserver;
 import java.util.List;
 import java.util.*;
@@ -77,7 +79,7 @@ class DocRenderer implements EditorCustomElementRenderer {
   private static String ourCachedStyleSheetLinkColor = "non-existing";
   private static String ourCachedStyleSheetMonoFont = "non-existing";
 
-  private final DocRenderItem myItem;
+  final DocRenderItem myItem;
   private boolean myContentUpdateNeeded;
   private EditorPane myPane;
 
@@ -276,9 +278,9 @@ class DocRenderer implements EditorCustomElementRenderer {
     Element element = event.getSourceElement();
     if (element == null) return;
 
-    Rectangle location = null;
+    Rectangle2D location = null;
     try {
-      location = ((JEditorPane)event.getSource()).modelToView(element.getStartOffset());
+      location = ((JEditorPane)event.getSource()).modelToView2D(element.getStartOffset());
     }
     catch (BadLocationException ignored) {}
     if (location == null) return;
@@ -315,7 +317,11 @@ class DocRenderer implements EditorCustomElementRenderer {
   private void showDocumentation(@NotNull Editor editor,
                                  @NotNull PsiElement context,
                                  @NotNull String linkUrl,
-                                 @NotNull Rectangle linkLocationWithinInlay) {
+                                 @NotNull Rectangle2D linkLocationWithinInlay) {
+    if (isExternalLink(linkUrl)) {
+      BrowserUtil.open(linkUrl);
+      return;
+    }
     Project project = context.getProject();
     DocumentationManager documentationManager = DocumentationManager.getInstance(project);
     if (QuickDocUtil.getActiveDocComponent(project) == null) {
@@ -323,8 +329,8 @@ class DocRenderer implements EditorCustomElementRenderer {
       Point inlayPosition = Objects.requireNonNull(inlay.getBounds()).getLocation();
       Rectangle relativeBounds = getEditorPaneBoundsWithinInlay(inlay);
       editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POINT,
-                         new Point(inlayPosition.x + relativeBounds.x + linkLocationWithinInlay.x,
-                                   inlayPosition.y + relativeBounds.y + linkLocationWithinInlay.y + linkLocationWithinInlay.height));
+                         new Point(inlayPosition.x + relativeBounds.x + (int)linkLocationWithinInlay.getX(),
+                                   inlayPosition.y + relativeBounds.y + (int)Math.ceil(linkLocationWithinInlay.getMaxY())));
       documentationManager.showJavaDocInfo(editor, context, context, () -> {
         editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POINT, null);
       }, "", false, true);
@@ -334,22 +340,26 @@ class DocRenderer implements EditorCustomElementRenderer {
       if (!documentationManager.hasActiveDockedDocWindow()) {
         component.startWait();
       }
-      documentationManager.navigateByLink(component, linkUrl);
+      documentationManager.navigateByLink(component, context, linkUrl);
     }
     if (documentationManager.getDocInfoHint() == null) {
       editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POINT, null);
     }
     if (documentationManager.hasActiveDockedDocWindow()) {
-      documentationManager.setAllowContentUpdateFromContext(false);
       Disposable disposable = Disposer.newDisposable();
       editor.getCaretModel().addCaretListener(new CaretListener() {
         @Override
         public void caretPositionChanged(@NotNull CaretEvent e) {
-          documentationManager.resetAutoUpdateState();
           Disposer.dispose(disposable);
         }
       }, disposable);
+      documentationManager.muteAutoUpdateTill(disposable);
     }
+  }
+
+  private static boolean isExternalLink(@NotNull String linkUrl) {
+    String l = linkUrl.toLowerCase(Locale.ROOT);
+    return l.startsWith("http://") || l.startsWith("https://");
   }
 
   private static EditorKit createEditorKit(@NotNull Editor editor) {
@@ -460,15 +470,16 @@ class DocRenderer implements EditorCustomElementRenderer {
         return null;
       }
       Rectangle boundsWithinInlay = getEditorPaneBoundsWithinInlay(myItem.inlay);
-      Rectangle locationInPane;
+      Rectangle2D locationInPane;
       try {
-        locationInPane = modelToView(getSelectionStart());
+        locationInPane = modelToView2D(getSelectionStart());
       }
       catch (BadLocationException e) {
         LOG.error(e);
         locationInPane = new Rectangle();
       }
-      return new Point(inlayBounds.x + boundsWithinInlay.x + locationInPane.x, inlayBounds.y + boundsWithinInlay.y + locationInPane.y);
+      return new Point(inlayBounds.x + boundsWithinInlay.x + (int)locationInPane.getX(),
+                       inlayBounds.y + boundsWithinInlay.y + (int)locationInPane.getY());
     }
 
     private void scheduleUpdate() {

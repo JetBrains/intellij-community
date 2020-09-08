@@ -107,8 +107,8 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
     final Project project = targetResourceBundle.getProject();
     if (properties.size() != propertiesFileMapping.size() &&
         Messages.NO == Messages.showYesNoDialog(project,
-                                                 "Source and target resource bundles properties files are not matched correctly. Copy properties anyway?",
-                                                 "Resource Bundles Are not Matched", null)) {
+                                                PropertiesBundle.message("copy.resource.bundles.are.not.matched.message"),
+                                                PropertiesBundle.message("copy.resource.bundles.are.not.matched.title"), null)) {
       return;
     }
 
@@ -178,10 +178,10 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
     @Override
     protected ValidationInfo doValidate() {
       if (StringUtil.isEmpty(myCurrentPropertyName)) {
-        return new ValidationInfo("Property name must be not empty");
+        return new ValidationInfo(PropertiesBundle.message("copy.property.name.must.be.not.empty.error"));
       }
       return PropertiesUtil.containsProperty(myCurrentResourceBundle, myCurrentPropertyName)
-             ? new ValidationInfo(String.format("Property with name '%s' already exists", myCurrentPropertyName))
+             ? new ValidationInfo(PropertiesBundle.message("copy.property.with.name.0.already.exists.conflict", myCurrentPropertyName))
              : null;
     }
 
@@ -198,7 +198,7 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
     @Override
     protected JComponent createCenterPanel() {
       JLabel informationalLabel = new JLabel();
-      informationalLabel.setText("Copy property " + ContainerUtil.getFirstItem(myProperties).getName());
+      informationalLabel.setText(PropertiesBundle.message("copy.property.0.label", ContainerUtil.getFirstItem(myProperties).getName()));
       informationalLabel.setFont(informationalLabel.getFont().deriveFont(Font.BOLD));
 
       final Collection<PropertiesFile> propertiesFiles = new ArrayList<>();
@@ -254,8 +254,8 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
       return FormBuilder
         .createFormBuilder()
         .addComponent(informationalLabel)
-        .addLabeledComponent("&New name:", myPropertyNameTextField, UIUtil.LARGE_VGAP)
-        .addLabeledComponent("&Destination resource bundle:", resourceBundleComboBox)
+        .addLabeledComponent(PropertiesBundle.message("copy.destination.new.name.label"), myPropertyNameTextField, UIUtil.LARGE_VGAP)
+        .addLabeledComponent(PropertiesBundle.message("copy.destination.resource.bundle.label"), resourceBundleComboBox)
         .getPanel();
     }
 

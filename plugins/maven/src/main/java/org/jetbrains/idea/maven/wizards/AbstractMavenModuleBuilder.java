@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.ide.util.projectWizard.*;
@@ -19,12 +19,14 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenEnvironmentForm;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -71,18 +73,19 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
       }
 
       new MavenModuleBuilderHelper(myProjectId, myAggregatorProject, myParentProject, myInheritGroupId,
-                                   myInheritVersion, myArchetype, myPropertiesToCreateByArtifact, "Create new Maven module").configure(project, root, false);
+                                   myInheritVersion, myArchetype, myPropertiesToCreateByArtifact,
+                                   MavenProjectBundle.message("command.name.create.new.maven.module")).configure(project, root, false);
     });
   }
 
   @Override
-  public String getBuilderId() {
+  public @NonNls String getBuilderId() {
     return getClass().getName();
   }
 
   @Override
   public String getPresentableName() {
-    return MAVEN_NAME;
+    return MavenProjectBundle.message("configurable.MavenSettings.display.name");
   }
 
   @Override

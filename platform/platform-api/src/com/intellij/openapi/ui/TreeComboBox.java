@@ -2,6 +2,7 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleColoredRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -65,9 +66,9 @@ public class TreeComboBox extends ComboBoxWithWidePopup {
     private boolean myChecked;
     private boolean myEditable;
     private final boolean myShowRootNode;
-    private final String myDefaultText;
+    private final @NlsContexts.Label String myDefaultText;
 
-    private TreeListCellRenderer(@NotNull final JComboBox comboBox, final boolean showRootNode, @Nullable final String defaultText) {
+    private TreeListCellRenderer(@NotNull final JComboBox comboBox, final boolean showRootNode, @Nullable @NlsContexts.Label String defaultText) {
       myComboBox = comboBox;
       myShowRootNode = showRootNode;
       myDefaultText = defaultText;
@@ -132,6 +133,7 @@ public class TreeComboBox extends ComboBoxWithWidePopup {
             append("");
           }
         } else {
+          //noinspection HardCodedStringLiteral
           append(value.toString());
         }
       }

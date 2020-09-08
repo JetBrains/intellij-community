@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -28,9 +29,7 @@ import com.intellij.openapi.vcs.changes.patch.tool.ApplyPatchDiffRequest;
 import com.intellij.openapi.vcs.changes.patch.tool.ApplyPatchMergeRequest;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import org.jetbrains.annotations.CalledInAny;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Arrays;
 import java.util.List;
@@ -44,7 +43,7 @@ public final class PatchDiffRequestFactory {
                                               @NotNull ProgressIndicator indicator)
     throws DiffRequestProducerException {
     ChangeDiffRequestProducer proxyProducer = ChangeDiffRequestProducer.create(project, change);
-    if (proxyProducer == null) throw new DiffRequestProducerException("Can't show diff for '" + name + "'");
+    if (proxyProducer == null) throw new DiffRequestProducerException(VcsBundle.message("changes.error.can.t.show.diff.for",  name));
     return proxyProducer.process(context, indicator);
   }
 
@@ -57,8 +56,11 @@ public final class PatchDiffRequestFactory {
                                                       @NotNull final ApplyPatchForBaseRevisionTexts texts,
                                                       @NotNull String name)
     throws DiffRequestProducerException {
-    if (file == null) throw new DiffRequestProducerException("Can't show diff for '" + name + "'");
-    if (file.getFileType().isBinary()) throw new DiffRequestProducerException("Can't show diff for binary file '" + name + "'");
+    if (file == null) throw new DiffRequestProducerException(VcsBundle.message("changes.error.can.t.show.diff.for",  name));
+
+    if (file.getFileType().isBinary()) {
+      throw new DiffRequestProducerException(VcsBundle.message("changes.error.can.t.show.diff.for.binary.file", name));
+    }
 
     if (texts.getBase() == null) {
       String localContent = texts.getLocal();
@@ -85,7 +87,7 @@ public final class PatchDiffRequestFactory {
   public static DiffRequest createDiffRequest(@Nullable Project project,
                                               @Nullable VirtualFile file,
                                               @NotNull List<String> contents,
-                                              @Nullable String windowTitle,
+                                              @Nullable @NlsContexts.DialogTitle String windowTitle,
                                               @NotNull List<String> titles) {
     assert contents.size() == 3;
     assert titles.size() == 3;
@@ -111,12 +113,12 @@ public final class PatchDiffRequestFactory {
   @NotNull
   public static DiffRequest createBadDiffRequest(@Nullable Project project,
                                                  @NotNull VirtualFile file,
-                                                 @NotNull String localContent,
+                                                 @NotNull @NonNls String localContent,
                                                  @NotNull AppliedTextPatch textPatch,
-                                                 @Nullable String windowTitle,
-                                                 @Nullable String localTitle,
-                                                 @Nullable String resultTitle,
-                                                 @Nullable String patchTitle) {
+                                                 @Nullable @NlsContexts.DialogTitle String windowTitle,
+                                                 @Nullable @NlsContexts.Label String localTitle,
+                                                 @Nullable @NlsContexts.Label String resultTitle,
+                                                 @Nullable @NlsContexts.Label String patchTitle) {
     if (windowTitle == null) windowTitle = getBadPatchTitle(file);
     if (localTitle == null) localTitle = VcsBundle.message("patch.apply.conflict.local.version");
     if (resultTitle == null) resultTitle = VcsBundle.message("patch.apply.conflict.patched.somehow.version");
@@ -131,9 +133,9 @@ public final class PatchDiffRequestFactory {
   public static MergeRequest createMergeRequest(@Nullable Project project,
                                                 @NotNull Document document,
                                                 @NotNull VirtualFile file,
-                                                @NotNull String baseContent,
-                                                @NotNull String localContent,
-                                                @NotNull String patchedContent,
+                                                @NotNull @NonNls String baseContent,
+                                                @NotNull @NonNls String localContent,
+                                                @NotNull @NonNls String patchedContent,
                                                 @Nullable Consumer<? super MergeResult> callback)
     throws InvalidDiffRequestException {
     List<String> titles = Arrays.asList(null, null, null);
@@ -158,7 +160,7 @@ public final class PatchDiffRequestFactory {
                                                 @NotNull Document document,
                                                 @Nullable VirtualFile file,
                                                 @NotNull List<String> contents,
-                                                @Nullable String windowTitle,
+                                                @Nullable @NlsContexts.DialogTitle String windowTitle,
                                                 @NotNull List<String> titles,
                                                 @Nullable Consumer<? super MergeResult> callback)
     throws InvalidDiffRequestException {
@@ -183,10 +185,10 @@ public final class PatchDiffRequestFactory {
                                                    @Nullable VirtualFile file,
                                                    @NotNull String localContent,
                                                    @NotNull AppliedTextPatch textPatch,
-                                                   @Nullable String windowTitle,
-                                                   @Nullable String localTitle,
-                                                   @Nullable String resultTitle,
-                                                   @Nullable String patchTitle,
+                                                   @Nullable @NlsContexts.DialogTitle String windowTitle,
+                                                   @Nullable @NlsContexts.Label String localTitle,
+                                                   @Nullable @NlsContexts.Label String resultTitle,
+                                                   @Nullable @NlsContexts.Label String patchTitle,
                                                    @Nullable Consumer<? super MergeResult> callback)
     throws InvalidDiffRequestException {
     if (!DiffUtil.canMakeWritable(document)) {
@@ -205,7 +207,7 @@ public final class PatchDiffRequestFactory {
   }
 
   @NotNull
-  private static String getPatchTitle(@Nullable VirtualFile file) {
+  private static @NlsContexts.DialogTitle String getPatchTitle(@Nullable VirtualFile file) {
     if (file != null) {
       return VcsBundle.message("patch.apply.conflict.for.title", getPresentablePath(file));
     }
@@ -215,6 +217,7 @@ public final class PatchDiffRequestFactory {
   }
 
 
+  @Nls
   @NotNull
   private static String getBadPatchTitle(@Nullable VirtualFile file) {
     if (file != null) {
@@ -225,9 +228,10 @@ public final class PatchDiffRequestFactory {
     }
   }
 
+  @Nls
   @NotNull
   private static String getPresentablePath(@NotNull VirtualFile file) {
-    String fullPath = file.getParent() == null ? file.getPath() : file.getParent().getPath();
+    String fullPath = file.getParent() == null ? file.getPresentableUrl() : file.getParent().getPresentableUrl();
     return file.getName() + " (" + fullPath + ")";
   }
 }

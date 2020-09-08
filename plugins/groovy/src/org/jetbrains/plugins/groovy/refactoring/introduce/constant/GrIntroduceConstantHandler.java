@@ -7,8 +7,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -21,16 +23,16 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.*;
 
 import java.util.*;
 
+import static org.jetbrains.annotations.Nls.Capitalization.Title;
+
 /**
  * @author Maxim.Medvedev
  */
 public class GrIntroduceConstantHandler extends GrIntroduceFieldHandlerBase<GrIntroduceConstantSettings> {
-  public static final String REFACTORING_NAME = "Introduce Constant";
 
-  @NotNull
   @Override
-  protected String getRefactoringName() {
-    return REFACTORING_NAME;
+  protected @Nls(capitalization = Title) @NotNull String getRefactoringName() {
+    return GroovyBundle.message("introduce.constant.title");
   }
 
   @NotNull

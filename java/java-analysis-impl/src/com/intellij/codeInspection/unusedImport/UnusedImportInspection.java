@@ -22,6 +22,7 @@ import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.fixes.DeleteImportFix;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -62,7 +63,7 @@ public class UnusedImportInspection extends GlobalSimpleInspectionTool {
     return false;
   }
 
-  public static String getDisplayNameText() {
+  public static @Nls String getDisplayNameText() {
     return JavaAnalysisBundle.message("unused.import.display.name");
   }
 }

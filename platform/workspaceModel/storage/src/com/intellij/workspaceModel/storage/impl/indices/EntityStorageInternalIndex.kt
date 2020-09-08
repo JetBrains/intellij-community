@@ -30,8 +30,10 @@ open class EntityStorageInternalIndex<T> private constructor(
 
     internal fun index(id: EntityId, entry: T? = null) {
       startWrite()
-      index.remove(id)
-      if (entry == null) return
+      if (entry == null) {
+        index.remove(id)
+        return
+      }
       index[id] = entry
       if (oneToOneAssociation) {
         if (index.getKeysByValue(entry)?.size ?: 0 > 1) {
@@ -55,10 +57,8 @@ open class EntityStorageInternalIndex<T> private constructor(
     private fun startWrite() {
       if (!freezed) return
       freezed = false
-      index = copyIndex()
+      index = index.copy()
     }
-
-    private fun copyIndex(): BidirectionalMap<EntityId, T> = index.copy()
 
     fun toImmutable(): EntityStorageInternalIndex<T> {
       freezed = true

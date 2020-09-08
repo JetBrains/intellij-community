@@ -120,7 +120,7 @@ internal class CheckFsSanityAndProjectRootPostStartUpActivity : StartupActivity.
 
           val rootPath = root.path
           for (manualWatchRoot in manualWatchRoots) {
-            if (FileUtil.isAncestor(manualWatchRoot!!, rootPath, false)) {
+            if (PathUtil.isAncestorOrSelf(manualWatchRoot, root)) {
               if (nonWatched == null) {
                 nonWatched = mutableListOf()
               }

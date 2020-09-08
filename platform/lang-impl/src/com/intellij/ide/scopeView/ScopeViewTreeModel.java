@@ -30,6 +30,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -46,7 +47,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
-import com.intellij.psi.search.scope.ProblemsScope;
 import com.intellij.psi.search.scope.ProjectFilesScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.util.PsiUtilCore;
@@ -132,7 +132,7 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
 
       @Override
       public void problemsDisappeared(@NotNull VirtualFile file) {
-        if (!updateScopeIf(ProblemsScope.class)) notifyPresentationChanged(file);
+        notifyPresentationChanged(file);
       }
     });
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
@@ -419,6 +419,7 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
     return null;
   }
 
+  @SuppressWarnings({"UnusedReturnValue", "SameParameterValue"})
   private boolean updateScopeIf(@NotNull Class<? extends NamedScope> type) {
     NamedScopeFilter filter = getFilter();
     if (filter == null || !type.isInstance(filter.getScope())) {
@@ -502,8 +503,7 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
       return newChildren;
     }
 
-    @Nullable
-    String getLocation() {
+    @Nullable @NlsSafe String getLocation() {
       return null;
     }
 
@@ -561,9 +561,8 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
       decorate(presentation);
     }
 
-    @Nullable
     @Override
-    String getLocation() {
+    @Nullable @NlsSafe String getLocation() {
       Project project = getProject();
       return project == null || project.isDisposed() ? null : FileUtil.getLocationRelativeToUserHome(project.getPresentableUrl());
     }
@@ -880,8 +879,8 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
 
 
   private static final class GroupNode extends Node implements NavigatableWithText {
-    private final String prefix;
-    private final String name;
+    private final @NlsSafe String prefix;
+    private final @NlsSafe String name;
     private Group group;
 
     GroupNode(@NotNull Node parent, @NotNull Object value) {
@@ -933,9 +932,8 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
       decorate(presentation);
     }
 
-    @Nullable
     @Override
-    String getLocation() {
+    @Nullable @NlsSafe String getLocation() {
       RootNode node = getSingleRoot();
       return node == null ? null : node.getTitle();
     }

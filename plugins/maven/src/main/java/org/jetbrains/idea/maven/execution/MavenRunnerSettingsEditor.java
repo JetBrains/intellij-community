@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenDisablePanelCheckbox;
+import org.jetbrains.idea.maven.project.MavenProjectBundle;
 
 import javax.swing.*;
 
@@ -70,7 +71,8 @@ public class MavenRunnerSettingsEditor extends SettingsEditor<MavenRunConfigurat
   @NotNull
   @Override
   protected JComponent createEditor() {
-    Pair<JPanel,JCheckBox> pair = MavenDisablePanelCheckbox.createPanel(myPanel.createComponent(), "Use project settings");
+    Pair<JPanel,JCheckBox> pair = MavenDisablePanelCheckbox.createPanel(myPanel.createComponent(),
+                                                                        MavenProjectBundle.message("label.use.project.settings"));
 
     myUseProjectSettings = pair.second;
     return pair.first;

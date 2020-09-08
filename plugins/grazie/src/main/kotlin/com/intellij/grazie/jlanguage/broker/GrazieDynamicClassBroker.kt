@@ -2,7 +2,7 @@
 package com.intellij.grazie.jlanguage.broker
 
 import com.intellij.grazie.GrazieDynamic
-import org.languagetool.tools.classbroker.ClassBroker
+import org.languagetool.broker.ClassBroker
 
 object GrazieDynamicClassBroker : ClassBroker {
   override fun forName(qualifiedName: String): Class<*> {

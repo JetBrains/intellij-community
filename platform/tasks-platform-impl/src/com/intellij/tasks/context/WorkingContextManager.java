@@ -17,6 +17,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -143,9 +144,8 @@ public final class WorkingContextManager {
       JBZipFile zipFile = null;
       try {
         zipFile = new JBZipFile(file);
-        Notifications.Bus.notify(new Notification("Tasks", "Context Data Corrupted",
-                                                  "Context information history for " + myProject.getName() + " was corrupted.\n" +
-                                                  "The history was replaced with empty one.", NotificationType.ERROR), myProject);
+        Notifications.Bus.notify(new Notification("Tasks", TaskBundle.message("notification.title.context.data.corrupted"),
+                                                  TaskBundle.message("notification.content.context.information.history", myProject.getName()), NotificationType.ERROR), myProject);
       }
       catch (IOException e1) {
         LOG.error("Can't repair form context data corruption", e1);

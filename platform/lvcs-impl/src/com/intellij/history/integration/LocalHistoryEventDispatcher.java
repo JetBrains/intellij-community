@@ -22,6 +22,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -74,7 +75,7 @@ class LocalHistoryEventDispatcher implements VirtualFileManagerListener, Command
     myVcs.forceBeginChangeSet();
   }
 
-  void finishAction(String name) {
+  void finishAction(@NlsContexts.Label String name) {
     myGateway.registerUnsavedDocuments(myVcs);
     endChangeSet(name);
   }
@@ -83,7 +84,7 @@ class LocalHistoryEventDispatcher implements VirtualFileManagerListener, Command
     myVcs.beginChangeSet();
   }
 
-  private void endChangeSet(String name) {
+  private void endChangeSet(@NlsContexts.Label String name) {
     myVcs.endChangeSet(name);
   }
 

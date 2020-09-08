@@ -24,7 +24,7 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
   private final EventLogApplicationInfo myApplicationInfo;
 
   public EventLogUploadSettingsService(@NotNull String recorderId, @NotNull EventLogApplicationInfo appInfo) {
-    this(recorderId, appInfo, TimeUnit.HOURS.toMillis(1));
+    this(recorderId, appInfo, TimeUnit.MINUTES.toMillis(10));
   }
 
   public EventLogUploadSettingsService(@NotNull String recorderId, @NotNull EventLogApplicationInfo appInfo, long settingsCacheTimeoutMs) {

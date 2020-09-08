@@ -9,22 +9,22 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.util.Collection;
 import java.util.List;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Base class for actions that affect the entire git repository.
@@ -46,7 +46,7 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
   }
 
   @NotNull
-  @CalledInAwt
+  @RequiresEdt
   private static VirtualFile getDefaultRoot(@NotNull Project project, @NotNull List<? extends VirtualFile> roots, VirtualFile @Nullable [] vFiles) {
     if (vFiles != null) {
       for (VirtualFile file : vFiles) {
@@ -80,18 +80,18 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
     try {
       VirtualFile[] contentRoots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs);
       if (ArrayUtil.isEmpty(contentRoots)) {
-        throw new VcsException(GitBundle.getString("repository.action.missing.roots.unconfigured.message"));
+        throw new VcsException(GitBundle.message("repository.action.missing.roots.unconfigured.message"));
       }
 
       Collection<GitRepository> repositories = GitUtil.getRepositories(project);
       if (repositories.isEmpty()) {
-        throw new VcsException(GitBundle.getString("repository.action.missing.roots.misconfigured"));
+        throw new VcsException(GitBundle.message("repository.action.missing.roots.misconfigured"));
       }
 
       return DvcsUtil.sortVirtualFilesByPresentation(GitUtil.getRootsFromRepositories(repositories));
     }
     catch (VcsException e) {
-      Messages.showErrorDialog(project, e.getMessage(), GitBundle.getString("repository.action.missing.roots.title"));
+      Messages.showErrorDialog(project, e.getMessage(), GitBundle.message("repository.action.missing.roots.title"));
       return null;
     }
   }
@@ -101,6 +101,7 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
    *
    * @return the name of action
    */
+  @NlsActions.ActionText
   @NotNull
   protected abstract String getActionName();
 

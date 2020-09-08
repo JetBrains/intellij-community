@@ -116,11 +116,18 @@ public final class JBMacMessages extends MacMessages {
       window = WindowManager.getInstance().findVisibleFrame();
     }
 
-    if (window != null) {
+    while (window != null) {
       // We have successfully found the window
       // Let's check that we have not missed a blocker
       if (ModalityHelper.isModalBlocked(window)) {
-        window = ModalityHelper.getModalBlockerFor(window);
+        Window result = ModalityHelper.getModalBlockerFor(window);
+        if (result == null) {
+          break;
+        }
+        window = result;
+      }
+      else {
+        break;
       }
     }
 

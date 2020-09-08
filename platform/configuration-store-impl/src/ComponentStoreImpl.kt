@@ -28,13 +28,14 @@ import com.intellij.util.ArrayUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.SystemProperties
 import com.intellij.util.ThreeState
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.xmlb.XmlSerializerUtil
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.util.*
@@ -175,7 +176,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   internal open fun commitComponents(isForce: Boolean, session: SaveSessionProducerManager, errors: MutableList<Throwable>) {
     if (components.isEmpty()) {
       return
@@ -185,7 +186,7 @@ abstract class ComponentStoreImpl : IComponentStore {
 
     val names = ArrayUtilRt.toStringArray(components.keys)
     Arrays.sort(names)
-    var timeLog: StringBuilder? = null
+    @NonNls var timeLog: StringBuilder? = null
 
     // well, strictly speaking each component saving takes some time, but +/- several seconds doesn't matter
     val nowInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()).toInt()
@@ -247,7 +248,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 
   @TestOnly
-  @CalledInAwt
+  @RequiresEdt
   override fun saveComponent(component: PersistentStateComponent<*>) {
     val stateSpec = getStateSpec(component)
     LOG.debug { "saveComponent is called for ${stateSpec.name}" }

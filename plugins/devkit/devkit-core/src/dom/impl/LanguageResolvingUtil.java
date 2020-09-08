@@ -9,6 +9,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -30,6 +31,7 @@ import com.intellij.util.xml.DomJavaUtil;
 import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.util.PsiUtil;
@@ -261,13 +263,15 @@ final class LanguageResolvingUtil {
     if (languageClass == null) return null;
 
     String anyLanguageId = calculateAnyLanguageId(context);
-    return new LanguageDefinition(anyLanguageId, languageClass, () -> AllIcons.FileTypes.Any_type, () -> "<any language>");
+    return new LanguageDefinition(anyLanguageId, languageClass,
+                                  () -> AllIcons.FileTypes.Any_type,
+                                  () -> DevKitBundle.message("plugin.xml.convert.language.id.any.language.display.name"));
   }
 
   private static final Set<String> EP_WITH_ANY_LANGUAGE_ID = Collections
     .unmodifiableSet(new HashSet<>(Arrays.asList(CompletionContributorEP.class.getName(), CompletionConfidenceEP.class.getName())));
 
-  private static String calculateAnyLanguageId(@NotNull ConvertContext context) {
+  private static @NlsSafe String calculateAnyLanguageId(@NotNull ConvertContext context) {
     final Extension extension = context.getInvocationElement().getParentOfType(Extension.class, true);
     if (extension == null) {
       return ANY_LANGUAGE_DEFAULT_ID;

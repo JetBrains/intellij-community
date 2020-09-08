@@ -24,6 +24,20 @@ class LightJava11HighlightingTest : LightJavaCodeInsightFixtureTestCase() {
     assertEquals(CommonClassNames.JAVA_LANG_STRING, (element as PsiClass).qualifiedName)
   }
 
+  fun testShebangInJavaFile() {
+    doTest()
+  }
+
+  fun testJavaShebang() {
+    myFixture.configureByText("hello", 
+                              """#!/path/to/java
+                                 |class Main {{
+                                 |int i = 0;
+                                 |i*<error descr="';' expected"><error descr="Expression expected"><error descr="Unexpected token">*</error></error></error>;
+                                 |}}""".trimMargin())
+    myFixture.checkHighlighting()
+  }
+
   private fun doTest() {
     myFixture.configureByFile(getTestName(false) + ".java")
     myFixture.checkHighlighting()

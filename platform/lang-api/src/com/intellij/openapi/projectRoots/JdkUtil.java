@@ -31,6 +31,8 @@ public final class JdkUtil {
 
   public static final Key<JdkCommandLineSetup> COMMAND_LINE_SETUP_KEY = Key.create("com.intellij.openapi.projectRoots.JdkCommandLineSetup");
 
+  public static final Key<String> AGENT_RUNTIME_CLASSPATH = Key.create("command.line.agent.classpath");
+
   /**
    * The VM property is needed to workaround incorrect escaped URLs handling in WebSphere,
    * see <a href="https://youtrack.jetbrains.com/issue/IDEA-126859#comment=27-778948">IDEA-126859</a> for additional details

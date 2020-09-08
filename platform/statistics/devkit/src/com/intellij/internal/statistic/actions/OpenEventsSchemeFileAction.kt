@@ -23,16 +23,7 @@ class OpenEventsSchemeFileAction(private val myRecorderId: String = StatisticsDe
                     AllIcons.FileTypes.Config) {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-
-    val settings = EventLogWhitelistSettingsPersistence.getInstance().getPathSettings(myRecorderId)
-    val file = if (settings != null && settings.isUseCustomPath) {
-      File(settings.customPath)
-    }
-    else {
-      BaseEventLogWhitelistPersistence.getDefaultMetadataFile(myRecorderId, EVENTS_SCHEME_FILE, null)
-    }
-
-    openFileInEditor(file, project)
+    openFileInEditor(getEventsSchemeFile(myRecorderId), project)
   }
 
   companion object {
@@ -43,6 +34,16 @@ class OpenEventsSchemeFileAction(private val myRecorderId: String = StatisticsDe
         return
       }
       FileEditorManager.getInstance(project).openFile(virtualFile, true)
+    }
+
+    fun getEventsSchemeFile(recorderId: String): File {
+      val settings = EventLogWhitelistSettingsPersistence.getInstance().getPathSettings(recorderId)
+      return if (settings != null && settings.isUseCustomPath) {
+        File(settings.customPath)
+      }
+      else {
+        BaseEventLogWhitelistPersistence.getDefaultMetadataFile(recorderId, EVENTS_SCHEME_FILE, null)
+      }
     }
   }
 

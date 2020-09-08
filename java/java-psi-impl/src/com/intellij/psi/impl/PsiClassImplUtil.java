@@ -123,6 +123,37 @@ public final class PsiClassImplUtil {
     return byMap.isEmpty() ? null : (PsiClass)byMap.get(0);
   }
 
+  public static boolean processAllMembersWithoutSubstitutors(@NotNull PsiClass psiClass, @NotNull PsiScopeProcessor processor, @NotNull ResolveState state) {
+    ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
+
+    NameHint nameHint = processor.getHint(NameHint.KEY);
+    String name = nameHint == null ? null : nameHint.getName(state);
+
+    if ((classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.METHOD)) &&
+        !processMembers(state, processor, getMap(psiClass, MemberType.METHOD).get(name == null ? ALL : name))) {
+      return false;
+    }
+    if ((classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.FIELD)) &&
+        !processMembers(state, processor, getMap(psiClass, MemberType.FIELD).get(name == null ? ALL : name))) {
+      return false;
+    }
+    if ((classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS)) &&
+        !processMembers(state, processor, getMap(psiClass, MemberType.CLASS).get(name == null ? ALL : name))) {
+      return false;
+    }
+    return true;
+  }
+
+  private static boolean processMembers(ResolveState state, PsiScopeProcessor processor, PsiMember @Nullable[] members) {
+    if (members == null) return true;
+    for (PsiMember member : members) {
+      if (!processor.execute(member, state)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   @NotNull
   private static List<PsiMember> findByMap(@NotNull PsiClass aClass, String name, boolean checkBases, @NotNull MemberType type) {
     if (name == null) return Collections.emptyList();
@@ -630,9 +661,7 @@ public final class PsiClassImplUtil {
     ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
 
     if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.FIELD)) {
-      for (PsiField field : aClass.getFields()) {
-        if (!processor.execute(field, state)) return false;
-      }
+      if (!processMembers(state, processor, aClass.getFields())) return false;
     }
 
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(aClass.getProject());
@@ -654,9 +683,7 @@ public final class PsiClassImplUtil {
       }
 
       if (!(last instanceof PsiReferenceList) && !(last instanceof PsiModifierList)) {
-        for (PsiClass inner : aClass.getInnerClasses()) {
-          if (!processor.execute(inner, state)) return false;
-        }
+        if (!processMembers(state, processor, aClass.getInnerClasses())) return false;
       }
     }
 

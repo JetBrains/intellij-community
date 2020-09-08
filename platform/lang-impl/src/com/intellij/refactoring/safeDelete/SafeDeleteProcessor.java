@@ -3,6 +3,7 @@
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
@@ -10,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -259,7 +261,7 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
       }
       final UsageInfo[] filteredUsages = UsageViewUtil.removeDuplicatedUsages(preprocessedUsages);
       execute(filteredUsages);
-    }, "Delete Anyway", RefactoringBundle.message("usageView.need.reRun"), RefactoringBundle.message("usageView.doAction"));
+    }, LangBundle.message("command.name.delete.anyway"), RefactoringBundle.message("usageView.need.reRun"), RefactoringBundle.message("usageView.doAction"));
   }
 
   private UsageView showUsages(UsageInfo[] usages, UsageViewPresentation presentation, UsageViewManager manager) {
@@ -406,11 +408,11 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private String calcCommandName() {
+  private @NlsContexts.Command String calcCommandName() {
     return RefactoringBundle.message("safe.delete.command", RefactoringUIUtil.calculatePsiElementDescriptionList(myElements));
   }
 
-  private String myCachedCommandName = null;
+  private @NlsContexts.Command String myCachedCommandName = null;
   @NotNull
   @Override
   protected String getCommandName() {

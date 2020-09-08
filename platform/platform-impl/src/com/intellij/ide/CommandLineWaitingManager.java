@@ -1,6 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
+import com.intellij.ide.lightEdit.LightEditService;
+import com.intellij.ide.lightEdit.LightEditorInfo;
+import com.intellij.ide.lightEdit.LightEditorListener;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -13,10 +16,12 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
@@ -44,6 +49,12 @@ public final class CommandLineWaitingManager {
         freeObject(file);
       }
     });
+    LightEditService.getInstance().getEditorManager().addListener(new LightEditorListener() {
+      @Override
+      public void afterClose(@NotNull LightEditorInfo editorInfo) {
+        freeObject(editorInfo.getFile());
+      }
+    });
     busConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosed(@NotNull Project project) {
@@ -65,7 +76,7 @@ public final class CommandLineWaitingManager {
   }
 
   private @NotNull Future<CliResult> addHookAndNotify(@NotNull Object fileOrProject,
-                                                      @NotNull String notificationText) {
+                                                      @NotNull @NlsContexts.NotificationContent String notificationText) {
     LOG.info(notificationText);
 
     final CompletableFuture<CliResult> result = new CompletableFuture<>();
@@ -93,7 +104,7 @@ public final class CommandLineWaitingManager {
     future.complete(CliResult.OK);
   }
 
-  static final class MyNotification extends EditorNotifications.Provider<EditorNotificationPanel> {
+  static final class MyNotification extends EditorNotifications.Provider<EditorNotificationPanel> implements DumbAware {
     private static final Key<EditorNotificationPanel> KEY = Key.create("CommandLineWaitingNotification");
 
     @Override

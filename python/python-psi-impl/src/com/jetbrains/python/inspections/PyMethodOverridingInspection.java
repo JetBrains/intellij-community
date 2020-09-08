@@ -35,7 +35,7 @@ public class PyMethodOverridingInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyFunction(final PyFunction function) {
+    public void visitPyFunction(final @NotNull PyFunction function) {
       final PyClass cls = function.getContainingClass();
       if (cls == null) return;
 

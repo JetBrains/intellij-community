@@ -382,7 +382,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     }
   }
   private static boolean isAcquired(@NotNull Lock l) {
-    String s = l.toString();
+    @NonNls String s = l.toString();
     return s.contains("Locked by thread");
   }
 
@@ -600,14 +600,11 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
           if (currentNode == null) return false;
 
           if (getModCount() != modCountBefore) throw new ConcurrentModificationException();
-          while (indexInCurrentList != currentNode.intervals.size()) {
-            T t = currentNode.intervals.get(indexInCurrentList++).get();
-            if (t != null) {
-              current = t;
-              return true;
-            }
+
+          if (nextInterval()) {
+            return true;
           }
-          indexInCurrentList = 0;
+
           while (true) {
             currentNode = nextNode(currentNode);
             if (currentNode == null) {
@@ -616,16 +613,25 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
             if (overlaps(currentNode, rangeInterval, deltaUpToRootExclusive)) {
               assert currentNode.intervalStart() + deltaUpToRootExclusive + currentNode.delta >= firstOverlapStart;
               indexInCurrentList = 0;
-              while (indexInCurrentList != currentNode.intervals.size()) {
-                T t = currentNode.intervals.get(indexInCurrentList++).get();
-                if (t != null) {
-                  current = t;
-                  return true;
-                }
+              if (nextInterval()) {
+                return true;
               }
-              indexInCurrentList = 0;
             }
           }
+        }
+
+        private boolean nextInterval() {
+          List<Getter<T>> intervals = currentNode.intervals;
+          while (indexInCurrentList < intervals.size()) {
+            T t = intervals.get(indexInCurrentList).get();
+            indexInCurrentList++;
+            if (t != null) {
+              current = t;
+              return true;
+            }
+          }
+          indexInCurrentList = 0;
+          return false;
         }
 
         @Override

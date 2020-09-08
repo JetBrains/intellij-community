@@ -41,7 +41,7 @@ public abstract class AbstractFileProcessor {
 
   protected abstract Runnable preprocessFile(PsiFile file, boolean allowReplacement) throws IncorrectOperationException;
 
-  protected AbstractFileProcessor(@NotNull Project project, @NotNull PsiFile file, @NotNull String title, @NotNull @NlsContexts.ProgressText String message) {
+  protected AbstractFileProcessor(@NotNull Project project, @NotNull PsiFile file, @NotNull @NlsContexts.ProgressTitle String title, @NotNull @NlsContexts.ProgressText String message) {
     myProject = project;
     myModule = null;
     this.file = file;
@@ -50,7 +50,7 @@ public abstract class AbstractFileProcessor {
     this.title = title;
   }
 
-  protected AbstractFileProcessor(@NotNull Project project, PsiFile @NotNull [] files, @NotNull String title, @NotNull @NlsContexts.ProgressText String message) {
+  protected AbstractFileProcessor(@NotNull Project project, PsiFile @NotNull [] files, @NotNull @NlsContexts.ProgressTitle String title, @NotNull @NlsContexts.ProgressText String message) {
     myProject = project;
     myModule = null;
     file = null;

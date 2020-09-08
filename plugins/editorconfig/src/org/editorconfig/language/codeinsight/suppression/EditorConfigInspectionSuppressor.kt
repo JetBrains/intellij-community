@@ -7,6 +7,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
+import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.EditorConfigOption
 import org.editorconfig.language.psi.EditorConfigRootDeclaration
 import org.editorconfig.language.psi.EditorConfigSection
@@ -39,8 +40,8 @@ class EditorConfigInspectionSuppressor : InspectionSuppressor {
   }
 
   override fun getSuppressActions(element: PsiElement?, toolId: String) = arrayOf(
-    EditorConfigSuppressInspectionFix(toolId, "Suppress for option", EditorConfigOption::class.java),
-    EditorConfigSuppressInspectionFix(toolId, "Suppress for section", EditorConfigSection::class.java)
+    EditorConfigSuppressInspectionFix(toolId, EditorConfigBundle.get("suppress.inspection.option"), EditorConfigOption::class.java),
+    EditorConfigSuppressInspectionFix(toolId, EditorConfigBundle.get("suppress.inspection.section"), EditorConfigSection::class.java)
   )
 
   private fun isSuppressedInComment(commentText: String, suppressId: String): Boolean {

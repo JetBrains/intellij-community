@@ -40,6 +40,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
@@ -142,14 +143,14 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     new EditSourceOnDoubleClickHandler.TreeMouseListener(myTree, null) {
       @Override
       protected void processDoubleClick(@NotNull MouseEvent e, @NotNull DataContext dataContext, @NotNull TreePath treePath) {
-        runSelection(DataManager.getInstance().getDataContext(myTree));
+        runSelection(DataManager.getInstance().getDataContext(myTree), true);
       }
     }.installOn(myTree);
 
     myTree.registerKeyboardAction(new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        runSelection(DataManager.getInstance().getDataContext(myTree));
+        runSelection(DataManager.getInstance().getDataContext(myTree), false);
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), WHEN_FOCUSED);
 
@@ -309,7 +310,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     }
   }
 
-  private void runSelection(final DataContext dataContext) {
+  private void runSelection(final DataContext dataContext, final boolean moveFocusToEditor) {
     if (!canRunSelection()) {
       return;
     }
@@ -318,6 +319,10 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       final List<String> targets = getTargetNamesFromPaths(myTree.getSelectionPaths());
       AntActionsUsagesCollector.runSelectedBuildAction.log(myProject);
       ExecutionHandler.runBuild(buildFile, targets, null, dataContext, Collections.emptyList(), AntBuildListener.NULL);
+
+      if (moveFocusToEditor) {
+        ToolWindowManager.getInstance(myProject).activateEditorComponent();
+      }
     }
   }
 
@@ -629,7 +634,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      runSelection(e.getDataContext());
+      runSelection(e.getDataContext(), true);
     }
 
     @Override

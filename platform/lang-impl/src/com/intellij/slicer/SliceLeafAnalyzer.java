@@ -81,7 +81,7 @@ public class SliceLeafAnalyzer {
 
     SliceNode oldRootStart = oldRoot.myCachedChildren.get(0);
     SliceUsage rootUsage = oldRootStart.getValue();
-    String description = SliceManager.getElementDescription(null, rootUsage.getElement(), " (grouped by value)");
+    String description = SliceManager.getElementDescription(null, rootUsage.getElement(), LangBundle.message("tab.title.grouped.by.value"));
     SliceManager.getInstance(root.getProject()).createToolWindow(true, root, true, description);
   }
 

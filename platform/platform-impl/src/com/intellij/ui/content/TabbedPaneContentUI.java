@@ -8,6 +8,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.content.tabs.TabbedContentAction;
 import com.intellij.util.IJSwingUtilities;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -27,7 +28,7 @@ import java.util.List;
  * @author Vladimir Kondratyev
  */
 public final class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
-  public static final String POPUP_PLACE = "TabbedPanePopup";
+  @NonNls public static final String POPUP_PLACE = "TabbedPanePopup";
 
   private ContentManager myManager;
   private final TabbedPaneWrapper myTabbedPaneWrapper;

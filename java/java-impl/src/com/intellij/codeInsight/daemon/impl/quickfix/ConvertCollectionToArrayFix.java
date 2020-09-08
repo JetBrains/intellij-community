@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -32,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 public class ConvertCollectionToArrayFix implements IntentionAction {
   private final PsiExpression myCollectionExpression;
   private final PsiExpression myExpressionToReplace;
-  private final String myNewArrayText;
+  @NonNls private final String myNewArrayText;
 
   public ConvertCollectionToArrayFix(@NotNull PsiExpression collectionExpression,
                                      @NotNull PsiExpression expressionToReplace,

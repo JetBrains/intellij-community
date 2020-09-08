@@ -5,6 +5,7 @@ import com.intellij.ide.bookmarks.Bookmark;
 import com.intellij.ide.bookmarks.BookmarkItem;
 import com.intellij.ide.bookmarks.BookmarkManager;
 import com.intellij.ide.bookmarks.BookmarksListener;
+import com.intellij.internal.statistic.BookmarkCounterCollector;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
@@ -161,10 +162,11 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
 
   @Override
   public void handleMnemonic(KeyEvent e, Project project, JBPopup popup) {
-    char mnemonic = e.getKeyChar();
+    char mnemonic = Character.toUpperCase(e.getKeyChar());
     final Bookmark bookmark = BookmarkManager.getInstance(project).findBookmarkForMnemonic(mnemonic);
     if (bookmark != null) {
       popup.cancel();
+      BookmarkCounterCollector.bookmarkNavigate.log(mnemonic >= '0' && mnemonic <= '9', mnemonic >= 'A' && mnemonic <= 'Z', bookmark.getLine() >= 0);
       IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> bookmark.navigate(true));
     }
   }
@@ -205,6 +207,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
     if (item instanceof BookmarkItem && withEnterOrDoubleClick) {
       Bookmark bookmark = ((BookmarkItem)item).getBookmark();
       popup.cancel();
+      BookmarkCounterCollector.bookmarkNavigate.log(false, false, bookmark.getLine() >= 0);
       bookmark.navigate(true);
     }
   }

@@ -52,25 +52,25 @@ public final class JavaModuleGraphUtil {
     if (file == null) return null;
 
     ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
-    if (index.isInLibrary(file)) {
-      VirtualFile root = index.getClassRootForFile(file);
-      if (root != null) {
-        VirtualFile descriptorFile = JavaModuleNameIndex.descriptorFile(root);
-        if (descriptorFile != null) {
-          PsiFile psiFile = PsiManager.getInstance(project).findFile(descriptorFile);
-          if (psiFile instanceof PsiJavaFile) {
-            return ((PsiJavaFile)psiFile).getModuleDeclaration();
-          }
-        }
-        else if (root.getFileSystem() instanceof JarFileSystem && "jar".equalsIgnoreCase(root.getExtension())) {
-          return LightJavaModule.findModule(PsiManager.getInstance(project), root);
+    return index.isInLibrary(file)
+           ? findLibraryFileModule(project, index, file)
+           : findDescriptorByModule(index.getModuleForFile(file), index.isInTestSourceContent(file));
+  }
+
+  private static PsiJavaModule findLibraryFileModule(@NotNull Project project, @NotNull ProjectFileIndex index, @NotNull VirtualFile file) {
+    VirtualFile root = index.getClassRootForFile(file);
+    if (root != null) {
+      VirtualFile descriptorFile = JavaModuleNameIndex.descriptorFile(root);
+      if (descriptorFile != null) {
+        PsiFile psiFile = PsiManager.getInstance(project).findFile(descriptorFile);
+        if (psiFile instanceof PsiJavaFile) {
+          return ((PsiJavaFile)psiFile).getModuleDeclaration();
         }
       }
+      else if (root.getFileSystem() instanceof JarFileSystem && "jar".equalsIgnoreCase(root.getExtension())) {
+        return LightJavaModule.findModule(PsiManager.getInstance(project), root);
+      }
     }
-    else {
-      return findDescriptorByModule(index.getModuleForFile(file), index.isInTestSourceContent(file));
-    }
-
     return null;
   }
 
@@ -143,7 +143,7 @@ public final class JavaModuleGraphUtil {
 
   /*
    * Looks for cycles between Java modules in the project sources.
-   * Library/JDK modules are excluded — in an assumption there can't be any lib -> src dependencies.
+   * Library/JDK modules are excluded in an assumption there can't be any lib -> src dependencies.
    * Module references are resolved "globally" (i.e., without taking project dependencies into account).
    */
   @NotNull
@@ -363,6 +363,46 @@ public final class JavaModuleGraphUtil {
     @Override
     public Iterator<N> getOut(N n) {
       return myInbound ? Collections.emptyIterator() : myEdges.get(n).iterator();
+    }
+  }
+
+  public static class JavaModuleScope extends GlobalSearchScope {
+
+    private final PsiJavaModule myModule;
+    private final boolean myIncludeLibraries;
+
+    private JavaModuleScope(Project project, PsiJavaModule module, boolean includeLibraries) {
+      super(project);
+      myModule = module;
+      myIncludeLibraries = includeLibraries;
+    }
+
+    @Override
+    public boolean isSearchInModuleContent(@NotNull Module aModule) {
+      VirtualFile moduleFile = aModule.getModuleFile();
+      if (moduleFile == null) return false;
+      boolean inTests = ProjectFileIndex.SERVICE.getInstance(getProject()).isInTestSourceContent(moduleFile);
+      return findDescriptorByModule(aModule, inTests) == myModule;
+    }
+
+    @Override
+    public boolean isSearchInLibraries() {
+      return myIncludeLibraries;
+    }
+
+    @Override
+    public boolean contains(@NotNull VirtualFile file) {
+      Project project = getProject();
+      if (project == null) return false;
+      if (!(myModule.getManager().findFile(file) instanceof PsiJavaFile)) return false;
+      ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
+      if (index.isInLibrary(file)) return myIncludeLibraries && findLibraryFileModule(project, index, file) == myModule;
+      Module fileModule = index.getModuleForFile(file);
+      return findDescriptorByModule(fileModule, index.isInTestSourceContent(file)) == myModule;
+    }
+
+    public static @NotNull JavaModuleScope moduleScope(@NotNull PsiJavaModule module, boolean includeLibraries) {
+      return new JavaModuleScope(module.getProject(), module, includeLibraries);
     }
   }
 }

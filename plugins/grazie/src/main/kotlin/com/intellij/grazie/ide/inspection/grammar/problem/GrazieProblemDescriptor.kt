@@ -12,6 +12,7 @@ import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuic
 import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.grazie.utils.*
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.containers.Interner
 import com.intellij.util.containers.toArray
 import kotlinx.html.*
@@ -46,6 +47,7 @@ class GrazieProblemDescriptor(fix: Typo, isOnTheFly: Boolean) : ProblemDescripto
       return fixes
     }
 
+    @NlsSafe
     private fun Typo.toDescriptionTemplate(isOnTheFly: Boolean): String {
       if (ApplicationManager.getApplication().isUnitTestMode) return info.rule.id
       val html = html {

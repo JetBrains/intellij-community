@@ -6,6 +6,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.text.DateFormatUtil;
 import com.michaelbaranov.microba.calendar.DatePicker;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -103,13 +104,14 @@ public class DateFilterComponent {
     settings.setDateAfter(myDateAfter.getDate());
   }
 
+  @Nls
   @Nullable
   public String validateInput() {
     if (myUseDateAfterFilter.isSelected() && myDateAfter.getDate() == null) {
-      return "Date After must be a valid date";
+      return VcsBundle.message("error.date.after.must.be.a.valid.date");
     }
     if (myUseDateBeforeFilter.isSelected() && myDateBefore.getDate() == null) {
-      return "Date Before must be a valid date";
+      return VcsBundle.message("error.date.before.must.be.a.valid.date");
     }
     return null;
   }

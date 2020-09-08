@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.plaf.beg;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -354,7 +355,7 @@ public class BegTabbedPaneUI extends MetalTabbedPaneUI {
   private FontMetrics myLayoutMetrics = null;
 
   @Override
-  protected void layoutLabel(int tabPlacement, FontMetrics metrics, int tabIndex, String title, Icon icon, Rectangle tabRect,
+  protected void layoutLabel(int tabPlacement, FontMetrics metrics, int tabIndex, @NlsContexts.TabTitle String title, Icon icon, Rectangle tabRect,
                              Rectangle iconRect, Rectangle textRect, boolean isSelected) {
 
     metrics = (myLayoutMetrics != null)? myLayoutMetrics : metrics;

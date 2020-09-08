@@ -15,6 +15,7 @@
  */
 package com.intellij.uiDesigner.quickFixes;
 
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import org.jetbrains.annotations.NotNull;
@@ -28,10 +29,10 @@ public abstract class QuickFix {
   public static final QuickFix[] EMPTY_ARRAY = {};
 
   protected final GuiEditor myEditor;
-  private final String myName;
+  private final @IntentionName String myName;
   protected RadComponent myComponent;
 
-  public QuickFix(@NotNull final GuiEditor editor, @NotNull final String name, @Nullable RadComponent component) {
+  public QuickFix(@NotNull GuiEditor editor, @NotNull @IntentionName String name, @Nullable RadComponent component) {
     myEditor = editor;
     myName = name;
     myComponent = component;
@@ -40,7 +41,7 @@ public abstract class QuickFix {
   /**
    * @return name of the quick fix.
    */
-  @NotNull public final String getName() {
+  @NotNull public final @IntentionName String getName() {
     return myName;
   }
 

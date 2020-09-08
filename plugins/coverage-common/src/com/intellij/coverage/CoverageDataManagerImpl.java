@@ -40,7 +40,11 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileContentsChangedAdapter;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -52,17 +56,22 @@ import com.intellij.ui.UIBundle;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
+import java.io.File;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import org.jdom.Element;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
-import java.util.*;
 
 /**
  * @author ven
@@ -254,7 +263,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
 
   @Override
   public CoverageSuite addCoverageSuite(final CoverageEnabledConfiguration config) {
-    final String name = config.getName() + " Coverage Results";
+    final String name = CoverageBundle.message("coverage.results.suite.name", config.getName());
     final String covFilePath = config.getCoverageFilePath();
     assert covFilePath != null; // Shouldn't be null here!
 
@@ -716,9 +725,9 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
       final Editor editor = event.getEditor();
       Project project = editor.getProject();
       if (project == null) return;
+      CoverageDataManagerImpl manager = project.getServiceIfCreated(CoverageDataManagerImpl.class);
       try {
-        
-        CoverageDataManagerImpl manager = (CoverageDataManagerImpl)getInstance(project);
+        if (manager == null) return;
         final SrcFileAnnotator fileAnnotator;
         synchronized (manager.ANNOTATORS_LOCK) {
           fileAnnotator = manager.myAnnotators.remove(editor);
@@ -729,13 +738,13 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
       }
       finally {
         final Runnable request = myCurrentEditors.remove(editor);
-        if (request != null) {
-          getRequestsAlarm((CoverageDataManagerImpl)getInstance(project)).cancelRequest(request);
+        if (request != null && manager != null) {
+          getRequestsAlarm(manager).cancelRequest(request);
         }
       }
     }
 
-    @CalledInAwt
+    @RequiresEdt
     private static Alarm getRequestsAlarm(@NotNull CoverageDataManagerImpl manager) {
       Alarm alarm = manager.myRequestsAlarm;
       if (alarm == null) {

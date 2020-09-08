@@ -50,7 +50,7 @@ public abstract class NewEditChangelistPanel extends JPanel {
     myNameTextField = componentWithTextField.getEditorTextField();
     myNameTextField.setOneLineMode(true);
     String generateUniqueName = UniqueNameGenerator
-      .generateUniqueName("New changelist", "", "", " (", ")", s -> ChangeListManager.getInstance(myProject).findChangeList(s) == null);
+      .generateUniqueName(VcsBundle.message("changes.new.changelist"), "", "", " (", ")", s -> ChangeListManager.getInstance(myProject).findChangeList(s) == null);
     myNameTextField.setText(generateUniqueName);
     myNameTextField.selectAll();
     add(componentWithTextField.myComponent, gb);

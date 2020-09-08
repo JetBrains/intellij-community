@@ -16,16 +16,20 @@
 package com.intellij.ide.util.projectWizard.importSources;
 
 import com.intellij.openapi.module.ModuleType;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
 public final class DetectedContentRoot extends DetectedProjectRoot {
-  @NotNull private final String myRootTypeName;
+  @NotNull private final @Nls(capitalization = Nls.Capitalization.Sentence) String myRootTypeName;
   @NotNull private final ModuleType myModuleType;
   private final ModuleType @NotNull [] myTypesToReplace;
 
-  public DetectedContentRoot(@NotNull File directory, @NotNull String rootTypeName, @NotNull ModuleType moduleType, ModuleType @NotNull ... typesToReplace) {
+  public DetectedContentRoot(@NotNull File directory,
+                             @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String rootTypeName,
+                             @NotNull ModuleType moduleType,
+                             ModuleType @NotNull ... typesToReplace) {
     super(directory);
     myRootTypeName = rootTypeName;
     myModuleType = moduleType;

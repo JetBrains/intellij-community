@@ -115,11 +115,13 @@ private class NativeCredentialStoreWrapper internal constructor(
 
 private fun notifyUnsatisfiedLinkError(e: UnsatisfiedLinkError) {
   LOG.error(e)
-  var message = "Credentials are remembered until ${ApplicationNamesInfo.getInstance().fullProductName} is closed."
+  var message = CredentialStoreBundle.message("notification.content.native.keychain.unavailable",
+                                              ApplicationNamesInfo.getInstance().fullProductName);
   if (SystemInfo.isLinux) {
-    message += "\nPlease install required package libsecret-1-0: sudo apt-get install libsecret-1-0 gnome-keyring"
+    message += "\n";
+    message += CredentialStoreBundle.message("notification.content.native.keychain.unavailable.linux.addition");
   }
-  NOTIFICATION_MANAGER.notify("Cannot Access Native Keychain", message)
+  NOTIFICATION_MANAGER.notify(CredentialStoreBundle.message("notification.title.native.keychain.unavailable"), message)
 }
 
 private class MacOsCredentialStoreFactory : CredentialStoreFactory {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.icons.AllIcons;
@@ -28,7 +14,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.JBMenuItem;
 import com.intellij.openapi.ui.JBPopupMenu;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
@@ -55,7 +42,7 @@ import java.awt.event.MouseEvent;
  */
 class StatusPanel extends JPanel {
   private Notification myCurrentNotification;
-  @Nullable private String myTimeText;
+  private @NlsSafe @Nullable String myTimeText;
   private boolean myDirty;
   private boolean myAfterClick;
   private Alarm myLogAlarm;
@@ -79,7 +66,9 @@ class StatusPanel extends JPanel {
         Rectangle boundsForTrim = new Rectangle(withoutTime, bounds.height);
         return super.truncateText(text, boundsForTrim, fm, textR, iconR, withoutTime) + myTimeText;
       }
-      return super.truncateText(text, bounds, fm, textR, iconR, maxWidth);
+      else {
+        return super.truncateText(text, bounds, fm, textR, iconR, maxWidth);
+      }
     }
   };
 
@@ -193,22 +182,23 @@ class StatusPanel extends JPanel {
   // editor window.
   @Nullable
   private Alarm getAlarm() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (myLogAlarm == null || myLogAlarm.isDisposed()) {
       myLogAlarm = null; //Welcome screen
       Project project = getActiveProject();
-      if (project != null && !project.isDisposed() && !Disposer.isDisposing(project)) {
+      if (project != null && !project.isDisposed()) {
         myLogAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
       }
     }
     return myLogAlarm;
   }
 
-  public boolean updateText(@Nullable String nonLogText) {
+  public boolean updateText(@Nullable @NlsContexts.StatusBarText String nonLogText) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    final Project project = getActiveProject();
-    final Trinity<Notification, String, Long> statusMessage = EventLog.getStatusMessage(project);
-    final Alarm alarm = getAlarm();
+    Project project = getActiveProject();
+    Trinity<Notification, @NlsContexts.StatusBarText String, Long> statusMessage = EventLog.getStatusMessage(project);
+    Alarm alarm = getAlarm();
     myCurrentNotification = StringUtil.isEmpty(nonLogText) && statusMessage != null && alarm != null ? statusMessage.first : null;
 
     if (alarm != null) {
@@ -244,7 +234,7 @@ class StatusPanel extends JPanel {
     return myCurrentNotification != null;
   }
 
-  private void setStatusText(String text) {
+  private void setStatusText(@NlsContexts.StatusBarText String text) {
     myTextPanel.setText(text);
   }
 

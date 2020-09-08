@@ -15,10 +15,7 @@ import com.intellij.psi.ResolveResult;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -98,7 +95,7 @@ public final class IdempotenceChecker {
                                                  @NotNull Computable<? extends T> recomputeValue) {
     ResultWithLog<T> rwl = computeWithLogging(recomputeValue);
     T freshest = rwl.result;
-    String msg = "\n\nRecomputation gives " + objAndClass(freshest);
+    @NonNls String msg = "\n\nRecomputation gives " + objAndClass(freshest);
     if (checkValueEquivalence(existing, freshest) == null) {
       msg += " which is equivalent to 'existing'";
     }
@@ -138,7 +135,7 @@ public final class IdempotenceChecker {
     }
   }
 
-  private static String objAndClass(Object o) {
+  private static @NonNls String objAndClass(Object o) {
     if (o == null) return "null";
 
     String s = o.toString();
@@ -208,7 +205,7 @@ public final class IdempotenceChecker {
     return o instanceof LinkedHashSet || o instanceof SortedSet;
   }
 
-  private static String whichIsField(@NotNull String field, @NotNull Object existing, @NotNull Object fresh, @Nullable String msg) {
+  private static String whichIsField(@NotNull @NonNls String field, @NotNull Object existing, @NotNull Object fresh, @Nullable String msg) {
     return msg == null ? null : appendDetail(msg, "which is " + field + " of " + existing + " and " + fresh);
   }
 
@@ -319,7 +316,7 @@ public final class IdempotenceChecker {
                         objAndClass(o1) + " != " + objAndClass(o2));
   }
 
-  private static String appendDetail(String message, String detail) {
+  private static String appendDetail(@NonNls String message, @NonNls String detail) {
     return message + "\n  " + StringUtil.trimLog(detail, 10_000);
   }
 
@@ -381,7 +378,7 @@ public final class IdempotenceChecker {
    * Log a message to help debug {@link #checkEquivalence} failures. When such a failure occurs, the computation can be re-run again
    * with this logging enabled, and the collected log will be included into exception message.
    */
-  public static void logTrace(@NotNull String message) {
+  public static void logTrace(@NotNull @NonNls String message) {
     List<String> log = ourLog.get();
     if (log != null) {
       log.add(message);

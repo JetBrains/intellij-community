@@ -28,8 +28,7 @@ public class FieldHidesLocalUsageInfo extends UnresolvableCollisionUsageInfo {
 
   @Override
   public String getDescription() {
-    String descr = JavaRefactoringBundle.message("local.will.be.hidden.renamed",
-                                             RefactoringUIUtil.getDescription(getElement(), true));
-    return StringUtil.capitalize(descr);
+    return JavaRefactoringBundle.message("local.will.be.hidden.renamed.description",
+                                         RefactoringUIUtil.getDescription(getElement(), true));
   }
 }

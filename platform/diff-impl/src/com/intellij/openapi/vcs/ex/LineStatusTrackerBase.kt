@@ -29,11 +29,11 @@ import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vcs.ex.LineStatusTrackerBlockOperations.Companion.isSelectedByLine
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.annotations.CalledInAwt
-import org.jetbrains.annotations.TestOnly
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.util.*
 
 abstract class LineStatusTrackerBase<R : Range>(
@@ -65,7 +65,7 @@ abstract class LineStatusTrackerBase<R : Range>(
   }
 
 
-  @CalledInAwt
+  @RequiresEdt
   protected open fun isDetectWhitespaceChangedLines(): Boolean = false
 
   /**
@@ -83,7 +83,7 @@ abstract class LineStatusTrackerBase<R : Range>(
     return blockOperations.getRanges()
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected fun setBaseRevision(vcsContent: CharSequence, beforeUnfreeze: (() -> Unit)?) {
     ApplicationManager.getApplication().assertIsDispatchThread()
     if (isReleased) return
@@ -102,7 +102,7 @@ abstract class LineStatusTrackerBase<R : Range>(
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun dropBaseRevision() {
     ApplicationManager.getApplication().assertIsDispatchThread()
     if (isReleased) return
@@ -128,18 +128,18 @@ abstract class LineStatusTrackerBase<R : Range>(
   }
 
 
-  @CalledInAwt
+  @RequiresEdt
   protected fun updateDocument(side: Side, task: (Document) -> Unit): Boolean {
     return updateDocument(side, null, task)
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected fun updateDocument(side: Side, commandName: String?, task: (Document) -> Unit): Boolean {
     val affectedDocument = if (side.isLeft) vcsDocument else document
     return updateDocument(project, affectedDocument, commandName, task)
   }
 
-  @CalledInAwt
+  @RequiresEdt
   override fun doFrozen(task: Runnable) {
     documentTracker.doFrozen({ task.run() })
   }
@@ -193,7 +193,7 @@ abstract class LineStatusTrackerBase<R : Range>(
       }
     }
 
-    @CalledInAwt
+    @RequiresEdt
     fun resetInnerRanges() {
       LOCK.write {
         if (isDetectWhitespaceChangedLines()) {
@@ -241,7 +241,7 @@ abstract class LineStatusTrackerBase<R : Range>(
   override fun transferLineToVcs(line: Int, approximate: Boolean): Int = blockOperations.transferLineToVcs(line, approximate)
 
 
-  @CalledInAwt
+  @RequiresEdt
   override fun rollbackChanges(range: Range) {
     val newRange = blockOperations.findBlock(range)
     if (newRange != null) {
@@ -249,12 +249,12 @@ abstract class LineStatusTrackerBase<R : Range>(
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   override fun rollbackChanges(lines: BitSet) {
     runBulkRollback { it.isSelectedByLine(lines) }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected fun runBulkRollback(condition: (Block) -> Boolean) {
     if (!isValid()) return
 
@@ -286,8 +286,11 @@ abstract class LineStatusTrackerBase<R : Range>(
       return result
     }
 
-    @CalledInAwt
-    fun updateDocument(project: Project?, document: Document, commandName: String?, task: (Document) -> Unit): Boolean {
+    @RequiresEdt
+    fun updateDocument(project: Project?,
+                       document: Document,
+                       commandName: @NlsContexts.Command String?,
+                       task: (Document) -> Unit): Boolean {
       if (DiffUtil.isUserDataFlagSet(VCS_DOCUMENT_KEY, document)) {
         document.setReadOnly(false)
         try {
@@ -306,9 +309,6 @@ abstract class LineStatusTrackerBase<R : Range>(
     }
   }
 
-
-  @TestOnly
-  fun getDocumentTrackerInTestMode(): DocumentTracker = documentTracker
 
   override fun toString(): String {
     return "${javaClass.name}(file=${virtualFile?.path}, isReleased=$isReleased)@${Integer.toHexString(hashCode())}"

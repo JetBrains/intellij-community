@@ -15,6 +15,7 @@ package org.zmlx.hg4idea.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -28,7 +29,7 @@ public class HgGlobalStatusDialog extends DialogWrapper {
     init();
   }
 
-  public void append(String text) {
+  public void append(@Nls String text) {
     if (StringUtil.isEmpty(text)) {
       return;
     }

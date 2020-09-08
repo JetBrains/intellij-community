@@ -41,7 +41,9 @@ import org.jetbrains.annotations.Nullable;
 
 public class AnnotateRevisionAction extends AnnotateRevisionActionBase implements DumbAware {
   public AnnotateRevisionAction() {
-    super(VcsBundle.message("annotate.action.name"), VcsBundle.message("annotate.action.description"), AllIcons.Actions.Annotate);
+    super(VcsBundle.messagePointer("annotate.action.name"),
+          VcsBundle.messagePointer("annotate.action.description"),
+          AllIcons.Actions.Annotate);
     setShortcutSet(ActionManager.getInstance().getAction("Annotate").getShortcutSet());
   }
 

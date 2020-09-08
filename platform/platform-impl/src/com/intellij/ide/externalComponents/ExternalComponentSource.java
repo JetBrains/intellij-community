@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.externalComponents;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,17 +50,17 @@ public interface ExternalComponentSource {
    * @return The name.
    */
   @NotNull
-  String getName();
+  @Nls(capitalization = Nls.Capitalization.Title) String getName();
 
   @NotNull
-  Collection<? extends Pair<String, String>> getStatuses();
+  Collection<? extends Pair<@Nls String, @Nls String>> getStatuses();
 
   /**
    * Gets a list of all available channels for this source. The first item is the default.
    * @return A list of channel names, or {@code null} to indicate that this source does not have different update channels.
    */
   @Nullable
-  List<String> getAllChannels();
+  List<@Nls(capitalization = Nls.Capitalization.Title) String> getAllChannels();
 
   default boolean isEnabled(){
     return true;

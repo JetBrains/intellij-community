@@ -33,6 +33,7 @@ import git4idea.commands.*;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.repo.GitRepository;
 import git4idea.util.StringScanner;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -260,6 +261,7 @@ public class GitIndexUtil {
       return myPath;
     }
 
+    @NonNls
     @Override
     public String toString() {
       return "StagedFileOrDirectory[" + myPath + "]";
@@ -285,6 +287,7 @@ public class GitIndexUtil {
       return myExecutable;
     }
 
+    @NonNls
     @Override
     public String toString() {
       return "StagedFile[" + myPath + "] at [" + myBlobHash + "]";
@@ -310,6 +313,7 @@ public class GitIndexUtil {
       return myBlobHash;
     }
 
+    @NonNls
     @Override
     public String toString() {
       return "StagedSubRepo[" + myPath + "] at [" + myBlobHash + "]";

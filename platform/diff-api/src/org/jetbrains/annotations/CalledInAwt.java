@@ -16,6 +16,8 @@
 
 package org.jetbrains.annotations;
 
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -23,8 +25,11 @@ import java.lang.annotation.Target;
 
 /**
  * Used to indicate that a method should be called in AWT thread
+ * @deprecated Use {@link RequiresEdt}.
  */
+@Deprecated
 @Retention(RetentionPolicy.CLASS)
 @Target({ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.PARAMETER})
 public @interface CalledInAwt {
+  boolean instrument() default true;
 }

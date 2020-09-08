@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.frame;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.xdebugger.Obsolescent;
 import com.intellij.xdebugger.XDebuggerBundle;
 import org.jetbrains.annotations.NotNull;
@@ -62,6 +63,7 @@ public abstract class XFullValueEvaluator {
    */
   public abstract void startEvaluation(@NotNull XFullValueEvaluationCallback callback);
 
+  @NlsSafe
   public String getLinkText() {
     return myLinkText;
   }

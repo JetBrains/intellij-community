@@ -427,7 +427,8 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
   private final class HideOutOfCyclePackagesAction extends ToggleAction {
 
     HideOutOfCyclePackagesAction() {
-      super("Hide packages without cyclic dependencies", "Hide packages without cyclic dependencies", AllIcons.General.Filter);
+      super(JavaBundle.message("hide.out.of.cyclic.packages.action.text"),
+            JavaBundle.message("hide.out.of.cyclic.packages.action.description"), AllIcons.General.Filter);
     }
 
     @Override

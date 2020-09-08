@@ -23,6 +23,7 @@ import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalS
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings.SyncType;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -42,6 +43,7 @@ import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -192,7 +194,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
 
   private static boolean isModulePointsSameRoot(ModuleData moduleData, Module ideModule) {
     for (VirtualFile root: ModuleRootManager.getInstance(ideModule).getContentRoots()) {
-      if (FileUtil.pathsEqual(root.getPath(), moduleData.getLinkedExternalProjectPath())) {
+      if (PathUtil.pathEqualsTo(root, moduleData.getLinkedExternalProjectPath())) {
         return true;
       }
     }

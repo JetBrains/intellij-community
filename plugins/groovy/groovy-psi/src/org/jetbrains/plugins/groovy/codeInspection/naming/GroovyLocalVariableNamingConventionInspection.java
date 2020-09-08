@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.codeInspection.naming;
 
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
@@ -46,11 +47,11 @@ public class GroovyLocalVariableNamingConventionInspection extends ConventionIns
   public String buildErrorString(Object... args) {
     final String className = (String) args[0];
     if (className.length() < getMinLength()) {
-      return "Local variable name '#ref' is too short";
+      return GroovyBundle.message("inspection.message.local.variable.name.ref.too.short");
     } else if (className.length() > getMaxLength()) {
-      return "Local variable name '#ref' is too long";
+      return GroovyBundle.message("inspection.message.local.variable.name.ref.too.long");
     }
-    return "Local variable name '#ref' doesn't match regex '" + getRegex() + "' #loc";
+    return GroovyBundle.message("inspection.message.local.variable.name.ref.doesnt.match.regex", getRegex());
   }
 
   @Override

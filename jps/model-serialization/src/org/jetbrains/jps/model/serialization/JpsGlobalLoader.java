@@ -101,19 +101,6 @@ public final class JpsGlobalLoader extends JpsLoaderBase {
         }
       }
     }
-
-    @Override
-    public void saveExtension(@NotNull JpsGlobal global, @NotNull Element componentTag) {
-      JpsPathVariablesConfiguration configuration = JpsModelSerializationDataService.getPathVariablesConfiguration(global);
-      if (configuration != null) {
-        for (Map.Entry<String, String> entry : configuration.getAllUserVariables().entrySet()) {
-          Element tag = new Element(MACRO_TAG);
-          tag.setAttribute(NAME_ATTRIBUTE, entry.getKey());
-          tag.setAttribute(VALUE_ATTRIBUTE, entry.getValue());
-          componentTag.addContent(tag);
-        }
-      }
-    }
   }
 
   public static class GlobalLibrariesSerializer extends JpsGlobalExtensionSerializer {
@@ -125,11 +112,6 @@ public final class JpsGlobalLoader extends JpsLoaderBase {
     public void loadExtension(@NotNull JpsGlobal global, @NotNull Element componentTag) {
       JpsLibraryTableSerializer.loadLibraries(componentTag, global.getLibraryCollection());
     }
-
-    @Override
-    public void saveExtension(@NotNull JpsGlobal global, @NotNull Element componentTag) {
-      JpsLibraryTableSerializer.saveLibraries(global.getLibraryCollection(), componentTag);
-    }
   }
 
   public static class SdkTableSerializer extends JpsGlobalExtensionSerializer {
@@ -140,11 +122,6 @@ public final class JpsGlobalLoader extends JpsLoaderBase {
     @Override
     public void loadExtension(@NotNull JpsGlobal global, @NotNull Element componentTag) {
       JpsSdkTableSerializer.loadSdks(componentTag, global.getLibraryCollection());
-    }
-
-    @Override
-    public void saveExtension(@NotNull JpsGlobal global, @NotNull Element componentTag) {
-      JpsSdkTableSerializer.saveSdks(global.getLibraryCollection(), componentTag);
     }
   }
 
@@ -159,10 +136,6 @@ public final class JpsGlobalLoader extends JpsLoaderBase {
       if (ignoreFilesTag != null) {
         global.getFileTypesConfiguration().setIgnoredPatternString(ignoreFilesTag.getAttributeValue("list"));
       }
-    }
-
-    @Override
-    public void saveExtension(@NotNull JpsGlobal global, @NotNull Element componentTag) {
     }
   }
 }

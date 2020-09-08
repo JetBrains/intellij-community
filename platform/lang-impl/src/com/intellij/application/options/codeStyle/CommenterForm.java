@@ -17,6 +17,7 @@ package com.intellij.application.options.codeStyle;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -43,7 +44,7 @@ public class CommenterForm implements CodeStyleSettingsCustomizable {
     this(language, ApplicationBundle.message("title.naming.comment.code"));
   }
 
-  public CommenterForm(Language language, @Nullable String title) {
+  public CommenterForm(Language language, @Nullable @NlsContexts.BorderTitle String title) {
     myLanguage = language;
     if (title != null) {
       myCommenterPanel.setBorder(IdeBorderFactory.createTitledBorder(title));

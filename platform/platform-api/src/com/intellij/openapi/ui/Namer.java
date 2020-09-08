@@ -19,8 +19,10 @@
  */
 package com.intellij.openapi.ui;
 
+import org.jetbrains.annotations.Nls;
+
 public interface Namer<T> {
-    String getName(T t);
+    @Nls(capitalization = Nls.Capitalization.Title) String getName(T t);
     boolean canRename(T item);
     void setName(T t, String name);
 }

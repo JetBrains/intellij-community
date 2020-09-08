@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,11 +23,11 @@ public class FieldPanel extends AbstractFieldPanel implements TextAccessor {
     createComponent();
   }
 
-  public FieldPanel(String labelText, final String viewerDialogTitle, ActionListener browseButtonActionListener, final Runnable documentListener) {
+  public FieldPanel(@NlsContexts.Label String labelText, final @NlsContexts.DialogTitle String viewerDialogTitle, ActionListener browseButtonActionListener, final Runnable documentListener) {
     this(new ExtendableTextField(30), labelText, viewerDialogTitle, browseButtonActionListener, documentListener);
   }
 
-  public FieldPanel(JTextField textField, String labelText, final String viewerDialogTitle, ActionListener browseButtonActionListener, final Runnable documentListener) {
+  public FieldPanel(JTextField textField, @NlsContexts.Label String labelText, final @NlsContexts.DialogTitle String viewerDialogTitle, ActionListener browseButtonActionListener, final Runnable documentListener) {
     super(textField, labelText, viewerDialogTitle, browseButtonActionListener, documentListener);
     myTextField = textField;
     createComponent();
@@ -64,21 +65,21 @@ public class FieldPanel extends AbstractFieldPanel implements TextAccessor {
     return myTextField;
   }
 
-  public static FieldPanel create(String labelText, String viewerDialogTitle) {
+  public static FieldPanel create(@NlsContexts.Label String labelText, @NlsContexts.DialogTitle String viewerDialogTitle) {
     return create(labelText, viewerDialogTitle, null, null);
   }
 
-  public static FieldPanel withPaths(String labelText, String viewerDialogTitle) {
+  public static FieldPanel withPaths(@NlsContexts.Label String labelText, @NlsContexts.DialogTitle String viewerDialogTitle) {
     return withPaths(labelText, viewerDialogTitle, null, null);
   }
 
-  public static FieldPanel withPaths(String labelText, String viewerDialogTitle, ActionListener browseButtonActionListener, Runnable documentListener) {
+  public static FieldPanel withPaths(@NlsContexts.Label String labelText, @NlsContexts.DialogTitle String viewerDialogTitle, ActionListener browseButtonActionListener, Runnable documentListener) {
     FieldPanel fieldPanel = create(labelText, viewerDialogTitle, browseButtonActionListener, documentListener);
     InsertPathAction.addTo(fieldPanel.myTextField);
     return fieldPanel;
   }
 
-  private static FieldPanel create(String labelText, String viewerDialogTitle, ActionListener browseButtonActionListener, Runnable documentListener) {
+  private static FieldPanel create(@NlsContexts.Label String labelText, @NlsContexts.DialogTitle String viewerDialogTitle, ActionListener browseButtonActionListener, Runnable documentListener) {
     return new FieldPanel(labelText, viewerDialogTitle, browseButtonActionListener, documentListener);
   }
 

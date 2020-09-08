@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgFile;
@@ -40,7 +41,7 @@ import java.util.Set;
 
 public abstract class HgCommitTypeCommand {
 
-  private static final String TEMP_FILE_NAME = ".hg4idea-commit.tmp";
+  private static final @NonNls String TEMP_FILE_NAME = ".hg4idea-commit.tmp";
 
   @NotNull protected final Project myProject;
   @NotNull protected final HgRepository myRepository;
@@ -69,7 +70,7 @@ public abstract class HgCommitTypeCommand {
       FileUtil.writeToFile(tempFile, myMessage.getBytes(myCharset));
     }
     catch (IOException e) {
-      throw new VcsException("Couldn't prepare commit message", e);
+      throw new VcsException(HgBundle.message("action.hg4idea.Commit.cant.prepare.commit.message.file"), e);
     }
     return tempFile;
   }

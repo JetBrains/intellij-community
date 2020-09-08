@@ -22,7 +22,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
-        <border type="none" title="XML Attribute"/>
+        <border type="none" title-resource-bundle="messages/IntelliLangBundle" title-key="xml.attribute.panel.title"/>
         <children>
           <component id="a82b5" class="javax.swing.JLabel">
             <constraints>
@@ -30,8 +30,8 @@
             </constraints>
             <properties>
               <labelFor value="cca5"/>
-              <text value="L&amp;ocal name:"/>
-              <toolTipText value="Regular expression to match the attribute name, e.g. &quot;on.*&quot;"/>
+              <text resource-bundle="messages/IntelliLangBundle" key="xml.attribute.panel.label.local.name"/>
+              <toolTipText resource-bundle="messages/IntelliLangBundle" key="xml.attribute.panel.tooltip.regular.expression"/>
             </properties>
           </component>
           <component id="bd61e" class="javax.swing.JLabel">
@@ -40,7 +40,7 @@
             </constraints>
             <properties>
               <labelFor value="289e8"/>
-              <text value="Na&amp;mespace:"/>
+              <text resource-bundle="messages/IntelliLangBundle" key="xml.attribute.panel.label.namespace"/>
             </properties>
           </component>
           <component id="cca5" class="com.intellij.ui.EditorTextField" binding="myLocalName" custom-create="true">
@@ -92,7 +92,7 @@
             </constraints>
             <properties>
               <labelFor value="80ca6"/>
-              <text value="&amp;Name:"/>
+              <text resource-bundle="messages/IntelliLangBundle" key="xml.attribute.panel.label.name"/>
             </properties>
           </component>
           <component id="80ca6" class="javax.swing.JTextField" binding="myNameTextField">

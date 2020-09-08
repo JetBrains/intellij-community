@@ -15,6 +15,7 @@ import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 import git4idea.config.GitExecutable
 import git4idea.config.GitExecutableManager
+import git4idea.i18n.GitBundle
 import git4idea.util.GitFileUtils.addTextConvParameters
 import java.nio.charset.Charset
 
@@ -27,7 +28,7 @@ fun getLocation(directory: VirtualFile, executable: GitExecutable): String {
   if (VcsLogUtil.HASH_REGEX.matcher(hash).matches()) {
     return VcsLogUtil.getShortHash(hash)
   }
-  throw VcsException("Could not find current revision for " + directory.path)
+  throw VcsException(GitBundle.message("git.light.cant.find.current.revision.exception.message", directory.path))
 }
 
 private fun createRevParseHandler(directory: VirtualFile, executable: GitExecutable, abbrev: Boolean = true): GitLineHandler {

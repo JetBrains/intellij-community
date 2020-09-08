@@ -13,6 +13,7 @@
 package org.zmlx.hg4idea.execution;
 
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,20 +38,22 @@ public final class HgCommandResult {
   }
 
   @NotNull
-  public List<String> getOutputLines() {
+  public List<@NlsSafe String> getOutputLines() {
     return myProcessOutput.getStdoutLines();
   }
 
   @NotNull
-  public List<String> getErrorLines() {
+  public List<@NlsSafe String> getErrorLines() {
     return myProcessOutput.getStderrLines();
   }
 
+  @NlsSafe
   @NotNull
   public String getRawOutput() {
     return myProcessOutput.getStdout();
   }
 
+  @NlsSafe
   @NotNull
   public String getRawError() {
     return myProcessOutput.getStderr();

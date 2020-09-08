@@ -9,6 +9,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.platform.ModuleAttachProcessor;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ListSpeedSearch;
@@ -16,7 +17,6 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,18 +36,17 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
                                                                                                Configurable.NoScroll {
   @NotNull
   private final Project myProject;
-  private final String myDisplayName;
+  private final @NlsContexts.ConfigurableName String myDisplayName;
   private final String myHelpTopic;
   private final Map<Module, T> myModuleConfigurables = new HashMap<>();
   private final static String PROJECT_ITEM_KEY = "thisisnotthemoduleyouarelookingfor";
 
-  public ModuleAwareProjectConfigurable(@NotNull Project project, String displayName, @NonNls String helpTopic) {
+  public ModuleAwareProjectConfigurable(@NotNull Project project, @NlsContexts.ConfigurableName String displayName, @NonNls String helpTopic) {
     myProject = project;
     myDisplayName = displayName;
     myHelpTopic = helpTopic;
   }
 
-  @Nls
   @Override
   public String getDisplayName() {
     return myDisplayName;
@@ -161,7 +160,7 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
    * @return Name for project-wide settings in modules list
    */
   @NotNull
-  protected String getProjectConfigurableItemName() {
+  protected @NlsContexts.Label String getProjectConfigurableItemName() {
     return myProject.getName();
   }
 

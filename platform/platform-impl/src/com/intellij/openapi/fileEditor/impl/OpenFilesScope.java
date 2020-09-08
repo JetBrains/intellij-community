@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProvider;
 import com.intellij.psi.search.scope.packageSet.FilteredPackageSet;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -18,7 +19,7 @@ public final class OpenFilesScope extends NamedScope {
   public static final OpenFilesScope INSTANCE = new OpenFilesScope();
 
   private OpenFilesScope() {
-    super(getNameText(), AllIcons.FileTypes.Any_type, new FilteredPackageSet(getNameText()) {
+    super("Open Files", () -> getNameText(), AllIcons.FileTypes.Any_type, new FilteredPackageSet(getNameText()) {
       @Override
       public boolean contains(@NotNull VirtualFile file, @NotNull Project project) {
         FileEditorManager manager = project.isDisposed() ? null : FileEditorManager.getInstance(project);
@@ -35,7 +36,7 @@ public final class OpenFilesScope extends NamedScope {
     }
   }
 
-  public static String getNameText() {
+  public static @NotNull @Nls String getNameText() {
     return IdeBundle.message("scope.open.files");
   }
 }

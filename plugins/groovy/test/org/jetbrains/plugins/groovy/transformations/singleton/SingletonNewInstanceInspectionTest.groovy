@@ -1,10 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.transformations.singleton
 
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
-import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle
 import org.jetbrains.plugins.groovy.codeInspection.bugs.NewInstanceOfSingletonInspection
 
 class SingletonNewInstanceInspectionTest extends LightGroovyTestCase {
@@ -19,7 +19,7 @@ class SingletonNewInstanceInspectionTest extends LightGroovyTestCase {
   private void doTest(String before, String after) {
     fixture.with {
       configureByText '_.groovy', before
-      def action = findSingleIntention(GroovyInspectionBundle.message("replace.new.expression.with.instance.access"))
+      def action = findSingleIntention(GroovyBundle.message("replace.new.expression.with.instance.access"))
       assert action
       launchAction action
       checkResult after

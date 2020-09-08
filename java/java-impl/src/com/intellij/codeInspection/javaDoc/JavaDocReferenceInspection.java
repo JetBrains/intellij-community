@@ -9,6 +9,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.FQNameCellRenderer;
 import com.intellij.java.JavaBundle;
@@ -53,10 +54,10 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     return new RenameReferenceQuickFix(unboundParams);
   }
 
-  private String getResolveErrorMessage(@NotNull PsiReference reference,
-                                        PsiElement resolved,
-                                        @NotNull PsiElement context,
-                                        CharSequence referenceText) {
+  private @InspectionMessage String getResolveErrorMessage(@NotNull PsiReference reference,
+                                                           PsiElement resolved,
+                                                           @NotNull PsiElement context,
+                                                           CharSequence referenceText) {
     if (resolved == null && reference instanceof PsiPolyVariantReference) {
       return getResolveErrorMessage(((PsiPolyVariantReference)reference).multiResolve(false), context, referenceText);
     }
@@ -64,7 +65,7 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     return getResolveErrorMessage(resolved, context, referenceText);
   }
 
-  private String getResolveErrorMessage(ResolveResult @NotNull [] resolveResults, @NotNull PsiElement context, CharSequence referenceText) {
+  private @InspectionMessage String getResolveErrorMessage(ResolveResult @NotNull [] resolveResults, @NotNull PsiElement context, CharSequence referenceText) {
     if (resolveResults.length == 0) {
       return JavaBundle.message("inspection.javadoc.problem.cannot.resolve", "<code>" + referenceText + "</code>");
     }
@@ -78,7 +79,7 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
            JavaBundle.message("inspection.javadoc.problem.inaccessible", "<code>" + referenceText + "</code>");
   }
 
-  private String getResolveErrorMessage(PsiElement resolved, @NotNull PsiElement context, CharSequence referenceText) {
+  private @InspectionMessage String getResolveErrorMessage(PsiElement resolved, @NotNull PsiElement context, CharSequence referenceText) {
     if (resolved == null) {
       return JavaBundle.message("inspection.javadoc.problem.cannot.resolve", "<code>" + referenceText + "</code>");
     }

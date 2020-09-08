@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.InputStream;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -111,7 +112,8 @@ public class YouTrackIntellisense {
     }
     LOG.debug("Cache " + (response != null? "hit" : "miss"));
     if (response == null) {
-      final String url = String.format("%s?filter=%s&caret=%d", INTELLISENSE_RESOURCE, URLEncoder.encode(query, "utf-8"), caret);
+      final String url = String.format("%s?filter=%s&caret=%d", INTELLISENSE_RESOURCE, URLEncoder.encode(query, StandardCharsets.UTF_8),
+                                       caret);
       final long startTime = System.currentTimeMillis();
       response = new Response(myRepository.doREST(url, false).getResponseBodyAsStream());
       LOG.debug(String.format("Intellisense request to YouTrack took %d ms to complete", System.currentTimeMillis() - startTime));

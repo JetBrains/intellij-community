@@ -18,6 +18,7 @@ package com.intellij.application.options;
 import com.intellij.application.options.codeStyle.CommenterForm;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -34,6 +35,7 @@ import com.intellij.ui.SortedListModel;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -88,11 +90,11 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
     GridBagConstraints gc =
       new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.NORTHEAST, GridBagConstraints.BOTH,
                              new JBInsets(0, 0, 0, 0), 0, 0);
-    Predicate<PsiClass> isApplicable = aClass -> aClass.isAnnotationType();
+    Predicate<PsiClass> isApplicable = PsiClass::isAnnotationType;
     //noinspection Convert2Diamond
     myRepeatAnnotationsModel = new SortedListModel<String>(Comparator.naturalOrder());
-    myOverridePanel.add(SpecialAnnotationsUtil.createSpecialAnnotationsListControl("Annotations to Copy", false, myRepeatAnnotationsModel,
-                                                                                   isApplicable), gc);
+    myOverridePanel.add(SpecialAnnotationsUtil.createSpecialAnnotationsListControl(JavaBundle.message("separator.annotations.to.copy"), 
+                                                                                   false, myRepeatAnnotationsModel, isApplicable), gc);
     return myPanel;
   }
 
@@ -192,7 +194,10 @@ public class CodeStyleGenerationConfigurable implements CodeStyleConfigurable {
     text = text.trim();
     if (text.isEmpty()) return text;
     if (!StringUtil.isJavaIdentifier(text)) {
-      throw new ConfigurationException("Not a valid java identifier part in " + (prefix ? "prefix" : "suffix") + " '" + text + "'");
+      final @Nls String message = JavaBundle.message(prefix
+                                                     ? "code.style.generation.settings.error.not.valid.identifier.part.in.prefix"
+                                                     : "code.style.generation.settings.error.not.valid.identifier.part.in.suffix", text);
+      throw new ConfigurationException(message);
     }
     return text;
   }

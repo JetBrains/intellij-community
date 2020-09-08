@@ -3,6 +3,7 @@ package com.intellij.ide
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.Future
 
@@ -10,7 +11,7 @@ import java.util.concurrent.Future
 data class CommandLineProcessorResult(val project: Project?, val future: Future<CliResult>) {
   companion object {
     @JvmStatic
-    fun createError(message: String): CommandLineProcessorResult {
+    fun createError(@NlsContexts.DialogMessage message : String): CommandLineProcessorResult {
       return CommandLineProcessorResult(null, CliResult.error(1, message))
     }
   }
@@ -22,7 +23,7 @@ data class CommandLineProcessorResult(val project: Project?, val future: Future<
     if (future.isDone) {
       val result = future.get()
       if (result.exitCode == 1) {
-        Messages.showErrorDialog(result.message, "Cannot execute command")
+        Messages.showErrorDialog(result.message, IdeBundle.message("dialog.title.cannot.execute.command"))
         return true
       }
     }

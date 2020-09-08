@@ -6,6 +6,7 @@ package com.intellij.lang.properties.editor;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.lang.properties.IProperty;
+import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.PropertiesHighlighter;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -24,7 +25,6 @@ import java.util.function.BooleanSupplier;
 public class PropertyStructureViewElement implements StructureViewTreeElement, ResourceBundleEditorViewElement {
   private static final TextAttributesKey GROUP_KEY;
 
-  public static final String PROPERTY_GROUP_KEY_TEXT = "<property>";
   @NotNull
   private final IProperty myProperty;
   @NotNull
@@ -102,7 +102,12 @@ public class PropertyStructureViewElement implements StructureViewTreeElement, R
       public String getPresentableText() {
         IProperty property = getProperty();
         if (property == null) return null;
-        return getPresentableName() == null ? property.getName() : getPresentableName().isEmpty() ? PROPERTY_GROUP_KEY_TEXT : getPresentableName();
+        String presentableName = getPresentableName();
+        if (presentableName == null) {
+          return property.getName();
+        }
+        return !presentableName.isEmpty() ? presentableName 
+                                          : PropertiesBundle.message("structure.view.empty.property.presentation");
       }
 
       @Override

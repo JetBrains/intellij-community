@@ -10,6 +10,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -131,7 +132,7 @@ public final class JavaExecutionUtil {
 
   @SuppressWarnings("MissingDeprecatedAnnotation")
   @Deprecated
-  public static void showExecutionErrorMessage(ExecutionException e, String title, Project project) {
+  public static void showExecutionErrorMessage(ExecutionException e, @NlsContexts.DialogTitle String title, Project project) {
     ExecutionErrorDialog.show(e, title, project);
   }
 

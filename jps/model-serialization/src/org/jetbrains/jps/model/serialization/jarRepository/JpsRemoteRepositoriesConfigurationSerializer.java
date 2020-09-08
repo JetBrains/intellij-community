@@ -70,9 +70,4 @@ public class JpsRemoteRepositoriesConfigurationSerializer extends JpsProjectExte
       config.setRepositories(result);
     }
   }
-
-  @Override
-  public void saveExtension(@NotNull JpsProject project, @NotNull Element componentTag) {
-     // not supported 
-  }
 }

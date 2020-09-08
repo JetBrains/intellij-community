@@ -32,6 +32,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -130,10 +131,10 @@ public class ImplementAbstractMethodHandler {
       final LinkedHashSet<PsiClass> classes = new LinkedHashSet<>();
       for (final Object o : selection) {
         if (o instanceof PsiEnumConstant) {
-          classes.add(ApplicationManager.getApplication().runWriteAction(new Computable<PsiClass>(){
+          classes.add(ApplicationManager.getApplication().runWriteAction(new Computable<>() {
             @Override
             public PsiClass compute() {
-              return ((PsiEnumConstant) o).getOrCreateInitializingClass();
+              return ((PsiEnumConstant)o).getOrCreateInitializingClass();
             }
           }));
         }
@@ -176,7 +177,8 @@ public class ImplementAbstractMethodHandler {
     }
 
     if (!classNamesWithPotentialImplementations.isEmpty()) {
-      problemDetected.set("Potential implementations with weaker access privileges are found: " + StringUtil.join(classNamesWithPotentialImplementations, ", "));
+      @NlsSafe String classNames = StringUtil.join(classNamesWithPotentialImplementations, ", ");
+      problemDetected.set(JavaBundle.message("implement.abstract.method.potential.implementations.with.weaker.access", classNames));
     }
     return list.toArray(PsiClass.EMPTY_ARRAY);
   }

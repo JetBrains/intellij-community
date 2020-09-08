@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -14,7 +14,11 @@ import com.intellij.openapi.vcs.changes.ChangesUtil.getAfterPath
 import com.intellij.openapi.vcs.changes.ChangesUtil.getBeforePath
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
-import org.jetbrains.idea.svn.*
+import org.jetbrains.idea.svn.ConflictState
+import org.jetbrains.idea.svn.ConflictedSvnChange
+import org.jetbrains.idea.svn.SvnBundle.message
+import org.jetbrains.idea.svn.SvnLocallyDeletedChange
+import org.jetbrains.idea.svn.SvnVcs
 import org.jetbrains.idea.svn.api.Depth
 
 private fun getConflict(e: AnActionEvent): Conflict? {
@@ -43,11 +47,14 @@ class MarkTreeConflictResolvedAction : DumbAwareAction() {
     val project = e.project!!
     val conflict = getConflict(e)!!
 
-    val markText = SvnBundle.message("action.mark.tree.conflict.resolved.confirmation.title")
-    val result = Messages.showYesNoDialog(project, SvnBundle.message("action.mark.tree.conflict.resolved.confirmation.text"), markText,
-                                          Messages.getQuestionIcon())
+    val result = Messages.showYesNoDialog(
+      project,
+      message("dialog.message.mark.tree.conflict.resolved.confirmation"),
+      message("dialog.title.mark.tree.conflict.resolved"),
+      Messages.getQuestionIcon()
+    )
     if (result == Messages.YES) {
-      object : Task.Backgroundable(project, markText, true) {
+      object : Task.Backgroundable(project, message("progress.title.mark.tree.conflict.resolved"), true) {
         private var exception: VcsException? = null
 
         override fun run(indicator: ProgressIndicator) {
@@ -66,7 +73,7 @@ class MarkTreeConflictResolvedAction : DumbAwareAction() {
 
         override fun onSuccess() {
           if (exception != null) {
-            AbstractVcsHelper.getInstance(project).showError(exception, markText)
+            AbstractVcsHelper.getInstance(project).showError(exception, message("dialog.title.mark.tree.conflict.resolved"))
           }
         }
       }.queue()

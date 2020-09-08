@@ -5,7 +5,6 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 final class RenameHandler2Renamer implements Renamer {
@@ -26,7 +25,7 @@ final class RenameHandler2Renamer implements Renamer {
   }
 
   @Override
-  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getPresentableText() {
+  public @NotNull String getPresentableText() {
     return RenameHandlerRegistry.getHandlerTitle(myHandler);
   }
 

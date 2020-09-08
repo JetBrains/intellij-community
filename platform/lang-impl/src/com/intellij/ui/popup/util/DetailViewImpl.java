@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -41,7 +42,7 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
   private JPanel myDetailPanelWrapper;
   private RangeHighlighter myHighlighter;
   private PreviewEditorState myEditorState = PreviewEditorState.EMPTY;
-  private String myEmptyLabel = UIBundle.message("message.nothingToShow");
+  private @NlsContexts.Label String myEmptyLabel = UIBundle.message("message.nothingToShow");
 
   public DetailViewImpl(Project project) {
     super(new BorderLayout());
@@ -196,7 +197,7 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
     repaint();
   }
 
-  public void setEmptyLabel(String text) {
+  public void setEmptyLabel(@NlsContexts.Label String text) {
     myEmptyLabel = text;
   }
 

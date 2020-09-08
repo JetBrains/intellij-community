@@ -16,7 +16,7 @@ from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider, StrPresenta
 from _pydevd_bundle.pydevd_utils import take_first_n_coll_elements, is_numeric_container, is_pandas_container, is_string, pandas_to_str, \
     should_evaluate_full_value, should_evaluate_shape
 from _pydevd_bundle.pydevd_vars import get_label, array_default_format, is_able_to_format_number, MAXIMUM_ARRAY_SIZE, \
-    get_column_formatter_by_type, get_formatted_row_elements, DEFAULT_DF_FORMAT
+    get_column_formatter_by_type, get_formatted_row_elements, DEFAULT_DF_FORMAT, DATAFRAME_HEADER_LOAD_MAX_SIZE
 from pydev_console.pydev_protocol import DebugValue, GetArrayResponse, ArrayData, ArrayHeaders, ColHeader, RowHeader, \
     UnsupportedArrayTypeException, ExceedingArrayDimensionsException
 
@@ -467,7 +467,7 @@ def array_to_meta_thrift_struct(array, name, format):
         slice += reslice
 
     bounds = (0, 0)
-    if type in NUMPY_NUMERIC_TYPES:
+    if type in NUMPY_NUMERIC_TYPES and array.size != 0:
         bounds = (array.min(), array.max())
     array_chunk = GetArrayResponse()
     array_chunk.slice = slice
@@ -492,6 +492,7 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
 
 
     """
+    original_df = df
     dim = len(df.axes)
     num_rows = df.shape[0]
     num_cols = df.shape[1] if dim > 1 else 1
@@ -520,6 +521,14 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
     if (rows, cols) == (-1, -1):
         rows, cols = num_rows, num_cols
 
+    elif (rows, cols) == (0, 0):
+        # return header only
+        r = min(num_rows, DATAFRAME_HEADER_LOAD_MAX_SIZE)
+        c = min(num_cols, DATAFRAME_HEADER_LOAD_MAX_SIZE)
+        array_chunk.headers = header_data_to_thrift_struct(r, c, [""] * num_cols, [(0, 0)] * num_cols, lambda x: DEFAULT_DF_FORMAT, original_df, dim)
+        array_chunk.data = array_data_to_thrift_struct(rows, cols, None, format)
+        return array_chunk
+
     rows = min(rows, MAXIMUM_ARRAY_SIZE)
     cols = min(cols, MAXIMUM_ARRAY_SIZE, num_cols)
     # need to precompute column bounds here before slicing!
@@ -529,7 +538,7 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
         for col in range(cols):
             dtype = df.dtypes.iloc[coffset + col].kind
             dtypes[col] = dtype
-            if dtype in NUMPY_NUMERIC_TYPES:
+            if dtype in NUMPY_NUMERIC_TYPES and df.size != 0:
                 cvalues = df.iloc[:, coffset + col]
                 bounds = (cvalues.min(), cvalues.max())
             else:
@@ -538,7 +547,7 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
     else:
         dtype = df.dtype.kind
         dtypes[0] = dtype
-        col_bounds[0] = (df.min(), df.max()) if dtype in NUMPY_NUMERIC_TYPES else (0, 0)
+        col_bounds[0] = (df.min(), df.max()) if dtype in NUMPY_NUMERIC_TYPES and df.size != 0 else (0, 0)
 
     df = df.iloc[roffset: roffset + rows, coffset: coffset + cols] if dim > 1 else df.iloc[roffset: roffset + rows]
     rows = df.shape[0]

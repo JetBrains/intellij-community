@@ -16,6 +16,7 @@
 
 package com.intellij.refactoring.inlineSuperClass;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -41,7 +42,7 @@ public class InlineSuperClassRefactoringDialog extends InlineOptionsDialog {
     mySuperClass = superClass;
     myCurrentInheritor = currentInheritor;
     myInvokedOnReference = currentInheritor != null;
-    myDocPanel = new DocCommentPanel("JavaDoc for inlined members");
+    myDocPanel = new DocCommentPanel(JavaRefactoringBundle.message("inline.super.doc.panel.title"));
     myDocPanel.setPolicy(JavaRefactoringSettings.getInstance().PULL_UP_MEMBERS_JAVADOC);
     init();
     setTitle(JavaRefactoringBundle.message("inline.super.class"));
@@ -92,12 +93,12 @@ public class InlineSuperClassRefactoringDialog extends InlineOptionsDialog {
 
   @Override
   protected String getNameLabelText() {
-    return "Class " + mySuperClass.getQualifiedName();
+    return JavaRefactoringBundle.message("inline.super.class.label", mySuperClass.getQualifiedName());
   }
 
   @Override
   protected String getBorderTitle() {
-    return "Inline";
+    return JavaRefactoringBundle.message("inline.action.name");
   }
 
   @Override

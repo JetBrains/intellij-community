@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.CollectionFactory;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -150,7 +151,7 @@ public final class JavaCoverageAnnotator extends BaseCoverageAnnotator {
   }
 
   @Nullable
-  public static String getCoverageInformationString(PackageAnnotator.SummaryCoverageInfo info, boolean subCoverageActive) {
+  public static @Nls String getCoverageInformationString(PackageAnnotator.SummaryCoverageInfo info, boolean subCoverageActive) {
     if (info == null) return null;
     if (info.totalClassCount == 0 || info.totalLineCount == 0) return null;
     if (subCoverageActive) {
@@ -258,7 +259,7 @@ public final class JavaCoverageAnnotator extends BaseCoverageAnnotator {
    * @return human-readable coverage information
    */
   @Nullable
-  public String getClassCoverageInformationString(String classFQName, CoverageDataManager coverageDataManager) {
+  public @Nls String getClassCoverageInformationString(String classFQName, CoverageDataManager coverageDataManager) {
     final PackageAnnotator.ClassCoverageInfo info = myClassCoverageInfos.get(classFQName);
     if (info == null) return null;
     if (info.totalMethodCount == 0 || info.totalLineCount == 0) return null;

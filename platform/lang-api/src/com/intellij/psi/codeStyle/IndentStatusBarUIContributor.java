@@ -3,7 +3,9 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor;
@@ -30,7 +32,7 @@ public abstract class IndentStatusBarUIContributor implements CodeStyleStatusBar
    * @return The indent options source hint or {@code null} if not available.
    */
   @Nullable
-  public abstract String getHint();
+  public abstract @NlsContexts.HintText String getHint();
 
   @Nullable
   @Override
@@ -55,28 +57,24 @@ public abstract class IndentStatusBarUIContributor implements CodeStyleStatusBar
   }
 
   @NotNull
-  public static String createTooltip(String indentInfo, String hint) {
-    StringBuilder sb = new StringBuilder();
-    sb.append("<html>").append(CodeInsightBundle.message("indent.status.bar.indent.tooltip")).append(indentInfo);
+  public static @NlsContexts.Tooltip String createTooltip(@Nls String indentInfo, @NlsContexts.HintText String hint) {
+    HtmlBuilder builder = new HtmlBuilder();
+    builder.append(CodeInsightBundle.message("indent.status.bar.indent.tooltip")).append(indentInfo);
     if (hint != null) {
-      sb.append("&nbsp;&nbsp;").append("<span style=\"color:#").append(ColorUtil.toHex(JBColor.GRAY)).append("\">");
-      sb.append(StringUtil.capitalize(hint));
-      sb.append("</span>");
+      builder.nbsp(2).append(HtmlChunk.span("color:"+ColorUtil.toHtmlColor(JBColor.GRAY)).addText(hint));
     }
-    return sb.append("</html>").toString();
+    return builder.wrapWith("html").toString();
   }
 
   @NotNull
   @Override
   public String getStatusText(@NotNull PsiFile psiFile) {
-    String indentInfo = getIndentInfo(myIndentOptions);
-    StringBuilder widgetText = new StringBuilder();
-    widgetText.append(indentInfo);
+    String widgetText = getIndentInfo(myIndentOptions);
     IndentOptions projectIndentOptions = CodeStyle.getSettings(psiFile.getProject()).getLanguageIndentOptions(psiFile.getLanguage());
     if (!projectIndentOptions.equals(myIndentOptions)) {
-      widgetText.append("*");
+      widgetText += "*";
     }
-    return widgetText.toString();
+    return widgetText;
   }
 }
 

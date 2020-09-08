@@ -107,7 +107,7 @@ public abstract class MavenCompilingTestCase extends MavenImportingTestCase {
     String jdkVersion = null;
     Optional<Sdk> sdk = Optional.ofNullable(ModuleRootManager.getInstance(module).getSdk());
 
-    if (!sdk.isPresent()) {
+    if (sdk.isEmpty()) {
       Optional<JdkOrderEntry> jdkEntry =
         Arrays.stream(ModuleRootManager.getInstance(module).getOrderEntries())
           .filter(JdkOrderEntry.class::isInstance)

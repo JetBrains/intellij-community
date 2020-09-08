@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.URLUtil
+import org.jetbrains.annotations.NonNls
 import java.net.MalformedURLException
 import java.net.URI
 import java.net.URISyntaxException
@@ -18,6 +19,7 @@ import java.util.regex.Pattern
 // about ";" see WEB-100359
 private val URI_PATTERN = Pattern.compile("^([^:/?#]+):(//)?([^/?#]*)([^?#;]*)(.*)")
 
+@NonNls
 object Urls {
   @JvmStatic
   fun newUri(scheme: String?, path: String): Url = UrlImpl(scheme, null, path)
@@ -109,7 +111,7 @@ object Urls {
   }
 
   private fun parseUrl(url: CharSequence): Url? {
-    val urlToParse = if (StringUtil.startsWith(url, "jar:file://")) url.subSequence("jar:".length, url.length) else url
+    val urlToParse = if (StringUtil.startsWith(url, "jar:file://")) url.subSequence("jar:".length, url.length) else url//NON-NLS
 
     val matcher = URI_PATTERN.matcher(urlToParse)
     if (!matcher.matches()) {
@@ -118,7 +120,7 @@ object Urls {
 
     var scheme = matcher.group(1)
     if (urlToParse !== url) {
-      scheme = "jar:$scheme"
+      scheme = "jar:$scheme"//NON-NLS
     }
 
     var authority = StringUtil.nullize(matcher.group(3))

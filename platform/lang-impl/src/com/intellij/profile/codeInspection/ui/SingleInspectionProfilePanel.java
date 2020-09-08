@@ -16,6 +16,7 @@ import com.intellij.ide.*;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -186,8 +187,8 @@ public class SingleInspectionProfilePanel extends JPanel {
     return null;
   }
 
-  public static String renderSeverity(HighlightSeverity severity) {
-    if (HighlightSeverity.INFORMATION.equals(severity)) return "No highlighting, only fix"; //todo severity presentation
+  public static @Nls String renderSeverity(HighlightSeverity severity) {
+    if (HighlightSeverity.INFORMATION.equals(severity)) return LangBundle.message("single.inspection.profile.panel.no.highlighting.only.fix");
     return StringUtil.capitalizeWords(StringUtil.toLowerCase(severity.getName()), true);
   }
 
@@ -725,7 +726,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         if (descriptor.loadDescription() != null) {
           // need this in order to correctly load plugin-supplied descriptions
           final Descriptor defaultDescriptor = singleNode.getDefaultDescriptor();
-          final String description = defaultDescriptor.loadDescription();
+          final String description = defaultDescriptor.loadDescription(); //NON-NLS
           try {
             readHTML(myBrowser, SearchUtil.markup(toHTML(myBrowser, description, false), myProfileFilter.getFilter()));
           }

@@ -1,6 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.push;
 
+import static com.intellij.openapi.util.text.HtmlChunk.raw;
+import static com.intellij.openapi.vcs.update.ActionInfo.UPDATE;
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
+import static com.intellij.util.containers.ContainerUtil.map;
+import static java.util.Collections.singletonList;
+
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
@@ -12,8 +18,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsNotifier;
@@ -21,37 +30,24 @@ import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction;
 import com.intellij.openapi.vcs.update.UpdateInfoTree;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.ViewUpdateInfoNotification;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.update.GitUpdateInfoAsLog;
 import git4idea.update.GitUpdateResult;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Supplier;
 import one.util.streamex.EntryStream;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Map;
-
-import static com.intellij.openapi.util.text.StringUtil.pluralize;
-import static com.intellij.openapi.vcs.update.ActionInfo.UPDATE;
-import static java.util.Collections.singletonList;
-
 final class GitPushResultNotification extends Notification {
-
-  public static final String VIEW_FILES_UPDATED_DURING_THE_PUSH = "View files updated during the push";
-
-  public static final String UPDATE_WITH_RESOLVED_CONFLICTS = "push has been cancelled, because there were conflicts during update.<br/>" +
-                                                              "Check that conflicts were resolved correctly, and invoke push again.";
-  public static final String INCOMPLETE_UPDATE = "push has been cancelled, because not all conflicts were resolved during update.<br/>" +
-                                                 "Resolve the conflicts and invoke push again.";
-  public static final String UPDATE_WITH_ERRORS = "push was rejected, and update failed with error.";
-  public static final String UPDATE_CANCELLED = "push was rejected, and update was cancelled.";
-
   private static final Logger LOG = Logger.getInstance(GitPushResultNotification.class);
 
   private GitPushResultNotification(@NotNull String groupDisplayId,
@@ -62,7 +58,7 @@ final class GitPushResultNotification extends Notification {
   }
 
   @NotNull
-  @CalledInAwt
+  @RequiresEdt
   static GitPushResultNotification create(@NotNull Project project,
                                           @NotNull GitPushResult pushResult,
                                           @Nullable GitPushOperation pushOperation,
@@ -75,19 +71,19 @@ final class GitPushResultNotification extends Notification {
     boolean singleRepoSuccess = false;
     if (!grouped.errors.isEmpty()) {
       if (!grouped.successful.isEmpty()) {
-        title = "Push partially failed";
+        title = GitBundle.message("push.notification.partially.failed.title");
       }
       else {
-        title = "Push failed";
+        title = GitBundle.message("push.notification.push.failed.title");
       }
       type = NotificationType.ERROR;
     }
     else if (!grouped.rejected.isEmpty() || !grouped.customRejected.isEmpty()) {
       if (!grouped.successful.isEmpty()) {
-        title = "Push partially rejected";
+        title = GitBundle.message("push.notification.partially.rejected.title");
       }
       else {
-        title = "Push rejected";
+        title = GitBundle.message("push.notification.rejected.title");
       }
       type = NotificationType.WARNING;
     }
@@ -95,11 +91,11 @@ final class GitPushResultNotification extends Notification {
       type = NotificationType.INFORMATION;
       if (!multiRepoProject) {
         singleRepoSuccess = true;
-        GitPushRepoResult result = grouped.successful.values().iterator().next();
-        title = StringUtil.capitalize(formRepoDescription(result));
+        GitPushRepoResult result = getFirstItem(grouped.successful.values());
+        title = formRepoDescription(result);
       }
       else {
-        title = "Push successful";
+        title = GitBundle.message("push.notification.successful.title");
       }
     }
 
@@ -107,7 +103,7 @@ final class GitPushResultNotification extends Notification {
     if (singleRepoSuccess) {
       if (notificationData != null) {
         int receivedCommitsCount = notificationData.getReceivedCommitsCount();
-        description = String.format("%d %s received during the push", receivedCommitsCount, commits(receivedCommitsCount));
+        description = GitBundle.message("push.notification.single.repo.success.description", receivedCommitsCount);
       }
       else { // nothing was updated
         description = "";
@@ -128,10 +124,10 @@ final class GitPushResultNotification extends Notification {
         Integer filteredCommitsCount = notificationData.getFilteredCommitsCount();
         String actionText;
         if (filteredCommitsCount == null || filteredCommitsCount == 0) {
-          actionText = "View received " + commits(notificationData.getReceivedCommitsCount());
+          actionText = GitBundle.message("push.notification.view.received.commits.action", notificationData.getReceivedCommitsCount());
         }
         else {
-          actionText = String.format("View %d %s matching the filter", filteredCommitsCount, commits(filteredCommitsCount));
+          actionText = GitBundle.message("push.notification.view.filtered.commits.actions", filteredCommitsCount);
         }
         notification.addAction(NotificationAction.createSimple(actionText, notificationData.getViewCommitAction()));
       }
@@ -139,11 +135,21 @@ final class GitPushResultNotification extends Notification {
     else {
       UpdatedFiles updatedFiles = pushResult.getUpdatedFiles();
       if (!updatedFiles.isEmpty()) {
-        UpdateInfoTree tree = ProjectLevelVcsManagerEx.getInstanceEx(project).showUpdateProjectInfo(updatedFiles, "Update", UPDATE, false);
+        UpdateInfoTree tree = ProjectLevelVcsManagerEx.getInstanceEx(project).showUpdateProjectInfo(
+          updatedFiles,
+          GitBundle.message("push.notification.update.action"),
+          UPDATE,
+          false
+        );
         if (tree != null) {
           tree.setBefore(pushResult.getBeforeUpdateLabel());
           tree.setAfter(pushResult.getAfterUpdateLabel());
-          notification.addAction(new ViewUpdateInfoNotification(project, tree, VIEW_FILES_UPDATED_DURING_THE_PUSH, notification));
+          notification.addAction(new ViewUpdateInfoNotification(
+            project,
+            tree,
+            GitBundle.message("push.notification.view.files.action"),
+            notification
+          ));
         }
       }
     }
@@ -153,9 +159,13 @@ final class GitPushResultNotification extends Notification {
       .keys().toList();
     if (!staleInfoRejected.isEmpty()) {
       notification.setContextHelpAction(new AnAction(
-        "What is force-with-lease?",
-        "Force-with-lease push prevents overriding remote changes that are unknown to local repository.<br>" +
-        "Fetch latest changes to verify that they can be safely discarded and repeat push operation.", null) {
+        GitBundle.message("push.notification.force.with.lease.help"),
+        new HtmlBuilder()
+          .append(GitBundle.message("push.notification.force.with.lease.help.description.first")).br()
+          .append(GitBundle.message("push.notification.force.with.lease.help.description.second"))
+          .toString(),
+        null
+      ) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
         }
@@ -180,81 +190,120 @@ final class GitPushResultNotification extends Notification {
     return notification;
   }
 
+  @NlsContexts.NotificationContent
   @NotNull
   static String emulateTitle(@NotNull @Nls String title, @NotNull @Nls String content) {
-    return "<b>" + title + "</b><br/>" + content;
+    return new HtmlBuilder()
+      .append(raw(title).bold()).br()
+      .appendRaw(content)
+      .toString();
   }
 
-  @NotNull
-  private static String commits(int commitsNumber) {
-    return pluralize("commit", commitsNumber);
-  }
+  private static @Nls String formDescription(@NotNull Map<GitRepository, GitPushRepoResult> results, final boolean multiRepoProject) {
+    List<Map.Entry<GitRepository, GitPushRepoResult>> entries = ContainerUtil.sorted(results.entrySet(), (o1, o2) -> {
+      // successful first
+      int compareResultTypes = GitPushRepoResult.TYPE_COMPARATOR.compare(o1.getValue().getType(), o2.getValue().getType());
+      if (compareResultTypes != 0) {
+        return compareResultTypes;
+      }
+      return DvcsUtil.REPOSITORY_COMPARATOR.compare(o1.getKey(), o2.getKey());
+    });
 
-  private static String formDescription(@NotNull Map<GitRepository, GitPushRepoResult> results, final boolean multiRepoProject) {
-    List<Map.Entry<GitRepository, GitPushRepoResult>> entries = ContainerUtil.sorted(results.entrySet(),
-      (o1, o2) -> {
-       // successful first
-       int compareResultTypes = GitPushRepoResult.TYPE_COMPARATOR.compare(o1.getValue().getType(), o2.getValue().getType());
-       if (compareResultTypes != 0) {
-         return compareResultTypes;
-       }
-       return DvcsUtil.REPOSITORY_COMPARATOR.compare(o1.getKey(), o2.getKey());
-      });
-
-    return StringUtil.join(entries, entry -> {
+    return new HtmlBuilder().appendWithSeparators(HtmlChunk.br(), map(entries, entry -> {
       GitRepository repository = entry.getKey();
       GitPushRepoResult result = entry.getValue();
 
-      String description = formRepoDescription(result);
-      if (!multiRepoProject) {
-        description = StringUtil.capitalize(description);
+      String description;
+      if (multiRepoProject) {
+        description = DvcsUtil.getShortRepositoryName(repository) + ": " + formRepoDescription(result);
       }
       else {
-        description = DvcsUtil.getShortRepositoryName(repository) + ": " + description;
+        description = formRepoDescription(result);
       }
-      return description;
-    }, "<br/>");
+      return raw(description);
+    })).toString();
   }
 
-  private static @Nls String formRepoDescription(@NotNull GitPushRepoResult result) {
-    @Nls String description;
+  private static @Nls String selectBundleMessageWithTags(
+    List<@NlsSafe String> pushedTags,
+    @Nls Supplier<@Nls String> withoutTagsMessage,
+    @Nls Supplier<@Nls String> singleTagMessage,
+    @Nls Supplier<@Nls String> manyTagsMessage
+  ) {
+    if (pushedTags.isEmpty()) {
+      return withoutTagsMessage.get();
+    }
+    else if (pushedTags.size() == 1) {
+      return singleTagMessage.get();
+    }
+    else {
+      return manyTagsMessage.get();
+    }
+  }
+
+  private static @NlsSafe String tagName(List<@NlsSafe String> pushedTags) {
+    return GitBranchUtil.stripRefsPrefix(pushedTags.get(0));
+  }
+
+  private static @NlsContexts.NotificationContent String formRepoDescription(@NotNull GitPushRepoResult result) {
     String sourceBranch = GitBranchUtil.stripRefsPrefix(result.getSourceBranch());
     String targetBranch = GitBranchUtil.stripRefsPrefix(result.getTargetBranch());
-    String tagDescription = formTagDescription(result.getPushedTags(), result.getTargetRemote());
+    @NotNull List<String> pushedTags = result.getPushedTags();
+    @NotNull String remoteName = result.getTargetRemote();
+
+    @NlsContexts.NotificationContent String description;
     switch (result.getType()) {
       case SUCCESS:
         int commitNum = result.getNumberOfPushedCommits();
-        String commits = pluralize("commit", commitNum);
-        description = String.format("pushed %d %s to %s", commitNum, commits, targetBranch);
-        if (tagDescription != null) {
-          description += ", and " + tagDescription;
-        }
+        description = selectBundleMessageWithTags(
+          pushedTags,
+          () -> GitBundle.message("push.notification.description.pushed", commitNum, targetBranch),
+          () -> GitBundle.message("push.notification.description.pushed.with.single.tag", commitNum, targetBranch, tagName(pushedTags), remoteName),
+          () -> GitBundle.message("push.notification.description.pushed.with.many.tags", commitNum, targetBranch, pushedTags.size(), remoteName)
+        );
         break;
       case NEW_BRANCH:
-        description = String.format("pushed %s to new branch %s", sourceBranch, targetBranch);
-        if (tagDescription != null) {
-          description += ", and " + tagDescription;
-        }
+        description = selectBundleMessageWithTags(
+          pushedTags,
+          () -> GitBundle.message("push.notification.description.new.branch", sourceBranch, targetBranch),
+          () -> GitBundle.message("push.notification.description.new.branch.with.single.tag", sourceBranch, targetBranch, tagName(pushedTags), remoteName),
+          () -> GitBundle.message("push.notification.description.new.branch.with.many.tags", sourceBranch, targetBranch, pushedTags.size(), remoteName)
+        );
         break;
       case UP_TO_DATE:
-        if (tagDescription != null) {
-          description = "pushed " + tagDescription;
-        }
-        else {
-          description = "everything is up-to-date";
-        }
+        description = selectBundleMessageWithTags(
+          pushedTags,
+          () -> GitBundle.message("push.notification.description.up.to.date"),
+          () -> GitBundle.message("push.notification.description.pushed.single.tag", tagName(pushedTags), remoteName),
+          () -> GitBundle.message("push.notification.description.pushed.many.tags", pushedTags.size(), remoteName)
+        );
         break;
       case FORCED:
-        description = String.format("force pushed %s to %s", sourceBranch, targetBranch);
+        description = GitBundle.message("push.notification.description.force.pushed", sourceBranch, targetBranch);
         break;
       case REJECTED_NO_FF:
-        description = formDescriptionBasedOnUpdateResult(result.getUpdateResult(), targetBranch);
+        GitUpdateResult updateResult = result.getUpdateResult();
+        if (updateResult == null || updateResult == GitUpdateResult.SUCCESS || updateResult == GitUpdateResult.NOTHING_TO_UPDATE) {
+          description = GitBundle.message("push.notification.description.rejected", targetBranch);
+        }
+        else if (updateResult == GitUpdateResult.SUCCESS_WITH_RESOLVED_CONFLICTS) {
+          description = GitBundle.message("push.notification.description.rejected.and.conflicts");
+        }
+        else if (updateResult == GitUpdateResult.INCOMPLETE) {
+          description = GitBundle.message("push.notification.description.rejected.and.incomplete");
+        }
+        else if (updateResult == GitUpdateResult.CANCEL) {
+          description = GitBundle.message("push.notification.description.rejected.and.cancelled");
+        }
+        else {
+          description = GitBundle.message("push.notification.description.rejected.and.failed");
+        }
         break;
       case REJECTED_STALE_INFO:
-        description = String.format("force-with-lease push %s to %s was rejected", sourceBranch, targetBranch);
+        description = GitBundle.message("push.notification.description.push.with.lease.rejected", sourceBranch, targetBranch);
         break;
       case REJECTED_OTHER:
-        description = String.format("push %s to %s was rejected by remote", sourceBranch, targetBranch);
+        description = GitBundle.message("push.notification.description.rejected.by.remote", sourceBranch, targetBranch);
         break;
       case ERROR:
         description = result.getError();
@@ -267,35 +316,6 @@ final class GitPushResultNotification extends Notification {
     return description;
   }
 
-  @Nullable
-  private static @Nls String formTagDescription(@NotNull List<String> pushedTags, @NotNull String remoteName) {
-    if (pushedTags.isEmpty()) {
-      return null;
-    }
-    if (pushedTags.size() == 1) {
-      return "tag " + GitBranchUtil.stripRefsPrefix(pushedTags.get(0)) + " to " + remoteName;
-    }
-    return pushedTags.size() + " tags to " + remoteName;
-  }
-
-  private static @Nls String formDescriptionBasedOnUpdateResult(GitUpdateResult updateResult, String targetBranch) {
-    if (updateResult == null || updateResult == GitUpdateResult.SUCCESS || updateResult == GitUpdateResult.NOTHING_TO_UPDATE) {
-      return String.format("push to %s was rejected", targetBranch);
-    }
-    else if (updateResult == GitUpdateResult.SUCCESS_WITH_RESOLVED_CONFLICTS) {
-      return UPDATE_WITH_RESOLVED_CONFLICTS;
-    }
-    else if (updateResult == GitUpdateResult.INCOMPLETE) {
-      return INCOMPLETE_UPDATE;
-    }
-    else if (updateResult == GitUpdateResult.CANCEL) {
-      return UPDATE_CANCELLED;
-    }
-    else {
-      return UPDATE_WITH_ERRORS;
-    }
-  }
-
   private static final class ForcePushNotificationAction extends NotificationAction {
     @NotNull private final Project myProject;
     @NotNull private final GitPushOperation myOperation;
@@ -304,7 +324,7 @@ final class GitPushResultNotification extends Notification {
     private ForcePushNotificationAction(@NotNull Project project,
                                         @NotNull GitPushOperation pushOperation,
                                         @NotNull List<GitRepository> repositories) {
-      super("Force Push Anyway");
+      super(GitBundle.message("push.notification.force.push.anyway.action"));
       myProject = project;
       myOperation = pushOperation;
       myRepositories = repositories;
@@ -315,7 +335,7 @@ final class GitPushResultNotification extends Notification {
       notification.expire();
 
       Project project = myProject;
-      new Task.Backgroundable(project, "Pushing...", true) {
+      new Task.Backgroundable(project, GitBundle.message("push.notification.force.push.progress.title.pushing"), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           GitPushOperation forcePushOperation = myOperation.deriveForceWithoutLease(myRepositories);

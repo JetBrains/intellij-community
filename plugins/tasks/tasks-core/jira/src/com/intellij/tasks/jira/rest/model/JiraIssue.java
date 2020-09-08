@@ -1,5 +1,6 @@
 package com.intellij.tasks.jira.rest.model;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,10 +22,10 @@ public abstract class JiraIssue {
   public abstract String getIssueUrl();
 
   @NotNull
-  public abstract String getSummary();
+  public abstract @NlsSafe String getSummary();
 
   @Nullable
-  public abstract String getDescription();
+  public abstract @NlsSafe String getDescription();
 
   @NotNull
   public abstract Date getCreated();

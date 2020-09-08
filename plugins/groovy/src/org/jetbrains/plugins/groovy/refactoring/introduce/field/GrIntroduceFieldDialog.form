@@ -21,7 +21,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="&amp;Type:"/>
+              <text resource-bundle="messages/GroovyRefactoringBundle" key="type.label"/>
             </properties>
           </component>
           <component id="d50d5" class="javax.swing.JLabel" binding="myNameLabel">
@@ -29,7 +29,7 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="&amp;Name:"/>
+              <text resource-bundle="messages/GroovyRefactoringBundle" key="name.label"/>
             </properties>
           </component>
           <component id="e4b52" class="com.intellij.refactoring.ui.NameSuggestionsField" binding="myNameField" custom-create="true" default-binding="true">
@@ -63,14 +63,14 @@
             <clientProperties>
               <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
             </clientProperties>
-            <border type="none" title="Initialize in"/>
+            <border type="none" title-resource-bundle="messages/GroovyRefactoringBundle" title-key="initialize.in.border.title"/>
             <children>
               <component id="cab71" class="javax.swing.JRadioButton" binding="myCurrentMethodRadioButton" default-binding="true">
                 <constraints>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="Current &amp;method"/>
+                  <text resource-bundle="messages/GroovyRefactoringBundle" key="initialize.in.current.method.choice"/>
                 </properties>
               </component>
               <component id="f707e" class="javax.swing.JRadioButton" binding="myFieldDeclarationRadioButton" default-binding="true">
@@ -78,7 +78,7 @@
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="Field &amp;declaration"/>
+                  <text resource-bundle="messages/GroovyRefactoringBundle" key="initialize.in.field.declaration.choice"/>
                 </properties>
               </component>
               <component id="6976e" class="javax.swing.JRadioButton" binding="myClassConstructorSRadioButton" default-binding="true">
@@ -86,7 +86,7 @@
                   <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="Class &amp;constructor(s)"/>
+                  <text resource-bundle="messages/GroovyRefactoringBundle" key="initialize.in.class.constructor.choice"/>
                 </properties>
               </component>
               <component id="65f1d" class="com.intellij.ui.components.JBRadioButton" binding="mySetUpMethodRadioButton" default-binding="true">
@@ -95,7 +95,7 @@
                 </constraints>
                 <properties>
                   <horizontalAlignment value="10"/>
-                  <text value="setUp method"/>
+                  <text resource-bundle="messages/GroovyRefactoringBundle" key="initialize.in.setup.method.choice"/>
                 </properties>
               </component>
             </children>
@@ -109,14 +109,15 @@
             <clientProperties>
               <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
             </clientProperties>
-            <border type="none" title="Visibility"/>
+            <border type="none" title-resource-bundle="messages/GroovyRefactoringBundle" title-key="visibility.border.title"/>
             <children>
               <component id="d06f8" class="javax.swing.JRadioButton" binding="myPrivateRadioButton" default-binding="true">
                 <constraints>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="Pri&amp;vate"/>
+                  <selected value="false"/>
+                  <text resource-bundle="messages/GroovyRefactoringBundle" key="visibility.private.choice"/>
                 </properties>
               </component>
               <component id="68d45" class="javax.swing.JRadioButton" binding="myProtectedRadioButton" default-binding="true">
@@ -124,7 +125,7 @@
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="Pr&amp;otected"/>
+                  <text resource-bundle="messages/GroovyRefactoringBundle" key="visibility.protected.choice"/>
                 </properties>
               </component>
               <component id="fc347" class="javax.swing.JRadioButton" binding="myPublicRadioButton" default-binding="true">
@@ -132,7 +133,7 @@
                   <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="Pu&amp;blic"/>
+                  <text resource-bundle="messages/GroovyRefactoringBundle" key="visibility.public.choice"/>
                 </properties>
               </component>
               <component id="f1cf2" class="javax.swing.JRadioButton" binding="myPropertyRadioButton" default-binding="true">
@@ -140,7 +141,7 @@
                   <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="P&amp;roperty"/>
+                  <text resource-bundle="messages/GroovyRefactoringBundle" key="visibility.property.choice"/>
                 </properties>
               </component>
             </children>
@@ -152,7 +153,7 @@
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Declare &amp;final"/>
+          <text resource-bundle="messages/GroovyRefactoringBundle" key="declare.final.checkbox"/>
         </properties>
       </component>
       <component id="ac577" class="javax.swing.JCheckBox" binding="myReplaceAllOccurrencesCheckBox" default-binding="true">
@@ -160,7 +161,7 @@
           <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Replace &amp;all occurrences"/>
+          <text resource-bundle="messages/GroovyRefactoringBundle" key="replace.all.occurrences.checkbox"/>
         </properties>
       </component>
       <vspacer id="aec39">

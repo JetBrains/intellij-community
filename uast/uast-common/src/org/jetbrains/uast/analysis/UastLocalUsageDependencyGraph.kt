@@ -390,15 +390,7 @@ private fun UExpression.accumulateBranchesResult(results: MutableSet<UExpression
 
 private val UExpression.lastExpression: UExpression?
   get() = when (this) {
-    is USwitchClauseExpressionWithBody -> {
-      //FIXME: workaround for KT-35574
-      if (lang.id == "kotlin" && getParentOfType<USwitchExpression>()?.getExpressionType() != null) {
-        // skip last break statement, which doesn't make sense
-        body.expressions.getOrNull(body.expressions.lastIndex - 1)
-      } else {
-        body.expressions.lastOrNull()
-      }
-    }
+    is USwitchClauseExpressionWithBody -> body.expressions.lastOrNull()
     is UBlockExpression -> this.expressions.lastOrNull()
     is UExpressionList -> this.expressions.lastOrNull()
     else -> this

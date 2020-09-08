@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClassExtension
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiElement
-import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.SearchSession
@@ -170,16 +169,23 @@ private class Layer<T>(
 
     for (wordRequest: WordRequest<T> in wordRequests) {
       progress.checkCanceled()
+      val occurrenceProcessor: OccurrenceProcessor = wordRequest.occurrenceProcessor(processor)
       val byRequest = theMap.getOrPut(wordRequest.searchWordRequest) {
         Pair(SmartList(), LinkedHashMap())
       }
-      val occurrenceProcessors: MutableCollection<OccurrenceProcessor> = when (val injectionInfo = wordRequest.injectionInfo) {
-        InjectionInfo.NoInjection -> byRequest.first
-        is InjectionInfo.InInjection -> byRequest.second.getOrPut(injectionInfo.languageInfo) {
-          SmartList()
-        }
+      val injectionInfo = wordRequest.injectionInfo
+      if (injectionInfo == InjectionInfo.NoInjection || injectionInfo == InjectionInfo.IncludeInjections) {
+        byRequest.first.add(occurrenceProcessor)
       }
-      occurrenceProcessors += wordRequest.occurrenceProcessor(processor)
+      if (injectionInfo is InjectionInfo.InInjection || injectionInfo == InjectionInfo.IncludeInjections) {
+        val languageInfo: LanguageInfo = if (injectionInfo is InjectionInfo.InInjection) {
+          injectionInfo.languageInfo
+        }
+        else {
+          LanguageInfo.NoLanguage
+        }
+        byRequest.second.getOrPut(languageInfo) { SmartList() }.add(occurrenceProcessor)
+      }
     }
 
     return theMap.map { (wordRequest: WordRequestInfo, byRequest) ->
@@ -197,8 +203,8 @@ private class Layer<T>(
       return processSingleRequest(globals.first())
     }
 
-    val globalsIds: Map<Set<IdIndexEntry>, List<WordRequestInfo>> = globals.groupBy(
-      { (request: WordRequestInfo, _) -> PsiSearchHelperImpl.getWordEntries(request.word, request.isCaseSensitive).toSet() },
+    val globalsIds: Map<PsiSearchHelperImpl.TextIndexQuery, List<WordRequestInfo>> = globals.groupBy(
+      { (request: WordRequestInfo, _) -> PsiSearchHelperImpl.TextIndexQuery.fromWord(request.word, request.isCaseSensitive, null) },
       { (request: WordRequestInfo, _) -> progress.checkCanceled(); request }
     )
     return myHelper.processGlobalRequests(globalsIds, progress, scopeProcessors(globals))

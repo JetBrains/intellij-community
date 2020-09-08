@@ -20,6 +20,7 @@ import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.java.request.CreateConstructorFromUsage;
 import com.intellij.lang.java.request.CreateMethodFromUsage;
@@ -864,7 +865,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createPushDownMethodFix() {
-    return new RunRefactoringAction(new JavaPushDownHandler(), "Push method down...") {
+    return new RunRefactoringAction(new JavaPushDownHandler(), JavaBundle.message("push.method.down.command.name")) {
       @NotNull
       @Override
       public Priority getPriority() {

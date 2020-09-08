@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -35,18 +36,18 @@ import java.util.function.Predicate;
  * @author Gregory.Shrago
  */
 public final class SpecialAnnotationsUtil {
-  public static JPanel createSpecialAnnotationsListControl(final List<String> list, final String borderTitle) {
+  public static JPanel createSpecialAnnotationsListControl(final List<String> list, final @NlsContexts.Separator String borderTitle) {
     return createSpecialAnnotationsListControl(list, borderTitle, false);
   }
 
   public static JPanel createSpecialAnnotationsListControl(final List<String> list,
-                                                           final String borderTitle,
+                                                           final @NlsContexts.Separator String borderTitle,
                                                            final boolean acceptPatterns) {
     return createSpecialAnnotationsListControl(list, borderTitle, acceptPatterns, aClass -> aClass.isAnnotationType());
   }
 
   public static JPanel createSpecialAnnotationsListControl(final List<String> list,
-                                                           final String borderTitle,
+                                                           final @NlsContexts.Separator String borderTitle,
                                                            final boolean acceptPatterns,
                                                            final Predicate<? super PsiClass> isApplicable) {
     @SuppressWarnings("Convert2Diamond")
@@ -80,11 +81,11 @@ public final class SpecialAnnotationsUtil {
     return createSpecialAnnotationsListControl(borderTitle, acceptPatterns, listModel, isApplicable);
   }
 
-  public static JPanel createSpecialAnnotationsListControl(final String borderTitle,
+  public static JPanel createSpecialAnnotationsListControl(final @NlsContexts.Separator String borderTitle,
                                                            final boolean acceptPatterns,
-                                                           final SortedListModel<? super String> listModel,
+                                                           final SortedListModel<String> listModel,
                                                            final Predicate<? super PsiClass> isApplicable) {
-    final JList injectionList = new JBList(listModel);
+    final JList<String> injectionList = new JBList<>(listModel);
 
     injectionList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
     ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(injectionList)
@@ -116,7 +117,7 @@ public final class SpecialAnnotationsUtil {
           new AnActionButton(JavaBundle.message("special.annotations.list.annotation.pattern"), IconUtil.getAddPatternIcon()) {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e) {
-              String selectedPattern = Messages.showInputDialog(JavaBundle.message("special.annotations.list.annotation.pattern"),
+              String selectedPattern = Messages.showInputDialog(JavaBundle.message("special.annotations.list.annotation.pattern.message"),
                                                                 JavaBundle.message("special.annotations.list.annotation.pattern"),
                                                                 Messages.getQuestionIcon());
               if (selectedPattern != null) {
@@ -124,7 +125,8 @@ public final class SpecialAnnotationsUtil {
               }
             }
           }).setButtonComparator(JavaBundle.message("special.annotations.list.add.annotation.class"),
-                                 JavaBundle.message("special.annotations.list.annotation.pattern"), "Remove");
+                                 JavaBundle.message("special.annotations.list.annotation.pattern"),
+                                 JavaBundle.message("special.annotations.list.remove.pattern"));
     }
 
     if (borderTitle == null) {

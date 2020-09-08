@@ -16,6 +16,7 @@
 package com.intellij.diagnostic.hprof.analysis
 
 import com.google.common.base.Stopwatch
+import com.intellij.diagnostic.DiagnosticBundle
 import com.intellij.diagnostic.hprof.classstore.ClassDefinition
 import com.intellij.diagnostic.hprof.histogram.Histogram
 import com.intellij.diagnostic.hprof.navigator.ObjectNavigator
@@ -183,7 +184,7 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext) {
       nominatedInstances.put(classStore.get(it), IntOpenHashSet())
     }
 
-    progress.text2 = "Collect all object roots"
+    progress.text2 = DiagnosticBundle.message("analyze.graph.progress.details.collect.roots")
 
     var toVisit = IntArrayList()
     var toVisit2 = IntArrayList()
@@ -224,7 +225,7 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext) {
     result.appendln("Roots count: ${toVisit.size}")
     result.appendln("Classes count: ${classStore.size()}")
 
-    progress.text2 = "Traversing instance graph"
+    progress.text2 = DiagnosticBundle.message("analyze.graph.progress.details.traversing.instance.graph")
 
     val strongRefHistogramEntries = HashMap<ClassDefinition, HistogramVisitor.InternalHistogramEntry>()
     val reachableNonStrongHistogramEntries = HashMap<ClassDefinition, HistogramVisitor.InternalHistogramEntry>()

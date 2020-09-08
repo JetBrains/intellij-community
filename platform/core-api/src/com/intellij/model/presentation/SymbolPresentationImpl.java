@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.presentation;
 
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,13 +15,13 @@ final class SymbolPresentationImpl implements SymbolPresentation {
 
   private final @Nullable Icon myIcon;
   private final @NotNull String myShortName;
-  private final @NotNull String myShortDescription;
-  private final @NotNull String myLongDescription;
+  private final @NotNull @Nls(capitalization = Sentence) String myShortDescription;
+  private final @NotNull @NlsContexts.DetailedDescription String myLongDescription;
 
   SymbolPresentationImpl(@Nullable Icon icon,
-                         @NotNull String shortNameString,
-                         @NotNull String shortDescription,
-                         @NotNull String longDescription) {
+                         @NotNull @NlsSafe String shortNameString,
+                         @NotNull @NlsContexts.DetailedDescription String shortDescription,
+                         @NotNull @NlsContexts.DetailedDescription String longDescription) {
     myIcon = icon;
     myShortName = shortNameString;
     myShortDescription = shortDescription;
@@ -32,17 +34,17 @@ final class SymbolPresentationImpl implements SymbolPresentation {
   }
 
   @Override
-  public @Nls @NotNull String getShortNameString() {
+  public @NotNull String getShortNameString() {
     return myShortName;
   }
 
   @Override
-  public @Nls(capitalization = Sentence) @NotNull String getShortDescription() {
+  public @NotNull String getShortDescription() {
     return myShortDescription;
   }
 
   @Override
-  public @Nls(capitalization = Sentence) @NotNull String getLongDescription() {
+  public @NotNull String getLongDescription() {
     return myLongDescription;
   }
 }

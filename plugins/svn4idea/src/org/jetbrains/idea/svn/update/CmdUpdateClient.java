@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -91,8 +91,7 @@ public class CmdUpdateClient extends BaseSvnClient implements UpdateClient {
     CommandUtil.put(parameters, revision);
     CommandUtil.put(parameters, depth, depthIsSticky);
     CommandUtil.put(parameters, allowUnversionedObstructions, "--force");
-    parameters.add("--accept");
-    parameters.add("postpone");
+    CommandUtil.put(parameters, "--accept", "postpone");
   }
 
   @Override

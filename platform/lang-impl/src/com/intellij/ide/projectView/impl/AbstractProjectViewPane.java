@@ -15,6 +15,7 @@ import com.intellij.ide.projectView.impl.nodes.ModuleGroupNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,8 +29,8 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -171,7 +172,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   protected final void fireTreeChangeListener() {
   }
 
-  public abstract @NotNull String getTitle();
+  public abstract @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getTitle();
 
   public abstract @NotNull Icon getIcon();
 
@@ -203,7 +204,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return false;
   }
 
-  protected @NotNull String getManualOrderOptionText() {
+  protected @NotNull @ActionText String getManualOrderOptionText() {
     return IdeBundle.message("action.manual.order");
   }
 
@@ -216,7 +217,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
 
   @NotNull
-  public String getPresentableSubIdName(@NotNull final String subId) {
+  public @NlsSafe String getPresentableSubIdName(@NotNull @NonNls String subId) {
     throw new IllegalStateException("should not call");
   }
 
@@ -840,7 +841,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
       final int count = paths.length;
 
-      final JLabel label = new JLabel(count + " " + StringUtil.pluralize("item", count));
+      JLabel label = new JLabel(LangBundle.message("dragged.item.count", count));
       label.setOpaque(true);
       label.setForeground(RenderingUtil.getForeground(myTree));
       label.setBackground(RenderingUtil.getBackground(myTree));

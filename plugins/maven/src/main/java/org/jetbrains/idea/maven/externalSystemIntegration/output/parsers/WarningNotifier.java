@@ -2,11 +2,12 @@
 package org.jetbrains.idea.maven.externalSystemIntegration.output.parsers;
 
 import com.intellij.build.events.MessageEvent;
+import org.jetbrains.idea.maven.execution.RunnerBundle;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.LogMessageType;
 
 public class WarningNotifier extends MessageNotifier {
 
   public WarningNotifier() {
-    super(LogMessageType.WARNING, MessageEvent.Kind.WARNING, "Warning");
+    super(LogMessageType.WARNING, MessageEvent.Kind.WARNING, RunnerBundle.message("build.event.title.warning"));
   }
 }

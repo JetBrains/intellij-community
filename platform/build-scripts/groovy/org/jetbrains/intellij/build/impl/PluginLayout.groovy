@@ -147,13 +147,6 @@ class PluginLayout extends BaseLayout {
     }
 
     /**
-     * @deprecated use {@link #withModule} instead
-     */
-    void withJpsModule(String moduleName) {
-      withModule(moduleName, "jps/${moduleName}.jar")
-    }
-
-    /**
      * By default, version of a plugin is equal to the build number of the IDE it's built with. This method allows to specify custom version evaluator.
      * In {@linkplain BiFunction}:
      * <ol>

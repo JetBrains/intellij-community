@@ -204,9 +204,6 @@ public final class EditorPainter implements TextDrawingCallback {
         return false;
       }
 
-      hintText = SwingUtilities.layoutCompoundLabel(myGraphics.getFontMetrics(), hintText.toString(), null, 0, 0, 0, 0,
-                                                    SwingUtilities.calculateInnerArea(editorComponent, null), // account for insets
-                                                    new Rectangle(), new Rectangle(), 0);
       EditorFontType fontType = EditorFontType.PLAIN;
       Color color = JBColor.namedColor("Component.infoForeground", myEditor.getColorsScheme().getDefaultForeground());
       TextAttributes attributes = myEditor.getPlaceholderAttributes();
@@ -220,8 +217,12 @@ public final class EditorPainter implements TextDrawingCallback {
         if (attColor != null) color = attColor;
       }
       myGraphics.setColor(color);
-      myGraphics.setFont(myEditor.getColorsScheme().getFont(fontType));
-      myGraphics.drawString(hintText.toString(), myView.getInsets().left, myView.getInsets().top + myAscent + myYShift);
+      String hintString = hintText.toString();
+      myGraphics.setFont(UIUtil.getFontWithFallbackIfNeeded(myEditor.getColorsScheme().getFont(fontType), hintString));
+      String toDisplay = SwingUtilities.layoutCompoundLabel(myGraphics.getFontMetrics(), hintString, null, 0, 0, 0, 0,
+                                                    SwingUtilities.calculateInnerArea(editorComponent, null), // account for insets
+                                                    new Rectangle(), new Rectangle(), 0);
+      myGraphics.drawString(toDisplay, myView.getInsets().left, myView.getInsets().top + myAscent + myYShift);
       return true;
     }
 

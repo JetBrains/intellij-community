@@ -9,6 +9,7 @@
  *****************************************************************************/
 package org.picocontainer.defaults;
 
+import org.jetbrains.annotations.NonNls;
 import org.picocontainer.ComponentAdapter;
 import org.picocontainer.PicoIntrospectionException;
 
@@ -46,7 +47,7 @@ public final class AmbiguousComponentResolutionException extends PicoIntrospecti
    * @return Returns a string containing the unresolved class type and the ambiguous keys.
    */
   @Override
-  public String getMessage() {
+  public @NonNls String getMessage() {
     return component +
            " has ambiguous dependency on " +
            ambiguousDependency +

@@ -32,6 +32,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
@@ -40,6 +41,7 @@ import com.intellij.profile.codeInspection.ui.header.InspectionProfileSchemesMod
 import com.intellij.profile.codeInspection.ui.header.InspectionToolsConfigurable;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,7 +61,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     super(InspectionsBundle.messagePointer("inspection.action.title"), InspectionsBundle.messagePointer("inspection.action.noun"));
   }
 
-  public CodeInspectionAction(String title, String analysisNoon) {
+  public CodeInspectionAction(@NlsContexts.DialogTitle String title, @Nls String analysisNoon) {
     super(title, analysisNoon);
   }
 

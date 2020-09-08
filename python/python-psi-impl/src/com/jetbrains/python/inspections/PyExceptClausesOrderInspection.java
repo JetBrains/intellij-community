@@ -45,7 +45,7 @@ public class PyExceptClausesOrderInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyTryExceptStatement(PyTryExceptStatement node) {
+    public void visitPyTryExceptStatement(@NotNull PyTryExceptStatement node) {
       PyExceptPart[] exceptParts = node.getExceptParts();
       if (exceptParts.length > 1) {
         Set<PyClass> exceptClasses = new HashSet<>();
@@ -56,12 +56,12 @@ public class PyExceptClausesOrderInspection extends PyInspection {
             if (element instanceof PyClass) {
               PyClass pyClass = (PyClass)element;
               if (exceptClasses.contains(pyClass)) {
-                registerProblem(exceptClass, PyPsiBundle.message("INSP.class.$0.already.caught", pyClass.getName()));
+                registerProblem(exceptClass, PyPsiBundle.message("INSP.bad.except.exception.class.already.caught", pyClass.getName()));
               } else {
                 for (PyClass superClass: pyClass.getSuperClasses(null)) {
                   if (exceptClasses.contains(superClass)) {
                     registerProblem(exceptClass, PyPsiBundle
-                                      .message("INSP.class.$0.superclass.$1.already.caught", superClass.getName(), pyClass.getName()),
+                                      .message("INSP.bad.except.superclass.of.exception.class.already.caught", superClass.getName(), pyClass.getName()),
                                     new PyMoveExceptQuickFix());
                   }
                 }

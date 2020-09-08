@@ -3,7 +3,6 @@
 // found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
-import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -32,7 +31,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
 /**
  * @author dcheryasov
  */
-public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> implements PyDecorator {
+public class PyDecoratorImpl extends PyBaseElementImpl<PyDecoratorStub> implements PyDecorator {
 
   public PyDecoratorImpl(ASTNode astNode) {
     super(astNode);
@@ -40,6 +39,11 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
 
   public PyDecoratorImpl(PyDecoratorStub stub) {
     super(stub, PyElementTypes.DECORATOR_CALL);
+  }
+
+  @Override
+  protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
+    pyVisitor.visitPyDecorator(this);
   }
 
   /**

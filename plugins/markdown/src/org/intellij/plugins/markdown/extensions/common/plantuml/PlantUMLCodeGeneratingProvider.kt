@@ -4,11 +4,12 @@ package org.intellij.plugins.markdown.extensions.common.plantuml
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
+import org.intellij.markdown.ast.ASTNode
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.extensions.MarkdownCodeFenceCacheableProvider
 import org.intellij.plugins.markdown.extensions.MarkdownCodeFencePluginGeneratingProvider
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithExternalFiles
-import org.intellij.plugins.markdown.ui.preview.MarkdownCodeFencePluginCacheCollector
+import org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFencePluginCacheCollector
 import java.io.File
 import java.io.IOException
 import java.net.URLClassLoader
@@ -24,7 +25,7 @@ internal class PlantUMLCodeGeneratingProvider(collector: MarkdownCodeFencePlugin
     return isEnabled && isAvailable && (language == "puml" || language == "plantuml")
   }
 
-  override fun generateHtml(language: String, raw: String): String {
+  override fun generateHtml(language: String, raw: String, node: ASTNode): String {
     val key = getUniqueFile(language, raw, "png").toFile()
 
     cacheDiagram(key, raw)

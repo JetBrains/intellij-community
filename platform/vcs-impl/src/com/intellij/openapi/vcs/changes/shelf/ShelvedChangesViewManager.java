@@ -53,6 +53,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.IconUtil.IconSizeWrapper;
 import com.intellij.util.PathUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.UtilKt;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.GraphicsUtil;
@@ -61,7 +62,6 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.vcsUtil.VcsUtil;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,7 +82,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.intellij.icons.AllIcons.Vcs.Patch_applied;
-import static com.intellij.openapi.actionSystem.Anchor.AFTER;
 import static com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider.createAppliedTextPatch;
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.REPOSITORY_GROUPING;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.SHELF;
@@ -138,7 +137,7 @@ public class ShelvedChangesViewManager implements Disposable {
     treeConsumer.consume(myPanel.myTree);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   void updateViewContent() {
     if (myShelveChangesManager.getAllLists().isEmpty()) {
       if (myContent != null) {
@@ -151,7 +150,7 @@ public class ShelvedChangesViewManager implements Disposable {
       if (myContent == null) {
         myPanel = new ShelfToolWindowPanel(myProject);
         myContent = new ContentImpl(myPanel.myRootPanel, VcsBundle.message("shelf.tab"), false);
-        myContent.setTabName(SHELF);
+        myContent.setTabName(SHELF); //NON-NLS overridden by displayName above
         MyDnDTarget dnDTarget = new MyDnDTarget(myPanel.myProject, myContent);
         myContent.putUserData(Content.TAB_DND_TARGET_KEY, dnDTarget);
 
@@ -225,7 +224,7 @@ public class ShelvedChangesViewManager implements Disposable {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void updateTreeModel() {
     updateTreeIfShown(tree -> tree.setPaintBusy(true));
     BackgroundTaskUtil.executeOnPooledThread(myProject, () -> {
@@ -245,7 +244,7 @@ public class ShelvedChangesViewManager implements Disposable {
     });
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void startEditing(@NotNull ShelvedChangeList shelvedChangeList) {
     runAfterUpdate(() -> {
       selectShelvedList(shelvedChangeList);
@@ -562,7 +561,8 @@ public class ShelvedChangesViewManager implements Disposable {
         myListDateMap.forEach((l, d) -> manager.restoreList(l, d));
         notification.expire();
         if (!cantRestoreList.isEmpty()) {
-          VcsNotifier.getInstance(myProject).notifyMinorWarning(VcsBundle.message("shelve.undo.deletion"),
+          VcsNotifier.getInstance(myProject).notifyMinorWarning("vcs.shelve.deletion.undo",
+                                                                VcsBundle.message("shelve.undo.deletion"),
                                                                 VcsBundle.message("shelve.changes.restore.error", cantRestoreList.size()));
         }
       }
@@ -684,9 +684,11 @@ public class ShelvedChangesViewManager implements Disposable {
 
       DefaultActionGroup actionGroup = new DefaultActionGroup();
       actionGroup.addAll((ActionGroup)ActionManager.getInstance().getAction("ShelvedChangesToolbar"));
-      actionGroup.add(new MyToggleDetailsAction(), new Constraints(AFTER, "ShelvedChanges.ShowHideDeleted"));
+      actionGroup.add(Separator.getInstance());
+      actionGroup.add(new MyToggleDetailsAction());
 
       myToolbar = ActionManager.getInstance().createActionToolbar("ShelvedChanges", actionGroup, false);
+      myToolbar.setTargetComponent(myTree);
       myTreeScrollPane = ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT);
       myRootPanel.add(myTreeScrollPane, BorderLayout.CENTER);
       addToolbar(isCommitToolWindow(myProject));
@@ -887,7 +889,7 @@ public class ShelvedChangesViewManager implements Disposable {
       return myCurrentShelvedElement;
     }
 
-    @CalledInAwt
+    @RequiresEdt
     @Override
     public void clear() {
       if (myCurrentShelvedElement != null) {
@@ -898,7 +900,7 @@ public class ShelvedChangesViewManager implements Disposable {
     }
 
     @Override
-    @CalledInAwt
+    @RequiresEdt
     public void refresh(boolean fromModelRefresh) {
       DataContext dc = DataManager.getInstance().getDataContext(myTree);
       List<ShelvedChange> selectedChanges = getShelveChanges(dc);
@@ -953,7 +955,7 @@ public class ShelvedChangesViewManager implements Disposable {
         DiffContentFactoryEx factory = DiffContentFactoryEx.getInstanceEx();
         ShelvedBinaryFile binaryFile = requireNonNull(provider.getBinaryFile());
         if (binaryFile.AFTER_PATH == null) {
-          throw new DiffRequestProducerException("Content for '" + getRequestName(provider) + "' was removed");
+          throw new DiffRequestProducerException(VcsBundle.message("changes.error.content.for.0.was.removed", getRequestName(provider)));
         }
         //
         byte[] binaryContent = binaryFile.createBinaryContentRevision(myProject).getBinaryContent();
@@ -962,7 +964,7 @@ public class ShelvedChangesViewManager implements Disposable {
                                      factory.createBinary(myProject, binaryContent, fileType, getRequestName(provider)), null, null);
       }
       catch (VcsException | IOException e) {
-        throw new DiffRequestProducerException("Can't show diff for '" + getRequestName(provider) + "'", e);
+        throw new DiffRequestProducerException(VcsBundle.message("changes.error.can.t.show.diff.for", getRequestName(provider)), e);
       }
     }
   }

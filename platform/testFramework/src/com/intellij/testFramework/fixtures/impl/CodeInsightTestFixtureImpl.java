@@ -883,7 +883,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public Collection<Usage> testFindUsagesUsingAction(String @NotNull ... fileNames) {
     assertInitialized();
-    configureByFiles(fileNames);
+    if (fileNames.length > 0) { // don't change configured files if already configured
+      configureByFiles(fileNames);
+    }
     EdtTestUtil.runInEdtAndWait(() -> myEditorTestFixture.performEditorAction(IdeActions.ACTION_FIND_USAGES));
     Disposer.register(getTestRootDisposable(), () -> {
       UsageViewContentManager usageViewManager = UsageViewContentManager.getInstance(getProject());

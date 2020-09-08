@@ -20,6 +20,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlQuickFixFactory;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
@@ -48,7 +49,8 @@ public abstract class XmlTagRuleProviderBase extends XmlTagRuleProvider {
   public static Rule unusedIfPresent(String attrPresent, String ... attrUnused) {
     Effect[] effects = new Effect[attrUnused.length];
     for (int i = 0; i < effects.length; i++) {
-      effects[i] = unused(attrUnused[i], "The attribute '" + attrUnused[i] + "' is unused because the attribute '" + attrPresent + "' is present");
+      effects[i] = unused(
+        attrUnused[i], XmlAnalysisBundle.message("xml.inspections.attribute.unused.because.other.attribute.present", attrUnused[i], attrPresent));
     }
 
     return new ConditionRule(ifAttrPresent(attrPresent), effects);
@@ -56,24 +58,25 @@ public abstract class XmlTagRuleProviderBase extends XmlTagRuleProvider {
 
   public static Rule unusedAllIfPresent(String attrPresent, String ... attrUnused) {
     return new ConditionRule(ifAttrPresent(attrPresent),
-                             new InvalidAllExpectSome("The attribute is unused because the attribute " + attrPresent + " is present",
-                                                      ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                                                      ArrayUtil.append(attrUnused, attrPresent)));
+                             new InvalidAllExpectSome(
+                               XmlAnalysisBundle.message("xml.inspections.all.attributes.unused.because.an.attribute.present", attrPresent),
+                               ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                               ArrayUtil.append(attrUnused, attrPresent)));
   }
 
-  public static Effect invalid(String attrName, String text) {
+  public static Effect invalid(String attrName, @InspectionMessage String text) {
     return new InvalidAttrEffect(attrName, text, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
 
   public static Effect unused(String attrName) {
-    return new InvalidAttrEffect(attrName, "Attribute '" + attrName + "' is unused", ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+    return new InvalidAttrEffect(attrName, XmlAnalysisBundle.message("xml.inspections.attribute.unused", attrName), ProblemHighlightType.LIKE_UNUSED_SYMBOL);
   }
 
-  public static Effect unused(String attrName, String text) {
+  public static Effect unused(String attrName, @InspectionMessage String text) {
     return new InvalidAttrEffect(attrName, text, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
   }
 
-  public static Effect unusedAll(String text, String... attrNames) {
+  public static Effect unusedAll(@InspectionMessage String text, String... attrNames) {
     return new InvalidAllExpectSome(text, ProblemHighlightType.LIKE_UNUSED_SYMBOL, attrNames);
   }
 
@@ -118,10 +121,10 @@ public abstract class XmlTagRuleProviderBase extends XmlTagRuleProvider {
 
   public static class InvalidAttrEffect extends Effect {
     private final String myAttrName;
-    private final String myText;
+    private final @InspectionMessage String myText;
     private final ProblemHighlightType myType;
 
-    public InvalidAttrEffect(String attrName, String text, ProblemHighlightType type) {
+    public InvalidAttrEffect(String attrName, @InspectionMessage String text, ProblemHighlightType type) {
       myAttrName = attrName;
       myText = text;
       myType = type;
@@ -141,10 +144,10 @@ public abstract class XmlTagRuleProviderBase extends XmlTagRuleProvider {
 
   public static class InvalidAllExpectSome extends Effect {
     private final String[] myAttrNames;
-    private final String myText;
+    private final @InspectionMessage String myText;
     private final ProblemHighlightType myType;
 
-    public InvalidAllExpectSome(String text, ProblemHighlightType type, String... attrNames) {
+    public InvalidAllExpectSome(@InspectionMessage String text, ProblemHighlightType type, String... attrNames) {
       myAttrNames = attrNames;
       myText = text;
       myType = type;
@@ -231,7 +234,7 @@ public abstract class XmlTagRuleProviderBase extends XmlTagRuleProvider {
       }
 
       holder.registerProblem(tagNameElement,
-                             XmlAnalysisBundle.message("tag.should.have.one.of.following.attributes.0", StringUtil.join(myAttributeNames, ", ")),
+                             XmlAnalysisBundle.message("xml.inspections.tag.should.have.one.of.following.attributes.0", StringUtil.join(myAttributeNames, ", ")),
                              myProblemHighlightType,
                              fixes);
     }

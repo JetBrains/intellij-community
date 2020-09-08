@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -14,6 +15,7 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.FunctionalExpressionUtils;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +49,7 @@ public class RedundantComparatorComparingInspection extends AbstractBaseJavaLoca
     staticCall(JAVA_UTIL_STREAM_COLLECTORS, "minBy", "maxBy").parameterTypes(JAVA_UTIL_COMPARATOR)
   );
 
-  private static final CallMapper<String> REPLACEMENTS = new CallMapper<String>()
+  private static final @NonNls CallMapper<String> REPLACEMENTS = new CallMapper<String>()
     .register(COMPARATOR_COMPARING, "thenComparing")
     .register(staticCall(JAVA_UTIL_COMPARATOR, "comparingInt").parameterCount(1), "thenComparingInt")
     .register(staticCall(JAVA_UTIL_COMPARATOR, "comparingLong").parameterCount(1), "thenComparingLong")
@@ -68,12 +70,13 @@ public class RedundantComparatorComparingInspection extends AbstractBaseJavaLoca
         if (COMPARATOR_COMPARING.test(call)) {
           PsiExpression arg = call.getArgumentList().getExpressions()[0];
           PsiElement nameElement = Objects.requireNonNull(call.getMethodExpression().getReferenceNameElement());
-          for (String suffix : new String[]{"Key", "Value"}) {
+          @NonNls String [] suffixes = new String[]{"Key", "Value"};
+          for (String suffix : suffixes) {
             if (FunctionalExpressionUtils.isFunctionalReferenceTo(arg, JAVA_UTIL_MAP_ENTRY, null, "get"+suffix, PsiType.EMPTY_ARRAY)) {
               String replacementMethod = "comparingBy" + suffix;
+              @NlsSafe String comparator = "Entry." + replacementMethod + "()";
               holder.registerProblem(nameElement,
-                                     JavaBundle.message("inspection.simplifiable.comparator.entry.comparator.message",
-                                                               "Entry." + replacementMethod + "()"),
+                                     JavaBundle.message("inspection.simplifiable.comparator.entry.comparator.message",comparator),
                                      new ReplaceWithEntryComparatorFix(replacementMethod));
             }
           }
@@ -113,13 +116,11 @@ public class RedundantComparatorComparingInspection extends AbstractBaseJavaLoca
     };
   }
 
-  @NotNull
-  private static String getMaxMinReplacement(@NotNull String maxOrMin) {
+  private static @NlsSafe @NotNull String getMaxMinReplacement(@NotNull @NlsSafe String maxOrMin) {
     return (maxOrMin.startsWith("max") ? "min" : "max")+maxOrMin.substring(3);
   }
 
-  @Nullable
-  static String getPlainComparatorExpressionFromReversed(PsiExpression expression, CommentTracker ct) {
+  static @NlsSafe @Nullable String getPlainComparatorExpressionFromReversed(PsiExpression expression, CommentTracker ct) {
     PsiMethodCallExpression call = tryCast(PsiUtil.skipParenthesizedExprDown(expression), PsiMethodCallExpression.class);
     if (call == null) return null;
     if (COMPARATOR_REVERSED.test(call)) {

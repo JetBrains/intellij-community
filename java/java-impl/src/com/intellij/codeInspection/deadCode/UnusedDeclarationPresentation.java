@@ -44,10 +44,7 @@ import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -73,7 +70,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   private final WeakUnreferencedFilter myFilter;
   private DeadHTMLComposer myComposer;
-  private final AtomicNotNullLazyValue<InspectionToolWrapper> myDummyWrapper = new AtomicNotNullLazyValue<InspectionToolWrapper>() {
+  private final AtomicNotNullLazyValue<InspectionToolWrapper> myDummyWrapper = new AtomicNotNullLazyValue<>() {
     @NotNull
     @Override
     protected InspectionToolWrapper compute() {
@@ -638,6 +635,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     css.addRule("div.problem-description {margin-left: " + JBUIScale.scale(9) + "px;}");
     css.addRule("ul {margin-left:" + JBUIScale.scale(10) + "px;text-indent: 0}");
     css.addRule("code {font-family:" + StartupUiUtil.getLabelFont().getFamily() + "}");
+    @Nls
     final StringBuilder buf = new StringBuilder();
     getComposer().compose(buf, entity, false);
     final String text = buf.toString();

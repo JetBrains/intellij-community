@@ -5,6 +5,7 @@ package com.intellij.openapi.ui.popup;
 import com.intellij.openapi.ui.ListComponentUpdater;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ActiveComponent;
 import com.intellij.ui.popup.HintUpdateSupply;
@@ -29,7 +30,7 @@ import java.util.Set;
 public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   private final PopupComponentAdapter<T> myChooserComponent;
-  private String myTitle;
+  private @PopupTitle String myTitle;
   private final ArrayList<KeyStroke> myAdditionalKeystrokes = new ArrayList<>();
   private Runnable myItemChosenRunnable;
   private JComponent mySouthComponent;
@@ -49,7 +50,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   private boolean myCancelKeyEnabled = true;
 
   private final List<JBPopupListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private String myAd;
+  private @NlsContexts.PopupAdvertisement String myAd;
   private Dimension myMinSize;
   private ActiveComponent myCommandButton;
   private final List<Pair<ActionListener,KeyStroke>> myKeyboardActions = new ArrayList<>();
@@ -147,7 +148,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   @Override
   @NotNull
-  public PopupChooserBuilder<T> setTitle(@NotNull @NlsContexts.PopupTitle String title) {
+  public PopupChooserBuilder<T> setTitle(@NotNull @PopupTitle String title) {
     myTitle = title;
     return this;
   }

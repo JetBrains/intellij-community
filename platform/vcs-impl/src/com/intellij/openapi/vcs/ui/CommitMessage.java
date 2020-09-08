@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.markup.UIController;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.CommitMessageI;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -34,12 +35,16 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.vcs.commit.CommitMessageUi;
 import com.intellij.vcs.commit.message.BodyLimitSettings;
 import com.intellij.vcs.commit.message.CommitMessageInspectionProfile;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -148,7 +153,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     return null;
   }
 
-  public void setSeparatorText(@NotNull String text) {
+  public void setSeparatorText(@NotNull @NlsContexts.Separator String text) {
     if (mySeparator != null) {
       mySeparator.setText(text);
     }
@@ -247,19 +252,19 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     myEditorField.getDocument().putUserData(DATA_KEY, null);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public synchronized void setChangeList(@NotNull ChangeList value) {
     setChangeLists(singletonList(value));
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public synchronized void setChangeLists(@NotNull List<ChangeList> value) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myChangeLists = newUnmodifiableList(value);
   }
 
   @NotNull
-  @CalledWithReadLock
+  @RequiresReadLock
   public synchronized List<ChangeList> getChangeLists() {
     return myChangeLists;
   }

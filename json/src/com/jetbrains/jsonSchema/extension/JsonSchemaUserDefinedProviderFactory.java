@@ -12,6 +12,7 @@ import com.jetbrains.jsonSchema.UserDefinedJsonSchemaConfiguration;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,14 +53,14 @@ public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderF
   static class MyProvider implements JsonSchemaFileProvider, JsonSchemaImportedProviderMarker {
     @NotNull private final Project myProject;
     @NotNull private final JsonSchemaVersion myVersion;
-    @NotNull private final String myName;
+    @NotNull private final @Nls String myName;
     @NotNull private final String myFile;
     private VirtualFile myVirtualFile;
     @NotNull private final List<? extends PairProcessor<Project, VirtualFile>> myPatterns;
 
     MyProvider(@NotNull final Project project,
                       @NotNull final JsonSchemaVersion version,
-                      @NotNull final String name,
+                      @NotNull final @Nls String name,
                       @NotNull final String file,
                       @NotNull final List<? extends PairProcessor<Project, VirtualFile>> patterns) {
       myProject = project;

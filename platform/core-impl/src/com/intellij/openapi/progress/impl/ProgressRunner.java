@@ -17,6 +17,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.EDT;
 import com.intellij.codeWithMe.ClientId;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -276,7 +277,7 @@ public class ProgressRunner<R, P extends ProgressIndicator> {
                             && (ApplicationManager.getApplication().isWriteAccessAllowed() || !isModal);
     if (forceDirectExec) {
       String reason = ApplicationManager.getApplication().isWriteAccessAllowed() ? "inside Write Action" : "not modal execution";
-      String failedConstraints = "";
+      @NonNls String failedConstraints = "";
       if (isModal) failedConstraints += "Use Modal execution; ";
       if (myThreadToUse == ThreadToUse.POOLED) failedConstraints += "Use pooled thread; ";
       failedConstraints = StringUtil.defaultIfEmpty(failedConstraints, "none");

@@ -5,6 +5,7 @@ import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExtern
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportBuilder;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 /**
@@ -34,6 +35,6 @@ public final class GradleProjectImportProvider extends AbstractExternalProjectIm
   @NotNull
   @Override
   public String getFileSample() {
-    return "<b>Gradle</b> build script (*.gradle)";
+    return GradleInspectionBundle.message("gradle.build.script");
   }
 }

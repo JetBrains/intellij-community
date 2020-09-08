@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -24,7 +25,7 @@ import static com.intellij.vcs.log.VcsLogFilterCollection.HASH_FILTER;
 public interface VcsLogHashFilter extends VcsLogFilter {
 
   @NotNull
-  Collection<String> getHashes();
+  Collection<@NlsSafe String> getHashes();
 
   @NotNull
   @Override

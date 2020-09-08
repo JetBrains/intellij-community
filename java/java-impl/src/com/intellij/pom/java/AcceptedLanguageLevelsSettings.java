@@ -106,7 +106,7 @@ public class AcceptedLanguageLevelsSettings implements PersistentStateComponent<
           Notification notification = PREVIEW_NOTIFICATION_GROUP.createNotification(
             JavaBundle.message("java.preview.features.notification.title"),
             JavaBundle.message("java.preview.features.warning", previewFeature + 1, previewFeature),
-            NotificationType.WARNING);
+            NotificationType.WARNING, null);
           notification.addAction(new NotificationAction(IdeBundle.messagePointer("action.Anonymous.text.do.not.show.again")) {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {

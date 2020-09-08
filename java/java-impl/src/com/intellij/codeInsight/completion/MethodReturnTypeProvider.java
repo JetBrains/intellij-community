@@ -29,7 +29,7 @@ final class MethodReturnTypeProvider {
     PsiMethod method = PsiTreeUtil.getParentOfType(position, PsiMethod.class);
     assert method != null;
 
-    final PsiTypeVisitor<PsiType> eachProcessor = new PsiTypeVisitor<PsiType>() {
+    final PsiTypeVisitor<PsiType> eachProcessor = new PsiTypeVisitor<>() {
       private final Set<PsiType> myProcessed = new HashSet<>();
 
       @Override

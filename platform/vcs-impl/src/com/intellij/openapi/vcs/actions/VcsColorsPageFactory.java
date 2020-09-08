@@ -25,6 +25,7 @@ import com.intellij.openapi.options.colors.ColorAndFontDescriptorsProvider;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -94,6 +95,7 @@ public class VcsColorsPageFactory implements ColorAndFontPanelFactory, ColorAndF
     return DisplayPriority.COMMON_SETTINGS;
   }
 
+  @Nls
   public static String getVcsGroup() {
     return ApplicationBundle.message("title.vcs");
   }

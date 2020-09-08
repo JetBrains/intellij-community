@@ -348,7 +348,7 @@ public final class XmlUtil {
       if (type instanceof ComplexTypeDescriptor) {
         final XmlTag[] simpleContent = new XmlTag[1];
 
-        processXmlElements(((ComplexTypeDescriptor)type).getDeclaration(), new PsiElementProcessor<PsiElement>() {
+        processXmlElements(((ComplexTypeDescriptor)type).getDeclaration(), new PsiElementProcessor<>() {
           @Override
           public boolean execute(@NotNull final PsiElement element) {
             if (element instanceof XmlTag) {
@@ -385,7 +385,7 @@ public final class XmlUtil {
 
       if (presentNames.containsKey(nameKey)) {
         final T psiElement = presentNames.get(nameKey);
-        final String message = XmlPsiBundle.message("duplicate.declaration", nameKey);
+        final String message = XmlPsiBundle.message("xml.inspections.duplicate.declaration", nameKey);
 
         if (psiElement != null) {
           presentNames.put(nameKey, null);
@@ -1003,7 +1003,7 @@ public final class XmlUtil {
 
       final PsiNamedElement[] result = new PsiNamedElement[1];
 
-      processXmlElements((XmlFile)currentElement, new PsiElementProcessor<PsiElement>() {
+      processXmlElements((XmlFile)currentElement, new PsiElementProcessor<>() {
         @Override
         public boolean execute(@NotNull final PsiElement element) {
           if (element instanceof PsiNamedElement) {

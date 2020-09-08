@@ -51,7 +51,7 @@ public final class BrowserUtil {
     return isAbsoluteURL(url) ? VfsUtilCore.convertToURL(url) : new URL("file", "", url);
   }
 
-  public static void open(@NotNull String url) {
+  public static void open(@NonNls @NotNull String url) {
     getBrowserLauncher().open(url);
   }
 

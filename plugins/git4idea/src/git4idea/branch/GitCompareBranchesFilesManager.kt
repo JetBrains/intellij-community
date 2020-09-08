@@ -12,7 +12,7 @@ import com.intellij.util.containers.ContainerUtil
 @Service
 internal class GitCompareBranchesFilesManager(private val project: Project) : Disposable {
   private val sessionId = System.currentTimeMillis().toString()
-  private val openedFiles = ContainerUtil.createWeakValueMap<GitCompareBranchesVirtualFileSystem.Path, GitCompareBranchesFile>()
+  private val openedFiles = ContainerUtil.createWeakValueMap<GitCompareBranchesVirtualFileSystem.ComplexPath, GitCompareBranchesFile>()
 
   fun openFile(compareBranchesUi: GitCompareBranchesUi, focus: Boolean) {
     val file = openedFiles.getOrPut(createPath(sessionId, compareBranchesUi), {
@@ -21,7 +21,7 @@ internal class GitCompareBranchesFilesManager(private val project: Project) : Di
     FileEditorManager.getInstance(project).openFile(file, focus)
   }
 
-  fun findFile(path: GitCompareBranchesVirtualFileSystem.Path): VirtualFile? = openedFiles[path]
+  fun findFile(path: GitCompareBranchesVirtualFileSystem.ComplexPath): VirtualFile? = openedFiles[path]
 
   override fun dispose() {
     openedFiles.clear()
@@ -32,10 +32,10 @@ internal class GitCompareBranchesFilesManager(private val project: Project) : Di
     fun getInstance(project: Project) = project.service<GitCompareBranchesFilesManager>()
 
     @JvmStatic
-    internal fun createPath(sessionId: String, compareBranchesUi: GitCompareBranchesUi): GitCompareBranchesVirtualFileSystem.Path {
-      return GitCompareBranchesVirtualFileSystem.Path(sessionId, compareBranchesUi.project.locationHash,
-                                                      compareBranchesUi.rangeFilter.ranges,
-                                                      compareBranchesUi.rootFilter?.roots)
+    internal fun createPath(sessionId: String, compareBranchesUi: GitCompareBranchesUi): GitCompareBranchesVirtualFileSystem.ComplexPath {
+      return GitCompareBranchesVirtualFileSystem.ComplexPath(sessionId, compareBranchesUi.project.locationHash,
+                                                             compareBranchesUi.rangeFilter.ranges,
+                                                             compareBranchesUi.rootFilter?.roots)
     }
   }
 }

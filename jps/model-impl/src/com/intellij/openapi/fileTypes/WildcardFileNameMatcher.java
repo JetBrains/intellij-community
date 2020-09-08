@@ -10,11 +10,12 @@ import org.jetbrains.annotations.NotNull;
 import java.util.regex.Matcher;
 
 public class WildcardFileNameMatcher implements FileNameMatcher {
+  @NotNull
   private final String myPattern;
   private final MaskMatcher myMatcher;
 
   private interface MaskMatcher {
-    boolean matches(CharSequence filename);
+    boolean matches(@NotNull CharSequence filename);
   }
 
   private static final class RegexpMatcher implements MaskMatcher {
@@ -25,7 +26,7 @@ public class WildcardFileNameMatcher implements FileNameMatcher {
     }
 
     @Override
-    public boolean matches(final CharSequence filename) {
+    public boolean matches(final @NotNull CharSequence filename) {
       synchronized (myMatcher) {
         myMatcher.reset(filename);
         return myMatcher.matches();
@@ -41,7 +42,7 @@ public class WildcardFileNameMatcher implements FileNameMatcher {
     }
 
     @Override
-    public boolean matches(final CharSequence filename) {
+    public boolean matches(final @NotNull CharSequence filename) {
       return StringUtil.endsWith(filename, mySuffix);
     }
   }
@@ -54,7 +55,7 @@ public class WildcardFileNameMatcher implements FileNameMatcher {
     }
 
     @Override
-    public boolean matches(final CharSequence filename) {
+    public boolean matches(final @NotNull CharSequence filename) {
       return StringUtil.startsWith(filename, myPrefix);
     }
   }
@@ -67,7 +68,7 @@ public class WildcardFileNameMatcher implements FileNameMatcher {
     }
 
     @Override
-    public boolean matches(final CharSequence filename) {
+    public boolean matches(final @NotNull CharSequence filename) {
       return StringUtil.contains(filename, myInfix);
     }
   }
@@ -115,16 +116,19 @@ public class WildcardFileNameMatcher implements FileNameMatcher {
 
     final WildcardFileNameMatcher that = (WildcardFileNameMatcher)o;
 
-    if (!myPattern.equals(that.myPattern)) return false;
-
-    return true;
+    return myPattern.equals(that.myPattern);
   }
 
   public int hashCode() {
     return myPattern.hashCode();
   }
 
-  public String getPattern() {
+  public @NotNull String getPattern() {
+    return myPattern;
+  }
+
+  @Override
+  public String toString() {
     return myPattern;
   }
 }

@@ -75,7 +75,9 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
 
     PsiType type = null;
     boolean inferred = false;
+    boolean ellipsis = false;
     List<PsiAnnotation> annotations = new SmartList<>();
+    List<TypeAnnotationProvider> providers = new SmartList<>();
 
     PsiElement parent = getParent();
     for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
@@ -110,11 +112,14 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       }
       else if (PsiUtil.isJavaToken(child, JavaTokenType.LBRACKET)) {
         assert type != null : this;
-        type = new PsiArrayType(type, createProvider(annotations));
+        providers.add(createProvider(annotations));
+        annotations = new SmartList<>();
       }
       else if (PsiUtil.isJavaToken(child, JavaTokenType.ELLIPSIS)) {
         assert type != null : this;
-        type = new PsiEllipsisType(type, createProvider(annotations));
+        providers.add(createProvider(annotations));
+        annotations = new SmartList<>();
+        ellipsis = true;
       }
 
       if (PsiUtil.isJavaToken(child, JavaTokenType.QUEST) ||
@@ -152,11 +157,23 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
 
     if (type == null) return new TypeInfo(PsiType.NULL, inferred);
 
+    type = createArray(type, providers, ellipsis);
+
     if (parent instanceof PsiModifierListOwner) {
       type = JavaSharedImplUtil.applyAnnotations(type, ((PsiModifierListOwner)parent).getModifierList());
     }
 
     return new TypeInfo(type, inferred);
+  }
+  
+  private static PsiType createArray(PsiType elementType, List<TypeAnnotationProvider> providers, boolean ellipsis) {
+    PsiType result = elementType;
+    for (int i = providers.size() - 1; i >= 0; i--) {
+      TypeAnnotationProvider provider = providers.get(i);
+      result = ellipsis && i == 0 ? new PsiEllipsisType(result, provider) : new PsiArrayType(result, provider);
+    }
+    providers.clear();
+    return result;
   }
 
   private PsiType inferVarType(PsiElement parent) {
@@ -317,13 +334,12 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
 
   @Override
   public PsiAnnotation @NotNull [] getAnnotations() {
-    PsiAnnotation[] annotations = PsiTreeUtil.getChildrenOfType(this, PsiAnnotation.class);
-    return annotations != null ? annotations : PsiAnnotation.EMPTY_ARRAY;
+    return getType().getAnnotations();
   }
 
   @Override
   public PsiAnnotation @NotNull [] getApplicableAnnotations() {
-    return getType().getAnnotations();
+    return getAnnotations();
   }
 
   @Override

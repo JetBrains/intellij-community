@@ -6,12 +6,14 @@ package com.intellij.refactoring.extractclass;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.extractclass.usageInfo.ReplaceStaticVariableAccess;
 import com.intellij.refactoring.psi.MutationUtils;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
@@ -107,7 +109,7 @@ public class ExtractEnumProcessor {
           if (errStatement instanceof PsiSwitchLabelStatement) {
             final PsiExpression caseValue = ((PsiSwitchLabelStatement)errStatement).getCaseValue();
             if (caseValue != null) {
-              description = caseValue.getText() + " can not be replaced with enum";
+              description = RefactorJBundle.message("case.value.can.not.be.replaced.with.enum", caseValue.getText());
             }
           }
           result.add(new ConflictUsageInfo(errStatement, description));
@@ -119,7 +121,9 @@ public class ExtractEnumProcessor {
             final PsiElement element = ((PsiReferenceExpression)expression).resolve();
             if (element != null) {
               if (!element.getManager().isInProject(element)) {
-                result.add(new ConflictUsageInfo(expression, StringUtil.capitalize(RefactoringUIUtil.getDescription(element, false)) + " is out of project"));
+                String outOfProjectMessage = RefactorJBundle.message("referenced.element.out.of.project",
+                                                                     StringUtil.capitalize(RefactoringUIUtil.getDescription(element, false)));
+                result.add(new ConflictUsageInfo(expression, outOfProjectMessage));
               }
             }
           }
@@ -186,7 +190,7 @@ public class ExtractEnumProcessor {
   private static class ConflictUsageInfo extends FixableUsageInfo {
     private final String myDescription;
 
-    ConflictUsageInfo(PsiElement expression, String description) {
+    ConflictUsageInfo(PsiElement expression, @NlsContexts.DialogMessage String description) {
       super(expression);
       myDescription = description;
     }
@@ -197,7 +201,7 @@ public class ExtractEnumProcessor {
 
     @Override
     public String getConflictMessage() {
-      return "Unable to migrate statement to enum constant." + (myDescription != null ? " " + myDescription : "");
+      return RefactorJBundle.message("unable.to.migrate.statement.to.enum", myDescription == null ? "" : (" " + myDescription));
     }
   }
 }

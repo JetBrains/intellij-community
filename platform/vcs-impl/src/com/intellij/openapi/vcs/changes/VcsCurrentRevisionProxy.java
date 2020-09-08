@@ -97,7 +97,7 @@ public final class VcsCurrentRevisionProxy implements ByteBackedContentRevision 
     VcsRevisionNumber currentRevision = myDiffProvider.getCurrentRevision(myFile);
 
     if (currentRevision == null) {
-      throw new VcsException("Failed to fetch current revision");
+      throw new VcsException(VcsBundle.message("changes.error.failed.to.fetch.current.revision"));
     }
 
     return currentRevision;
@@ -109,7 +109,7 @@ public final class VcsCurrentRevisionProxy implements ByteBackedContentRevision 
     ContentRevision contentRevision = myDiffProvider.createFileContent(currentRevision, myFile);
 
     if (contentRevision == null) {
-      throw new VcsException("Failed to create content for current revision");
+      throw new VcsException(VcsBundle.message("changes.error.failed.to.create.content.for.current.revision"));
     }
 
     byte[] bytes;
@@ -118,7 +118,7 @@ public final class VcsCurrentRevisionProxy implements ByteBackedContentRevision 
     }
     else {
       String content = contentRevision.getContent();
-      if (content == null) throw new VcsException("Can't get revision content");
+      if (content == null) throw new VcsException(VcsBundle.message("changes.error.can.t.get.revision.content"));
       bytes = content.getBytes(myFile.getCharset());
     }
     return Pair.create(currentRevision, bytes);

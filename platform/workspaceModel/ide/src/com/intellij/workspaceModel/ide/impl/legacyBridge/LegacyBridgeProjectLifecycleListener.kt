@@ -39,7 +39,6 @@ import org.picocontainer.MutablePicoContainer
 @ApiStatus.Internal
 class LegacyBridgeProjectLifecycleListener : ProjectServiceContainerCustomizer {
   companion object {
-    const val ENABLED_REGISTRY_KEY = "ide.new.project.model"
     const val ENABLED_CACHE_KEY = "ide.new.project.model.cache"
 
     private val LOG = logger<LegacyBridgeProjectLifecycleListener>()
@@ -49,7 +48,7 @@ class LegacyBridgeProjectLifecycleListener : ProjectServiceContainerCustomizer {
   }
 
   override fun serviceRegistered(project: Project) {
-    val enabled = Registry.`is`(ENABLED_REGISTRY_KEY) || WorkspaceModelInitialTestContent.peek() != null
+    val enabled = WorkspaceModel.isEnabled || WorkspaceModelInitialTestContent.peek() != null
     if (!enabled) {
       LOG.info("Using legacy project model to open project")
       return

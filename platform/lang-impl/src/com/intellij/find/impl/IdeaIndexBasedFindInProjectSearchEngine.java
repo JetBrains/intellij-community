@@ -4,6 +4,7 @@ package com.intellij.find.impl;
 import com.intellij.find.FindInProjectSearchEngine;
 import com.intellij.find.FindModel;
 import com.intellij.find.TextSearchService;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -17,7 +18,6 @@ import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.FileBasedIndexImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -30,7 +30,6 @@ public final class IdeaIndexBasedFindInProjectSearchEngine implements FindInProj
 
   private static final class MyFindInProjectSearcher implements FindInProjectSearcher {
     private @NotNull final ProjectFileIndex myFileIndex;
-    private @NotNull final FileBasedIndexImpl myFileBasedIndex;
     private @NotNull final Project myProject;
     private @NotNull final FindModel myFindModel;
     private @NotNull final TextSearchService myTextSearchService;
@@ -42,7 +41,6 @@ public final class IdeaIndexBasedFindInProjectSearchEngine implements FindInProj
       myProject = project;
       myFindModel = findModel;
       myFileIndex = ProjectFileIndex.SERVICE.getInstance(myProject);
-      myFileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
       myTextSearchService = TextSearchService.getInstance();
       String stringToFind = findModel.getStringToFind();
 
@@ -57,6 +55,13 @@ public final class IdeaIndexBasedFindInProjectSearchEngine implements FindInProj
 
     @Override
     public @NotNull Collection<VirtualFile> searchForOccurrences() {
+      return ReadAction
+        .nonBlocking(this::doSearchForOccurrences)
+        .withDocumentsCommitted(myProject)
+        .executeSynchronously();
+    }
+
+    public Collection<VirtualFile> doSearchForOccurrences() {
       String stringToFind = getStringToFindInIndexes(myFindModel, myProject);
 
       if (stringToFind.isEmpty() || (DumbService.getInstance(myProject).isDumb() && !FileBasedIndex.isIndexAccessDuringDumbModeEnabled())) {
@@ -76,20 +81,24 @@ public final class IdeaIndexBasedFindInProjectSearchEngine implements FindInProj
         return Collections.unmodifiableCollection(hits);
       }
 
-      Set<VirtualFile> resultFiles = new HashSet<>();
       PsiSearchHelper helper = PsiSearchHelper.getInstance(myProject);
-      helper.processCandidateFilesForText(scope, UsageSearchContext.ANY, myFindModel.isCaseSensitive(), stringToFind, file -> {
-        ContainerUtil.addIfNotNull(resultFiles, file);
-        return true;
-      });
-
-      // in case our word splitting is incorrect
       CacheManager cacheManager = CacheManager.getInstance(myProject);
-      VirtualFile[] filesWithWord = cacheManager.getVirtualFilesWithWord(stringToFind, UsageSearchContext.ANY, scope,
-                                                                         myFindModel.isCaseSensitive());
 
-      Collections.addAll(resultFiles, filesWithWord);
-      return Collections.unmodifiableCollection(resultFiles);
+      return FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE, () -> {
+        Set<VirtualFile> resultFiles = new HashSet<>();
+
+        helper.processCandidateFilesForText(scope, UsageSearchContext.ANY, myFindModel.isCaseSensitive(), stringToFind, file -> {
+          ContainerUtil.addIfNotNull(resultFiles, file);
+          return true;
+        });
+
+        // in case our word splitting is incorrect
+        VirtualFile[] filesWithWord = cacheManager.getVirtualFilesWithWord(stringToFind, UsageSearchContext.ANY, scope,
+                                                                           myFindModel.isCaseSensitive());
+
+        Collections.addAll(resultFiles, filesWithWord);
+        return Collections.unmodifiableCollection(resultFiles);
+      });
     }
 
     @Override

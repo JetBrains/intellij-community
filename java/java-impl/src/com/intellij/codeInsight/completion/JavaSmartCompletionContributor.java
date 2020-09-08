@@ -35,7 +35,7 @@ import static com.intellij.patterns.StandardPatterns.or;
  * @author peter
  */
 public final class JavaSmartCompletionContributor {
-  static final TObjectHashingStrategy<ExpectedTypeInfo> EXPECTED_TYPE_INFO_STRATEGY = new TObjectHashingStrategy<ExpectedTypeInfo>() {
+  static final TObjectHashingStrategy<ExpectedTypeInfo> EXPECTED_TYPE_INFO_STRATEGY = new TObjectHashingStrategy<>() {
     @Override
     public int computeHashCode(ExpectedTypeInfo object) {
       return object.getType().hashCode();
@@ -183,7 +183,7 @@ public final class JavaSmartCompletionContributor {
     };
     JavaCompletionProcessor.Options options =
       JavaCompletionProcessor.Options.DEFAULT_OPTIONS.withFilterStaticAfterInstance(parameters.getInvocationCount() <= 1);
-    return JavaCompletionUtil.processJavaReference(element, reference, checkClass, options, matcher, parameters);
+    return JavaCompletionUtil.processJavaReference(element, reference, checkClass, options, matcher::prefixMatches, parameters);
   }
 
   static void beforeSmartCompletion(@NotNull CompletionInitializationContext context) {

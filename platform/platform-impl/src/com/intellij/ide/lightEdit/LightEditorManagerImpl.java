@@ -133,6 +133,10 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
     myEditors.clear();
   }
 
+  public void closeAllEditors() {
+    myEditors.forEach(editorInfo -> closeEditor(editorInfo));
+  }
+
   @Override
   public void closeEditor(@NotNull LightEditorInfo editorInfo) {
     EditorHistoryManager.getInstance(myLightEditService.getOrCreateProject()).updateHistoryEntry(editorInfo.getFile(), false);

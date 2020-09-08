@@ -2,10 +2,12 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -26,6 +28,7 @@ import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Collections;
 
 /**
  * @author dsl
@@ -192,6 +195,11 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
   }
 
   @Override
+  public @NotNull Iterable<? extends @NotNull PsiSymbolReference> getOwnReferences() {
+    return Collections.singletonList(myReference);
+  }
+
+  @Override
   public PsiMethod resolveConstructor() {
     return resolveMethod();
   }
@@ -219,7 +227,13 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
     @Override
     public TextRange getRangeInElement() {
       PsiIdentifier nameIdentifier = getNameIdentifier();
-      return TextRange.from(nameIdentifier.getStartOffsetInParent() + nameIdentifier.getTextLength(), 0);
+      int startOffsetInParent = nameIdentifier.getStartOffsetInParent();
+      if (Registry.is("java.empty.enum.constructor.ref")) {
+        return TextRange.from(startOffsetInParent + nameIdentifier.getTextLength(), 0);
+      }
+      else {
+        return TextRange.from(startOffsetInParent, nameIdentifier.getTextLength());
+      }
     }
 
     @Override

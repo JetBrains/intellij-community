@@ -13,6 +13,7 @@ import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
@@ -89,7 +90,7 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
 
 
     SettingsEditorGroup<DeployToServerRunConfiguration> group = new SettingsEditorGroup<>();
-    group.addEditor("Deployment", commonEditor);
+    group.addEditor(CloudBundle.message("DeployToServerRunConfiguration.tab.title.deployment"), commonEditor);
     DeployToServerRunConfigurationExtensionsManager.getInstance().appendEditors(this, group);
     return group;
   }
@@ -99,19 +100,19 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
     String serverName = getServerName();
     if (serverName == null) {
-      throw new ExecutionException("Server is not specified");
+      throw new ExecutionException(CloudBundle.message("DeployToServerRunConfiguration.error.server.required"));
     }
 
     RemoteServer<S> server = findServer();
     if (server == null) {
-      throw new ExecutionException("Server '" + serverName + " not found");
+      throw new ExecutionException(CloudBundle.message("DeployToServerRunConfiguration.error.server.not.found", serverName));
     }
 
     if (myDeploymentSource == null) {
-      throw new ExecutionException("Deployment is not selected");
+      throw new ExecutionException(CloudBundle.message("DeployToServerRunConfiguration.error.deployment.not.selected"));
     }
 
-    return new DeployToServerState(server, myDeploymentSource, myDeploymentConfiguration, env);
+    return new DeployToServerState<>(server, myDeploymentSource, myDeploymentConfiguration, env);
   }
 
   @Override
@@ -210,6 +211,7 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
     return null;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
     ConfigurationState state = new ConfigurationState();

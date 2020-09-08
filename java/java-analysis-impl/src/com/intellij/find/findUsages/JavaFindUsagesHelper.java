@@ -205,7 +205,7 @@ public final class JavaFindUsagesHelper {
       for (AliasingPsiTarget psiTarget : aliasingPsiTargetMapper.getTargets(pomTarget)) {
         boolean success = ReferencesSearch
           .search(new ReferencesSearch.SearchParameters(ReadAction.compute(() -> PomService.convertToPsi(psiTarget)), options.searchScope, false, options.fastTrack))
-          .forEach(new ReadActionProcessor<PsiReference>() {
+          .forEach(new ReadActionProcessor<>() {
             @Override
             public boolean processInReadAction(PsiReference reference) {
               return addResult(reference, options, processor);
@@ -242,12 +242,13 @@ public final class JavaFindUsagesHelper {
           progress.setText(JavaAnalysisBundle.message("find.searching.for.references.to.class.progress", name));
         }
         ProgressManager.checkCanceled();
-        boolean success = ReferencesSearch.search(new ReferencesSearch.SearchParameters(aClass, options.searchScope, false, options.fastTrack)).forEach(new ReadActionProcessor<PsiReference>() {
-          @Override
-          public boolean processInReadAction(PsiReference psiReference) {
-            return addResult(psiReference, options, processor);
-          }
-        });
+        boolean success = ReferencesSearch.search(new ReferencesSearch.SearchParameters(aClass, options.searchScope, false, options.fastTrack)).forEach(
+          new ReadActionProcessor<>() {
+            @Override
+            public boolean processInReadAction(PsiReference psiReference) {
+              return addResult(psiReference, options, processor);
+            }
+          });
         if (!success) return false;
       }
     }
@@ -348,12 +349,13 @@ public final class JavaFindUsagesHelper {
           if (!addElementUsages(fields[i], options, processor)) return false;
         }
         else {
-          boolean success = ReferencesSearch.search(new ReferencesSearch.SearchParameters(field, options.searchScope, false, options.fastTrack)).forEach(new ReadActionProcessor<PsiReference>() {
-            @Override
-            public boolean processInReadAction(PsiReference reference) {
-              return addResultFromReference(reference, fieldClass, manager, aClass, options, processor);
-            }
-          });
+          boolean success = ReferencesSearch.search(new ReferencesSearch.SearchParameters(field, options.searchScope, false, options.fastTrack)).forEach(
+            new ReadActionProcessor<>() {
+              @Override
+              public boolean processInReadAction(PsiReference reference) {
+                return addResultFromReference(reference, fieldClass, manager, aClass, options, processor);
+              }
+            });
           if (!success) return false;
         }
       }
@@ -453,7 +455,7 @@ public final class JavaFindUsagesHelper {
           !(options instanceof JavaMethodFindUsagesOptions) || !((JavaMethodFindUsagesOptions)options).isIncludeOverloadUsages;
         return MethodReferencesSearch
           .search(new MethodReferencesSearch.SearchParameters(method, searchScope, strictSignatureSearch, options.fastTrack))
-          .forEach(new ReadActionProcessor<PsiReference>() {
+          .forEach(new ReadActionProcessor<>() {
             @Override
             public boolean processInReadAction(PsiReference ref) {
               return addResult(ref, options, processor);
@@ -463,7 +465,7 @@ public final class JavaFindUsagesHelper {
       return true;
     }
 
-    ReadActionProcessor<PsiReference> consumer = new ReadActionProcessor<PsiReference>() {
+    ReadActionProcessor<PsiReference> consumer = new ReadActionProcessor<>() {
       @Override
       public boolean processInReadAction(PsiReference ref) {
         return addResult(ref, options, processor);

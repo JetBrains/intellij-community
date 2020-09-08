@@ -3,6 +3,7 @@ package com.intellij.codeInsight.hints.settings.language
 
 import com.intellij.codeInsight.hints.ChangeListener
 import com.intellij.codeInsight.hints.ImmediateConfigurable
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.ContextHelpLabel
 import com.intellij.util.ui.JBUI
 import java.awt.Component
@@ -14,7 +15,7 @@ import javax.swing.JPanel
 
 internal class CasesPanel(
   cases: List<ImmediateConfigurable.Case>,
-  mainCheckBoxName: String,
+  @NlsContexts.Checkbox mainCheckBoxName: String,
   private val loadMainCheckBoxValue: () -> Boolean,
   private val onUserChangedMainCheckBox: (Boolean) -> Unit,
   listener: ChangeListener,

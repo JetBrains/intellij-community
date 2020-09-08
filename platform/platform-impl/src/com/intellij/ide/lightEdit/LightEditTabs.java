@@ -25,6 +25,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -48,11 +49,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
 final class LightEditTabs extends JBEditorTabs implements LightEditorListener, CloseAction.CloseTarget {
+  private final Project myProject;
   private final LightEditorManagerImpl myEditorManager;
   private final ExecutorService myTabUpdateExecutor;
 
-  LightEditTabs(@NotNull Disposable parentDisposable, @NotNull LightEditorManagerImpl editorManager) {
-    super(LightEditUtil.getProject(), null, parentDisposable);
+  LightEditTabs(@NotNull Project project, @NotNull Disposable parentDisposable, @NotNull LightEditorManagerImpl editorManager) {
+    super(project, null, parentDisposable);
+    myProject = project;
 
     myEditorManager = editorManager;
     myTabUpdateExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Light Edit Tabs Update", 1);
@@ -289,7 +292,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
   @Override
   public Object getData(@NotNull String dataId) {
     if (CommonDataKeys.PROJECT.is(dataId)) {
-      return LightEditUtil.getProject();
+      return myProject;
     }
     else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
       return getSelectedFile();
@@ -308,7 +311,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
     assert ApplicationManager.getApplication().isDispatchThread();
     LightEditorInfo editorInfo = getEditorInfo(tabInfo);
     if (editorInfo == null) return;
-    EditorNotifications.getInstance(LightEditUtil.getProject()).updateNotifications(editorInfo.getFile());
+    EditorNotifications.getInstance(myProject).updateNotifications(editorInfo.getFile());
     asyncUpdateTabs(Collections.singletonList(Pair.createNonNull(tabInfo, editorInfo)));
   }
 

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.tooling.builder;
 
 import com.amazon.ion.IonType;
+import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
@@ -124,6 +125,8 @@ public abstract class AbstractModelBuilderTest {
       }
     }
 
+    // fix exception of FJP at org.gradle.process.internal.ExecHandleRunner.run => ... => net.rubygrapefruit.platform.internal.DefaultProcessLauncher.start => java.lang.ProcessBuilder.start => java.lang.ProcessHandleImpl.completion
+    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
     GradleConnector connector = GradleConnector.newConnector();
 
     GradleVersion _gradleVersion = GradleVersion.version(gradleVersion);
@@ -142,7 +145,8 @@ public abstract class AbstractModelBuilderTest {
     try {
       boolean isCompositeBuildsSupported = _gradleVersion.compareTo(GradleVersion.version("3.1")) >= 0;
       final ProjectImportAction projectImportAction = new ProjectImportAction(false, isCompositeBuildsSupported, false);
-      projectImportAction.addProjectImportModelProvider(new ClassSetImportModelProvider(getModels(), set(IdeaProject.class)));
+      projectImportAction.addProjectImportModelProvider(new ClassSetImportModelProvider(getModels(),
+                                                                                        ContainerUtil.<Class<?>>set(IdeaProject.class)));
       BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = connection.action(projectImportAction);
       File initScript = GradleExecutionHelper.generateInitScript(false, getToolingExtensionClasses());
       assertNotNull(initScript);
@@ -215,10 +219,13 @@ public abstract class AbstractModelBuilderTest {
     final DomainObjectSet<? extends IdeaModule> ideaModules = allModels.getModel(IdeaProject.class).getModules();
 
     final String filterKey = "to_filter";
-    final Map<String, T> map = ContainerUtil.map2Map(ideaModules, (Function<IdeaModule, Pair<String, T>>)module -> {
-      final T value = allModels.getModel(module, aClass);
-      final String key = value != null ? module.getGradleProject().getPath() : filterKey;
-      return Pair.create(key, value);
+    final Map<String, T> map = ContainerUtil.map2Map(ideaModules, new Function<IdeaModule, Pair<String, T>>() {
+      @Override
+      public Pair<String, T> fun(IdeaModule module) {
+        final T value = allModels.getModel(module, aClass);
+        final String key = value != null ? module.getGradleProject().getPath() : filterKey;
+        return Pair.create(key, value);
+      }
     });
 
     map.remove(filterKey);

@@ -114,7 +114,7 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
         }
 
         JBPopupFactory.getInstance()
-          .createActionGroupPopup("Add Server", group, DataManager.getInstance().getDataContext(anActionButton.getContextComponent()),
+          .createActionGroupPopup(TaskBundle.message("popup.title.add.server"), group, DataManager.getInstance().getDataContext(anActionButton.getContextComponent()),
                                   JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true).show(
           anActionButton.getPreferredPopupPoint());
       }

@@ -170,7 +170,7 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
   
   private static List<PsiExpression> generatedList(PsiElement context, int size, IntFunction<String> generator) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
-    return new AbstractList<PsiExpression>() {
+    return new AbstractList<>() {
       @Override
       public PsiExpression get(int index) {
         return factory.createExpressionFromText(generator.apply(index), context);

@@ -13,7 +13,17 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.CheckoutProvider;
+import com.intellij.openapi.vcs.CommittedChangesProvider;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.RemoteDifferenceStrategy;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.openapi.vcs.VcsOutgoingChangesProvider;
+import com.intellij.openapi.vcs.VcsRoot;
+import com.intellij.openapi.vcs.VcsType;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
@@ -24,6 +34,7 @@ import com.intellij.openapi.vcs.roots.VcsRootDetector;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.VcsSynchronousProgressWrapper;
 import com.intellij.vcs.AnnotationProviderEx;
@@ -53,21 +64,27 @@ import git4idea.status.GitChangeProvider;
 import git4idea.update.GitUpdateEnvironment;
 import git4idea.util.GitVcsConsoleWriter;
 import git4idea.vfs.GitVFSListener;
-import org.jetbrains.annotations.CalledInAwt;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Supplier;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-
-import java.util.*;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Git VCS implementation
  */
 public final class GitVcs extends AbstractVcs {
-  public static final String NAME = "Git";
-  public static final String ID = "git";
+  public static final Supplier<@Nls String> DISPLAY_NAME = GitBundle.messagePointer("git4idea.vcs.name");
+  public static final @NonNls String NAME = "Git";
+  public static final @NonNls String ID = "git";
 
   private static final Logger LOG = Logger.getInstance(GitVcs.class.getName());
   private static final VcsKey ourKey = createKey(NAME);
@@ -145,7 +162,7 @@ public final class GitVcs extends AbstractVcs {
   @Override
   @NotNull
   public String getDisplayName() {
-    return NAME;
+    return DISPLAY_NAME.get();
   }
 
   @Override
@@ -248,9 +265,9 @@ public final class GitVcs extends AbstractVcs {
    * @param list   a list of errors
    * @param action an action
    */
-  public void showErrors(@NotNull List<? extends VcsException> list, @NotNull String action) {
+  public void showErrors(@NotNull List<? extends VcsException> list, @NotNull @Nls String action) {
     if (list.size() > 0) {
-      StringBuilder buffer = new StringBuilder();
+      @Nls StringBuilder buffer = new StringBuilder();
       buffer.append("\n");
       buffer.append(GitBundle.message("error.list.title", action));
       for (final VcsException exception : list) {
@@ -275,7 +292,7 @@ public final class GitVcs extends AbstractVcs {
    * @deprecated use {@link GitVcsConsoleWriter}
    */
   @Deprecated
-  public void showCommandLine(final String cmdLine) {
+  public void showCommandLine(@Nls String cmdLine) {
     GitVcsConsoleWriter.getInstance(myProject).showCommandLine(cmdLine);
   }
 
@@ -325,7 +342,7 @@ public final class GitVcs extends AbstractVcs {
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   public void enableIntegration() {
     new Task.Backgroundable(myProject, GitBundle.message("progress.title.enabling.git"), true) {
       @Override
@@ -349,7 +366,7 @@ public final class GitVcs extends AbstractVcs {
 
     return VcsSynchronousProgressWrapper.compute(
       () -> GitCommittedChangeListProvider.getCommittedChangeList(myProject, repository.getRoot(), (GitRevisionNumber)number),
-      getProject(), "Load Revision Contents");
+      getProject(), GitBundle.message("revision.load.contents"));
   }
 
   @Override

@@ -14,7 +14,7 @@ import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
 
 class EditorConfigRemoveDeprecatedElementQuickFix : LocalQuickFix {
-  override fun getFamilyName() = EditorConfigBundle["quickfix.deprecated.element.remove"]
+  override fun getFamilyName() = EditorConfigBundle.get("quickfix.deprecated.element.remove")
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val element = descriptor.psiElement as? EditorConfigDescribableElement ?: return
     val editor = FileEditorManager.getInstance(project).selectedTextEditor ?: return

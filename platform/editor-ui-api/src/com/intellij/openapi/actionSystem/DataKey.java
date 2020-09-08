@@ -38,7 +38,7 @@ public final class DataKey<T> implements ValueKey<T> {
   }
 
   @Override
-  public @NotNull String getName() {
+  public @NotNull @NonNls String getName() {
     return myName;
   }
 

@@ -24,14 +24,14 @@ internal class GitDropLogAction : GitMultipleCommitEditingAction() {
         if (operationResult is GitCommitEditingOperationResult.Complete) {
           operationResult.notifySuccess(
             GitBundle.message("rebase.log.drop.success.notification.title", commitDetails.size),
-            GitBundle.getString("rebase.log.drop.undo.progress.title"),
-            GitBundle.getString("rebase.log.drop.undo.impossible.title"),
-            GitBundle.getString("rebase.log.drop.undo.failed.title")
+            GitBundle.message("rebase.log.drop.undo.progress.title"),
+            GitBundle.message("rebase.log.drop.undo.impossible.title"),
+            GitBundle.message("rebase.log.drop.undo.failed.title")
           )
         }
       }
     }.queue()
   }
 
-  override fun getFailureTitle(): String = GitBundle.getString("rebase.log.drop.action.failure.title")
+  override fun getFailureTitle(): String = GitBundle.message("rebase.log.drop.action.failure.title")
 }

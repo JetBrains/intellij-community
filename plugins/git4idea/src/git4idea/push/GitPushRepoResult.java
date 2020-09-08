@@ -1,10 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.push;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.update.GitUpdateResult;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -119,16 +121,18 @@ public final class GitPushRepoResult {
     return myTargetBranch;
   }
 
+  @NlsSafe
   @Nullable
   String getError() {
     return myError;
   }
 
   @NotNull
-  List<String> getPushedTags() {
+  List<@NlsSafe String> getPushedTags() {
     return myPushedTags;
   }
 
+  @NlsSafe
   @NotNull
   public String getTargetRemote() {
     return myTargetRemote;
@@ -157,6 +161,7 @@ public final class GitPushRepoResult {
     }
   }
 
+  @NonNls
   @Override
   public String toString() {
     return String.format("%s (%d, '%s'), update: %s}", myType, myCommits, mySourceBranch, myUpdateResult);

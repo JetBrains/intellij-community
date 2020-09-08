@@ -293,6 +293,9 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
 
       @Override
       protected PsiClass getContainingClass(@NotNull PsiMethod method) {
+        if (newExpression.getAnonymousClass() != null) {
+          return PsiTreeUtil.getContextOfType(argumentList, PsiClass.class, false);
+        }
         return psiClass;
       }
 

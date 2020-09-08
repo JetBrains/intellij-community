@@ -16,8 +16,8 @@ import org.editorconfig.language.util.EditorConfigPsiTreeUtil.getParentOfType
 import org.editorconfig.language.util.EditorConfigTextMatchingUtil
 
 class EditorConfigInvertValueIntention : IntentionAction {
-  override fun getText() = EditorConfigBundle["intention.invert-option-value"]
-  override fun getFamilyName(): String = EditorConfigBundle["intention.invert-option-value"]
+  override fun getText() = EditorConfigBundle.get("intention.invert-option-value")
+  override fun getFamilyName(): String = EditorConfigBundle.get("intention.invert-option-value")
   override fun startInWriteAction() = true
 
   override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {

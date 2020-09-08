@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -30,5 +31,5 @@ public interface PyQualifiedNameOwner extends PyElement {
    * is contained inside an element that doesn't have a qualified name.
    */
   @Nullable
-  String getQualifiedName();
+  @NlsSafe String getQualifiedName();
 }

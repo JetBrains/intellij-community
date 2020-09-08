@@ -112,7 +112,7 @@ public class FormNode extends ProjectViewNode<Form>{
   }
 
   @Override
-  public boolean canHaveChildrenMatching(final Condition<PsiFile> condition) {
+  public boolean canHaveChildrenMatching(final Condition<? super PsiFile> condition) {
     for(BasePsiNode<? extends PsiElement> child: myChildren) {
       if (condition.value(child.getValue().getContainingFile())) {
         return true;

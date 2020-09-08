@@ -100,12 +100,12 @@ internal class BranchesDashboardController(private val project: Project,
   }
 
   private fun updateBranchesIsMyState() {
-    VcsProjectLog.runWhenLogIsReady(project) { log, _ ->
+    VcsProjectLog.runWhenLogIsReady(project) {
       val allBranches = localBranches + remoteBranches
       val branchesToCheck = allBranches.filter { it.isMy == ThreeState.UNSURE }
       ui.startLoadingBranches()
       calculateMyBranchesInBackground(
-        run = { indicator -> BranchesDashboardUtil.checkIsMyBranchesSynchronously(log, branchesToCheck, indicator) },
+        run = { indicator -> BranchesDashboardUtil.checkIsMyBranchesSynchronously(VcsProjectLog.getInstance(project), branchesToCheck, indicator) },
         onSuccess = { branches ->
           localBranches.updateUnsureBranchesStateFrom(branches)
           remoteBranches.updateUnsureBranchesStateFrom(branches)

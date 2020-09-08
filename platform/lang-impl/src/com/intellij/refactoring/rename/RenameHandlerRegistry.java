@@ -14,6 +14,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler;
@@ -21,6 +23,7 @@ import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -89,18 +92,18 @@ public class RenameHandlerRegistry {
   }
 
   private @NotNull List<? extends @NotNull RenameHandler> doGetRenameHandlers(@NotNull DataContext dataContext) {
-    final List<RenameHandler> availableHandlers = new SmartList<>();
+    final Map<String, RenameHandler> availableHandlers = new TreeMap<>();
     for (RenameHandler renameHandler : RenameHandler.EP_NAME.getExtensionList()) {
       if (renameHandler.isRenaming(dataContext)) {
-        availableHandlers.add(renameHandler);
+        availableHandlers.put(getHandlerTitle(renameHandler), renameHandler);
       }
     }
     if (availableHandlers.size() == 1) {
-      return availableHandlers;
+      return new SmartList<>(availableHandlers.values());
     }
-    for (Iterator<RenameHandler> iterator = availableHandlers.iterator(); iterator.hasNext(); ) {
-      RenameHandler renameHandler = iterator.next();
-      if (renameHandler instanceof MemberInplaceRenameHandler) {
+    for (Iterator<Map.Entry<String, RenameHandler>> iterator = availableHandlers.entrySet().iterator(); iterator.hasNext(); ) {
+      Map.Entry<String, RenameHandler> entry = iterator.next();
+      if (entry.getValue() instanceof MemberInplaceRenameHandler) {
         iterator.remove();
         break;
       }
@@ -108,7 +111,7 @@ public class RenameHandlerRegistry {
     if (availableHandlers.isEmpty() && myDefaultElementRenameHandler.isRenaming(dataContext)) {
       return Collections.singletonList(myDefaultElementRenameHandler);
     }
-    return availableHandlers;
+    return new SmartList<>(availableHandlers.values());
   }
 
   @TestOnly
@@ -122,16 +125,20 @@ public class RenameHandlerRegistry {
     });
   }
 
-  static String getHandlerTitle(RenameHandler renameHandler) {
-    return renameHandler instanceof TitledHandler ? StringUtil.capitalize(StringUtil.toLowerCase(((TitledHandler)renameHandler).getActionTitle())) : renameHandler.toString();
+  public static @Nls(capitalization = Nls.Capitalization.Sentence) String getHandlerTitle(RenameHandler renameHandler) {
+    if (renameHandler instanceof TitledHandler) {
+      return StringUtil.capitalize(StringUtil.toLowerCase(((TitledHandler)renameHandler).getActionTitle()));
+    }
+    @NlsSafe String handlerToString = renameHandler.toString();
+    return handlerToString;
   }
 
   private static class HandlersChooser extends DialogWrapper {
-    private final String[] myRenamers;
+    private final @NlsContexts.RadioButton String[] myRenamers;
     private String mySelection;
     private final JRadioButton[] myRButtons;
 
-    protected HandlersChooser(Project project, String [] renamers) {
+    protected HandlersChooser(Project project, @NlsContexts.RadioButton String [] renamers) {
       super(project);
       myRenamers = renamers;
       myRButtons = new JRadioButton[myRenamers.length];
@@ -150,7 +157,7 @@ public class RenameHandlerRegistry {
       final ButtonGroup bg = new ButtonGroup();
       boolean selected = true;
       int rIdx = 0;
-      for (final String renamer : myRenamers) {
+      for (final @NlsContexts.RadioButton String renamer : myRenamers) {
         final JRadioButton rb = new JRadioButton(renamer, selected);
         myRButtons[rIdx++] = rb;
         final ItemListener listener = new ItemListener() {

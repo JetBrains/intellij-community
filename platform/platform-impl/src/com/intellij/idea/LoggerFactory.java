@@ -12,6 +12,7 @@ import org.jdom.Document;
 import org.jdom.JDOMException;
 import org.jdom.adapters.JAXPDOMAdapter;
 import org.jdom.output.DOMOutputter;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.w3c.dom.Element;
 
@@ -23,9 +24,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public final class LoggerFactory implements Logger.Factory {
-  private static final String SYSTEM_MACRO = "$SYSTEM_DIR$";
-  private static final String APPLICATION_MACRO = "$APPLICATION_DIR$";
-  private static final String LOG_DIR_MACRO = "$LOG_DIR$";
+  @NonNls private static final String SYSTEM_MACRO = "$SYSTEM_DIR$";
+  @NonNls private static final String APPLICATION_MACRO = "$APPLICATION_DIR$";
+  @NonNls private static final String LOG_DIR_MACRO = "$LOG_DIR$";
 
   LoggerFactory() throws Exception {
     System.setProperty("log4j.defaultInitOverride", "true");

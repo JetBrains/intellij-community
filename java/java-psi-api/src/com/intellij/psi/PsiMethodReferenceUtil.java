@@ -3,11 +3,13 @@ package com.intellij.psi;
 
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -145,7 +147,7 @@ public final class PsiMethodReferenceUtil {
   private static boolean isReturnTypeCompatible(PsiMethodReferenceExpression expression,
                                                 JavaResolveResult result,
                                                 PsiType functionalInterfaceType,
-                                                Ref<? super String> errorMessage) {
+                                                Ref<@Nls String> errorMessage) {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
     if (interfaceMethod != null) {
@@ -293,7 +295,7 @@ public final class PsiMethodReferenceUtil {
     return type;
   }
 
-  public static String checkTypeArguments(PsiTypeElement qualifier, PsiType psiType) {
+  public static @NlsContexts.DetailedDescription String checkTypeArguments(PsiTypeElement qualifier, PsiType psiType) {
     if (psiType instanceof PsiClassType) {
       final PsiJavaCodeReferenceElement referenceElement = qualifier.getInnermostComponentReferenceElement();
       if (referenceElement != null) {
@@ -308,8 +310,8 @@ public final class PsiMethodReferenceUtil {
     return null;
   }
 
-  public static String checkReturnType(PsiMethodReferenceExpression expression, JavaResolveResult result, PsiType functionalInterfaceType) {
-    final Ref<String> errorMessage = Ref.create();
+  public static @NlsContexts.DetailedDescription String checkReturnType(PsiMethodReferenceExpression expression, JavaResolveResult result, PsiType functionalInterfaceType) {
+    final Ref<@Nls String> errorMessage = Ref.create();
     if (!isReturnTypeCompatible(expression, result, functionalInterfaceType, errorMessage)) {
       return errorMessage.get();
     }

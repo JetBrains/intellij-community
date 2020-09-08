@@ -18,6 +18,7 @@ package com.intellij.diff.editor
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.util.FileEditorBase
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
@@ -45,7 +46,7 @@ class DiffRequestProcessorEditor(
   override fun dispose() {}
   override fun isValid(): Boolean = !processor.isDisposed
   override fun getFile(): VirtualFile = file
-  override fun getName(): String = "Diff"
+  override fun getName(): String = DiffBundle.message("diff.file.editor.name")
 
   override fun selectNotify() {
     processor.updateRequest()

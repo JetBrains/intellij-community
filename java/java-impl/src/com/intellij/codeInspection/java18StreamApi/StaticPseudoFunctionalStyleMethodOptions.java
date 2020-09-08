@@ -116,7 +116,7 @@ public class StaticPseudoFunctionalStyleMethodOptions {
 
   public JComponent createPanel() {
     final JBList<PipelineElement> list = new JBList<>(myElements);
-    list.setCellRenderer(new ColoredListCellRenderer<PipelineElement>() {
+    list.setCellRenderer(new ColoredListCellRenderer<>() {
       @Override
       protected void customizeCellRenderer(@NotNull JList list, PipelineElement element, int index, boolean selected, boolean hasFocus) {
         final String classFQName = element.getHandlerClass();
@@ -176,7 +176,7 @@ public class StaticPseudoFunctionalStyleMethodOptions {
       myTemplate = template;
     }
 
-    public String getHandlerClass() {
+    public @NlsSafe String getHandlerClass() {
       return myHandlerClass;
     }
 

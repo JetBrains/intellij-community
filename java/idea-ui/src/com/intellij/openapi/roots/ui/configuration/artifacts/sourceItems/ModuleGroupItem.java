@@ -16,6 +16,8 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingSourceItem;
@@ -29,10 +31,10 @@ import java.util.Collections;
 import java.util.List;
 
 public class ModuleGroupItem extends PackagingSourceItem {
-  private final String myGroupName;
+  private final @NlsSafe String myGroupName;
   private final List<String> myPath;
 
-  public ModuleGroupItem(@NotNull List<String> path) {
+  public ModuleGroupItem(@NotNull List<@NlsSafe String> path) {
     super(false);
     myGroupName = path.get(path.size() - 1);
     myPath = path;
@@ -63,9 +65,9 @@ public class ModuleGroupItem extends PackagingSourceItem {
   }
 
   private static class ModuleGroupSourceItemPresentation extends SourceItemPresentation {
-    private final String myGroupName;
+    private final @NlsContexts.Label String myGroupName;
 
-    ModuleGroupSourceItemPresentation(String groupName) {
+    ModuleGroupSourceItemPresentation(@NlsContexts.Label String groupName) {
       myGroupName = groupName;
     }
 

@@ -9,6 +9,7 @@ import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -111,7 +112,7 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
     return null;
   }
 
-  private static String getTemplateName(URL url) {
+  private static @NlsSafe String getTemplateName(URL url) {
     String fileName = new File(url.getPath()).getName();
     return fileName.substring(0, fileName.length() - ArchivedTemplatesFactory.ZIP.length()).replace('_', ' ');
   }

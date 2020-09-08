@@ -2,10 +2,13 @@
 package com.intellij.ui.tabs.impl.singleRow;
 
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.ui.tabs.impl.*;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.lang.ref.WeakReference;
 import java.util.List;
@@ -284,5 +287,11 @@ public abstract class SingleRowLayout extends TabLayout {
     }
 
     return result;
+  }
+
+  @Override
+  @MagicConstant(intValues = {SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT, -1})
+  public int getDropSideFor(@NotNull Point point) {
+    return TabsUtil.getDropSideFor(point, myTabs);
   }
 }

@@ -46,7 +46,7 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
   public InplaceVariableIntroducer(PsiNamedElement elementToRename,
                                    Editor editor,
                                    final Project project,
-                                   String title, E[] occurrences,
+                                   @NlsContexts.Command String title, E[] occurrences,
                                    @Nullable E expr) {
     super(editor, elementToRename, project);
     myTitle = title;
@@ -135,7 +135,7 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
   }
 
   @Override
-  protected @NlsContexts.Command String getCommandName() {
+  protected String getCommandName() {
     return myTitle;
   }
 
@@ -166,7 +166,7 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
                                        final LinkedHashSet<String> names,
                                        final PsiNamedElement elementToRename,
                                        final boolean shouldSelectAll,
-                                       final String advertisementText) {
+                                       final @NlsContexts.PopupAdvertisement String advertisementText) {
       super(initialName, names, elementToRename, elementToRename, shouldSelectAll, advertisementText);
       myPointer = SmartPointerManager.getInstance(elementToRename.getProject()).createSmartPsiElementPointer(elementToRename);
     }

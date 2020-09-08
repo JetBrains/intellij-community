@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs
 
 import com.intellij.diff.util.Side
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.undo.DocumentReferenceManager
+import com.intellij.openapi.vcs.LineStatusTrackerTestUtil.parseInput
 import com.intellij.openapi.vcs.ex.Range
 
 class PartialLineStatusTrackerTest : BaseLineStatusTrackerTestCase() {

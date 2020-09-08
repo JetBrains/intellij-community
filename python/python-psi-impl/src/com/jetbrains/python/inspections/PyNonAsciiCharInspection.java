@@ -17,10 +17,12 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.inspections.quickfix.AddEncodingQuickFix;
@@ -79,7 +81,7 @@ public class PyNonAsciiCharInspection extends PyInspection {
 
         if (hasNonAscii) {
           if (charsetString == null) {
-            registerProblem(node, "Non-ASCII character " + c + " in file, but no encoding declared",
+            registerProblem(node, PyPsiBundle.message("INSP.non.ascii.char.non.ascii.character.in.file.but.no.encoding.declared", c),
                             new AddEncodingQuickFix(myDefaultEncoding, myEncodingFormatIndex));
           }
         }
@@ -87,22 +89,22 @@ public class PyNonAsciiCharInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyStringLiteralExpression(PyStringLiteralExpression node) {
+    public void visitPyStringLiteralExpression(@NotNull PyStringLiteralExpression node) {
       checkString(node, node.getText());
     }
 
     @Override
-    public void visitPyReferenceExpression(PyReferenceExpression node) {
+    public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
       checkString(node, node.getText());
     }
 
     @Override
-    public void visitPyTargetExpression(PyTargetExpression node) {
+    public void visitPyTargetExpression(@NotNull PyTargetExpression node) {
       checkString(node, node.getText());
     }
   }
 
-  public String myDefaultEncoding = "utf-8";
+  public @NlsSafe String myDefaultEncoding = "utf-8";
   public int myEncodingFormatIndex = 0;
 
   @Override

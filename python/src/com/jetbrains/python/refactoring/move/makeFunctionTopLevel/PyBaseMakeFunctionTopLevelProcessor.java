@@ -44,6 +44,7 @@ import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.move.PyMoveRefactoringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -108,7 +109,7 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
     final PyFile targetFile = PyRefactoringUtil.getOrCreateFile(myDestinationPath, myProject);
     if (targetFile.findTopLevelFunction(myFunction.getName()) != null) {
       throw new IncorrectOperationException(
-        PyBundle.message("refactoring.move.error.destination.file.contains.function.$0", myFunction.getName()));
+        PyBundle.message("refactoring.move.error.destination.file.contains.function", myFunction.getName()));
     }
     if (importsRequired(usages, targetFile)) {
       PyMoveRefactoringUtil.checkValidImportableFile(targetFile, targetFile.getVirtualFile());
@@ -162,7 +163,7 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
   }
 
   @NotNull
-  protected abstract String getRefactoringName();
+  protected abstract @Nls String getRefactoringName();
 
   @NotNull
   protected abstract List<String> collectNewParameterNames();

@@ -3,6 +3,7 @@ PsiJavaFileStub []
     PsiModifierListStub[mask=1025]
     PsiTypeParameterListStub
       PsiTypeParameter[T]
+        PsiAnnotationStub[@TA(value=10)]
         PsiRefListStub[EXTENDS_BOUNDS_LIST:java.lang.Object]
     PsiRefListStub[EXTENDS_LIST:java.io.Serializable]
     PsiRefListStub[IMPLEMENTS_LIST:]

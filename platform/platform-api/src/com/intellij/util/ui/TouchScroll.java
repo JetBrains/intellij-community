@@ -35,7 +35,7 @@ public final class TouchScroll {
   }
 
 
-  public void processMouseWheelEvent(@NotNull MouseWheelEvent e, @Nullable Consumer<MouseWheelEvent> alternative) {
+  public void processMouseWheelEvent(@NotNull MouseWheelEvent e, @Nullable Consumer<? super MouseWheelEvent> alternative) {
     JScrollBar bar = !myScrollEnabled.get() ? null : getEventScrollBar(e);
     if (bar == null) {
       if (alternative != null) alternative.accept(e);

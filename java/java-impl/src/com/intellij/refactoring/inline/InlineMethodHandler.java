@@ -9,6 +9,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -136,16 +137,17 @@ public final class InlineMethodHandler extends JavaInlineActionHandler {
       ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(Collections.singletonList(vFile));
     }
 
-    PsiJavaCodeReferenceElement refElement = null;
     if (reference != null) {
       final PsiElement referenceElement = reference.getElement();
-      if (referenceElement instanceof PsiJavaCodeReferenceElement) {
-        refElement = (PsiJavaCodeReferenceElement)referenceElement;
+      if (referenceElement.getLanguage() == JavaLanguage.INSTANCE && 
+          !(referenceElement instanceof PsiJavaCodeReferenceElement)) {
+        reference = null;
       }
     }
-    InlineMethodDialog dialog = new InlineMethodDialog(project, method, refElement, editor, allowInlineThisOnly);
+    InlineMethodDialog dialog = new InlineMethodDialog(project, method, reference, editor, allowInlineThisOnly);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       dialog.doAction();
+      dialog.close(DialogWrapper.OK_EXIT_CODE, true);
     }
     else {
       dialog.show();
@@ -187,7 +189,7 @@ public final class InlineMethodHandler extends JavaInlineActionHandler {
 
   @Override
   public @NotNull String getActionName(PsiElement element) {
-    return getRefactoringName() + "...";
+    return RefactoringBundle.message("inline.method.action.name");
   }
 
   private static @NlsContexts.DialogTitle String getRefactoringName() {

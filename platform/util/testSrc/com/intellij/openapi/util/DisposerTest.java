@@ -4,13 +4,20 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.LeakHunter;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.util.Disposer.newDisposable;
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
@@ -103,8 +110,6 @@ public class DisposerTest extends TestCase {
     assertDisposed(selfDisposable);
     assertDisposed(myFolder1);
     assertDisposed(myFolder2);
-
-    assertEquals(0, Disposer.getTree().getNodesInExecution().size());
   }
 
   public void testDirectCallOfUnregisteredSelfDisposable() {
@@ -167,6 +172,44 @@ public class DisposerTest extends TestCase {
     Disposer.dispose(myRoot);
     assertDisposed(myFolder1);
     assertDisposed(myLeaf1);
+  }
+
+  public void testIsDisposingWorksForDisposablesRegisteredWithParent() throws ExecutionException, InterruptedException {
+    AtomicBoolean disposeRun = new AtomicBoolean();
+    AtomicBoolean allowToContinueDispose = new AtomicBoolean();
+    Disposable disposable = () -> {
+      disposeRun.set(true);
+      while (!allowToContinueDispose.get());
+    };
+    Disposer.register(myRoot, disposable);
+
+    assertFalse(Disposer.isDisposed(disposable));
+    ExecutorService executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(StringUtil.capitalize(getName()));
+    Future<?> future = executor.submit(() -> Disposer.dispose(myRoot));
+    while (!disposeRun.get());
+    assertTrue(Disposer.isDisposed(disposable));
+    assertFalse(future.isDone());
+    allowToContinueDispose.set(true);
+    future.get();
+    assertTrue(Disposer.isDisposed(disposable));
+  }
+
+  public void testIsDisposingWorksForUnregisteredDisposables() throws ExecutionException, InterruptedException {
+    AtomicBoolean disposeRun = new AtomicBoolean();
+    AtomicBoolean allowToContinueDispose = new AtomicBoolean();
+    Disposable disposable = () -> {
+      disposeRun.set(true);
+      while (!allowToContinueDispose.get());
+    };
+    assertFalse(Disposer.isDisposed(disposable));
+    ExecutorService executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(StringUtil.capitalize(getName()));
+    Future<?> future = executor.submit(() -> Disposer.dispose(disposable));
+    while (!disposeRun.get());
+    assertTrue(Disposer.isDisposed(disposable));
+    assertFalse(future.isDone());
+    allowToContinueDispose.set(true);
+    future.get();
+    assertTrue(Disposer.isDisposed(disposable));
   }
 
   public void testDisposableParentNotify() {
@@ -373,9 +416,24 @@ public class DisposerTest extends TestCase {
       fail("Must throw");
     }
     catch (Throwable e) {
-      assertEquals("Sorry but parent: parent is being disposed so the child: child will never be disposed", e.getMessage());
+      assertTrue(e.getMessage(), e.getMessage().startsWith("Sorry but parent"));
     }
 
     assertTrue(Disposer.isDisposed(parent));
+  }
+
+  public void testNoLeaksAfterConcurrentDisposeAndRegister() throws Exception {
+    ExecutorService executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(StringUtil.capitalize(getName()));
+
+    for (int i = 0; i < 100; i++) {
+      MyDisposable parent = new MyDisposable("parent");
+      Future<?> future = executor.submit(() -> Disposer.tryRegister(parent, new MyDisposable("child")));
+
+      Disposer.dispose(parent);
+
+      future.get();
+
+      LeakHunter.checkLeak(Disposer.getTree(), MyDisposable.class);
+    }
   }
 }

@@ -2,13 +2,11 @@
 package com.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.text.OrdinalFormat;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.lang.reflect.Field;
 import java.text.MessageFormat;
@@ -21,10 +19,11 @@ import java.util.ResourceBundle;
  */
 public abstract class BundleBase {
   public static final char MNEMONIC = 0x1B;
-  public static final String MNEMONIC_STRING = Character.toString(MNEMONIC);
+  public static final @NlsSafe String MNEMONIC_STRING = Character.toString(MNEMONIC);
   static final String L10N_MARKER = "🔅";
   public static final boolean SHOW_LOCALIZED_MESSAGES = Boolean.getBoolean("idea.l10n");
   public static final boolean SHOW_DEFAULT_MESSAGES = Boolean.getBoolean("idea.l10n.english");
+  public static final boolean SHOW_KEYS = Boolean.getBoolean("idea.l10n.keys");
   private static final Logger LOG = Logger.getInstance(BundleBase.class);
 
   private static boolean assertOnMissedKeys;
@@ -53,8 +52,8 @@ public abstract class BundleBase {
     if (unassignedParams <= 0) throw new IllegalArgumentException();
     Object[] newParams = new Object[params.length + unassignedParams];
     System.arraycopy(params, 0, newParams, 0, params.length);
-    final String prefix = "#$$$TemplateParameter$$$#";
-    final String suffix = "#$$$/TemplateParameter$$$#";
+    @NonNls String prefix = "#$$$TemplateParameter$$$#";
+    @NonNls String suffix = "#$$$/TemplateParameter$$$#";
     for (int i = 0; i < unassignedParams; i++) {
       newParams[i + params.length] = prefix + i + suffix;
     }
@@ -91,7 +90,7 @@ public abstract class BundleBase {
 
   public static @Nls String messageOrDefault(@Nullable ResourceBundle bundle,
                                              @NotNull String key,
-                                             @Nullable String defaultValue,
+                                             @Nullable @Nls String defaultValue,
                                              Object @NotNull ... params) {
     if (bundle == null) return defaultValue;
 
@@ -108,32 +107,47 @@ public abstract class BundleBase {
 
     String result = postprocessValue(bundle, value, params);
 
-    if (SHOW_DEFAULT_MESSAGES && resourceFound) {
-      try {
-        Field parent = ReflectionUtil.getDeclaredField(ResourceBundle.class, "parent");
-        if (parent != null) {
-          Object parentBundle = parent.get(bundle);
-          if (parentBundle instanceof ResourceBundle) {
-            String suffix = " (" + ((ResourceBundle)parentBundle).getString(key) + ")";
-            return appendLocalizationSuffix(result, suffix);
-          }
-        }
-      }
-      catch (IllegalAccessException e) {
-        LOG.warn("Cannot fetch default message with -Didea.l10n.english enabled, by key '" + key + "'");
-      }
+    if (!resourceFound) {
+      return result;
     }
 
-    if (SHOW_LOCALIZED_MESSAGES && resourceFound) {
+    if (SHOW_KEYS && SHOW_DEFAULT_MESSAGES) {
+      return appendLocalizationSuffix(result, " (" + key + "=" + getDefaultMessage(bundle, key) + ")");
+    }
+    if (SHOW_KEYS) {
+      return appendLocalizationSuffix(result, " (" + key + ")");
+    }
+    if (SHOW_DEFAULT_MESSAGES) {
+      return appendLocalizationSuffix(result, " (" + getDefaultMessage(bundle, key) + ")");
+    }
+    if (SHOW_LOCALIZED_MESSAGES) {
       return appendLocalizationSuffix(result, L10N_MARKER);
     }
     return result;
   }
 
+  @NotNull
+  public static String getDefaultMessage(@NotNull ResourceBundle bundle, @NotNull String key) {
+    try {
+      Field parent = ReflectionUtil.getDeclaredField(ResourceBundle.class, "parent");
+      if (parent != null) {
+        Object parentBundle = parent.get(bundle);
+        if (parentBundle instanceof ResourceBundle) {
+          return ((ResourceBundle)parentBundle).getString(key);
+        }
+      }
+    }
+    catch (IllegalAccessException e) {
+      LOG.warn("Cannot fetch default message with -Didea.l10n.english enabled, by key '" + key + "'");
+    }
+    //noinspection HardCodedStringLiteral
+    return "undefined";
+  }
+
   private static final String[] SUFFIXES = {"</body></html>", "</html>"};
 
   @NotNull
-  protected static String appendLocalizationSuffix(@NotNull String result, @NotNull String suffixToAppend) {
+  protected static @NlsSafe String appendLocalizationSuffix(@NotNull String result, @NotNull String suffixToAppend) {
     for (String suffix : SUFFIXES) {
       if (result.endsWith(suffix)) return result.substring(0, result.length() - suffix.length()) + L10N_MARKER + suffix;
     }
@@ -141,7 +155,7 @@ public abstract class BundleBase {
   }
 
   @NotNull
-  static String useDefaultValue(@Nullable ResourceBundle bundle, @NotNull String key, @Nullable String defaultValue) {
+  static @Nls String useDefaultValue(@Nullable ResourceBundle bundle, @NotNull String key, @Nullable @Nls String defaultValue) {
     if (defaultValue != null) {
       return defaultValue;
     }
@@ -149,11 +163,13 @@ public abstract class BundleBase {
     if (assertOnMissedKeys) {
       LOG.error("'" + key + "' is not found in " + bundle);
     }
+    //noinspection HardCodedStringLiteral
     return "!" + key + "!";
   }
 
+  @SuppressWarnings("HardCodedStringLiteral")
   @NotNull
-  static @Nls String postprocessValue(@NotNull ResourceBundle bundle, @NotNull String value, Object @NotNull ... params) {
+  static @Nls String postprocessValue(@NotNull ResourceBundle bundle, @NotNull @Nls String value, Object @NotNull ... params) {
     value = replaceMnemonicAmpersand(value);
 
     if (params.length > 0 && value.indexOf('{') >= 0) {
@@ -172,6 +188,7 @@ public abstract class BundleBase {
   }
 
   @NotNull
+  @Contract(pure = true)
   public static String format(@NotNull String value, Object @NotNull ... params) {
     return params.length > 0 && value.indexOf('{') >= 0 ? MessageFormat.format(value, params) : value;
   }
@@ -212,6 +229,7 @@ public abstract class BundleBase {
       }
       i++;
     }
-    return builder.toString();
+    @NlsSafe final String result = builder.toString();
+    return result;
   }
 }

@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 public class MavenEditorTabTitleProvider implements EditorTabTitleProvider {
@@ -32,7 +33,7 @@ public class MavenEditorTabTitleProvider implements EditorTabTitleProvider {
     if (mavenProject != null) {
       String name = file.getName() + " (" + mavenProject.getMavenId().getArtifactId() + ")";
       if (projectsManager.isIgnored(mavenProject)) {
-        return "ignored " + name;
+        return MavenProjectBundle.message("tab.title.ignored", name);
       }
       return name;
     }

@@ -261,7 +261,7 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
 
   @Override
   protected IndexingStampInfo getIndexingStampInfo(@NotNull VirtualFile file) {
-    return StubUpdatingIndex.getIndexingStampInfo(file);
+    return StubUpdatingIndex.readSavedIndexingStampInfo(file);
   }
 
   @Override

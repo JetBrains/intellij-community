@@ -7,6 +7,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -19,7 +20,7 @@ import java.util.prefs.Preferences;
  */
 public final class PermanentInstallationID {
   private static final String OLD_USER_ON_MACHINE_ID_KEY = "JetBrains.UserIdOnMachine";
-  private static final String INSTALLATION_ID_KEY = "user_id_on_machine";
+  @NonNls private static final String INSTALLATION_ID_KEY = "user_id_on_machine";
   private static final String INSTALLATION_ID = calculateInstallationId();
 
   @NotNull

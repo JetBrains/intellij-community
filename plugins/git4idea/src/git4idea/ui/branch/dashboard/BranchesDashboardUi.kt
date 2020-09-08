@@ -20,6 +20,7 @@ import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.StatusText.getDefaultEmptyText
@@ -41,8 +42,8 @@ import com.intellij.vcs.log.util.VcsLogUiUtil.isDiffPreviewInEditor
 import com.intellij.vcs.log.visible.VisiblePackRefresher
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
-import com.intellij.vcs.log.visible.filters.without
 import com.intellij.vcs.log.visible.filters.with
+import com.intellij.vcs.log.visible.filters.without
 import git4idea.i18n.GitBundle.message
 import git4idea.i18n.GitBundleExtensions.messagePointer
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.DeleteBranchAction
@@ -53,7 +54,6 @@ import git4idea.ui.branch.dashboard.BranchesDashboardActions.ShowBranchDiffActio
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.ShowMyBranchesAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.ToggleFavoriteAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.UpdateSelectedBranchAction
-import org.jetbrains.annotations.CalledInAwt
 import java.awt.Component
 import javax.swing.JComponent
 import javax.swing.event.TreeSelectionListener
@@ -112,7 +112,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     toggleBranchesPanelVisibility()
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private fun installLogUi() {
     uiController.registerDataPackListener(logUi.logData)
     uiController.registerLogUiPropertiesListener(logUi.properties)
@@ -129,7 +129,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     tree.component.addTreeSelectionListener(treeSelectionListener)
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private fun disposeBranchesUi() {
     branchViewSplitter.secondComponent.removeAll()
     uiController.removeDataPackListener(logUi.logData)
@@ -222,6 +222,8 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     override fun getData(dataId: String): Any? {
       return when {
         GIT_BRANCHES.`is`(dataId) -> tree.getSelectedBranches()
+        GIT_BRANCH_FILTERS.`is`(dataId) -> tree.getSelectedBranchFilters()
+        GIT_REMOTES.`is`(dataId) -> tree.getSelectedRemotes()
         BRANCHES_UI_CONTROLLER.`is`(dataId) -> uiController
         VcsLogInternalDataKeys.LOG_UI_PROPERTIES.`is`(dataId) -> logUi.properties
         else -> null

@@ -11,14 +11,14 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -62,7 +62,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
    * @return The language name to show in preview tab (null by default).
    */
   @Nullable
-  public String getLanguageName() {
+  public @NlsContexts.Label String getLanguageName() {
     return null;
   }
 
@@ -202,7 +202,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
    *         language's own display name.
    */
   @NotNull
-  public static String getLanguageName(Language lang) {
+  public static @NlsSafe String getLanguageName(Language lang) {
     final LanguageCodeStyleSettingsProvider provider = forLanguage(lang);
     String providerLangName = provider != null ? provider.getLanguageName() : null;
     return providerLangName != null ? providerLangName : lang.getDisplayName();
@@ -315,21 +315,21 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
     }
 
     @Override
-    public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
-                                 String fieldName,
-                                 String title,
-                                 @Nullable String groupName,
+    public void showCustomOption(@NotNull Class<? extends CustomCodeStyleSettings> settingsClass,
+                                 @NonNls @NotNull String fieldName,
+                                 @NlsContexts.Label @NotNull String title,
+                                 @Nls @Nullable String groupName,
                                  Object... options) {
       myCollectedFields.add(fieldName);
     }
 
     @Override
-    public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
-                                 String fieldName,
-                                 String title,
-                                 @Nullable String groupName,
+    public void showCustomOption(@NotNull Class<? extends CustomCodeStyleSettings> settingsClass,
+                                 @NonNls @NotNull String fieldName,
+                                 @NlsContexts.Label @NotNull String title,
+                                 @Nls @Nullable String groupName,
                                  @Nullable OptionAnchor anchor,
-                                 @Nullable String anchorFieldName,
+                                 @NonNls @Nullable String anchorFieldName,
                                  Object... options) {
       myCollectedFields.add(fieldName);
     }

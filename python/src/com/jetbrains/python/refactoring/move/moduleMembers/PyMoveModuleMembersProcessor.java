@@ -38,6 +38,7 @@ import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.move.PyMoveRefactoringUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -115,15 +116,15 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
         }
         if (e instanceof PyClass && destination.findTopLevelClass(name) != null) {
           throw new IncorrectOperationException(
-            PyBundle.message("refactoring.move.error.destination.file.contains.class.$0", name));
+            PyBundle.message("refactoring.move.error.destination.file.contains.class", name));
         }
         if (e instanceof PyFunction && destination.findTopLevelFunction(name) != null) {
           throw new IncorrectOperationException(
-            PyBundle.message("refactoring.move.error.destination.file.contains.function.$0", name));
+            PyBundle.message("refactoring.move.error.destination.file.contains.function", name));
         }
         if (e instanceof PyTargetExpression && destination.findTopLevelAttribute(name) != null) {
           throw new IncorrectOperationException(
-            PyBundle.message("refactoring.move.error.destination.file.contains.global.variable.$0", name));
+            PyBundle.message("refactoring.move.error.destination.file.contains.global.variable", name));
         }
         final Collection<UsageInfo> usageInfos = usagesByElement.get(e);
         final boolean usedFromOutside = ContainerUtil.exists(usageInfos, usageInfo -> {
@@ -157,7 +158,7 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  public static String getRefactoringName() {
+  public static @Nls String getRefactoringName() {
     return PyBundle.message("refactoring.move.module.members");
   }
 }

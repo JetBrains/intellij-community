@@ -4,9 +4,10 @@ package com.intellij.codeInsight.daemon;
 import org.jetbrains.annotations.ApiStatus;
 
 /**
- * @deprecated use XmlErrorBundle
+ * @deprecated use {@link com.intellij.xml.psi.XmlPsiBundle} instead. Some of the message keys needs to be updated.
+ *             See @link {@link XmlErrorBundle#keyMappings}}
  */
 @Deprecated
-@ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
 public class XmlErrorMessages extends XmlErrorBundle {
 }

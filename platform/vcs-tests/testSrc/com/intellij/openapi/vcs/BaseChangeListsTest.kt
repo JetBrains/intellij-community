@@ -11,7 +11,7 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.BaseLineStatusTrackerTestCase.Companion.parseInput
+import com.intellij.openapi.vcs.LineStatusTrackerTestUtil.parseInput
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl

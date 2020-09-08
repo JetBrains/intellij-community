@@ -34,7 +34,7 @@ class MavenParentMissedVersionInspection : DomElementsInspection<MavenDomProject
         holder.createProblem(
           parent,
           HighlightSeverity.ERROR,
-          XmlDomBundle.message("child.tag.0.should.be.defined", "version"),
+          XmlDomBundle.message("dom.inspections.child.tag.0.should.be.defined", "version"),
           AddVersionQuickFix(version)
         )
       )
@@ -65,11 +65,11 @@ class MavenParentMissedVersionInspection : DomElementsInspection<MavenDomProject
 
   private class AddVersionQuickFix(private val myVersion: String) : LocalQuickFix {
     override fun getName(): String {
-      return XmlDomBundle.message("insert.required.tag.fix", "version")
+      return XmlDomBundle.message("dom.quickfix.insert.required.tag.text", "version")
     }
 
     override fun getFamilyName(): String {
-      return XmlDomBundle.message("insert.required.tag.fix.family")
+      return XmlDomBundle.message("dom.quickfix.insert.required.tag.family")
     }
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {

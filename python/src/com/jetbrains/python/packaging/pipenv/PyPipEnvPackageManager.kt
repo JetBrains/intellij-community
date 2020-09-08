@@ -11,10 +11,13 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.packaging.*
-import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.associatedModuleDir
 import com.jetbrains.python.sdk.pipenv.pipFileLockRequirements
 import com.jetbrains.python.sdk.pipenv.runPipEnv
+import com.jetbrains.python.sdk.pythonSdk
 
 /**
  * @author vlan
@@ -76,7 +79,7 @@ class PyPipEnvPackageManager(val sdk: Sdk) : PyPackageManager() {
   }
 
   override fun createVirtualEnv(destinationDir: String, useGlobalSite: Boolean): String {
-    throw ExecutionException("Creating virtual environments based on Pipenv environments is not supported")
+    throw ExecutionException(PySdkBundle.message("python.sdk.pipenv.creating.venv.not.supported"))
   }
 
   override fun getPackages() = packages

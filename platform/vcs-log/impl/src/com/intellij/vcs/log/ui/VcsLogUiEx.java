@@ -4,10 +4,8 @@ package com.intellij.vcs.log.ui;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.navigation.History;
 import com.intellij.util.PairFunction;
-import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
@@ -51,14 +49,16 @@ public interface VcsLogUiEx extends VcsLogUi, Disposable {
   @Nullable
   String getHelpId();
 
-  void jumpToRow(int row, boolean silently);
-
+  /**
+   * @deprecated use {@link VcsLog#jumpToReference(String)} instead
+   */
   @NotNull
-  ListenableFuture<Boolean> jumpToCommit(@NotNull Hash commitHash, @NotNull VirtualFile root);
+  @Deprecated
+  default ListenableFuture<Boolean> jumpToHash(@NotNull String commitHash) {
+    return ((ListenableFuture<Boolean>)getVcsLog().jumpToReference(commitHash));
+  }
 
-  @NotNull
-  ListenableFuture<Boolean> jumpToHash(@NotNull String commitHash);
-
+  @ApiStatus.Internal
   <T> void jumpTo(@NotNull T commitId,
                   @NotNull PairFunction<GraphTableModel, T, Integer> rowGetter,
                   @NotNull SettableFuture<? super Boolean> future,

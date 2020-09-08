@@ -25,6 +25,7 @@ import java.util.Map;
  * @author Gregory.Shrago
  * @author Konstantin Bulenkov
  */
+@SuppressWarnings("HardCodedStringLiteral")
 public class ModelGen {
   private final ModelDesc model = new ModelDesc();
   private final Map<String, String> schemaLocationMap = new HashMap<>();

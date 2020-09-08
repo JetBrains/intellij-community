@@ -2,8 +2,8 @@
 package com.intellij.workspaceModel.storage.bridgeEntities
 
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
 import com.intellij.workspaceModel.storage.VirtualFileUrl
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
 import com.intellij.workspaceModel.storage.impl.EntityDataDelegation
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileUrlLibraryRootProperty
@@ -104,10 +104,15 @@ class ModifiableJavaSourceRootEntity : ModifiableWorkspaceEntityBase<JavaSourceR
   var packagePrefix: String by EntityDataDelegation()
 }
 
+/**
+ * [JavaSourceRootEntity] has the same entity source as [SourceRootEntity].
+ * [JavaSourceRootEntityData] contains assertion for that. Please update an assertion in case you need a different entity source for these
+ *   entities.
+ */
 fun WorkspaceEntityStorageDiffBuilder.addJavaSourceRootEntity(sourceRoot: SourceRootEntity,
                                                               generated: Boolean,
-                                                              packagePrefix: String, source: EntitySource) = addEntity(
-  ModifiableJavaSourceRootEntity::class.java, source) {
+                                                              packagePrefix: String) = addEntity(
+  ModifiableJavaSourceRootEntity::class.java, sourceRoot.entitySource) {
   this.sourceRoot = sourceRoot
   this.generated = generated
   this.packagePrefix = packagePrefix
@@ -121,8 +126,8 @@ class ModifiableJavaResourceRootEntity : ModifiableWorkspaceEntityBase<JavaResou
 
 fun WorkspaceEntityStorageDiffBuilder.addJavaResourceRootEntity(sourceRoot: SourceRootEntity,
                                                                 generated: Boolean,
-                                                                relativeOutputPath: String, source: EntitySource) = addEntity(
-  ModifiableJavaResourceRootEntity::class.java, source) {
+                                                                relativeOutputPath: String) = addEntity(
+  ModifiableJavaResourceRootEntity::class.java, sourceRoot.entitySource) {
   this.sourceRoot = sourceRoot
   this.generated = generated
   this.relativeOutputPath = relativeOutputPath
@@ -133,9 +138,8 @@ class ModifiableCustomSourceRootPropertiesEntity : ModifiableWorkspaceEntityBase
   var propertiesXmlTag: String by EntityDataDelegation()
 }
 
-fun WorkspaceEntityStorageDiffBuilder.addCustomSourceRootPropertiesEntity(sourceRoot: SourceRootEntity,
-                                                                          propertiesXmlTag: String, source: EntitySource) = addEntity(
-  ModifiableCustomSourceRootPropertiesEntity::class.java, source) {
+fun WorkspaceEntityStorageDiffBuilder.addCustomSourceRootPropertiesEntity(sourceRoot: SourceRootEntity, propertiesXmlTag: String) = addEntity(
+  ModifiableCustomSourceRootPropertiesEntity::class.java, sourceRoot.entitySource) {
   this.sourceRoot = sourceRoot
   this.propertiesXmlTag = propertiesXmlTag
 }
@@ -148,6 +152,17 @@ class ModifiableContentRootEntity : ModifiableWorkspaceEntityBase<ContentRootEnt
 }
 
 fun WorkspaceEntityStorageDiffBuilder.addContentRootEntity(url: VirtualFileUrl,
+                                                           excludedUrls: List<VirtualFileUrl>,
+                                                           excludedPatterns: List<String>,
+                                                           module: ModuleEntity): ContentRootEntity {
+  return addContentRootEntityWithCustomEntitySource(url, excludedUrls, excludedPatterns, module, module.entitySource)
+}
+
+/**
+ * Entity source of content root is *almost* the same as the entity source of the corresponding module.
+ * Please update assertConsistency in [ContentRootEntityData] if you're using this method.
+ */
+fun WorkspaceEntityStorageDiffBuilder.addContentRootEntityWithCustomEntitySource(url: VirtualFileUrl,
                                                            excludedUrls: List<VirtualFileUrl>,
                                                            excludedPatterns: List<String>,
                                                            module: ModuleEntity, source: EntitySource) = addEntity(
@@ -180,10 +195,15 @@ class ModifiableLibraryPropertiesEntity : ModifiableWorkspaceEntityBase<LibraryP
   var propertiesXmlTag: String? by EntityDataDelegation()
 }
 
+/**
+ * [LibraryPropertiesEntity] has the same entity source as [LibraryEntity].
+ * [LibraryPropertiesEntityData] contains assertion for that. Please update an assertion in case you need a different entity source for these
+ *   entities.
+ */
 fun WorkspaceEntityStorageDiffBuilder.addLibraryPropertiesEntity(library: LibraryEntity,
                                                                  libraryType: String,
-                                                                 propertiesXmlTag: String?, source: EntitySource) = addEntity(
-  ModifiableLibraryPropertiesEntity::class.java, source) {
+                                                                 propertiesXmlTag: String?) = addEntity(
+  ModifiableLibraryPropertiesEntity::class.java, library.entitySource) {
   this.library = library
   this.libraryType = libraryType
   this.propertiesXmlTag = propertiesXmlTag

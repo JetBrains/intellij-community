@@ -25,7 +25,9 @@ abstract class FilesProcessorWithNotificationImpl(
   abstract val forAllProjectsActionText: String?
   abstract val muteActionText: String
 
+  @NlsContexts.NotificationTitle
   abstract fun notificationTitle(): String
+  @NlsContexts.NotificationContent
   abstract fun notificationMessage(): String
   @NlsContexts.DialogTitle
   protected open val viewFilesDialogTitle: String? = null
@@ -51,7 +53,13 @@ abstract class FilesProcessorWithNotificationImpl(
           }
           add(muteAction())
         }
-        notification = VcsNotifier.getInstance(project).notifyMinorInfo(true, notificationDisplayId, notificationTitle(), notificationMessage(), *notificationActions.toTypedArray())
+        notification = VcsNotifier.getInstance(project).notifyMinorInfo(
+          notificationDisplayId,
+          true,
+          notificationTitle(),
+          notificationMessage(),
+          *notificationActions.toTypedArray()
+        )
       }
     }
   }

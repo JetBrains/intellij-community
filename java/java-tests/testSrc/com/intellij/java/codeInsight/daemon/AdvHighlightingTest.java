@@ -63,11 +63,11 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     EditorColorsScheme scheme = (EditorColorsScheme)manager.getGlobalScheme().clone();
     manager.addColorsScheme(scheme);
     EditorColorsManager.getInstance().setGlobalScheme(scheme);
-    TextAttributesKey xKey = ScopeAttributesUtil.getScopeTextAttributeKey(xScope.getName());
+    TextAttributesKey xKey = ScopeAttributesUtil.getScopeTextAttributeKey(xScope.getScopeId());
     TextAttributes xAttributes = new TextAttributes(Color.cyan, Color.darkGray, Color.blue, EffectType.BOXED, Font.ITALIC);
     scheme.setAttributes(xKey, xAttributes);
 
-    TextAttributesKey utilKey = ScopeAttributesUtil.getScopeTextAttributeKey(utilScope.getName());
+    TextAttributesKey utilKey = ScopeAttributesUtil.getScopeTextAttributeKey(utilScope.getScopeId());
     TextAttributes utilAttributes = new TextAttributes(Color.gray, Color.magenta, Color.orange, EffectType.STRIKEOUT, Font.BOLD);
     scheme.setAttributes(utilKey, utilAttributes);
 
@@ -90,16 +90,16 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     EditorColorsScheme scheme = (EditorColorsScheme)manager.getGlobalScheme().clone();
     manager.addColorsScheme(scheme);
     EditorColorsManager.getInstance().setGlobalScheme(scheme);
-    TextAttributesKey xKey = ScopeAttributesUtil.getScopeTextAttributeKey(xScope.getName());
+    TextAttributesKey xKey = ScopeAttributesUtil.getScopeTextAttributeKey(xScope.getScopeId());
     TextAttributes xAttributes = new TextAttributes(Color.cyan, Color.darkGray, Color.blue, null, Font.ITALIC);
     scheme.setAttributes(xKey, xAttributes);
 
-    TextAttributesKey utilKey = ScopeAttributesUtil.getScopeTextAttributeKey(utilScope.getName());
+    TextAttributesKey utilKey = ScopeAttributesUtil.getScopeTextAttributeKey(utilScope.getScopeId());
     TextAttributes utilAttributes = new TextAttributes(Color.gray, Color.magenta, Color.orange, EffectType.STRIKEOUT, Font.BOLD);
     scheme.setAttributes(utilKey, utilAttributes);
 
     NamedScope projectScope = PackagesScopesProvider.getInstance(myProject).getProjectProductionScope();
-    TextAttributesKey projectKey = ScopeAttributesUtil.getScopeTextAttributeKey(projectScope.getName());
+    TextAttributesKey projectKey = ScopeAttributesUtil.getScopeTextAttributeKey(projectScope.getScopeId());
     TextAttributes projectAttributes = new TextAttributes(null, null, Color.blue, EffectType.BOXED, Font.ITALIC);
     scheme.setAttributes(projectKey, projectAttributes);
 

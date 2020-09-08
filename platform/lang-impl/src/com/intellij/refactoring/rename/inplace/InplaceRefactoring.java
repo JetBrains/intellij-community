@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -92,7 +92,7 @@ public abstract class InplaceRefactoring {
   protected final Editor myEditor;
   protected final Project myProject;
   protected RangeMarker myRenameOffset;
-  protected String myAdvertisementText;
+  protected @NlsContexts.PopupAdvertisement String myAdvertisementText;
   private ArrayList<RangeHighlighter> myHighlighters;
   protected String myInitialName;
   protected String myOldName;
@@ -161,7 +161,7 @@ public abstract class InplaceRefactoring {
     }
   }
 
-  public void setAdvertisementText(String advertisementText) {
+  public void setAdvertisementText(@NlsContexts.PopupAdvertisement String advertisementText) {
     myAdvertisementText = advertisementText;
   }
 
@@ -469,7 +469,7 @@ public abstract class InplaceRefactoring {
     stopIntroduce(editor, myProject, getCommandName());
   }
 
-  public static void stopIntroduce(Editor editor, Project project, final String commandName) {
+  public static void stopIntroduce(Editor editor, Project project, final @NlsContexts.Command String commandName) {
     final TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
     if (templateState != null) {
       final Runnable runnable = () -> templateState.gotoEnd(true);
@@ -487,7 +487,7 @@ public abstract class InplaceRefactoring {
   private static void navigateToStarted(final Document oldDocument,
                                         final Project project,
                                         @Messages.YesNoResult final int exitCode,
-                                        String commandName) {
+                                        @NlsContexts.Command String commandName) {
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(oldDocument);
     if (file != null) {
       final VirtualFile virtualFile = file.getVirtualFile();
@@ -567,7 +567,7 @@ public abstract class InplaceRefactoring {
   @Nullable
   protected PsiNamedElement getVariable() {
     // todo we can use more specific class, shouldn't we?
-    //Class clazz = myElementToRename != null? myElementToRename.getClass() : PsiNameIdentifierOwner.class; 
+    //Class clazz = myElementToRename != null? myElementToRename.getClass() : PsiNameIdentifierOwner.class;
     if (myElementToRename != null && myElementToRename.isValid()) {
       if (Comparing.strEqual(myOldName, myElementToRename.getName())) return myElementToRename;
       if (myRenameOffset != null) return PsiTreeUtil.findElementOfClassAtRange(
@@ -621,7 +621,7 @@ public abstract class InplaceRefactoring {
     }
   }
 
-  protected void showDialogAdvertisement(final String actionId) {
+  protected void showDialogAdvertisement(final @NonNls @Nullable String actionId) {
     final Shortcut shortcut = KeymapUtil.getPrimaryShortcut(actionId);
     if (shortcut != null) {
       setAdvertisementText(RefactoringBundle.message("inplace.refactoring.advertisement.text", KeymapUtil.getShortcutText(shortcut)));
@@ -666,7 +666,7 @@ public abstract class InplaceRefactoring {
    *
    * @return command name
    */
-  protected abstract String getCommandName();
+  protected abstract @NlsContexts.Command String getCommandName();
 
   public void finish(boolean success) {
     if (!ourRenamersStack.isEmpty() && ourRenamersStack.peek() == this) {

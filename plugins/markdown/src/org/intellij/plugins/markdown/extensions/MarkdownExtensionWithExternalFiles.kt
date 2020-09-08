@@ -28,6 +28,9 @@ interface MarkdownExtensionWithExternalFiles : MarkdownConfigurableExtension {
   val isAvailable: Boolean
     get() = directory.exists()
 
+  override val isEnabled: Boolean
+    get() = super.isEnabled && isAvailable
+
   /**
    * Directory name inside [extensionsDownloadDirectory] for downloaded file.
    */

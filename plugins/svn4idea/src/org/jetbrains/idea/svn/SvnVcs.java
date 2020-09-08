@@ -12,6 +12,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
@@ -87,8 +88,9 @@ public final class SvnVcs extends AbstractVcs {
   private static final Logger REFRESH_LOG = Logger.getInstance("#svn_refresh");
   public static boolean ourListenToWcDb = !Boolean.getBoolean(DO_NOT_LISTEN_TO_WC_DB);
 
-  @NonNls public static final String VCS_NAME = "svn";
-  public static final String VCS_DISPLAY_NAME = "Subversion";
+  public static final @NonNls @NotNull String VCS_NAME = "svn";
+  public static final @NlsSafe @NotNull String VCS_DISPLAY_NAME = "Subversion";
+  private static final @NlsSafe @NotNull String VCS_SHORT_DISPLAY_NAME = "SVN";
 
   private static final VcsKey ourKey = createKey(VCS_NAME);
   public static final Topic<Runnable> WC_CONVERTED = new Topic<>("WC_CONVERTED", Runnable.class);
@@ -262,22 +264,7 @@ public final class SvnVcs extends AbstractVcs {
 
     RootsToWorkingCopies.getInstance(myProject);
     ProjectLevelVcsManager.getInstance(myProject).runAfterInitialization(() -> setupChangeLists());
-    StartupManager.getInstance(myProject).runAfterOpened(() -> {
-      postStartup();
-
-      // for IDEA, it takes 2 minutes - and anyway this can be done in background, no sense...
-      // once it could be mistaken about copies for 2 minutes on start...
-
-      /*if (! myMapping.getAllWcInfos().isEmpty()) {
-        invokeRefreshSvnRoots();
-        return;
-      }
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        public void run() {
-          myCopiesRefreshManager.getCopiesRefresh().ensureInit();
-        }
-      }, SvnBundle.message("refreshing.working.copies.roots.progress.text"), true, myProject);*/
-    });
+    StartupManager.getInstance(myProject).runAfterOpened(() -> postStartup());
 
     SvnLoadedBranchesStorage.getInstance(myProject).activate();
   }
@@ -366,7 +353,7 @@ public final class SvnVcs extends AbstractVcs {
   @NotNull
   @Override
   public String getShortName() {
-    return "SVN";
+    return VCS_SHORT_DISPLAY_NAME;
   }
 
   @Override
@@ -402,7 +389,8 @@ public final class SvnVcs extends AbstractVcs {
   }
 
   @Override
-  public VcsHistoryProvider getVcsHistoryProvider() {
+  @NotNull
+  public SvnHistoryProvider getVcsHistoryProvider() {
     // no heavy state, but it would be useful to have place to keep state in -> do not reuse instance
     return new SvnHistoryProvider(this);
   }

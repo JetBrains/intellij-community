@@ -18,6 +18,7 @@ import org.jetbrains.jps.model.JpsProject;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 
@@ -57,7 +58,9 @@ public class GradleResourceFileProcessor {
 
   private static void copyWithFiltering(File file, Ref<File> outputFileRef, List<ResourceRootFilter> filters, CompileContext context) throws IOException {
     try (InputStream inputStream = transform(file, filters, outputFileRef, context)) {
-      Files.copy(inputStream, outputFileRef.get().toPath(), StandardCopyOption.REPLACE_EXISTING);
+      Path target = outputFileRef.get().toPath();
+      Files.createDirectories(target.getParent());
+      Files.copy(inputStream, target, StandardCopyOption.REPLACE_EXISTING);
     }
   }
 

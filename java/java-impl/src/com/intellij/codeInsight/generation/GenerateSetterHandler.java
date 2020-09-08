@@ -67,11 +67,11 @@ public class GenerateSetterHandler extends GenerateGetterSetterHandlerBase {
 
   @Override
   protected String getNothingFoundMessage() {
-    return "No fields have been found to generate setters for";
+    return JavaBundle.message("generate.setters.no.fields");
   }
 
   @Override
   protected String getNothingAcceptedMessage() {
-    return "No fields without setter were found";
+    return JavaBundle.message("generate.setters.no.fields.without.setters");
   }
 }

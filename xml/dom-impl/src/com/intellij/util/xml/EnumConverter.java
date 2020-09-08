@@ -43,7 +43,7 @@ public final class EnumConverter<T extends Enum> extends ResolvingConverter<T>{
 
   @Override
   public String getErrorMessage(@Nullable final String s, final ConvertContext context) {
-    return XmlDomBundle.message("error.unknown.enum.value.message", s);
+    return XmlDomBundle.message("dom.converter.unknown.enum.value", s);
   }
 
   @Override

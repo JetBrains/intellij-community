@@ -16,6 +16,7 @@
 package com.intellij.refactoring.util.classMembers;
 
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberDependencyGraph;
@@ -76,17 +77,8 @@ public class InterfaceMemberDependencyGraph<T extends PsiMember, M extends Membe
   public @NlsContexts.Tooltip String getElementTooltip(PsiMember member) {
     final Set<? extends PsiMember> dependencies = getDependenciesOf(member);
     if(dependencies == null || dependencies.size() == 0) return null;
-    StringBuilder buffer = new StringBuilder();
-    buffer.append(RefactoringBundle.message("interface.member.dependency.required.by.interfaces", dependencies.size()));
-    buffer.append(" ");
-    for (Iterator<? extends PsiMember> iterator = dependencies.iterator(); iterator.hasNext();) {
-      PsiClass aClass = (PsiClass) iterator.next();
-      buffer.append(aClass.getName());
-      if(iterator.hasNext()) {
-        buffer.append(", ");
-      }
-    }
-    return buffer.toString();
+    String interfaces = StringUtil.join(dependencies, PsiMember::getName, ", ");
+    return RefactoringBundle.message("interface.member.dependency.required.by.interfaces.list", dependencies.size(), interfaces);
   }
 
   protected void addInterfaceDeps(PsiClass intf) {

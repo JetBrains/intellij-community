@@ -45,7 +45,12 @@ public class ScalaModelBuilderImplTest extends AbstractModelBuilderTest {
     DomainObjectSet<? extends IdeaModule> ideaModules = allModels.getModel(IdeaProject.class).getModules();
 
     List<ScalaModel> scalaModels = ContainerUtil.mapNotNull(
-      ideaModules, (Function<IdeaModule, ScalaModel>)module -> allModels.getModel(module, ScalaModel.class));
+      ideaModules, new Function<IdeaModule, ScalaModel>() {
+        @Override
+        public ScalaModel fun(IdeaModule module) {
+          return allModels.getModel(module, ScalaModel.class);
+        }
+      });
 
     assertEquals(1, scalaModels.size());
     ScalaModel scalaModel = scalaModels.get(0);
@@ -57,6 +62,6 @@ public class ScalaModelBuilderImplTest extends AbstractModelBuilderTest {
 
   @Override
   protected Set<Class<?>> getModels() {
-    return ContainerUtil.set(ScalaModel.class);
+    return ContainerUtil.<Class<?>>set(ScalaModel.class);
   }
 }

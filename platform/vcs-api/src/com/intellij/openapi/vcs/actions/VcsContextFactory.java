@@ -4,9 +4,11 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -72,7 +74,7 @@ public interface VcsContextFactory {
    * @return the FilePath instance.
    */
   @NotNull
-  FilePath createFilePathOnNonLocal(@NotNull String path, boolean isDirectory);
+  FilePath createFilePathOnNonLocal(@NotNull @NonNls String path, boolean isDirectory);
 
   /**
    * Creates a FilePath corresponding to a file with the specified name in the specified directory.
@@ -84,15 +86,15 @@ public interface VcsContextFactory {
    * @return the FilePath instance.
    */
   @NotNull
-  FilePath createFilePathOn(@NotNull VirtualFile parent, @NotNull String name);
+  FilePath createFilePathOn(@NotNull VirtualFile parent, @NotNull @NonNls String name);
 
   @NotNull
-  FilePath createFilePath(@NotNull VirtualFile parent, @NotNull String fileName, boolean isDirectory);
+  FilePath createFilePath(@NotNull VirtualFile parent, @NotNull @NonNls String fileName, boolean isDirectory);
 
   @NotNull
-  LocalChangeList createLocalChangeList(@NotNull Project project, @NotNull final String name);
+  LocalChangeList createLocalChangeList(@NotNull Project project, @NotNull @NlsSafe final String name);
 
-  @NotNull FilePath createFilePath(@NotNull String path, boolean isDirectory);
+  @NotNull FilePath createFilePath(@NotNull @NonNls String path, boolean isDirectory);
 
   final class SERVICE {
     private SERVICE() {

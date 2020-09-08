@@ -19,6 +19,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -55,7 +56,7 @@ import java.util.List;
 
 public class NewErrorTreeViewPanel extends JPanel implements DataProvider, OccurenceNavigator, MutableErrorTreeView, CopyProvider, Disposable {
   protected static final Logger LOG = Logger.getInstance(NewErrorTreeViewPanel.class);
-  private volatile String myProgressText = "";
+  private volatile @NlsContexts.ProgressText String myProgressText = "";
   private volatile float myFraction;
   private final ErrorViewStructure myErrorViewStructure;
   private final StructureTreeModel<ErrorViewStructure> myStructureModel;
@@ -471,13 +472,13 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     }
   }
 
-  public void setProgress(final String s, float fraction) {
+  public void setProgress(final @NlsContexts.ProgressText String s, float fraction) {
     myProgressText = s;
     myFraction = fraction;
     updateProgress();
   }
 
-  public void setProgressText(String s) {
+  public void setProgressText(@NlsContexts.ProgressText String s) {
     myProgressText = s;
     updateProgress();
   }

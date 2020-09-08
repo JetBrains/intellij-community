@@ -16,10 +16,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.SystemDependent;
-import org.jetbrains.annotations.SystemIndependent;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.nio.file.InvalidPathException;
@@ -88,7 +85,7 @@ final class WatchRootsManager {
     }
   }
 
-  void updateSymlink(int fileId, String linkPath, @Nullable String linkTarget) {
+  void updateSymlink(int fileId, @NotNull String linkPath, @Nullable String linkTarget) {
     synchronized (myLock) {
       SymlinkData data = mySymlinksById.get(fileId);
       if (data != null) {
@@ -221,7 +218,9 @@ final class WatchRootsManager {
     if (index >= 0) root = root.substring(0, index);
     try {
       Path rootPath = Paths.get(FileUtil.toSystemDependentName(root));
-      if (!rootPath.isAbsolute()) throw new InvalidPathException(root, "Watch roots should be absolute");
+      if (!rootPath.isAbsolute()) {
+        throw new InvalidPathException(root, "Watch roots should be absolute");
+      }
       return FileUtil.toSystemIndependentName(rootPath.toString());
     }
     catch (InvalidPathException e) {
@@ -410,6 +409,7 @@ final class WatchRootsManager {
     }
 
     @Override
+    @NonNls
     public String toString() {
       return "SymlinkData{" + id + ", " + path + " -> " + target + '}';
     }

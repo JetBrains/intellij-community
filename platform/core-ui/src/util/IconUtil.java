@@ -18,10 +18,7 @@ import com.intellij.ui.icons.CompositeIcon;
 import com.intellij.ui.icons.CopyableIcon;
 import com.intellij.ui.scale.*;
 import com.intellij.util.ui.*;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -312,7 +309,7 @@ public class IconUtil {
   }
 
   @NotNull
-  private static String getToolbarDecoratorIconsFolder() {
+  private static @NonNls String getToolbarDecoratorIconsFolder() {
     return "/toolbarDecorator/" + (SystemInfo.isMac ? "mac/" : "");
   }
 

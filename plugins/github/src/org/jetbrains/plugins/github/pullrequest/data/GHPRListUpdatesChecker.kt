@@ -2,19 +2,19 @@
 package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
-import org.jetbrains.annotations.CalledInAwt
+import com.intellij.util.concurrency.annotations.RequiresEdt
 
 interface GHPRListUpdatesChecker : Disposable {
 
-  @get:CalledInAwt
+  @get:RequiresEdt
   val outdated: Boolean
 
-  @CalledInAwt
+  @RequiresEdt
   fun start()
 
-  @CalledInAwt
+  @RequiresEdt
   fun stop()
 
-  @CalledInAwt
+  @RequiresEdt
   fun addOutdatedStateChangeListener(disposable: Disposable, listener: () -> Unit)
 }

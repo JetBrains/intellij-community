@@ -163,7 +163,7 @@ public class AnnotateDiffViewerAction {
           VcsException exception = loader.getException();
           if (exception != null) {
             Notification notification = VcsNotifier.IMPORTANT_ERROR_NOTIFICATION
-              .createNotification("Can't Load Annotations", exception.getMessage(), NotificationType.ERROR, null);
+              .createNotification(VcsBundle.message("notification.title.cant.load.annotations"), exception.getMessage(), NotificationType.ERROR, null, "vcs.cannot.load.annotations");
             showNotification(viewer, notification);
             LOG.warn(exception);
             return;

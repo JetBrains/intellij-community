@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.blockingCallsDetection;
 
+import com.intellij.analysis.JvmAnalysisBundle;
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.icons.AllIcons;
@@ -164,7 +165,7 @@ class BlockingAnnotationsPanel {
 
   private void chooseAnnotation(String title) {
     final TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject)
-      .createNoInnerClassesScopeChooser("Choose " + title, GlobalSearchScope.allScope(myProject), new ClassFilter() {
+      .createNoInnerClassesScopeChooser(JvmAnalysisBundle.message("dialog.title.choose.annotation", title), GlobalSearchScope.allScope(myProject), new ClassFilter() {
         @Override
         public boolean isAccepted(PsiClass aClass) {
           return PsiAnnotation.TargetType.METHOD.equals(AnnotationTargetUtil.findAnnotationTarget(aClass, PsiAnnotation.TargetType.METHOD));

@@ -35,7 +35,6 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
 
 import java.util.List;
 
@@ -75,8 +74,10 @@ public class TestDiffRequestProcessor extends DiffRequestProcessor {
       DiffContent content1 = createContentWithTitle(getProject(), text1, file1, file2);
       DiffContent content2 = createContentWithTitle(getProject(), text2, file2, file1);
 
-      String title1 = getContentTitle("diff.content.expected.title", file1);
-      String title2 = getContentTitle("diff.content.actual.title", file2);
+      String title1 = file1 != null ? ExecutionBundle.message("diff.content.expected.title.with.file.url", file1.getPresentableUrl())
+                                    : ExecutionBundle.message("diff.content.expected.title");
+      String title2 = file2 != null ? ExecutionBundle.message("diff.content.actual.title.with.file.url", file2.getPresentableUrl())
+                                    : ExecutionBundle.message("diff.content.actual.title", file1.getPresentableUrl());
 
       return new SimpleDiffRequest(windowTitle, content1, content2, title1, title2);
     }
@@ -103,15 +104,6 @@ public class TestDiffRequestProcessor extends DiffRequestProcessor {
     else {
       return DiffContentFactory.getInstance().create(project, content, highlightFile);
     }
-  }
-
-  @NotNull
-  private static String getContentTitle(@PropertyKey(resourceBundle = ExecutionBundle.PATH_TO_BUNDLE) @NotNull String titleKey, @Nullable VirtualFile file) {
-    String title = ExecutionBundle.message(titleKey);
-    if (file != null) {
-      title += " (" + file.getPresentableUrl() + ")";
-    }
-    return title;
   }
 
   //

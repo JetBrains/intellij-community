@@ -378,10 +378,11 @@ public abstract class UsefulTestCase extends TestCase {
    */
   @NotNull
   public Disposable getTestRootDisposable() {
-    if (myTestRootDisposable == null) {
-      myTestRootDisposable = new TestDisposable();
+    Disposable disposable = myTestRootDisposable;
+    if (disposable == null) {
+      myTestRootDisposable = disposable = new TestDisposable();
     }
-    return myTestRootDisposable;
+    return disposable;
   }
 
   /**
@@ -1092,7 +1093,11 @@ public abstract class UsefulTestCase extends TestCase {
 
       if (shouldOccur) {
         wasThrown = true;
-        assertInstanceOf(cause, exceptionCase.getExpectedExceptionClass());
+        Class<T> expected = exceptionCase.getExpectedExceptionClass();
+        if (!expected.isInstance(cause)) {
+          throw new AssertionError("Expected instance of: " + expected + " actual: " + cause.getClass(), cause);
+        }
+
         if (expectedErrorMsgPart != null) {
           assertTrue(cause.getMessage(), cause.getMessage().contains(expectedErrorMsgPart));
         }

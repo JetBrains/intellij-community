@@ -5,12 +5,13 @@ import com.intellij.build.events.DerivedResult;
 import com.intellij.build.events.EventResult;
 import com.intellij.build.events.FailureResult;
 import com.intellij.build.events.impl.FailureResultImpl;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 
 public class MavenTaskFailedResultImpl implements DerivedResult {
-  private final String myError;
+  private @NlsSafe final String myError;
 
-  public MavenTaskFailedResultImpl(String error) {
+  public MavenTaskFailedResultImpl(@NlsSafe String error) {
     myError = error;
   }
 

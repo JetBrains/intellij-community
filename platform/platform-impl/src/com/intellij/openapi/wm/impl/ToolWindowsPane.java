@@ -27,6 +27,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.ImageUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +51,7 @@ import static com.intellij.util.ui.UIUtil.useSafely;
  */
 public final class ToolWindowsPane extends JBLayeredPane implements UISettingsListener {
   private static final Logger LOG = Logger.getInstance(ToolWindowsPane.class);
-  public static final String TEMPORARY_ADDED = "TEMPORARY_ADDED";
+  @NonNls public static final String TEMPORARY_ADDED = "TEMPORARY_ADDED";
 
   private final JFrame frame;
 

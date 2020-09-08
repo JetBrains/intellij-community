@@ -7,6 +7,8 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixActionRegistrarImpl;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.core.JavaPsiBundle;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -109,6 +111,16 @@ public final class GenericsHighlightUtil {
               QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createIncreaseLanguageLevelFix(LanguageLevel.JDK_1_9));
             }
             return highlightInfo;
+          }
+        }
+
+        PsiElement parent = referenceParameterList.getParent().getParent();
+        if (parent instanceof PsiAnonymousClass) {
+          PsiAnonymousClass anonymousClass = (PsiAnonymousClass)parent;
+          if (ContainerUtil.exists(anonymousClass.getMethods(), method -> !method.hasModifierProperty(PsiModifier.PRIVATE) && method.findSuperMethods().length == 0)) {
+            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(referenceParameterList)
+              .descriptionAndTooltip(JavaPsiBundle.message("diamond.error.anonymous.inner.classes.non.private"))
+              .create();
           }
         }
       }
@@ -482,13 +494,19 @@ public final class GenericsHighlightUtil {
             continue;
           }
 
-          final String message = unrelatedDefaults != null ? " inherits unrelated defaults for " : " inherits abstract and default for ";
-          final HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(classIdentifier).descriptionAndTooltip(
-            HighlightUtil.formatClass(aClass) +
-            message +
-            JavaHighlightUtil.formatMethod(defaultMethod) + " from types " +
-            (unrelatedDefaults != null ? unrelatedDefaults
-                                       : HighlightUtil.formatClass(defaultMethodContainingClass) + " and " + HighlightUtil.formatClass(unrelatedMethodContainingClass)))
+          final String message;
+          if (unrelatedDefaults == null) {
+            message = JavaErrorBundle.message("text.class.inherits.abstract.and.default", HighlightUtil.formatClass(aClass),
+                                              JavaHighlightUtil.formatMethod(defaultMethod),
+                                              HighlightUtil.formatClass(defaultMethodContainingClass),
+                                              HighlightUtil.formatClass(unrelatedMethodContainingClass));
+          }
+          else {
+            message = JavaErrorBundle.message("text.class.inherits.unrelated.defaults", HighlightUtil.formatClass(aClass),
+                                              JavaHighlightUtil.formatMethod(defaultMethod), unrelatedDefaults);
+          }
+          final HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(classIdentifier)
+            .descriptionAndTooltip(message)
             .create();
           QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createImplementMethodsFix(aClass));
           return info;
@@ -516,7 +534,8 @@ public final class GenericsHighlightUtil {
       }
 
       if (classes.size() > 1) {
-        return HighlightUtil.formatClass(classes.get(0)) + " and " + HighlightUtil.formatClass(classes.get(1));
+        return IdeBundle.message("x.and.y", HighlightUtil.formatClass(classes.get(0)),
+                                 HighlightUtil.formatClass(classes.get(1)));
       }
     }
 
@@ -1312,8 +1331,8 @@ public final class GenericsHighlightUtil {
         resolved instanceof PsiTypeParameterListOwner &&
         ((PsiTypeParameterListOwner)resolved).hasTypeParameters() &&
         !((PsiTypeParameterListOwner)resolved).hasModifierProperty(PsiModifier.STATIC)) {
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parent).descriptionAndTooltip(
-        "Improper formed type; some type parameters are missing").create();
+      final String message = JavaErrorBundle.message("text.improper.formed.type");
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parent).descriptionAndTooltip(message).create();
     }
     return null;
   }
@@ -1344,7 +1363,8 @@ public final class GenericsHighlightUtil {
             }
           }
           if (hiddenClass != null) {
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(hiddenClass.getName() + " is not accessible in current context").range(ref).create();
+            final String message = JavaErrorBundle.message("text.class.is.not.accessible", hiddenClass.getName());
+            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).description(message).range(ref).create();
           }
         }
       }
@@ -1388,6 +1408,10 @@ public final class GenericsHighlightUtil {
     PsiClass[] classes = shortNamesCache.getClassesByName(shortName, GlobalSearchScope.allScope(manager.getProject()));
     PsiElementFactory factory = facade.getElementFactory();
     for (PsiClass aClass : classes) {
+      if (aClass == null) {
+        LOG.error("null class returned for " + shortName);
+        continue;
+      }
       if (checkReferenceTypeArgumentList(aClass, parameterList, PsiSubstitutor.EMPTY, false, version) == null) {
         PsiType[] actualTypeParameters = parameterList.getTypeArguments();
         PsiTypeParameter[] classTypeParameters = aClass.getTypeParameters();
@@ -1512,7 +1536,7 @@ public final class GenericsHighlightUtil {
 
       final String qualifiedName = aClass.getQualifiedName();
       if (qualifiedName != null && factory.findClass(qualifiedName, resolveScope) == null) {
-        return "Cannot access " + HighlightUtil.formatClass(aClass);
+        return JavaErrorBundle.message("text.class.cannot.access", HighlightUtil.formatClass(aClass));
       }
 
       if (!checkParameters){

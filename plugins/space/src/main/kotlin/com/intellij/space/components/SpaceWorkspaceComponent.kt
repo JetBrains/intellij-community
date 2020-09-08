@@ -3,11 +3,14 @@ package com.intellij.space.components
 import circlet.arenas.initCircletArenas
 import circlet.client.api.impl.ApiClassesDeserializer
 import circlet.client.api.impl.tombstones.registerArenaTombstones
+import circlet.code.api.CodeReviewArena
+import circlet.code.api.CodeReviewParticipantsArena
 import circlet.common.oauth.IdeaOAuthConfig
 import circlet.permission.FeatureFlagsVmPersistenceKey
 import circlet.platform.api.oauth.OAuthTokenResponse
 import circlet.platform.api.oauth.toTokenInfo
 import circlet.platform.api.serialization.ExtendableSerializationRegistry
+import circlet.platform.client.ClientArenaRegistry
 import circlet.platform.workspaces.CodeFlowConfig
 import circlet.platform.workspaces.WorkspaceConfiguration
 import circlet.platform.workspaces.WorkspaceManagerHost
@@ -20,6 +23,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.space.auth.SpaceAuthNotifier
 import com.intellij.space.auth.startRedirectHandling
+import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.runtime.ApplicationDispatcher
 import com.intellij.space.settings.SpaceLoginState
 import com.intellij.space.settings.SpaceServerSettings
@@ -78,12 +82,14 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
 
     // sign in automatically on application startup.
     launch(wsLifetime, Ui) {
-      if (!autoSignIn(wsLifetime)) {
+      if (autoSignIn(wsLifetime) == AutoSignInResult.NOT_AUTHORIZED) {
         SpaceAuthNotifier.notifyDisconnected()
       }
     }
 
     workspace.forEach(lifetime) { ws ->
+      System.setProperty("space_server_for_script_definition", ws?.client?.server?.let { "$it/system/maven" } ?: "not_set")
+
       loginState.value = if (ws == null) {
         SpaceLoginState.Disconnected(settings.serverSettings.server)
       }
@@ -102,6 +108,11 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
     registerArenaTombstones(ExtendableSerializationRegistry.global)
 
     ApiClassesDeserializer(ExtendableSerializationRegistry.global).registerDeserializers()
+
+    // code review
+    ClientArenaRegistry.register(CodeReviewArena)
+    ClientArenaRegistry.register(CodeReviewParticipantsArena)
+    circlet.code.api.impl.ApiClassesDeserializer(ExtendableSerializationRegistry.global).registerDeserializers()
   }
 
 
@@ -119,7 +130,7 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
     val portsMapping: Map<Int, URL> = IdeaOAuthConfig.redirectURIs.map { rawUri -> URL(rawUri).let { url -> url.port to url } }.toMap()
     val ports = portsMapping.keys
     val (port, redirectUrl) = startRedirectHandling(lifetime, ports)
-                              ?: return OAuthTokenResponse.Error(server, "", "The ports required for authorization are busy")
+                              ?: return OAuthTokenResponse.Error(server, "", SpaceBundle.message("auth.error.ports.busy.label"))
 
     val authUrl = portsMapping.getValue(port)
     val codeFlow = CodeFlowConfig(newManager.wsConfig, authUrl.toExternalForm())
@@ -128,7 +139,7 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
       BrowserLauncher.instance.browse(uri)
     }
     catch (th: Throwable) {
-      return OAuthTokenResponse.Error(server, "", "Can't open '$server' in system browser.")
+      return OAuthTokenResponse.Error(server, "", SpaceBundle.message("auth.error.cant.open.browser.label", server))
     }
 
     val response = withContext(lifetime, AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()) {
@@ -162,7 +173,10 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
         }
         catch (th: Throwable) {
           log.error(th)
-          loginState.value = SpaceLoginState.Disconnected(serverName, th.message ?: "error of type ${th.javaClass.simpleName}")
+          loginState.value = SpaceLoginState.Disconnected(
+            serverName,
+            th.message ?: SpaceBundle.message("auth.error.unknown.label", th.javaClass.simpleName)
+          )
         }
         val frame = SwingUtilities.getAncestorOfClass(JFrame::class.java, component)
         AppIcon.getInstance().requestFocus(frame as IdeFrame?)
@@ -178,23 +192,26 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
     settings.serverSettings = settings.serverSettings.copy(enabled = false)
   }
 
-  private suspend fun autoSignIn(wsLifetime: Lifetime): Boolean {
+  private suspend fun autoSignIn(wsLifetime: Lifetime): AutoSignInResult {
     val serverSettings = SpaceSettings.getInstance().serverSettings
     val server = serverSettings.server
-    if (serverSettings.enabled && server.isNotBlank()) {
-      val newManager = createWorkspaceManager(wsLifetime, server)
-      if (newManager.signInNonInteractive()) {
-        manager.value = newManager
-        return true
-      }
+    if (!serverSettings.enabled || server.isBlank()) {
+      return AutoSignInResult.NOT_AUTHORIZED_BEFORE
     }
-    return false
+    val newManager = createWorkspaceManager(wsLifetime, server)
+    return if (newManager.signInNonInteractive()) {
+      manager.value = newManager
+      AutoSignInResult.AUTHORIZED
+    }
+    else {
+      AutoSignInResult.NOT_AUTHORIZED
+    }
   }
 
   private fun createWorkspaceManager(lifetime: Lifetime, server: String): WorkspaceManager {
     val persistenceConfig = PersistenceConfiguration(
       FeatureFlagsVmPersistenceKey,
-      PersistenceKey.Arena
+      PersistenceKey.AllArenas
     )
     val workspaceConfig = WorkspaceConfiguration(server, IdeaOAuthConfig.clientId, IdeaOAuthConfig.clientSecret)
     return WorkspaceManager(lifetime, null, this, InMemoryPersistence(), IdeaPasswordSafePersistence, persistenceConfig, workspaceConfig)
@@ -203,6 +220,12 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
   private fun getInitialState(): SpaceLoginState {
     val workspace = workspace.value ?: return SpaceLoginState.Disconnected("")
     return SpaceLoginState.Connected(workspace.client.server, workspace)
+  }
+
+  private enum class AutoSignInResult {
+    NOT_AUTHORIZED_BEFORE,
+    NOT_AUTHORIZED,
+    AUTHORIZED
   }
 
   companion object {

@@ -9,16 +9,19 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.PotemkinProgress
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.messages.MessageBusConnection
+import com.intellij.vcsUtil.VcsUtil
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepositoryManager
 import git4idea.repo.GitUntrackedFilesHolder
-import org.jetbrains.annotations.CalledWithWriteLock
 
 class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
   private val cache get() = project.serviceIfCreated<GitIndexVirtualFileCache>()
@@ -68,7 +71,7 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
     }
   }
 
-  @CalledWithWriteLock
+  @RequiresWriteLock
   internal fun changeContent(file: GitIndexVirtualFile, requestor: Any?, modificationStamp: Long, writeCommand: () -> Unit) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
 
@@ -88,6 +91,24 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
 
     @JvmStatic
     fun getInstance(project: Project) = project.service<GitIndexFileSystemRefresher>()
+
+    @JvmStatic
+    fun refreshFilePaths(project: Project, paths: Collection<FilePath>) {
+      val pathsSet = paths.toSet()
+      project.serviceIfCreated<GitIndexFileSystemRefresher>()?.refresh { pathsSet.contains(it.filePath) }
+    }
+
+    @JvmStatic
+    fun refreshFilePaths(project: Project, paths: Map<VirtualFile, Collection<FilePath>>) {
+      project.serviceIfCreated<GitIndexFileSystemRefresher>()?.refresh {
+        paths[it.root]?.contains(it.filePath) == true
+      }
+    }
+
+    @JvmStatic
+    fun refreshVirtualFiles(project: Project, paths: Collection<VirtualFile>) {
+      refreshFilePaths(project, paths.map(VcsUtil::getFilePath))
+    }
   }
 
   private class RefreshSession(private val filesToRefresh: List<GitIndexVirtualFile>, private val postRunnable: Runnable?) {

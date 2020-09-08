@@ -66,7 +66,8 @@ public class GitStashChangesSaver extends GitChangesSaver {
         }
         else {
           if (!result.success()) {
-            throw new VcsException("Couldn't stash " + repository.getRoot() + ": " + result.getErrorOutputAsJoinedString());
+            throw new VcsException(GitBundle.message("exception.message.could.not.stash.root.error",
+                                                     repository.getRoot(), result.getErrorOutputAsJoinedString()));
           }
           else {
             LOG.warn("There was nothing to stash in " + repository.getRoot());
@@ -135,7 +136,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
     @Override
     protected void notifyUnresolvedRemain() {
       VcsNotifier.getInstance(myProject).notifyImportantWarning(
-        GitBundle.getString("stash.unstash.unresolved.conflict.warning.notification.title"),
+        "git.unstash.with.conflicts", GitBundle.getString("stash.unstash.unresolved.conflict.warning.notification.title"),
         GitBundle.getString("stash.unstash.unresolved.conflict.warning.notification.message"),
         new NotificationListener() {
           @Override

@@ -24,6 +24,7 @@ package org.jetbrains.idea.devkit.dom.generator;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.apache.xerces.xs.XSObject;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,17 +35,17 @@ import java.util.StringTokenizer;
  * @author Konstantin Bulenkov
  */
 public class Util {
-  public static final String ANONYMOUS_ELEM_TYPE_SUFFIX = "ElemType";
-  public static final String ANONYMOUS_ATTR_TYPE_SUFFIX = "AttrType";
-  public static final String TYPE_SUFFIX = "Type";
+  public static final @NonNls String ANONYMOUS_ELEM_TYPE_SUFFIX = "ElemType";
+  public static final @NonNls String ANONYMOUS_ATTR_TYPE_SUFFIX = "AttrType";
+  public static final @NonNls String TYPE_SUFFIX = "Type";
   
   //
   // Constants
   //
-  public static final String XSD_NS = "http://www.w3.org/2001/XMLSchema";
+  public static final @NonNls String XSD_NS = "http://www.w3.org/2001/XMLSchema";
 
   // reserved names map
-  public static final String[] RESERVED_NAMES_TABLE = {
+  public static final @NonNls  String[] RESERVED_NAMES_TABLE = {
           "abstract", "default", "if", "private", "this",
           "boolean", "do", "implements", "protected", "throw",
           "break", "double", "import", "public", "throws",
@@ -69,18 +70,19 @@ public class Util {
   }
 
 
-  static void log(String str) {
+  static void log(@NonNls String str) {
     System.out.println(str);
   }
 
-  static void logwarn(String str) {
-    System.out.println("[warn] " + str);
+  static void logwarn(@NonNls String str) {
+    System.out.println("[warn] " + str); //NON-NLS
   }
 
-  static void logerr(String str) {
-    System.out.println("[error] " + str);
+  static void logerr(@NonNls String str) {
+    System.out.println("[error] " + str); //NON-NLS
   }
 
+  @SuppressWarnings("HardCodedStringLiteral")
   public static String pluralize(String suggestion) {
     // return suggestion+"List";
     final String VOWELS = "aeiouy";
@@ -156,6 +158,7 @@ public class Util {
   }
 
 
+  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean addToNameMap(Map<String, FieldDesc> fdMap, FieldDesc fd1, boolean merge) {
     boolean duplicates = false;
     FieldDesc fd2;

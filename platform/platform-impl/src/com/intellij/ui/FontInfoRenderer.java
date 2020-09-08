@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.ide.ui.AntialiasingType;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.ui.FontInfo;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,7 +13,7 @@ public class FontInfoRenderer extends ColoredListCellRenderer<Object> {
   @Override
   protected void customizeCellRenderer(@NotNull JList<?> list, Object value, int index, boolean selected, boolean focused) {
     Font font = list.getFont();
-    String text = value == null ? "" : value.toString();
+    @NlsSafe String text = value == null ? "" : value.toString();
     append(text);
     if (value instanceof FontInfo) {
       FontInfo info = (FontInfo)value;

@@ -24,7 +24,7 @@ class FilePredictionHandler(private val project: Project) : Disposable {
 
   init {
     val percent = Registry.get("filePrediction.calculate.candidates.percent").asDouble()
-    manager = FilePredictionSessionManager(50, 3, 5, percent)
+    manager = FilePredictionSessionManager(125, 3, 5, percent)
   }
 
   fun onFileSelected(newFile: VirtualFile) {

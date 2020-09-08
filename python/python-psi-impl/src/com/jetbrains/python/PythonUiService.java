@@ -4,13 +4,13 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsContexts.*;
 import com.intellij.openapi.util.NlsContexts.Checkbox;
-import com.intellij.openapi.util.NlsContexts.Label;
+import com.intellij.openapi.util.NlsContexts.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -34,6 +34,14 @@ public class PythonUiService {
   public void showBalloonWarning(Project project, @PopupContent String message) {}
 
   public void showBalloonError(Project project, @PopupContent String message) {}
+
+  public FileEditor getSelectedEditor(@NotNull Project project, VirtualFile virtualFile) {
+    return null;
+  }
+
+  public Editor openTextEditor(@NotNull Project project, PsiElement anchor) {
+    return null;
+  }
 
   public Editor openTextEditor(@NotNull Project project, VirtualFile virtualFile) {
     return null;
@@ -71,7 +79,7 @@ public class PythonUiService {
     return null;
   }
 
-  public JComponent createSingleCheckboxOptionsPanel(@Label String label, InspectionProfileEntry inspection, String property) {
+  public JComponent createSingleCheckboxOptionsPanel(@Checkbox String label, InspectionProfileEntry inspection, String property) {
     return null;
   }
 
@@ -79,9 +87,9 @@ public class PythonUiService {
   }
 
   @NotNull
-  public JComponent createEncodingsOptionsPanel(String[] possibleEncodings,
-                                                String defaultEncoding,
-                                                String[] possibleFormats,
+  public JComponent createEncodingsOptionsPanel(String @ListItem [] possibleEncodings,
+                                                @ListItem String defaultEncoding,
+                                                String @ListItem[] possibleFormats,
                                                 int formatIndex,
                                                 Consumer<String> encodingChanged,
                                                 Consumer<Integer> formatIndexChanged) {
@@ -100,7 +108,7 @@ public class PythonUiService {
     return null;
   }
 
-  public JComponent createListEditForm(String title, List<String> stringList) {
+  public JComponent createListEditForm(@ColumnName String title, List<String> stringList) {
     return null;
   }
 
@@ -108,7 +116,7 @@ public class PythonUiService {
     return null;
   }
 
-  public void showErrorHint(Editor editor, String message) {
+  public void showErrorHint(Editor editor, @NotNull @HintText String message) {
   }
 
   public static PythonUiService getInstance() {
@@ -122,8 +130,8 @@ public class PythonUiService {
 
   @Nullable
   public JComponent createComboBoxWithLabel(@NotNull @NlsContexts.Label String label,
-                                            String[] items,
-                                            final String selectedItem,
+                                            String @ListItem [] items,
+                                            @ListItem String selectedItem,
                                             Consumer<Object> selectedItemChanged) {
     return null;
   }
@@ -159,10 +167,10 @@ public class PythonUiService {
 
   public int showChooseDialog(@Nullable Project project,
                               @Nullable Component parentComponent,
-                              String message,
-                              String title,
-                              String[] values,
-                              String initialValue,
+                              @DialogMessage String message,
+                              @DialogTitle String title,
+                              String @ListItem [] values,
+                              @ListItem String initialValue,
                               @Nullable Icon icon) {
     return -1;
 

@@ -20,7 +20,7 @@ public class LargeFileFindAllAction extends AnAction implements DumbAware {
     this.searchManager = searchManager;
 
     getTemplatePresentation().setDescription(
-      EditorBundle.message("large.file.editor.action.description.search.entire.file.and.show.toolwindow"));
+      EditorBundle.messagePointer("large.file.editor.action.description.search.entire.file.and.show.toolwindow"));
     getTemplatePresentation().setText(IdeBundle.messagePointer("action.presentation.FindAllAction.text"));
     getTemplatePresentation().setIcon(AllIcons.Actions.FindEntireFile);
   }

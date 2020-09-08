@@ -30,7 +30,8 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.repo.GitUntrackedFilesHolder
 import git4idea.status.GitChangeProvider
-import git4idea.util.toShortenedString
+import git4idea.util.toShortenedLogString
+import org.jetbrains.annotations.NonNls
 import java.util.*
 
 private val PROCESSED = Key.create<Boolean>("GitStageTracker.file.processed")
@@ -42,6 +43,7 @@ class GitStageTracker(val project: Project) : Disposable {
 
   @Volatile
   var state: State = State(gitRoots().associateWith { RootState.empty(it) })
+    private set
 
   init {
     val connection: MessageBusConnection = project.messageBus.connect(this)
@@ -187,8 +189,9 @@ class GitStageTracker(val project: Project) : Disposable {
       return statuses.isEmpty()
     }
 
+    @NonNls
     override fun toString(): String {
-      return "RootState(root=${root.name}, statuses=${statuses.toShortenedString(",\n")})"
+      return "RootState(root=${root.name}, statuses=${statuses.toShortenedLogString(",\n")})"
     }
 
     companion object {
@@ -209,8 +212,9 @@ class GitStageTracker(val project: Project) : Disposable {
       return State(result)
     }
 
+    @NonNls
     override fun toString(): String {
-      return "State(${rootStates.toShortenedString(separator = "\n") { "${it.key.name}=${it.value}" }}"
+      return "State(${rootStates.toShortenedLogString(separator = "\n") { "${it.key.name}=${it.value}" }}"
     }
 
     companion object {

@@ -233,7 +233,7 @@ public class CyclicDependenciesBuilder{
   }
 
   private Graph<PsiPackage> buildGraph() {
-    return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<PsiPackage>() {
+    return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<>() {
       @Override
       @NotNull
       public Collection<PsiPackage> getNodes() {

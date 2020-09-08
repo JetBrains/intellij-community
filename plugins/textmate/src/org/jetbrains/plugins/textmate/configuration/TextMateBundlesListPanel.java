@@ -37,7 +37,7 @@ public class TextMateBundlesListPanel implements Disposable {
   private Collection<TextMateBundlesChangeStateListener> myListeners = new ArrayList<>();
 
   public TextMateBundlesListPanel() {
-    myBundlesList = new CheckBoxList<BundleConfigBean>(new CheckBoxListListener() {
+    myBundlesList = new CheckBoxList<>(new CheckBoxListListener() {
       @Override
       public void checkBoxSelectionChanged(int index, boolean value) {
         BundleConfigBean itemAt = myBundlesList.getItemAt(index);
@@ -53,7 +53,7 @@ public class TextMateBundlesListPanel implements Disposable {
         if (isBuiltin(bean)) {
           return TextMateBundle.message("title.built.in");
         }
-        return bean != null ? bean.getPath() : null;
+        return bean != null ? FileUtil.toSystemDependentName(bean.getPath()) : null;
       }
     };
     myBundlesList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);

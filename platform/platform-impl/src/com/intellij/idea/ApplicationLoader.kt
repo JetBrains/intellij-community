@@ -73,15 +73,19 @@ private fun executeInitAppInEdt(args: List<String>,
       val starter = findStarter(args.first()) ?: IdeStarter()
       if (Main.isHeadless() && !starter.isHeadless) {
         val commandName = starter.commandName
-        val message = "Application cannot start in a headless mode" + when {
-          starter is IdeStarter -> ""
-          commandName != null -> ", for command: $commandName"
-          else -> ", for starter: " + starter.javaClass.name
-        } + when {
-          args.isNotEmpty() -> " (commandline: ${args.joinToString(" ")})"
-          else -> ""
-        }
-        Main.showMessage("Startup Error", message, true)
+        val message = IdeBundle.message(
+          "application.cannot.start.in.a.headless.mode",
+          when {
+            starter is IdeStarter -> 0
+            commandName != null -> 1
+            else -> 2
+          },
+          commandName,
+          starter.javaClass.name,
+          if (args.isEmpty()) 0 else 1,
+          args.joinToString(" ")
+        )
+        Main.showMessage(IdeBundle.message("main.startup.error"), message, true)
         exitProcess(Main.NO_GRAPHICS)
       }
 

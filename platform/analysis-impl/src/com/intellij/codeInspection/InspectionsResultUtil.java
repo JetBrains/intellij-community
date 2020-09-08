@@ -103,7 +103,7 @@ public final class InspectionsResultUtil {
   public static void writeInspectionResult(@NotNull Project project, @NotNull String shortName,
                                            @NotNull Collection<? extends InspectionToolWrapper<?, ?>> wrappers,
                                            @NotNull Path outputDirectory,
-                                           @NotNull Function<InspectionToolWrapper, InspectionToolResultExporter> f) throws IOException {
+                                           @NotNull Function<? super InspectionToolWrapper, ? extends InspectionToolResultExporter> f) throws IOException {
     //dummy entry points tool
     if (wrappers.isEmpty()) return;
     try (XmlWriterWrapper reportWriter = new XmlWriterWrapper(project, outputDirectory, shortName,

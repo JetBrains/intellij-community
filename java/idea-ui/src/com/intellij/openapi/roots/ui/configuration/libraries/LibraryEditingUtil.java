@@ -86,11 +86,13 @@ public final class LibraryEditingUtil {
         final Library source = ((LibraryEx)library).getSource();
         if (source != null && result.contains(source)) return false;
       }
-      PersistentLibraryKind<?> kind = ((LibraryEx)library).getKind();
-      if (kind != null) {
-        LibraryType type = LibraryType.findByKind(kind);
-        if (!type.isSuitableModule(rootModel.getModule(), facetsProvider)) {
-          return false;
+      if (library instanceof LibraryEx) {
+        PersistentLibraryKind<?> kind = ((LibraryEx)library).getKind();
+        if (kind != null) {
+          LibraryType type = LibraryType.findByKind(kind);
+          if (!type.isSuitableModule(rootModel.getModule(), facetsProvider)) {
+            return false;
+          }
         }
       }
       return true;
@@ -156,23 +158,27 @@ public final class LibraryEditingUtil {
 
   public static BaseListPopupStep<LibraryType> createChooseTypeStep(final ClasspathPanel classpathPanel,
                                                                     final ParameterizedRunnable<? super LibraryType> action) {
-    return new BaseListPopupStep<LibraryType>(JavaUiBundle.message("popup.title.select.library.type"), getSuitableTypes(classpathPanel)) {
-          @NotNull
-          @Override
-          public String getTextFor(LibraryType value) {
-            return value != null ? value.getCreateActionName() : JavaUiBundle.message("create.default.library.type.action.name");
-          }
+    return new BaseListPopupStep<>(JavaUiBundle.message("popup.title.select.library.type"), getSuitableTypes(classpathPanel)) {
+      @NotNull
+      @Override
+      public String getTextFor(LibraryType value) {
+        if (value != null) {
+          final String name = value.getCreateActionName();
+          if (name != null) return name;
+        }
+        return JavaUiBundle.message("create.default.library.type.action.name");
+      }
 
-          @Override
-          public Icon getIconFor(LibraryType aValue) {
-            return aValue != null ? aValue.getIcon(null) : PlatformIcons.LIBRARY_ICON;
-          }
+      @Override
+      public Icon getIconFor(LibraryType aValue) {
+        return aValue != null ? aValue.getIcon(null) : PlatformIcons.LIBRARY_ICON;
+      }
 
-          @Override
-          public PopupStep onChosen(final LibraryType selectedValue, boolean finalChoice) {
-            return doFinalStep(() -> action.run(selectedValue));
-          }
-        };
+      @Override
+      public PopupStep onChosen(final LibraryType selectedValue, boolean finalChoice) {
+        return doFinalStep(() -> action.run(selectedValue));
+      }
+    };
   }
 
   public static List<Module> getSuitableModules(@NotNull ModuleStructureConfigurable rootConfigurable,

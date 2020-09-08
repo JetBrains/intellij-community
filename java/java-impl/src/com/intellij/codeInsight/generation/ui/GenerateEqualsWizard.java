@@ -266,7 +266,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
 
   private static class EqualsMemberInfoModel extends AbstractMemberInfoModel<PsiMember, MemberInfo> {
     MemberInfoTooltipManager<PsiMember, MemberInfo> myTooltipManager =
-      new MemberInfoTooltipManager<>(new MemberInfoTooltipManager.TooltipProvider<PsiMember, MemberInfo>() {
+      new MemberInfoTooltipManager<>(new MemberInfoTooltipManager.TooltipProvider<>() {
         @Override
         public String getTooltip(MemberInfo memberInfo) {
           if (checkForProblems(memberInfo) == OK) return null;
@@ -314,7 +314,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
 
   private static class HashCodeMemberInfoModel extends AbstractMemberInfoModel<PsiMember, MemberInfo> {
     private final MemberInfoTooltipManager<PsiMember, MemberInfo> myTooltipManager =
-      new MemberInfoTooltipManager<>(new MemberInfoTooltipManager.TooltipProvider<PsiMember, MemberInfo>() {
+      new MemberInfoTooltipManager<>(new MemberInfoTooltipManager.TooltipProvider<>() {
         @Override
         public String getTooltip(MemberInfo memberInfo) {
           if (isMemberEnabled(memberInfo)) return null;

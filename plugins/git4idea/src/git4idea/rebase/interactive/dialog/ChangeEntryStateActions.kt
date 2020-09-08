@@ -210,7 +210,7 @@ internal class DropAction(table: GitRebaseCommitsTableView) :
 }
 
 internal class ShowGitRebaseCommandsDialog(private val project: Project, private val table: GitRebaseCommitsTableView) :
-  DumbAwareAction(GitBundle.getString("rebase.interactive.dialog.view.git.commands.text")) {
+  DumbAwareAction(GitBundle.messagePointer("rebase.interactive.dialog.view.git.commands.text")) {
 
   private fun getEntries(): List<GitRebaseEntry> = table.model.rebaseTodoModel.convertToEntries()
 

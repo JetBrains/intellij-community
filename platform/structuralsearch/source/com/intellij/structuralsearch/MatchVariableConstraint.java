@@ -116,6 +116,12 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     invertContainsConstraint = constraint.invertContainsConstraint;
     invertWithinConstraint = constraint.invertWithinConstraint;
     contextConstraint = constraint.contextConstraint;
+    final Map<String, String> additionalConstraints = constraint.additionalConstraints;
+    if (additionalConstraints != null) {
+      for (Map.Entry<String, String> entry : additionalConstraints.entrySet()) {
+        putAdditionalConstraint(entry.getKey(), entry.getValue());
+      }
+    }
   }
 
   @Override

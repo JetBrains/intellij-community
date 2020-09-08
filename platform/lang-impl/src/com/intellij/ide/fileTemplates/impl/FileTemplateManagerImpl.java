@@ -3,6 +3,7 @@
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.*;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -52,7 +53,7 @@ public final class FileTemplateManagerImpl extends FileTemplateManager implement
     myDefaultSettings = ApplicationManager.getApplication().getService(ExportableFileTemplateSettings.class);
     myProject = project;
 
-    myProjectScheme = project.isDefault() ? null : new FileTemplatesScheme("Project") {
+    myProjectScheme = project.isDefault() ? null : new FileTemplatesScheme(IdeBundle.message("project.scheme")) {
       @NotNull
       @Override
       public String getTemplatesDir() {

@@ -51,6 +51,8 @@ public interface IdeActions {
   @NonNls String ACTION_EDITOR_NEXT_WORD_WITH_SELECTION = "EditorNextWordWithSelection";
   @NonNls String ACTION_EDITOR_PREVIOUS_WORD_WITH_SELECTION = "EditorPreviousWordWithSelection";
   @NonNls String ACTION_EDITOR_TAB = "EditorTab";
+  @NonNls String ACTION_EDITOR_INDENT_SELECTION = "EditorIndentSelection";
+  @NonNls String ACTION_EDITOR_UNINDENT_SELECTION = "EditorUnindentSelection";
   @NonNls String ACTION_EDITOR_EMACS_TAB = "EmacsStyleIndent";
   @NonNls String ACTION_EDITOR_ESCAPE = "EditorEscape";
   @NonNls String ACTION_EDITOR_JOIN_LINES = "EditorJoinLines";
@@ -285,6 +287,7 @@ public interface IdeActions {
   @NonNls String GROUP_WELCOME_SCREEN_QUICKSTART = "WelcomeScreen.QuickStart";
   @NonNls String GROUP_WELCOME_SCREEN_DOC = "WelcomeScreen.Documentation";
   @NonNls String GROUP_WELCOME_SCREEN_CONFIGURE = "WelcomeScreen.Configure";
+  @NonNls String GROUP_WELCOME_SCREEN_HELP = "WelcomeScreen.Help";
   @NonNls String ACTION_KEYMAP_REFERENCE="Help.KeymapReference";
   @NonNls String ACTION_MOVE = "Move";
   @NonNls String ACTION_RENAME = "RenameElement";

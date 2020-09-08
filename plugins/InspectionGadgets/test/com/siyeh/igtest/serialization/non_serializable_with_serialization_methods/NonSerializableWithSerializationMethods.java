@@ -18,3 +18,12 @@ public class <warning descr="Non-serializable class 'NonSerializableWithSerializ
         };
     }
 }
+
+record R() {
+
+    private void readObject(java.io.ObjectInputStream str) {
+    }
+
+    private void writeObject(java.io.ObjectOutputStream str) {
+    }
+}

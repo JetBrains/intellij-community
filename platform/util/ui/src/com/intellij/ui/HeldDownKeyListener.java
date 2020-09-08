@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import org.jetbrains.annotations.NonNls;
+
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 
@@ -38,7 +40,7 @@ public abstract class HeldDownKeyListener {
 
   protected abstract void heldKeyTriggered(JComponent component, boolean pressed);
 
-  private static void registerAction(JComponent component, String name, KeyStroke keyStroke, AbstractAction action) {
+  private static void registerAction(JComponent component, @NonNls String name, KeyStroke keyStroke, AbstractAction action) {
     component.getInputMap().put(keyStroke, name);
     component.getActionMap().put(name, action);
   }

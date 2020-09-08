@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
@@ -30,6 +31,7 @@ import com.intellij.openapi.vfs.encoding.EncodingManager
 import com.intellij.util.PathUtil
 import com.intellij.util.PathsList
 import com.intellij.util.SystemProperties
+import com.intellij.util.containers.IntObjectMap
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.io.isDirectory
 import com.intellij.util.lang.UrlClassLoader
@@ -51,6 +53,7 @@ import java.util.*
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeoutException
 import java.util.jar.Manifest
+import javax.swing.Icon
 import kotlin.math.abs
 
 class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
@@ -246,14 +249,15 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
         appendVmParameters(vmParameters)
       }
 
-      argFile.scheduleWriteFileWhenReady(javaParameters, vmParameters)
-
       appendEncoding(javaParameters, vmParameters)
 
       val argFileParameter = uploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, argFile.file.absolutePath)
       commandLine.addParameter(TargetValue.map(argFileParameter) { s -> "@$s" })
 
-      rememberFileContentAfterUpload(argFile.file, argFileParameter)
+      argFile.scheduleWriteFileWhenReady(javaParameters, vmParameters) {
+        rememberFileContentAfterUpload(argFile.file, argFileParameter)
+      }
+      
     }
     catch (e: IOException) {
       throwUnableToCreateTempFile(e)
@@ -369,7 +373,12 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
 
       val classpath: MutableSet<TargetValue<String>> = LinkedHashSet()
       classpath.add(uploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, PathUtil.getJarPathForClass(commandLineWrapper)))
-
+      // If kotlin agent starts it needs kotlin-stdlib in the classpath.
+      javaParameters.classPath.rootDirs.forEach {
+        it.getUserData(JdkUtil.AGENT_RUNTIME_CLASSPATH)?.let {
+          classpath.add(uploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, it))
+        }
+      }
       if (vmParameters.isUrlClassloader()) {
         if (request !is LocalTargetEnvironmentRequest) {
           throw CantRunException("Cannot run application with UrlClassPath on the remote target.")
@@ -593,7 +602,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
 
     @Throws(CantRunException::class)
     private fun throwUnableToCreateTempFile(cause: IOException?) {
-      throw CantRunException("Failed to create a temporary file in " + FileUtilRt.getTempDirectory(), cause)
+      throw CantRunException("Failed to create a temporary file in " + FileUtil.getTempDirectory(), cause)
     }
   }
 
@@ -618,10 +627,13 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
       registerPromise(promisedValue)
     }
 
-    fun scheduleWriteFileWhenReady(javaParameters: SimpleJavaParameters, vmParameters: ParametersList) {
+    fun scheduleWriteFileWhenReady(javaParameters: SimpleJavaParameters,
+                                   vmParameters: ParametersList,
+                                   rememberContent: () -> Unit) {
       myAllPromises.collectResults().onSuccess {
         try {
           writeArgFileNow(javaParameters, vmParameters)
+          rememberContent.invoke()
         }
         catch (e: IOException) {
           //todo[remoteServers]: interrupt preparing environment
@@ -657,6 +669,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
     private fun registerPromise(value: TargetValue<String>) {
       myAllPromises.add(value.targetValue)
     }
+
   }
 
   internal class ClasspathJar @Throws(IOException::class) constructor(private val setup: JdkCommandLineSetup,
@@ -728,4 +741,5 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
       return url.toString()
     }
   }
+
 }

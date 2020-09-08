@@ -39,7 +39,7 @@ public final class BiDirectionalEnumerator<T> extends Enumerator<T> {
     return value;
   }
 
-  public void forEachValue(@NotNull Predicate<T> processor) {
+  public void forEachValue(@NotNull Predicate<? super T> processor) {
     for (T value : myIntToObjectMap.values()) {
       if (!processor.test(value)) {
         break;

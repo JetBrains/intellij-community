@@ -7,6 +7,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Contract;
@@ -77,7 +78,8 @@ public abstract class ContractReturnValue {
    * @return null if this contract return value makes sense for the supplied return type.
    * Otherwise the human-readable error message is returned.
    */
-  public final String getMethodCompatibilityProblem(PsiMethod method) {
+  public final @InspectionMessage String getMethodCompatibilityProblem(PsiMethod method) {
+    //noinspection HardCodedStringLiteral
     return validators().map(fn -> fn.apply(method)).filter(Objects::nonNull).findFirst()
                        .map((JavaAnalysisBundle.message("contract.return.value.validation.prefix", this)+' ')::concat)
                        .orElse(null);

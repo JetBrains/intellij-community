@@ -1,7 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
-import com.intellij.internal.statistic.eventLog.*;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.EventField;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
+import com.intellij.internal.statistic.eventLog.events.VarargEventId;
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
@@ -43,8 +47,8 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
 
   private static final EventLogGroup GROUP = new EventLogGroup("file.types.usage", FeatureUsageLogger.INSTANCE.getConfig().getVersion());
 
-  private static final EventField<String> FILE_TYPE = EventFields.String("file_type").withCustomRule("file_type");
-  private static final EventField<String> SCHEMA = EventFields.String("schema").withCustomRule("file_type_schema");
+  private static final EventField<String> FILE_TYPE = EventFields.StringValidatedByCustomRule("file_type", "file_type");
+  private static final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", "file_type_schema");
   private static final EventField<Boolean> IS_WRITABLE = EventFields.Boolean("is_writable");
 
   @Override
@@ -52,7 +56,7 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
     return GROUP;
   }
 
-  private static VarargEventId registerFileTypeEvent(String eventId, EventField<?> ... extraFields) {
+  private static VarargEventId registerFileTypeEvent(String eventId, EventField<?>... extraFields) {
     EventField<?>[] baseFields = {EventFields.PluginInfoFromInstance, FILE_TYPE, EventFields.AnonymizedPath, SCHEMA};
     return GROUP.registerVarargEvent(eventId, ArrayUtil.mergeArrays(baseFields, extraFields));
   }
@@ -76,30 +80,32 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
   }
 
   public static void triggerOpen(@NotNull Project project, @NotNull VirtualFile file) {
-    OPEN.log(project, ArrayUtil.append(buildCommonEventPairs(file), IS_WRITABLE.with(file.isWritable())));
+    OPEN.log(project, ArrayUtil.append(buildCommonEventPairs(project, file), IS_WRITABLE.with(file.isWritable())));
   }
 
   public static void triggerClosed(@NotNull Project project, @NotNull VirtualFile file) {
-    CLOSE.log(project, ArrayUtil.append(buildCommonEventPairs(file), IS_WRITABLE.with(file.isWritable())));
+    CLOSE.log(project, ArrayUtil.append(buildCommonEventPairs(project, file), IS_WRITABLE.with(file.isWritable())));
   }
 
   private static void log(@NotNull VarargEventId eventId, @NotNull Project project, @NotNull VirtualFile file) {
-    eventId.log(project, buildCommonEventPairs(file));
+    eventId.log(project, buildCommonEventPairs(project, file));
   }
 
-  private static EventPair<?> @NotNull [] buildCommonEventPairs(@NotNull VirtualFile file) {
+  private static EventPair<?> @NotNull [] buildCommonEventPairs(@NotNull Project project,
+                                                                @NotNull VirtualFile file) {
     FileType fileType = file.getFileType();
     return new EventPair[]{EventFields.PluginInfoFromInstance.with(fileType),
       FILE_TYPE.with(FileTypeUsagesCollector.getSafeFileTypeName(fileType)),
       EventFields.AnonymizedPath.with(file.getPath()),
-      SCHEMA.with(findSchema(file))};
+      SCHEMA.with(findSchema(project, file))};
   }
 
   private static void logEmptyFile() {
     SELECT.log(EventFields.AnonymizedPath.with(null));
   }
 
-  private static @Nullable String findSchema(@NotNull VirtualFile file) {
+  public static @Nullable String findSchema(@NotNull Project project,
+                                            @NotNull VirtualFile file) {
     for (FileTypeUsageSchemaDescriptorEP<FileTypeUsageSchemaDescriptor> ext : EP.getExtensionList()) {
       FileTypeUsageSchemaDescriptor instance = ext.getInstance();
       if (ext.schema == null) {
@@ -107,7 +113,7 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
         continue;
       }
 
-      if(instance.describes(file)) {
+      if (instance.describes(project, file)) {
         return getPluginInfo(instance.getClass()).isSafeToReport() ? ext.schema : "third.party";
       }
     }

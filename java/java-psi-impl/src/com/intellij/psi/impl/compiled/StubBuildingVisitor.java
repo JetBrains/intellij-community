@@ -44,8 +44,6 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   private static final String SYNTHETIC_CLASS_INIT_METHOD = "<clinit>";
   private static final String SYNTHETIC_INIT_METHOD = "<init>";
 
-  static final int ASM_API = Opcodes.API_VERSION;
-
   private final T mySource;
   private final InnerClassSourceStrategy<T> myInnersStrategy;
   private final StubElement<?> myParent;
@@ -67,7 +65,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
   public StubBuildingVisitor(T classSource, InnerClassSourceStrategy<T> innersStrategy, StubElement<?> parent, int access, String shortName,
                              boolean anonymousInner, boolean localClassInner) {
-    super(ASM_API);
+    super(Opcodes.API_VERSION);
     mySource = classSource;
     myInnersStrategy = innersStrategy;
     myParent = parent;
@@ -119,7 +117,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       myClassInfo = parseClassDescription(superName, interfaces);
     }
 
-    myClassInfo.typeParameters.createTypeParameterList(myResult);
+    new PsiTypeParameterListStubImpl(myResult);
 
     if (myResult.isInterface()) {
       if (myClassInfo.interfaces != null && myResult.isAnnotationType()) {
@@ -245,6 +243,9 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     if (ref.getSort() == TypeReference.CLASS_TYPE_PARAMETER_BOUND) {
       info = myClassInfo.typeParameters.getBoundType(ref);
     }
+    else if (ref.getSort() == TypeReference.CLASS_TYPE_PARAMETER) {
+      info = myClassInfo.typeParameters.getParameterType(ref);
+    }
     else if (ref.getSort() == TypeReference.CLASS_EXTENDS) {
       int index = ref.getSuperTypeIndex();
       if (index == -1) {
@@ -267,6 +268,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     if (myAnnoBuilders != null) {
       myAnnoBuilders.values().forEach(TypeAnnotationContainer.Builder::build);
     }
+    myClassInfo.typeParameters.fillInTypeParameterList(myResult);
   }
 
   @Override
@@ -365,6 +367,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       if ("values".equals(name) && desc.startsWith("()")) return null;
       if ("valueOf".equals(name) && desc.startsWith("(Ljava/lang/String;)")) return null;
     }
+    
+    if (myFirstPassData.isSyntheticRecordMethod(name, desc)) return null;
 
     boolean isDeprecated = isSet(access, Opcodes.ACC_DEPRECATED);
     boolean isVarargs = isSet(access, Opcodes.ACC_VARARGS);
@@ -394,7 +398,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     PsiModifierListStub modList = new PsiModifierListStubImpl(stub, packMethodFlags(access, myResult.isInterface()));
 
-    info.typeParameters.createTypeParameterList(stub);
+    new PsiTypeParameterListStubImpl(stub);
 
     boolean isEnumConstructor = isConstructor && isEnum;
     boolean isInnerClassConstructor = isConstructor && !isEnum && isInner() && !isGroovyClosure(canonicalMethodName);
@@ -513,7 +517,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     private FieldAnnotationCollectingVisitor(@NotNull PsiFieldStub stub,
                                              @NotNull PsiModifierListStub modList,
                                              @NotNull FirstPassData firstPassData) {
-      super(ASM_API);
+      super(Opcodes.API_VERSION);
       myModList = modList;
       myFirstPassData = firstPassData;
       myAnnoBuilder = new TypeAnnotationContainer.Builder(stub.getType(false), firstPassData);
@@ -545,7 +549,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     private RecordComponentAnnotationCollectingVisitor(@NotNull PsiRecordComponentStub stub,
                                                        @NotNull PsiModifierListStub modList,
                                                        @NotNull FirstPassData firstPassData) {
-      super(ASM_API);
+      super(Opcodes.API_VERSION);
       myModList = modList;
       myFirstPassData = firstPassData;
       myAnnoBuilder = new TypeAnnotationContainer.Builder(stub.getType(false), firstPassData);
@@ -590,7 +594,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
                                               int paramIgnoreCount,
                                               int localVarIgnoreCount,
                                               @NotNull FirstPassData firstPassData) {
-      super(ASM_API);
+      super(Opcodes.API_VERSION);
       myOwner = owner;
       myMethodInfo = methodInfo;
       myModList = modList;
@@ -636,6 +640,9 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
           info = myParamStubs[parameterIndex].getType(false);
         }
       }
+      else if (ref.getSort() == TypeReference.METHOD_TYPE_PARAMETER) {
+        info = myMethodInfo.typeParameters.getParameterType(ref);
+      }
       else if (ref.getSort() == TypeReference.METHOD_TYPE_PARAMETER_BOUND) {
         info = myMethodInfo.typeParameters.getBoundType(ref);
       }
@@ -658,6 +665,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       if (myAnnoBuilders != null) {
         myAnnoBuilders.values().forEach(TypeAnnotationContainer.Builder::build);
       }
+      myMethodInfo.typeParameters.fillInTypeParameterList(myOwner);
     }
 
     @Override

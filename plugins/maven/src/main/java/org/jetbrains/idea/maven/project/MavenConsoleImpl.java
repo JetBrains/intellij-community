@@ -10,6 +10,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,17 +38,17 @@ public class MavenConsoleImpl extends MavenConsole {
   private static final String CONSOLE_FILTER_REGEXP =
     "(?:^|(?:\\[\\w+\\]\\s*)( /)?)" + RegexpFilter.FILE_PATH_MACROS + ":\\[" + RegexpFilter.LINE_MACROS + "," + RegexpFilter.COLUMN_MACROS + "]";
 
-  private final String myTitle;
+  private @NlsContexts.TabTitle final String myTitle;
   private final Project myProject;
   private final ConsoleView myConsoleView;
   private final AtomicBoolean isOpen = new AtomicBoolean(false);
   private final Pair<MavenRunnerParameters, MavenRunnerSettings> myParametersAndSettings;
 
-  public MavenConsoleImpl(String title, Project project) {
+  public MavenConsoleImpl(@NlsContexts.TabTitle String title, Project project) {
     this(title, project, null);
   }
 
-  public MavenConsoleImpl(String title,
+  public MavenConsoleImpl(@NlsContexts.TabTitle String title,
                           Project project,
                           Pair<MavenRunnerParameters, MavenRunnerSettings> parametersAndSettings) {
     super(getGeneralSettings(project).getLoggingLevel(), getGeneralSettings(project).isPrintErrorStackTraces());

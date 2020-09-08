@@ -18,6 +18,7 @@ package com.intellij.codeInsight.template.postfix.templates;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
@@ -55,7 +56,7 @@ public class IntroduceVariablePostfixTemplate extends PostfixTemplateWithExpress
                                                          PsiElement anchor, JavaReplaceChoice replaceChoice) {
         return new IntroduceVariableSettings() {
           @Override
-          public String getEnteredName() {
+          public @NlsSafe String getEnteredName() {
             return "foo";
           }
 

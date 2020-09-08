@@ -64,13 +64,13 @@ public final class GitCommand {
   /**
    * Name of environment variable that specifies editor for the git
    */
-  public static final String GIT_EDITOR_ENV = "GIT_EDITOR";
+  public static final @NonNls String GIT_EDITOR_ENV = "GIT_EDITOR";
   /**
    * Name of environment variable that specifies askpass for the git (http and ssh passphrase authentication)
    */
-  public static final String GIT_ASK_PASS_ENV = "GIT_ASKPASS";
-  public static final String GIT_SSH_ASK_PASS_ENV = "SSH_ASKPASS";
-  public static final String DISPLAY_ENV = "DISPLAY";
+  public static final @NonNls String GIT_ASK_PASS_ENV = "GIT_ASKPASS";
+  public static final @NonNls String GIT_SSH_ASK_PASS_ENV = "SSH_ASKPASS";
+  public static final @NonNls String DISPLAY_ENV = "DISPLAY";
 
   enum LockingPolicy {
     READ,
@@ -81,7 +81,7 @@ public final class GitCommand {
   @NotNull @NonNls private final String myName; // command name passed to git
   @NotNull private final LockingPolicy myLocking; // Locking policy for the command
 
-  private GitCommand(@NotNull String name, @NotNull LockingPolicy lockingPolicy) {
+  private GitCommand(@NotNull @NonNls String name, @NotNull LockingPolicy lockingPolicy) {
     myLocking = lockingPolicy;
     myName = name;
   }
@@ -112,17 +112,17 @@ public final class GitCommand {
   }
 
   @NotNull
-  private static GitCommand read(@NotNull String name) {
+  private static GitCommand read(@NotNull @NonNls String name) {
     return new GitCommand(name, LockingPolicy.READ);
   }
 
   @NotNull
-  private static GitCommand readOptional(@NotNull String name) {
+  private static GitCommand readOptional(@NotNull @NonNls String name) {
     return new GitCommand(name, LockingPolicy.READ_OPTIONAL_LOCKING);
   }
 
   @NotNull
-  private static GitCommand write(@NotNull String name) {
+  private static GitCommand write(@NotNull @NonNls String name) {
     return new GitCommand(name, LockingPolicy.WRITE);
   }
 

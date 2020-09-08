@@ -1723,7 +1723,8 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModuleModuleDeps("project.main", ArrayUtil.EMPTY_STRING_ARRAY);
 
     assertModuleLibDeps((actual, expected) -> {
-      return actual.contains("build/.transforms/") && new File(actual).getName().equals(new File(expected).getName());
+      return actual.contains("build" + File.separatorChar + ".transforms" + File.separatorChar) &&
+             new File(actual).getName().equals(new File(expected).getName());
     }, "project.main", "lib-1.jar", "lib-2.jar");
   }
 

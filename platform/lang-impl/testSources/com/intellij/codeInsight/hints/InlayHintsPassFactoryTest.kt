@@ -20,7 +20,7 @@ class InlayHintsPassFactoryTest : BasePlatformTestCase() {
       override fun getProvidersInfo(project: Project): List<ProviderInfo<out Any>> {
         return listOf(ProviderInfo(language, dummyProvider(key, object : InlayHintsCollector {
           override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
-            sink.addInlineElement(0, true, SpacePresentation(1, 1))
+            sink.addInlineElement(0, true, SpacePresentation(1, 1), false)
             return false
           }
         })))

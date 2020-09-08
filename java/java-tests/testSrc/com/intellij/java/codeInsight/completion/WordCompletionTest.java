@@ -54,7 +54,7 @@ public class WordCompletionTest extends NormalCompletionTestCase {
     final PsiReferenceProvider softProvider = new PsiReferenceProvider() {
       @Override
       public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
-        return new PsiReference[]{new PsiReferenceBase<PsiElement>(element, true) {
+        return new PsiReference[]{new PsiReferenceBase<>(element, true) {
           @Override
           public PsiElement resolve() {
             return null;
@@ -70,7 +70,7 @@ public class WordCompletionTest extends NormalCompletionTestCase {
     final PsiReferenceProvider hardProvider = new PsiReferenceProvider() {
       @Override
       public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
-        return new PsiReference[]{new PsiReferenceBase<PsiElement>(element, false) {
+        return new PsiReference[]{new PsiReferenceBase<>(element, false) {
           @Override
           public PsiElement resolve() {
             return null;

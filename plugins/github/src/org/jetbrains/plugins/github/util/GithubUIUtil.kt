@@ -119,31 +119,6 @@ object GithubUIUtil {
     }
   }
 
-  object Lists {
-    fun installSelectionOnFocus(list: JList<*>): FocusListener {
-      val listener: FocusListener = object : FocusAdapter() {
-        override fun focusGained(e: FocusEvent) {
-          if (list.isSelectionEmpty && list.model.size > 0) list.selectedIndex = 0
-        }
-      }
-      list.addFocusListener(listener)
-      return listener
-    }
-
-    fun installSelectionOnRightClick(list: JList<*>): MouseListener {
-      val listener: MouseListener = object : MouseAdapter() {
-        override fun mousePressed(e: MouseEvent) {
-          if (SwingUtilities.isRightMouseButton(e)) {
-            val row = list.locationToIndex(e.point)
-            if (row != -1) list.selectedIndex = row
-          }
-        }
-      }
-      list.addMouseListener(listener)
-      return listener
-    }
-  }
-
   fun <T> showChooserPopup(popupTitle: String, parentComponent: JComponent,
                            cellRendererFactory: (JList<SelectableWrapper<T>>) -> SelectionListCellRenderer<T>,
                            currentList: List<T>,

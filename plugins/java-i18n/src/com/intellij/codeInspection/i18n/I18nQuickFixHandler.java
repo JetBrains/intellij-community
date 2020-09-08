@@ -23,19 +23,15 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UExpression;
-import org.jetbrains.uast.expressions.UInjectionHost;
 
 import java.util.Collection;
 
-/**
- * @author Alexey
- */
-public interface I18nQuickFixHandler {
+public interface I18nQuickFixHandler<T extends UExpression> {
   void checkApplicability(final PsiFile psiFile,
                           final Editor editor) throws IncorrectOperationException;
   void performI18nization(final PsiFile psiFile,
                           final Editor editor,
-                          UInjectionHost literalExpression,
+                          T literalExpression,
                           Collection<PropertiesFile> propertiesFiles,
                           String key,
                           String value,
@@ -43,6 +39,8 @@ public interface I18nQuickFixHandler {
                           UExpression[] parameters,
                           PropertyCreationHandler propertyCreationHandler) throws IncorrectOperationException;
 
+  T getEnclosingLiteral(PsiFile file, Editor editor);
+
   @Nullable
-  JavaI18nizeQuickFixDialog createDialog(Project project, Editor editor, PsiFile psiFile);
+  JavaI18nizeQuickFixDialog<T> createDialog(Project project, Editor editor, PsiFile psiFile);
 }

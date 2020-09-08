@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -28,6 +28,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -35,6 +36,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -258,10 +260,11 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
 
 
   @NotNull
-  public static String getMessage(final boolean multiple, @NotNull String name) {
+  public static @NlsContexts.HintText String getMessage(final boolean multiple, @NotNull String name) {
     final String messageKey = multiple ? "import.popup.multiple" : "import.popup.text";
     String hintText = DaemonBundle.message(messageKey, name);
-    hintText += " " + KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
+    hintText +=
+      " " + KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
     return hintText;
   }
 }

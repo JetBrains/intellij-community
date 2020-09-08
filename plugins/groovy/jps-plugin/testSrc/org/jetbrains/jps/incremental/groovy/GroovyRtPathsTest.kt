@@ -22,12 +22,12 @@ class GroovyRtPathsTest {
   @Test
   fun pluginDistribution() {
     val lib = directoryContent {
-      file("groovy-jps-plugin.jar")
-      file("groovy-rt-constants.jar")
-      file("groovy_rt.jar")
+      file("groovy-jps.jar")
+      file("groovy-constants-rt.jar")
+      file("groovy-rt.jar")
     }.generateInTempDir().toFile()
-    val roots = GroovyBuilder.getGroovyRtRoots(File(lib, "groovy-jps-plugin.jar"))
-    assertSameFiles(roots, File(lib, "groovy_rt.jar"), File(lib, "groovy-rt-constants.jar"))
+    val roots = GroovyBuilder.getGroovyRtRoots(File(lib, "groovy-jps.jar"))
+    assertSameFiles(roots, File(lib, "groovy-rt.jar"), File(lib, "groovy-constants-rt.jar"))
   }
 
   @Test

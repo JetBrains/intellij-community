@@ -6,6 +6,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +62,7 @@ public abstract class CodeStyleSettingsProvider {
    * @return the display name of the configurable page.
    */
   @Nullable
-  public String getConfigurableDisplayName() {
+  public @NlsContexts.ConfigurableName String getConfigurableDisplayName() {
     Language lang = getLanguage();
     return lang == null ? null : lang.getDisplayName();
   }

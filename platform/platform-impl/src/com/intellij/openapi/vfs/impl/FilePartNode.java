@@ -206,13 +206,6 @@ class FilePartNode {
     String prevChildName = "";
     for (int i = 0; i < children.length; i++) {
       FilePartNode child = children[i];
-      // the parent can't be an url and the child a file
-      if (!(this instanceof FilePartNodeRoot)) {
-        VirtualFile childFile = child.myFile();
-        assert myFile != null || childFile == null : "this: " + this + "; myFileOrUrl: " + myFileOrUrl + " (" +myFileOrUrl.getClass()+")"+
-                                                     "; child: " + child + "; child.myFile: " + childFile + " (" +childFile.getClass()+")"+
-                                                     "; parent: " + parent + "; urlFromRoot: " + urlFromRoot +"; name: "+name;
-      }
       String childName = child.getName().toString();
       boolean needSeparator = !urlFromRoot.isEmpty() && !urlFromRoot.endsWith("/") && !childName.equals(JarFileSystem.JAR_SEPARATOR);
       String childUrlFromRoot = needSeparator ? urlFromRoot + "/" + childName : urlFromRoot + childName;
@@ -323,7 +316,7 @@ class FilePartNode {
     if (file != null && !Objects.equals(getParentThroughJar(file, myFS), parentFile)) {
       // this node file must be moved to the other dir. remove and re-insert from the root to the correct path, preserving all children
       FilePartNode newNode = root.findOrCreateByFile(file).node;
-      processPointers(p-> newNode.addLeaf(p));
+      processPointers(p -> newNode.addLeaf(p));
       newNode.children = children;
       children = EMPTY_ARRAY;
       changed = true;
@@ -378,6 +371,7 @@ class FilePartNode {
     int nameId = getNameId(file);
     parent.children = ArrayUtil.remove(parent.children, this);
     FilePartNode newNode = parent.findChildByNameId(file, nameId, true, (NewVirtualFileSystem)file.getFileSystem());
+    assert newNode.nameId == nameId;
     newNode.children = children; // old children are destroyed when renamed onto their parent
     processPointers(pointer-> newNode.addLeaf(pointer));
 

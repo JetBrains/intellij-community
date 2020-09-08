@@ -19,12 +19,13 @@ import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
+import org.jetbrains.annotations.Nls;
 
 public final class RepositoryLibraryDefinition extends AbstractExtensionPointBean {
   public static final ExtensionPointName<RepositoryLibraryDefinition> EP_NAME = ExtensionPointName.create("com.intellij.repositoryLibrary");
 
   @Attribute("name")
-  public String name;
+  public @Nls(capitalization = Nls.Capitalization.Title) String name;
 
   @Tag("groupId")
   public String groupId;

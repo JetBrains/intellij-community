@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.NlsContexts.PopupContent;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -73,7 +74,7 @@ public class JsonSchemaMappingsView implements Disposable {
   private TextFieldWithBrowseButton mySchemaField;
   private ComboBox<JsonSchemaVersion> mySchemaVersionComboBox;
   private JEditorPane myError;
-  private String myErrorText;
+  private @PopupContent String myErrorText;
   private JBLabel myErrorIcon;
   private boolean myInitialized;
 
@@ -174,7 +175,7 @@ public class JsonSchemaMappingsView implements Disposable {
   public void dispose() {
   }
 
-  public void setError(final String text, boolean showWarning) {
+  public void setError(@PopupContent String text, boolean showWarning) {
     myErrorText = text;
     myError.setVisible(showWarning && text != null);
     myErrorIcon.setVisible(showWarning && text != null);

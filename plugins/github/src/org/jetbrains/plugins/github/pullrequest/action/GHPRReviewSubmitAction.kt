@@ -20,6 +20,7 @@ import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.panels.HorizontalBox
 import com.intellij.util.ui.*
+import com.intellij.util.ui.codereview.InlineIconButton
 import icons.GithubIcons
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -30,7 +31,6 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.ui.GHHtmlErrorPanel
 import org.jetbrains.plugins.github.ui.GHSimpleErrorPanelModel
-import org.jetbrains.plugins.github.ui.InlineIconButton
 import org.jetbrains.plugins.github.util.errorOnEdt
 import org.jetbrains.plugins.github.util.successOnEdt
 import java.awt.FlowLayout
@@ -165,8 +165,9 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
 
       init {
         discardButton = pendingReview?.let { review ->
-          val button = InlineIconButton(icon = GithubIcons.Delete, hoveredIcon = GithubIcons.DeleteHovered,
-                                        tooltip = GithubBundle.message("pull.request.discard.pending.comments"))
+          val button = InlineIconButton(icon = GithubIcons.Delete, hoveredIcon =GithubIcons.DeleteHovered,
+                                                                              tooltip = GithubBundle.message(
+                                                                                "pull.request.discard.pending.comments"))
           button.actionListener = ActionListener {
             if (MessageDialogBuilder.yesNo(GithubBundle.message("pull.request.discard.pending.comments.dialog.title"),
                                            GithubBundle.message("pull.request.discard.pending.comments.dialog.msg")).ask(button)) {

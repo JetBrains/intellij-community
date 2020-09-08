@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.impl.VcsPathPresenter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,13 +67,13 @@ public class Change {
     return FileStatus.MODIFIED;
   }
 
-  public void addAdditionalLayerElement(final String name, final Change change) {
+  public void addAdditionalLayerElement(@NonNls String name, final Change change) {
     if (myOtherLayers == null) myOtherLayers = new HashMap<>(1);
     myOtherLayers.put(name, change);
   }
 
   @NotNull
-  public Map<String, Change> getOtherLayers() {
+  public Map<@NonNls String, Change> getOtherLayers() {
     return ContainerUtil.notNullize(myOtherLayers);
   }
 
@@ -215,6 +216,7 @@ public class Change {
   }
 
   @Nullable
+  @Nls
   public String getOriginText(final Project project) {
     cacheRenameOrMove(project);
     if (isMoved()) {
@@ -226,11 +228,13 @@ public class Change {
   }
 
   @Nullable
+  @Nls
   protected String getRenamedText() {
     return VcsBundle.message("change.file.renamed.from.text", myBeforeRevision.getFile().getName());
   }
 
   @Nullable
+  @Nls
   protected String getMovedText(final Project project) {
     return VcsBundle.message("change.file.moved.from.text", getMoveRelativePath(project));
   }
@@ -248,6 +252,7 @@ public class Change {
     return null;
   }
 
+  @Nls
   @Nullable
   public String getDescription() {
     return null;

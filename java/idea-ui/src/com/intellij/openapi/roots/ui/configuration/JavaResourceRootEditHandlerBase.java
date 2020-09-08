@@ -11,7 +11,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.roots.IconActionComponent;
 import com.intellij.util.ui.FormBuilder;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -98,7 +97,7 @@ public abstract class JavaResourceRootEditHandlerBase extends ModuleSourceRootEd
       myProperties = properties;
       setTitle(ProjectBundle.message("module.paths.edit.properties.title"));
       myRelativeOutputPathField = new JTextField();
-      myIsGeneratedCheckBox = new JCheckBox(UIUtil.replaceMnemonicAmpersand("For &generated resources"));
+      myIsGeneratedCheckBox = new JCheckBox(JavaUiBundle.message("checkbox.for.generated.resources"));
       myMainPanel = FormBuilder.createFormBuilder()
         .addLabeledComponent(JavaUiBundle.message("label.relative.output.path"), myRelativeOutputPathField)
         .addComponent(myIsGeneratedCheckBox)

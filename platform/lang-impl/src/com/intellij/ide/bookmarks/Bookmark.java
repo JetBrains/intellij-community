@@ -294,6 +294,10 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
     return targetLine;
   }
 
+  public boolean hasLine() {
+    return myTarget.getLine() >= 0;
+  }
+
   @NotNull
   private OpenFileDescriptor getTarget() {
     int line = getLine();
@@ -547,11 +551,6 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
           myBookmark.myTarget = new OpenFileDescriptor(myBookmark.myTarget.getProject(), file, line, -1, true);
           myBookmark.updateHighlighter();
           return true;
-        }
-
-        @Override
-        public Cursor getCursor(int line, int actionId) {
-          return DragSource.DefaultMoveDrop;
         }
       };
     }

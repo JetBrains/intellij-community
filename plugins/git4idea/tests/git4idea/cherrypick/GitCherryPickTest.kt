@@ -30,7 +30,7 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
 
     cherryPick(commit)
 
-    assertErrorNotification("Cherry-pick Failed", """
+    assertErrorNotification("Cherry-pick failed", """
       ${shortHash(commit)} fix #1
       Your local changes would be overwritten by cherry-pick.
       Commit your changes or stash them to proceed.""")

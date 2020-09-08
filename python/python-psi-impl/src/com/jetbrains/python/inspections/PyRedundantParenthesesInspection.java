@@ -83,7 +83,7 @@ public class PyRedundantParenthesesInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyParenthesizedExpression(final PyParenthesizedExpression node) {
+    public void visitPyParenthesizedExpression(final @NotNull PyParenthesizedExpression node) {
       if (node.textContains('\n')) return;
       final PsiElement parent = node.getParent();
       if (parent instanceof PyParenthesizedExpression) return;
@@ -144,7 +144,7 @@ public class PyRedundantParenthesesInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyArgumentList(PyArgumentList node) {
+    public void visitPyArgumentList(@NotNull PyArgumentList node) {
       if (!(node.getParent() instanceof PyClass)) {
         return;
       }

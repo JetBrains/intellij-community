@@ -13,7 +13,7 @@ import java.util.Comparator;
 import java.util.Objects;
 
 public abstract class ColumnInfo<Item, Aspect> {
-  private String myName;
+  private @ColumnName String myName;
   public static final ColumnInfo[] EMPTY_ARRAY = new ColumnInfo[0];
 
   @SuppressWarnings("unchecked")
@@ -46,7 +46,7 @@ public abstract class ColumnInfo<Item, Aspect> {
     return null;
   }
 
-  public String getName() {
+  public @ColumnName String getName() {
     return myName;
   }
 

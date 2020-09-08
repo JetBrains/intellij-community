@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,8 +22,8 @@ public interface ChangeListListener extends EventListener {
   default void changeListRemoved(ChangeList list) {}
   default void changeListChanged(ChangeList list) {}
   default void changeListDataChanged(@NotNull ChangeList list) {}
-  default void changeListRenamed(ChangeList list, String oldName) {}
-  default void changeListCommentChanged(ChangeList list, String oldComment) {}
+  default void changeListRenamed(ChangeList list, @NlsSafe String oldName) {}
+  default void changeListCommentChanged(ChangeList list, @NlsSafe String oldComment) {}
   default void defaultListChanged(ChangeList oldDefaultList, ChangeList newDefaultList) {}
   default void defaultListChanged(ChangeList oldDefaultList, ChangeList newDefaultList, boolean automatic) {
     defaultListChanged(oldDefaultList, newDefaultList);

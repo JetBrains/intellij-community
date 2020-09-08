@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -76,14 +77,14 @@ class AddModuleDependencyAction extends AddItemPopupAction<Module> {
 
   private static class ModuleChooser implements ClasspathElementChooser<Module> {
     private final List<? extends Module> myItems;
-    private final String myTitle;
-    private final String myDescription;
+    private final @NlsContexts.DialogTitle String myTitle;
+    private final @NlsContexts.Label String myDescription;
     private final ClasspathPanel myClasspathPanel;
 
     ModuleChooser(final ClasspathPanel classpathPanel,
-                         final List<? extends Module> items,
-                         final String title,
-                         String description) {
+                  final List<? extends Module> items,
+                  final @NlsContexts.DialogTitle String title,
+                  @NlsContexts.Label String description) {
       myItems = items;
       myTitle = title;
       myDescription = description;

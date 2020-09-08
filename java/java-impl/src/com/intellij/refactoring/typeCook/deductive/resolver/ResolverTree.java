@@ -191,7 +191,7 @@ public final class ResolverTree {
       }
     }
 
-    final DFSTBuilder<PsiTypeVariable> dfstBuilder = new DFSTBuilder<>(new Graph<PsiTypeVariable>() {
+    final DFSTBuilder<PsiTypeVariable> dfstBuilder = new DFSTBuilder<>(new Graph<>() {
       @NotNull
       @Override
       public Collection<PsiTypeVariable> getNodes() {

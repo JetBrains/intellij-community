@@ -4,6 +4,7 @@ package org.zmlx.hg4idea.repo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.command.HgShowConfigCommand;
@@ -39,7 +40,7 @@ public final class HgConfig {
   }
 
   @Nullable
-  public String getNamedConfig(@NotNull String sectionName, @Nullable String configName) {
+  public String getNamedConfig(@NotNull @NonNls String sectionName, @Nullable @NonNls String configName) {
     if (StringUtil.isEmptyOrSpaces(sectionName) || StringUtil.isEmptyOrSpaces(configName)) {
       return null;
     }
@@ -49,7 +50,7 @@ public final class HgConfig {
 
   @NotNull
   public Collection<String> getPaths() {
-    Map<String, String> pathOptions = myConfigMap.get("paths");
+    Map<String, String> pathOptions = myConfigMap.get("paths"); //NON-NLS
     return pathOptions != null ? pathOptions.values() : Collections.emptyList();
   }
 

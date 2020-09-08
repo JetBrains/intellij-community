@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.NotNull;
@@ -16,21 +17,10 @@ public abstract class DItemElement implements DNamedElement, DTypedElement, Comp
   public Boolean myStatic;
   public String myName;
 
-//  @NotNull
-  public String myHighlightedText = null;
-
   public DItemElement(@Nullable Boolean isStatic, @Nullable String name, @Nullable String type) {
     myStatic = isStatic;
     myName = name;
     myType = type;
-  }
-
-  public String getHighlightedText() {
-    return myHighlightedText;
-  }
-
-  public void setHighlightedText(String highlightedText) {
-    myHighlightedText = highlightedText;
   }
 
   public boolean equals(Object o) {
@@ -67,12 +57,12 @@ public abstract class DItemElement implements DNamedElement, DTypedElement, Comp
   public abstract void clearCache();
 
   @Override
-  public String getName() {
+  public @NlsSafe String getName() {
     return myName;
   }
 
   @Override
-  public void setName(String name) {
+  public void setName(@NlsSafe String name) {
     this.myName = name;
     clearCache();
   }

@@ -1,7 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase.log
 
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.impl.HashImpl
+import git4idea.GitUtil
 import git4idea.commands.Git
 import git4idea.findProtectedRemoteBranchContainingCommit
 import git4idea.history.GitLogUtil
@@ -43,6 +46,7 @@ internal sealed class GitCommitEditingOperationResult {
       val res = Git.getInstance().reset(repository, GitResetMode.KEEP, oldHead)
       repository.update()
       return if (res.success()) {
+        GitUtil.updateAndRefreshChangedVfs(repository, HashImpl.build(newHead))
         UndoResult.Success
       }
       else {
@@ -52,7 +56,7 @@ internal sealed class GitCommitEditingOperationResult {
 
     sealed class UndoResult {
       object Success : UndoResult()
-      class Error(val errorHtml: String) : UndoResult()
+      class Error(@NlsContexts.NotificationContent val errorHtml: String) : UndoResult()
     }
 
     sealed class UndoPossibility {

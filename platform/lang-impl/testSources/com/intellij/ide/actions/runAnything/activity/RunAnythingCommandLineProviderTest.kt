@@ -127,4 +127,17 @@ class RunAnythingCommandLineProviderTest : RunAnythingCommandLineProviderTestCas
       }
     }
   }
+
+  @Test
+  fun `test recognition of command prefix`() {
+    val provider = createDummyCommandLineProvider()
+    assertEquals("", provider.findMatchingValue({}, ""))
+    assertEquals("s", provider.findMatchingValue({}, "s"))
+    assertEquals("st", provider.findMatchingValue({}, "st"))
+    assertEquals("start", provider.findMatchingValue({}, "start"))
+    assertEquals("start ", provider.findMatchingValue({}, "start "))
+    assertEquals("start 123", provider.findMatchingValue({}, "start 123"))
+    assertEquals(null, provider.findMatchingValue({}, "start1"))
+    assertEquals(null, provider.findMatchingValue({}, "starts"))
+  }
 }

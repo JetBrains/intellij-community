@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemeMetaInfo;
+import com.intellij.openapi.util.NlsSafe;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -45,6 +46,7 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
   FontPreferences getFontPreferences();
   void setFontPreferences(@NotNull FontPreferences preferences);
 
+  @NlsSafe
   String getEditorFontName();
 
   void setEditorFontName(String fontName);
@@ -113,6 +115,7 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
   default void setUseAppFontPreferencesInEditor() {}
   default boolean isUseAppFontPreferencesInEditor() {return false;}
 
+  @NlsSafe
   String getConsoleFontName();
 
   void setConsoleFontName(String fontName);

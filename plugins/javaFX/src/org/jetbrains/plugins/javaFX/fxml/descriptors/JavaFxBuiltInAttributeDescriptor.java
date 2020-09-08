@@ -8,6 +8,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
@@ -83,7 +84,7 @@ public class JavaFxBuiltInAttributeDescriptor extends JavaFxPropertyAttributeDes
         if (tagClass != null) {
           final PsiField field = controllerClass.findFieldByName(value, true);
           if (field != null && !InheritanceUtil.isInheritorOrSelf(tagClass, PsiUtil.resolveClassInType(field.getType()), true)) {
-            return "Cannot set " + tagClass.getQualifiedName() + " to field '" + field.getName() + "'";
+            return JavaFXBundle.message("cannot.class.name.to.field.name", tagClass.getQualifiedName(), field.getName());
           }
         }
       }
@@ -127,7 +128,7 @@ public class JavaFxBuiltInAttributeDescriptor extends JavaFxPropertyAttributeDes
         }
         final PsiMethod method = JavaFxPsiUtil.findValueOfMethod(tagClass);
         if (method == null) {
-          return "Unable to coerce '" + value + "' to " + tagClass.getQualifiedName() + ".";
+          return JavaFXBundle.message("unable.to.coerce.error",value, tagClass.getQualifiedName());
         }
       }
       return validateLiteral(xmlAttributeValue, value);
@@ -167,7 +168,7 @@ public class JavaFxBuiltInAttributeDescriptor extends JavaFxPropertyAttributeDes
       if (tagClass != null) {
         final PsiField constField = tagClass.findFieldByName(value, true);
         if (constField == null || !isConstant(constField)) {
-          return "Constant '" + value + "' is not found";
+          return JavaFXBundle.message("constant.not.found", value);
         }
       }
       return null;

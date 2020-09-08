@@ -20,13 +20,18 @@ public class DefaultBundleService {
   }
 
   @NotNull
-  public <T> T compute(@NotNull Supplier<T> computable) {
-    ourDefaultBundle.set(true);
+  public <T> T compute(@NotNull Supplier<? extends T> computable) {
+    final boolean isDefault = isDefaultBundle();
+    if (!isDefault) {
+      ourDefaultBundle.set(true);
+    }
     try {
       return computable.get();
     }
     finally {
-      ourDefaultBundle.set(false);
+      if (!isDefault) {
+        ourDefaultBundle.set(false);
+      }
     }
   }
 

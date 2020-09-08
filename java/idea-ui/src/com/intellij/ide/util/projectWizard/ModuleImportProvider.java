@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util.projectWizard;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportProvider;
@@ -48,6 +49,6 @@ public class ModuleImportProvider extends ProjectImportProvider {
   @Nullable
   @Override
   public String getFileSample() {
-    return "Intellij IDEA module file (*.iml)";
+    return JavaUiBundle.message("intellij.idea.module.file.iml");
   }
 }

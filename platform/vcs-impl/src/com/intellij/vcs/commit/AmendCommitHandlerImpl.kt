@@ -65,8 +65,9 @@ open class AmendCommitHandlerImpl(private val workflowHandler: AbstractCommitWor
     amendCommitEventDispatcher.addListener(listener, parent)
 
   protected fun setAmendPrefix(isAmend: Boolean) {
-    val amendPrefix = if (isAmend) "Amend " else ""
-    workflowHandler.ui.defaultCommitActionName = amendPrefix + workflowHandler.getCommitActionName()
+    val commitActionName = workflowHandler.getCommitActionName()
+    val newActionName = if (isAmend) VcsBundle.message("amend.action.name", commitActionName) else commitActionName
+    workflowHandler.ui.defaultCommitActionName = newActionName
   }
 
   private fun setAmendMessage() {

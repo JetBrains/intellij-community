@@ -194,18 +194,6 @@ public class RootsChangedTest extends JavaModuleTestCase {
     });
   }
 
-  @NotNull
-  public Sdk createJdk() {
-    final Sdk jdk;
-    try {
-      jdk = (Sdk)IdeaTestUtil.getMockJdk17().clone();
-    }
-    catch (CloneNotSupportedException e) {
-      throw new RuntimeException(e);
-    }
-    return jdk;
-  }
-
   public void testInheritedJdkEditing() {
     ApplicationManager.getApplication().runWriteAction(() -> {
       final Module moduleA = createModule("a.iml");

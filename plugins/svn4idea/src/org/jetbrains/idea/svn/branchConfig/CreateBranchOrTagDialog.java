@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.ide.ui.ProductIcons;
@@ -91,12 +91,16 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
 
     Info info = myVcs.getInfo(file);
     if (info == null || info.getUrl() == null) {
-      throw new VcsException("Can not find url for file: " + file.getPath());
+      throw new VcsException(message("error.can.not.find.url.for.file", file.getPath()));
     }
     mySrcURL = info.getUrl();
 
-    myWorkingCopyField.addBrowseFolderListener("Select Working Copy Location", "Select Location to Copy From:",
-                                               myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor());
+    myWorkingCopyField.addBrowseFolderListener(
+      message("dialog.title.select.working.copy.location"),
+      message("label.select.location.to.copy.from"),
+      myProject,
+      FileChooserDescriptorFactory.createSingleFolderDescriptor()
+    );
     myWorkingCopyField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull final DocumentEvent e) {
@@ -120,8 +124,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
       try {
         Url url = createUrl(myToURLText.getText(), false);
         String dstName = mySrcURL.getTail();
-        Url destination = SelectLocationDialog
-          .selectCopyDestination(myProject, removePathTail(url), message("label.copy.select.location.dialog.copy.as"), dstName, false);
+        Url destination = SelectLocationDialog.selectCopyDestination(myProject, removePathTail(url), dstName);
 
         if (destination != null) {
           myToURLText.setText(destination.toDecodedString());
@@ -134,7 +137,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
 
     RootUrlInfo root = myVcs.getSvnFileUrlMapping().getWcRootForFilePath(getFilePath(file));
     if (root == null) {
-      throw new VcsException("Can not find working copy for file: " + file.getPath());
+      throw new VcsException(message("error.can.not.find.working.copy.for.file", file.getPath()));
     }
     mySrcVirtualFile = root.getVirtualFile();
     myWcRootUrl = root.getUrl();
@@ -204,7 +207,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
   }
 
   private void updateSwitchOnCreate() {
-    mySwitchOnCreate.setText("Switch " + getSourceFile() + " to the newly created branch or tag");
+    mySwitchOnCreate.setText(message("checkbox.switch.to.newly.created.branch.or.tag", getSourceFile()));
   }
 
   private void updateControls() {
@@ -297,12 +300,12 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     if (myRepositoryRadioButton.isSelected()) {
       Url url = getRepositoryFieldUrl();
       if (url == null) {
-        return new ValidationInfo("Invalid repository location", myRepositoryField.getTextField());
+        return new ValidationInfo(message("dialog.message.invalid.repository.location"), myRepositoryField.getTextField());
       }
 
       Revision revision = getRevision();
       if (!revision.isValid() || revision.isLocal()) {
-        return new ValidationInfo(message("create.branch.invalid.revision.error"), myRevisionPanel.getRevisionTextField());
+        return new ValidationInfo(message("dialog.message.invalid.revision"), myRevisionPanel.getRevisionTextField());
       }
 
       mySource = Target.on(url, revision);
@@ -319,18 +322,18 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     if (myBranchOrTagRadioButton.isSelected()) {
       Url branchLocation = myBranchTagBaseModel.getSelected();
       if (branchLocation == null) {
-        return new ValidationInfo(message("create.branch.no.base.location.error"), myBranchTagBaseComboBox.getComboBox());
+        return new ValidationInfo(message("dialog.message.no.branch.base.location.selected"), myBranchTagBaseComboBox.getComboBox());
       }
 
       if (isEmptyOrSpaces(myBranchTextField.getText())) {
-        return new ValidationInfo("Branch name is empty", myBranchTextField);
+        return new ValidationInfo(message("dialog.message.branch.name.is.empty"), myBranchTextField);
       }
 
       try {
         myDestination = branchLocation.appendPath(myBranchTextField.getText(), false);
       }
       catch (SvnBindException e) {
-        return new ValidationInfo("Invalid branch name", myBranchTextField);
+        return new ValidationInfo(message("dialog.message.invalid.branch.name"), myBranchTextField);
       }
     }
     else {
@@ -338,7 +341,7 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
         myDestination = createUrl(myToURLText.getText(), false);
       }
       catch (SvnBindException e) {
-        return new ValidationInfo("Invalid branch url", myToURLText.getTextField());
+        return new ValidationInfo(message("dialog.message.invalid.branch.url"), myToURLText.getTextField());
       }
     }
 

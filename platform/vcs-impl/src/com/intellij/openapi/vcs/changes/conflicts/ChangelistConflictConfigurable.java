@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.conflicts;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -8,9 +8,9 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.binding.BindControl;
 import com.intellij.openapi.options.binding.BindableConfigurable;
 import com.intellij.openapi.options.binding.ControlBinder;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBList;
@@ -48,11 +48,15 @@ public class ChangelistConflictConfigurable extends BindableConfigurable impleme
   private final ChangelistConflictTracker myConflictTracker;
   private final VcsApplicationSettings myVcsApplicationSettings;
 
-  public ChangelistConflictConfigurable(ChangeListManagerImpl manager) {
-    super(new ControlBinder(manager.getConflictTracker().getOptions()));
+  public ChangelistConflictConfigurable(Project project) {
+    this(ChangelistConflictTracker.getInstance(project));
+  }
+
+  public ChangelistConflictConfigurable(ChangelistConflictTracker conflictTracker) {
+    super(new ControlBinder(conflictTracker.getOptions()));
     myVcsApplicationSettings = VcsApplicationSettings.getInstance();
 
-    myConflictTracker = manager.getConflictTracker();
+    myConflictTracker = conflictTracker;
 
     myClearButton.addActionListener(new ActionListener() {
       @Override
@@ -71,6 +75,7 @@ public class ChangelistConflictConfigurable extends BindableConfigurable impleme
   @Override
   public JComponent createComponent() {
     getBinder().bindAnnotations(this);
+    SwingUtilities.updateComponentTreeUI(myPanel); // TODO: create Swing components in this method (see javadoc)
     return myPanel;
   }
 

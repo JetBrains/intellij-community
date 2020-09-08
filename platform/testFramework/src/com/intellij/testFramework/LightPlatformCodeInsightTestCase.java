@@ -185,7 +185,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       }
       EditorTestUtil.setCaretsAndSelection(getEditor(), caretsState);
       setupEditorForInjectedLanguage();
-      myIndexingMode.ensureIndexingStatus(getProject());
+      getIndexingMode().ensureIndexingStatus(getProject());
       return document;
     });
   }
@@ -202,7 +202,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       ((EditorImpl)editor).setCaretActive();
 
       EditorTestUtil.setCaretsAndSelection(editor, caretsState);
-      myIndexingMode.ensureIndexingStatus(getProject());
+      getIndexingMode().ensureIndexingStatus(getProject());
       return editor;
     });
   }
@@ -214,7 +214,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     DaemonCodeAnalyzer.getInstance(getProject()).restart();
     assertNotNull(editor);
     ((EditorImpl)editor).setCaretActive();
-    myIndexingMode.ensureIndexingStatus(getProject());
+    getIndexingMode().ensureIndexingStatus(getProject());
     return editor;
   }
 
@@ -227,7 +227,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     myEditor = createSaveAndOpenFile(relativePath, fileText);
     myVFile = FileDocumentManager.getInstance().getFile(getEditor().getDocument());
     myFile = getPsiManager().findFile(myVFile);
-    myIndexingMode.ensureIndexingStatus(getProject());
+    getIndexingMode().ensureIndexingStatus(getProject());
     return getEditor().getDocument();
   }
 
@@ -235,7 +235,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected Editor createSaveAndOpenFile(@NotNull String relativePath, @NotNull String fileText) {
     Editor editor = createEditor(VfsTestUtil.createFile(getSourceRoot(), relativePath, fileText));
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-    myIndexingMode.ensureIndexingStatus(getProject());
+    getIndexingMode().ensureIndexingStatus(getProject());
     return editor;
   }
 
@@ -272,25 +272,25 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
         FileEditorManager.getInstance(getProject()).closeFile(myVFile);
         myVFile.delete(getProject());
       });
-      myIndexingMode.ensureIndexingStatus(getProject());
+      getIndexingMode().ensureIndexingStatus(getProject());
     }
   }
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myIndexingMode.setUpTest(getProject(), getTestRootDisposable());
+    getIndexingMode().setUpTest(getProject(), getTestRootDisposable());
   }
 
   @Before  // runs after (all overrides of) setUp()
   public void before() throws Throwable {
-    myIndexingMode.ensureIndexingStatus(getProject());
+    getIndexingMode().ensureIndexingStatus(getProject());
   }
 
   @Override
   protected void tearDown() throws Exception {
     try {
-      myIndexingMode.tearDownTest(getProject());
+      getIndexingMode().tearDownTest(getProject());
       FileEditorManager editorManager = FileEditorManager.getInstance(getProject());
       for (VirtualFile openFile : editorManager.getOpenFiles()) {
         editorManager.closeFile(openFile);

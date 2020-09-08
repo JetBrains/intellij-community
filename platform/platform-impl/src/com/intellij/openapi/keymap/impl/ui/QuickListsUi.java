@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ui.ListItemEditor;
 import com.intellij.util.ui.ListModelEditor;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -22,8 +23,8 @@ import java.awt.*;
 import java.util.List;
 
 final class QuickListsUi implements ConfigurableUi<List<QuickList>> {
-  public static final String EMPTY = "empty";
-  public static final String PANEL = "panel";
+  @NonNls public static final String EMPTY = "empty";
+  @NonNls public static final String PANEL = "panel";
   private final KeymapListener keymapListener;
 
   private final ListItemEditor<QuickList> itemEditor = new ListItemEditor<QuickList>() {

@@ -16,6 +16,8 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -280,7 +282,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
                                         @Nullable String newName,
                                         @NotNull PsiDirectory targetDirectory,
                                         int @Nullable [] choice,
-                                        @Nullable String title) throws IncorrectOperationException, IOException {
+                                        @Nullable @NlsContexts.Command String title) throws IncorrectOperationException, IOException {
     ArrayList<PsiFile> added = new ArrayList<>();
     copyToDirectory(elementToCopy, newName, targetDirectory, choice, title, added);
     if (added.isEmpty()) {
@@ -301,12 +303,12 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
                                       @Nullable String newName,
                                       @NotNull PsiDirectory targetDirectory,
                                       int @Nullable [] choice,
-                                      @Nullable String title,
+                                      @Nullable @NlsContexts.Command String title,
                                       @NotNull List<PsiFile> added) throws IncorrectOperationException, IOException {
     if (elementToCopy instanceof PsiFile) {
       PsiFile file = (PsiFile)elementToCopy;
       String name = newName == null ? file.getName() : newName;
-      if (checkFileExist(targetDirectory, choice, file, name, "Copy")) {
+      if (checkFileExist(targetDirectory, choice, file, name, RefactoringBundle.message("command.name.copy"))) {
         return;
       }
       ((PsiDirectoryImpl)targetDirectory).executeWithUpdatingAddedFilesDisabled(() -> {
@@ -352,15 +354,19 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
     }
   }
 
-  public static boolean checkFileExist(@Nullable PsiDirectory targetDirectory, int[] choice, PsiFile file, String name, String title) {
+  public static boolean checkFileExist(@Nullable PsiDirectory targetDirectory, int[] choice, PsiFile file, @NlsSafe String name, @NlsContexts.Command String title) {
     if (targetDirectory == null) return false;
     final PsiFile existing = targetDirectory.findFile(name);
     if (existing != null && !existing.equals(file)) {
       int selection;
       if (choice == null || choice[0] == -1) {
-        String message = String.format("File '%s' already exists in directory '%s'", name, targetDirectory.getVirtualFile().getPath());
-        String[] options = choice == null ? new String[]{"Overwrite", "Skip"}
-                                          : new String[]{"Overwrite", "Skip", "Overwrite for all", "Skip for all"};
+        String message =
+          RefactoringBundle.message("dialog.message.file.already.exists.in.directory", name, targetDirectory.getVirtualFile().getPath());
+        String[] options = choice == null ? new String[]{RefactoringBundle.message("copy.overwrite.button"), RefactoringBundle.message("copy.skip.button")}
+                                          : new String[]{RefactoringBundle.message("copy.overwrite.button"),
+                                            RefactoringBundle.message("copy.skip.button"),
+                                            RefactoringBundle.message("copy.overwrite.for.all.button"),
+                                            RefactoringBundle.message("copy.skip.for.all.button")};
         selection = Messages.showDialog(targetDirectory.getProject(), message, title, options, 0, Messages.getQuestionIcon());
       }
       else {

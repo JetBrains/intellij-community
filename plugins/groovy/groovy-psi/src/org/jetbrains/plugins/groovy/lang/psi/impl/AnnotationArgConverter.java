@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +31,7 @@ public class AnnotationArgConverter {
     }
   }
 
-  private void generateText(PsiAnnotationMemberValue value, final StringBuilder buffer) {
+  private void generateText(PsiAnnotationMemberValue value, final @NlsSafe StringBuilder buffer) {
     value.accept(new JavaElementVisitor() {
       @Override
       public void visitAnnotation(PsiAnnotation annotation) {

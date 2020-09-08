@@ -4,7 +4,7 @@ package git4idea.remote;
 import com.intellij.dvcs.hosting.RepositoryHostingService;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.CalledInBackground;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,7 +15,7 @@ public abstract class GitRepositoryHostingService implements RepositoryHostingSe
   /**
    * @see InteractiveGitHttpAuthDataProvider
    */
-  @CalledInBackground
+  @RequiresBackgroundThread
   @Nullable
   public InteractiveGitHttpAuthDataProvider getInteractiveAuthDataProvider(@NotNull Project project, @NotNull String url) {
     return null;
@@ -24,7 +24,7 @@ public abstract class GitRepositoryHostingService implements RepositoryHostingSe
   /**
    * @see InteractiveGitHttpAuthDataProvider
    */
-  @CalledInBackground
+  @RequiresBackgroundThread
   @Nullable
   public InteractiveGitHttpAuthDataProvider getInteractiveAuthDataProvider(@NotNull Project project, @NotNull String url, @NotNull String login) {
     return null;

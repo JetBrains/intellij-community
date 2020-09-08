@@ -15,6 +15,8 @@
  */
 package com.intellij.psi;
 
+import com.intellij.core.JavaPsiBundle;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.util.PsiUtil;
@@ -42,7 +44,7 @@ public abstract class PsiDiamondType extends PsiType {
 
       @Override
       public String getErrorMessage() {
-        return "Cannot use diamonds with explicit type parameters for constructor";
+        return JavaPsiBundle.message("diamond.error.explicit.type.parameters.for.constructor");
       }
     };
 
@@ -54,7 +56,7 @@ public abstract class PsiDiamondType extends PsiType {
 
       @Override
       public String getErrorMessage() {
-        return "Cannot infer arguments";
+        return JavaPsiBundle.message("diamond.error.cannot.infer.arguments");
       }
     };
 
@@ -78,7 +80,7 @@ public abstract class PsiDiamondType extends PsiType {
 
       @Override
       public String getErrorMessage() {
-        return "Cannot infer arguments (unable to resolve constructor)";
+        return JavaPsiBundle.message("diamond.error.cannot.infer.arguments.unable.to.resolve.constructor");
       }
     };
 
@@ -90,12 +92,12 @@ public abstract class PsiDiamondType extends PsiType {
 
       @Override
       public String getErrorMessage() {
-        return "Cannot use ''<>'' with anonymous inner classes";
+        return JavaPsiBundle.message("diamond.error.anonymous.inner.classes");
       }
     };
 
     private final List<PsiType> myInferredTypes = new ArrayList<>();
-    private String myErrorMessage;
+    private @NlsContexts.DetailedDescription String myErrorMessage;
     private String myNewExpressionPresentableText;
 
     public DiamondInferenceResult() { }
@@ -115,7 +117,7 @@ public abstract class PsiDiamondType extends PsiType {
       return myInferredTypes;
     }
 
-    public String getErrorMessage() {
+    public @NlsContexts.DetailedDescription String getErrorMessage() {
       return myErrorMessage;
     }
 
@@ -126,7 +128,7 @@ public abstract class PsiDiamondType extends PsiType {
     protected void addInferredType(PsiType psiType) {
       if (myErrorMessage != null) return;
       if (psiType == null) {
-        myErrorMessage = "Cannot infer type arguments for " + myNewExpressionPresentableText;
+        myErrorMessage = JavaPsiBundle.message("diamond.error.cannot.infer.type.arguments", myNewExpressionPresentableText);
       }
       else {
         myInferredTypes.add(psiType);

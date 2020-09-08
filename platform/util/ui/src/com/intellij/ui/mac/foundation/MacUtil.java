@@ -9,7 +9,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.awt.AWTAccessor;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
@@ -145,14 +144,17 @@ public final class MacUtil {
     ID windowId = null;
     if (Registry.is("skip.untitled.windows.for.mac.messages")) {
       try {
-        Class <?> cWindowPeerClass  = AWTAccessor.getComponentAccessor().getPeer(w).getClass();
+        Class<?> awtAccessor = Class.forName("sun.awt.AWTAccessor");
+        Object componentAccessor = awtAccessor.getMethod("getComponentAccessor").invoke(null);
+        Object peer = componentAccessor.getClass().getMethod("getPeer", Component.class).invoke(componentAccessor, w);
+        Class<?> cWindowPeerClass  = peer.getClass();
         Method getPlatformWindowMethod = cWindowPeerClass.getDeclaredMethod("getPlatformWindow");
-        Object cPlatformWindow = getPlatformWindowMethod.invoke(AWTAccessor.getComponentAccessor().getPeer(w));
-        Class <?> cPlatformWindowClass = cPlatformWindow.getClass();
+        Object cPlatformWindow = getPlatformWindowMethod.invoke(peer);
+        Class<?> cPlatformWindowClass = cPlatformWindow.getClass();
         Method getNSWindowPtrMethod = cPlatformWindowClass.getDeclaredMethod("getNSWindowPtr");
         windowId = new ID((Long)getNSWindowPtrMethod.invoke(cPlatformWindow));
       }
-      catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+      catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassNotFoundException e) {
         LOG.debug(e);
       }
     }

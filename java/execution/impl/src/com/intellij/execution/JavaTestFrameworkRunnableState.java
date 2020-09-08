@@ -24,6 +24,7 @@ import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersConfigurator;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -45,7 +46,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
@@ -63,9 +63,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public abstract class JavaTestFrameworkRunnableState<T extends
@@ -121,9 +124,15 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   @NotNull protected abstract String getForkMode();
 
   @NotNull
-  protected OSProcessHandler createHandler(Executor executor) throws ExecutionException {
+  private OSProcessHandler createHandler(Executor executor, SMTestRunnerResultsForm viewer) throws ExecutionException {
     appendForkInfo(executor);
     appendRepeatMode();
+
+    SearchForTestsTask searchForTestsTask = createSearchingForTestsTask();
+    if (searchForTestsTask != null) {
+      searchForTestsTask.arrangeForIndexAccess();
+      searchForTestsTask.setIncompleteIndexUsageCallback(() -> viewer.setIncompleteIndexUsed());
+    }
 
     EmptyProgressIndicator targetIndicator = new EmptyProgressIndicator();
     TargetEnvironment remoteEnvironment = getEnvironment().getPreparedTargetEnvironment(this, targetIndicator);
@@ -137,7 +146,6 @@ public abstract class JavaTestFrameworkRunnableState<T extends
                                                                                targetedCommandLineBuilder.getFilesToDeleteOnTermination());
 
     ProcessTerminatedListener.attach(processHandler);
-    final SearchForTestsTask searchForTestsTask = createSearchingForTestsTask();
     if (searchForTestsTask != null) {
       searchForTestsTask.attachTaskToProcess(processHandler);
     }
@@ -185,9 +193,8 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     final BaseTestsOutputConsoleView consoleView = SMTestRunnerConnectionUtil.createConsole(getFrameworkName(), testConsoleProperties);
     final SMTestRunnerResultsForm viewer = ((SMTRunnerConsoleView)consoleView).getResultsViewer();
     Disposer.register(getConfiguration().getProject(), consoleView);
-    viewer.getTestsRootNode().setExecutionId(getEnvironment().getExecutionId());
 
-    final OSProcessHandler handler = createHandler(executor);
+    OSProcessHandler handler = createHandler(executor, viewer);
 
     for (ArgumentFileFilter filter : myArgumentFileFilters) {
       consoleView.addMessageFilter(filter);
@@ -318,15 +325,14 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       if (forkPerModule()) {
         if (isExecutorDisabledInForkedMode()) {
           final String actionName = executor.getActionName();
-          throw new CantRunException("'" + actionName + "' is disabled when per-module working directory is configured.<br/>" +
-                                     "Please specify single working directory, or change test scope to single module.");
+          throw new CantRunException(JavaCompilerBundle.message("action.disabled.when.per.module.working.directory.configured", actionName));
         }
       } else {
         return;
       }
     } else if (isExecutorDisabledInForkedMode()) {
       final String actionName = executor.getActionName();
-      throw new CantRunException(actionName + " is disabled in fork mode.<br/>Please change fork mode to &lt;none&gt; to " + StringUtil.toLowerCase(actionName) + ".");
+      throw new CantRunException(JavaCompilerBundle.message("action.disabled.in.fork.mode", actionName, StringUtil.toLowerCase(actionName)));
     }
 
     final JavaParameters javaParameters = getJavaParameters();
@@ -337,7 +343,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
     try {
       final File tempFile = FileUtil.createTempFile("command.line", "", true);
-      try (PrintWriter writer = new PrintWriter(tempFile, CharsetToolkit.UTF8)) {
+      try (PrintWriter writer = new PrintWriter(tempFile, StandardCharsets.UTF_8)) {
         ShortenCommandLine shortenCommandLine = getConfiguration().getShortenCommandLine();
         boolean useDynamicClasspathForForkMode = shortenCommandLine == null
                                                  ? JdkUtil.useDynamicClasspath(getConfiguration().getProject())
@@ -597,7 +603,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   protected void writeClassesPerModule(String packageName,
                                        JavaParameters javaParameters,
                                        Map<Module, List<String>> perModule,
-                                       @NotNull String filters) throws FileNotFoundException, UnsupportedEncodingException {
+                                       @NotNull String filters) throws IOException {
     if (perModule != null) {
       final String classpath = getScope() == TestSearchScope.WHOLE_PROJECT
                                ? null : javaParameters.getClassPath().getPathsString();
@@ -607,7 +613,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       //like plugin and corresponding IDE register the same components twice
       boolean toChangeWorkingDirectory = toChangeWorkingDirectory(workingDirectory);
 
-      try (PrintWriter wWriter = new PrintWriter(myWorkingDirsFile, CharsetToolkit.UTF8)) {
+      try (PrintWriter wWriter = new PrintWriter(myWorkingDirsFile, StandardCharsets.UTF_8)) {
         wWriter.println(packageName);
         for (Module module : perModule.keySet()) {
           wWriter.println(toChangeWorkingDirectory ? PathMacroUtil.getModuleDir(module.getModuleFilePath()) : workingDirectory);

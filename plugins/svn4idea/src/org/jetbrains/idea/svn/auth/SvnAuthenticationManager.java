@@ -5,8 +5,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.IdeaSVNConfigFile;
@@ -15,18 +15,20 @@ import org.jetbrains.idea.svn.api.Url;
 
 import java.nio.file.Path;
 
+import static com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier.showOverChangesView;
 import static org.jetbrains.idea.svn.IdeaSVNConfigFile.*;
+import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.SYSTEM_CONFIGURATION_PATH;
 
 public class SvnAuthenticationManager {
 
   // TODO Looks reasonable to introduce some AuthType/AuthKind class
-  public static final String PASSWORD = "svn.simple";
-  public static final String SSL = "svn.ssl.client-passphrase";
+  public static final @NonNls String PASSWORD = "svn.simple";
+  public static final @NonNls String SSL = "svn.ssl.client-passphrase";
 
-  public static final String SVN_SSH = "svn+ssh";
-  public static final String HTTP = "http";
-  public static final String HTTPS = "https";
+  public static final @NonNls String SVN_SSH = "svn+ssh";
+  public static final @NonNls String HTTP = "http";
+  public static final @NonNls String HTTPS = "https";
 
   private final @NotNull Project myProject;
   private final @NotNull Path myConfigDirectory;
@@ -116,8 +118,7 @@ public class SvnAuthenticationManager {
   }
 
   public void warnOnAuthStorageDisabled() {
-    VcsBalloonProblemNotifier
-      .showOverChangesView(myProject, "Cannot store credentials: forbidden by \"store-auth-creds=no\"", MessageType.ERROR);
+    showOverChangesView(myProject, message("svn.cannot.save.credentials.store-auth-creds"), MessageType.ERROR);
   }
 
   public final class HostOptions {

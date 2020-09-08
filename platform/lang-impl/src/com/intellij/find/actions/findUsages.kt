@@ -22,6 +22,7 @@ import com.intellij.usages.UsageSearcher
 import com.intellij.usages.UsageViewManager
 import com.intellij.usages.UsageViewPresentation
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 internal val LOG: Logger = Logger.getInstance("#com.intellij.find.actions")
 
@@ -97,6 +98,7 @@ private fun canReuseTab(project: Project): Boolean {
 
 internal val SearchTarget.displayString: String? get() = presentation.presentableText
 
+@Nls(capitalization = Nls.Capitalization.Title)
 internal fun <O> UsageHandler<O>.getSearchString(allOptions: AllSearchOptions<O>): String {
   return getSearchString(allOptions.options, allOptions.customOptions)
 }

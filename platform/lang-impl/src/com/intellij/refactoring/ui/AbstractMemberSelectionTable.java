@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.refactoring.ui;
 
@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
@@ -44,13 +45,15 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
   protected static final int VISIBILITY_ICON_POSITION = 1;
   protected static final int MEMBER_ICON_POSITION = 0;
 
-  protected final String myAbstractColumnHeader;
+  protected final @NlsContexts.ColumnName String myAbstractColumnHeader;
   protected List<M> myMemberInfos;
   protected final boolean myAbstractEnabled;
   protected MemberInfoModel<T, M> myMemberInfoModel;
   protected MyTableModel<T, M> myTableModel;
 
-  public AbstractMemberSelectionTable(Collection<M> memberInfos, @Nullable MemberInfoModel<T, M> memberInfoModel, @Nullable String abstractColumnHeader) {
+  public AbstractMemberSelectionTable(Collection<M> memberInfos,
+                                      @Nullable MemberInfoModel<T, M> memberInfoModel,
+                                      @Nullable @NlsContexts.ColumnName String abstractColumnHeader) {
     myAbstractEnabled = abstractColumnHeader != null;
     myAbstractColumnHeader = abstractColumnHeader;
     myTableModel = new MyTableModel<>(this);
@@ -427,7 +430,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     }
   }
 
-  protected static String getDisplayNameColumnHeader() {
+  protected static @NlsContexts.ColumnName String getDisplayNameColumnHeader() {
     return RefactoringBundle.message("member.column");
   }
 }

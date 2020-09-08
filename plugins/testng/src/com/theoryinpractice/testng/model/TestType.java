@@ -16,24 +16,29 @@
 
 package com.theoryinpractice.testng.model;
 
+import com.intellij.openapi.util.NlsContexts;
+import com.theoryinpractice.testng.TestngBundle;
+
+import java.util.function.Supplier;
+
 public enum TestType
 {
 
-    PACKAGE("PACKAGE", "All in package", 0),
-    CLASS  ("CLASS", "Class", 1),
-    METHOD ("METHOD", "Method", 2),
-    GROUP  ("GROUP", "Group", 3),
-    SUITE  ("SUITE", "Suite", 4),
-    PATTERN("PATTERN", "Pattern", 5),
-    SOURCE ("SOURCE", "Source location", 6);
+    PACKAGE("PACKAGE", () -> TestngBundle.message("label.all.in.package.test.type"), 0),
+    CLASS  ("CLASS", () -> TestngBundle.message("label.class.test.type"), 1),
+    METHOD ("METHOD", () -> TestngBundle.message("label.method.test.type"), 2),
+    GROUP  ("GROUP", () -> TestngBundle.message("label.group.test.type"), 3),
+    SUITE  ("SUITE", () -> TestngBundle.message("label.suite.test.type"), 4),
+    PATTERN("PATTERN", () -> TestngBundle.message("label.pattern.test.type"), 5),
+    SOURCE ("SOURCE", () -> TestngBundle.message("label.source.location.test.type"), 6);
     
     public final String type;
-    private final String presentableName;
+    private final Supplier<@NlsContexts.Label String> presentableNameSupplier;
     public final int value;
 
-    TestType(String type, String presentableName, int value) {
+    TestType(String type, Supplier<@NlsContexts.Label String> presentableNameSupplier, int value) {
         this.type = type;
-        this.presentableName = presentableName;
+        this.presentableNameSupplier = presentableNameSupplier;
         this.value = value;
     }
 
@@ -45,7 +50,7 @@ public enum TestType
         return value;
     }
 
-    public String getPresentableName() {
-        return presentableName;
+    public @NlsContexts.Label String getPresentableName() {
+        return presentableNameSupplier.get();
     }
 }

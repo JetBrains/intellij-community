@@ -35,6 +35,7 @@ import org.intellij.lang.xpath.xslt.validation.inspections.TemplateInvocationIns
 import org.intellij.lang.xpath.xslt.validation.inspections.UnusedElementInspection;
 import org.intellij.lang.xpath.xslt.validation.inspections.VariableShadowingInspection;
 import org.intellij.lang.xpath.xslt.validation.inspections.XsltDeclarationInspection;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,7 +88,7 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
                 if (sb.length() > 0) sb.append(", ");
                 sb.append("mode='").append(mode.toString()).append("'");
             }
-            return "Template (" + sb + ")";
+            return XPathBundle.message("list.item.template", sb);
         }
 
         @Override

@@ -41,7 +41,7 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
     super(text);
   }
 
-  protected DumbAwareAction(@NotNull Supplier<String> dynamicText) {
+  protected DumbAwareAction(@NotNull Supplier<@NlsActions.ActionText String> dynamicText) {
     super(dynamicText);
   }
 
@@ -51,11 +51,13 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
     super(text, description, icon);
   }
 
-  protected DumbAwareAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, @Nullable Icon icon) {
+  protected DumbAwareAction(@NotNull Supplier<@NlsActions.ActionText String> dynamicText,
+                            @NotNull Supplier<@NlsActions.ActionDescription String> dynamicDescription,
+                            @Nullable Icon icon) {
     super(dynamicText, dynamicDescription, icon);
   }
 
-  protected DumbAwareAction(@NotNull Supplier<String> dynamicText, @NotNull Icon icon) {
+  protected DumbAwareAction(@NotNull Supplier<@NlsActions.ActionText String> dynamicText, @NotNull Icon icon) {
     super(dynamicText, icon);
   }
 

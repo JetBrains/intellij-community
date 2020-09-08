@@ -26,6 +26,7 @@ import com.jetbrains.python.run.PythonProcessRunner;
 import com.jetbrains.python.run.PythonTracebackFilter;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.rest.PythonRestBundle;
 import com.jetbrains.rest.RestBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -124,7 +125,7 @@ public class SphinxBaseCommand {
   protected GeneralCommandLine createCommandLine(Module module, List<String> params) throws ExecutionException {
     Sdk sdk = PythonSdkUtil.findPythonSdk(module);
     if (sdk == null) {
-      throw new ExecutionException("No sdk specified");
+      throw new ExecutionException(PythonRestBundle.message("python.rest.no.sdk.specified"));
     }
 
     ReSTService service = ReSTService.getInstance(module);

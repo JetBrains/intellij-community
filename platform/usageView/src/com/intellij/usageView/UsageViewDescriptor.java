@@ -2,6 +2,7 @@
 package com.intellij.usageView;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,9 +17,11 @@ public interface UsageViewDescriptor {
 
   String getProcessedElementsHeader();
 
+  @Nls
   @NotNull
   String getCodeReferencesText(int usagesCount, int filesCount);
 
+  @Nls
   @Nullable
   default String getCommentReferencesText(int usagesCount, int filesCount) {
     return null;

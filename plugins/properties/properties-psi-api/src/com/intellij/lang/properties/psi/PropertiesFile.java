@@ -19,6 +19,7 @@ package com.intellij.lang.properties.psi;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -123,7 +124,7 @@ public interface PropertiesFile {
   @NotNull
   Map<String,String> getNamesMap();
 
-  @NotNull
+  @NotNull @NlsSafe
   String getName();
 
   VirtualFile getVirtualFile();

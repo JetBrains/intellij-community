@@ -5,6 +5,9 @@
     <extensionPoint name="logHighlighterFactory" interface="com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory" dynamic="true"/>
     <extensionPoint name="customVcsLogUiFactoryProvider" interface="com.intellij.vcs.log.impl.CustomVcsLogUiFactoryProvider"
                     area="IDEA_PROJECT" dynamic="true"/>
+    <extensionPoint name="vcsLogCustomColumn"
+                    interface="com.intellij.vcs.log.ui.table.column.VcsLogCustomColumn"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

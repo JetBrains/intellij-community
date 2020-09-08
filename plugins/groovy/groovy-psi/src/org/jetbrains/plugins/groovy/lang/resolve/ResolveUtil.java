@@ -5,6 +5,7 @@ import com.intellij.lang.java.beans.PropertyKind;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.ElementClassHint;
@@ -614,14 +615,14 @@ public final class ResolveUtil {
 
 
   public static GroovyResolveResult @NotNull [] getMethodCandidates(@NotNull PsiType thisType,
-                                                                    @Nullable String methodName,
+                                                                    @NlsSafe @Nullable String methodName,
                                                                     @NotNull PsiElement place,
                                                                     PsiType @Nullable ... argumentTypes) {
     return getMethodCandidates(thisType, methodName, place, false, argumentTypes);
   }
 
   public static GroovyResolveResult @NotNull [] getMethodCandidates(@NotNull PsiType thisType,
-                                                                    @Nullable String methodName,
+                                                                    @NlsSafe @Nullable String methodName,
                                                                     @NotNull PsiElement place,
                                                                     boolean allVariants,
                                                                     PsiType @Nullable ... argumentTypes) {

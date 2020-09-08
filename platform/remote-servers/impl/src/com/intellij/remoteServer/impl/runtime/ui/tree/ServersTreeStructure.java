@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.ServerType;
@@ -128,14 +129,16 @@ public final class ServersTreeStructure {
     }
 
     public void deploy(@NotNull AnActionEvent e) {
-      doDeploy(e, DefaultRunExecutor.getRunExecutorInstance(), "Deploy Configuration", true);
+      doDeploy(e, DefaultRunExecutor.getRunExecutorInstance(),
+               CloudBundle.message("ServersTreeStructure.RemoteServerNode.popup.title.deploy.configuration"), true);
     }
 
     public void deployWithDebug(@NotNull AnActionEvent e) {
-      doDeploy(e, DefaultDebugExecutor.getDebugExecutorInstance(), "Deploy and Debug Configuration", false);
+      doDeploy(e, DefaultDebugExecutor.getDebugExecutorInstance(),
+               CloudBundle.message("ServersTreeStructure.RemoteServerNode.popup.title.deploy.debug.configuration"), false);
     }
 
-    public void doDeploy(@NotNull AnActionEvent e, final Executor executor, String popupTitle, boolean canCreate) {
+    public void doDeploy(@NotNull AnActionEvent e, final Executor executor, @NlsContexts.PopupTitle String popupTitle, boolean canCreate) {
       final RemoteServer<?> server = getServer();
       final ServerType<? extends ServerConfiguration> serverType = server.getType();
       final DeploymentConfigurationManager configurationManager = DeploymentConfigurationManager.getInstance(myProject);

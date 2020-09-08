@@ -20,6 +20,7 @@
 package org.jetbrains.idea.maven.dom.model;
 
 import com.intellij.ide.presentation.Presentation;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericDomValue;
@@ -122,4 +123,10 @@ public interface MavenDomDependency extends MavenDomElement, MavenDomArtifactCoo
   @NotNull
   @Required(value = false, nonEmpty = true)
   GenericDomValue<Boolean> getOptional();
+
+
+
+  @Override
+  @NlsSafe
+  String toString();
 }

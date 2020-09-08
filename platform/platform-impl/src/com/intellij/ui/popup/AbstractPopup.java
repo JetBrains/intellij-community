@@ -60,12 +60,12 @@ import static java.awt.event.WindowEvent.WINDOW_ACTIVATED;
 import static java.awt.event.WindowEvent.WINDOW_GAINED_FOCUS;
 
 public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
-  public static final String SHOW_HINTS = "ShowHints";
+  @NonNls public static final String SHOW_HINTS = "ShowHints";
 
   // Popup size stored with DimensionService is null first time
   // In this case you can put Dimension in content client properties to adjust size
   // Zero or negative values (with/height or both) would be ignored (actual values would be obtained from preferred size)
-  public static final String FIRST_TIME_SIZE = "FirstTimeSize";
+  @NonNls public static final String FIRST_TIME_SIZE = "FirstTimeSize";
 
   private static final Logger LOG = Logger.getInstance(AbstractPopup.class);
 
@@ -202,7 +202,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
                                         boolean movable,
                                         String dimensionServiceKey,
                                         boolean resizable,
-                                        @Nullable String caption,
+                                        @NlsContexts.PopupTitle @Nullable String caption,
                                         @Nullable Computable<Boolean> callback,
                                         boolean cancelOnClickOutside,
                                         @NotNull Set<? extends JBPopupListener> listeners,
@@ -2054,7 +2054,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     return project == null ? WindowStateService.getInstance() : WindowStateService.getInstance(project);
   }
 
-  private static <T> T findInComponentHierarchy(@NotNull Component component, Function<@NotNull Component, @Nullable T> mapper) {
+  private static <T> T findInComponentHierarchy(@NotNull Component component, Function<? super @NotNull Component, ? extends @Nullable T> mapper) {
     T found = mapper.fun(component);
     if (found != null) {
       return found;

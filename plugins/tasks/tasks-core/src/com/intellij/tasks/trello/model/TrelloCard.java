@@ -17,6 +17,7 @@
 package com.intellij.tasks.trello.model;
 
 import com.google.gson.annotations.SerializedName;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
@@ -90,7 +91,7 @@ public class TrelloCard extends TrelloModel {
   @NotNull
   @Attribute("name")
   @Override
-  public String getName() {
+  public @NlsSafe String getName() {
     return name;
   }
 
@@ -100,7 +101,7 @@ public class TrelloCard extends TrelloModel {
   }
 
   @NotNull
-  public String getDescription() {
+  public @NlsSafe String getDescription() {
     return description;
   }
 

@@ -18,11 +18,13 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 
 import java.util.Objects;
+import java.util.function.Supplier;
 
 /**
  * @author yole
@@ -30,7 +32,7 @@ import java.util.Objects;
 public class VcsDirectoryMapping {
   public static final String DEFAULT_MAPPING_DIR = "";
 
-  public static final String PROJECT_CONSTANT = "<Project>";
+  public static final Supplier<@Nls String> PROJECT_CONSTANT = VcsBundle.messagePointer("label.project.vcs.root.mapping");
   public static final VcsDirectoryMapping[] EMPTY_ARRAY = new VcsDirectoryMapping[0];
 
   @NotNull private final String myDirectory;
@@ -135,6 +137,6 @@ public class VcsDirectoryMapping {
 
   @Override
   public String toString() {
-    return isDefaultMapping() ? PROJECT_CONSTANT : myDirectory;
+    return isDefaultMapping() ? PROJECT_CONSTANT.get() : myDirectory;
   }
 }

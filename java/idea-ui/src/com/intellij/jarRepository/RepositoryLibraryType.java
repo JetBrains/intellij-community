@@ -15,11 +15,15 @@
  */
 package com.intellij.jarRepository;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.libraries.NewLibraryConfiguration;
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
-import com.intellij.openapi.roots.libraries.ui.*;
+import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
+import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor;
+import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +35,7 @@ import javax.swing.*;
 public class RepositoryLibraryType extends LibraryType<RepositoryLibraryProperties> {
 
   public static final PersistentLibraryKind<RepositoryLibraryProperties>
-    REPOSITORY_LIBRARY_KIND = new PersistentLibraryKind<RepositoryLibraryProperties>("repository") {
+    REPOSITORY_LIBRARY_KIND = new PersistentLibraryKind<>("repository") {
     @NotNull
     @Override
     public RepositoryLibraryProperties createDefaultProperties() {
@@ -49,8 +53,8 @@ public class RepositoryLibraryType extends LibraryType<RepositoryLibraryProperti
 
   @Nullable
   @Override
-  public String getCreateActionName() {
-    return "From Maven...";
+  public @NlsContexts.Label String getCreateActionName() {
+    return JavaUiBundle.message("repository.library.type.action.name.label");
   }
 
   @Override
@@ -78,7 +82,8 @@ public class RepositoryLibraryType extends LibraryType<RepositoryLibraryProperti
   @Override
   public String getDescription(@NotNull RepositoryLibraryProperties properties) {
     RepositoryLibraryDescription description = RepositoryLibraryDescription.findDescription(properties);
-    return "Maven: " + description.getDisplayName(properties.getVersion());
+    final String name = description.getDisplayName(properties.getVersion());
+    return JavaUiBundle.message("repository.library.type.maven.description", name);
   }
 
   @Nullable

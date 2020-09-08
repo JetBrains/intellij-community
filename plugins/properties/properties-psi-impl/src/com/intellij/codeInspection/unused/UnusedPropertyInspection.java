@@ -104,7 +104,8 @@ public class UnusedPropertyInspection extends PropertiesInspectionBase {
     PsiSearchHelper searchHelper = helper.getSearchHelper();
     if (mayHaveUsages(property, name, searchHelper, helper.getOwnUseScope(), isOnTheFly, original)) return true;
 
-    final GlobalSearchScope widerScope = getWidestUseScope(property.getKey(), property.getProject(), helper.getModule());
+    final GlobalSearchScope widerScope = isOnTheFly ? getWidestUseScope(property.getKey(), property.getProject(), helper.getModule())
+                                                    : GlobalSearchScope.projectScope(property.getProject());
     if (widerScope != null && mayHaveUsages(property, name, searchHelper, widerScope, isOnTheFly, original)) return true;
     return false;
   }

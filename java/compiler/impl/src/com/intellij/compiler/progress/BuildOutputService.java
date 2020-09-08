@@ -20,6 +20,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.pom.Navigatable;
@@ -33,7 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.*;
 
-import static com.intellij.compiler.impl.CompileDriver.CLASSES_UP_TO_DATE_CHECK;
 import static com.intellij.execution.filters.RegexpFilter.*;
 import static com.intellij.openapi.util.text.StringUtil.*;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
@@ -46,9 +46,9 @@ public class BuildOutputService implements BuildViewService {
   private static final String ANSI_BOLD = "\u001b[1m"; //NON-NLS
   private final @NotNull Project myProject;
   private final @NotNull BuildProgress<BuildProgressDescriptor> myBuildProgress;
-  private final @NotNull String myContentName;
+  private final @NotNull @NlsContexts.TabTitle String myContentName;
 
-  public BuildOutputService(@NotNull Project project, @NotNull String contentName) {
+  public BuildOutputService(@NotNull Project project, @NotNull @NlsContexts.TabTitle String contentName) {
     myProject = project;
     myContentName = contentName;
     myBuildProgress = BuildViewManager.createBuildProgress(project);
@@ -128,7 +128,7 @@ public class BuildOutputService implements BuildViewService {
     }
     else {
       boolean isUpToDate = exitStatus == ExitStatus.UP_TO_DATE;
-      if (CLASSES_UP_TO_DATE_CHECK.equals(myContentName)) {
+      if (JavaCompilerBundle.message("classes.up.to.date.check").equals(myContentName)) {
         if (isUpToDate) {
           myBuildProgress.output(JavaCompilerBundle.message("compiler.build.messages.classes.check.uptodate"), true);
         }

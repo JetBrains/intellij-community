@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.*;
@@ -220,7 +221,7 @@ public class EclipseClasspathReader extends AbstractEclipseClasspathReader<Modif
     setOutputUrl(rootModel, path);
   }
 
-  public static void setOutputUrl(@NotNull ModifiableRootModel rootModel, @NotNull String path) {
+  public static void setOutputUrl(@NotNull ModifiableRootModel rootModel, @NotNull @NonNls String path) {
     CompilerModuleExtension compilerModuleExtension = rootModel.getModuleExtension(CompilerModuleExtension.class);
     compilerModuleExtension.setCompilerOutputPath(pathToUrl(path));
     compilerModuleExtension.inheritCompilerOutputPath(false);

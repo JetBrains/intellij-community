@@ -15,6 +15,7 @@
  */
 package com.intellij.util.text;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,8 +48,7 @@ public final class SemVer implements Comparable<SemVer> {
     myPreRelease = preRelease;
   }
 
-  @NotNull
-  public String getRawVersion() {
+  public @NotNull @NlsSafe String getRawVersion() {
     return myRawVersion;
   }
 
@@ -64,13 +64,11 @@ public final class SemVer implements Comparable<SemVer> {
     return myPatch;
   }
 
-  @Nullable
-  public String getPreRelease() {
+  public @Nullable @NlsSafe String getPreRelease() {
     return myPreRelease;
   }
 
-  @NotNull
-  public String getParsedVersion() {
+  public @NotNull @NlsSafe String getParsedVersion() {
     return myMajor + "." + myMinor + "." + myPatch + (myPreRelease != null ? "-" + myPreRelease : "");
   }
 

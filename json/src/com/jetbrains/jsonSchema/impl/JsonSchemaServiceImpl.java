@@ -210,7 +210,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
       if (providers.size() > 1) {
         final Optional<JsonSchemaFileProvider> userSchema =
           providers.stream().filter(provider -> SchemaType.userSchema.equals(provider.getSchemaType())).findFirst();
-        if (!userSchema.isPresent()) return ContainerUtil.emptyList();
+        if (userSchema.isEmpty()) return ContainerUtil.emptyList();
         selected = userSchema.get();
       } else selected = providers.get(0);
       VirtualFile schemaFile = getSchemaForProvider(myProject, selected);

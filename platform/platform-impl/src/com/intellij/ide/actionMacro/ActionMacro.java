@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.ui.playback.commands.KeyCodeTypeCommand;
 import com.intellij.openapi.ui.playback.commands.TypeCommand;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jdom.Element;
@@ -48,6 +49,7 @@ public class ActionMacro {
     myName = name;
   }
 
+  @NlsSafe
   public String getName() {
     return myName;
   }

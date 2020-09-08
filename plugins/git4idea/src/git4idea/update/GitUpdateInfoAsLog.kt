@@ -12,6 +12,8 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.ContentUtilEx
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsLogFilterCollection
@@ -36,8 +38,6 @@ import git4idea.GitRevisionNumber
 import git4idea.history.GitHistoryUtils
 import git4idea.merge.MergeChangeCollector
 import git4idea.repo.GitRepository
-import org.jetbrains.annotations.CalledInAwt
-import org.jetbrains.annotations.CalledInBackground
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.function.Supplier
@@ -59,10 +59,10 @@ class GitUpdateInfoAsLog(private val project: Project,
 
   private class CommitsAndFiles(val updatedFilesCount: Int, val receivedCommitsCount: Int)
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   fun calculateDataAndCreateLogTab(): NotificationData? {
     val commitsAndFiles = calculateDataFromGit() ?: return null
-    VcsProjectLog.getOrCreateLog(project) ?: return null
+    if (!VcsProjectLog.ensureLogCreated(project)) return null
 
     if (isPathFilterSet()) {
       return waitForLogRefreshAndCalculate(commitsAndFiles)
@@ -80,7 +80,7 @@ class GitUpdateInfoAsLog(private val project: Project,
     return project.service<GitUpdateProjectInfoLogProperties>().getFilterValues(STRUCTURE_FILTER.name) != null
   }
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   private fun waitForLogRefreshAndCalculate(commitsAndFiles: CommitsAndFiles): NotificationData? {
     val dataSupplier = CompletableFuture<NotificationData>()
     runInEdt {
@@ -99,7 +99,7 @@ class GitUpdateInfoAsLog(private val project: Project,
     return dataSupplier.get()
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private fun createLogTabAndCalculateIfRangesAreReachable(dataPack: DataPack,
                                                            logManager: VcsLogManager,
                                                            commitsAndFiles: CommitsAndFiles,

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
@@ -215,7 +216,7 @@ public final class ProblemDescriptorUtil {
                                                        @NotNull HighlightSeverity severity,
                                                        int startOffset,
                                                        int endOffset,
-                                                       @NotNull String message,
+                                                       @NotNull @InspectionMessage String message,
                                                        boolean isAfterEndOfLine,
                                                        LocalQuickFix @NotNull [] quickFixes) {
     if (severity == HighlightSeverity.INFORMATION ||

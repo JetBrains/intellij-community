@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.rename;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.patterns.ElementPattern;
@@ -42,12 +43,12 @@ public class PsiPackageRenameValidator implements RenameInputValidatorEx {
   @Override
   public String getErrorMessage(@NotNull String newName, @NotNull Project project) {
     if (FileTypeManager.getInstance().isFileIgnored(newName)) {
-      return "Trying to create a package with ignored name, result will not be visible";
+      return JavaBundle.message("rename.package.ignored.name.warning");
     }
 
     if (newName.length() > 0) {
       if (!PsiDirectoryFactory.getInstance(project).isValidPackageName(newName)) {
-        return "Not a valid package name";
+        return JavaBundle.message("rename.package.invalid.name.error");
       }
     }
 

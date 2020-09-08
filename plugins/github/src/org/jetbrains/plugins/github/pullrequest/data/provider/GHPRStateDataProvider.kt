@@ -3,23 +3,23 @@ package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.CalledInAny
-import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 import java.util.concurrent.CompletableFuture
 
 interface GHPRStateDataProvider {
 
-  @CalledInAwt
+  @RequiresEdt
   fun loadMergeabilityState(): CompletableFuture<GHPRMergeabilityState>
 
-  @CalledInAwt
+  @RequiresEdt
   fun reloadMergeabilityState()
 
-  @CalledInAwt
+  @RequiresEdt
   fun addMergeabilityStateListener(disposable: Disposable, listener: () -> Unit)
 
-  @CalledInAwt
+  @RequiresEdt
   fun loadMergeabilityState(disposable: Disposable, consumer: (CompletableFuture<GHPRMergeabilityState>) -> Unit) {
     addMergeabilityStateListener(disposable) {
       consumer(loadMergeabilityState())
@@ -34,7 +34,7 @@ interface GHPRStateDataProvider {
   @CalledInAny
   fun reopen(progressIndicator: ProgressIndicator): CompletableFuture<Unit>
 
-  @CalledInAwt
+  @RequiresEdt
   fun markReadyForReview(progressIndicator: ProgressIndicator): CompletableFuture<Unit>
 
   @CalledInAny

@@ -3,6 +3,7 @@ package com.jetbrains.python.console;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.Consumer;
 import com.jetbrains.python.run.PythonRunConfiguration;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +17,7 @@ public class PydevConsoleWithFileRunnerImpl extends PydevConsoleRunnerImpl {
   public PydevConsoleWithFileRunnerImpl(@NotNull Project project,
                                         @Nullable Sdk sdk,
                                         @NotNull PyConsoleType consoleType,
-                                        @NotNull String title,
+                                        @NotNull @NlsContexts.TabTitle String title,
                                         @Nullable String workingDir,
                                         @NotNull Map<String, String> environmentVariables,
                                         @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider,

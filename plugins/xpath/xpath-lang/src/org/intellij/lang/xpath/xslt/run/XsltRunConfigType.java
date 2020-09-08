@@ -20,8 +20,9 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import icons.XpathIcons;
-import org.jetbrains.annotations.NonNls;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -51,19 +52,18 @@ public final class XsltRunConfigType implements ConfigurationType {
   @NotNull
   @Override
   public String getDisplayName() {
-    return "XSLT";
+    return getId();
   }
 
   @Override
-  @NonNls
   @NotNull
-  public String getId() {
+  public @NlsSafe String getId() {
     return "XSLT";
   }
 
   @Override
   public String getConfigurationTypeDescription() {
-    return "Run XSLT Script";
+    return XPathBundle.message("run.configuration.description.xslt.script");
   }
 
   @Override

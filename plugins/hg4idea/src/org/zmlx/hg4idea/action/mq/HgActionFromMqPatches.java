@@ -18,6 +18,7 @@ package org.zmlx.hg4idea.action.mq;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.ui.HgMqUnAppliedPatchesPanel;
@@ -50,6 +51,7 @@ public abstract class HgActionFromMqPatches extends DumbAwareAction {
 
   protected abstract void executeInCurrentThread(@NotNull HgRepository repository, @NotNull List<String> patchNames);
 
+  @NlsContexts.ProgressTitle
   @NotNull
   protected abstract String getTitle();
 }

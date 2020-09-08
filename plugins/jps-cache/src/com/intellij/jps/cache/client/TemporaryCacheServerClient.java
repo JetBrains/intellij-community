@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.intellij.jps.cache.JpsCachesPluginUtil;
+import com.intellij.jps.cache.git.GitRepositoryUtil;
 import com.intellij.jps.cache.model.AffectedModule;
 import com.intellij.jps.cache.model.OutputLoadResult;
 import com.intellij.jps.cache.ui.JpsLoaderNotifications;
@@ -53,10 +54,12 @@ public final class TemporaryCacheServerClient implements JpsServerClient {
 
   @NotNull
   @Override
-  public Set<String> getAllCacheKeys(@NotNull Project project) {
+  public Map<String, Set<String>> getCacheKeysPerRemote(@NotNull Project project) {
     Map<String, List<String>> response = doGetRequest(project, getRequestHeaders());
-    if (response == null) return Collections.emptySet();
-    return response.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
+    if (response == null) return Collections.emptyMap();
+    Map<String, Set<String>> result = new HashMap<>();
+    response.forEach((key, value) -> result.put(GitRepositoryUtil.getRemoteRepoName(key), new HashSet<>(value)));
+    return result;
   }
 
   @Nullable

@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
+import static com.intellij.util.text.DateFormatUtil.formatPrettyDateTime;
 
 public final class SvnMergeSourceDetails extends MasterDetailsComponent {
   private final Project myProject;
@@ -129,12 +130,10 @@ public final class SvnMergeSourceDetails extends MasterDetailsComponent {
         description += ourDots;
       }
 
-      final String date = CommittedChangeListRenderer.getDateOfChangeList(revision.getRevisionDate());
-
       append(revisonNumber + " ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       append(description + " ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
       append(notNullize(revision.getAuthor()), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-      append(", " + date, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      append(", " + formatPrettyDateTime(revision.getRevisionDate()), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
   }
 

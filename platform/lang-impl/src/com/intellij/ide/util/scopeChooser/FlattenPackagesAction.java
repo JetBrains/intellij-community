@@ -27,8 +27,7 @@ public final class FlattenPackagesAction extends ToggleAction {
   private final Runnable myUpdate;
 
   public FlattenPackagesAction(Runnable update) {
-    super(IdeBundle.message("action.flatten.packages"),
-          IdeBundle.message("action.flatten.packages"), PlatformIcons.FLATTEN_PACKAGES_ICON);
+    super(IdeBundle.messagePointer("action.flatten.packages"), PlatformIcons.FLATTEN_PACKAGES_ICON);
     myUpdate = update;
   }
 

@@ -169,7 +169,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
     for (CoverageRunner runner : runners) {
       final DefaultMutableTreeNode runnerNode = new DefaultMutableTreeNode(getCoverageRunnerTitle(runner));
       final Map<String, List<CoverageSuite>> providers = grouped.get(runner);
-      final DefaultMutableTreeNode remoteNode = new DefaultMutableTreeNode("Remote");
+      final DefaultMutableTreeNode remoteNode = new DefaultMutableTreeNode(CoverageBundle.message("remote.suites.node"));
       if (providers.size() == 1) {
         final String providersKey = providers.keySet().iterator().next();
         DefaultMutableTreeNode suitesNode = runnerNode;

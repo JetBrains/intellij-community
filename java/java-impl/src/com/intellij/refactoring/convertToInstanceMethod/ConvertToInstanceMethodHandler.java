@@ -106,12 +106,12 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler 
         message = JavaRefactoringBundle.message("convertToInstanceMethod.no.parameters.with.reference.type");
       }
       else if (!resolvableClassesFound) {
-        message = JavaRefactoringBundle.message("convertToInstanceMethod.all.reference.type.parametres.have.unknown.types");
+        message = JavaRefactoringBundle.message("convertToInstanceMethod.all.reference.type.parameters.have.unknown.types");
       }
       else {
         message = JavaRefactoringBundle.message("convertToInstanceMethod.all.reference.type.parameters.are.not.in.project");
       }
-      message += " and containing class doesn't have default constructor";
+      message += " " + JavaRefactoringBundle.message("convertToInstanceMethod.no.default.ctor");
       Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
       CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(message), getRefactoringName(), HelpID.CONVERT_TO_INSTANCE_METHOD);
       return;

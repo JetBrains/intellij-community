@@ -46,7 +46,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
 
   public AbstractFileTreeTable(@NotNull Project project,
                                @NotNull Class<T> valueClass,
-                               @NotNull String valueTitle,
+                               @NlsContexts.ColumnName @NotNull String valueTitle,
                                @NotNull VirtualFileFilter filter,
                                boolean showProjectNode) {
     this(project, valueClass, valueTitle, filter, showProjectNode, true);
@@ -58,7 +58,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
    */
   public AbstractFileTreeTable(@NotNull Project project,
                                @NotNull Class<T> valueClass,
-                               @NotNull String valueTitle,
+                               @NlsContexts.ColumnName @NotNull String valueTitle,
                                @NotNull VirtualFileFilter filter,
                                boolean showProjectNode,
                                boolean showContentFilesOnly) {
@@ -89,6 +89,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     getTree().setCellRenderer(new DefaultTreeCellRenderer() {
       private final SimpleColoredComponent myComponent = new SimpleColoredComponent();
+
       @Override
       public Component getTreeCellRendererComponent(JTree tree,
                                                     Object value,
@@ -130,7 +131,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
   }
 
   private static @NlsContexts.Label String getProjectNodeText() {
-    return "Project";
+    return LangBundle.message("label.project");
   }
 
   public Project getProject() {
@@ -159,7 +160,9 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     }
   }
 
-  public boolean clearSubdirectoriesOnDemandOrCancel(final VirtualFile parent, final @NlsContexts.DialogMessage String message, final @NlsContexts.DialogTitle String title) {
+  public boolean clearSubdirectoriesOnDemandOrCancel(final VirtualFile parent,
+                                                     final @NlsContexts.DialogMessage String message,
+                                                     final @NlsContexts.DialogTitle String title) {
     Map<VirtualFile, T> mappings = myModel.myCurrentMapping;
     Map<VirtualFile, T> subdirectoryMappings = new THashMap<>();
     for (VirtualFile file : mappings.keySet()) {
@@ -230,10 +233,13 @@ public class AbstractFileTreeTable<T> extends TreeTable {
   private static final class MyModel<T> extends DefaultTreeModel implements TreeTableModel {
     private final Map<VirtualFile, T> myCurrentMapping = new HashMap<>();
     private final Class<T> myValueClass;
-    private final String myValueTitle;
+    @NlsContexts.ColumnName private final String myValueTitle;
     private AbstractFileTreeTable<T> myTreeTable;
 
-    private MyModel(@NotNull Project project, @NotNull Class<T> valueClass, @NotNull String valueTitle, @NotNull VirtualFileFilter filter) {
+    private MyModel(@NotNull Project project,
+                    @NotNull Class<T> valueClass,
+                    @NlsContexts.ColumnName @NotNull String valueTitle,
+                    @NotNull VirtualFileFilter filter) {
       super(new ProjectRootNode(project, filter));
       myValueClass = valueClass;
       myValueTitle = valueTitle;
@@ -256,7 +262,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     public String getColumnName(final int column) {
       switch (column) {
         case 0:
-          return "File/Directory";
+          return LangBundle.message("column.name.file.directory");
         case 1:
           return myValueTitle;
         default:
@@ -396,7 +402,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     }
 
     @Override
-    public Enumeration children() {
+    public Enumeration<TreeNode> children() {
       init();
       return super.children();
     }

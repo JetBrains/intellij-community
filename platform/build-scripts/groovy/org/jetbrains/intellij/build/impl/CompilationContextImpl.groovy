@@ -72,7 +72,7 @@ class CompilationContextImpl implements CompilationContext {
 
     projectHome = toCanonicalPath(projectHome)
     def kotlinHome = toCanonicalPath("$communityHome/build/dependencies/build/kotlin/Kotlin")
-    def model = loadProject(projectHome, kotlinHome, messages, options, ant, gradle)
+    def model = loadProject(projectHome, kotlinHome, messages, options, ant)
     def jdkHome = defineJavaSdk(model, projectHome, options, messages)
     def oldToNewModuleName = loadModuleRenamingHistory(projectHome, messages) + loadModuleRenamingHistory(communityHome, messages)
     def context = new CompilationContextImpl(ant, gradle, model, communityHome, projectHome, jdkHome, kotlinHome, messages, oldToNewModuleName,
@@ -85,9 +85,6 @@ class CompilationContextImpl implements CompilationContext {
   private static String defineJavaSdk(JpsModel model, String projectHome, BuildOptions options, BuildMessages messages) {
     def sdks = []
     def jbrDir = jbrDir(projectHome, options)
-    def jdk6Home = JdkUtils.computeJdkHome(messages, '1.6', "$jbrDir/1.6", "JDK_16_x64")
-    JdkUtils.defineJdk(model.global, "IDEA jdk", jdk6Home, messages)
-    sdks << "IDEA jdk"
     def jbrVersionName = jbrVersionName(options)
     sdks << jbrVersionName
     def jbrDefaultDir = "$jbrDir/$jbrVersionName"
@@ -172,7 +169,7 @@ class CompilationContextImpl implements CompilationContext {
                                       paths.kotlinHome, messages, oldToNewModuleName, buildOutputRootEvaluator, options)
   }
 
-  private static JpsModel loadProject(String projectHome, String kotlinHome, BuildMessages messages, BuildOptions options, AntBuilder ant, GradleRunner gradle) {
+  private static JpsModel loadProject(String projectHome, String kotlinHome, BuildMessages messages, BuildOptions options, AntBuilder ant) {
     if (!options.useCompiledClassesFromProjectOutput && options.pathToCompiledClassesArchive == null && options.pathToCompiledClassesArchivesMetadata == null) {
       //we need to add Kotlin JPS plugin to classpath before loading the project to ensure that Kotlin settings will be properly loaded
       ensureKotlinJpsPluginIsAddedToClassPath(kotlinHome, ant, messages)
@@ -228,9 +225,9 @@ class CompilationContextImpl implements CompilationContext {
     compilationData = new JpsCompilationData(new File(paths.buildOutputRoot, dataDirName), new File("$logDir/compilation.log"),
                                              System.getProperty("intellij.build.debug.logging.categories", ""), messages)
 
-    def classesDirName = "classes"
+    def classesDirName = CLASSES_DIR_NAME
     def projectArtifactsDirName = "project-artifacts"
-    def classesOutput = "$paths.buildOutputRoot/$classesDirName"
+    def classesOutput = classesOutputDirectory()
     List<String> outputDirectoriesToKeep = ["log"]
     if (options.pathToCompiledClassesArchivesMetadata != null) {
       fetchAndUnpackCompiledClasses(messages, classesOutput, options)
@@ -253,23 +250,42 @@ class CompilationContextImpl implements CompilationContext {
       outputDirectoriesToKeep.add(classesDirName)
       outputDirectoriesToKeep.add(projectArtifactsDirName)
     }
-    if (!options.useCompiledClassesFromProjectOutput) {
+
+    suppressWarnings(project)
+    exportModuleOutputProperties()
+
+    if (options.cleanOutputFolder) {
+      cleanOutput(outputDirectoriesToKeep)
+    } else {
+      messages.info("cleanOutput step was skipped")
+    }
+  }
+
+  static final String CLASSES_DIR_NAME = "classes"
+
+  private String classesOutputDirectory() {
+    String classesOutput
+    if (options.projectClassesOutputDirectory != null && !options.projectClassesOutputDirectory.isEmpty()) {
+      classesOutput = options.projectClassesOutputDirectory
       projectOutputDirectory = classesOutput
     }
     else {
+      classesOutput = "$paths.buildOutputRoot/$CLASSES_DIR_NAME"
+      if (!options.useCompiledClassesFromProjectOutput) {
+        projectOutputDirectory = classesOutput
+      }
+    }
+    if (options.useCompiledClassesFromProjectOutput) {
       def outputDir = getProjectOutputDirectory()
       if (!outputDir.exists()) {
         messages.error("$BuildOptions.USE_COMPILED_CLASSES_PROPERTY is enabled, but the project output directory $outputDir.absolutePath doesn't exist")
       }
     }
-
-    suppressWarnings(project)
-    exportModuleOutputProperties()
-    cleanOutput(outputDirectoriesToKeep)
+    return classesOutput
   }
 
   /**
-   * @return url attribute value of output tag from .idea/misc.xml
+   * @return directory with compiled project classes, url attribute value of output tag from .idea/misc.xml by default
    */
   File getProjectOutputDirectory() {
     JpsPathUtil.urlToFile(JpsJavaExtensionService.instance.getOrCreateProjectExtension(project).outputUrl)

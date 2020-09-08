@@ -16,6 +16,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,8 +36,8 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   private static final JBColor DIVIDER_COLOR = new JBColor(0xd9d9d9, 0x515151);
   private static final int DEFAULT_WIDTH = 400;
   private static final int DEFAULT_HEIGHT = 200;
-  private static final String LAST_SEEN_TIP_ID = "lastSeenTip";
-  private static final String SEEN_TIPS = "seenTips";
+  @NonNls private static final String LAST_SEEN_TIP_ID = "lastSeenTip";
+  @NonNls private static final String SEEN_TIPS = "seenTips";
 
   private final TipUIUtil.Browser myBrowser;
   private final JLabel myPoweredByLabel;
@@ -78,21 +79,32 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     myTips = new ArrayList<>(recommendation.getTips());
     myAlgorithm = recommendation.getAlgorithm();
     myAlgorithmVersion = recommendation.getVersion();
-    for (String id : mySeenIds) {
-      TipAndTrickBean tip = findByFileName(id);
-      if (tip != null) {
-        if (myTips.remove(tip)) {
-          myTips.add(tip);   //move last seen to the end
+    if (!isExperiment(myAlgorithm)) {
+      for (String id : mySeenIds) {
+        TipAndTrickBean tip = findByFileName(id);
+        if (tip != null) {
+          if (myTips.remove(tip)) {
+            myTips.add(tip);   //move last seen to the end
+          }
+        }
+      }
+      if (TipDialog.wereTipsShownToday()) {
+        TipAndTrickBean lastSeenTip = findByFileName(PropertiesComponent.getInstance().getValue(LAST_SEEN_TIP_ID));
+        if (lastSeenTip != null && myTips.remove(lastSeenTip)) {
+          myTips.add(0, lastSeenTip);
         }
       }
     }
-    if (TipDialog.wereTipsShownToday()) {
-      TipAndTrickBean lastSeenTip = findByFileName(PropertiesComponent.getInstance().getValue(LAST_SEEN_TIP_ID));
-      if (lastSeenTip != null && myTips.remove(lastSeenTip)) {
-        myTips.add(0, lastSeenTip);
-      }
-    }
     showNext(true);
+  }
+
+  /**
+   * We are running the experiment for research purposes and we want the experiment to be pure.
+   * This requires disabling idea's filtering mechanism as this mechanism affects the experiment
+   * results by modifying tips order.
+   */
+  private static boolean isExperiment(String algorithm) {
+    return algorithm.endsWith("_SUMMER2020");
   }
 
   @Override

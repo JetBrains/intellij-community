@@ -117,7 +117,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     }
     if (element instanceof PsiMethod) {
       final PsiMethod[] methods =
-        SuperMethodWarningUtil.checkSuperMethods((PsiMethod)element, JavaRefactoringBundle.message("to.delete.with.usage.search"),
+        SuperMethodWarningUtil.checkSuperMethods((PsiMethod)element,
                                                  allElementsToDelete);
       if (methods.length == 0) return null;
       final ArrayList<PsiMethod> psiMethods = new ArrayList<>(Arrays.asList(methods));
@@ -575,7 +575,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
             PsiJavaCodeReferenceElement classRef = (PsiJavaCodeReferenceElement) element;
             final PsiClass inheritor = (PsiClass) pparent;
             if (parent.equals(inheritor.getPermitsList())) {
-              usages.add(new SafeDeletePermitsClassUsageInfo(classRef, psiClass, inheritor));
+              usages.add(new SafeDeletePermitsClassUsageInfo(classRef, psiClass, inheritor, true));
               return true;
             }
             //If psiClass contains only private members, then it is safe to remove it and change inheritor's extends/implements accordingly

@@ -33,14 +33,18 @@ import com.intellij.util.diff.DiffTree;
 import com.intellij.util.diff.DiffTreeChangeBuilder;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.intellij.util.diff.ShallowNodeComparator;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Function;
 
 public class BlockSupportImpl extends BlockSupport {
   private static final Logger LOG = Logger.getInstance(BlockSupportImpl.class);
 
   @Override
-  public void reparseRange(@NotNull PsiFile file, int startOffset, int endOffset, @NotNull CharSequence newText) throws IncorrectOperationException {
+  public void reparseRange(@NotNull PsiFile file, int startOffset, int endOffset, @NotNull CharSequence newText)
+    throws IncorrectOperationException {
     LOG.assertTrue(file.isValid());
     final PsiFileImpl psiFile = (PsiFileImpl)file;
     final Document document = psiFile.getViewProvider().getDocument();
@@ -108,38 +112,40 @@ public class BlockSupportImpl extends BlockSupport {
     final CharTable charTable = fileElement.getCharTable();
     int lengthShift = newFileText.length() - fileElement.getTextLength();
 
-    if (fileElement.getElementType() instanceof ITemplateDataElementType || isTooDeep(file)) {
-      // unable to perform incremental reparse for template data in JSP, or in exceptionally deep trees
+    if (isTooDeep(file)) {
       return null;
     }
+
+    boolean isTemplateFile = fileElement.getElementType() instanceof ITemplateDataElementType;
 
     final ASTNode leafAtStart = fileElement.findLeafElementAt(Math.max(0, changedPsiRange.getStartOffset() - 1));
     final ASTNode leafAtEnd = fileElement.findLeafElementAt(Math.min(changedPsiRange.getEndOffset(), fileElement.getTextLength() - 1));
     ASTNode node = leafAtStart != null && leafAtEnd != null ? TreeUtil.findCommonParent(leafAtStart, leafAtEnd) : fileElement;
     Language baseLanguage = file.getViewProvider().getBaseLanguage();
 
-    while (node != null && !(node instanceof FileElement)) {
-      IElementType elementType = node.getElementType();
+    Function<ASTNode, Couple<ASTNode>> reparseNodeFunction = astNode -> {
+      IElementType elementType = astNode.getElementType();
       if (elementType instanceof IReparseableElementTypeBase || elementType instanceof IReparseableLeafElementType) {
-        final TextRange textRange = node.getTextRange();
+        final TextRange textRange = astNode.getTextRange();
 
         if (textRange.getLength() + lengthShift > 0 &&
-            (baseLanguage.isKindOf(elementType.getLanguage()) || !TreeUtil.containsOuterLanguageElements(node))) {
+            (baseLanguage.isKindOf(elementType.getLanguage()) || !TreeUtil.containsOuterLanguageElements(astNode))) {
           final int start = textRange.getStartOffset();
           final int end = start + textRange.getLength() + lengthShift;
           if (end > newFileText.length()) {
-            reportInconsistentLength(file, newFileText, node, start, end);
-            break;
+            reportInconsistentLength(file, newFileText, astNode, start, end);
+            return Couple.of(null, null);
           }
 
           CharSequence newTextStr = newFileText.subSequence(start, end);
 
           ASTNode newNode;
           if (elementType instanceof IReparseableElementTypeBase) {
-            newNode = tryReparseNode((IReparseableElementTypeBase)elementType, node, newTextStr, file.getManager(), baseLanguage, charTable);
+            newNode =
+              tryReparseNode((IReparseableElementTypeBase)elementType, astNode, newTextStr, file.getManager(), baseLanguage, charTable);
           }
           else {
-            newNode = tryReparseLeaf((IReparseableLeafElementType)elementType, node, newTextStr);
+            newNode = tryReparseLeaf((IReparseableLeafElementType)elementType, astNode, newTextStr);
           }
 
           if (newNode != null) {
@@ -150,9 +156,45 @@ public class BlockSupportImpl extends BlockSupport {
               LOG.error("Inconsistent reparse: " + details + " type=" + elementType);
             }
 
-            return Couple.of(node, newNode);
+            return Couple.of(astNode, newNode);
           }
         }
+      }
+      return null;
+    };
+
+    TextRange startLeafRange = leafAtStart == null ? null : leafAtStart.getTextRange();
+    TextRange endLeafRange = leafAtEnd == null ? null : leafAtEnd.getTextRange();
+
+    IElementType startLeafType = PsiUtilCore.getElementType(leafAtStart);
+    if (startLeafType instanceof IReparseableLeafElementType &&
+        startLeafRange.getEndOffset() == changedPsiRange.getEndOffset() &&
+        (!isTemplateFile || startLeafType instanceof OuterLanguageElementType)) {
+      Couple<ASTNode> reparseResult = reparseNodeFunction.apply(leafAtStart);
+      if (reparseResult != null && reparseResult.first != null) {
+        return reparseResult;
+      }
+    }
+    IElementType endLeafType = PsiUtilCore.getElementType(leafAtEnd);
+    if (endLeafType instanceof IReparseableLeafElementType &&
+        endLeafRange.getStartOffset() == changedPsiRange.getStartOffset() &&
+        (!isTemplateFile || endLeafType instanceof OuterLanguageElementType)) {
+      Couple<ASTNode> reparseResult = reparseNodeFunction.apply(leafAtEnd);
+      if (reparseResult != null && reparseResult.first != null) {
+        return reparseResult;
+      }
+    }
+
+    while (node != null && !(node instanceof FileElement)) {
+      if (isTemplateFile && !(PsiUtilCore.getElementType(node) instanceof OuterLanguageElementType)) {
+        break;
+      }
+      Couple<ASTNode> couple = reparseNodeFunction.apply(node);
+      if (couple != null) {
+        if (couple.first == null) {
+          break;
+        }
+        return couple;
       }
       node = node.getTreeParent();
     }
@@ -193,12 +235,12 @@ public class BlockSupportImpl extends BlockSupport {
   }
 
   private static void reportInconsistentLength(PsiFile file, CharSequence newFileText, ASTNode node, int start, int end) {
-    String message = "Index out of bounds: type=" + node.getElementType() +
-                     "; file=" + file +
-                     "; file.class=" + file.getClass() +
-                     "; start=" + start +
-                     "; end=" + end +
-                     "; length=" + node.getTextLength();
+    @NonNls String message = "Index out of bounds: type=" + node.getElementType() +
+                             "; file=" + file +
+                             "; file.class=" + file.getClass() +
+                             "; start=" + start +
+                             "; end=" + end +
+                             "; length=" + node.getTextLength();
     String newTextBefore = newFileText.subSequence(0, start).toString();
     String oldTextBefore = file.getText().subSequence(0, start).toString();
     if (oldTextBefore.equals(newTextBefore)) {
@@ -281,7 +323,7 @@ public class BlockSupportImpl extends BlockSupport {
     return newFile;
   }
 
-  private static String details(FileViewProvider providerCopy, FileViewProvider viewProvider) {
+  private static @NonNls String details(FileViewProvider providerCopy, FileViewProvider viewProvider) {
     return "; languages: " + viewProvider.getLanguages() +
            "; base: " + viewProvider.getBaseLanguage() +
            "; copy: " + providerCopy +

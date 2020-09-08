@@ -5,14 +5,14 @@ import org.jetbrains.annotations.NotNull;
 
 public class ChangedLines<T> {
   // VisualPosition.line
-  public final int line1;
-  public final int line2;
+  public final int y1;
+  public final int y2;
   public final byte type;
   @NotNull public final T flags;
 
-  ChangedLines(int line1, int line2, byte type, @NotNull T flags) {
-    this.line1 = line1;
-    this.line2 = line2;
+  ChangedLines(int y1, int y2, byte type, @NotNull T flags) {
+    this.y1 = y1;
+    this.y2 = y2;
     this.type = type;
     this.flags = flags;
   }

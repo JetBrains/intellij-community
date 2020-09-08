@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -266,7 +267,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     return renderer;
   }
 
-  public abstract String getElementText(T element);
+  public abstract @NlsSafe String getElementText(T element);
 
   @Nullable
   protected abstract String getContainerText(T element, final String name);

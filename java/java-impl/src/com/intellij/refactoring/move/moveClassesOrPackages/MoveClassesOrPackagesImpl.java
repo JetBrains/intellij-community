@@ -25,6 +25,7 @@ import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -125,7 +126,7 @@ public final class MoveClassesOrPackagesImpl {
     final PsiDirectory[] directories = aPackage.getDirectories();
     final VirtualFile[] virtualFiles = aPackage.occursInPackagePrefixes();
     if (directories.length > 1 || virtualFiles.length > 0) {
-      final StringBuffer message = new StringBuffer();
+      final @Nls StringBuffer message = new StringBuffer();
       RenameUtil.buildPackagePrefixChangedMessage(virtualFiles, message, aPackage.getQualifiedName());
       if (directories.length > 1) {
         DirectoryAsPackageRenameHandlerBase.buildMultipleDirectoriesInPackageMessage(message, aPackage.getQualifiedName(), directories);
@@ -136,8 +137,9 @@ public final class MoveClassesOrPackagesImpl {
       }
       message.append("\n");
       message.append(RefactoringBundle.message("do.you.wish.to.continue"));
-      int ret =
-        Messages.showYesNoDialog(project, message.toString(), RefactoringBundle.message("warning.title"), Messages.getWarningIcon());
+      //noinspection HardCodedStringLiteral
+      String resultMessage = message.toString();
+      int ret = Messages.showYesNoDialog(project, resultMessage, RefactoringBundle.message("warning.title"), Messages.getWarningIcon());
       if (ret != Messages.YES) {
         return false;
       }

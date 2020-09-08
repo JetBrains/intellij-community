@@ -45,18 +45,10 @@ import org.jetbrains.annotations.NotNull;
  * Helps to specify type  in annotations in python3
  */
 public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
-  private String myText = PyPsiBundle.message("INTN.specify.type.in.annotation");
-
-  @Override
-  @NotNull
-  public String getText() {
-    return myText;
-  }
-
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyPsiBundle.message("INTN.specify.type.in.annotation");
+    return PyPsiBundle.message("INTN.NAME.specify.type.in.annotation");
   }
 
   @Override
@@ -212,7 +204,7 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
 
   @Override
   protected void updateText(boolean isReturn) {
-    myText = isReturn ? PyPsiBundle.message("INTN.specify.return.type.in.annotation") : PyPsiBundle
-      .message("INTN.specify.type.in.annotation");
+    setText(isReturn ? PyPsiBundle.message("INTN.specify.return.type.in.annotation")
+                     : PyPsiBundle.message("INTN.specify.type.in.annotation"));
   }
 }

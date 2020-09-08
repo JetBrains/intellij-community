@@ -5,6 +5,7 @@ import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.incremental.BinaryContent;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.CompiledClass;
@@ -26,7 +27,7 @@ public class PatternValidatorBuilder extends BaseInstrumentingBuilder {
   @NotNull
   @Override
   public String getPresentableName() {
-    return "IntelliLang Pattern Validator";
+    return JpsBuildBundle.message("intellilang.pattern.validator.presentable.name");
   }
 
   @Override
@@ -64,7 +65,7 @@ public class PatternValidatorBuilder extends BaseInstrumentingBuilder {
 
   @Override
   protected String getProgressMessage() {
-    return "Adding pattern assertions...";
+    return JpsBuildBundle.message("intellilang.pattern.validator.progress.message");
   }
 
   public static boolean processClassFile(ClassReader reader,

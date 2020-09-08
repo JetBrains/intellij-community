@@ -100,6 +100,7 @@
       <action id="Git.Stash" class="git4idea.actions.GitStash"/>
       <action id="Git.Unstash" class="git4idea.actions.GitUnstash"/>
       <reference ref="ChangesView.Revert" />
+      <reference ref="Vcs.UmlDiff" />
     </group>
 
     <group id="Git.MainMenu" class="git4idea.actions.GitMainMenuActionGroup">
@@ -131,6 +132,8 @@
       <separator/>
       <action id="Git.Configure.Remotes" class="git4idea.remote.GitConfigureRemotesAction"/>
       <action id="Git.Clone" class="git4idea.actions.GitCloneAction"/>
+      <separator/>
+      <reference id="Vcs.QuickListPopupAction" />
       <separator/>
       <action id="Git.Revert.Abort" class="git4idea.actions.GitAbortOperationAction$Revert"/>
       <action id="Git.CherryPick.Abort" class="git4idea.actions.GitAbortOperationAction$CherryPick"/>
@@ -193,6 +196,10 @@
       <add-to-group group-id="VcsGroup" anchor="last"/>
     </group>
 
+    <action id="Vcs.ShowBranches" class="git4idea.actions.GitBranchesComboBoxAction" icon="AllIcons.Vcs.Branch">
+      <add-to-group group-id="VcsNavBarToolbarActionsLight" anchor="first"/>
+    </action>
+
     <!--This group is empty and unused, left for plugins compatibility.-->
     <group id="Git.LogContextMenu"/>
 
@@ -252,12 +259,18 @@
     <action id="Git.Stage.Add" class="git4idea.index.actions.GitAddAction" use-shortcut-of="ChangesView.AddUnversioned"/>
     <action id="Git.Stage.Reset" class="git4idea.index.actions.GitResetAction" use-shortcut-of="ChangesView.Revert"/>
     <action id="Git.Stage.Revert" class="git4idea.index.actions.GitRevertAction" use-shortcut-of="ChangesView.Revert"/>
+    <action id="Git.Stage.AcceptTheirs" class="git4idea.index.actions.GitAcceptTheirsAction"/>
+    <action id="Git.Stage.AcceptYours" class="git4idea.index.actions.GitAcceptYoursAction"/>
+    <action id="Git.Stage.Merge" class="git4idea.index.actions.GitMergeConflictAction"/>
 
     <group id="Git.Stage.Toolbar">
       <reference id="Diff.ShowDiff"/>
       <reference id="Git.Stage.Refresh"/>
     </group>
     <group id="Git.Stage.Tree.Menu">
+      <reference id="Git.Stage.Merge"/>
+      <reference id="Git.Stage.AcceptTheirs"/>
+      <reference id="Git.Stage.AcceptYours"/>
       <reference id="Git.Stage.Add"/>
       <reference id="Git.Stage.Reset"/>
       <reference id="Git.Stage.Revert"/>
@@ -265,6 +278,9 @@
       <reference id="Git.Ignore.File"/>
       <separator/>
       <reference id="Diff.ShowDiff"/>
+      <reference ref="ChangesView.CreatePatchFromChanges"/>
+      <reference ref="ChangesView.CreatePatchToClipboard"/>
+      <separator/>
       <reference id="Vcs.ShowTabbedFileHistory"/>
       <reference id="LocalHistory"/>
     </group>
@@ -328,7 +344,7 @@
                               Set to -2 to start as many threads, as there are repositories in the project.\n
                               Set to -3 to start as many threads, as there are repositories, but not more than 2 * number of cores.\n
                               By default, SSH supports up to 10 multiplexed connections, thus number of threads will be limited by 10 despite this value."/>
-    <registryKey key="git.use.schannel.on.windows" defaultValue="true"
+    <registryKey key="git.use.schannel.on.windows" defaultValue="false"
                  description="Force git to use Windows certificate store to very SSL connections. Git 2.14 and above is required"/>
     <registryKey key="git.use.shell.script.on.windows" defaultValue="true"
                  description="Use workaround for Native SSH support in Git. Batch file cannot properly handle arguments with newlines when used as SSH_ASKPASS."/>
@@ -398,6 +414,7 @@
     <projectService serviceImplementation="git4idea.config.GitVcsSettings" configurationSchemaKey="versionControl.git"/>
     <projectService serviceImplementation="git4idea.config.GitRebaseSettings"/>
     <projectService serviceImplementation="git4idea.config.GitMergeSettings"/>
+    <projectService serviceImplementation="git4idea.config.GitPullSettings"/>
     <projectService serviceImplementation="git4idea.config.GitSharedSettings" />
     <projectService serviceImplementation="git4idea.rebase.interactive.GitRewordedCommitMessageProvider"/>
     <projectService serviceInterface="git4idea.branch.GitBrancher"
@@ -493,7 +510,7 @@
 
     <projectService serviceImplementation="git4idea.index.GitStageManager"/>
     <projectService serviceImplementation="git4idea.index.GitStageTracker"/>
-    <openapi.vcs.impl.LocalLineStatusTrackerProvider implementation="git4idea.index.lst.GitStageLineStatusTrackerProvider"/>
+    <openapi.vcs.impl.LocalLineStatusTrackerProvider implementation="git4idea.index.GitStageLineStatusTrackerProvider"/>
 
     <backgroundPostStartupActivity implementation="git4idea.index.GitStageStartupActivity"/>
 
@@ -506,6 +523,10 @@
     <editorTabTitleProvider implementation="git4idea.index.vfs.GitIndexVirtualFileTabTitleProvider"/>
 
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="git4idea.index.actions.GitStageDiffAction"/>
+    <openapi.vcs.changes.actions.CreatePatchFromChangesAction.Dialog.ExtensionProvider
+      implementation="git4idea.index.actions.GitStageCreatePatchActionProvider$Dialog"/>
+    <openapi.vcs.changes.actions.CreatePatchFromChangesAction.Clipboard.ExtensionProvider
+      implementation="git4idea.index.actions.GitStageCreatePatchActionProvider$Clipboard"/>
 
     <vcs.consoleFolding implementation="git4idea.console.GitConsoleFolding"/>
     <console.folding implementation="git4idea.console.GitProgressOutputConsoleFolding"/>

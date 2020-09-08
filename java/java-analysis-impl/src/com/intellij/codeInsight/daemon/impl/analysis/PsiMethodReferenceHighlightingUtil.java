@@ -4,6 +4,8 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +20,7 @@ public final class PsiMethodReferenceHighlightingUtil {
           PsiElement resolve = ((PsiReferenceExpression)qualifier).resolve();
           if (resolve instanceof PsiClass && ((PsiClass)resolve).hasTypeParameters()) {
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression)
-              .descriptionAndTooltip("Raw constructor reference with explicit type parameters for constructor").create();
+              .descriptionAndTooltip(JavaAnalysisBundle.message("text.raw.ctor.reference.with.type.parameters")).create();
           }
         }
       }
@@ -26,16 +28,16 @@ public final class PsiMethodReferenceHighlightingUtil {
     return null;
   }
 
-  static String checkMethodReferenceContext(@NotNull PsiMethodReferenceExpression methodRef) {
+  static @NlsContexts.DetailedDescription String checkMethodReferenceContext(@NotNull PsiMethodReferenceExpression methodRef) {
     final PsiElement resolve = methodRef.resolve();
 
     if (resolve == null) return null;
     return checkMethodReferenceContext(methodRef, resolve, methodRef.getFunctionalInterfaceType());
   }
 
-  public static String checkMethodReferenceContext(@NotNull PsiMethodReferenceExpression methodRef,
-                                                   @NotNull PsiElement resolve,
-                                                   PsiType functionalInterfaceType) {
+  public static @NlsContexts.DetailedDescription String checkMethodReferenceContext(@NotNull PsiMethodReferenceExpression methodRef,
+                                                                                    @NotNull PsiElement resolve,
+                                                                                    PsiType functionalInterfaceType) {
     final PsiClass containingClass = resolve instanceof PsiMethod ? ((PsiMethod)resolve).getContainingClass() : (PsiClass)resolve;
     final boolean isStaticSelector = PsiMethodReferenceUtil.isStaticallyReferenced(methodRef);
     final PsiElement qualifier = methodRef.getQualifier();

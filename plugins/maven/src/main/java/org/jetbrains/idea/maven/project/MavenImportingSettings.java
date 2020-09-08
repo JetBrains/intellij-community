@@ -16,12 +16,13 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Property;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 
 import java.util.LinkedHashSet;
@@ -46,7 +47,7 @@ public class MavenImportingSettings implements Cloneable {
   public static final String DEFAULT_DEPENDENCY_TYPES =
     "jar, test-jar, maven-plugin, ejb, ejb-client, jboss-har, jboss-sar, war, ear, bundle";
 
-  @NotNull private String dedicatedModuleDir = "";
+  @NotNull @NlsSafe  private String dedicatedModuleDir = "";
   private boolean lookForNested = false;
 
   private boolean importAutomatically = false;
@@ -55,7 +56,7 @@ public class MavenImportingSettings implements Cloneable {
   private boolean excludeTargetFolder = true;
   private boolean keepSourceFolders = true;
   private boolean useMavenOutput = true;
-  private String updateFoldersOnImportPhase = UPDATE_FOLDERS_DEFAULT_PHASE;
+  @NlsSafe private String updateFoldersOnImportPhase = UPDATE_FOLDERS_DEFAULT_PHASE;
 
   private boolean downloadSourcesAutomatically = false;
   private boolean downloadDocsAutomatically = false;
@@ -67,9 +68,9 @@ public class MavenImportingSettings implements Cloneable {
   private String dependencyTypes = DEFAULT_DEPENDENCY_TYPES;
   private Set<String> myDependencyTypesAsSet;
 
-  @NotNull private String vmOptionsForImporter = "";
+  @NotNull @NlsSafe private String vmOptionsForImporter = "";
 
-  @NotNull private String jdkForImporter = MavenRunnerSettings.USE_INTERNAL_JAVA;
+  @NotNull @NlsSafe private String jdkForImporter = MavenRunnerSettings.USE_INTERNAL_JAVA;
 
   private List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -85,12 +86,14 @@ public class MavenImportingSettings implements Cloneable {
       myMessageKey = messageKey;
     }
 
+    @NlsContexts.ListItem
     public String getTitle() {
       return MavenConfigurableBundle.message(myMessageKey);
     }
   }
 
   @NotNull
+  @NlsSafe
   public String getDedicatedModuleDir() {
     return dedicatedModuleDir;
   }
@@ -194,6 +197,7 @@ public class MavenImportingSettings implements Cloneable {
     this.useMavenOutput = useMavenOutput;
   }
 
+  @NlsSafe
   public String getUpdateFoldersOnImportPhase() {
     return updateFoldersOnImportPhase;
   }

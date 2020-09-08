@@ -2,7 +2,6 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.SystemInfoRt;
-import gnu.trove.TObjectHashingStrategy;
 import it.unimi.dsi.fastutil.objects.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -21,8 +20,7 @@ public final class CollectionFactory {
 
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentWeakIdentityMap() {
-    //noinspection unchecked
-    return new ConcurrentWeakHashMap<>((TObjectHashingStrategy<K>)TObjectHashingStrategy.IDENTITY);
+    return new ConcurrentWeakHashMap<>(ContainerUtil.identityStrategy());
   }
 
   @Contract(value = " -> new", pure = true)
@@ -116,11 +114,9 @@ public final class CollectionFactory {
 
   public static @NotNull Set<String> createFilePathSet(String @NotNull[] paths, boolean isFileSystemCaseSensitive) {
     if (isFileSystemCaseSensitive) {
-      return new HashSet<>(Arrays.asList(paths));
+      return ContainerUtil.set(paths);
     }
-    else {
-      return new ObjectOpenCustomHashSet<>(paths, FastUtilHashingStrategies.getCaseInsensitiveStringStrategy());
-    }
+    return new ObjectOpenCustomHashSet<>(paths, FastUtilHashingStrategies.getCaseInsensitiveStringStrategy());
   }
 
   public static @NotNull Set<String> createFilePathSet(@NotNull Collection<String> paths) {
@@ -178,6 +174,7 @@ public final class CollectionFactory {
    */
   @Contract(value = "-> new", pure = true)
   public static <K, V> @NotNull Map<K, V> createSmallMemoryFootprintLinkedMap() {
+    //noinspection SSBasedInspection
     return new Object2ObjectLinkedOpenHashMap<>();
   }
 
@@ -188,6 +185,7 @@ public final class CollectionFactory {
    */
   @Contract(value = "-> new", pure = true)
   public static <K, V> @NotNull Map<K, V> createSmallMemoryFootprintMap() {
+    //noinspection SSBasedInspection
     return new Object2ObjectOpenHashMap<>();
   }
 
@@ -198,6 +196,7 @@ public final class CollectionFactory {
    */
   @Contract(value = "_ -> new", pure = true)
   public static <K, V> @NotNull Map<K, V> createSmallMemoryFootprintMap(int expected) {
+    //noinspection SSBasedInspection
     return new Object2ObjectOpenHashMap<>(expected);
   }
 
@@ -208,6 +207,7 @@ public final class CollectionFactory {
    */
   @Contract(value = "_ -> new", pure = true)
   public static <K, V> @NotNull Map<K, V> createSmallMemoryFootprintMap(@NotNull Map<? extends K, ? extends V> map) {
+    //noinspection SSBasedInspection
     return new Object2ObjectOpenHashMap<>(map);
   }
 
@@ -218,6 +218,7 @@ public final class CollectionFactory {
    */
   @Contract(value = "_,_ -> new", pure = true)
   public static <K, V> @NotNull Map<K, V> createSmallMemoryFootprintMap(int expected, float loadFactor) {
+    //noinspection SSBasedInspection
     return new Object2ObjectOpenHashMap<>(expected, loadFactor);
   }
 
@@ -229,6 +230,7 @@ public final class CollectionFactory {
    */
   @Contract(value = "-> new", pure = true)
   public static <K> @NotNull Set<K> createSmallMemoryFootprintSet() {
+    //noinspection SSBasedInspection
     return new ObjectOpenHashSet<>();
   }
   /**
@@ -239,6 +241,7 @@ public final class CollectionFactory {
    */
   @Contract(value = "_-> new", pure = true)
   public static <K> @NotNull Set<K> createSmallMemoryFootprintSet(int expected) {
+    //noinspection SSBasedInspection
     return new ObjectOpenHashSet<>(expected);
   }
   /**
@@ -249,6 +252,7 @@ public final class CollectionFactory {
    */
   @Contract(value = "_-> new", pure = true)
   public static <K> @NotNull Set<K> createSmallMemoryFootprintSet(@NotNull Collection<? extends K> collection) {
+    //noinspection SSBasedInspection
     return new ObjectOpenHashSet<>(collection);
   }
 

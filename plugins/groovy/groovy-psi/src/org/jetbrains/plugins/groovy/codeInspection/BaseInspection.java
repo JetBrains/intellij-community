@@ -17,8 +17,10 @@ package org.jetbrains.plugins.groovy.codeInspection;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -31,6 +33,7 @@ public abstract class BaseInspection extends GroovySuppressableInspectionTool {
   @Deprecated public static final String PROBABLE_BUGS = getProbableBugs();
 
   @Nullable
+  @InspectionMessage
   protected String buildErrorString(Object... args) {
     return null;
   }
@@ -57,6 +60,7 @@ public abstract class BaseInspection extends GroovySuppressableInspectionTool {
   @NotNull
   protected abstract BaseInspectionVisitor buildVisitor();
 
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   public static String getProbableBugs() {
     return GroovyBundle.message("inspection.bugs");
   }

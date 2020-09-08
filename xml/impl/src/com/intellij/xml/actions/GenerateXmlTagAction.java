@@ -36,6 +36,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -231,7 +232,7 @@ public class GenerateXmlTagAction extends SimpleCodeInsightAction {
     return tag;
   }
 
-  private static String getNamespace(XmlElementDescriptor descriptor) {
+  private static @NlsSafe String getNamespace(XmlElementDescriptor descriptor) {
     return descriptor instanceof XmlElementDescriptorImpl ? ((XmlElementDescriptorImpl)descriptor).getNamespace() : "";
   }
 

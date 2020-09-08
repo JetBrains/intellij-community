@@ -14,8 +14,8 @@ class SpaceIdeaAutomationTracer(private val processHandler: TaskProcessHandler) 
     processHandler.message("Commit $commit [$level]: $message", level)
   }
 
-  override fun traceStep(executionId: StepExecId, message: String, level: TraceLevel) {
-    processHandler.message("Step execution $executionId [$level]: $message", level)
+  override fun traceStep(graphExecId: GraphExecId, stepExecId: StepExecId, message: String, level: TraceLevel) {
+    processHandler.message("Step execution $stepExecId [$level]: $message", level)
   }
 
   override fun traceGraph(executionId: GraphExecId, message: String, level: TraceLevel) {

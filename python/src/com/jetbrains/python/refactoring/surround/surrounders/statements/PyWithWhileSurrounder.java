@@ -36,6 +36,7 @@ public class PyWithWhileSurrounder extends PyStatementSurrounder{
 
   @Override
   public String getTemplateDescription() {
+    //noinspection DialogTitleCapitalization
     return CodeInsightBundle.message("surround.with.while.template");
   }
 }

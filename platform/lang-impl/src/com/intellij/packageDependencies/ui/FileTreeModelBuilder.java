@@ -36,6 +36,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -603,7 +604,7 @@ public class FileTreeModelBuilder {
     }
   }
 
-  public static String getScanningPackagesMessage() {
+  public static @NlsContexts.ProgressText String getScanningPackagesMessage() {
     return CodeInsightBundle.message("package.dependencies.build.progress.text");
   }
 }

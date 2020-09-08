@@ -2,6 +2,7 @@
 package com.intellij.refactoring;
 
 import com.intellij.DynamicBundle;
+import com.intellij.ide.IdeDeprecatedMessagesBundle;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.*;
 
@@ -15,24 +16,33 @@ public final class RefactoringBundle extends DynamicBundle {
 
   @NotNull
   public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
-    return INSTANCE.getMessage(key, params);
+    if (INSTANCE.containsKey(key)) {
+      return INSTANCE.getMessage(key, params);
+    }
+    return IdeDeprecatedMessagesBundle.message(key, params);
   }
 
   @NotNull
   public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
-    return INSTANCE.getLazyMessage(key, params);
+    if (INSTANCE.containsKey(key)) {
+      return INSTANCE.getLazyMessage(key, params);
+    }
+    return IdeDeprecatedMessagesBundle.messagePointer(key, params);
   }
 
   @NotNull
   public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key) {
-    return INSTANCE.getMessage(key);
+    if (INSTANCE.containsKey(key)) {
+      return INSTANCE.getMessage(key);
+    }
+    return IdeDeprecatedMessagesBundle.message(key);
   }
 
-  public static String getSearchInCommentsAndStringsText() {
+  public static @NlsContexts.Label String getSearchInCommentsAndStringsText() {
     return message("search.in.comments.and.strings");
   }
 
-  public static String getSearchForTextOccurrencesText() {
+  public static @NlsContexts.Label String getSearchForTextOccurrencesText() {
     return message("search.for.text.occurrences");
   }
 

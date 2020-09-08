@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,7 +29,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -180,7 +180,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
   }
 
   protected class MyValidator extends MyInputValidator implements InputValidatorEx {
-    private String myErrorText;
+    private @NlsContexts.DetailedDescription String myErrorText;
 
     public MyValidator(Project project, PsiDirectory directory){
       super(project, directory);

@@ -14,7 +14,6 @@ import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
-import java.io.File
 import java.nio.file.Path
 
 object JpsProjectEntitiesLoader {
@@ -52,7 +51,7 @@ object JpsProjectEntitiesLoader {
                           builder: WorkspaceEntityStorageBuilder,
                           virtualFileManager: VirtualFileUrlManager) {
     val reader = CachingJpsFileContentReader(configLocation.baseDirectoryUrlString)
-    val serializer = ModuleListSerializerImpl.createModuleEntitiesSerializer(moduleFile.toVirtualFileUrl(virtualFileManager), source)
+    val serializer = ModuleListSerializerImpl.createModuleEntitiesSerializer(moduleFile.toVirtualFileUrl(virtualFileManager), null, source)
     serializer.loadEntities(builder, reader, virtualFileManager)
   }
 

@@ -30,15 +30,9 @@ class SingleDeclarationNormalizer {
     myVariables = variables;
   }
 
-  boolean possibleToNormalize() {
-    return possibleSingleDeclaration() && sameAnnotationsForAllDimensions();
-  }
+  boolean normalize() {
+    if (!possibleSingleDeclaration() || !sameAnnotationsForAllDimensions()) return false;
 
-  /**
-   * com.siyeh.ig.fixes.SingleDeclarationNormalizer#possibleToNormalize() has to be called before
-   * to prevent unexpected results
-   */
-  void normalize() {
     PsiVariable firstVar = myVariables.get(0);
     JavaSharedImplUtil.normalizeBrackets(firstVar);
 
@@ -57,6 +51,7 @@ class SingleDeclarationNormalizer {
         currSibling.delete();
       }
     }
+    return true;
   }
 
   private boolean possibleSingleDeclaration() {

@@ -53,7 +53,7 @@ public class PyStatementEffectInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyExpressionStatement(final PyExpressionStatement node) {
+    public void visitPyExpressionStatement(final @NotNull PyExpressionStatement node) {
       if (ContainerUtil.exists(PyInspectionExtension.EP_NAME.getExtensionList(),
                                extension -> extension.ignoreNoEffectStatement(node))) {
         return;
@@ -76,10 +76,11 @@ public class PyStatementEffectInspection extends PyInspection {
         }
       }
       if (expression instanceof PyReferenceExpression && !((PyReferenceExpression)expression).isQualified()) {
-        registerProblem(expression, PyPsiBundle.message("INSP.NAME.statement.message"));
+        registerProblem(expression, PyPsiBundle.message("INSP.statement.effect.statement.seems.to.have.no.effect"));
       }
       else {
-        registerProblem(expression, PyPsiBundle.message("INSP.NAME.statement.message"), new StatementEffectIntroduceVariableQuickFix());
+        registerProblem(expression, PyPsiBundle.message("INSP.statement.effect.statement.seems.to.have.no.effect"),
+                        new StatementEffectIntroduceVariableQuickFix());
       }
     }
 
@@ -138,7 +139,9 @@ public class PyStatementEffectInspection extends PyInspection {
         ResolveResult[] results = referenceExpression.getReference(getResolveContext()).multiResolve(true);
         for (ResolveResult res : results) {
           if (res.getElement() instanceof PyFunction) {
-            registerProblem(expression, "Statement seems to have no effect and can be replaced with function call to have effect", new StatementEffectFunctionCallQuickFix());
+            registerProblem(expression,
+                            PyPsiBundle.message("INSP.statement.effect.statement.having.no.effect.can.be.replaced.with.function.call"),
+                            new StatementEffectFunctionCallQuickFix());
             return true;
           }
         }

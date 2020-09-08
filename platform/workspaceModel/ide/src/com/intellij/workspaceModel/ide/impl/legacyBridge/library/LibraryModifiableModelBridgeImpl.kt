@@ -14,6 +14,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
+import com.intellij.workspaceModel.ide.legacyBridge.LibraryModifiableModelBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jdom.Element
@@ -23,8 +24,9 @@ internal class LibraryModifiableModelBridgeImpl(
   private val originalLibrary: LibraryBridgeImpl,
   private val originalLibrarySnapshot: LibraryStateSnapshot,
   diff: WorkspaceEntityStorageBuilder,
-  private val targetBuilder: WorkspaceEntityStorageDiffBuilder?
-) : LegacyBridgeModifiableBase(diff), LibraryEx.ModifiableModelEx, LibraryEx, RootProvider {
+  private val targetBuilder: WorkspaceEntityStorageDiffBuilder?,
+  cacheStorageResult: Boolean = true
+) : LegacyBridgeModifiableBase(diff, cacheStorageResult), LibraryModifiableModelBridge, RootProvider {
 
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(originalLibrary.project)
   private var entityId = originalLibrarySnapshot.libraryEntity.persistentId()
@@ -93,6 +95,15 @@ internal class LibraryModifiableModelBridgeImpl(
       originalLibrary.entityId = entityId
       originalLibrary.fireRootSetChanged()
     }
+  }
+
+  override fun prepareForCommit() {
+    assertModelIsLive()
+
+    modelIsCommittedOrDisposed = true
+
+    if (reloadKind) originalLibrary.cleanCachedValue()
+    if (isChanged) originalLibrary.entityId = entityId
   }
 
   private fun update(updater: ModifiableLibraryEntity.() -> Unit) {

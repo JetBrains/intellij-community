@@ -123,11 +123,11 @@ final class InProcessGroovyc implements GroovycFlavor {
     return new GroovycContinuation() {
       @NotNull
       @Override
-      public GroovycOutputParser continueCompilation() throws Exception {
+      public GroovyCompilerResult continueCompilation() throws Exception {
         parser.onContinuation();
         mailbox.offer(GroovyRtConstants.JAVAC_COMPLETED);
         future.get();
-        return parser;
+        return parser.result();
       }
 
       @Override

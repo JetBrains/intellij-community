@@ -70,7 +70,7 @@ class JavaElementActionsFactory : JvmElementActionsFactory() {
     if (staticMethodRequested) {
       // static method in interfaces are allowed starting with Java 8
       if (javaClass.isInterface && !PsiUtil.isLanguageLevel8OrHigher(javaClass)) return emptyList()
-      // static methods in inner classes are disallowed JLS §8.1.3
+      // static methods in inner classes are disallowed: see JLS 8.1.3
       if (javaClass.containingClass != null && !javaClass.hasModifierProperty(PsiModifier.STATIC)) return emptyList()
     }
 

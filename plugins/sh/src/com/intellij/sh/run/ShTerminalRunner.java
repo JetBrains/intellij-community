@@ -3,6 +3,7 @@ package com.intellij.sh.run;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -29,7 +30,7 @@ final class ShTerminalRunner extends ShRunner {
   }
 
   @Override
-  public void run(@NotNull String command, @NotNull String workingDirectory, @NotNull String title) {
+  public void run(@NotNull String command, @NotNull String workingDirectory, @NotNull @NlsContexts.TabTitle String title) {
     TerminalView terminalView = TerminalView.getInstance(myProject);
     ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
     if (window == null) return;

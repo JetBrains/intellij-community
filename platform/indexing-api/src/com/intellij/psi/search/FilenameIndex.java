@@ -31,7 +31,7 @@ public final class FilenameIndex {
   @NonNls
   public static final ID<String, Void> NAME = ID.create("FilenameIndex");
 
-  public static String @NotNull [] getAllFilenames(@Nullable Project project) {
+  public static @NotNull String @NotNull [] getAllFilenames(@Nullable Project project) {
     Set<String> names = new HashSet<>();
     processAllFileNames((String s) -> {
       names.add(s);
@@ -58,7 +58,7 @@ public final class FilenameIndex {
     return getVirtualFilesByNameIgnoringCase(name, scope, null);
   }
 
-  public static PsiFile @NotNull [] getFilesByName(@NotNull Project project, @NotNull String name, @NotNull GlobalSearchScope scope) {
+  public static @NotNull PsiFile @NotNull [] getFilesByName(@NotNull Project project, @NotNull String name, @NotNull GlobalSearchScope scope) {
     return (PsiFile[])getFilesByName(project, name, scope, false);
   }
 
@@ -130,10 +130,10 @@ public final class FilenameIndex {
     return files;
   }
 
-  public static PsiFileSystemItem @NotNull [] getFilesByName(@NotNull Project project,
-                                                             @NotNull String name,
-                                                             @NotNull final GlobalSearchScope scope,
-                                                             boolean directories) {
+  public static @NotNull PsiFileSystemItem @NotNull [] getFilesByName(@NotNull Project project,
+                                                                      @NotNull String name,
+                                                                      @NotNull final GlobalSearchScope scope,
+                                                                      boolean directories) {
     SmartList<PsiFileSystemItem> result = new SmartList<>();
     Processor<PsiFileSystemItem> processor = Processors.cancelableCollectProcessor(result);
     processFilesByName(name, directories, processor, scope, project, null);

@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorInlayFoldingMapper;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -41,6 +42,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +60,7 @@ public final class DocRenderItem {
 
   final Editor editor;
   final RangeHighlighter highlighter;
-  String textToRender;
+  @Nls String textToRender;
   private FoldRegion foldRegion;
   Inlay<DocRenderer> inlay;
 
@@ -79,14 +81,10 @@ public final class DocRenderItem {
     if (existing == null) {
       if (itemsToSet.isEmpty()) return;
       editor.putUserData(OUR_ITEMS, items = new ArrayList<>());
-      if (DocRenderManager.isDocRenderingEnabled(editor)) {
-        collapseNewItems = true;
-      }
     }
     else {
       items = existing;
     }
-    boolean finalCollapseNewItems = collapseNewItems;
     keepScrollingPositionWhile(editor, () -> {
       List<Runnable> foldingTasks = new ArrayList<>();
       List<DocRenderItem> itemsToUpdateInlays = new ArrayList<>();
@@ -108,9 +106,9 @@ public final class DocRenderItem {
       }
       Collection<DocRenderItem> newRenderItems = new ArrayList<>();
       for (DocRenderPassFactory.Item item : itemsToSet) {
-        DocRenderItem newItem = new DocRenderItem(editor, item.textRange, finalCollapseNewItems ? null : item.textToRender);
+        DocRenderItem newItem = new DocRenderItem(editor, item.textRange, collapseNewItems ? null : item.textToRender);
         newRenderItems.add(newItem);
-        if (finalCollapseNewItems) {
+        if (collapseNewItems) {
           updated |= newItem.toggle(foldingTasks);
           newItem.textToRender = item.textToRender;
           itemsToUpdateInlays.add(newItem);
@@ -231,11 +229,12 @@ public final class DocRenderItem {
   }
 
   public static EditorCustomElementRenderer createDemoRenderer(@NotNull Editor editor) {
-    DocRenderItem item = new DocRenderItem(editor, new TextRange(0, 0), "Rendered documentation with <a href='''>link</a>");
+    DocRenderItem item = new DocRenderItem(editor, new TextRange(0, 0), CodeInsightBundle.message(
+      "documentation.rendered.documentation.with.href.link"));
     return new DocRenderer(item);
   }
 
-  private DocRenderItem(@NotNull Editor editor, @NotNull TextRange textRange, @Nullable String textToRender) {
+  private DocRenderItem(@NotNull Editor editor, @NotNull TextRange textRange, @Nullable @Nls String textToRender) {
     this.editor = editor;
     this.textToRender = textToRender;
     highlighter = editor.getMarkupModel()
@@ -327,7 +326,7 @@ public final class DocRenderItem {
       return DocRenderPassFactory.calcText(getComment());
     }).withDocumentsCommitted(Objects.requireNonNull(editor.getProject()))
       .coalesceBy(this)
-      .finishOnUiThread(ModalityState.any(), html -> {
+      .finishOnUiThread(ModalityState.any(), (@Nls String html) -> {
         textToRender = html;
         toggle(null);
       }).submit(AppExecutorUtil.getAppExecutorService());
@@ -513,6 +512,11 @@ public final class DocRenderItem {
       return icon;
     }
 
+    @Override
+    public @NotNull String getAccessibleName() {
+      return CodeInsightBundle.message("doc.render.icon.accessible.name");
+    }
+
     @NotNull
     @Override
     public Alignment getAlignment() {
@@ -673,6 +677,20 @@ public final class DocRenderItem {
     public void dispose() {
       myCurrentItem = null;
       myQueuedEditor = null;
+    }
+  }
+
+  private static class InlayFoldingMapper implements EditorInlayFoldingMapper {
+    @Override
+    public @Nullable FoldRegion getAssociatedFoldRegion(@NotNull Inlay<?> inlay) {
+      EditorCustomElementRenderer renderer = inlay.getRenderer();
+      return renderer instanceof DocRenderer ? ((DocRenderer)renderer).myItem.foldRegion : null;
+    }
+
+    @Override
+    public @Nullable Inlay<?> getAssociatedInlay(@NotNull FoldRegion foldRegion) {
+      DocRenderItem item = foldRegion.getUserData(OUR_ITEM);
+      return item == null ? null : item.inlay;
     }
   }
 }

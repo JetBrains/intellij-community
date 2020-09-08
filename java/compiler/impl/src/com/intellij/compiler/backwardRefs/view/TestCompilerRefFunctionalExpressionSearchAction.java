@@ -3,6 +3,7 @@ package com.intellij.compiler.backwardRefs.view;
 
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.psi.LambdaUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 public final class TestCompilerRefFunctionalExpressionSearchAction extends TestCompilerHierarchyBaseAction {
   public TestCompilerRefFunctionalExpressionSearchAction() {
-    super("Compiler Reference Functional Expression Search");
+    super(JavaCompilerBundle.message("action.compiler.reference.functional.expression.search.text"));
   }
 
   @Nullable

@@ -324,7 +324,7 @@ public final class FileStatusMap implements Disposable {
     }
 
     @Override
-    public String toString() {
+    public @NonNls String toString() {
       return "WHOLE_FILE";
     }
   };

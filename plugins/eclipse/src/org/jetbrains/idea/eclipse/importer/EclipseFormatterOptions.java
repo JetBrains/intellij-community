@@ -3,20 +3,22 @@
  */
 package org.jetbrains.idea.eclipse.importer;
 
+import org.jetbrains.annotations.NonNls;
+
 public interface EclipseFormatterOptions {
-  String VALUE_INSERT = "insert";
-  String VALUE_DO_NOT_INSERT = "do not insert";
+  @NonNls String VALUE_INSERT = "insert";
+  @NonNls String VALUE_DO_NOT_INSERT = "do not insert";
   String VALUE_FALSE = "false";
   String VALUE_TRUE = "true";
 
-  String VALUE_NEXT_LINE = "next_line";
-  String VALUE_NEXT_LINE_SHIFTED = "next_line_shifted";
-  String VALUE_END_OF_LINE = "end_of_line";
-  String VALUE_NEXT_LINE_IF_WRAPPED = "next_line_on_wrap";
+  @NonNls String VALUE_NEXT_LINE = "next_line";
+  @NonNls String VALUE_NEXT_LINE_SHIFTED = "next_line_shifted";
+  @NonNls String VALUE_END_OF_LINE = "end_of_line";
+  @NonNls String VALUE_NEXT_LINE_IF_WRAPPED = "next_line_on_wrap";
 
-  String TAB_CHAR_TAB = "tab";
-  String TAB_CHAR_SPACE = "space";
-  String TAB_CHAR_MIXED = "mixed";
+  @NonNls String TAB_CHAR_TAB = "tab";
+  @NonNls String TAB_CHAR_SPACE = "space";
+  @NonNls String TAB_CHAR_MIXED = "mixed";
 
   String FORMATTER_OPTIONS_PREFIX = "org.eclipse.jdt.core.formatter";
 
@@ -54,7 +56,7 @@ public interface EclipseFormatterOptions {
   String OPTION_ON_DEMAND_STATIC_IMPORT_THRESHOLD = "org.eclipse.jdt.ui.staticondemandthreshold";
 
   String OPTION_IMPORT_ORDER = "org.eclipse.jdt.ui.importorder";
-  String OPTION_FORMATTER_PROFILE = "formatter_profile";
+  @NonNls String OPTION_FORMATTER_PROFILE = "formatter_profile";
 
   int DEFAULT_IMPORTS_THRESHOLD = 99;
 

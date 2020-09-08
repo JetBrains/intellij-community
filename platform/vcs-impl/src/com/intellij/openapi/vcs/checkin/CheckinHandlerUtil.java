@@ -14,6 +14,7 @@ import com.intellij.project.ProjectKt;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -61,7 +62,7 @@ public final class CheckinHandlerUtil {
       .anyMatch(checker -> FileTypeRegistry.getInstance().isFileOfType(file, checker.getFileType()) && checker.isOutOfSources(project, file));
   }
 
-  public static void disableWhenDumb(@NotNull Project project, @NotNull JCheckBox checkBox, @NotNull String tooltip) {
+  public static void disableWhenDumb(@NotNull Project project, @NotNull JCheckBox checkBox, @NotNull @Nls String tooltip) {
     boolean dumb = DumbService.isDumb(project);
     checkBox.setEnabled(!dumb);
     checkBox.setToolTipText(dumb ? tooltip : "");

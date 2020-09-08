@@ -371,7 +371,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
       return myGetter;
     }
 
-    public void setGetter(String getter) {
+    public void setGetter(@NonNls String getter) {
       myGetter = getter;
     }
 

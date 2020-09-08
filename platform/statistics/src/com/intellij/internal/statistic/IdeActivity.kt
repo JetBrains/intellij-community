@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.TimeoutUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
 
@@ -79,7 +80,7 @@ class IdeActivity @JvmOverloads constructor(private val projectOrNullForApplicat
 
     @JvmStatic
     @JvmOverloads
-    fun started(projectOrNullForApplication: Project?, group: String, activityName: String? = null): IdeActivity =
+    fun started(projectOrNullForApplication: Project?, group: @NonNls String, activityName: @NonNls String? = null): IdeActivity =
       IdeActivity(projectOrNullForApplication, group, activityName).started()
   }
 }

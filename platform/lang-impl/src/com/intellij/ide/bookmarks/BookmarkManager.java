@@ -213,6 +213,10 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
     return answer;
   }
 
+  public Collection<Bookmark> getAllBookmarks() {
+    return myBookmarks.values();
+  }
+
   @Nullable
   public Bookmark findEditorBookmark(@NotNull Document document, int line) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);

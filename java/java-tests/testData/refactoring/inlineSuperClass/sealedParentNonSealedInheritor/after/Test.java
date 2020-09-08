@@ -1,3 +1,3 @@
-final class Super {}
+class Super {}
 
 class Test {}

@@ -4,24 +4,18 @@ package org.jetbrains.jps.model.serialization.library;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jdom.Element;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.java.JpsJavaLibraryType;
 import org.jetbrains.jps.model.library.*;
-import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsModuleReference;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 
 public final class JpsLibraryTableSerializer {
   private static final JpsLibraryRootTypeSerializer[] PREDEFINED_ROOT_TYPES_SERIALIZERS = {
     new JpsLibraryRootTypeSerializer("CLASSES", JpsOrderRootType.COMPILED, true),
-    new JpsLibraryRootTypeSerializer("SOURCES", JpsOrderRootType.SOURCES, true)
+    new JpsLibraryRootTypeSerializer("SOURCES", JpsOrderRootType.SOURCES, true),
+    new JpsLibraryRootTypeSerializer("DOCUMENTATION", JpsOrderRootType.DOCUMENTATION, false)
   };
   public static final String NAME_ATTRIBUTE = "name";
   public static final String TYPE_ATTRIBUTE = "type";
@@ -37,10 +31,6 @@ public final class JpsLibraryTableSerializer {
       public JpsDummyElement loadProperties(@Nullable Element propertiesElement) {
         return JpsElementFactory.getInstance().createDummyElement();
       }
-
-      @Override
-      public void saveProperties(JpsDummyElement properties, Element element) {
-      }
     };
   public static final String MODULE_LEVEL = "module";
   public static final String PROJECT_LEVEL = "project";
@@ -49,23 +39,6 @@ public final class JpsLibraryTableSerializer {
   public static void loadLibraries(@Nullable Element libraryTableElement, JpsLibraryCollection result) {
     for (Element libraryElement : JDOMUtil.getChildren(libraryTableElement, LIBRARY_TAG)) {
       result.addLibrary(loadLibrary(libraryElement));
-    }
-  }
-
-  public static void saveLibraries(JpsLibraryCollection libraryCollection, Element libraryTableElement) {
-    List<JpsLibrary> libraries = new ArrayList<>();
-    for (JpsLibrary library : libraryCollection.getLibraries()) {
-      if (!(library.getType() instanceof JpsSdkType<?>)) {
-        libraries.add(library);
-      }
-    }
-
-    libraries.sort((o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
-
-    for (JpsLibrary library : libraries) {
-      Element libraryTag = new Element(LIBRARY_TAG);
-      saveLibrary(library, libraryTag, library.getName());
-      libraryTableElement.addContent(libraryTag);
     }
   }
 
@@ -111,47 +84,6 @@ public final class JpsLibraryTableSerializer {
     return library;
   }
 
-  public static void saveLibrary(JpsLibrary library, Element libraryElement, final String libraryName) {
-    if (libraryName != null) {
-      libraryElement.setAttribute(NAME_ATTRIBUTE, libraryName);
-    }
-    saveProperties((JpsTypedLibrary<?>)library, libraryElement);
-    List<Element> jarDirectoryElements = new ArrayList<>();
-    for (JpsLibraryRootTypeSerializer serializer : getSortedSerializers()) {
-      List<JpsLibraryRoot> roots = library.getRoots(serializer.getType());
-      if (roots.isEmpty() && !serializer.isWriteIfEmpty()) continue;
-
-      Element typeElement = new Element(serializer.getTypeId());
-      for (JpsLibraryRoot root : roots) {
-        typeElement.addContent(new Element(ROOT_TAG).setAttribute(URL_ATTRIBUTE, root.getUrl()));
-        if (root.getInclusionOptions() != JpsLibraryRoot.InclusionOptions.ROOT_ITSELF) {
-          Element jarDirectoryElement = new Element(JAR_DIRECTORY_TAG).setAttribute(URL_ATTRIBUTE, root.getUrl());
-          boolean recursive = root.getInclusionOptions() == JpsLibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT_RECURSIVELY;
-          jarDirectoryElement.setAttribute(RECURSIVE_ATTRIBUTE, Boolean.toString(recursive));
-          if (!serializer.getType().equals(JpsOrderRootType.COMPILED)) {
-            jarDirectoryElement.setAttribute(TYPE_ATTRIBUTE, serializer.getTypeId());
-          }
-          jarDirectoryElements.add(jarDirectoryElement);
-        }
-      }
-      libraryElement.addContent(typeElement);
-    }
-    libraryElement.addContent(jarDirectoryElements);
-  }
-
-  private static <P extends JpsElement> void saveProperties(JpsTypedLibrary<P> library, Element libraryElement) {
-    JpsLibraryType<P> type = library.getType();
-    if (!type.equals(JpsJavaLibraryType.INSTANCE)) {
-      JpsLibraryPropertiesSerializer<P> serializer = getLibraryPropertiesSerializer(type);
-      libraryElement.setAttribute(TYPE_ATTRIBUTE, serializer.getTypeId());
-      Element element = new Element(PROPERTIES_TAG);
-      serializer.saveProperties(library.getProperties(), element);
-      if (!element.getContent().isEmpty() || !element.getAttributes().isEmpty()) {
-        libraryElement.addContent(element);
-      }
-    }
-  }
-
   private static <P extends JpsElement> JpsLibrary createLibrary(String name, JpsLibraryPropertiesSerializer<P> loader,
                                                                            final Element propertiesElement) {
     return JpsElementFactory.getInstance().createLibrary(name, loader.getType(), loader.loadProperties(propertiesElement));
@@ -173,16 +105,6 @@ public final class JpsLibraryTableSerializer {
     return JpsOrderRootType.COMPILED;
   }
 
-  private static Collection<JpsLibraryRootTypeSerializer> getSortedSerializers() {
-    List<JpsLibraryRootTypeSerializer> serializers = new ArrayList<>();
-    Collections.addAll(serializers, PREDEFINED_ROOT_TYPES_SERIALIZERS);
-    for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
-      serializers.addAll(extension.getLibraryRootTypeSerializers());
-    }
-    Collections.sort(serializers);
-    return serializers;
-  }
-
   private static JpsLibraryPropertiesSerializer<?> getLibraryPropertiesSerializer(@Nullable String typeId) {
     if (typeId != null) {
       for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
@@ -194,18 +116,6 @@ public final class JpsLibraryTableSerializer {
       }
     }
     return JAVA_LIBRARY_PROPERTIES_SERIALIZER;
-  }
-
-  private static <P extends JpsElement> JpsLibraryPropertiesSerializer<P> getLibraryPropertiesSerializer(@NotNull JpsLibraryType<P> type) {
-    for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
-      for (JpsLibraryPropertiesSerializer<?> loader : extension.getLibraryPropertiesSerializers()) {
-        if (loader.getType().equals(type)) {
-          //noinspection unchecked
-          return (JpsLibraryPropertiesSerializer<P>)loader;
-        }
-      }
-    }
-    throw new IllegalArgumentException("unknown type library:" + type);
   }
 
   public static JpsElementReference<? extends JpsCompositeElement> createLibraryTableReference(String level) {

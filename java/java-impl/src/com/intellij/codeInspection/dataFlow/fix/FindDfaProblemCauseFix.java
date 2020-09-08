@@ -10,6 +10,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.TrackingRunner;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
@@ -114,7 +115,7 @@ public final class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityA
     }
     if (causes.isEmpty()) {
       HintManagerImpl hintManager = (HintManagerImpl)HintManager.getInstance();
-      hintManager.showErrorHint(editor, "Unable to find the cause");
+      hintManager.showErrorHint(editor, JavaAnalysisBundle.message("dfa.find.cause.unable"));
       return;
     }
     if (causes.size() == 1) {
@@ -123,6 +124,7 @@ public final class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityA
       return;
     }
     AtomicReference<ScopeHighlighter> highlighter = new AtomicReference<>(new ScopeHighlighter(editor));
+    //noinspection HardCodedStringLiteral
     JBPopup popup = JBPopupFactory.getInstance().createPopupChooserBuilder(causes)
       .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
       .setAccessibleName(root.toString())
@@ -159,6 +161,7 @@ public final class FindDfaProblemCauseFix implements LocalQuickFix, LowPriorityA
     PsiNavigationSupport.getInstance().createNavigatable(file.getProject(), targetFile.getVirtualFile(), range.getStartOffset())
       .navigate(true);
     HintManagerImpl hintManager = (HintManagerImpl)HintManager.getInstance();
+    //noinspection HardCodedStringLiteral
     hintManager.showInformationHint(editor, StringUtil.escapeXmlEntities(StringUtil.capitalize(item.toString())));
   }
 }

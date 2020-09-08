@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +42,7 @@ public abstract class ProjectImportProvider {
   }
 
   @NotNull
-  public String getName(){
+  public @Nls(capitalization = Nls.Capitalization.Sentence) String getName(){
     return getBuilder().getName();
   }
 
@@ -92,7 +93,7 @@ public abstract class ProjectImportProvider {
 
   @Nullable
   @Language("HTML")
-  public String getFileSample() {
+  public @Nls String getFileSample() {
     return null;
   }
 }

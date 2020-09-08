@@ -7,24 +7,22 @@ import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.StreamEx;
+import com.siyeh.ig.psiutils.SealedUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -52,7 +50,7 @@ public class FillPermitsListFix extends LocalQuickFixAndIntentionActionOnPsiElem
     Set<PsiClass> permittedClasses = ContainerUtil.map2Set(psiClass.getPermitsListTypes(), PsiClassType::resolve);
     Collection<String> missingInheritors = getMissingInheritors(project, psiJavaFile, psiClass, permittedClasses);
     if (missingInheritors == null) return;
-    fillPermitsList(psiClass, missingInheritors);
+    SealedUtils.fillPermitsList(psiClass, missingInheritors);
   }
 
   @Override
@@ -68,7 +66,7 @@ public class FillPermitsListFix extends LocalQuickFixAndIntentionActionOnPsiElem
     Collection<String> missingInheritors = new SmartList<>();
     PsiJavaModule module = JavaModuleGraphUtil.findDescriptorByElement(psiClass);
     for (PsiClass inheritor : DirectClassInheritorsSearch.search(psiClass)) {
-      String errorTitle = SealClassAction.checkInheritor(psiJavaFile, module, inheritor);
+      String errorTitle = SealedUtils.checkInheritor(psiJavaFile, module, inheritor);
       if (errorTitle != null) {
         reportError(project, JavaBundle.message(errorTitle));
         return null;
@@ -85,31 +83,9 @@ public class FillPermitsListFix extends LocalQuickFixAndIntentionActionOnPsiElem
     return missingInheritors;
   }
 
-  public static void fillPermitsList(@NotNull PsiClass parent, @NotNull Collection<String> missingInheritors) {
-    PsiReferenceList permitsList = parent.getPermitsList();
-    PsiFileFactory factory = PsiFileFactory.getInstance(parent.getProject());
-    if (permitsList == null) {
-      PsiReferenceList implementsList = Objects.requireNonNull(parent.getImplementsList());
-      String permitsClause = StreamEx.of(missingInheritors).sorted().joining(",", "permits ", "");
-      parent.addAfter(createPermitsClause(factory, permitsClause), implementsList);
-    }
-    else {
-      Stream<String> curClasses = Arrays.stream(permitsList.getReferenceElements()).map(ref -> ref.getQualifiedName());
-      String permitsClause = StreamEx.of(missingInheritors).append(curClasses).sorted().joining(",", "permits ", "");
-      permitsList.replace(createPermitsClause(factory, permitsClause));
-    }
-  }
-
-  private static void reportError(@NotNull Project project, @NotNull String message) {
+  private static void reportError(@NotNull Project project, @NotNull @NlsContexts.HintText String message) {
     Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
     if (editor == null) return;
     HintManager.getInstance().showErrorHint(editor, message);
-  }
-
-  @NotNull
-  private static PsiReferenceList createPermitsClause(@NotNull PsiFileFactory factory, @NotNull String permitsClause) {
-    PsiJavaFile javaFile = (PsiJavaFile)factory.createFileFromText(JavaLanguage.INSTANCE, "class __Dummy " + permitsClause + "{}");
-    PsiClass newClass = javaFile.getClasses()[0];
-    return Objects.requireNonNull(newClass.getPermitsList());
   }
 }

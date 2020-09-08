@@ -59,7 +59,7 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
       @Override
       public String getErrorText(String inputString) {
         if (inputString.length() > 0 && !PsiNameHelper.getInstance(project).isQualifiedName(inputString)) {
-          return "This is not a valid Java qualified name";
+          return JavaErrorBundle.message("create.class.action.this.not.valid.java.qualified.name");
         }
         String shortName = StringUtil.getShortName(inputString);
         if (HighlightClassUtil.isRestrictedIdentifier(shortName, level)) {

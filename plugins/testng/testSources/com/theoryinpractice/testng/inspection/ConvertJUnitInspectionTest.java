@@ -29,7 +29,7 @@ public class ConvertJUnitInspectionTest extends BaseTestNGInspectionsTest {
 
   @Override
   protected String getActionName() {
-    return JUnitConvertTool.QUICKFIX_NAME;
+    return "Convert TestCase to TestNG";
   }
 
   public void testClass() {

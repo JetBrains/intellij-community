@@ -16,6 +16,7 @@
 package org.intellij.images.search;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import org.intellij.images.thumbnail.ThumbnailView;
@@ -24,16 +25,16 @@ import org.intellij.images.thumbnail.actions.Filter;
 import java.util.Objects;
 
 public class TagFilter implements Filter {
-  private final String myTag;
+  private final @NlsActions.ActionText String myTag;
   private final ImageTagManager myManager;
 
-  public TagFilter(String tag, ImageTagManager manager) {
+  public TagFilter(@NlsActions.ActionText String tag, ImageTagManager manager) {
     myTag = tag;
     myManager = manager;
   }
 
   @Override
-  public String getDisplayName() {
+  public @NlsActions.ActionText String getDisplayName() {
     return myTag;
   }
 

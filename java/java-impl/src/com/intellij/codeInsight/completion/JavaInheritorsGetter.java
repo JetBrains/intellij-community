@@ -152,7 +152,8 @@ public class JavaInheritorsGetter {
             if (inferenceResult.getErrorMessage() == null &&
                 !psiClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
                 areInferredTypesApplicable(inferenceResult.getTypes(), parameters.getPosition())) {
-              psiType = initializer.getType();
+              assert initializer != null;
+              psiType = Objects.requireNonNull(initializer.getType());
             }
           }
         }
@@ -226,17 +227,18 @@ public class JavaInheritorsGetter {
       final PsiClass baseClass = baseResult.getElement();
       if (baseClass == null) return false;
 
-      final PsiSubstitutor baseSubstitutor = baseResult.getSubstitutor();
-
-      final Processor<PsiClass> processor = CodeInsightUtil.createInheritorsProcessor(context, type, 0, false,
-                                                                                      consumer, baseClass, baseSubstitutor);
       final StatisticsInfo[] stats = StatisticsManager.getInstance().getAllValues(JavaStatisticsManager.getAfterNewKey(type));
       for (final StatisticsInfo statisticsInfo : stats) {
         final String value = statisticsInfo.getValue();
         if (value.startsWith(JavaStatisticsManager.CLASS_PREFIX)) {
           final String qname = value.substring(JavaStatisticsManager.CLASS_PREFIX.length());
           final PsiClass psiClass = JavaPsiFacade.getInstance(contextFile.getProject()).findClass(qname, contextFile.getResolveScope());
-          if (psiClass != null && !PsiTreeUtil.isAncestor(contextFile, psiClass, true) && !processor.process(psiClass)) break;
+          if (psiClass != null && !PsiTreeUtil.isAncestor(contextFile, psiClass, true)) {
+            PsiType toAdd = CodeInsightUtil.getSubTypeBySubClass(context, type, 0, false, baseClass, psiClass);
+            if (toAdd != null) {
+              consumer.consume(toAdd);
+            }
+          }
         }
       }
     }

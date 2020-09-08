@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
@@ -55,7 +56,7 @@ public class ThrowExceptionAction extends DebuggerAction {
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
         ApplicationManager.getApplication().invokeLater(
           () -> new XExpressionDialog(project, debugProcess.getXdebugProcess().getEditorsProvider(), "throwExceptionValue",
-                                    "Exception To Throw", stackFrame.getSourcePosition(), null) {
+                                      JavaDebuggerBundle.message("dialog.title.exception.to.throw"), stackFrame.getSourcePosition(), null) {
             @Override
             protected void doOKAction() {
               evaluateAndReturn(project, stackFrame, debugProcess, getExpression(), this);
@@ -90,7 +91,7 @@ public class ThrowExceptionAction extends DebuggerAction {
     });
   }
 
-  private static void showError(Project project, String message) {
+  private static void showError(Project project, @NlsContexts.DialogMessage String message) {
     PopFrameAction.showError(project, message, UIUtil.removeMnemonic(ActionsBundle.actionText("Debugger.ThrowException")));
   }
 

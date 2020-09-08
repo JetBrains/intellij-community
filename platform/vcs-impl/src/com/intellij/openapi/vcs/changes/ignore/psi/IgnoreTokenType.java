@@ -54,6 +54,6 @@ public class IgnoreTokenType extends IElementType {
    */
   @Override
   public String toString() {
-    return VcsBundle.INSTANCE.messageOrDefault("ignoreTokenType." + debugName, "IgnoreTokenType." + super.toString());
+    return VcsBundle.INSTANCE.messageOrDefault("ignoreTokenType." + debugName, "IgnoreTokenType." + super.toString()); // NON-NLS
   }
 }

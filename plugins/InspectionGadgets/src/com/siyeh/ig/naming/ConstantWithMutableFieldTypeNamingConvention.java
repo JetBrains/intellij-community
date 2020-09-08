@@ -22,10 +22,11 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.NonNls;
 
 public class ConstantWithMutableFieldTypeNamingConvention extends NamingConvention<PsiField> {
 
-  static final String CONSTANT_WITH_MUTABLE_FIELD_TYPE_NAMING_CONVENTION_SHORT_NAME = "ConstantWithMutableFieldTypeNamingConvention";
+  @NonNls static final String CONSTANT_WITH_MUTABLE_FIELD_TYPE_NAMING_CONVENTION_SHORT_NAME = "ConstantWithMutableFieldTypeNamingConvention";
 
   private static final int DEFAULT_MIN_LENGTH = 5;
   private static final int DEFAULT_MAX_LENGTH = 32;

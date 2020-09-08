@@ -19,7 +19,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent"/>
         </clientProperties>
-        <border type="none" title="Modules to export">
+        <border type="none" title-resource-bundle="messages/EclipseBundle" title-key="border.title.modules.to.export">
           <font/>
         </border>
         <children>
@@ -36,7 +36,7 @@
           <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Switch selected modules to &amp;Eclipse-compatible format"/>
+          <text resource-bundle="messages/EclipseBundle" key="checkbox.switch.selected.modules.to.eclipse.compatible.format"/>
         </properties>
       </component>
       <component id="285cc" class="javax.swing.JLabel" binding="myPathToUserLibsLabel">
@@ -45,7 +45,7 @@
         </constraints>
         <properties>
           <labelFor value="c860d"/>
-          <text value="&amp;Path to resulting .userlibraries"/>
+          <text resource-bundle="messages/EclipseBundle" key="label.path.to.resulting.userlibraries"/>
         </properties>
       </component>
       <component id="c860d" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myUserLibrariesTF">
@@ -59,7 +59,7 @@
           <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="E&amp;xport non-module libraries"/>
+          <text resource-bundle="messages/EclipseBundle" key="checkbox.export.non.module.libraries"/>
         </properties>
       </component>
     </children>

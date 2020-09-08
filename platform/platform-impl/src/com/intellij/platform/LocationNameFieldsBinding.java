@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton.BrowseFolderActionListener;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -38,10 +39,10 @@ public class LocationNameFieldsBinding {
                                    final TextFieldWithBrowseButton locationField,
                                    final JTextField nameField,
                                    String baseDir,
-                                   String title) {
+                                   @NlsContexts.DialogTitle String title) {
     myBaseDir = baseDir;
     File suggestedProjectDirectory = FileUtil.findSequentNonexistentFile(new File(baseDir), "untitled", "");
-    locationField.setText(suggestedProjectDirectory.toString());
+    locationField.setText(suggestedProjectDirectory.getPath());
     nameField.setDocument(new NameFieldDocument(nameField, locationField));
     mySuggestedProjectName = suggestedProjectDirectory.getName();
     nameField.setText(mySuggestedProjectName);
@@ -55,7 +56,7 @@ public class LocationNameFieldsBinding {
           myBaseDir = chosenFile.getPath();
           if (isProjectNameChanged(nameField.getText()) && !nameField.getText().equals(chosenFile.getName())) {
             myExternalModify = true;
-            locationField.setText(new File(chosenFile.getPath(), nameField.getText()).toString());
+            locationField.setText(new File(chosenFile.getPath(), nameField.getText()).getPath());
             myExternalModify = false;
           }
           else {

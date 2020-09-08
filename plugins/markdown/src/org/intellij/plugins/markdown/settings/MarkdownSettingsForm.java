@@ -44,7 +44,6 @@ import java.util.Map;
 import java.util.Objects;
 
 public class MarkdownSettingsForm implements MarkdownCssSettings.Holder, MarkdownPreviewSettings.Holder, Disposable {
-  private static final String JAVA_FX_HTML_PANEL_PROVIDER = "JavaFxHtmlPanelProvider";
   private JPanel myMainPanel;
   private JBCheckBox myCustomCssFromPathEnabled;
   private TextFieldWithBrowseButton myCustomCssPath;
@@ -53,7 +52,6 @@ public class MarkdownSettingsForm implements MarkdownCssSettings.Holder, Markdow
   private JPanel myCssTitledSeparator;
   private ComboBox myPreviewProvider;
   private ComboBox myDefaultSplitLayout;
-  private JBCheckBox myUseGrayscaleRenderingForJBCheckBox;
   private JPanel myPreviewTitledSeparator;
   private JBCheckBox myAutoScrollCheckBox;
   private JPanel myMultipleProvidersPreviewPanel;
@@ -64,8 +62,6 @@ public class MarkdownSettingsForm implements MarkdownCssSettings.Holder, Markdow
   private JBCheckBox myHideErrorsCheckbox;
   private MarkdownScriptsTable myScriptsTable;
   private JBLabel myExtensionsHelpMessage;
-
-  private static final Color SUCCESS_COLOR = new JBColor(0x008000, 0x6A8759);
 
   @Nullable
   private EditorEx myEditor;
@@ -106,7 +102,6 @@ public class MarkdownSettingsForm implements MarkdownCssSettings.Holder, Markdow
     });
 
     myMultipleProvidersPreviewPanel.setVisible(isMultipleProviders());
-    updateUseGrayscaleEnabled();
 
     myDefaultSplitLayout.addActionListener(new ActionListener() {
       @Override
@@ -290,7 +285,6 @@ public class MarkdownSettingsForm implements MarkdownCssSettings.Holder, Markdow
         else {
           myLastItem = item;
           myScriptsTable.setState(MarkdownApplicationSettings.getInstance().getExtensionsEnabledState(), provider.getProviderInfo());
-          updateUseGrayscaleEnabled();
         }
       }
     });
@@ -300,22 +294,11 @@ public class MarkdownSettingsForm implements MarkdownCssSettings.Holder, Markdow
     );
   }
 
-  private void updateUseGrayscaleEnabled() {
-    final MarkdownHtmlPanelProvider.ProviderInfo selected = getSelectedProvider();
-    myUseGrayscaleRenderingForJBCheckBox.setEnabled(isProviderOf(selected, JAVA_FX_HTML_PANEL_PROVIDER));
-  }
-
-  private static boolean isProviderOf(@NotNull MarkdownHtmlPanelProvider.ProviderInfo selected, @NotNull String provider) {
-    return selected.getClassName().contains(provider);
-  }
-
   @NotNull
-  private static MarkdownHtmlPanelProvider getProvider(@SuppressWarnings("SameParameterValue") @NotNull String providerClass) {
-    for (MarkdownHtmlPanelProvider provider : MarkdownHtmlPanelProvider.getProviders()) {
-      if (isProviderOf(provider.getProviderInfo(), providerClass)) return provider;
-    }
-
-    throw new RuntimeException("Cannot find " + providerClass);
+  private static MarkdownHtmlPanelProvider getDefaultProvider() {
+    MarkdownHtmlPanelProvider[] providers = MarkdownHtmlPanelProvider.getProviders();
+    if (providers.length > 0) return providers[0];
+    throw new RuntimeException("No providers are defined");
   }
 
   @NotNull
@@ -324,7 +307,7 @@ public class MarkdownSettingsForm implements MarkdownCssSettings.Holder, Markdow
       return Objects.requireNonNull(myPreviewPanelModel.getSelected());
     }
     else {
-      return getProvider(JAVA_FX_HTML_PANEL_PROVIDER).getProviderInfo();
+      return getDefaultProvider().getProviderInfo();
     }
   }
 
@@ -335,12 +318,9 @@ public class MarkdownSettingsForm implements MarkdownCssSettings.Holder, Markdow
     }
 
     mySplitLayoutModel.setSelectedItem(settings.getSplitEditorLayout());
-    myUseGrayscaleRenderingForJBCheckBox.setSelected(settings.isUseGrayscaleRendering());
     myAutoScrollCheckBox.setSelected(settings.isAutoScrollPreview());
     myVerticalLayout.setSelected(settings.isVerticalSplit());
     myHorizontalLayout.setSelected(!settings.isVerticalSplit());
-
-    updateUseGrayscaleEnabled();
   }
 
   @NotNull
@@ -351,7 +331,6 @@ public class MarkdownSettingsForm implements MarkdownCssSettings.Holder, Markdow
     Objects.requireNonNull(provider);
     return new MarkdownPreviewSettings(mySplitLayoutModel.getSelectedItem(),
                                        provider,
-                                       myUseGrayscaleRenderingForJBCheckBox.isSelected(),
                                        myAutoScrollCheckBox.isSelected(),
                                        myVerticalLayout.isSelected());
   }

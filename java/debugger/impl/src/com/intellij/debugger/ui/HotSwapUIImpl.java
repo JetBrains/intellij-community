@@ -191,7 +191,8 @@ public final class HotSwapUIImpl extends HotSwapUI {
             final int answer = Messages.showCheckboxMessageDialog(
               JavaDebuggerBundle.message("hotswap.dialog.hang.warning"),
               JavaDebuggerBundle.message("hotswap.dialog.title"),
-              new String[]{"Perform &Reload Classes", "&Skip Reload Classes"},
+              new String[]{JavaDebuggerBundle.message("button.perform.reload.classes"),
+                JavaDebuggerBundle.message("button.skip.reload.classes")},
               UIBundle.message("dialog.options.do.not.show"),
               false, 1, 1, Messages.getWarningIcon(),
               (exitCode, cb) -> {

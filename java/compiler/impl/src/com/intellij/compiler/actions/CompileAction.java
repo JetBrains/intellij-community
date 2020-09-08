@@ -11,6 +11,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -135,7 +136,7 @@ public class CompileAction extends CompileActionBase {
     presentation.setEnabledAndVisible(forFiles == isForFiles);
   }
 
-  private String createPresentationText(String elementDescription) {
+  private @NlsSafe String createPresentationText(String elementDescription) {
     StringBuilder buffer = new StringBuilder(40);
     buffer.append(ActionsBundle.actionText(bundleKey)).append(" ");
     int length = elementDescription.length();

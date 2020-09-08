@@ -29,10 +29,7 @@ import java.util.Map;
 public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
 
   private static final Logger LOG = Logger.getInstance("TestNG QuickFix");
-  private static final String DISPLAY_NAME = "JUnit Test can be converted to TestNG";
   private static final Map<String, String> ANNOTATIONS_MAP;
-
-  public static final String QUICKFIX_NAME = "Convert TestCase to TestNG";
 
   static {
     ANNOTATIONS_MAP = new HashMap<>();
@@ -72,7 +69,7 @@ public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
     @Override
     @NotNull
     public String getFamilyName() {
-      return QUICKFIX_NAME;
+      return TestngBundle.message("intention.family.name.convert.testcase.to.testng");
     }
 
     @Override

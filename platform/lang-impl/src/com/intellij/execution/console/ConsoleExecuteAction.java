@@ -41,26 +41,26 @@ public class ConsoleExecuteAction extends DumbAwareAction {
 
   private final LanguageConsoleView myConsoleView;
   final ConsoleExecuteActionHandler myExecuteActionHandler;
-  private final Condition<LanguageConsoleView> myEnabledCondition;
+  private final Condition<? super LanguageConsoleView> myEnabledCondition;
 
   public ConsoleExecuteAction(@NotNull LanguageConsoleView console, @NotNull BaseConsoleExecuteActionHandler executeActionHandler) {
     this(console, executeActionHandler, CONSOLE_EXECUTE_ACTION_ID, Conditions.alwaysTrue());
   }
 
-  ConsoleExecuteAction(@NotNull LanguageConsoleView console, @NotNull ConsoleExecuteActionHandler executeActionHandler, @Nullable Condition<LanguageConsoleView> enabledCondition) {
+  ConsoleExecuteAction(@NotNull LanguageConsoleView console, @NotNull ConsoleExecuteActionHandler executeActionHandler, @Nullable Condition<? super LanguageConsoleView> enabledCondition) {
     this(console, executeActionHandler, CONSOLE_EXECUTE_ACTION_ID, enabledCondition);
   }
 
   public ConsoleExecuteAction(@NotNull LanguageConsoleView console,
                               @NotNull BaseConsoleExecuteActionHandler executeActionHandler,
-                              @Nullable Condition<LanguageConsoleView> enabledCondition) {
+                              @Nullable Condition<? super LanguageConsoleView> enabledCondition) {
     this(console, executeActionHandler, CONSOLE_EXECUTE_ACTION_ID, enabledCondition);
   }
 
   public ConsoleExecuteAction(@NotNull LanguageConsoleView consoleView,
                                @NotNull ConsoleExecuteActionHandler executeActionHandler,
                                @NotNull String emptyExecuteActionId,
-                               @Nullable Condition<LanguageConsoleView> enabledCondition) {
+                               @Nullable Condition<? super LanguageConsoleView> enabledCondition) {
     super(AllIcons.Actions.Execute);
 
     myConsoleView = consoleView;

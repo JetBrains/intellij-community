@@ -3,6 +3,7 @@ package com.intellij.psi;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -63,8 +64,7 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
     myRangeInElement = rangeInElement;
   }
 
-  @NotNull
-  public String getValue() {
+  public @NotNull @NlsSafe String getValue() {
     String text = myElement.getText();
     final TextRange range = getRangeInElement();
     try {
@@ -97,8 +97,7 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText() {
+  public @NotNull @NlsSafe String getCanonicalText() {
     return getValue();
   }
 

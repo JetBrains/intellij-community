@@ -6,6 +6,7 @@ import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiElement
 import com.intellij.util.KeyedLazyInstance
 import org.jetbrains.annotations.Nls
@@ -109,7 +110,7 @@ data class Option(@NonNls val id: String,
   val name: String
     get() = nameSupplier.get()
 
-  var extendedDescriptionSupplier: Supplier<String>? = null
+  var extendedDescriptionSupplier: Supplier<@NlsContexts.DetailedDescription String>? = null
 
   fun isEnabled(): Boolean = get()
 

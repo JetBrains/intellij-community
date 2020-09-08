@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.search;
 
 import com.intellij.lang.Language;
@@ -62,6 +62,12 @@ public interface SearchWordQueryBuilder {
 
   /**
    * Orders to search occurrences in files of given language.
+   * <br/>
+   * For example {@code inFilesWithLanguage(JavaLanguage.INSTANCE)} will produce occurrences
+   * from Java files and JSP files (since JSP contains code with JavaLanguage)
+   * <p>
+   * This only checks the host file language.
+   * </p>
    */
   @Contract(value = "_ -> new", pure = true)
   @NotNull
@@ -69,27 +75,37 @@ public interface SearchWordQueryBuilder {
 
   /**
    * Orders to search occurrences in files of given language and its dialects.
+   * <p>
+   * Same as {@link #inFilesWithLanguage}, except the language is matched with dialects.
+   * </p>
    */
   @Contract(value = "_ -> new", pure = true)
   @NotNull
   SearchWordQueryBuilder inFilesWithLanguageOfKind(@NotNull Language language);
 
   /**
-   * Orders to search occurrences in language injections.
+   * Orders to include occurrences in language injections of any language as well as occurrences in host files.
+   */
+  @Contract(value = "-> new", pure = true)
+  @NotNull
+  SearchWordQueryBuilder includeInjections();
+
+  /**
+   * Orders to search occurrences in language injections (instead of host files).
    */
   @Contract(value = "-> new", pure = true)
   @NotNull
   SearchWordQueryBuilder inInjections();
 
   /**
-   * Orders to search occurrences in language injections of given language.
+   * Orders to search occurrences in language injections (instead of host files) of given language.
    */
   @Contract(value = "_ -> new", pure = true)
   @NotNull
   SearchWordQueryBuilder inInjections(@NotNull Language language);
 
   /**
-   * Orders to search occurrences in language injections of given language and its dialects.
+   * Orders to search occurrences in language injections (instead of host files) of given language and its dialects.
    */
   @Contract(value = "_ -> new", pure = true)
   @NotNull

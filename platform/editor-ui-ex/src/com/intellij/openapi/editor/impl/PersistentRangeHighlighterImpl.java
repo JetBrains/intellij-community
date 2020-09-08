@@ -3,11 +3,8 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.util.DocumentUtil;
-import com.intellij.util.diff.FilesTooBigForDiffException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,48 +43,11 @@ final class PersistentRangeHighlighterImpl extends RangeHighlighterImpl {
 
   @Override
   protected void changedUpdateImpl(@NotNull DocumentEvent e) {
-    // todo Denis Zhdanov
-    DocumentEventImpl event = (DocumentEventImpl)e;
-    final boolean shouldTranslateViaDiff = isValid() && PersistentRangeMarkerUtil.shouldTranslateViaDiff(event, getStartOffset(), getEndOffset());
-    boolean wasTranslatedViaDiff = shouldTranslateViaDiff;
-    if (shouldTranslateViaDiff) {
-      wasTranslatedViaDiff = translatedViaDiff(e, event);
-    }
-    if (!wasTranslatedViaDiff) {
-      super.changedUpdateImpl(e);
-      if (isValid()) {
-        myLine = getDocument().getLineNumber(getStartOffset());
-        int endLine = getDocument().getLineNumber(getEndOffset());
-        if (endLine != myLine) {
-          setIntervalEnd(getDocument().getLineEndOffset(myLine));
-        }
-      }
-    }
-    if (isValid() && getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE) {
-      setIntervalStart(DocumentUtil.getFirstNonSpaceCharOffset(getDocument(), myLine));
-      setIntervalEnd(getDocument().getLineEndOffset(myLine));
-    }
-  }
-
-  private boolean translatedViaDiff(@NotNull DocumentEvent e, @NotNull DocumentEventImpl event) {
-    try {
-      myLine = event.translateLineViaDiff(myLine);
-    }
-    catch (FilesTooBigForDiffException ignored) {
-      return false;
-    }
-    if (myLine < 0 || myLine >= getDocument().getLineCount()) {
-      invalidate(e);
-    }
-    else {
-      DocumentEx document = getDocument();
-      setIntervalStart(document.getLineStartOffset(myLine));
-      setIntervalEnd(document.getLineEndOffset(myLine));
-    }
-    return true;
+    myLine = persistentHighlighterUpdate(e, myLine, getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE);
   }
 
   @Override
+  @NonNls
   public String toString() {
     return "PersistentRangeHighlighter" +
            (isGreedyToLeft() ? "[" : "(") +

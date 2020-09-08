@@ -87,7 +87,8 @@ internal fun checkoutOrReset(project: Project,
     val hasCommits = checkCommitsUnderProgress(project, repositories, startPoint, name)
     if (hasCommits) {
       VcsNotifier.getInstance(project)
-        .notifyError(GitBundle.message("branches.checkout.failed.title"),
+        .notifyError("git.branch.checkout.failed",
+                     GitBundle.message("branches.checkout.failed.title"),
                      GitBundle.message("branches.checkout.failed.description", name))
       return
     }
@@ -102,7 +103,8 @@ internal fun createNewBranch(project: Project, repositories: List<GitRepository>
   if (options.reset) {
     val hasCommits = checkCommitsUnderProgress(project, repositories, startPoint, name)
     if (hasCommits) {
-      VcsNotifier.getInstance(project).notifyError(GitBundle.message("branches.creation.failed.title"),
+      VcsNotifier.getInstance(project).notifyError("git.branch.creation.failed",
+                                                   GitBundle.message("branches.creation.failed.title"),
                                                    GitBundle.message("branches.checkout.failed.description", name))
       return
     }
@@ -144,7 +146,8 @@ internal fun updateBranches(project: Project, repositories: List<GitRepository>,
   if (repoToTrackingInfos.isEmpty()) return
 
   GitVcs.runInBackground(object : Task.Backgroundable(project, GitBundle.message("branches.updating.process"), true) {
-    var successFetches = 0
+    private val successfullyUpdated = arrayListOf<String>()
+
     override fun run(indicator: ProgressIndicator) {
       val fetchSupport = GitFetchSupport.fetchSupport(project)
       for ((repo, trackingInfos) in repoToTrackingInfos) {
@@ -154,7 +157,7 @@ internal fun updateBranches(project: Project, repositories: List<GitRepository>,
           val fetchResult = fetchSupport.fetch(repo, trackingInfo.remote, "$remoteBranchName:$localBranchName")
           try {
             fetchResult.throwExceptionIfFailed()
-            successFetches += 1
+            successfullyUpdated.add(localBranchName)
           }
           catch (ignored: VcsException) {
             fetchResult.showNotificationIfFailed(GitBundle.message("branches.update.failed"))
@@ -164,9 +167,11 @@ internal fun updateBranches(project: Project, repositories: List<GitRepository>,
     }
 
     override fun onSuccess() {
-      if (successFetches > 0) {
-        VcsNotifier.getInstance(myProject).notifySuccess(GitBundle.message("branches.selected.branches.updated.title",
-                                                                           localBranchNames.size))
+      if (successfullyUpdated.isNotEmpty()) {
+        VcsNotifier.getInstance(myProject).notifySuccess("git.branches.update.successful", "",
+                                                         GitBundle.message("branches.selected.branches.updated.title",
+                                                                                                                            successfullyUpdated.size,
+                                                                           successfullyUpdated.joinToString("\n")))
       }
     }
   })

@@ -15,6 +15,7 @@
  */
 package com.intellij.xml.breadcrumbs;
 
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -24,7 +25,7 @@ public abstract class BreadcrumbsItem {
 
   public abstract String getDisplayText();
 
-  public String getTooltip() {
+  public @NlsContexts.Tooltip String getTooltip() {
     return "";
   }
 

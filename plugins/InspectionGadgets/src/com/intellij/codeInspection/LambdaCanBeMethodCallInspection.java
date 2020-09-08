@@ -4,6 +4,7 @@ package com.intellij.codeInspection;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -14,6 +15,7 @@ import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class LambdaCanBeMethodCallInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -82,7 +84,7 @@ public class LambdaCanBeMethodCallInspection extends AbstractBaseJavaLocalInspec
         if (aClass == null || !CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION.equals(aClass.getQualifiedName())) return;
         PsiType[] typeParameters = type.getParameters();
         if (typeParameters.length != 2 || !typeParameters[1].isAssignableFrom(typeParameters[0])) return;
-        String replacement = CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION + ".identity()";
+        @NlsSafe String replacement = CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION + ".identity()";
         if (!LambdaUtil.isSafeLambdaReplacement(lambda, replacement)) return;
         registerProblem(lambda, "Function.identity()", replacement);
       }
@@ -120,7 +122,7 @@ public class LambdaCanBeMethodCallInspection extends AbstractBaseJavaLocalInspec
         }
       }
 
-      private void registerProblem(PsiLambdaExpression lambda, String displayReplacement, String replacement) {
+      private void registerProblem(PsiLambdaExpression lambda, @NlsSafe String displayReplacement, @NlsSafe String replacement) {
         holder.registerProblem(lambda, JavaAnalysisBundle.message("inspection.can.be.replaced.with.message", displayReplacement),
                                new ReplaceWithFunctionCallFix(replacement, displayReplacement));
       }

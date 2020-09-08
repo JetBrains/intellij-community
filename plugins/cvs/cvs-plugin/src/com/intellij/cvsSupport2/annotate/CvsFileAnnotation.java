@@ -8,6 +8,8 @@ import com.intellij.cvsSupport2.cvsoperations.cvsAnnotate.Annotation;
 import com.intellij.cvsSupport2.cvsstatuses.CvsEntriesListener;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
@@ -15,6 +17,7 @@ import com.intellij.openapi.vcs.annotate.LineAnnotationAspectAdapter;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
@@ -22,7 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class CvsFileAnnotation extends FileAnnotation{
+public class CvsFileAnnotation extends FileAnnotation {
   private final String myContent;
   private final Annotation[] myAnnotations;
   private final CvsEntriesListener myCvsEntriesListener;
@@ -31,41 +34,44 @@ public class CvsFileAnnotation extends FileAnnotation{
   private final VirtualFile myFile;
   private final String myCurrentRevision;
 
-  private final LineAnnotationAspect USER = new CvsAnnotationAspect(CvsAnnotationAspect.AUTHOR, true) {
-    @Override
-    public String getValue(int lineNumber) {
-      if (lineNumber < 0 || lineNumber >= myAnnotations.length)  {
-        return "";
+  private final LineAnnotationAspect USER =
+    new CvsAnnotationAspect(LineAnnotationAspect.AUTHOR, VcsBundle.message("line.annotation.aspect.author"), true) {
+      @Override
+      public String getValue(int lineNumber) {
+        if (lineNumber < 0 || lineNumber >= myAnnotations.length) {
+          return "";
+        }
+        else {
+          return myAnnotations[lineNumber].getUserName();
+        }
       }
-      else {
-        return myAnnotations[lineNumber].getUserName();
-      }
-    }
-  };
+    };
 
-  private final LineAnnotationAspect DATE = new CvsAnnotationAspect(CvsAnnotationAspect.DATE, true) {
-    @Override
-    public String getValue(int lineNumber) {
-      if (lineNumber < 0 || lineNumber >= myAnnotations.length)  {
-        return "";
+  private final LineAnnotationAspect DATE =
+    new CvsAnnotationAspect(LineAnnotationAspect.DATE, VcsBundle.message("line.annotation.aspect.date"), true) {
+      @Override
+      public String getValue(int lineNumber) {
+        if (lineNumber < 0 || lineNumber >= myAnnotations.length) {
+          return "";
+        }
+        else {
+          return myAnnotations[lineNumber].getPresentableDateString();
+        }
       }
-      else {
-        return myAnnotations[lineNumber].getPresentableDateString();
-      }
-    }
-  };
+    };
 
-  private final LineAnnotationAspect REVISION = new CvsAnnotationAspect(CvsAnnotationAspect.REVISION, false) {
-    @Override
-    public String getValue(int lineNumber) {
-      if (lineNumber < 0 || lineNumber >= myAnnotations.length)  {
-        return "";
+  private final LineAnnotationAspect REVISION =
+    new CvsAnnotationAspect(LineAnnotationAspect.REVISION, VcsBundle.message("line.annotation.aspect.revision"), false) {
+      @Override
+      public String getValue(int lineNumber) {
+        if (lineNumber < 0 || lineNumber >= myAnnotations.length) {
+          return "";
+        }
+        else {
+          return myAnnotations[lineNumber].getRevision();
+        }
       }
-      else {
-        return myAnnotations[lineNumber].getRevision();
-      }
-    }
-  };
+    };
 
 
   public CvsFileAnnotation(final String content, final Annotation[] annotations,
@@ -165,8 +171,8 @@ public class CvsFileAnnotation extends FileAnnotation{
   }
 
   private abstract static class CvsAnnotationAspect extends LineAnnotationAspectAdapter {
-    CvsAnnotationAspect(String id, boolean showByDefault) {
-      super(id, showByDefault);
+    CvsAnnotationAspect(@NonNls String id, @NlsContexts.ListItem String displayName, boolean showByDefault) {
+      super(id, displayName, showByDefault);
     }
 
     @Override

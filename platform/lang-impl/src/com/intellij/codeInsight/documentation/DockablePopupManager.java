@@ -8,11 +8,13 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.psi.PsiDocumentManager;
@@ -25,6 +27,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,16 +40,17 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
   private final static Logger LOG = Logger.getInstance(DockablePopupManager.class);
   protected ToolWindow myToolWindow;
   private Runnable myAutoUpdateRequest;
+  private boolean myAutoUpdateMuted;
   @NotNull protected final Project myProject;
 
   public DockablePopupManager(@NotNull Project project) {
     myProject = project;
   }
 
-  @Nls
+  @NonNls
   protected abstract String getShowInToolWindowProperty();
 
-  @Nls
+  @NonNls
   protected abstract String getAutoUpdateEnabledProperty();
 
   protected boolean getAutoUpdateDefault() {
@@ -81,7 +85,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
 
   protected abstract void doUpdateComponent(@NotNull PsiElement element);
 
-  protected abstract String getTitle(PsiElement element);
+  protected abstract @NlsContexts.TabTitle String getTitle(PsiElement element);
 
   protected abstract String getToolwindowId();
 
@@ -204,7 +208,8 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
   }
 
   void restartAutoUpdate(final boolean state) {
-    if (state && myToolWindow != null) {
+    boolean enabled = state && myToolWindow != null && !myAutoUpdateMuted;
+    if (enabled) {
       if (myAutoUpdateRequest == null) {
         myAutoUpdateRequest = this::updateComponent;
 
@@ -217,6 +222,17 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
         myAutoUpdateRequest = null;
       }
     }
+  }
+
+  public void muteAutoUpdateTill(@NotNull Disposable disposable) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    myAutoUpdateMuted = true;
+    resetAutoUpdateState();
+    Disposer.register(disposable, () -> {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+      myAutoUpdateMuted = false;
+      resetAutoUpdateState();
+    });
   }
 
   public void resetAutoUpdateState() {

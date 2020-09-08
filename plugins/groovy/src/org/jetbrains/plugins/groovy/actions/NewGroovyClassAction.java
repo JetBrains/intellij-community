@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.actions;
 
@@ -36,24 +36,24 @@ import static org.jetbrains.plugins.groovy.projectRoots.RootTypesKt.ROOT_TYPES;
 public class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTypeDefinition> implements DumbAware {
 
   public NewGroovyClassAction() {
-    super(GroovyBundle.message("newclass.menu.action.text"), GroovyBundle.message("newclass.menu.action.description"),
+    super(GroovyBundle.message("new.class.action.text"), GroovyBundle.message("new.class.action.description"),
           JetgroovyIcons.Groovy.Class, ROOT_TYPES);
   }
 
   @Override
   protected void buildDialog(Project project, PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder) {
     builder
-      .setTitle(GroovyBundle.message("newclass.dlg.title"))
-      .addKind("Class", JetgroovyIcons.Groovy.Class, GroovyTemplates.GROOVY_CLASS)
-      .addKind("Interface", JetgroovyIcons.Groovy.Interface, GroovyTemplates.GROOVY_INTERFACE);
+      .setTitle(GroovyBundle.message("new.class.dialog.title"))
+      .addKind(GroovyBundle.message("new.class.list.item.class"), JetgroovyIcons.Groovy.Class, GroovyTemplates.GROOVY_CLASS)
+      .addKind(GroovyBundle.message("new.class.list.item.interface"), JetgroovyIcons.Groovy.Interface, GroovyTemplates.GROOVY_INTERFACE);
 
     if (GroovyConfigUtils.getInstance().isVersionAtLeast(directory, GroovyConfigUtils.GROOVY2_3, true)) {
-      builder.addKind("Trait", JetgroovyIcons.Groovy.Trait, GroovyTemplates.GROOVY_TRAIT);
+      builder.addKind(GroovyBundle.message("new.class.list.item.trait"), JetgroovyIcons.Groovy.Trait, GroovyTemplates.GROOVY_TRAIT);
     }
 
     builder
-      .addKind("Enum", JetgroovyIcons.Groovy.Enum, GroovyTemplates.GROOVY_ENUM)
-      .addKind("Annotation", JetgroovyIcons.Groovy.AnnotationType, GroovyTemplates.GROOVY_ANNOTATION);
+      .addKind(GroovyBundle.message("new.class.list.item.enum"), JetgroovyIcons.Groovy.Enum, GroovyTemplates.GROOVY_ENUM)
+      .addKind(GroovyBundle.message("new.class.list.item.annotation"), JetgroovyIcons.Groovy.AnnotationType, GroovyTemplates.GROOVY_ANNOTATION);
 
     for (FileTemplate template : FileTemplateManager.getInstance(project).getAllTemplates()) {
       FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(template.getExtension());
@@ -65,7 +65,7 @@ public class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTy
     builder.setValidator(new InputValidatorEx() {
 
       @Override
-      public String getErrorText(String inputString) { return "This is not a valid Groovy qualified name"; }
+      public String getErrorText(String inputString) { return GroovyBundle.message("invalid.qualified.name"); }
 
       @Override
       public boolean checkInput(String inputString) { return true; }
@@ -84,7 +84,7 @@ public class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTy
 
   @Override
   protected String getActionName(PsiDirectory directory, @NotNull String newName, String templateName) {
-    return GroovyBundle.message("newclass.menu.action.text");
+    return GroovyBundle.message("new.class.action.text");
   }
 
   @Override

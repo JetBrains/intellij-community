@@ -1,6 +1,7 @@
 package com.intellij.tools.launch
 
 import com.intellij.tools.launch.impl.ClassPathBuilder
+import java.io.File
 import java.net.InetAddress
 import java.net.ServerSocket
 import java.nio.file.Files
@@ -12,9 +13,15 @@ object Launcher {
   fun launch(paths: PathsProvider,
              modules: ModulesProvider,
              options: LauncherOptions): Process {
-
     val classPathBuilder = ClassPathBuilder(paths, modules)
     val classPathFile = classPathBuilder.build()
+
+    return launch(paths, classPathFile, options)
+  }
+
+  fun launch(paths: PathsProvider,
+             classPathFile: File,
+             options: LauncherOptions): Process {
 
     // We should create config folder to avoid import settings dialog.
     Files.createDirectories(paths.configFolder.toPath())
@@ -86,7 +93,8 @@ object Launcher {
     val processBuilder = ProcessBuilder(cmd)
     if (options.redirectOutputIntoParentProcess) {
       processBuilder.inheritIO()
-    } else {
+    }
+    else {
       paths.logFolder.mkdirs()
       processBuilder.redirectOutput(paths.logFolder.resolve("out.log"))
       processBuilder.redirectError(paths.logFolder.resolve("err.log"))

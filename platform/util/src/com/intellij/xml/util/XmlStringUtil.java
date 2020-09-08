@@ -25,17 +25,17 @@ public final class XmlStringUtil {
     return sb.toString();
   }
 
-  @Contract("null->null; !null->!null")
+  @Contract(value = "null->null; !null->!null", pure = true)
   public static String escapeString(@Nullable String str) {
     return escapeString(str, false);
   }
 
-  @Contract("null,_->null; !null,_->!null")
+  @Contract(value = "null,_->null; !null,_->!null", pure = true)
   public static String escapeString(@Nullable String str, final boolean escapeWhiteSpace) {
     return escapeString(str, escapeWhiteSpace, true);
   }
 
-  @Contract("null,_,_->null; !null,_,_->!null")
+  @Contract(value = "null,_,_->null; !null,_,_->!null", pure = true)
   public static String escapeString(@Nullable String str, final boolean escapeWhiteSpace, final boolean convertNoBreakSpace) {
     if (str == null) {
       return null;
@@ -104,7 +104,8 @@ public final class XmlStringUtil {
     return buffer;
   }
 
-  public static @NotNull @Nls String wrapInHtml(@Nls @NotNull CharSequence result) {
+  @Contract(pure = true)
+  public static @NotNull String wrapInHtml(@NotNull CharSequence result) {
     return HTML_START + result + HTML_END;
   }
 
@@ -141,6 +142,7 @@ public final class XmlStringUtil {
            StringUtil.endsWithIgnoreCase(tooltip, HTML_END);
   }
 
+  @Contract(pure = true)
   public static @NotNull String stripHtml(@NotNull String toolTip) {
     toolTip = StringUtil.trimStart(toolTip, HTML_START);
     toolTip = StringUtil.trimStart(toolTip, BODY_START);
@@ -153,6 +155,7 @@ public final class XmlStringUtil {
    * Converts {@code text} to a string which can be used inside an HTML document: if it's already an HTML text the root html/body tags will
    * be stripped, if it's a plain text special characters will be escaped
    */
+  @Contract(pure = true)
   public static @NotNull String convertToHtmlContent(@NotNull String text) {
     return isWrappedInHtml(text) ? stripHtml(text) : escapeString(text);
   }

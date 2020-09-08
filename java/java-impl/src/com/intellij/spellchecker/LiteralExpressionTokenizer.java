@@ -40,9 +40,10 @@ public class LiteralExpressionTokenizer extends EscapeSequenceTokenizer<PsiLiter
 
     if (InjectedLanguageManager.getInstance(expression.getProject()).getInjectedPsiFiles(expression) != null) return;
 
-    final PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(expression, PsiModifierListOwner.class);
+    final PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(skipParenthesizedExprUp(expression), 
+                                                                       PsiModifierListOwner.class);
     if (listOwner != null && AnnotationUtil.isAnnotated(listOwner, AnnotationUtil.NON_NLS, AnnotationUtil.CHECK_EXTERNAL)) {
-      PsiElement targetElement = getCompleteStringValueExpression(expression);
+      PsiElement targetElement = skipParenthesizedExprUp(getCompleteStringValueExpression(expression));
       if (listOwner instanceof PsiMethod) {
         if (Arrays.stream(PsiUtil.findReturnStatements(((PsiMethod)listOwner))).map(s -> s.getReturnValue()).anyMatch(e -> e == targetElement)) {
           return;
@@ -59,6 +60,13 @@ public class LiteralExpressionTokenizer extends EscapeSequenceTokenizer<PsiLiter
     else {
       processTextWithEscapeSequences(expression, text, consumer);
     }
+  }
+
+  private static PsiElement skipParenthesizedExprUp(PsiElement expression) {
+    while (expression.getParent() instanceof PsiParenthesizedExpression) {
+      expression = expression.getParent();
+    }
+    return expression;
   }
 
   public static void processTextWithEscapeSequences(PsiLiteralExpression element, String text, TokenConsumer consumer) {

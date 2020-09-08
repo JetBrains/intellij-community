@@ -2,7 +2,6 @@
 package org.intellij.plugins.markdown.ui.preview
 
 import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.Urls.parseEncoded
 import io.netty.buffer.Unpooled
@@ -59,7 +58,7 @@ class PreviewStaticServer : HttpRequestHandler() {
         style-src https: ${StringUtil.join(styles.map(::stripQueryParameters), " ")} 'unsafe-inline';
         img-src file: *; connect-src 'none'; font-src * data: *;
         object-src 'none'; media-src 'none'; child-src 'none';
-      """.trimIndent()
+      """
     }
 
     @JvmStatic

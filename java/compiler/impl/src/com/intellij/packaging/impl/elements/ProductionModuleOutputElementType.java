@@ -15,7 +15,7 @@ public final class ProductionModuleOutputElementType extends ModuleOutputElement
   public static final ProductionModuleOutputElementType ELEMENT_TYPE = new ProductionModuleOutputElementType();
 
   private ProductionModuleOutputElementType() {
-    super("module-output", JavaCompilerBundle.message("element.type.name.module.output"));
+    super("module-output", JavaCompilerBundle.messagePointer("element.type.name.module.output"));
   }
 
   @Override

@@ -3,8 +3,7 @@
 
 package com.jetbrains.python.console
 
-import com.intellij.util.concurrency.SequentialTaskExecutor
-import com.jetbrains.python.PyBundle
+import com.intellij.util.ConcurrencyUtil
 import com.jetbrains.python.console.protocol.PythonConsoleBackendService
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.InvocationTargetException
@@ -15,11 +14,16 @@ import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
+private const val PYTHON_CONSOLE_COMMAND_THREAD_FACTORY_NAME: String = "Python Console Command Executor"
+
 fun synchronizedPythonConsoleClient(loader: ClassLoader,
                                     delegate: PythonConsoleBackendService.Iface,
                                     pythonConsoleProcess: Process): PythonConsoleBackendServiceDisposable {
-  val executorService = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(PyBundle.message("console.command.executor"))
-  // make the `PythonConsoleBackendService.Iface` process-aware and thread-safe
+  // DO NOT replace this ExecutorService with `SequentialTaskExecutor.createSequentialApplicationPoolExecutor()`!
+  // It may use different threads for executing different tasks in a sequence and it breaks the prerequisite of `PipedInputStream`
+  // that requires every read to be made from the same thread.
+  val executorService = ConcurrencyUtil.newSingleThreadExecutor(PYTHON_CONSOLE_COMMAND_THREAD_FACTORY_NAME)
+
   val proxy = Proxy.newProxyInstance(loader, arrayOf<Class<*>>(
     PythonConsoleBackendService.Iface::class.java),
                                      InvocationHandler { _, method, args ->

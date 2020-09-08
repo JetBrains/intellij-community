@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.navigation.structure;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.xml.XmlTag;
@@ -32,9 +33,11 @@ import java.util.Set;
 public final class PluginDescriptorStructureUtil {
   public static final Icon DEFAULT_ICON = AllIcons.Nodes.Tag;
 
+  @NonNls 
   private static final Set<String> KNOWN_TOP_LEVEL_NODE_NAMES =
     ContainerUtil.immutableSet("id", "name", "version", "category", "resource-bundle");
 
+  @NonNls
   private static final Map<String, String> TAG_DISPLAY_NAME_REPLACEMENTS = new ContainerUtil.ImmutableMapBuilder<String, String>()
     .put("psi", "PSI")
     .put("dom", "DOM")
@@ -58,7 +61,7 @@ public final class PluginDescriptorStructureUtil {
   private PluginDescriptorStructureUtil() {
   }
 
-  public static @NotNull String getTagDisplayText(@Nullable XmlTag tag) {
+  public static @NotNull @NlsSafe String getTagDisplayText(@Nullable XmlTag tag) {
     DomElement element = getDomElement(tag);
     if (element == null) {
       return safeGetTagDisplayText(tag);
@@ -89,7 +92,7 @@ public final class PluginDescriptorStructureUtil {
     return toDisplayName(element.getXmlElementName()); // default
   }
 
-  public static @NotNull String safeGetTagDisplayText(@Nullable XmlTag tag) {
+  public static @NotNull @NlsSafe String safeGetTagDisplayText(@Nullable XmlTag tag) {
     return tag != null ? toDisplayName(tag.getLocalName()) : DevKitBundle.message("error.plugin.xml.tag.invalid");
   }
 
@@ -250,7 +253,7 @@ public final class PluginDescriptorStructureUtil {
   private static @Nullable String getTopLevelNodeLocation(GenericDomValue<?> element) {
     if (element instanceof Dependency) {
       Dependency dependency = (Dependency)element;
-      String result = dependency.getRawText();
+      @NonNls String result = dependency.getRawText();
 
       Boolean optional = dependency.getOptional().getValue();
       if (optional != null && optional) {
@@ -308,21 +311,18 @@ public final class PluginDescriptorStructureUtil {
       return possibleOnlyAttrValue;
     }
 
-    // check if tag doesn't have attributes and subtags and use it's text content as a location in such cases
+    // check if tag doesn't have attributes and subtags and use its text content as a location in such cases
     if (attrDescriptions.isEmpty() && genericInfo.getFixedChildrenDescriptions().isEmpty()) {
       if (element instanceof GenericDomValue) {
         return ((GenericDomValue<?>)element).getRawText();
       }
-      /*if (element instanceof ExtensionDomExtender.SimpleTagValue) {
-        return ((ExtensionDomExtender.SimpleTagValue)element).getStringValue();
-      }*/
     }
 
     return null;
   }
 
 
-  private static @Nullable String toShortName(@Nullable String fqName) {
+  private static @Nullable @NlsSafe String toShortName(@Nullable String fqName) {
     if (fqName == null || fqName.contains(" ")) {
       return null;
     }
@@ -333,7 +333,7 @@ public final class PluginDescriptorStructureUtil {
     return fqName;
   }
 
-  private static @NotNull String toDisplayName(@NotNull String tagName) {
+  private static @NotNull @NlsSafe String toDisplayName(@NotNull @NonNls String tagName) {
     String result = tagName.replaceAll("-", " ").replaceAll("\\.", "|");
 
     String[] words = NameUtil.nameToWords(result);
@@ -351,7 +351,7 @@ public final class PluginDescriptorStructureUtil {
     return result;
   }
 
-  private static @Nullable String firstNotNullAttribute(DomElement element, String... attributes) {
+  private static @Nullable @NonNls String firstNotNullAttribute(DomElement element, @NonNls String... attributes) {
     DomGenericInfo genericInfo = element.getGenericInfo();
     for (String attribute : attributes) {
       DomAttributeChildDescription<?> description = genericInfo.getAttributeChildDescription(attribute);

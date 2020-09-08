@@ -5,6 +5,8 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +30,7 @@ public class PathMacroEditor extends DialogWrapper {
     boolean isOK(String name, String value);
   }
 
-  public PathMacroEditor(String title, String macroName, String value, Validator validator) {
+  public PathMacroEditor(@NlsContexts.DialogTitle String title, @NlsSafe String macroName, @NlsSafe String value, Validator validator) {
     super(true);
     setTitle(title);
     myValidator = validator;

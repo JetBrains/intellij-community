@@ -9,6 +9,7 @@ import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.rt.coverage.instrumentation.SaveHook;
 import com.intellij.rt.coverage.util.ProjectDataLoader;
 import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,7 +66,7 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
                                      final boolean collectLineInfo,
                                      final boolean isSampling,
                                      @Nullable String sourceMapPath) {
-    StringBuilder argument = new StringBuilder("-javaagent:");
+    @NonNls StringBuilder argument = new StringBuilder("-javaagent:");
     String agentPath = handleSpacesInAgentPath(PathUtil.getJarPathForClass(ProjectData.class));
     if (agentPath == null) return;
     argument.append(agentPath);

@@ -238,6 +238,10 @@ final class TabContentLayout extends ContentLayout implements MorePopupAware {
     return result;
   }
 
+  @Nullable ContentTabLabel findTabLabelByContent(@Nullable Content content) {
+    return myContent2Tabs.get(content);
+  }
+
   static void dropTab(final LayoutData data, final ContentTabLabel toDropLabel) {
     data.requiredWidth -= (toDropLabel.getPreferredSize().width + 1);
     data.toDrop.add(toDropLabel);

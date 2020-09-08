@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class PushActionBase extends DumbAwareAction {
 
-  public PushActionBase(@NotNull String actionName) {
+  public PushActionBase(@NotNull @NlsActions.ActionText String actionName) {
     super(actionName);
   }
 

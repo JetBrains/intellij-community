@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -86,7 +87,10 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
   }
 
   private void notifyAboutSyncedBranches() {
-    Notification notification = STANDARD_NOTIFICATION.createNotification("Branch Operations Are Executed on All Roots", "", NotificationType.INFORMATION, null);
+    Notification notification = STANDARD_NOTIFICATION.createNotification(
+      DvcsBundle.message("notification.message.branch.operations.are.executed.on.all.roots"),
+      NotificationType.INFORMATION,
+      "vcs.branch.operations.are.executed.on.all.roots");
     notification
       .addAction(NotificationAction.createSimple(DvcsBundle.messagePointer("action.NotificationAction.DvcsBranchPopup.text.disable"), () -> {
       ShowSettingsUtil.getInstance().showSettingsDialog(myProject, myVcs.getDisplayName());
@@ -131,7 +135,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
 
   private void warnThatBranchesDivergedIfNeeded() {
     if (isBranchesDiverged()) {
-      myPopup.setWarning("Branches have diverged");
+      myPopup.setWarning(DvcsBundle.message("branch.popup.warning.branches.have.diverged"));
     }
   }
 
@@ -154,7 +158,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
     private final DvcsSyncSettings myVcsSettings;
 
     TrackReposSynchronouslyAction(@NotNull DvcsSyncSettings vcsSettings) {
-      super(DvcsBundle.message("sync.setting"), DvcsBundle.message("sync.setting.description", "repository"), null);
+      super(DvcsBundle.message("sync.setting"), DvcsBundle.message("sync.setting.description", VcsBundle.message("vcs.generic.name")), null);
       myVcsSettings = vcsSettings;
     }
 

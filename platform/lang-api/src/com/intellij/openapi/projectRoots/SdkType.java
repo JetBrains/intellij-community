@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -213,7 +214,7 @@ public abstract class SdkType implements SdkTypeId {
   }
 
   @NotNull
-  public String getHomeFieldLabel() {
+  public @NlsContexts.Label String getHomeFieldLabel() {
     return ProjectBundle.message("sdk.configure.type.home.path", getPresentableName());
   }
 
@@ -292,15 +293,14 @@ public abstract class SdkType implements SdkTypeId {
   public void showCustomCreateUI(@NotNull SdkModel sdkModel,
                                  @NotNull JComponent parentComponent,
                                  @Nullable Sdk selectedSdk,
-                                 @NotNull Consumer<Sdk> sdkCreatedCallback) {
-    //noinspection deprecation
+                                 @NotNull Consumer<? super Sdk> sdkCreatedCallback) {
     showCustomCreateUI(sdkModel, parentComponent, sdkCreatedCallback);
   }
 
   /** @deprecated use {@link #showCustomCreateUI(SdkModel, JComponent, Sdk, Consumer)} method instead */
   @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
-  public void showCustomCreateUI(@NotNull SdkModel sdkModel, @NotNull JComponent parentComponent, @NotNull Consumer<Sdk> sdkCreatedCallback) { }
+  public void showCustomCreateUI(@NotNull SdkModel sdkModel, @NotNull JComponent parentComponent, @NotNull Consumer<? super Sdk> sdkCreatedCallback) { }
 
   /**
    * Checks if the home directory of the specified SDK is valid. By default, checks that the directory points to a valid local

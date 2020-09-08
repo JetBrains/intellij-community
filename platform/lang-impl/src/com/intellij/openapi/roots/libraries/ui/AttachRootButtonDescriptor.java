@@ -29,7 +29,7 @@ import javax.swing.*;
  */
 public abstract class AttachRootButtonDescriptor {
   private final OrderRootType myOrderRootType;
-  protected final String myButtonText;
+  protected final @NlsContexts.Button String myButtonText;
   private final Icon myToolbarIcon;
 
   /**
@@ -56,7 +56,7 @@ public abstract class AttachRootButtonDescriptor {
   public abstract VirtualFile[] selectFiles(@NotNull JComponent parent, @Nullable VirtualFile initialSelection,
                                             @Nullable Module contextModule, @NotNull LibraryEditor libraryEditor);
 
-  public String getButtonText() {
+  public @NlsContexts.Button String getButtonText() {
     return myButtonText;
   }
 

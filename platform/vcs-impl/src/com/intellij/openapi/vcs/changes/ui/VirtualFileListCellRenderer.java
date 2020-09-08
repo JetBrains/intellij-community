@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -11,6 +12,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -44,6 +46,7 @@ public class VirtualFileListCellRenderer extends ColoredListCellRenderer {
                   : UIUtil.getListBackground());
   }
 
+  @Nls
   protected String getName(FilePath path) {
     return path.getName();
   }
@@ -83,7 +86,7 @@ public class VirtualFileListCellRenderer extends ColoredListCellRenderer {
     }
   }
 
-  protected void putParentPathImpl(Object value, String parentPath, FilePath self) {
+  protected void putParentPathImpl(Object value, @NlsSafe String parentPath, FilePath self) {
     append(parentPath, SimpleTextAttributes.GRAYED_ATTRIBUTES);
   }
 }

@@ -35,6 +35,7 @@ import com.intellij.uast.UastSmartPointer
 import com.intellij.uast.createUastSmartPointer
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.SmartList
+import org.jetbrains.annotations.Nls
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UDeclaration
 import org.jetbrains.uast.toUElementOfType
@@ -189,6 +190,7 @@ class ImplicitSubclassInspection : LocalInspectionTool() {
 
     private val MAX_MESSAGES_TO_COMBINE = 3
 
+    @Nls
     private val text = when (uDeclaration) {
       is UClass ->
         if (actionsToPerform.size <= MAX_MESSAGES_TO_COMBINE)

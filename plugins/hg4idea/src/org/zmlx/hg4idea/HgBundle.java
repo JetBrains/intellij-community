@@ -21,7 +21,7 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.function.Supplier;
 
 public final class HgBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.HgBundle";
+  @NonNls public static final String BUNDLE = "messages.HgBundle";
   private static final HgBundle INSTANCE = new HgBundle();
 
   private HgBundle() { super(BUNDLE); }

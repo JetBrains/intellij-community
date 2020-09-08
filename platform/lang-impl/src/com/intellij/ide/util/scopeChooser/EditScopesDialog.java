@@ -36,14 +36,14 @@ public final class EditScopesDialog extends SettingsDialog {
     if (myCheckShared && mySelectedScope != null) {
       final Project project = myProject;
       final DependencyValidationManager manager = DependencyValidationManager.getInstance(project);
-      NamedScope scope = manager.getScope(mySelectedScope.getName());
+      NamedScope scope = manager.getScope(mySelectedScope.getScopeId());
       if (scope == null) {
         if (MessageDialogBuilder
               .yesNo(IdeBundle.message("scope.unable.to.save.scope.title"), IdeBundle.message("scope.unable.to.save.scope.message"))
               .icon(Messages.getErrorIcon()).ask(project)) {
           final String newName = Messages.showInputDialog(project, IdeBundle.message("add.scope.name.label"),
                                                           IdeBundle.message("scopes.save.dialog.title.shared"), Messages.getQuestionIcon(),
-                                                          mySelectedScope.getName(), new InputValidator() {
+                                                          mySelectedScope.getScopeId(), new InputValidator() {
             @Override
             public boolean checkInput(String inputString) {
               return inputString != null && inputString.length() > 0 && manager.getScope(inputString) == null;

@@ -74,7 +74,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
 
     final String filesCoverageInfo = getFilesCoverageInformationString(coverageInfo);
     if (filesCoverageInfo != null) {
-      final StringBuilder builder = new StringBuilder();
+      final @Nls StringBuilder builder = new StringBuilder();
       builder.append(filesCoverageInfo);
       final String linesCoverageInfo = getLinesCoverageInformationString(coverageInfo);
       if (linesCoverageInfo != null) {
@@ -398,7 +398,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
   }
 
   @Nullable
-  protected String getLinesCoverageInformationString(@NotNull final FileCoverageInfo info) {
+  protected @Nls String getLinesCoverageInformationString(@NotNull final FileCoverageInfo info) {
     return CoverageBundle.message("coverage.view.text.lines.covered", calcCoveragePercentage(info));
   }
 

@@ -101,7 +101,7 @@ public class PyMakeFunctionFromMethodQuickFix implements LocalQuickFix {
       session.putUserData(PyUnresolvedReferencesVisitor.INSPECTION, new SimplePyUnresolvedReferencesInspection());
       usageFile.accept(new PyRecursiveElementVisitor() {
         @Override
-        public void visitPyElement(PyElement node) {
+        public void visitPyElement(@NotNull PyElement node) {
           super.visitPyElement(node);
           node.accept(visitor);
         }

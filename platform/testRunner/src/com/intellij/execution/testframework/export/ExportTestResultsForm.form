@@ -22,7 +22,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
-        <border type="none" title="Export format"/>
+        <border type="none" title-resource-bundle="messages/TestRunnerBundle" title-key="border.title.export.format"/>
         <children>
           <component id="c1f67" class="javax.swing.JRadioButton" binding="myBundledTemplateRb">
             <constraints>
@@ -50,7 +50,7 @@
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="&amp;Custom, apply XSL template:"/>
+              <text resource-bundle="messages/TestRunnerBundle" key="radio.button.custom.apply.xsl.template"/>
             </properties>
           </component>
           <component id="8e2f1" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myCustomTemplateField">
@@ -70,14 +70,14 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
         </clientProperties>
-        <border type="none" title="Output"/>
+        <border type="none" title-resource-bundle="messages/TestRunnerBundle" title-key="border.title.output"/>
         <children>
           <component id="1682" class="javax.swing.JLabel" binding="myOutputFolderLabel">
             <constraints>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="&amp;Folder:"/>
+              <text resource-bundle="messages/TestRunnerBundle" key="label.folder"/>
             </properties>
           </component>
           <component id="6a5bb" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myFolderField">
@@ -91,7 +91,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="File &amp;name:"/>
+              <text resource-bundle="messages/TestRunnerBundle" key="label.file.name"/>
             </properties>
           </component>
           <component id="8b6fc" class="javax.swing.JTextField" binding="myFileNameField">
@@ -117,7 +117,7 @@
           <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="open exported file in browser"/>
+          <text resource-bundle="messages/ExecutionBundle" key="export.test.results.open.browser"/>
         </properties>
       </component>
     </children>
@@ -129,4 +129,8 @@
       <member id="69317"/>
     </group>
   </buttonGroups>
+  <inspectionSuppressions>
+    <suppress inspection="I18nForm" id="48139"/>
+    <suppress inspection="I18nForm" id="c1f67"/>
+  </inspectionSuppressions>
 </form>

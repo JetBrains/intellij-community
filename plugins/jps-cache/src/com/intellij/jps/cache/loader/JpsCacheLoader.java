@@ -94,7 +94,7 @@ class JpsCacheLoader implements JpsOutputLoader<File> {
     if (newTimestampFolder.exists()) FileUtil.delete(newTimestampFolder);
 
     File currentDirForBuildCache = myBuildManager.getProjectSystemDirectory(myProject);
-    indicatorManager.setText(this, "Applying changes...");
+    indicatorManager.setText(this, "Applying JPS Caches...");
     if (currentDirForBuildCache != null) {
       SegmentedProgressIndicatorManager.SubTaskProgressIndicator subTaskIndicator = indicatorManager.createSubTaskIndicator();
       subTaskIndicator.setText2("Applying downloaded caches");

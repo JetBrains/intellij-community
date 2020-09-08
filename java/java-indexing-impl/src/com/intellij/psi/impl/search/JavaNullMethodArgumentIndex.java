@@ -98,7 +98,7 @@ public final class JavaNullMethodArgumentIndex extends ScalarIndexExtension<Java
   @NotNull
   @Override
   public KeyDescriptor<MethodCallData> getKeyDescriptor() {
-    return new KeyDescriptor<MethodCallData>() {
+    return new KeyDescriptor<>() {
       @Override
       public int getHashCode(MethodCallData value) {
         return value.hashCode();

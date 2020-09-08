@@ -743,7 +743,7 @@ public final class CreateFromUsageUtils {
       //Double check to avoid expensive operations on PsiClassTypes
       final Set<PsiType> typesSet = new HashSet<>();
 
-      PsiTypeVisitor<PsiType> visitor = new PsiTypeVisitor<PsiType>() {
+      PsiTypeVisitor<PsiType> visitor = new PsiTypeVisitor<>() {
         @Override
         @Nullable
         public PsiType visitType(@NotNull PsiType type) {
@@ -753,7 +753,7 @@ public final class CreateFromUsageUtils {
 
           if (!typesSet.contains(type)) {
             if (type instanceof PsiClassType && (!expectedFieldNames.isEmpty() || !expectedMethodNames.isEmpty())) {
-              PsiClass aClass = ((PsiClassType) type).resolve();
+              PsiClass aClass = ((PsiClassType)type).resolve();
               if (aClass != null) {
                 for (String fieldName : expectedFieldNames) {
                   if (aClass.findFieldByName(fieldName, true) == null) return null;

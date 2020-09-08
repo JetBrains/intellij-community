@@ -86,7 +86,7 @@ public class GradleAttachSourcesProvider implements AttachSourcesProvider {
 
         String sourceArtifactNotation = getSourcesArtifactNotation(artifactIdCandidate -> {
           VirtualFile[] rootFiles = libraryOrderEntry.getRootFiles(OrderRootType.CLASSES);
-          return rootFiles.length == 0 || Arrays.stream(rootFiles).anyMatch(file -> file.getName().startsWith(artifactIdCandidate));
+          return rootFiles.length == 0 || ContainerUtil.exists(rootFiles, file -> file.getName().startsWith(artifactIdCandidate));
         }, artifactCoordinates);
         final String sourcesLocationFilePath;
         final File sourcesLocationFile;

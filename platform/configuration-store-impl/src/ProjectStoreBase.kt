@@ -12,9 +12,9 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCoreUtil
 import com.intellij.openapi.project.doGetProjectFileName
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.PathUtil
 import com.intellij.util.SmartList
 import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.io.Ksuid
@@ -22,12 +22,13 @@ import com.intellij.util.io.exists
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.text.nullize
+import org.jetbrains.annotations.NonNls
 import java.nio.file.Path
 import java.util.*
 import kotlin.collections.ArrayList
 
-internal const val PROJECT_FILE = "\$PROJECT_FILE$"
-internal const val PROJECT_CONFIG_DIR = "\$PROJECT_CONFIG_DIR$"
+@NonNls internal const val PROJECT_FILE = "\$PROJECT_FILE$"
+@NonNls internal const val PROJECT_CONFIG_DIR = "\$PROJECT_CONFIG_DIR$"
 
 internal val PROJECT_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(PROJECT_FILE, false)
 private val DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(PROJECT_FILE, true)
@@ -243,7 +244,7 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
     if (!isDirectoryBased) {
       return filePath == projectFilePath.systemIndependentPath || filePath == workspacePath.systemIndependentPath
     }
-    return FileUtil.isAncestor(projectFilePath.parent.systemIndependentPath, filePath, false)
+    return PathUtil.isAncestorOrSelf(projectFilePath.parent.systemIndependentPath, file)
   }
 
   override fun getDirectoryStorePath(ignoreProjectStorageScheme: Boolean) = dotIdea?.systemIndependentPath.nullize()

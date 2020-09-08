@@ -300,6 +300,7 @@
     <applicationService serviceImplementation="com.intellij.facet.impl.invalid.InvalidFacetType"/>
     <projectService serviceInterface="com.intellij.facet.impl.invalid.InvalidFacetManager"
                     serviceImplementation="com.intellij.facet.impl.invalid.InvalidFacetManagerImpl"/>
+    <backgroundPostStartupActivity implementation="com.intellij.facet.FacetTypeFeatureCollector"/>
     <projectService serviceInterface="com.intellij.openapi.module.ProjectLoadingErrorsNotifier"
                     serviceImplementation="com.intellij.openapi.module.impl.ProjectLoadingErrorsNotifierImpl"
                     testServiceImplementation="com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier"/>
@@ -539,7 +540,6 @@
 
     <patternDialectProvider implementation="com.intellij.packageDependencies.ui.ProjectPatternProvider" id="file"/>
     <customScopesProvider implementation="com.intellij.packageDependencies.DefaultScopesProvider" id="default" order="first"/>
-    <customScopesProvider implementation="com.intellij.psi.search.scope.ProblemsScope$Provider" order="last"/>
     <customScopesProvider implementation="com.intellij.openapi.fileEditor.impl.OpenFilesScope$Provider" order="last"/>
 
     <searchScopesProvider implementation="com.intellij.psi.search.DefaultSearchScopeProviders$Favorites"/>
@@ -915,24 +915,27 @@
 
     <applicationService serviceImplementation="com.intellij.ui.debugger.extensions.PlaybackDebugger$PlaybackDebuggerState"/>
 
-    <globalInspection shortName="Annotator" displayName="Annotator" groupKey="inspection.general.tools.group.name" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="ERROR"
+    <globalInspection shortName="Annotator" groupKey="inspection.general.tools.group.name" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="ERROR"
+                      bundle="messages.LangBundle" key="display.name.annotator"
                       implementationClass="com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitorBasedInspection$AnnotatorBasedInspection"/>
-    <globalInspection shortName="SyntaxError" displayName="Syntax error" groupKey="inspection.general.tools.group.name" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="ERROR"
+    <globalInspection shortName="SyntaxError" groupKey="inspection.general.tools.group.name" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="ERROR"
+                      bundle="messages.LangBundle" key="display.name.syntax.error"
                       implementationClass="com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitorBasedInspection$SyntaxErrorInspection"/>
-    <localInspection shortName="LossyEncoding" bundle="messages.InspectionsBundle" key="lossy.encoding"
-                     groupKey="group.names.internationalization.issues" enabledByDefault="true" level="WARNING"
+    <localInspection shortName="LossyEncoding" bundle="messages.LangBundle" key="lossy.encoding"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.internationalization.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.LossyEncodingInspection"/>
-    <localInspection shortName="NonAsciiCharacters" bundle="messages.InspectionsBundle" key="non.ascii.characters"
-                     groupKey="group.names.internationalization.issues" enabledByDefault="true" level="WARNING"
+    <localInspection shortName="NonAsciiCharacters" bundle="messages.LangBundle" key="non.ascii.characters"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.internationalization.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.NonAsciiCharactersInspection"/>
-    <localInspection shortName="ProblematicWhitespace" bundle="messages.InspectionsBundle" key="problematic.whitespace.display.name"
-                     groupKey="inspection.general.tools.group.name" enabledByDefault="false" level="WARNING"
+    <localInspection shortName="ProblematicWhitespace" bundle="messages.LangBundle" key="problematic.whitespace.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name" 
+                     enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ProblematicWhitespaceInspection"/>
-    <localInspection shortName="TodoComment" bundle="messages.InspectionsBundle" key="todo.comment.display.name"
-                     groupKey="inspection.general.tools.group.name" enabledByDefault="false"
+    <localInspection shortName="TodoComment" bundle="messages.LangBundle" key="todo.comment.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name" enabledByDefault="false"
                      level="WARNING" implementationClass="com.intellij.codeInspection.TodoCommentInspection"/>
-    <localInspection shortName="LongLine" bundle="messages.InspectionsBundle" key="long.line.display.name"
-                     groupKey="inspection.general.tools.group.name" enabledByDefault="false"
+    <localInspection shortName="LongLine" bundle="messages.LangBundle" key="long.line.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name" enabledByDefault="false"
                      level="WARNING" implementationClass="com.intellij.codeInspection.longLine.LongLineInspection"/>
     <globalInspection shortName="RedundantSuppression" bundle="messages.InspectionsBundle" key="inspection.redundant.suppression.name"
                       groupKey="inspection.general.tools.group.name" enabledByDefault="true" level="WARNING"
@@ -940,9 +943,6 @@
 
     <annotator language="TEXT" implementationClass="com.intellij.codeInsight.highlighting.LargeFilesAnnotator"/>
     <annotator language="" implementationClass="com.intellij.codeInsight.highlighting.HyperlinkAnnotator"/>
-
-    <applicationService serviceInterface="com.intellij.codeInsight.template.TemplateBuilderFactory"
-                        serviceImplementation="com.intellij.codeInsight.template.TemplateBuilderFactoryImpl"/>
 
     <projectService serviceImplementation="com.intellij.analysis.problemsView.toolWindow.HighlightingErrorsProvider"/>
     <projectService serviceInterface="com.intellij.analysis.problemsView.ProblemsCollector"
@@ -976,7 +976,9 @@
     <statistics.counterUsagesCollector groupId="move.refactoring" version="1"/>
     <statistics.counterUsagesCollector groupId="refactoring" version="1"/>
     <statistics.counterUsagesCollector groupId="package.management.ui" version="1"/>
-    <statistics.counterUsagesCollector groupId="completion" version="3"/>
+    <statistics.counterUsagesCollector groupId="completion" version="5"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.find.findUsages.FindUsagesStatisticsCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.usages.impl.UsageViewStatisticsCollector"/>
 
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector"/>
     <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector$ToolWindowUtilValidator" />
@@ -1000,12 +1002,15 @@
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.editor.EditorSettingsStatisticsCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.editor.EditorSettingsStatisticsCollector$ProjectUsages"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.projectView.ProjectViewCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.tools.InspectionsUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.KeymapUsageCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.execution.dashboard.RunDashboardUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.codeInsight.hints.InlayProviderUsageCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFileCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.ui.tabs.FileColorsUsagesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.BookmarkUsagesCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.BookmarkCounterCollector"/>
 
     <statistics.counterUsagesCollector groupId="searchEverywhere" version="4"/>
     <statistics.counterUsagesCollector groupId="actions.runAnything" version="1"/>
@@ -1013,6 +1018,7 @@
     <statistics.counterUsagesCollector groupId="find" version="3"/>
     <statistics.counterUsagesCollector groupId="create.directory.dialog" version="1"/>
     <statistics.counterUsagesCollector groupId="refactoring.dialog" version="1"/>
+    <statistics.counterUsagesCollector groupId="project.view.pane.changes" version="1"/>
 
     <statistics.collectorExtension implementation="com.intellij.execution.impl.statistics.RunConfigurationUsageLanguageExtension"/>
     <statistics.collectorExtension implementation="com.intellij.execution.impl.statistics.RunConfigurationTypeLanguageExtension"/>
@@ -1148,23 +1154,28 @@
     <daemon.tooltipActionProvider order="last" id="defaultProvider" implementation="com.intellij.codeInsight.daemon.impl.DaemonTooltipActionProvider" />
 
     <schemeExporter
-        name="IntelliJ IDEA code style XML"
+        nameBundle="messages.ApplicationBundle"
+        nameKey="settings.export.target.intellij.xml"
         schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"
         implementationClass="com.intellij.application.options.schemes.SerializableSchemeExporter"/>
     <schemeExporter
-        name="IntelliJ IDEA color scheme (.icls)"
+        nameBundle="messages.ApplicationBundle"
+        nameKey="settings.export.target.color.scheme"
         schemeClass="com.intellij.openapi.editor.colors.EditorColorsScheme"
         implementationClass="com.intellij.application.options.colors.ColorSchemeExporter"/>
     <schemeExporter
-        name="Color scheme plugin .jar"
+        nameBundle="messages.ApplicationBundle"
+        nameKey="settings.export.target.color.scheme.plugin"
         schemeClass="com.intellij.openapi.editor.colors.EditorColorsScheme"
         implementationClass="com.intellij.application.options.colors.pluginExport.ColorSchemePluginExporter"/>
     <schemeImporter
-        name="IntelliJ IDEA code style XML"
+        nameBundle="messages.ApplicationBundle"
+        nameKey="settings.export.target.intellij.xml"
         schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"
         implementationClass="com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeXmlImporter"/>
     <schemeImporter
-        name="IntelliJ IDEA color scheme (.icls) or settings (.jar)"
+        nameBundle="messages.ApplicationBundle"
+        nameKey="settings.import.source.color.scheme"
         schemeClass="com.intellij.openapi.editor.colors.EditorColorsScheme"
         implementationClass="com.intellij.application.options.colors.ColorSchemeImporter"/>
     <schemeExporter
@@ -1233,6 +1244,8 @@
     <projectService serviceInterface="com.intellij.build.SyncViewManager"
                     serviceImplementation="com.intellij.build.SyncViewManager"
                     testServiceImplementation="com.intellij.build.internal.DummySyncViewManager"/>
+    <projectService serviceInterface="com.intellij.build.BuildWorkspaceConfiguration"
+                    serviceImplementation="com.intellij.build.BuildWorkspaceConfigurationImpl"/>
 
     <moveLeftRightHandler language=""
                           implementationClass="com.intellij.codeInsight.editorActions.moveLeftRight.DefaultMoveElementLeftRightHandler"
@@ -1295,13 +1308,27 @@
 
     <toolWindow id="Problems View" anchor="bottom" icon="AllIcons.Toolwindows.ToolWindowProblemsEmpty" canCloseContents="true"
                 factoryClass="com.intellij.analysis.problemsView.toolWindow.ProblemsView"/>
-    <experimentalFeature id="problems.view.project.errors.enabled" percentOfUsers="0" internalFeature="true">
+    <experimentalFeature id="problems.view.project.errors.enabled" percentOfUsers="100">
       <description>Allows to use the Project Errors tab in the Problems View toolwindow.</description>
     </experimentalFeature>
     <projectService serviceImplementation="com.intellij.analysis.problemsView.toolWindow.ProblemsViewStateManager"/>
-    <notificationAllowlist groupIds="Problems View;Inspection Results;Find in Path;Dependencies;Execution;Suggest Run Dashboard;
-    Parameter Name Hints;Print;Actions;Load Error;Project Template;Run Anything;Reformat changed text;Module Manager;Project Loading Error"/>
+    <notificationGroup id="Automatic Module Unloading" displayType="BALLOON"/>
+    <notificationGroup id="Execution" displayType="NONE"/>
+    <notificationGroup id="Inspection Results" displayType="TOOL_WINDOW" toolWindowId="Inspection Results"/>
+    <notificationGroup id="Find in Path" displayType="TOOL_WINDOW" toolWindowId="Find" isLogByDefault="false"/>
+    <notificationGroup id="Dependencies" displayType="TOOL_WINDOW" toolWindowId="Dependency Viewer"/>
+    <notificationGroup id="Suggest Run Dashboard" displayType="BALLOON"/>
+    <notificationGroup id="Parameter Name Hints" displayType="BALLOON"/>
+    <notificationGroup id="Print" displayType="BALLOON"/>
+    <notificationGroup id="Project Template" displayType="BALLOON"/>
+    <notificationGroup id="Load Error" displayType="BALLOON"/>
+    <notificationGroup id="Module Manager" displayType="BALLOON" bundle="messages.ProjectBundle" key="notification.group.module.manager"/>
+    <notificationGroup id="Reformat changed text" displayType="BALLOON" bundle="messages.ApplicationBundle" key="reformat.changed.text.file.too.big.notification.groupId"/>
+    <notificationGroup id="Project Loading Error" displayType="BALLOON" bundle="messages.ProjectBundle" key="notification.group.project.loading.error"/>
+    <notificationGroup id="Run Anything" displayType="BALLOON" bundle="messages.IdeBundle" key="run.anything.custom.activity.notification.group.id"/>
 
+    <applicationService serviceInterface="com.intellij.openapi.editor.ex.EditorInlayFoldingMapper"
+                        serviceImplementation="com.intellij.codeInsight.documentation.render.DocRenderItem$InlayFoldingMapper"/>
     <codeInsight.lineMarkerProvider implementationClass="com.intellij.codeInsight.documentation.render.DocRenderDummyLineMarkerProvider"/>
 
     <psi.treeChangeListener implementation="com.intellij.openapi.fileEditor.impl.FileEditorPsiTreeChangeListener"/>

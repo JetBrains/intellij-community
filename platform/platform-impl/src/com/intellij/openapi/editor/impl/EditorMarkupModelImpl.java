@@ -55,6 +55,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -488,7 +489,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     boolean resetAnalyzingStatus = analyzerStatus != null &&
                             analyzerStatus.isTextStatus() && analyzerStatus.getAnalyzingType() == AnalyzingType.COMPLETE;
     analyzerStatus = newStatus;
-    smallIconLabel.setIcon(analyzerStatus.getAnalyzingType() == AnalyzingType.COMPLETE ? analyzerStatus.getIcon() : AllIcons.General.InspectionsEye);
+    AnalyzingType type = analyzerStatus.getAnalyzingType();
+    smallIconLabel.setIcon(type == AnalyzingType.COMPLETE || type == AnalyzingType.SUSPENDED ? analyzerStatus.getIcon() : AllIcons.General.InspectionsEye);
 
     if (showToolbar != analyzerStatus.getController().enableToolbar()) {
       showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget() &&
@@ -1053,10 +1055,9 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       final int[] thinYStart = new int[1];  // in range 0..yStart all spots are drawn
       final int[] wideYStart = new int[1];  // in range 0..yStart all spots are drawn
 
-      MarkupIterator<ErrorStripeMarkerImpl> iterator = myErrorStripeMarkersModel.overlappingIterator(startOffset, endOffset);
+      MarkupIterator<RangeHighlighterEx> iterator = myErrorStripeMarkersModel.highlighterIterator(startOffset, endOffset);
       try {
-        ContainerUtil.process(iterator, errorStripeMarker -> {
-          RangeHighlighterEx highlighter = errorStripeMarker.getHighlighter();
+        ContainerUtil.process(iterator, highlighter -> {
           boolean isThin = highlighter.isThinErrorStripeMark();
           int[] yStart = isThin ? thinYStart : wideYStart;
           List<PositionedStripe> stripes = isThin ? thinStripes : wideStripes;
@@ -1721,7 +1722,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       }
     }
 
-    private JLabel createStyledLabel(@Nullable String text, @Nullable Icon icon, int alignment) {
+    private JLabel createStyledLabel(@Nullable @Nls String text, @Nullable Icon icon, int alignment) {
       JLabel label = new JLabel(text, icon, alignment) {
         @Override
         protected void paintComponent(Graphics graphics) {

@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.vcsUtil.VcsFileUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +69,8 @@ public final class GitPatchParser {
     int newFileMode = -1;
     Couple<String> sha1Indexes = null;
     if (beforeAfterName == null) {
-      throw new PatchSyntaxException(iterator.previousIndex(), "Can't detect file names from git format header line");
+      throw new PatchSyntaxException(iterator.previousIndex(),
+                                     VcsBundle.message("patch.can.t.detect.file.names.from.git.format.header.line"));
     }
     while (iterator.hasNext()) {
       String next = iterator.next();

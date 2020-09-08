@@ -3,6 +3,7 @@ package org.jetbrains.jps;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NotNullFunction;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.jps.incremental.ModuleBuildTarget;
 import org.jetbrains.jps.model.module.JpsModule;
 
@@ -26,7 +27,7 @@ public class ModuleChunk {
     myContainsTests = containsTests;
   }
 
-  public String getPresentableShortName() {
+  public @Nls String getPresentableShortName() {
     String name = myModules.iterator().next().getName();
     if (myModules.size() > 1) {
       name += " and " + (myModules.size() - 1) + " more";

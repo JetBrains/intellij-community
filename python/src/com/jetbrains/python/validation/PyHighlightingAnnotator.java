@@ -38,7 +38,7 @@ import java.util.Optional;
 public class PyHighlightingAnnotator extends PyAnnotator implements HighlightRangeExtension {
 
   @Override
-  public void visitPyFunction(PyFunction node) {
+  public void visitPyFunction(@NotNull PyFunction node) {
     if (node.isAsyncAllowed()) {
       highlightKeyword(node, PyTokenTypes.ASYNC_KEYWORD);
     }
@@ -52,7 +52,7 @@ public class PyHighlightingAnnotator extends PyAnnotator implements HighlightRan
   }
 
   @Override
-  public void visitPyNumericLiteralExpression(PyNumericLiteralExpression node) {
+  public void visitPyNumericLiteralExpression(@NotNull PyNumericLiteralExpression node) {
     String suffix = node.getIntegerLiteralSuffix();
     if (suffix == null || "l".equalsIgnoreCase(suffix)) return;
     if (node.getContainingFile().getLanguage() != PythonLanguage.getInstance()) return;
@@ -61,22 +61,22 @@ public class PyHighlightingAnnotator extends PyAnnotator implements HighlightRan
   }
 
   @Override
-  public void visitPyForStatement(PyForStatement node) {
+  public void visitPyForStatement(@NotNull PyForStatement node) {
     highlightKeyword(node, PyTokenTypes.ASYNC_KEYWORD);
   }
 
   @Override
-  public void visitPyWithStatement(PyWithStatement node) {
+  public void visitPyWithStatement(@NotNull PyWithStatement node) {
     highlightKeyword(node, PyTokenTypes.ASYNC_KEYWORD);
   }
 
   @Override
-  public void visitPyPrefixExpression(PyPrefixExpression node) {
+  public void visitPyPrefixExpression(@NotNull PyPrefixExpression node) {
     highlightKeyword(node, PyTokenTypes.AWAIT_KEYWORD);
   }
 
   @Override
-  public void visitPyComprehensionElement(PyComprehensionElement node) {
+  public void visitPyComprehensionElement(@NotNull PyComprehensionElement node) {
     highlightKeywords(node, PyTokenTypes.ASYNC_KEYWORD);
   }
 

@@ -62,7 +62,7 @@ open class ProjectRunConfigurationConfigurable(project: Project, runDialog: RunD
   override fun createTipPanelAboutAddingNewRunConfiguration(configurationType: ConfigurationType?): JPanel {
     val messagePanel = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0))
     messagePanel.border = JBUI.Borders.empty(30, 0, 0, 0)
-    messagePanel.add(JLabel("Click the"))
+    messagePanel.add(JLabel(ExecutionBundle.message("empty.run.configuration.panel.text.label1")))
 
     val addIcon = ActionLink("", IconUtil.getAddIcon(), toolbarAddAction)
     addIcon.border = JBUI.Borders.empty(0, 3, 0, 3)

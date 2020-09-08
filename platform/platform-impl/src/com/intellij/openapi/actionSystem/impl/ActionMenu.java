@@ -13,6 +13,7 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -29,6 +30,8 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 import java.awt.*;
@@ -152,8 +155,11 @@ public final class ActionMenu extends JBMenu {
 
     myStubItem = macSystemMenu ? null : new StubItem();
     addStubItem();
-    addMenuListener(new MenuListenerImpl());
     setBorderPainted(false);
+
+    MenuListenerImpl menuListener = new MenuListenerImpl();
+    addMenuListener(menuListener);
+    getModel().addChangeListener(menuListener);
 
     setVisible(myPresentation.isVisible());
     setEnabled(myPresentation.isEnabled());
@@ -171,6 +177,7 @@ public final class ActionMenu extends JBMenu {
 
   public void setMnemonicEnabled(boolean enable) {
     myMnemonicEnabled = enable;
+    setText(myPresentation.getText(enable));
     setMnemonic(myPresentation.getMnemonic());
     setDisplayedMnemonicIndex(myPresentation.getDisplayedMnemonicIndex());
   }
@@ -227,7 +234,7 @@ public final class ActionMenu extends JBMenu {
     showDescriptionInStatusBar(isIncluded, this, myPresentation.getDescription());
   }
 
-  public static void showDescriptionInStatusBar(boolean isIncluded, Component component, String description) {
+  public static void showDescriptionInStatusBar(boolean isIncluded, Component component, @NlsContexts.StatusBarText String description) {
     IdeFrame frame = (IdeFrame)(component instanceof IdeFrame ? component : SwingUtilities.getAncestorOfClass(IdeFrame.class, component));
     StatusBar statusBar;
     if (frame != null && (statusBar = frame.getStatusBar()) != null) {
@@ -235,8 +242,30 @@ public final class ActionMenu extends JBMenu {
     }
   }
 
-  private class MenuListenerImpl implements MenuListener {
+  private class MenuListenerImpl implements ChangeListener, MenuListener {
+    boolean isSelected = false;
+
     boolean myIsHidden = false;
+
+    @Override
+    public void stateChanged(ChangeEvent e) {
+      // Re-implement javax.swing.JMenu.MenuChangeListener to avoid recursive event notifications
+      // if 'menuSelected' fires unrelated 'stateChanged' event, without changing 'model.isSelected()' value.
+      ButtonModel model = (ButtonModel)e.getSource();
+      boolean modelSelected = model.isSelected();
+
+      if (modelSelected != isSelected) {
+        isSelected = modelSelected;
+
+        if (modelSelected) {
+          menuSelected();
+        }
+        else {
+          menuDeselected();
+        }
+      }
+    }
+
     @Override
     public void menuCanceled(MenuEvent e) {
       onMenuHidden();
@@ -244,6 +273,15 @@ public final class ActionMenu extends JBMenu {
 
     @Override
     public void menuDeselected(MenuEvent e) {
+      // Use ChangeListener instead to guard against recursive calls
+    }
+
+    @Override
+    public void menuSelected(MenuEvent e) {
+      // Use ChangeListener instead to guard against recursive calls
+    }
+
+    private void menuDeselected() {
       if (myDisposable != null) {
         Disposer.dispose(myDisposable);
         myDisposable = null;
@@ -286,8 +324,7 @@ public final class ActionMenu extends JBMenu {
       }
     }
 
-    @Override
-    public void menuSelected(MenuEvent e) {
+    private void menuSelected() {
       UsabilityHelper helper = new UsabilityHelper(ActionMenu.this);
       if (myDisposable == null) {
         myDisposable = Disposer.newDisposable();
@@ -363,7 +400,7 @@ public final class ActionMenu extends JBMenu {
         setDisplayedMnemonicIndex(myPresentation.getDisplayedMnemonicIndex());
       }
       else if (Presentation.PROP_TEXT.equals(name)) {
-        setText(myPresentation.getText());
+        setText(myPresentation.getText(true));
       }
       else if (Presentation.PROP_ICON.equals(name) || Presentation.PROP_DISABLED_ICON.equals(name)) {
         updateIcon();

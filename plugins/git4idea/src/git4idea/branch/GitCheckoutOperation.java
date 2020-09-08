@@ -7,12 +7,14 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.*;
@@ -135,20 +137,18 @@ class GitCheckoutOperation extends GitBranchOperation {
         }
         else {
           Collection<GitRepository> successfulRepositories = getSuccessfulRepositories();
+          HtmlBuilder builder = new HtmlBuilder();
           String mentionSuccess = GitBundle.message("checkout.operation.in", getSuccessMessage(),
                                                     successfulRepositories.size(),
                                                     joinShortNames(successfulRepositories, REPOSITORIES_LIMIT));
-          String mentionSkipped = wereSkipped()
-                                  ? UIUtil.BR + revisionNotFound
-                                  : "";
+          builder.appendRaw(mentionSuccess);
+          if (wereSkipped()) {
+            builder.br().append(revisionNotFound);
+          }
+          builder.br().appendLink(ROLLBACK_HREF_ATTRIBUTE, GitBundle.message("checkout.operation.rollback"));
 
-          VcsNotifier.getInstance(myProject).notifySuccess("",
-                                                           mentionSuccess +
-                                                           mentionSkipped +
-                                                           UIUtil.BR +
-                                                           "<a href='" + ROLLBACK_HREF_ATTRIBUTE + "'>" + //NON-NLS
-                                                           GitBundle.message("checkout.operation.rollback")
-                                                           + "</a>", //NON-NLS
+          VcsNotifier.getInstance(myProject).notifySuccess("git.checkout.success", "",
+                                                           builder.toString(),
                                                            new RollbackOperationNotificationListener());
         }
         notifyBranchHasChanged(myStartPointReference);
@@ -214,9 +214,13 @@ class GitCheckoutOperation extends GitBranchOperation {
     String previousBranch = getIfSingle(repositories.stream().map(myCurrentHeads::get).distinct());
     if (previousBranch == null) previousBranch = GitBundle.message("checkout.operation.previous.branch");
     String rollBackProposal = GitBundle.message("checkout.operation.you.may.rollback.not.to.let.branches.diverge", previousBranch);
-    return GitBundle.message("checkout.operation.however.checkout.has.succeeded.for.the.following", repositories.size()) + UIUtil.BR +
-           successfulRepositoriesJoined() + UIUtil.BR +
-           rollBackProposal;
+    return new HtmlBuilder()
+      .append(GitBundle.message("checkout.operation.however.checkout.has.succeeded.for.the.following", repositories.size()))
+      .br()
+      .appendRaw(successfulRepositoriesJoined())
+      .br()
+      .append(rollBackProposal)
+      .toString();
   }
 
   @NotNull
@@ -245,7 +249,7 @@ class GitCheckoutOperation extends GitBranchOperation {
       updateAndRefreshChangedVfs(repository, startHash);
     }
     if (!checkoutResult.totalSuccess() || !deleteResult.totalSuccess()) {
-      StringBuilder message = new StringBuilder();
+      @NlsContexts.NotificationContent StringBuilder message = new StringBuilder();
       if (!checkoutResult.totalSuccess()) {
         message.append(GitBundle.message("checkout.operation.errors.during.checkout"));
         message.append(checkoutResult.getErrorOutputWithReposIndication());
@@ -254,13 +258,15 @@ class GitCheckoutOperation extends GitBranchOperation {
         message.append(GitBundle.message("checkout.operation.errors.during.deleting", code(myNewBranch)));
         message.append(deleteResult.getErrorOutputWithReposIndication());
       }
-      VcsNotifier.getInstance(myProject).notifyError(GitBundle.message("checkout.operation.error.during.rollback"),
+      VcsNotifier.getInstance(myProject).notifyError("git.checkout.rollback.error",
+                                                     GitBundle.message("checkout.operation.error.during.rollback"),
                                                      message.toString(),
                                                      true);
     }
   }
 
   @NotNull
+  @NlsContexts.NotificationTitle
   private String getCommonErrorTitle() {
     return GitBundle.message("checkout.operation.could.not.checkout.error.title", getRefPresentation(myStartPointReference));
   }
@@ -283,7 +289,7 @@ class GitCheckoutOperation extends GitBranchOperation {
   }
 
   // stash - checkout - unstash
-  private boolean smartCheckout(@NotNull final List<? extends GitRepository> repositories, @NotNull final String reference,
+  private boolean smartCheckout(@NotNull final List<? extends GitRepository> repositories, @NotNull @NlsSafe final String reference,
                                 @Nullable final String newBranch, @NotNull ProgressIndicator indicator) {
     AtomicBoolean result = new AtomicBoolean();
     GitSaveChangesPolicy saveMethod = GitVcsSettings.getInstance(myProject).getSaveChangesPolicy();

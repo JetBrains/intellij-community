@@ -3,6 +3,7 @@ package com.intellij.tasks.context;
 
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.tasks.TaskBundle;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,7 +20,7 @@ final class RunConfigurationsContextProvider extends WorkingContextProvider {
   @Override
   @NotNull
   public String getDescription() {
-    return "Run Configurations";
+    return TaskBundle.message("run.configurations");
   }
 
   @Override

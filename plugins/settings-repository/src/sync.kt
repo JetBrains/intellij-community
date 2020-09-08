@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository
 
-import com.intellij.configurationStore.ComponentStoreImpl
-import com.intellij.configurationStore.StateStorageManagerImpl
-import com.intellij.configurationStore.XmlElementStorage
-import com.intellij.configurationStore.askToRestart
+import com.intellij.configurationStore.*
 import com.intellij.configurationStore.schemeManager.SchemeManagerImpl
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
@@ -20,6 +17,7 @@ import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.eclipse.jgit.errors.NoRemoteRepositoryException
+import org.jetbrains.annotations.NonNls
 import java.util.*
 
 internal class SyncManager(private val icsManager: IcsManager, private val autoSyncManager: AutoSyncManager) {
@@ -29,7 +27,9 @@ internal class SyncManager(private val icsManager: IcsManager, private val autoS
   private suspend fun runSyncTask(onAppExit: Boolean, project: Project?, task: suspend (indicator: ProgressIndicator) -> Unit) {
     icsManager.runInAutoCommitDisabledMode {
       if (!onAppExit) {
-        ApplicationManager.getApplication()!!.saveSettings()
+        runInAutoSaveDisabledMode {
+          saveSettings(ApplicationManager.getApplication(), false)
+        }
       }
 
       try {
@@ -176,8 +176,12 @@ internal fun updateCloudSchemes(icsManager: IcsManager, indicator: ProgressIndic
 }
 
 
-internal suspend fun updateStoragesFromStreamProvider(icsManager: IcsManager, store: ComponentStoreImpl, updateResult: UpdateResult, reloadAllSchemes: Boolean = false): Boolean {
-  val (changed, deleted) = (store.storageManager as StateStorageManagerImpl).getCachedFileStorages(updateResult.changed, updateResult.deleted, ::toIdeaPath)
+internal suspend fun updateStoragesFromStreamProvider(icsManager: IcsManager,
+                                                      store: ComponentStoreImpl,
+                                                      updateResult: UpdateResult,
+                                                      reloadAllSchemes: Boolean = false): Boolean {
+  val (changed, deleted) = (store.storageManager as StateStorageManagerImpl).getCachedFileStorages(updateResult.changed,
+                                                                                                   updateResult.deleted, ::toIdeaPath)
 
   val schemeManagersToReload = SmartList<SchemeManagerImpl<*, *>>()
   icsManager.schemeManagerFactory.value.process {
@@ -234,7 +238,7 @@ private fun updateStateStorage(changedComponentNames: MutableSet<String>, stateS
   }
 }
 
-enum class SyncType(val messageKey: String) {
+enum class SyncType(@NonNls val messageKey: String) {
   MERGE("Merge"),
   OVERWRITE_LOCAL("ResetToTheirs"),
   OVERWRITE_REMOTE("ResetToMy")

@@ -431,7 +431,7 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
                           final boolean replaceDuplicates) {
     final ElementToWorkOn[] elementToWorkOn = new ElementToWorkOn[1];
     ElementToWorkOn.processElementToWorkOn(getEditor(), getFile(), "INtr param", HelpID.INTRODUCE_PARAMETER, getProject(),
-                                           new ElementToWorkOn.ElementsProcessor<ElementToWorkOn>() {
+                                           new ElementToWorkOn.ElementsProcessor<>() {
                                              @Override
                                              public boolean accept(ElementToWorkOn el) {
                                                return true;

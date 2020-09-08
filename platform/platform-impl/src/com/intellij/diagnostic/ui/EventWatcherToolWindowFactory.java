@@ -1,10 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic.ui;
 
+import com.intellij.diagnostic.DiagnosticBundle;
 import com.intellij.diagnostic.EventWatcher;
 import com.intellij.diagnostic.RunnablesListener;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.ui.components.JBScrollPane;
@@ -14,6 +16,7 @@ import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,9 +29,6 @@ import java.util.function.Function;
 
 @ApiStatus.Experimental
 public final class EventWatcherToolWindowFactory implements ToolWindowFactory, DumbAware {
-
-  @NotNull
-  public static final String TOOL_WINDOW_ID = "Event Watcher";
 
   @Override
   public void createToolWindowContent(@NotNull Project project,
@@ -45,7 +45,7 @@ public final class EventWatcherToolWindowFactory implements ToolWindowFactory, D
 
   @Override
   public void init(@NotNull ToolWindow toolWindow) {
-    toolWindow.setStripeTitle(TOOL_WINDOW_ID);
+    toolWindow.setStripeTitle(DiagnosticBundle.message("tab.title.event.watcher"));
   }
 
   @Override
@@ -66,9 +66,9 @@ public final class EventWatcherToolWindowFactory implements ToolWindowFactory, D
     TableProvidingListener() {
       myInvocationsModel = new ListTableModel<>(
         new ColumnInfo[]{
-          FunctionBasedColumnInfo.stringBased("Runnable/Callable", InvocationsInfo::getFQN),
-          new FunctionBasedColumnInfo<>("Average duration, ms", Double.TYPE, InvocationsInfo::getAverageDuration),
-          new FunctionBasedColumnInfo<>("Count", Integer.TYPE, InvocationsInfo::getCount)
+          FunctionBasedColumnInfo.stringBased(DiagnosticBundle.message("event.watcher.column.name.runnable.callable"), InvocationsInfo::getFQN),
+          new FunctionBasedColumnInfo<>(DiagnosticBundle.message("event.watcher.column.name.average.duration.ms"), Double.TYPE, InvocationsInfo::getAverageDuration),
+          new FunctionBasedColumnInfo<>(DiagnosticBundle.message("event.watcher.column.name.count"), Integer.TYPE, InvocationsInfo::getCount)
         },
         new ArrayList<>(),
         1,
@@ -76,30 +76,30 @@ public final class EventWatcherToolWindowFactory implements ToolWindowFactory, D
       );
 
       myRunnablesModel = new ListTableModel<>(
-        FunctionBasedColumnInfo.stringBased("Runnable", InvocationDescription::getProcessId),
-        new FunctionBasedColumnInfo<>("Duration, ms", Long.TYPE, InvocationDescription::getDuration),
-        new FunctionBasedColumnInfo<>("Started at", String.class,
+        FunctionBasedColumnInfo.stringBased(DiagnosticBundle.message("event.watcher.column.name.runnable"), InvocationDescription::getProcessId),
+        new FunctionBasedColumnInfo<>(DiagnosticBundle.message("event.watcher.column.name.duration.ms"), Long.TYPE, InvocationDescription::getDuration),
+        new FunctionBasedColumnInfo<>(DiagnosticBundle.message("event.watcher.column.name.started.at"), String.class,
                                       description -> new SimpleDateFormat().format(new Date(description.getStartedAt())),
                                       Comparator.comparingLong(InvocationDescription::getStartedAt))
       );
 
       myWrappersModel = new ListTableModel<>(
-        FunctionBasedColumnInfo.stringBased("Runnable/Callable", WrapperDescription::getFQN),
-        new FunctionBasedColumnInfo<>("Usages count", Integer.TYPE, WrapperDescription::getUsagesCount)
+        FunctionBasedColumnInfo.stringBased(DiagnosticBundle.message("event.watcher.column.name.runnable.callable"), WrapperDescription::getFQN),
+        new FunctionBasedColumnInfo<>(DiagnosticBundle.message("event.watcher.column.name.usages.count"), Integer.TYPE, WrapperDescription::getUsagesCount)
       );
 
       myAcquirementsModel = new ListTableModel<>(
-        FunctionBasedColumnInfo.stringBased("Runnable", LockAcquirementDescription::getFQN),
-        new FunctionBasedColumnInfo<>("Reads", Long.TYPE, LockAcquirementDescription::getReads),
-        new FunctionBasedColumnInfo<>("Writes", Long.TYPE, LockAcquirementDescription::getWrites),
-        new FunctionBasedColumnInfo<>("Write intents", Long.TYPE, LockAcquirementDescription::getWriteIntents)
+        FunctionBasedColumnInfo.stringBased(DiagnosticBundle.message("event.watcher.column.name.runnable"), LockAcquirementDescription::getFQN),
+        new FunctionBasedColumnInfo<>(DiagnosticBundle.message("event.watcher.column.name.reads"), Long.TYPE, LockAcquirementDescription::getReads),
+        new FunctionBasedColumnInfo<>(DiagnosticBundle.message("event.watcher.column.name.writes"), Long.TYPE, LockAcquirementDescription::getWrites),
+        new FunctionBasedColumnInfo<>(DiagnosticBundle.message("event.watcher.column.name.write.intents"), Long.TYPE, LockAcquirementDescription::getWriteIntents)
       );
 
       myContents = Arrays.asList(
-        createTableContent("Invocations", myInvocationsModel),
-        createTableContent("Runnables", myRunnablesModel),
-        createTableContent("Wrappers", myWrappersModel),
-        createTableContent("Locks", myAcquirementsModel)
+        createTableContent(DiagnosticBundle.message("event.watcher.tab.title.invocations"), myInvocationsModel),
+        createTableContent(DiagnosticBundle.message("event.watcher.tab.title.runnables"), myRunnablesModel),
+        createTableContent(DiagnosticBundle.message("event.watcher.tab.title.wrappers"), myWrappersModel),
+        createTableContent(DiagnosticBundle.message("event.watcher.tab.title.locks"), myAcquirementsModel)
       );
     }
 
@@ -123,7 +123,7 @@ public final class EventWatcherToolWindowFactory implements ToolWindowFactory, D
     }
 
     @NotNull
-    private static Content createTableContent(@NotNull String tableName,
+    private static Content createTableContent(@NotNull @NlsContexts.TabTitle String tableName,
                                               @NotNull ListTableModel<?> tableModel) {
       JPanel panel = new JPanel(new BorderLayout());
       panel.add(
@@ -146,7 +146,7 @@ public final class EventWatcherToolWindowFactory implements ToolWindowFactory, D
       @NotNull
       private final Comparator<Item> myComparator;
 
-      private FunctionBasedColumnInfo(@NotNull String name,
+      private FunctionBasedColumnInfo(@NotNull @Nls String name,
                                       @NotNull Class<? extends Aspect> columnClass,
                                       @NotNull Function<? super Item, ? extends Aspect> extractor,
                                       @NotNull Comparator<Item> comparator) {
@@ -156,7 +156,7 @@ public final class EventWatcherToolWindowFactory implements ToolWindowFactory, D
         myComparator = comparator;
       }
 
-      private FunctionBasedColumnInfo(@NotNull String name,
+      private FunctionBasedColumnInfo(@NotNull @Nls String name,
                                       @NotNull Class<? extends Aspect> columnClass,
                                       @NotNull Function<? super Item, ? extends Aspect> extractor) {
         this(name, columnClass, extractor, Comparator.comparing(extractor));
@@ -180,7 +180,7 @@ public final class EventWatcherToolWindowFactory implements ToolWindowFactory, D
         return myComparator;
       }
 
-      private static <Item extends Comparable<? super Item>> FunctionBasedColumnInfo<Item, String> stringBased(@NotNull String name,
+      private static <Item extends Comparable<? super Item>> FunctionBasedColumnInfo<Item, String> stringBased(@NotNull @NlsContexts.ColumnName String name,
                                                                                                                @NotNull Function<? super Item, String> extractor) {
         return new FunctionBasedColumnInfo<Item, String>(name, String.class, extractor, Comparator.naturalOrder());
       }

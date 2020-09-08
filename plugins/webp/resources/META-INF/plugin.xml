@@ -1,8 +1,8 @@
-<idea-plugin implementation-detail="true">
+<idea-plugin>
   <id>intellij.webp</id>
   <vendor>JetBrains</vendor>
   <depends>com.intellij.modules.lang</depends>
-  <name>Webp Support</name>
+  <name>WebP</name>
   <description><![CDATA[
     <p>Provides support for webp images format.</p>
     ]]></description>

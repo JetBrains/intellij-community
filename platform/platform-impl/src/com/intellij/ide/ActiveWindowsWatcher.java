@@ -13,7 +13,7 @@ public final class ActiveWindowsWatcher {
 
   private final static LinkedHashSet<Window> activatedWindows = new LinkedHashSet<>();
 
-  public static boolean isTheCurrentWindowOnTheActivatedList(@NotNull Window w) {
+  public static boolean isTheCurrentWindowOnTheActivatedList(Window w) {
     updateActivatedWindowSet();
     return activatedWindows.contains(w);
   }
@@ -26,7 +26,14 @@ public final class ActiveWindowsWatcher {
   public static void updateActivatedWindowSet() {
     for (Iterator<Window> iter = activatedWindows.iterator(); iter.hasNext(); ) {
       Window window = iter.next();
-      if (!window.isFocusableWindow() || !window.isVisible() || ComponentUtil.isMinimized(window) || AppUIUtil.isInFullscreen(window)) {
+      if (!window.isFocusableWindow() ||
+          !window.isVisible() ||
+          ComponentUtil.isMinimized(window) ||
+          AppUIUtil.isInFullscreen(window) ||
+          (window instanceof Frame && ((Frame) window).isUndecorated()) ||
+          (window instanceof Dialog && ((Dialog) window).isUndecorated() ||
+          (!(window instanceof Dialog) && !(window instanceof Frame)))
+      ) {
         iter.remove();
       }
     }
@@ -34,7 +41,6 @@ public final class ActiveWindowsWatcher {
   }
 
   public static Window nextWindowAfter (@NotNull Window w) {
-    assert activatedWindows.contains(w);
 
     Window[] windows = activatedWindows.toArray(new Window[0]);
 

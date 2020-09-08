@@ -2,6 +2,9 @@
 package com.intellij.util.ui;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.util.NlsContext;
+import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,13 +29,14 @@ public final class DialogUtil{
     setTextWithMnemonic(button, button.getText(), mn);
   }
 
-  public static void setTextWithMnemonic(@NotNull AbstractButton button, String text) {
+  public static void setTextWithMnemonic(@NotNull AbstractButton button, @NlsContexts.Button String text) {
     setTextWithMnemonic(button, text, UIUtil.MNEMONIC);
   }
 
-  public static void setTextWithMnemonic(@NotNull AbstractButton button, String text, char mn) {
+  public static void setTextWithMnemonic(@NotNull AbstractButton button, @NlsContexts.Button String text, char mn) {
     if (text != null) {
-      final StringBuilder realText = new StringBuilder();
+      @Nls
+      StringBuilder realText = new StringBuilder();
       char mnemonic = '\0';
       int index = -1;
       for (int i = 0; i < text.length(); i++) {
@@ -71,7 +75,8 @@ public final class DialogUtil{
   public static void registerMnemonic(JLabel label, @Nullable JComponent target, char mn) {
     String text = label.getText();
     if (text != null) {
-      final StringBuilder realText = new StringBuilder(text.length());
+      @Nls
+      StringBuilder realText = new StringBuilder(text.length());
       char mnemonic = '\0';
       int index = -1;
       for (int i = 0; i < text.length(); i++) {

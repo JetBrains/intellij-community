@@ -65,6 +65,7 @@ public class MavenCommandLineOptions {
   public static class Option {
     private final String myName;
     private final String myLongName;
+    @Nls(capitalization = Nls.Capitalization.Sentence)
     private final String myDescription;
 
     public Option(@NonNls String name, @NonNls String longName, @Nls(capitalization = Nls.Capitalization.Sentence) String description) {
@@ -77,6 +78,7 @@ public class MavenCommandLineOptions {
       return longName? myLongName : myName;
     }
 
+    @Nls(capitalization = Nls.Capitalization.Sentence)
     public String getDescription() {
       return myDescription;
     }

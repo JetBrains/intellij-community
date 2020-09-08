@@ -1,11 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.gdpr
 
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.gdpr.ui.HtmlRtfPane
 import com.intellij.idea.Main
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.OnePixelDivider
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.border.CustomLineBorder
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
@@ -77,8 +79,8 @@ class AgreementUi private constructor(val htmlText: String) {
       override fun createSouthPanel(): JComponent {
         val panel = JPanel(BorderLayout(0, 0))
         val buttonPanel = JPanel()
-        declineButton = JButton("Exit")
-        acceptButton = JButton("Continue")
+        declineButton = JButton(IdeBundle.message("gdpr.exit.button"))
+        acceptButton = JButton(IdeBundle.message("gdpr.continue.button"))
 
         panel.add(buttonPanel, BorderLayout.EAST)
         buttonPanel.layout = BoxLayout(buttonPanel, BoxLayout.X_AXIS)
@@ -111,12 +113,12 @@ class AgreementUi private constructor(val htmlText: String) {
     return this
   }
 
-  fun setTitle(title: String): AgreementUi {
+  fun setTitle(@NlsContexts.DialogTitle title: String): AgreementUi {
     dialog?.title = title
     return this
   }
 
-  fun addCheckBox(checkBoxText: String, checkBoxListener: (JCheckBox) -> Unit): AgreementUi {
+  fun addCheckBox(@NlsContexts.Checkbox checkBoxText: String, checkBoxListener: (JCheckBox) -> Unit): AgreementUi {
     val checkBox = JCheckBox(checkBoxText)
     bottomPanel?.add(JBUI.Borders.empty(14, 30, 10, 8).wrap(checkBox), BorderLayout.CENTER)
     JBUI.Borders.empty().wrap(bottomPanel)

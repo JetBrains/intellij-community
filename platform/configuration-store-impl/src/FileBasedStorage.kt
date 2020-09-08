@@ -23,6 +23,7 @@ import com.intellij.util.io.readCharSequence
 import com.intellij.util.io.systemIndependentPath
 import org.jdom.Element
 import org.jdom.JDOMException
+import org.jetbrains.annotations.NonNls
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.file.Files
@@ -243,8 +244,10 @@ open class FileBasedStorage(file: Path,
 
     val app = ApplicationManager.getApplication()
     if (!app.isUnitTestMode && !app.isHeadlessEnvironment) {
-      val reason = if (contentTruncated) "content truncated" else e!!.message
-      val action = if (blockSaving == null) "File content will be recreated" else "Please correct the file content"
+      val reason = if (contentTruncated) ConfigurationStoreBundle.message("notification.load.settings.error.reason.truncated") else e!!.message
+      val action = if (blockSaving == null)
+        ConfigurationStoreBundle.message("notification.load.settings.action.content.will.be.recreated")
+        else ConfigurationStoreBundle.message("notification.load.settings.action.please.correct.file.content")
       Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
                    ConfigurationStoreBundle.message("notification.load.settings.title"),
                    "${ConfigurationStoreBundle.message("notification.load.settings.content", file)}: $reason\n$action",
@@ -375,4 +378,4 @@ private fun deleteFile(file: Path, requestor: StorageManagerFileWriteRequestor, 
 
 internal class ReadOnlyModificationException(val file: VirtualFile, val session: SaveSession?) : RuntimeException("File is read-only: $file")
 
-private data class BlockSaving(val reason: String)
+private data class BlockSaving(@NonNls val reason: String)

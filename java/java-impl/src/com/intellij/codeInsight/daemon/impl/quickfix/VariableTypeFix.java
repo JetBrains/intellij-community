@@ -16,7 +16,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
@@ -131,7 +130,7 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
   }
 
   private void changeSignature(PsiVariable myVariable, PsiParameter myParameter, PsiMethod method) {
-    final PsiMethod psiMethod = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
+    final PsiMethod psiMethod = SuperMethodWarningUtil.checkSuperMethod(method);
     if (psiMethod == null) return;
     final int parameterIndex = method.getParameterList().getParameterIndex(myParameter);
     if (!FileModificationService.getInstance().prepareFileForWrite(psiMethod.getContainingFile())) return;

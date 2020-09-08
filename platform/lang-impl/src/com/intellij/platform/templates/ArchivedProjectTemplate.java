@@ -7,6 +7,7 @@ import com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory;
 import com.intellij.ide.util.projectWizard.WizardInputField;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -14,6 +15,7 @@ import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,18 +32,18 @@ import java.util.zip.ZipInputStream;
  */
 @Tag("template")
 public abstract class ArchivedProjectTemplate implements ProjectTemplate {
-  public static final String INPUT_FIELD = "input-field";
-  public static final String TEMPLATE = "template";
-  public static final String INPUT_DEFAULT = "default";
+  @NonNls public static final String INPUT_FIELD = "input-field";
+  @NonNls public static final String TEMPLATE = "template";
+  @NonNls public static final String INPUT_DEFAULT = "default";
 
-  protected final String myDisplayName;
+  protected final @NlsContexts.Label String myDisplayName;
   @Nullable private final String myCategory;
 
   private List<WizardInputField<?>> myInputFields = Collections.emptyList();
   private List<String> myFrameworks = new ArrayList<>();
   private List<Artifact> myArtifacts = new ArrayList<>();
 
-  public ArchivedProjectTemplate(@NotNull String displayName, @Nullable String category) {
+  public ArchivedProjectTemplate(@NotNull @NlsContexts.Label String displayName, @Nullable String category) {
     myDisplayName = displayName;
     myCategory = category;
   }

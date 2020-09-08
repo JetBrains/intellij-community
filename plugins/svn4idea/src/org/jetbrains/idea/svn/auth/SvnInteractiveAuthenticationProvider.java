@@ -1,17 +1,14 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.auth;
 
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.dialogs.SSLCredentialsDialog;
@@ -19,6 +16,9 @@ import org.jetbrains.idea.svn.dialogs.ServerSSLDialog;
 import org.jetbrains.idea.svn.dialogs.SimpleCredentialsDialog;
 
 import java.security.cert.X509Certificate;
+
+import static com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier.showOverChangesView;
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class SvnInteractiveAuthenticationProvider implements AuthenticationProvider {
   private static final Logger LOG = Logger.getInstance(SvnInteractiveAuthenticationProvider.class);
@@ -65,7 +65,8 @@ public class SvnInteractiveAuthenticationProvider implements AuthenticationProvi
       command = () -> {
         SimpleCredentialsDialog dialog = new SimpleCredentialsDialog(myProject);
         dialog.setup(realm, userName, authCredsOn);
-        setTitle(dialog);
+        dialog.setTitle(message("dialog.title.authentication.required"));
+
         if (dialog.showAndGet()) {
           result[0] = new PasswordAuthenticationData(dialog.getUserName(), dialog.getPassword(), dialog.isSaveAllowed());
         }
@@ -79,7 +80,8 @@ public class SvnInteractiveAuthenticationProvider implements AuthenticationProvi
         if (!StringUtil.isEmptyOrSpaces(file)) {
           dialog.setFile(file);
         }
-        setTitle(dialog);
+        dialog.setTitle(message("dialog.title.authentication.required"));
+
         if (dialog.showAndGet()) {
           result[0] = new CertificateAuthenticationData(dialog.getCertificatePath(), dialog.getCertificatePassword(), dialog.getSaveAuth());
         }
@@ -88,16 +90,12 @@ public class SvnInteractiveAuthenticationProvider implements AuthenticationProvi
 
     if (command != null) {
       showAndWait(command);
-      log("3 authentication result: " + result[0]);
+      LOG.debug("3 authentication result: " + result[0]);
     }
 
     final boolean wasCanceled = result[0] == null;
     callState.setWasCancelled(wasCanceled);
     return result[0];
-  }
-
-  private static void setTitle(@NotNull DialogWrapper dialog) {
-    dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
   }
 
   @Override
@@ -116,8 +114,7 @@ public class SvnInteractiveAuthenticationProvider implements AuthenticationProvi
         result.set(dialog.getResult());
       };
     } else {
-      VcsBalloonProblemNotifier.showOverChangesView(myProject, "Subversion: unknown certificate type from " + url.toDecodedString(),
-                                                    MessageType.ERROR);
+      showOverChangesView(myProject, message("notification.content.unknown.certificate.type.from.url", url.toDecodedString()), MessageType.ERROR);
       return AcceptResult.REJECTED;
     }
 
@@ -127,10 +124,6 @@ public class SvnInteractiveAuthenticationProvider implements AuthenticationProvi
 
   private static void showAndWait(@NotNull Runnable command) {
     WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(command, ModalityState.any());
-  }
-
-  private void log(final String s) {
-    LOG.debug(s);
   }
 
   public static class MyCallState {

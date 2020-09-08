@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -12,6 +13,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.BitUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +31,7 @@ public class ReopenProjectAction extends AnAction implements DumbAware, LightEdi
   private final String myProjectName;
   private boolean myIsRemoved = false;
 
-  public ReopenProjectAction(@NotNull @SystemIndependent String projectPath, String projectName, String displayName) {
+  public ReopenProjectAction(@NotNull @SystemIndependent String projectPath, @NlsSafe String projectName, @NlsSafe String displayName) {
     myProjectPath = projectPath;
     myProjectName = projectName;
 
@@ -49,7 +51,7 @@ public class ReopenProjectAction extends AnAction implements DumbAware, LightEdi
     if (!Files.exists(file)) {
       if (Messages.showDialog(project, IdeBundle
                                 .message("message.the.path.0.does.not.exist.maybe.on.remote", FileUtil.toSystemDependentName(myProjectPath)),
-                              IdeBundle.message("dialog.title.reopen.project"), new String[]{"OK", "&Remove From List"}, 0, Messages.getErrorIcon()) == 1) {
+                              IdeBundle.message("dialog.title.reopen.project"), new String[]{CommonBundle.getOkButtonText(), IdeBundle.message("button.remove.from.list")}, 0, Messages.getErrorIcon()) == 1) {
         myIsRemoved = true;
         RecentProjectsManager.getInstance().removePath(myProjectPath);
       }
@@ -74,6 +76,7 @@ public class ReopenProjectAction extends AnAction implements DumbAware, LightEdi
     return myIsRemoved;
   }
 
+  @NlsSafe
   public String getProjectName() {
     final RecentProjectsManager mgr = RecentProjectsManager.getInstance();
     if (mgr instanceof RecentProjectsManagerBase) {

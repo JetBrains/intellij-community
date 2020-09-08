@@ -28,10 +28,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 public class ScopesOrderDialog extends DialogWrapper {
-  private final JList<String> myOptionsList = new JBList<>();
+  private final JList<NamedScope> myOptionsList = new JBList<>();
   private final InspectionProfileImpl myInspectionProfile;
   @NotNull
   private final Project myProject;
@@ -48,6 +49,15 @@ public class ScopesOrderDialog extends DialogWrapper {
     reloadScopeList();
     myOptionsList.setModel(myModel);
     myOptionsList.setSelectedIndex(0);
+    myOptionsList.setCellRenderer(new DefaultListCellRenderer() {
+      @Override
+      public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        if (value instanceof NamedScope) {
+          setText(((NamedScope)value).getPresentableName());
+        }
+        return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      }
+    });
 
     final JPanel listPanel = ToolbarDecorator.createDecorator(myOptionsList).setMoveDownAction(new AnActionButtonRunnable() {
       @Override
@@ -79,18 +89,18 @@ public class ScopesOrderDialog extends DialogWrapper {
   private void reloadScopeList() {
     myModel.removeAllElements();
 
-    final List<String> scopes = new ArrayList<>();
+    final List<NamedScope> scopes = new ArrayList<>();
     for (final NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(myProject)) {
       for (final NamedScope scope : holder.getScopes()) {
         if (!(scope instanceof NonProjectFilesScope)) {
-          scopes.add(scope.getName());
+          scopes.add(scope);
         }
       }
     }
-    scopes.remove(CustomScopesProviderEx.getAllScope().getName());
-    scopes.sort(new ScopeOrderComparator(myInspectionProfile));
-    for (String scopeName : scopes) {
-      myModel.addElement(scopeName);
+    scopes.remove(CustomScopesProviderEx.getAllScope());
+    scopes.sort(Comparator.comparing(namedScope -> namedScope.getScopeId(), new ScopeOrderComparator(myInspectionProfile)));
+    for (NamedScope scope : scopes) {
+      myModel.addElement(scope);
     }
   }
 
@@ -105,8 +115,8 @@ public class ScopesOrderDialog extends DialogWrapper {
     final int size = myOptionsList.getModel().getSize();
     final String[] newScopeOrder = new String[size];
     for (int i = 0; i < size; i++) {
-      final String scopeName = myOptionsList.getModel().getElementAt(i);
-      newScopeOrder[i] = scopeName;
+      final NamedScope namedScope = myOptionsList.getModel().getElementAt(i);
+      newScopeOrder[i] = namedScope.getScopeId();
     }
     if (!Arrays.equals(newScopeOrder, myInspectionProfile.getScopesOrder())) {
       myInspectionProfile.setScopesOrder(newScopeOrder);
@@ -114,7 +124,7 @@ public class ScopesOrderDialog extends DialogWrapper {
     super.doOKAction();
   }
 
-  private static class MyModel extends DefaultListModel<String> implements EditableModel {
+  private static class MyModel extends DefaultListModel<NamedScope> implements EditableModel {
     @Override
     public void addRow() {
       throw new UnsupportedOperationException();
@@ -122,7 +132,7 @@ public class ScopesOrderDialog extends DialogWrapper {
 
     @Override
     public void exchangeRows(int oldIndex, int newIndex) {
-      String scope1 = getElementAt(newIndex);
+      NamedScope scope1 = getElementAt(newIndex);
       set(newIndex, getElementAt(oldIndex));
       set(oldIndex, scope1);
     }

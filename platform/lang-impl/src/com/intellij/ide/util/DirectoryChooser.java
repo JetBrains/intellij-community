@@ -521,7 +521,7 @@ public class DirectoryChooser extends DialogWrapper {
       myCommon = isCommon;
     }
 
-    public String getText() {
+    public @NlsSafe String getText() {
       return myText;
     }
 

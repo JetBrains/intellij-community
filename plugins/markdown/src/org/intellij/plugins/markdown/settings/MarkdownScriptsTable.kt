@@ -4,15 +4,10 @@ package org.intellij.plugins.markdown.settings
 import com.intellij.ui.layout.*
 import com.intellij.ui.table.JBTable
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.extensions.MarkdownConfigurableExtension
 import org.intellij.plugins.markdown.extensions.MarkdownExtension
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithExternalFiles
-import org.intellij.plugins.markdown.extensions.javafx.MarkdownJavaFXPreviewExtension
-import org.intellij.plugins.markdown.extensions.jcef.MarkdownJCEFPreviewExtension
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider
-import org.intellij.plugins.markdown.ui.preview.javafx.JavaFxHtmlPanelProvider
-import org.intellij.plugins.markdown.ui.preview.jcef.JCEFHtmlPanelProvider
 import java.awt.Component
 import javax.swing.JComponent
 import javax.swing.table.TableCellRenderer
@@ -25,7 +20,7 @@ internal class MarkdownScriptsTable : JBTable() {
   override fun getCellSelectionEnabled(): Boolean = false
 
   override fun prepareRenderer(renderer: TableCellRenderer, row: Int, column: Int): Component {
-    var prepared = super.prepareRenderer(renderer, row, column)
+    var prepared  = super.prepareRenderer(renderer, row, column)
     if (prepared is JComponent) {
       val tableModel = model as MarkdownScriptsTableModel
       val extension = tableModel.getExtensionAt(row)
@@ -41,9 +36,9 @@ internal class MarkdownScriptsTable : JBTable() {
               }
             }
           }
-        } as JComponent
+        }
       }
-      prepared.toolTipText = extension.description
+      (prepared as JComponent).toolTipText = extension.description
     }
     return prepared
   }
@@ -51,27 +46,10 @@ internal class MarkdownScriptsTable : JBTable() {
   fun getState(): MutableMap<String, Boolean> = (model as MarkdownScriptsTableModel).state
 
   fun setState(state: Map<String, Boolean>, providerInfo: MarkdownHtmlPanelProvider.ProviderInfo?) {
-    val extensions = with(MarkdownExtension.all.filterIsInstance<MarkdownConfigurableExtension>()) {
-      if (providerInfo == null) {
-        this
-      }
-      else when (providerInfo.className) {
-        JavaFxHtmlPanelProvider::class.java.name -> filter {
-          if (it is MarkdownBrowserPreviewExtension) {
-            it !is MarkdownJCEFPreviewExtension
-          }
-          else true
-        }
-        JCEFHtmlPanelProvider::class.java.name -> filter {
-          if (it is MarkdownBrowserPreviewExtension) {
-            it !is MarkdownJavaFXPreviewExtension
-          }
-          else true
-        }
-        else -> this
-      }
-    }
+    val extensions = MarkdownExtension.all.filterIsInstance<MarkdownConfigurableExtension>()
+
     val mergedState = extensions.map { it.id to false }.toMap().toMutableMap()
+
     for ((key, value) in state) {
       if (key in state.keys) {
         mergedState[key] = value

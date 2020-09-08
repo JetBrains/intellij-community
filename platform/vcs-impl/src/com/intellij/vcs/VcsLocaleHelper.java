@@ -2,6 +2,7 @@
 package com.intellij.vcs;
 
 import com.intellij.openapi.util.registry.Registry;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashMap;
@@ -10,11 +11,12 @@ import java.util.MissingResourceException;
 
 public final class VcsLocaleHelper {
 
-  private static final String DEFAULT_EXECUTABLE_LOCALE_VALUE = "en_US.UTF-8";
-  private static final String REGISTRY_KEY_SUFFIX = ".executable.locale";
+  private static final @NonNls String DEFAULT_EXECUTABLE_LOCALE_VALUE = "en_US.UTF-8";
+  private static final @NonNls String REGISTRY_KEY_SUFFIX = ".executable.locale";
 
+  @NonNls
   @NotNull
-  public static String getDefaultLocaleFromRegistry(@NotNull String prefix) {
+  public static String getDefaultLocaleFromRegistry(@NotNull @NonNls String prefix) {
     String registryKey = prefix + REGISTRY_KEY_SUFFIX;
     try {
       return Registry.stringValue(registryKey);
@@ -25,14 +27,14 @@ public final class VcsLocaleHelper {
   }
 
   @NotNull
-  public static Map<String, String> getDefaultLocaleEnvironmentVars(@NotNull String prefix) {
+  public static Map<String, String> getDefaultLocaleEnvironmentVars(@NotNull @NonNls String prefix) {
     Map<String, String> envMap = new LinkedHashMap<>();
     String defaultLocale = getDefaultLocaleFromRegistry(prefix);
     if (defaultLocale.isEmpty()) { // let skip locale definition if needed
       return envMap;
     }
-    envMap.put("LANGUAGE", "");
-    envMap.put("LC_ALL", defaultLocale);
+    envMap.put("LANGUAGE", ""); //NON-NLS
+    envMap.put("LC_ALL", defaultLocale); //NON-NLS
     return envMap;
   }
 }

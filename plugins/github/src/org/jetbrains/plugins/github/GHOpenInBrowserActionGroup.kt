@@ -173,7 +173,8 @@ open class GHOpenInBrowserActionGroup
                                     editor: Editor?) {
         val relativePath = VfsUtilCore.getRelativePath(virtualFile, repositoryRoot)
         if (relativePath == null) {
-          GithubNotifications.showError(project, GithubBundle.message("cannot.open.in.browser"),
+          GithubNotifications.showError(project, "github.open.in.browser.file.is.not.under.repo",
+                                        GithubBundle.message("cannot.open.in.browser"),
                                         GithubBundle.message("open.on.github.file.is.not.under.repository"),
                                         "Root: " + repositoryRoot.presentableUrl + ", file: " + virtualFile.presentableUrl)
           return
@@ -181,7 +182,9 @@ open class GHOpenInBrowserActionGroup
 
         val hash = getCurrentFileRevisionHash(project, virtualFile)
         if (hash == null) {
-          GithubNotifications.showError(project, GithubBundle.message("cannot.open.in.browser"),
+          GithubNotifications.showError(project,
+                                        "github.open.in.browser.cannot.get.last.revision",
+                                        GithubBundle.message("cannot.open.in.browser"),
                                         GithubBundle.message("cannot.get.last.revision"))
           return
         }

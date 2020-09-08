@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemStatUtilKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.idea.maven.execution.SoutMavenConsole;
@@ -35,7 +36,7 @@ import java.util.Queue;
 
 public class MavenProjectsProcessor {
   private final Project myProject;
-  private final String myTitle;
+  private final @NlsContexts.Command String myTitle;
   private final boolean myCancellable;
   private final MavenEmbeddersManager myEmbeddersManager;
 
@@ -45,7 +46,7 @@ public class MavenProjectsProcessor {
   private volatile boolean isStopped;
 
   public MavenProjectsProcessor(Project project,
-                                String title,
+                                @NlsContexts.Command String title,
                                 boolean cancellable,
                                 MavenEmbeddersManager embeddersManager) {
     myProject = project;

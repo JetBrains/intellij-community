@@ -5,11 +5,18 @@ import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
+import com.intellij.openapi.editor.impl.Interval;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.TestFileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.awt.*;
+import java.util.List;
 
 public class JavaDocRenderTest extends AbstractEditorTest {
   private boolean myStoredSetting;
@@ -160,6 +167,48 @@ public class JavaDocRenderTest extends AbstractEditorTest {
     }
   }
 
+  public void testTypingAfterCollapse() {
+    configure("/**\n" +
+              " * doc<caret>\n" +
+              " */\n" +
+              "class C {}", false);
+    toggleItem();
+    type("  ");
+    checkResultByText("/**\n" +
+                      " * doc\n" +
+                      " */\n" +
+                      "  <caret>class C {}");
+  }
+
+  public void testAddedCommentIsNotCollapsed() {
+    configure("class C {}", true);
+    runWriteCommand(() -> getEditor().getDocument().insertString(0, "/**\n * comment\n */\n"));
+    updateRenderedItems(false);
+    verifyFoldingState("[]");
+  }
+
+  public void testLineToYAndBackConversions() {
+    configure("class C {\n" +
+              "  /**\n" +
+              "   * comment\n" +
+              "   */\n" +
+              "  void m() {}\n" +
+              "}", true);
+    List<Inlay<?>> inlays = getEditor().getInlayModel().getBlockElementsForVisualLine(1, true);
+    assertSize(1, inlays);
+    Rectangle inlayBounds = inlays.get(0).getBounds();
+    assertNotNull(inlayBounds);
+    assertFalse(inlayBounds.isEmpty());
+
+    Interval yRange = EditorUtil.logicalLineToYRange(getEditor(), 2);
+    assertEquals(inlayBounds.y, yRange.intervalStart());
+    assertEquals(inlayBounds.y + inlayBounds.height, yRange.intervalEnd());
+
+    Interval lineRange = EditorUtil.yToLogicalLineRange(getEditor(), inlayBounds.y + inlayBounds.height / 2);
+    assertEquals(1, lineRange.intervalStart());
+    assertEquals(3, lineRange.intervalEnd());
+  }
+
   private void configure(@NotNull String text, boolean enableRendering) {
     EditorSettingsExternalizable.getInstance().setDocCommentRenderingEnabled(enableRendering);
     init(text, TestFileType.JAVA);
@@ -167,6 +216,7 @@ public class JavaDocRenderTest extends AbstractEditorTest {
   }
 
   private void updateRenderedItems(boolean collapseNewRegions) {
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     DocRenderPassFactory.Items items = DocRenderPassFactory.calculateItemsToRender(getEditor(), getFile());
     DocRenderPassFactory.applyItemsToRender(getEditor(), getProject(), items, collapseNewRegions);
   }

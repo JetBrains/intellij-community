@@ -6,7 +6,6 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.ui.UIThemeProvider;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.NotificationAction;
-import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.Application;
@@ -22,6 +21,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.Extensions;
@@ -37,7 +37,7 @@ final class PluginModuleConvertToGradleStartupActivity implements StartupActivit
   private static final String ID = "Migrate DevKit plugin to Gradle";
 
   private static final NotificationGroup NOTIFICATION_GROUP =
-    new NotificationGroup(ID, NotificationDisplayType.STICKY_BALLOON, true);
+    NotificationGroup.balloonGroup(ID, DevKitBundle.message("convert.devkit.to.gradle.notification"));
 
   private static final String DO_NOT_SHOW_AGAIN_SETTING = "PluginModuleConvertToGradleStartupActivity.DoNotShowAgain";
 
@@ -65,13 +65,17 @@ final class PluginModuleConvertToGradleStartupActivity implements StartupActivit
     }
     if (!isSimpleSingleModulePlugin(project, devkitModules)) return;
 
-    UIUtil.invokeLaterIfNeeded(() -> NOTIFICATION_GROUP.createNotification(ID, null, "Gradle-based setup is recommended for this project.",
+    UIUtil.invokeLaterIfNeeded(() -> NOTIFICATION_GROUP.createNotification(DevKitBundle.message("convert.devkit.to.gradle.notification"),
+                                                                           null,
+                                                                           DevKitBundle
+                                                                             .message("convert.devkit.to.gradle.notification.content"),
                                                                            NotificationType.INFORMATION)
-      .addAction(NotificationAction.createSimpleExpiring("Migration guide", () ->
+      .addAction(NotificationAction.createSimpleExpiring(DevKitBundle.message("convert.devkit.to.gradle.notification.link.title"), () ->
         BrowserUtil.browse("http://www.jetbrains.org/intellij/sdk/docs/tutorials/build_system/prerequisites.html" +
                            "#adding-gradle-support-to-an-existing-devkit-based-intellij-platform-plugin")))
-      .addAction(NotificationAction.createSimpleExpiring("Do not show again", () ->
-        propertiesComponent.setValue(DO_NOT_SHOW_AGAIN_SETTING, true)))
+      .addAction(
+        NotificationAction.createSimpleExpiring(DevKitBundle.message("convert.devkit.to.gradle.notification.do.not.show.again"), () ->
+          propertiesComponent.setValue(DO_NOT_SHOW_AGAIN_SETTING, true)))
       .setIcon(AllIcons.Nodes.Plugin)
       .notify(project));
   }

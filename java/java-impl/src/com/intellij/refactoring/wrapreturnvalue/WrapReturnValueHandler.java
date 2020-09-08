@@ -29,7 +29,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -101,7 +100,7 @@ class WrapReturnValueHandler implements RefactoringActionHandler {
                                           getRefactoringNameText(), this.getHelpID());
       return;
     }
-    method = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
+    method = SuperMethodWarningUtil.checkSuperMethod(method);
     if (method == null) return;
 
     if(method instanceof PsiCompiledElement){

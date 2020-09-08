@@ -24,7 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.SealedUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -121,9 +121,9 @@ public class UnimplementInterfaceAction implements IntentionAction {
     if (target == psiClass) return;
 
     if (targetClass.hasModifierProperty(PsiModifier.SEALED)) {
-      ClassUtils.removeFromPermitsList(targetClass, psiClass);
+      SealedUtils.removeFromPermitsList(targetClass, psiClass);
       final PsiModifierList modifiers = psiClass.getModifierList();
-      if (modifiers != null && modifiers.hasExplicitModifier(PsiModifier.NON_SEALED) && !ClassUtils.hasSealedParent(psiClass)) {
+      if (modifiers != null && modifiers.hasExplicitModifier(PsiModifier.NON_SEALED) && !SealedUtils.hasSealedParent(psiClass)) {
         modifiers.setModifierProperty(PsiModifier.NON_SEALED, false);
       }
     }

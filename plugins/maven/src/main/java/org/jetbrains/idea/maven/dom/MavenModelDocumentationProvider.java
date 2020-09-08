@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.dom;
 
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.ElementDescriptionLocation;
 import com.intellij.psi.ElementDescriptionProvider;
@@ -55,6 +56,7 @@ public class MavenModelDocumentationProvider implements DocumentationProvider, E
   }
 
   @Nullable
+  @NlsContexts.DetailedDescription
   private static String getMavenElementDescription(PsiElement e, DescKind kind, boolean html) {
     e = getMavenElement(e);
     if (e == null) return null;
@@ -65,7 +67,7 @@ public class MavenModelDocumentationProvider implements DocumentationProvider, E
 
     boolean property = MavenDomUtil.isMavenProperty(e);
 
-    String type = property ? "Property" : "Model Property";
+    String type = property ? MavenDomBundle.message("text.property") : MavenDomBundle.message("text.model.property");
     if (kind == DescKind.TYPE) return type;
 
     String name = buildPropertyName(e, property);
@@ -85,8 +87,9 @@ public class MavenModelDocumentationProvider implements DocumentationProvider, E
     return null;
   }
 
+  @NlsContexts.DetailedDescription
   private static String buildPropertyName(PsiElement e, boolean property) {
-    if (property) return DescriptiveNameUtil.getDescriptiveName(e);
+    if (property) return DescriptiveNameUtil.getDescriptiveName(e); //NON-NLS - suprress warning
 
     List<String> path = new ArrayList<>();
     do {

@@ -2,6 +2,7 @@
 package com.intellij.execution.process;
 
 import com.intellij.util.concurrency.CountingThreadFactory;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -14,7 +15,7 @@ import java.util.concurrent.*;
  * @author peter
  */
 public final class ProcessIOExecutorService extends ThreadPoolExecutor {
-  public static final String POOLED_THREAD_PREFIX = "I/O pool ";
+  public static final @NonNls String POOLED_THREAD_PREFIX = "I/O pool ";
   public static final ExecutorService INSTANCE = new ProcessIOExecutorService();
 
   private ProcessIOExecutorService() {

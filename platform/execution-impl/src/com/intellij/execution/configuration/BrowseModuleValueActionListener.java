@@ -13,7 +13,7 @@ import java.awt.event.ActionListener;
 
 public abstract class BrowseModuleValueActionListener<T extends JComponent> implements ActionListener {
   private final Project myProject;
-  private ComponentWithBrowseButton<T> myField;
+  private TextAccessor myField;
 
   protected BrowseModuleValueActionListener(Project project) {
     myProject = project;
@@ -24,22 +24,26 @@ public abstract class BrowseModuleValueActionListener<T extends JComponent> impl
   }
 
   public JComponent getField() {
-    return myField;
+    return (JComponent)myField;
   }
 
   public void setField(@NotNull ComponentWithBrowseButton<T> field) {
-    myField = field;
-    myField.addActionListener(this);
-    myField.setButtonEnabled(!myProject.isDefault());
+    setTextAccessor((TextAccessor)field);
+    field.addActionListener(this);
+    field.setButtonEnabled(!myProject.isDefault());
+  }
+
+  public void setTextAccessor(@NotNull TextAccessor accessor) {
+    myField = accessor;
   }
 
   public String getText() {
-    return ((TextAccessor)myField).getText();
+    return myField.getText();
   }
 
   public void detach() {
-    if (myField != null) {
-      myField.removeActionListener(this);
+    if (myField instanceof ComponentWithBrowseButton) {
+      ((ComponentWithBrowseButton<?>)myField).removeActionListener(this);
       myField = null;
     }
   }
@@ -48,7 +52,7 @@ public abstract class BrowseModuleValueActionListener<T extends JComponent> impl
   public void actionPerformed(ActionEvent e) {
     String text = showDialog();
     if (text != null) {
-      ((TextAccessor)myField).setText(text);
+      myField.setText(text);
     }
   }
 

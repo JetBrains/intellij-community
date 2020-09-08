@@ -12,6 +12,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.Gray;
@@ -40,7 +41,7 @@ public final class RunAnythingUtil {
     return UIUtil.getLabelFont().deriveFont(UIUtil.getFontSize(UIUtil.FontSize.SMALL));
   }
 
-  static JComponent createTitle(@NotNull String titleText, @NotNull Color background) {
+  static JComponent createTitle(@NlsContexts.PopupTitle @NotNull String titleText, @NotNull Color background) {
     JLabel titleLabel = new JLabel(StringUtil.capitalizeWords(titleText, true));
     titleLabel.setFont(getTitleFont());
     titleLabel.setForeground(UIUtil.getLabelDisabledForeground());

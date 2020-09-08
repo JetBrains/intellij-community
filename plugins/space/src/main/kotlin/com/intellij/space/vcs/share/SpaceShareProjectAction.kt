@@ -6,6 +6,7 @@ import circlet.client.api.impl.vcsPasswords
 import circlet.client.td
 import com.intellij.CommonBundle
 import com.intellij.dvcs.repo.VcsRepositoryManager
+import com.intellij.notification.NotificationListener
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -15,6 +16,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsException
@@ -24,6 +26,7 @@ import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.space.actions.SpaceActionUtils
 import com.intellij.space.components.space
+import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.settings.CloneType
 import com.intellij.space.settings.SpaceSettings
 import com.intellij.space.vcs.SpaceHttpPasswordState
@@ -31,6 +34,8 @@ import com.intellij.space.vcs.SpaceProjectContext
 import com.intellij.space.vcs.SpaceSetGitHttpPasswordDialog
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcsUtil.VcsFileUtil
+import com.intellij.xml.util.XmlStringUtil.formatLink
+import com.intellij.xml.util.XmlStringUtil.wrapInHtmlLines
 import git4idea.GitUtil
 import git4idea.actions.GitInit
 import git4idea.commands.Git
@@ -93,9 +98,9 @@ class SpaceShareProjectAction : DumbAwareAction() {
     val result = createSpaceProject(project) ?: return
     val (repoInfo, repoDetails, url) = result
 
-    object : Task.Backgroundable(project, "Sharing Project on Space...") {
+    object : Task.Backgroundable(project, SpaceBundle.message("share.project.action.progress.title.sharing.title")) {
       override fun run(indicator: ProgressIndicator) {
-        indicator.text = "Search for git repository"
+        indicator.text = SpaceBundle.message("share.project.action.progress.title.searching.repository.title")
         val repository = if (file != null) {
           VcsRepositoryManager.getInstance(project).getRepositoryForFile(file, false)
         }
@@ -134,8 +139,12 @@ class SpaceShareProjectAction : DumbAwareAction() {
           return
         }
 
-        // final notification
-        SpaceNotification.showInfoWithURL(project, "Successfully shared project on Space", repoInfo.name, url)
+        VcsNotifier.getInstance(project).notifySuccess(
+          "space.project.shared.successfully",
+          SpaceBundle.message("share.project.success.notification.title"),
+          formatLink(url, repoInfo.name),
+          NotificationListener.URL_OPENING_LISTENER
+        )
       }
     }.queue()
   }
@@ -173,10 +182,12 @@ class SpaceShareProjectAction : DumbAwareAction() {
   }
 
   private fun createEmptyGitRepository(project: Project, root: VirtualFile, indicator: ProgressIndicator): Boolean {
-    indicator.text = "Init new git repository"
+    indicator.text = SpaceBundle.message("share.project.action.progress.title.initializing.repository.title")
     val result = Git.getInstance().init(project, root)
     if (!result.success()) {
-      VcsNotifier.getInstance(project).notifyError(GitBundle.getString("initializing.title"), result.errorOutputAsHtmlString)
+      VcsNotifier.getInstance(project).notifyError("space.git.repo.init.error",
+                                                   GitBundle.getString("initializing.title"),
+                                                   result.errorOutputAsHtmlString)
       log.info { "Failed to create empty git repo: " + result.errorOutputAsJoinedString }
       return false
     }
@@ -192,7 +203,7 @@ class SpaceShareProjectAction : DumbAwareAction() {
     } as String
 
     val remoteName = "origin"
-    indicator.text = "Adding remote url"
+    indicator.text = SpaceBundle.message("share.project.action.progress.title.adding.remote.title")
     val commandResult = git.addRemote(gitRepo, remoteName, remoteUrl)
     if (commandResult.success()) {
       gitRepo.update()
@@ -217,7 +228,7 @@ class SpaceShareProjectAction : DumbAwareAction() {
 
     try {
       log.info("Adding files for commit")
-      indicator.text = "Adding files to git..."
+      indicator.text = SpaceBundle.message("share.project.action.progress.title.adding.files.title")
 
       // ask for files to add
       val changeListManager = ChangeListManager.getInstance(project)
@@ -241,7 +252,7 @@ class SpaceShareProjectAction : DumbAwareAction() {
 
       // commit
       log.info("Performing commit")
-      indicator.text = "Performing commit..."
+      indicator.text = SpaceBundle.message("share.project.action.progress.title.committing.title")
       val handler = GitLineHandler(project, root, GitCommand.COMMIT)
       handler.setStdoutSuppressed(false)
       handler.addParameters("-m", "Initial commit")
@@ -252,9 +263,11 @@ class SpaceShareProjectAction : DumbAwareAction() {
     }
     catch (e: VcsException) {
       log.warn(e)
-      SpaceNotification.showErrorWithURL(project, Messages.CANT_FINISH_SHARING, Messages.CREATED_PROJECT, "'$name'",
-                                           " on Space, but initial commit failed:<br/>" + e.messages,
-                                         url)
+      val repositoryLink = formatLink(url, "'$name'")
+      notifyError(project, wrapInHtmlLines(
+        SpaceBundle.message("share.project.error.notification.initial.commit.failed.message", repositoryLink),
+        *e.messages
+      ))
       return false
     }
 
@@ -270,7 +283,7 @@ class SpaceShareProjectAction : DumbAwareAction() {
       val selectFilesDialog = SelectFilesDialog.init(project, allFiles, null, null, true, false,
                                                      CommonBundle.getAddButtonText(),
                                                      CommonBundle.getCancelButtonText())
-      selectFilesDialog.title = "Add Files For Initial Commit"
+      selectFilesDialog.title = SpaceBundle.message("share.project.action.progress.title.adding.files.to.commit.title")
       if (preselectedFiles.isNotEmpty()) {
         selectFilesDialog.selectedFiles = preselectedFiles
       }
@@ -290,27 +303,32 @@ class SpaceShareProjectAction : DumbAwareAction() {
                                 url: String,
                                 indicator: ProgressIndicator): Boolean {
     log.info("Pushing to master")
-    indicator.text = "Pushing to master..."
+    indicator.text = SpaceBundle.message("share.project.action.progress.title.pushing.title")
 
     val currentBranch = repository.currentBranch
+    val repositoryLink = formatLink(url, "'$name'")
     if (currentBranch == null) {
-      SpaceNotification.showErrorWithURL(project, Messages.CANT_FINISH_SHARING, Messages.CREATED_PROJECT, "'$name'",
-                                         " on Space, but initial push failed: no current branch", url)
+      notifyError(project, SpaceBundle.message("share.project.error.notification.no.current.branch.message", repositoryLink))
       return false
     }
     val result = git.push(repository, remoteName, remoteUrl, currentBranch.name, true)
     if (!result.success()) {
-      SpaceNotification.showErrorWithURL(project, Messages.CANT_FINISH_SHARING, Messages.CREATED_PROJECT, "'$name'",
-                                           " on Space, but initial push failed:<br/>" + result.errorOutputAsHtmlString, url)
+      notifyError(project, wrapInHtmlLines(
+        SpaceBundle.message("share.project.error.notification.push.failed.message", repositoryLink),
+        result.errorOutputAsHtmlString
+      ))
       return false
     }
     return true
   }
 
-
-  object Messages {
-    const val CANT_FINISH_SHARING = "Sharing not finished"
-    const val CREATED_PROJECT = "Created repository "
+  private fun notifyError(project: Project, @NotificationContent message: String) {
+    VcsNotifier.getInstance(project).notifyError(
+      "space.sharing.not.finished",
+      SpaceBundle.message("share.project.error.notification.title"),
+      message,
+      NotificationListener.URL_OPENING_LISTENER
+    )
   }
 }
 

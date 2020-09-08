@@ -5,11 +5,12 @@ import com.intellij.debugger.streams.trace.IntermediateCallHandler
 import com.intellij.debugger.streams.trace.TerminatorCallHandler
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.wrapper.TerminatorStreamCall
+import org.jetbrains.annotations.NonNls
 
 /**
  * @author Vitaliy.Bibaev
  */
 interface HandlerFactory {
   fun getForIntermediate(number: Int, call: IntermediateStreamCall): IntermediateCallHandler
-  fun getForTermination(call: TerminatorStreamCall, resultExpression: String): TerminatorCallHandler
+  fun getForTermination(call: TerminatorStreamCall, @NonNls resultExpression: String): TerminatorCallHandler
 }

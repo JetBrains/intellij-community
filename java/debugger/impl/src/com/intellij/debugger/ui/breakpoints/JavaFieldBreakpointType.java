@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.CommonBundle;
@@ -17,6 +17,7 @@ import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaFieldBreakpointProperties;
@@ -87,6 +88,7 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
     return getText(breakpoint);
   }
 
+  @Nls
   public String getText(XLineBreakpoint<JavaFieldBreakpointProperties> breakpoint) {
     //if(!isValid()) {
     //  return JavaDebuggerBundle.message("status.breakpoint.invalid");

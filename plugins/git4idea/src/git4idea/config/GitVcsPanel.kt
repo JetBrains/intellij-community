@@ -28,7 +28,6 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.ui.layout.*
 import com.intellij.util.execution.ParametersListUtil
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.VcsExecutablePathSelector
 import com.intellij.vcs.log.VcsLogFilterCollection.STRUCTURE_FILTER
@@ -36,7 +35,6 @@ import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl
 import com.intellij.vcs.log.ui.filter.StructureFilterPopupComponent
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi
-import com.intellij.vcs.log.ui.filter.VcsLogPopupComponent
 import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.i18n.GitBundle
@@ -46,7 +44,6 @@ import git4idea.update.GitUpdateProjectInfoLogProperties
 import git4idea.update.getUpdateMethods
 import org.jetbrains.annotations.CalledInAny
 import java.awt.Color
-import java.util.function.Consumer
 import javax.swing.JLabel
 import javax.swing.border.Border
 
@@ -81,7 +78,7 @@ internal fun gitOptionDescriptors(project: Project): List<OptionDescription> {
 }
 
 internal class GitVcsPanel(private val project: Project) :
-  BoundConfigurable(GitVcs.NAME, "project.propVCSSupport.VCSs.Git"),
+  BoundConfigurable(GitBundle.message("settings.git.option.group"), "project.propVCSSupport.VCSs.Git"),
   SearchableConfigurable {
 
   private val projectSettings by lazy { GitVcsSettings.getInstance(project) }
@@ -96,10 +93,18 @@ internal class GitVcsPanel(private val project: Project) :
   private lateinit var supportedBranchUpLabel: JLabel
 
   private val pathSelector: VcsExecutablePathSelector by lazy {
-    VcsExecutablePathSelector("Git", disposable!!, Consumer { path -> testExecutable(path) })
+    VcsExecutablePathSelector(GitVcs.NAME, disposable!!, object : VcsExecutablePathSelector.ExecutableHandler {
+      override fun patchExecutable(executable: String): String? {
+        return GitExecutableDetector.patchExecutablePath(executable)
+      }
+
+      override fun testExecutable(executable: String) {
+        testGitExecutable(executable)
+      }
+    })
   }
 
-  private fun testExecutable(pathToGit: String) {
+  private fun testGitExecutable(pathToGit: String) {
     val modalityState = ModalityState.stateForComponent(pathSelector.mainPanel)
     val errorNotifier = InlineErrorNotifierFromSettings(
       GitExecutableInlineComponent(pathSelector.errorComponent, modalityState, null),
@@ -266,7 +271,7 @@ internal class GitVcsPanel(private val project: Project) :
     if (project.isDefault || GitRepositoryManager.getInstance(project).moreThanOneRoot()) {
       row {
         checkBox(cdSyncBranches(project)).applyToComponent {
-          toolTipText = DvcsBundle.message("sync.setting.description", "Git")
+          toolTipText = DvcsBundle.message("sync.setting.description", GitVcs.DISPLAY_NAME.get())
         }
       }
     }
@@ -299,7 +304,7 @@ internal class GitVcsPanel(private val project: Project) :
         label(message("settings.clean.working.tree"))
         buttonGroup({ projectSettings.saveChangesPolicy }, { projectSettings.saveChangesPolicy = it }) {
           GitSaveChangesPolicy.values().forEach { saveSetting ->
-            radioButton(saveSetting.name.toLowerCase().capitalize(), saveSetting)
+            radioButton(saveSetting.text, saveSetting)
           }
         }
       }

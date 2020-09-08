@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.action;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -29,6 +29,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XSourcePosition;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -132,7 +133,7 @@ public final class TraceStreamAction extends AnAction {
         throw new TraceCompilationException(message, traceExpression);
       }
 
-      private void notifyUI(@NotNull String message) {
+      private void notifyUI(@NotNull @Nls String message) {
         ApplicationManager.getApplication().invokeLater(() -> window.setFailMessage(message));
       }
     });

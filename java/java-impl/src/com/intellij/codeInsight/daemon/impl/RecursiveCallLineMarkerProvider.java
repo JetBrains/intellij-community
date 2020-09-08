@@ -86,14 +86,14 @@ public class RecursiveCallLineMarkerProvider extends LineMarkerProviderDescripto
     }
 
     private RecursiveMethodCallMarkerInfo(@NotNull PsiElement name) {
-      super(name, name.getTextRange(), AllIcons.Gutter.RecursiveMethod, FunctionUtil.constant("Recursive call"), null,
+      super(name, name.getTextRange(), AllIcons.Gutter.RecursiveMethod, FunctionUtil.constant(JavaBundle.message("tooltip.recursive.call")), null,
             GutterIconRenderer.Alignment.RIGHT);
     }
 
     @Override
     public GutterIconRenderer createGutterRenderer() {
       if (myIcon == null) return null;
-      return new LineMarkerGutterIconRenderer<PsiElement>(this){
+      return new LineMarkerGutterIconRenderer<>(this) {
         @Override
         public AnAction getClickAction() {
           return null; // to place breakpoint on mouse click

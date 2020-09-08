@@ -1,12 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger.pydev;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
+import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
+import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +48,12 @@ public interface ProcessDebugger {
                             int rows,
                             int cols,
                             String format) throws PyDebuggerException;
+
+  @NotNull
+  default DataViewerCommandResult executeDataViewerCommand(@NotNull DataViewerCommandBuilder builder) throws PyDebuggerException {
+    Logger.getInstance(this.getClass()).warn("executeDataViewerCommand is not supported on this ProcessDebugger");
+    return DataViewerCommandResult.NOT_IMPLEMENTED;
+  }
 
   void loadReferrers(String threadId, String frameId, PyReferringObjectsValue var, PyDebugCallback<XValueChildrenList> callback);
 

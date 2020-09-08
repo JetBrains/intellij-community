@@ -81,7 +81,7 @@ public class JavaParameterTableModel extends ParameterTableModelBase<ParameterIn
       f.createExpressionCodeFragment(ObjectUtils.notNull(value, ""), myDefaultValueContext, null, true);
     defaultValueCodeFragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
 
-    return new ParameterTableModelItemBase<ParameterInfoImpl>(parameterInfo, paramTypeCodeFragment, defaultValueCodeFragment) {
+    return new ParameterTableModelItemBase<>(parameterInfo, paramTypeCodeFragment, defaultValueCodeFragment) {
       @Override
       public boolean isEllipsisType() {
         try {

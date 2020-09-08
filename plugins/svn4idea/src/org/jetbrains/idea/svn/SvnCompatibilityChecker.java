@@ -17,6 +17,7 @@ import static com.intellij.openapi.progress.ProgressManager.checkCanceled;
 import static com.intellij.openapi.progress.util.BackgroundTaskUtil.executeOnPooledThread;
 import static com.intellij.openapi.util.Disposer.isDisposed;
 import static com.intellij.util.containers.ContainerUtil.filter;
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 @Service
 final class SvnCompatibilityChecker implements Disposable {
@@ -61,8 +62,8 @@ final class SvnCompatibilityChecker implements Disposable {
 
   private void notify(@NotNull List<VirtualFile> roots) {
     String message = roots.size() == 1
-                     ? "Root '" + roots.get(0).getPresentableName() + "' is likely to be of unsupported Subversion format"
-                     : "Some roots are likely to be of unsupported Subversion format";
+                     ? message("notification.content.single.root.unsupported.format", roots.get(0).getPresentableName())
+                     : message("notification.content.multiple.roots.unsupported.format");
 
     getApplication().invokeLater(
       () -> {

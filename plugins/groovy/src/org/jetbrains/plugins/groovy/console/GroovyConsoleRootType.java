@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.console;
 
 import com.intellij.execution.console.ConsoleRootType;
@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
 public final class GroovyConsoleRootType extends ConsoleRootType {
@@ -23,7 +24,7 @@ public final class GroovyConsoleRootType extends ConsoleRootType {
   }
 
   public GroovyConsoleRootType() {
-    super("groovy", "Groovy consoles");
+    super("groovy", GroovyBundle.message("groovy.consoles.type"));
   }
 
   @NotNull

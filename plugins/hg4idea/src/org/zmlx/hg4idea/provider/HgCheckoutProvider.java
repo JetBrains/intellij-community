@@ -67,7 +67,9 @@ public class HgCheckoutProvider implements CheckoutProvider {
       @Override
       public void onSuccess() {
         if (cloneResult.get() == null || HgErrorUtil.hasErrorsInCommandExecution(cloneResult.get())) {
-          new HgCommandResultNotifier(project).notifyError(cloneResult.get(), HgBundle.message("hg4idea.clone.error"),
+          new HgCommandResultNotifier(project).notifyError("hg.clone.error",
+                                                           cloneResult.get(),
+                                                           HgBundle.message("hg4idea.clone.error"),
                                                            HgBundle.message("hg4idea.clone.repo.error.msg", sourceRepositoryURL));
         }
         else {

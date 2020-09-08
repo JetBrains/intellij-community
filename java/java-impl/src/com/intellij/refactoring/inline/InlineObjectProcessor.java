@@ -4,6 +4,7 @@ package com.intellij.refactoring.inline;
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.editorActions.DeclarationJoinLinesHandler;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -269,7 +270,7 @@ public final class InlineObjectProcessor extends BaseRefactoringProcessor {
   @NotNull
   @Override
   protected String getCommandName() {
-    return "Inline Object";
+    return JavaRefactoringBundle.message("inline.object.command.name");
   }
 
   @Nullable

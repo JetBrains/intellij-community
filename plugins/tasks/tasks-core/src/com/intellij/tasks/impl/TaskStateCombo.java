@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.tasks.CustomTaskState;
 import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.impl.TaskUiUtil.ComboBoxUpdater;
 import com.intellij.ui.components.JBLabel;
@@ -51,7 +52,7 @@ public abstract class TaskStateCombo extends JPanel {
 
     myHintLabel = new JBLabel();
     myHintLabel.setIcon(PlatformIcons.UP_DOWN_ARROWS);
-    myHintLabel.setToolTipText("Pressing Up or Down arrows while in editor changes the state");
+    myHintLabel.setToolTipText(TaskBundle.message("pressing.up.or.down.arrows.while.in.editor.changes.the.state"));
     final JComboBox comboBox = myKindCombo.getComboBox();
     comboBox.setPreferredSize(new Dimension(300, comboBox.getPreferredSize().height));
     setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
@@ -69,7 +70,7 @@ public abstract class TaskStateCombo extends JPanel {
       final JComboBox comboBox = myKindCombo.getComboBox();
       final TaskRepository repository = myTask.getRepository();
       assert repository != null;
-      new ComboBoxUpdater<CustomStateTrinityAdapter>(myProject, "Fetching available task states...", comboBox) {
+      new ComboBoxUpdater<CustomStateTrinityAdapter>(myProject, TaskBundle.message("progress.title.fetching.available.task.states"), comboBox) {
         @NotNull
         @Override
         protected List<CustomStateTrinityAdapter> fetch(@NotNull ProgressIndicator indicator) throws Exception {

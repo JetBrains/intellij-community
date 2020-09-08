@@ -10,6 +10,9 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.inline.InlineOptionsDialog;
+import org.jetbrains.annotations.Nls;
+
+import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
 /**
 * @author Max Medvedev
@@ -70,7 +73,7 @@ class InlineGroovyFieldDialog extends InlineOptionsDialog {
     return HelpID.INLINE_FIELD;
   }
 
-  public static String getRefactoringName() {
+  public static @Nls(capitalization = Title) String getRefactoringName() {
     return JavaRefactoringBundle.message("inline.field.title");
   }
 }

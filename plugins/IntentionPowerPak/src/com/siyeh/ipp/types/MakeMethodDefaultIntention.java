@@ -14,7 +14,11 @@ import org.jetbrains.annotations.NotNull;
 
 public class MakeMethodDefaultIntention extends BaseElementAtCaretIntentionAction {
 
-  private @IntentionName String text = "Make method default";
+  private @IntentionName String text;
+
+  public MakeMethodDefaultIntention() {
+    text = IntentionPowerPackBundle.message("make.method.default.family.name");
+  }
 
   @NotNull
   @Override
@@ -35,7 +39,7 @@ public class MakeMethodDefaultIntention extends BaseElementAtCaretIntentionActio
       if (psiMethod.getBody() == null && !psiMethod.hasModifierProperty(PsiModifier.DEFAULT)) {
         final PsiClass containingClass = psiMethod.getContainingClass();
         if (containingClass != null && containingClass.isInterface() && !containingClass.isAnnotationType()) {
-          text = "Make '" + psiMethod.getName() + "()' default";
+          text = IntentionPowerPackBundle.message("intention.name.make.default", psiMethod.getName());
           return true;
         }
       }

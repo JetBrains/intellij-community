@@ -19,7 +19,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnDiffProvider;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -44,6 +43,7 @@ import java.util.Map;
 
 import static com.intellij.openapi.fileEditor.impl.LoadTextUtil.getTextByBinaryPresentation;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.*;
 
 public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAnnotationProvider {
@@ -61,16 +61,14 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     SvnRevisionNumber currentRevision = ((SvnRevisionNumber)provider.getCurrentRevision(file));
     VcsRevisionDescription lastChangedRevision = provider.getCurrentRevisionDescription(file);
     if (lastChangedRevision == null) {
-      throw new VcsException("Can not get current revision for file " + file.getPath());
+      throw new VcsException(message("error.can.not.get.current.revision.for.path", file.getPath()));
     }
     final Revision revision = ((SvnRevisionNumber)lastChangedRevision.getRevisionNumber()).getRevision();
     if (!revision.isValid()) {
-      throw new VcsException(
-        "Can not get last changed revision for file: " + file.getPath() + "\nPlease run svn info for this file and file an issue.");
+      throw new VcsException(message("error.can.not.get.last.changed.revision.for.path.please.file.an.issue", file.getPath()));
     }
     return annotate(file, currentRevision, lastChangedRevision.getRevisionNumber(), () -> {
-      byte[] data =
-        getFileContents(myVcs, Target.on(virtualToIoFile(file).getAbsoluteFile()), Revision.BASE, Revision.UNDEFINED);
+      byte[] data = getFileContents(myVcs, Target.on(virtualToIoFile(file).getAbsoluteFile()), Revision.BASE, Revision.UNDEFINED);
       return getTextByBinaryPresentation(data, file, false, false).toString();
     });
   }
@@ -90,7 +88,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
                                   @NotNull VcsRevisionNumber lastChangedRevision,
                                   @NotNull Throwable2Computable<String, VcsException, IOException> contentLoader) throws VcsException {
     if (file.isDirectory()) {
-      throw new VcsException(SvnBundle.message("exception.text.cannot.annotate.directory"));
+      throw new VcsException(message("exception.text.cannot.annotate.directory"));
     }
     final FileAnnotation[] annotation = new FileAnnotation[1];
     final VcsException[] exception = new VcsException[1];
@@ -106,7 +104,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
 
         info = myVcs.getInfo(ioFile);
         if (info == null) {
-          exception[0] = new SvnBindException("File '" + ioFile + "' is not under version control");
+          exception[0] = new SvnBindException(message("error.file.is.not.under.version.control", ioFile));
           return;
         }
         Url url = info.getUrl();
@@ -115,7 +113,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
           endRevision = info.getRevision();
         }
         if (progress != null) {
-          progress.setText(SvnBundle.message("progress.text.computing.annotation", file.getName()));
+          progress.setText(message("progress.text.computing.annotation", file.getName()));
         }
 
         // ignore mime type=true : IDEA-19562
@@ -154,7 +152,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     };
     if (ApplicationManager.getApplication().isDispatchThread()) {
       ProgressManager.getInstance()
-        .runProcessWithProgressSynchronously(command, SvnBundle.message("action.text.annotate"), false, myVcs.getProject());
+        .runProcessWithProgressSynchronously(command, message("action.text.annotate"), false, myVcs.getProject());
     }
     else {
       command.run();
@@ -230,17 +228,20 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     final File root = getCommonAncestor(wasFile, info.getFile());
 
     if (root == null) {
-      throw new VcsException("Can not find relative path for " + wasFile.getPath() + "@" + revisionNumber.asString());
+      throw new VcsException(
+        message("error.can.not.find.relative.path.for.path.at.revision", wasFile.getPath(), revisionNumber.asString()));
     }
 
     final String relativePath = FileUtil.getRelativePath(root.getPath(), wasFile.getPath(), File.separatorChar);
     if (relativePath == null) {
-      throw new VcsException("Can not find relative path for " + wasFile.getPath() + "@" + revisionNumber.asString());
+      throw new VcsException(
+        message("error.can.not.find.relative.path.for.path.at.revision", wasFile.getPath(), revisionNumber.asString()));
     }
 
     Info wcRootInfo = myVcs.getInfo(root);
     if (wcRootInfo == null || wcRootInfo.getUrl() == null) {
-      throw new VcsException("Can not find relative path for " + wasFile.getPath() + "@" + revisionNumber.asString());
+      throw new VcsException(
+        message("error.can.not.find.relative.path.for.path.at.revision", wasFile.getPath(), revisionNumber.asString()));
     }
     Url wasUrl = wcRootInfo.getUrl();
     final String[] strings = relativePath.replace('\\', '/').split("/");
@@ -437,7 +438,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
 
                        if (myProgress != null) {
                          myProgress.checkCanceled();
-                         myProgress.setText2(SvnBundle.message("progress.text2.revision.processed", logEntry.getRevision()));
+                         myProgress.setText2(message("progress.text2.revision.processed", logEntry.getRevision()));
                        }
                        myResult.setRevision(logEntry.getRevision(), new SvnFileRevision(myVcs, Revision.UNDEFINED, logEntry, myUrl, ""));
                      });

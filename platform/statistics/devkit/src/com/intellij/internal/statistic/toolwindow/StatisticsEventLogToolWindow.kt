@@ -35,7 +35,7 @@ internal class StatisticsEventLogToolWindow(project: Project, private val record
 
   init {
     val model = StatisticsLogFilterModel()
-    consoleLog = StatisticsEventLogConsole(project, model)
+    consoleLog = StatisticsEventLogConsole(project, model, recorderId)
     eventLogListener = { logEvent -> consoleLog.addLogLine(messageBuilder.buildLogMessage(logEvent)) }
 
     val topPanel = JPanel(FlowLayout(FlowLayout.LEFT))

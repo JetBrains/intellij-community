@@ -4,6 +4,7 @@ package com.intellij.ui.mac;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,11 +19,11 @@ public abstract class MacMessages {
   }
 
   @Messages.YesNoCancelResult
-  public abstract int showYesNoCancelDialog(@NotNull String title,
-                                            @NotNull String message,
-                                            @NotNull String yesText,
-                                            @NotNull String noText,
-                                            @NotNull String cancelText,
+  public abstract int showYesNoCancelDialog(@NlsContexts.DialogTitle @NotNull String title,
+                                            @NlsContexts.DialogMessage @NotNull String message,
+                                            @NlsContexts.Button @NotNull String yesText,
+                                            @NlsContexts.Button @NotNull String noText,
+                                            @NlsContexts.Button @NotNull String cancelText,
                                             @Nullable Window window,
                                             @Nullable DialogWrapper.DoNotAskOption doNotAskOption);
   public static @NotNull MacMessages getInstance() {
@@ -45,18 +46,25 @@ public abstract class MacMessages {
    *
    * @return number of button pressed: from 0 up to buttons.length-1 inclusive, or -1 for Cancel
    */
-  public abstract int showMessageDialog(@NotNull String title, String message, String @NotNull [] buttons, boolean errorStyle,
+  public abstract int showMessageDialog(@NlsContexts.DialogTitle @NotNull String title,
+                                        @NlsContexts.DialogMessage String message,
+                                        @NlsContexts.Button String @NotNull [] buttons, boolean errorStyle,
                                         @Nullable Window window, int defaultOptionIndex, int focusedOptionIndex,
                                         @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption);
 
-  public abstract void showOkMessageDialog(@NotNull String title, String message, @NotNull String okText, @Nullable Window window);
+  public abstract void showOkMessageDialog(@NlsContexts.DialogTitle @NotNull String title,
+                                           @NlsContexts.DialogMessage String message,
+                                           @NlsContexts.Button @NotNull String okText, @Nullable Window window);
 
-  public abstract boolean showYesNoDialog(@NotNull String title,
-                                          @NotNull String message,
-                                          @NotNull String yesText,
-                                          @NotNull String noText,
+  public abstract boolean showYesNoDialog(@NlsContexts.DialogTitle@NotNull String title,
+                                          @NlsContexts.DialogMessage@NotNull String message,
+                                          @NlsContexts.Button @NotNull String yesText,
+                                          @NlsContexts.Button @NotNull String noText,
                                           @Nullable Window window,
                                           @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption);
 
-  public abstract void showErrorDialog(@NotNull String title, String message, @NotNull String okButton, @Nullable Window window);
+  public abstract void showErrorDialog(@NlsContexts.DialogTitle @NotNull String title,
+                                       @NlsContexts.DialogMessage String message,
+                                       @NlsContexts.Button @NotNull String okButton,
+                                       @Nullable Window window);
 }

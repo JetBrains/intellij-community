@@ -43,6 +43,9 @@ final class DefaultProject extends UserDataHolderBase implements Project {
       DefaultProjectImpl project = new DefaultProjectImpl(DefaultProject.this);
       ProjectStoreFactory componentStoreFactory = ApplicationManager.getApplication().getService(ProjectStoreFactory.class);
       project.registerServiceInstance(IComponentStore.class, componentStoreFactory.createDefaultProjectStore(project), ComponentManagerImpl.getFakeCorePluginDescriptor());
+
+      Disposer.register(DefaultProject.this,this); // mark myDelegate as not disposed if someone cluelessly did Disposer.dispose(getDefaultProject())
+
       return project;
     }
 

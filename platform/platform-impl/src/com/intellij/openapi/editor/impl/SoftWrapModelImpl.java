@@ -25,6 +25,7 @@ import com.intellij.ui.EditorNotifications;
 import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -615,6 +616,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   }
 
   @NotNull
+  @NonNls
   @Override
   public String dumpState() {
     return String.format("\nuse soft wraps: %b, tab width: %d, additional columns: %b, " +

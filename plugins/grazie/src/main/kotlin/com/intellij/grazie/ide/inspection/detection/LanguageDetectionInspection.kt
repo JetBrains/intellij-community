@@ -70,8 +70,8 @@ internal class LanguageDetectionInspection : LocalInspectionTool() {
         val strategies = LanguageGrammarChecking.getStrategiesForElement(element, enabledStrategiesIDs, disabledStrategiesIDs)
 
         for (strategy in strategies) {
-          val (_, _, text) = GraziePsiElementProcessor.processElements(element, strategy)
-          LangDetector.updateContext(text, session.getUserData(key)!!)
+          val (_, _, _, text) = GraziePsiElementProcessor.processElements(listOf(element), strategy)
+          LangDetector.updateContext(text.first().text, session.getUserData(key)!!)
           break
         }
       }

@@ -128,8 +128,9 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManager {
   public void setMaximized(@NotNull ToolWindow window, boolean maximized) {
   }
 
+  @Nullable
   @Override
-  public @Nullable ToolWindow getLastActiveToolWindow(@Nullable Predicate<JComponent> condition) {
+  public ToolWindow getLastActiveToolWindow(@Nullable Predicate<? super JComponent> condition) {
     return null;
   }
 
@@ -372,6 +373,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManager {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral", "DialogTitleCapitalization"})
   private static class MockContentManager implements ContentManager {
     private final EventDispatcher<ContentManagerListener> myDispatcher = EventDispatcher.create(ContentManagerListener.class);
     private final List<Content> myContents = new ArrayList<>();

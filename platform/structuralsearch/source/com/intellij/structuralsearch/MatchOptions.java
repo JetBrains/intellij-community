@@ -6,6 +6,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.structuralsearch.impl.matcher.compiler.StringToConstraintsTransformer;
@@ -145,8 +146,7 @@ public class MatchOptions implements JDOMExternalizable {
     pattern = text;
   }
 
-  @NotNull
-  public String getSearchPattern() {
+  public @NlsSafe @NotNull String getSearchPattern() {
     return pattern;
   }
 

@@ -4,6 +4,7 @@ package com.intellij.grazie.ide.ui.proofreading.component.list
 import com.intellij.grazie.ide.ui.components.dsl.panel
 import com.intellij.grazie.ide.ui.components.utils.configure
 import com.intellij.grazie.jlanguage.Lang
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.JBColor
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.popup.list.PopupListElementRenderer
@@ -30,8 +31,9 @@ class GrazieLanguagesPopupElementRenderer(list: ListPopupImpl) : PopupListElemen
   }
 
   override fun customizeComponent(list: JList<out Lang>, lang: Lang, isSelected: Boolean) {
+    @NlsSafe val size = lang.remote.size.takeUnless { lang.isAvailable() } ?: ""
     mySizeLabel.configure {
-      text = lang.remote.size.takeUnless { lang.isAvailable() } ?: ""
+      text = size
       foreground = myTextLabel.foreground.takeIf { isSelected } ?: Color.GRAY
     }
   }

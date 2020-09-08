@@ -4,6 +4,9 @@ package git4idea.branch
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.util.Consumer
@@ -30,6 +33,7 @@ import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.collection
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromRange
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromRoot
 import git4idea.i18n.GitBundle
+import git4idea.i18n.GitBundleExtensions.html
 import git4idea.repo.GitRepository
 import java.util.*
 import javax.swing.JComponent
@@ -55,7 +59,7 @@ internal class GitCompareBranchesUi @JvmOverloads constructor(internal val proje
   }
 
   fun open() {
-    VcsProjectLog.runWhenLogIsReady(project) { _, _ ->
+    VcsProjectLog.runWhenLogIsReady(project) {
       GitCompareBranchesFilesManager.getInstance(project).openFile(this, true)
     }
   }
@@ -184,6 +188,9 @@ private fun VcsLogRangeFilter.asReversed(): VcsLogRangeFilter {
   return fromRange(end, start)
 }
 
-private fun getExplanationText(dontExist: String, existIn: String): String =
-  "<html>${GitBundle.message("git.compare.branches.explanation.message",
-                             "<code><b>$existIn</b></code>", "<code><b>$dontExist</b></code>")}</html>"
+@NlsContexts.LinkLabel
+private fun getExplanationText(@NlsSafe dontExist: String, @NlsSafe existIn: String): String {
+  return html("git.compare.branches.explanation.message",
+              HtmlChunk.tag("code").child(HtmlChunk.text(existIn).bold()),
+              HtmlChunk.tag("code").child(HtmlChunk.text(dontExist).bold()))
+}

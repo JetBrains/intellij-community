@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -94,7 +95,7 @@ public abstract class ShowRelatedElementsActionBase extends DumbAwareAction impl
   protected abstract List<ImplementationViewSessionFactory> getSessionFactories();
 
   @NotNull
-  protected abstract String getIndexNotReadyMessage();
+  protected abstract @NlsContexts.PopupContent String getIndexNotReadyMessage();
 
   private void updateElementImplementations(final Object lookupItemObject, ImplementationViewSession session) {
     ImplementationViewSessionFactory currentFactory = session.getFactory();
@@ -209,13 +210,13 @@ public abstract class ShowRelatedElementsActionBase extends DumbAwareAction impl
   }
 
   @NotNull
-  protected abstract String getPopupTitle(@NotNull ImplementationViewSession session);
+  protected abstract @NlsContexts.PopupTitle String getPopupTitle(@NotNull ImplementationViewSession session);
 
   protected abstract boolean couldPinPopup();
 
   private void updateInBackground(@NotNull ImplementationViewSession session,
                                   @NotNull ImplementationViewComponent component,
-                                  String title,
+                                  @NlsContexts.PopupTitle String title,
                                   @NotNull AbstractPopup popup,
                                   @NotNull Ref<? extends UsageView> usageView) {
     final ImplementationsUpdaterTask updaterTask = SoftReference.dereference(myTaskRef);
@@ -265,13 +266,13 @@ public abstract class ShowRelatedElementsActionBase extends DumbAwareAction impl
   }
 
   private static final class ImplementationsUpdaterTask extends BackgroundUpdaterTaskBase<ImplementationViewElement> {
-    private final String myCaption;
+    private final @NlsContexts.PopupTitle String myCaption;
     private final ImplementationViewSession mySession;
     private final ImplementationViewComponent myComponent;
     private List<ImplementationViewElement> myElements;
 
     private ImplementationsUpdaterTask(ImplementationViewSession session,
-                                       final String caption,
+                                       final @NlsContexts.PopupTitle String caption,
                                        ImplementationViewComponent component) {
       super(session.getProject(), ImplementationSearcher.getSearchingForImplementations(), null);
       myCaption = caption;

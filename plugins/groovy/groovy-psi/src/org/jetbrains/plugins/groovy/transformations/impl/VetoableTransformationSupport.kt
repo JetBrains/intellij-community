@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.transformations.impl
 
 import com.intellij.codeInsight.AnnotationUtil
@@ -6,6 +6,7 @@ import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiArrayType
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiType
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
@@ -16,7 +17,7 @@ import org.jetbrains.plugins.groovy.transformations.TransformationContext
 private const val VETOABLE_FQN = "groovy.beans.Vetoable"
 private const val VCL_FQN = "java.beans.VetoableChangeListener"
 private const val VCS_FQN = "java.beans.VetoableChangeSupport"
-const val ORIGIN_INFO: String = "via @Vetoable"
+@NonNls const val ORIGIN_INFO: String = "via @Vetoable"
 
 class VetoableTransformationSupport : AstTransformationSupport {
 

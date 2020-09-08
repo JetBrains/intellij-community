@@ -21,6 +21,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ProjectModelElement;
 import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
@@ -37,11 +38,15 @@ public class Facet<C extends FacetConfiguration> extends UserDataHolderBase impl
   @NotNull private final Module myModule;
   @NotNull private final C myConfiguration;
   private final Facet myUnderlyingFacet;
-  private String myName;
+  private @NlsSafe String myName;
   private boolean isDisposed;
   private ProjectModelExternalSource myExternalSource;
 
-  public Facet(@NotNull final FacetType facetType, @NotNull final Module module, @NotNull final String name, @NotNull final C configuration, Facet underlyingFacet) {
+  public Facet(@NotNull final FacetType facetType,
+               @NotNull final Module module,
+               @NotNull final @NlsSafe String name,
+               @NotNull final C configuration,
+               Facet underlyingFacet) {
     myName = name;
     myFacetType = facetType;
     myModule = module;
@@ -105,14 +110,14 @@ public class Facet<C extends FacetConfiguration> extends UserDataHolderBase impl
   }
 
   @NotNull
-  public final String getName() {
+  public final @NlsSafe String getName() {
     return myName;
   }
 
   /**
    * Use {@link ModifiableFacetModel#rename} to rename facets
    */
-  final void setName(@NotNull final String name) {
+  final void setName(@NotNull final @NlsSafe String name) {
     myName = name;
   }
 

@@ -9,12 +9,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
+import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 
 public final class Utils {
   private static final Logger LOG = Logger.getInstance(Utils.class);
-  private static final String TB_SERVER_PROCESS = "TouchBarServer";
+  @NonNls private static final String TB_SERVER_PROCESS = "TouchBarServer";
 
   public static boolean isTouchBarServerRunning() {
     final GeneralCommandLine cmdLine = new GeneralCommandLine("pgrep", TB_SERVER_PROCESS)

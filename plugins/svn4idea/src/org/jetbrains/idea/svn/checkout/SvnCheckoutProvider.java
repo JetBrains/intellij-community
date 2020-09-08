@@ -21,7 +21,7 @@ import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListe
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
-import org.jetbrains.annotations.CalledInAwt;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
@@ -111,8 +111,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
                               WorkingCopyFormat selectedFormat) {
     final Ref<Boolean> checkoutSuccessful = new Ref<>();
     final Exception[] exception = new Exception[1];
-    final Task.Backgroundable checkoutBackgroundTask = new Task.Backgroundable(project,
-                                                                               message("message.title.check.out"), true,
+    final Task.Backgroundable checkoutBackgroundTask = new Task.Backgroundable(project, message("progress.title.check.out"), true,
                                                                                VcsConfiguration.getInstance(project).getCheckoutOption()) {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
@@ -139,7 +138,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
       @Override
       public void onSuccess() {
         if (exception[0] != null) {
-          showErrorDialog(message("message.text.cannot.checkout", exception[0].getMessage()), message("message.title.check.out"));
+          showErrorDialog(message("message.text.cannot.checkout", exception[0].getMessage()), message("dialog.title.check.out"));
         }
 
         VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(target);
@@ -177,7 +176,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   @NotNull
   public static WorkingCopyFormat promptForWCopyFormat(@NotNull File target, @NotNull Project project) {
     return new CheckoutFormatFromUserProvider(project, target).prompt();
@@ -237,7 +236,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
             vcs.getFactoryFromSettings().createImportClient().doImport(target, url, depth, message, includeIgnored, handler, filter);
 
           if (revision > 0) {
-            StatusBar.Info.set(message("status.text.comitted.revision", revision), project);
+            StatusBar.Info.set(message("status.text.committed.revision", revision), project);
           }
         }
       }
@@ -287,7 +286,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
       error = new AtomicReference<>();
     }
 
-    @CalledInAwt
+    @RequiresEdt
     public WorkingCopyFormat prompt() {
       assert !getApplication().isUnitTestMode();
 
@@ -313,7 +312,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
           if (errorMessage != null) {
             dialog.doCancelAction();
             showErrorDialog(message("message.text.cannot.load.supported.formats", errorMessage),
-                            message("message.title.check.out"));
+                            message("dialog.title.check.out"));
           }
           else {
             dialog.setSupported(formats);

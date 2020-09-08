@@ -4,6 +4,7 @@ package com.intellij.application.options;
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.codeStyle.CodeStyleConfigurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
@@ -16,10 +17,10 @@ public abstract class CodeStyleAbstractConfigurable implements CodeStyleConfigur
   private CodeStyleAbstractPanel myPanel;
   private final CodeStyleSettings mySettings;
   private final CodeStyleSettings myCloneSettings;
-  private final String myDisplayName;
+  private final @NlsContexts.ConfigurableName String myDisplayName;
 
   public CodeStyleAbstractConfigurable(@NotNull CodeStyleSettings settings, CodeStyleSettings cloneSettings,
-                                       final String displayName) {
+                                       final @NlsContexts.ConfigurableName String displayName) {
     mySettings = settings;
     myCloneSettings = cloneSettings;
     myDisplayName = displayName;

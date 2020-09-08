@@ -265,14 +265,8 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     }
 
     if (!rootSources.isEmpty()) {
-      final String message;
-      if (rootSources.size() == 1) {
-        final String name = rootSources.iterator().next().getPresentableName();
-        message = "The selected node belongs to '" + name + "' element. Do you want to remove the whole '" + name + "' element from the artifact?";
-      }
-      else {
-        message = "The selected node belongs to " + nodes.size() + " elements. Do you want to remove all these elements from the artifact?";
-      }
+      final String name = rootSources.iterator().next().getPresentableName();
+      final String message = JavaUiBundle.message("layout.tree.check.can.remove.dialog.message", name, rootSources.size());
       final int answer = Messages.showYesNoDialog(myArtifactsEditor.getMainComponent(), message, JavaUiBundle.message(
         "dialog.title.remove.elements"), null);
       if (answer != Messages.YES) return false;

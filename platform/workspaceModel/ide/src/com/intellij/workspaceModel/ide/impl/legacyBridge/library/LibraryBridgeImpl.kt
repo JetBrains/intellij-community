@@ -92,7 +92,7 @@ internal class LibraryBridgeImpl(
     return getModifiableModel(WorkspaceEntityStorageBuilder.from(librarySnapshot.storage))
   }
   override fun getModifiableModel(builder: WorkspaceEntityStorageBuilder): LibraryEx.ModifiableModelEx {
-    return LibraryModifiableModelBridgeImpl(this, librarySnapshot, builder, targetBuilder)
+    return LibraryModifiableModelBridgeImpl(this, librarySnapshot, builder, targetBuilder, false)
   }
   override fun getSource(): Library? = null
   override fun getExternalSource(): ProjectModelExternalSource? = librarySnapshot.externalSource

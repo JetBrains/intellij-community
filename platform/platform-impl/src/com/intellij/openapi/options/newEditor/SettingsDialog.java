@@ -17,6 +17,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.SearchTextField.FindAction;
 import com.intellij.util.ui.JBDimension;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +31,7 @@ import java.util.List;
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_FIND;
 
 public class SettingsDialog extends DialogWrapper implements DataProvider {
-  public static final String DIMENSION_KEY = "SettingsEditor";
+  @NonNls public static final String DIMENSION_KEY = "SettingsEditor";
 
   private final String myDimensionServiceKey;
   private final AbstractEditor myEditor;

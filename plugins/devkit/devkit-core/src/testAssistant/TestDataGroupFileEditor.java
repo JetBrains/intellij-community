@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -11,6 +11,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
@@ -86,7 +87,7 @@ public class TestDataGroupFileEditor extends UserDataHolderBase implements TextE
   public void navigateTo(@NotNull Navigatable navigatable) {
   }
 
-  private static JComponent wrapWithTitle(String name, final FileEditor beforeEditor) {
+  private static JComponent wrapWithTitle(@NlsSafe String name, final FileEditor beforeEditor) {
     JPanel panel = new JPanel(new BorderLayout());
     final JLabel label = new JBLabel(name, UIUtil.ComponentStyle.SMALL);
     label.setBorder(JBUI.Borders.empty(1, 4, 2, 0));

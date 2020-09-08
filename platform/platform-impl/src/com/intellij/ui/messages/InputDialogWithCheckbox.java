@@ -3,7 +3,8 @@ package com.intellij.ui.messages;
 
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,14 +14,14 @@ import java.awt.*;
 class InputDialogWithCheckbox extends Messages.InputDialog {
   private JCheckBox myCheckBox;
 
-  InputDialogWithCheckbox(String message,
-                                 @Nls(capitalization = Nls.Capitalization.Title) String title,
-                                 String checkboxText,
-                                 boolean checked,
-                                 boolean checkboxEnabled,
-                                 @Nullable Icon icon,
-                                 @Nullable String initialValue,
-                                 @Nullable InputValidator validator) {
+  InputDialogWithCheckbox(@NlsContexts.DialogMessage String message,
+                          @NlsContexts.DialogTitle String title,
+                          @NlsContexts.Checkbox String checkboxText,
+                          boolean checked,
+                          boolean checkboxEnabled,
+                          @Nullable Icon icon,
+                          @Nullable @NlsSafe String initialValue,
+                          @Nullable InputValidator validator) {
     super(message, title, icon, initialValue, validator);
     myCheckBox.setText(checkboxText);
     myCheckBox.setSelected(checked);

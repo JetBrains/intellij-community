@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.externalSystem.service.project;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.module.Module;
@@ -108,7 +107,7 @@ public class IdeModelsProviderImpl implements IdeModelsProvider {
 
   private static boolean isApplicableIdeModule(@NotNull ModuleData moduleData, @NotNull Module ideModule) {
     for (VirtualFile root : ModuleRootManager.getInstance(ideModule).getContentRoots()) {
-      if (pathsEqual(root.getPath(), moduleData.getLinkedExternalProjectPath())) {
+      if (PathUtil.pathEqualsTo(root, moduleData.getLinkedExternalProjectPath())) {
         return true;
       }
     }

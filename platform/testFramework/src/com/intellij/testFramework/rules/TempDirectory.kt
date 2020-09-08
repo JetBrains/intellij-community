@@ -2,12 +2,14 @@
 package com.intellij.testFramework.rules
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.VfsTestUtil
+import com.intellij.util.io.zipFile
 import org.junit.rules.ExternalResource
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
@@ -113,6 +115,18 @@ class TempDirectory : ExternalResource() {
     val existing = virtualFileRoot.findFileByRelativePath(relativePath)
     require(existing == null) { "Already exists: ${existing!!.path}"}
     return VfsTestUtil.createFile(virtualFileRoot, relativePath, content)
+  }
+
+  /**
+   * Creates an empty new JAR file with the given relative path from the root temp directory.
+   */
+  fun newEmptyVirtualJarFile(relativePath: String): VirtualFile {
+    val existing = virtualFileRoot.findFileByRelativePath(relativePath)
+    require(existing == null) { "Already exists: ${existing!!.path}"}
+    val jarFile = File(root, relativePath)
+    zipFile {  }.generate(jarFile)
+    val localFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jarFile)!!
+    return JarFileSystem.getInstance().getJarRootForLocalFile(localFile)!!
   }
 
   @Deprecated("use newDirectory(relativePath) instead", ReplaceWith("newDirectory(relativePath)"))

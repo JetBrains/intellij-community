@@ -24,17 +24,17 @@ public class PsiEllipsisType extends PsiArrayType {
 
   @Override
   public @NotNull String getPresentableText(boolean annotated) {
-    return getText(getComponentType().getPresentableText(annotated), "...", false, annotated);
+    return getText(getDeepComponentType().getPresentableText(annotated), "...", false, annotated);
   }
 
   @Override
   public @NotNull String getCanonicalText(boolean annotated) {
-    return getText(getComponentType().getCanonicalText(annotated), "...", true, annotated);
+    return getText(getDeepComponentType().getCanonicalText(annotated), "...", true, annotated);
   }
 
   @Override
   public @NotNull String getInternalCanonicalText() {
-    return getText(getComponentType().getInternalCanonicalText(), "...", true, true);
+    return getText(getDeepComponentType().getInternalCanonicalText(), "...", true, true);
   }
 
   @Override

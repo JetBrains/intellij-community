@@ -48,7 +48,7 @@ class GradleRunAnythingProvider : RunAnythingCommandLineProvider() {
 
   override fun getHelpCommand() = HELP_COMMAND
 
-  override fun getHelpCommandAliases() = listOf(SECONDARY_HELP_COMMAND)
+  override fun getHelpCommandAliases() = SECONDARY_HELP_COMMANDS
 
   override fun getHelpIcon(): Icon? = GradleIcons.Gradle
 
@@ -216,6 +216,6 @@ class GradleRunAnythingProvider : RunAnythingCommandLineProvider() {
 
   companion object {
     const val HELP_COMMAND = "gradle"
-    private const val SECONDARY_HELP_COMMAND = "gradlew"
+    private val SECONDARY_HELP_COMMANDS = listOf("gradlew", "./gradlew", "gradle.bat")
   }
 }

@@ -28,7 +28,7 @@ import java.util.Map;
  * constructs as expected by the specification. But with buffer wide enough, the method {@link #guessEncoding}
  * did behave correctly and recognized the UTF-8 charset.</p>
  *
- * <p>A byte buffer of 4 KB or 8 KB is sufficient to be able to guess the encoding.</p>
+ * <p>A byte buffer of 4 KB or 8 KB is sufficient to be able to guess the encoding.</p>
  *
  * <p>Usage:
  * <pre>

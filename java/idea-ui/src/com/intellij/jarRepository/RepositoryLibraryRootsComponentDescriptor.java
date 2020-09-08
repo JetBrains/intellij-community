@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.libraries.ui.OrderRootTypePresentation;
 import com.intellij.openapi.roots.libraries.ui.RootDetector;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.DefaultLibraryRootsComponentDescriptor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.PathUtil;
@@ -49,8 +50,8 @@ class RepositoryLibraryRootsComponentDescriptor extends LibraryRootsComponentDes
   }
 
   @Override
-  public String getAttachFilesActionName() {
-    return "Attach Annotations...";
+  public @NlsActions.ActionText String getAttachFilesActionName() {
+    return JavaUiBundle.message("repository.library.root.action.attach.annotations.text");
   }
 
   @NotNull

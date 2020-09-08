@@ -4,6 +4,7 @@ package com.jetbrains.python.documentation;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -325,6 +326,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
    * @return string representation of the type
    */
   @NotNull
+  @NlsSafe
   public static String getTypeName(@Nullable PyType type, @NotNull TypeEvalContext context) {
     return buildTypeModel(type, context).asString();
   }

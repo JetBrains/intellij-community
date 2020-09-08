@@ -2,6 +2,7 @@
 package com.intellij.analysis.problemsView.toolWindow;
 
 import com.intellij.DynamicBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
@@ -16,13 +17,13 @@ final class ProblemsViewBundle extends DynamicBundle {
     super(BUNDLE);
   }
 
-  public static @NotNull String message(
+  public static @Nls @NotNull String message(
     @NotNull @PropertyKey(resourceBundle = BUNDLE) String key,
     @NotNull Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
 
-  public static @NotNull Supplier<String> messagePointer(
+  public static @NotNull Supplier<@Nls String> messagePointer(
     @NotNull @PropertyKey(resourceBundle = BUNDLE) String key,
     @NotNull Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);

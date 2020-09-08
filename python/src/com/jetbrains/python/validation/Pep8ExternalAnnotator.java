@@ -334,7 +334,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
         builder
           .withFix(new IgnoreErrorFix(problem.myCode))
           .withFix(new CustomEditInspectionToolsSettingsAction(HighlightDisplayKey.find(PyPep8Inspection.INSPECTION_SHORT_NAME),
-                                                               () -> "Edit inspection profile setting")).create();
+                                                               () -> PyBundle.message("QFIX.pep8.edit.inspection.profile.setting"))).create();
       }
     }
   }

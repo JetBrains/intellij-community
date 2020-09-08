@@ -5,6 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.configurationStore.StoreUtil
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.lang.LangBundle
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
@@ -17,6 +18,7 @@ import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.ModuleAttachProcessor.Companion.getPrimaryModule
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenedCallback
@@ -53,9 +55,10 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
 
     /**
      * @param project the project
-     * @return null if either multi-projects are not enabled or the project has only one module
+     * @return `null` if either multi-projects are not enabled or the project has only one module
      */
     @JvmStatic
+    @NlsSafe
     fun getMultiProjectDisplayName(project: Project): String? {
       if (!canAttachToProject()) {
         return null
@@ -68,14 +71,8 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
 
       val primaryModule = getPrimaryModule(project) ?: modules.first()
       val result = StringBuilder(primaryModule.name)
-      result.append(", ")
-      for (module in modules) {
-        if (module === primaryModule) {
-          continue
-        }
-        result.append(module.name)
-        break
-      }
+        .append(", ")
+        .append(modules.asSequence().filter { it !== primaryModule }.first())
       if (modules.size > 2) {
         result.append("...")
       }
@@ -98,7 +95,9 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
     }
     catch (e: Exception) {
       LOG.info(e)
-      Messages.showErrorDialog(project, "Cannot attach project: ${e.message}", CommonBundle.getErrorTitle())
+      Messages.showErrorDialog(project,
+                               LangBundle.message("module.attach.dialog.message.cannot.attach.project", e.message),
+                               CommonBundle.getErrorTitle())
       return false
     }
 
@@ -110,8 +109,9 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
     }
 
     return Messages.showYesNoDialog(project,
-      "The project at $projectDir uses a non-standard layout and cannot be attached to this project. Would you like to open it in a new window?",
-      "Open Project", Messages.getQuestionIcon()) != Messages.YES
+                                    LangBundle.message("module.attach.dialog.message.project.uses.non.standard.layout", projectDir),
+                                    LangBundle.message("module.attach.dialog.title.open.project"),
+                                    Messages.getQuestionIcon()) != Messages.YES
   }
 
   override fun beforeDetach(module: Module) {

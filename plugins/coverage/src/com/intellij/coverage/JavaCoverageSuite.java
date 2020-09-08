@@ -33,6 +33,7 @@ public final class JavaCoverageSuite extends BaseCoverageSuite {
 
   @NonNls
   private static final String FILTER = "FILTER";
+  @NonNls
   private static final String EXCLUDED_FILTER = "EXCLUDED_FILTER";
   @NonNls
   private static final String MERGE_SUITE = "MERGE_SUITE";

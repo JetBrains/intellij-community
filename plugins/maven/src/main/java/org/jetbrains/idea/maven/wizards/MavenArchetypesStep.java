@@ -6,6 +6,7 @@ import com.intellij.ide.wizard.StepAdapter;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.render.RenderingUtil;

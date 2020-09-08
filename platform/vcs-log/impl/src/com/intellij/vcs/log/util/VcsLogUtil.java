@@ -1,9 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.util;
 
+import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,7 +27,9 @@ import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
 import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +49,7 @@ public final class VcsLogUtil {
   public static final int FULL_HASH_LENGTH = 40;
   public static final int SHORT_HASH_LENGTH = 8;
   public static final Pattern HASH_REGEX = Pattern.compile("[a-fA-F0-9]{7,40}");
-  @NonNls public static final String HEAD = "HEAD";
+  @NlsSafe public static final String HEAD = "HEAD";
 
   @NotNull
   public static Map<VirtualFile, Set<VcsRef>> groupRefsByRoot(@NotNull Collection<? extends VcsRef> refs) {
@@ -162,6 +166,7 @@ public final class VcsLogUtil {
   }
 
   @Nullable
+  @NlsSafe
   public static String getSingleFilteredBranch(@NotNull VcsLogFilterCollection filters, @NotNull VcsLogRefs refs) {
     VcsLogBranchFilter filter = filters.get(VcsLogFilterCollection.BRANCH_FILTER);
     if (filter == null) return null;
@@ -185,7 +190,7 @@ public final class VcsLogUtil {
     return branchName;
   }
 
-  public static boolean maybeRegexp(@NotNull String text) {
+  public static boolean isRegexp(@NotNull String text) {
     return StringUtil.containsAnyChar(text, "()[]{}.*?+^$\\|");
   }
 
@@ -224,11 +229,13 @@ public final class VcsLogUtil {
   }
 
   @NotNull
+  @NlsSafe
   public static String getShortHash(@NotNull String hashString) {
     return getShortHash(hashString, SHORT_HASH_LENGTH);
   }
 
   @NotNull
+  @NlsSafe
   public static String getShortHash(@NotNull String hashString, int shortHashLength) {
     return hashString.substring(0, Math.min(shortHashLength, hashString.length()));
   }
@@ -341,11 +348,13 @@ public final class VcsLogUtil {
   }
 
   @NotNull
+  @NonNls
   public static String getProvidersMapText(@NotNull Map<VirtualFile, VcsLogProvider> providers) {
-    return "[" + StringUtil.join(providers.keySet(), file -> file.getPresentableUrl(), ", ") + "]"; // NON-NLS
+    return "[" + StringUtil.join(providers.keySet(), file -> file.getPresentableUrl(), ", ") + "]";
   }
 
   @NotNull
+  @Nls
   public static String getVcsDisplayName(@NotNull Project project, @NotNull Collection<VcsLogProvider> logProviders) {
     Set<AbstractVcs> vcs = ContainerUtil.map2SetNotNull(logProviders,
                                                         provider -> VcsUtil.findVcsByKey(project, provider.getSupportedVcs()));
@@ -354,6 +363,7 @@ public final class VcsLogUtil {
   }
 
   @NotNull
+  @Nls
   public static String getVcsDisplayName(@NotNull Project project, @NotNull VcsLogManager logManager) {
     return getVcsDisplayName(project, logManager.getDataManager().getLogProviders().values());
   }
@@ -369,5 +379,12 @@ public final class VcsLogUtil {
         }
       }
     });
+  }
+
+  public static void jumpToRow(@NotNull VcsLogUiEx vcsLogUi, int row, boolean silently) {
+    vcsLogUi.jumpTo(row, (model, r) -> {
+      if (model.getRowCount() <= r) return -1;
+      return r;
+    }, SettableFuture.create(), silently);
   }
 }

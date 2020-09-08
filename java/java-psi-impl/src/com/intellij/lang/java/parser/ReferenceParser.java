@@ -91,6 +91,7 @@ public class ReferenceParser {
     if (tokenType == JavaTokenType.IDENTIFIER &&
         isSet(flags, VAR_TYPE) &&
         builder.lookAhead(1) != JavaTokenType.DOT &&
+        builder.lookAhead(1) != JavaTokenType.COLON &&
         PsiKeyword.VAR.equals(builder.getTokenText()) &&
         getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_10)) {
       builder.remapCurrentToken(tokenType = JavaTokenType.VAR_KEYWORD);
@@ -145,8 +146,8 @@ public class ReferenceParser {
       return null;
     }
 
+    type.done(JavaElementType.TYPE);
     while (true) {
-      type.done(JavaElementType.TYPE);
       myParser.getDeclarationParser().parseAnnotations(builder);
 
       PsiBuilder.Marker bracket = builder.mark();
@@ -160,15 +161,16 @@ public class ReferenceParser {
       }
       bracket.drop();
       typeInfo.isArray = true;
-
-      type = type.precede();
     }
 
     if (isSet(flags, ELLIPSIS) && builder.getTokenType() == JavaTokenType.ELLIPSIS) {
-      type = type.precede();
       builder.advanceLexer();
-      type.done(JavaElementType.TYPE);
       typeInfo.isVarArg = true;
+    }
+
+    if (typeInfo.isVarArg || typeInfo.isArray) {
+      type = type.precede();
+      type.done(JavaElementType.TYPE);
     }
 
     typeInfo.marker = type;
@@ -308,7 +310,7 @@ public class ReferenceParser {
 
   @NotNull
   public PsiBuilder.Marker parseTypeParameters(PsiBuilder builder) {
-    PsiBuilder.Marker list = builder.mark();
+     PsiBuilder.Marker list = builder.mark();
     if (!expect(builder, JavaTokenType.LT)) {
       list.done(JavaElementType.TYPE_PARAMETER_LIST);
       return list;

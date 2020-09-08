@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -84,7 +85,7 @@ public class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<P
       }
     });
 
-    String removingRedundantImportsTitle = "Removing redundant imports";
+    String removingRedundantImportsTitle = JavaRefactoringBundle.message("removing.redundant.imports.progress.title");
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(findRedundantImports, removingRedundantImportsTitle, false, project)) return;
 
     ApplicationManager.getApplication().runWriteAction(() -> {

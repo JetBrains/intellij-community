@@ -9,7 +9,7 @@ import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.EditorConfigRootDeclaration
 
 class EditorConfigRemoveRootDeclarationQuickFix : LocalQuickFix {
-  override fun getFamilyName() = EditorConfigBundle["quickfix.root-declaration.remove.description"]
+  override fun getFamilyName() = EditorConfigBundle.get("quickfix.root-declaration.remove.description")
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val rootDeclaration = descriptor.psiElement as? EditorConfigRootDeclaration ?: return
     CodeStyleManager.getInstance(project).performActionWithFormatterDisabled(rootDeclaration::delete)

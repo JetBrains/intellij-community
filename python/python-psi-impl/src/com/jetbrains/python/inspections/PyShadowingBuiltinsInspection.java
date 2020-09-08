@@ -20,6 +20,7 @@ import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiNameIdentifierOwner;
@@ -61,7 +62,7 @@ public class PyShadowingBuiltinsInspection extends PyInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    return PythonUiService.getInstance().createListEditForm("Ignore built-ins", ignoredNames);
+    return PythonUiService.getInstance().createListEditForm(PyPsiBundle.message("INSP.shadowing.builtins.column.name.ignore.built.ins"), ignoredNames);
   }
 
   @NotNull
@@ -73,7 +74,7 @@ public class PyShadowingBuiltinsInspection extends PyInspection {
   }
 
   private static final class PyIgnoreBuiltinQuickFix implements LocalQuickFix, LowPriorityAction {
-    @NotNull private final String myName;
+    @NotNull private final @NlsSafe String myName;
 
     private PyIgnoreBuiltinQuickFix(@NotNull String name) {
       myName = name;
@@ -82,7 +83,7 @@ public class PyShadowingBuiltinsInspection extends PyInspection {
     @NotNull
     @Override
     public String getName() {
-      return getFamilyName() + " \"" + myName + "\"";
+      return PyPsiBundle.message("QFIX.ignore.shadowed.built.in.name", myName);
     }
 
     @Override
@@ -93,7 +94,7 @@ public class PyShadowingBuiltinsInspection extends PyInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return PyPsiBundle.message("INSP.shadowing.builtins.ignore.shadowed.built.in.name");
+      return PyPsiBundle.message("QFIX.NAME.ignore.shadowed.built.in.name");
     }
 
     @Override
@@ -155,7 +156,7 @@ public class PyShadowingBuiltinsInspection extends PyInspection {
         if (builtin != null && !PyUtil.inSameFile(builtin, element)) {
           final PsiElement identifier = element.getNameIdentifier();
           final PsiElement problemElement = identifier != null ? identifier : element;
-          registerProblem(problemElement, String.format("Shadows built-in name '%s'", name),
+          registerProblem(problemElement, PyPsiBundle.message("INSP.shadowing.builtins.shadows.built.in.name", name),
                           ProblemHighlightType.WEAK_WARNING, null, createQuickFixes(name, problemElement));
         }
       }

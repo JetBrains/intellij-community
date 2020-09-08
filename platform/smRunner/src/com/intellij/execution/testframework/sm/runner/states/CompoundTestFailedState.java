@@ -21,7 +21,6 @@ import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,8 +29,8 @@ public class CompoundTestFailedState extends TestFailedState {
   
   final List<TestFailedState> myStates = new ArrayList<>();
 
-  public CompoundTestFailedState(@Nullable String localizedMessage, @Nullable String stackTrace) {
-    super(localizedMessage, stackTrace);
+  public CompoundTestFailedState() {
+    super(null, null);
   }
 
   public void addFailure(TestFailedState state) {

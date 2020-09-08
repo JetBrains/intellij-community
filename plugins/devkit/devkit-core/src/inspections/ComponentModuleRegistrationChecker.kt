@@ -6,7 +6,6 @@ package org.jetbrains.idea.devkit.inspections
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
@@ -30,6 +29,7 @@ import com.intellij.util.xml.DomUtil
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
 import com.siyeh.ig.psiutils.TypeUtils
 import org.jetbrains.annotations.Nls
+import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.ExtensionPoint
 import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter
@@ -148,7 +148,7 @@ class ComponentModuleRegistrationChecker(private val moduleToModuleSet: Clearabl
     }
     val fix = if (modulePluginXmlFile != null) MoveRegistrationQuickFix(pluginXmlModule, modulePluginXmlFile.name) else null
     annotationHolder.createProblem(element, ProblemHighlightType.WARNING,
-                                   "Element should be registered in '${definingModule.name}' module where its class '${psiClass.qualifiedName}' is defined", null,
+                                   DevKitBundle.message("inspections.plugin.xml.ComponentModuleRegistrationChecker.element.registered.wrong.module", definingModule.name, psiClass.qualifiedName), null,
                                    fix)
     return true
   }
@@ -200,10 +200,10 @@ class ComponentModuleRegistrationChecker(private val moduleToModuleSet: Clearabl
                                        private val myTargetFileName: String) : LocalQuickFix {
 
     @Nls
-    override fun getName(): String = "Move registration to " + myTargetFileName
+    override fun getName(): String = DevKitBundle.message("inspections.plugin.xml.ComponentModuleRegistrationChecker.fix.move.registration.name", myTargetFileName)
 
     @Nls
-    override fun getFamilyName(): String = "Move registration to correct module"
+    override fun getFamilyName(): String = DevKitBundle.message("inspections.plugin.xml.ComponentModuleRegistrationChecker.fix.move.registration.family.name")
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
       val tag = PsiTreeUtil.getParentOfType(descriptor.psiElement, XmlTag::class.java, false) ?: return

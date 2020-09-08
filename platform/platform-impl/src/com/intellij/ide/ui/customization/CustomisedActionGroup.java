@@ -2,6 +2,7 @@
 package com.intellij.ide.ui.customization;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +19,7 @@ public class CustomisedActionGroup extends ActionGroup {
   private int mySchemeModificationStamp = -1;
   private int myGroupModificationStamp = -1;
 
-  public CustomisedActionGroup(String shortName,
+  public CustomisedActionGroup(@NlsActions.ActionText String shortName,
                                @NotNull ActionGroup group,
                                CustomActionsSchema schema,
                                String defaultGroupName,

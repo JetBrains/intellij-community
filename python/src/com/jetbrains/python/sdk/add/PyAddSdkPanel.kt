@@ -23,6 +23,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -79,9 +80,9 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
       val text = field.text
       val file = File(text)
       val message = when {
-        StringUtil.isEmptyOrSpaces(text) -> "Environment location field is empty"
-        file.exists() && !file.isDirectory -> "Environment location field path is not a directory"
-        file.isNotEmptyDirectory -> "Environment location directory is not empty"
+        StringUtil.isEmptyOrSpaces(text) -> PyBundle.message("python.sdk.environment.location.field.empty")
+        file.exists() && !file.isDirectory -> PyBundle.message("python.sdk.environment.location.field.path.not.directory")
+        file.isNotEmptyDirectory -> PyBundle.message("python.sdk.environment.location.directory.not.empty")
         else -> return null
       }
       return ValidationInfo(message, field)
@@ -99,9 +100,10 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
       }
     }
 
+    @NlsContexts.Button
     private fun getDefaultButtonName(view: PyAddSdkView): String {
       return if (view.component.parent?.parent is PyAddNewEnvironmentPanel) {
-        "Create" // ProjectSettingsStepBase.createActionButton
+        PyBundle.message("python.sdk.button.create") // ProjectSettingsStepBase.createActionButton
       }
       else {
         CommonBundle.getOkButtonText() // DialogWrapper.createDefaultActions

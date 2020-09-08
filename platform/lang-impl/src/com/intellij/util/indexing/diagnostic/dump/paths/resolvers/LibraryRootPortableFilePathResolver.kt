@@ -13,22 +13,24 @@ import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePath
 object LibraryRootPortableFilePathResolver : PortableFilePathResolver {
   override fun findFileByPath(project: Project, portableFilePath: PortableFilePath): VirtualFile? {
     if (portableFilePath is PortableFilePath.LibraryRoot) {
-      return when (portableFilePath.libraryType) {
-        PortableFilePath.LibraryRoot.LibraryType.APPLICATION -> {
-          findInLibraryTable(LibraryTablesRegistrar.getInstance().libraryTable, portableFilePath)
-        }
-        PortableFilePath.LibraryRoot.LibraryType.PROJECT -> {
-          findInLibraryTable(LibraryTablesRegistrar.getInstance().getLibraryTable(project), portableFilePath)
-        }
-        PortableFilePath.LibraryRoot.LibraryType.MODULE -> {
-          val moduleName = portableFilePath.moduleName!!
-          val module = ModuleManager.getInstance(project).findModuleByName(moduleName) ?: return null
-          val rootModel = runReadAction { ModuleRootManager.getInstance(module).modifiableModel }
-          try {
-            findInLibraryTable(rootModel.moduleLibraryTable, portableFilePath)
+      return runReadAction {
+        when (portableFilePath.libraryType) {
+          PortableFilePath.LibraryRoot.LibraryType.APPLICATION -> {
+            findInLibraryTable(LibraryTablesRegistrar.getInstance().libraryTable, portableFilePath)
           }
-          finally {
-            rootModel.dispose()
+          PortableFilePath.LibraryRoot.LibraryType.PROJECT -> {
+            findInLibraryTable(LibraryTablesRegistrar.getInstance().getLibraryTable(project), portableFilePath)
+          }
+          PortableFilePath.LibraryRoot.LibraryType.MODULE -> {
+            val moduleName = portableFilePath.moduleName!!
+            val module = ModuleManager.getInstance(project).findModuleByName(moduleName) ?: return@runReadAction null
+            val rootModel = ModuleRootManager.getInstance(module).modifiableModel
+            try {
+              findInLibraryTable(rootModel.moduleLibraryTable, portableFilePath)
+            }
+            finally {
+              rootModel.dispose()
+            }
           }
         }
       }

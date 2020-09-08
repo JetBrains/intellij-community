@@ -8,7 +8,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ThrowableComputable
-import org.jetbrains.annotations.CalledInAwt
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.GithubServerPath
@@ -52,7 +52,7 @@ class GithubAccountsMigrationHelper {
   /**
    * @return false if process was cancelled by user, true otherwise
    */
-  @CalledInAwt
+  @RequiresEdt
   @JvmOverloads
   fun migrate(project: Project, parentComponent: Component? = null): Boolean {
     LOG.debug("Migrating old auth")

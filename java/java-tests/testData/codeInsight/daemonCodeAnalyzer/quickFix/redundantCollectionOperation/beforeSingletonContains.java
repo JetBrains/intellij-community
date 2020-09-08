@@ -1,4 +1,4 @@
-// "Replace with 'Objects.equals'" "true"
+// "Replace with 'Objects.equals()'" "true"
 import java.util.*;
 
 class Test {

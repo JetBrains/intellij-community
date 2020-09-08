@@ -38,6 +38,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.LazyUiDisposable;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -170,6 +171,9 @@ public class JBTabsImpl extends JComponent
 
   protected TabInfo myDropInfo;
   private int myDropInfoIndex;
+
+  @MagicConstant(intValues = {SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT, -1})
+  private int myDropSide = -1;
   protected boolean myShowDropLocation = true;
 
   private TabInfo myOldSelection;
@@ -785,6 +789,11 @@ public class JBTabsImpl extends JComponent
 
   private void setDropInfoIndex(int dropInfoIndex) {
     myDropInfoIndex = dropInfoIndex;
+  }
+
+  @MagicConstant(intValues = {SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT, -1})
+  private void setDropSide(int side) {
+    myDropSide = side;
   }
 
   public int getFirstTabOffset() {
@@ -2908,6 +2917,7 @@ public class JBTabsImpl extends JComponent
       myShowDropLocation = true;
       myForcedRelayout = true;
       setDropInfoIndex(-1);
+      setDropSide(-1);
       removeTab(dropInfo, null, false, true);
     }
   }
@@ -2939,9 +2949,15 @@ public class JBTabsImpl extends JComponent
   public void processDropOver(TabInfo over, RelativePoint point) {
     Point pointInMySpace = point.getPoint(this);
     int index = NEW_TABS ? myTabsLayout.getDropIndexFor(pointInMySpace) : myLayout.getDropIndexFor(pointInMySpace);
-
+    int side = index != -1
+               ? -1
+               : NEW_TABS ? myTabsLayout.getDropSideFor(pointInMySpace) : myLayout.getDropSideFor(pointInMySpace);
     if (index != getDropInfoIndex()) {
       setDropInfoIndex(index);
+      relayout(true, false);
+    }
+    if (side != myDropSide) {
+      setDropSide(side);
       relayout(true, false);
     }
   }
@@ -2949,6 +2965,12 @@ public class JBTabsImpl extends JComponent
   @Override
   public int getDropInfoIndex() {
     return myDropInfoIndex;
+  }
+
+  @Override
+  @MagicConstant(intValues = {SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT, -1})
+  public int getDropSide() {
+    return myDropSide;
   }
 
   @Override

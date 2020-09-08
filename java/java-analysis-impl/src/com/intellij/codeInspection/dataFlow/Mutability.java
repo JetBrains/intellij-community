@@ -8,6 +8,7 @@ import com.intellij.codeInspection.dataFlow.inference.JavaSourceInference;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
@@ -21,8 +22,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.Collections;
 import java.util.List;
@@ -31,31 +34,31 @@ public enum Mutability {
   /**
    * Mutability is not known; probably value can be mutated
    */
-  UNKNOWN("unknown", null),
+  UNKNOWN("mutability.unknown", null),
   /**
    * A value is known to be mutable (e.g. elements are sometimes added to the collection)
    */
-  MUTABLE("modifiable", null),
+  MUTABLE("mutability.modifiable", null),
   /**
    * A value is known to be an immutable view over a possibly mutable value: it cannot be mutated directly using this
    * reference; however subsequent reads (e.g. {@link java.util.Collection#size}) may return different results if the
    * underlying value is mutated by somebody else.
    */
-  UNMODIFIABLE_VIEW("unmodifiable view", "org.jetbrains.annotations.UnmodifiableView"),
+  UNMODIFIABLE_VIEW("mutability.unmodifiable.view", "org.jetbrains.annotations.UnmodifiableView"),
   /**
    * A value is known to be immutable. For collection no elements could be added, removed or altered (though if collection
    * contains mutable elements, they still could be mutated).
    */
-  UNMODIFIABLE("unmodifiable", "org.jetbrains.annotations.Unmodifiable");
+  UNMODIFIABLE("mutability.unmodifiable", "org.jetbrains.annotations.Unmodifiable");
 
   public static final @NotNull String UNMODIFIABLE_ANNOTATION = UNMODIFIABLE.myAnnotation;
   public static final @NotNull String UNMODIFIABLE_VIEW_ANNOTATION = UNMODIFIABLE_VIEW.myAnnotation;
-  private final String myName;
+  private final @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String myResourceKey;
   private final String myAnnotation;
   private final Key<CachedValue<PsiAnnotation>> myKey;
 
-  Mutability(String name, String annotation) {
-    myName = name;
+  Mutability(@PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String resourceKey, String annotation) {
+    myResourceKey = resourceKey;
     myAnnotation = annotation;
     myKey = annotation == null ? null : Key.create(annotation);
   }
@@ -63,10 +66,9 @@ public enum Mutability {
   public DfReferenceType asDfType() {
     return DfTypes.customObject(TypeConstraints.TOP, DfaNullability.UNKNOWN, this, null, DfTypes.BOTTOM);
   }
-
-  @Override
-  public String toString() {
-    return myName;
+  
+  public @NotNull @Nls String getPresentationName() {
+    return JavaAnalysisBundle.message(myResourceKey);
   }
 
   public boolean isUnmodifiable() {

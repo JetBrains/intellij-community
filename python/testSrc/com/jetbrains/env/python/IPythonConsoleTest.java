@@ -9,7 +9,6 @@ import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.env.PyEnvTestCase;
-import com.jetbrains.env.Staging;
 import com.jetbrains.env.python.console.PyConsoleTask;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +21,6 @@ import java.util.Set;
 
 import static org.junit.Assert.assertTrue;
 
-@Staging //Thread leak
 public class IPythonConsoleTest extends PyEnvTestCase {
   @Test
   public void testQuestion() {

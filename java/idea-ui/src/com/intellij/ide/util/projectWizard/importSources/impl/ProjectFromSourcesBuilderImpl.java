@@ -3,6 +3,7 @@ package com.intellij.ide.util.projectWizard.importSources.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.importProject.LibraryDescriptor;
 import com.intellij.ide.util.importProject.ModuleDescriptor;
 import com.intellij.ide.util.importProject.ModuleInsight;
@@ -13,6 +14,7 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.util.projectWizard.importSources.*;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.SdkTypeId;
@@ -50,7 +52,6 @@ import java.util.*;
  */
 public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder implements ProjectFromSourcesBuilder {
   private static final Logger LOG = Logger.getInstance(ProjectFromSourcesBuilderImpl.class);
-  private static final String NAME = "Existing Sources";
   private String myBaseProjectPath;
   private final List<ProjectConfigurationUpdater> myUpdaters = new ArrayList<>();
   private final Map<ProjectStructureDetector, ProjectDescriptor> myProjectDescriptors = new LinkedHashMap<>();
@@ -124,7 +125,7 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
   @NotNull
   @Override
   public String getName() {
-    return NAME;
+    return JavaUiBundle.message("existing.sources");
   }
 
   @Override
@@ -142,7 +143,7 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
   }
 
   @Override
-  public void setFileToImport(String path) {
+  public void setFileToImport(@NotNull String path) {
     setBaseProjectPath(path);
   }
 

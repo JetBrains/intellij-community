@@ -166,10 +166,10 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
         if (annotationMemberValue == null) {
           if (methodSource.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME) == null) return
           val providerName = method.name
-          val methods = containingClass.findMethodsBySignature(
-            JavaPsiFacade.getElementFactory(method.project).createMethodFromText("void $providerName()", method), false)
-          if (methods.isNotEmpty()) {
-            doCheckSourceProvider(methods[0], containingClass, methodSource, method)
+          val foundMethod = containingClass.findMethodBySignature(
+            JavaPsiFacade.getElementFactory(method.project).createMethodFromText("void $providerName()", method), true)
+          if (foundMethod != null) {
+            doCheckSourceProvider(foundMethod, containingClass, methodSource, method)
           }
           else {
             highlightAbsentSourceProvider(containingClass, methodSource, providerName, method)

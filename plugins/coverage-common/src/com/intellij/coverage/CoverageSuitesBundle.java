@@ -126,8 +126,8 @@ public class CoverageSuitesBundle {
                                                                  final TreeMap<Integer, LineData> lines,
                                                                  final boolean coverageByTestApplicable,
                                                                  @NotNull final CoverageSuitesBundle coverageSuite,
-                                                                 final Function<Integer, Integer> newToOldConverter,
-                                                                 final Function<Integer, Integer> oldToNewConverter, boolean subCoverageActive) {
+                                                                 final Function<? super Integer, Integer> newToOldConverter,
+                                                                 final Function<? super Integer, Integer> oldToNewConverter, boolean subCoverageActive) {
     return myEngine.getLineMarkerRenderer(lineNumber, className, lines, coverageByTestApplicable, coverageSuite, newToOldConverter, oldToNewConverter, subCoverageActive);
   }
 

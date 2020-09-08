@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AncestorListenerAdapter;
@@ -29,6 +30,7 @@ import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -253,7 +255,7 @@ class InspectionPopupManager {
   }
 
   private @NotNull JComponent createDetailsPanel() {
-    StringBuilder text = new StringBuilder();
+    @Nls StringBuilder text = new StringBuilder();
     for (int i = 0; i < getAnalyzerStatus().getExpandedStatus().size(); i++) {
       boolean last = i == getAnalyzerStatus().getExpandedStatus().size() - 1;
       StatusItem item = getAnalyzerStatus().getExpandedStatus().get(i);
@@ -335,7 +337,8 @@ class InspectionPopupManager {
                                   addData("level", inspectionsLevel.toString());
 
                                 FUCounterUsageLogger.getInstance().logEvent("inspection.widget", "highlight.level.changed", data);
-                              });
+                              },
+                              true);
   }
 
 
@@ -350,7 +353,7 @@ class InspectionPopupManager {
   private static final class TrackableLinkLabel extends LinkLabel<Object> {
     private InputEvent myEvent;
 
-    private TrackableLinkLabel(@NotNull String text, @NotNull Runnable action) {
+    private TrackableLinkLabel(@NotNull @NlsContexts.LinkLabel String text, @NotNull Runnable action) {
       super(text, null);
       setListener((__, ___) -> {
         action.run();

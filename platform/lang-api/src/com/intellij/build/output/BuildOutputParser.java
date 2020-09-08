@@ -2,6 +2,7 @@
 package com.intellij.build.output;
 
 import com.intellij.build.events.BuildEvent;
+import com.intellij.openapi.util.NlsSafe;
 
 import java.util.function.Consumer;
 
@@ -9,5 +10,5 @@ import java.util.function.Consumer;
  * @author Vladislav.Soroka
  */
 public interface BuildOutputParser {
-  boolean parse(String line, BuildOutputInstantReader reader, Consumer<? super BuildEvent> messageConsumer);
+  boolean parse(@NlsSafe String line, BuildOutputInstantReader reader, Consumer<? super BuildEvent> messageConsumer);
 }

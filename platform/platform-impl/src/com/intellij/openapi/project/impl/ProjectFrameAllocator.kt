@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
@@ -30,9 +31,9 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.scale.ScaleContext
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.CalledInAwt
 import java.awt.Dimension
 import java.awt.Frame
 import java.awt.Image
@@ -117,12 +118,13 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
     return result
   }
 
+  @NlsContexts.ProgressTitle
   private fun getProgressTitle(): String {
     val projectName = options.projectName ?: (projectStoreBaseDir.fileName ?: projectStoreBaseDir).toString()
     return IdeUICustomization.getInstance().projectMessage("progress.title.project.loading.name", projectName)
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private fun initNewFrame(frame: IdeFrameImpl) {
     if (frame.isVisible) {
       val frameHelper = ProjectFrameHelper(frame, null)

@@ -5,7 +5,7 @@ PyFile:KeywordAsNamedParameter.py
     PsiElement(Py:IDENTIFIER)('f')
     PyParameterList
       PsiElement(Py:LPAR)('(')
-      PsiErrorElement:formal parameter name expected
+      PsiErrorElement:Formal parameter name expected
         PsiElement(Py:FROM_KEYWORD)('from')
         PsiElement(Py:EQ)('=')
         PsiElement(Py:INTEGER_LITERAL)('1')

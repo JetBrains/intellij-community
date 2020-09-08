@@ -18,4 +18,8 @@ public final class LanguageWordCompletion extends LanguageExtension<WordCompleti
   public boolean isEnabledIn(@NotNull IElementType type) {
     return forLanguage(type.getLanguage()).isWordCompletionEnabledIn(type);
   }
+
+  public boolean isWordCompletionInDumbModeEnabled(@NotNull Language language) {
+    return forLanguage(language).isWordCompletionInDumbModeEnabled();
+  }
 }

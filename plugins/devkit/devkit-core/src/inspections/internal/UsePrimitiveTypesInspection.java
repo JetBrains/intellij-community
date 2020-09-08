@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import com.intellij.uast.UastHintedVisitorAdapter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
@@ -46,7 +47,7 @@ public class UsePrimitiveTypesInspection extends DevKitUastInspectionBase {
     if (isPrimitivePsiTypeReference(lhs) || isPrimitivePsiTypeReference(rhs)) {
       final PsiElement sourcePsi = uBinaryExpression.getSourcePsi();
       if (sourcePsi == null) return;
-      holder.registerProblem(sourcePsi, "Primitive types should be compared by equals()");
+      holder.registerProblem(sourcePsi, DevKitBundle.message("inspections.use.primitive.types"));
     }
   }
 

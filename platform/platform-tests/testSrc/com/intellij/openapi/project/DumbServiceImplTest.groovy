@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl
 import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
+import com.intellij.util.ArrayUtil
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.Semaphore
@@ -22,9 +23,10 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NotNull
 import org.junit.Assert
 
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
-
 /**
  * @author peter
  */
@@ -170,7 +172,7 @@ class DumbServiceImplTest extends BasePlatformTestCase {
           ProgressIndicatorUtils.withTimeout(20_000) {
             def index = FileBasedIndex.getInstance() as FileBasedIndexImpl
             new IndexUpdateRunner(index, ConcurrencyUtil.newSameThreadExecutorService(), 1)
-              .indexFiles(project, [child], indicator)
+              .indexFiles(project, "child", [child], indicator)
           }
         }
         catch (ProcessCanceledException e) {
@@ -183,5 +185,29 @@ class DumbServiceImplTest extends BasePlatformTestCase {
     WriteAction.run { dumbService.completeJustSubmittedTasks() }
     assert started.get()
     assert finished.get()
+  }
+
+  public void testDelayBetweenBecomingSmartAndWaitForSmartReturnMustBeSmall() {
+    int N = 100
+    int[] delays = new int[N]
+    DumbServiceImpl dumbService = getDumbService()
+    Future<?> future = null;
+    for (int i=0; i< N; i++) {
+      dumbService.runInDumbMode {
+        CountDownLatch waiting = new CountDownLatch(1)
+        future = ApplicationManager.getApplication().executeOnPooledThread({
+            waiting.countDown()
+            dumbService.waitForSmartMode()
+          } as Runnable)
+        waiting.await()
+      }
+      long start = System.currentTimeMillis()
+      future.get();
+      long elapsed = System.currentTimeMillis() - start
+      delays[i] = elapsed
+    }
+    Arrays.sort(delays)
+    int avg = ArrayUtil.averageAmongMedians(delays, 3)
+    assert avg == 0 : "Seems there's is a significant delay between becoming smart and waitForSmartMode() return. Delays in ms:\n"+Arrays.toString(delays)+"\n"
   }
 }

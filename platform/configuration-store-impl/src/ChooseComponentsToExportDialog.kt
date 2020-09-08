@@ -110,7 +110,7 @@ fun chooseSettingsFile(oldPath: String?, parent: Component?, title: String, desc
 internal class ChooseComponentsToExportDialog(fileToComponents: Map<FileSpec, List<ExportableItem>>,
                                               private val isShowFilePath: Boolean,
                                               @NlsContexts.DialogTitle title: String,
-                                              private val description: String) : DialogWrapper(false) {
+                                              @NlsContexts.Label private val description: String) : DialogWrapper(false) {
   private val chooser: ElementsChooser<ComponentElementProperties>
   private val pathPanel = FieldPanel(ConfigurationStoreBundle.message("editbox.export.settings.to"), null, { browse() }, null)
 
@@ -168,17 +168,17 @@ internal class ChooseComponentsToExportDialog(fileToComponents: Map<FileSpec, Li
   }
 
   override fun createLeftSideActions(): Array<Action> {
-    val selectAll = object : AbstractAction("Select &All") {
+    val selectAll = object : AbstractAction(ConfigurationStoreBundle.message("export.components.list.action.select.all")) {
       override fun actionPerformed(e: ActionEvent) {
         chooser.setAllElementsMarked(true)
       }
     }
-    val selectNone = object : AbstractAction("Select &None") {
+    val selectNone = object : AbstractAction(ConfigurationStoreBundle.message("export.components.list.action.select.none")) {
       override fun actionPerformed(e: ActionEvent) {
         chooser.setAllElementsMarked(false)
       }
     }
-    val invert = object : AbstractAction("&Invert") {
+    val invert = object : AbstractAction(ConfigurationStoreBundle.message("export.components.list.action.invert.selection")) {
       override fun actionPerformed(e: ActionEvent) {
         chooser.invertSelection()
       }

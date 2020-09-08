@@ -29,6 +29,7 @@ import com.intellij.ui.popup.NotLookupOrSearchCondition;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -85,9 +86,8 @@ public class ShowCoveringTestsAction extends AnAction {
           });
       } else {
         component = null;
-        final JPanel panel = new PanelWithText(CoverageBundle
-                                                 .message("following.test.0.could.not.be.found.1", testNames.length > 1 ? "s" : "",
-                                                          StringUtil.join(testNames, "<br/>").replace("_", ".")));
+        @NonNls String testsPresentation = StringUtil.join(testNames, "<br/>").replace("_", ".");
+        final JPanel panel = new PanelWithText(CoverageBundle.message("following.test.could.not.be.found.1", testNames.length, testsPresentation));
         popupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, null);
       }
       final JBPopup popup = popupBuilder.setRequestFocusCondition(project, NotLookupOrSearchCondition.INSTANCE)

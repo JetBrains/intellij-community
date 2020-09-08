@@ -38,10 +38,8 @@ public class NewParameterCollidesWithLocalUsageInfo extends UnresolvableCollisio
 
   @Override
   public String getDescription() {
-    String buffer = RefactoringBundle.message("there.is.already.a.0.in.1.it.will.conflict.with.the.new.parameter",
+    return RefactoringBundle.message("there.is.already.a.0.in.1.it.will.conflict.with.the.new.parameter",
                                      RefactoringUIUtil.getDescription(myConflictingElement, true),
                                      RefactoringUIUtil.getDescription(myMethod, true));
-
-    return StringUtil.capitalize(buffer);
   }
 }

@@ -1,13 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.config;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.InsertPathAction;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
@@ -17,6 +18,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
   private JPanel myMainPanel;
@@ -115,8 +118,9 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
   private void initBrowseActions() {
     InsertPathAction.addTo(myPathToCertificatesField, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
     myClientCertificatePathField.addBrowseFolderListener(
-        SvnBundle.message("dialog.edit.http.proxies.settings.dialog.select.ssl.client.certificate.path.title"),
-        null, null, new FileChooserDescriptor(true, false, false, false, false, false));
+      message("dialog.edit.http.proxies.settings.dialog.select.ssl.client.certificate.path.title"),
+      null, null, new FileChooserDescriptor(true, false, false, false, false, false)
+    );
   }
 
   private void initNumericValidation() {
@@ -176,6 +180,7 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
     @Override
     public void focusGained(final FocusEvent e) {
     }
+
     @Override
     public void focusLost(final FocusEvent e) {
       myValidator.run();
@@ -186,17 +191,7 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
     for (Map.Entry<String, String> entry : properties.entrySet()) {
       final JComponent component = myKey2Component.get(entry.getKey());
       if (component != null) {
-        JTextComponent textComponent = null;
-        if (component instanceof JTextComponent) {
-          textComponent = (JTextComponent) component;
-        } else if (component instanceof TextFieldWithBrowseButton) {
-          textComponent = ((TextFieldWithBrowseButton) component).getTextField();
-        }
-        if (textComponent != null) {
-          textComponent.setText(entry.getValue());
-          textComponent.selectAll();
-        }
-        component.setToolTipText(entry.getKey());
+        setProperty(component, entry.getKey(), entry.getValue());
       }
     }
 
@@ -204,14 +199,30 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
     repositoryUrlsRecalculation();
   }
 
+  private static void setProperty(@NotNull JComponent component, @NlsSafe String name, @NlsSafe String value) {
+    JTextComponent textComponent = null;
+    if (component instanceof JTextComponent) {
+      textComponent = (JTextComponent)component;
+    }
+    else if (component instanceof TextFieldWithBrowseButton) {
+      textComponent = ((TextFieldWithBrowseButton)component).getTextField();
+    }
+    if (textComponent != null) {
+      textComponent.setText(value);
+      textComponent.selectAll();
+    }
+    component.setToolTipText(name);
+  }
+
   public void copyStringProperties(Map<String, String> map) {
     for (Map.Entry<String, JComponent> entry : myKey2Component.entrySet()) {
       final JComponent component = entry.getValue();
       String value = null;
       if (component instanceof JTextComponent) {
-        value = ((JTextComponent) component).getText();
-      } else if (component instanceof TextFieldWithBrowseButton) {
-        value = ((TextFieldWithBrowseButton) component).getTextField().getText();
+        value = ((JTextComponent)component).getText();
+      }
+      else if (component instanceof TextFieldWithBrowseButton) {
+        value = ((TextFieldWithBrowseButton)component).getTextField().getText();
       } else if (component instanceof JCheckBox) {
         value = ((JCheckBox) component).isSelected() ? "yes" : "no";
       }

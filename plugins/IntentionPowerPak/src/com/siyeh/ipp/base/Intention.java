@@ -143,6 +143,6 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
-    return IntentionPowerPackBundle.defaultableMessage(getPrefix() + ".family.name");
+    return IntentionPowerPackBundle.message(getPrefix() + ".family.name");
   }
 }

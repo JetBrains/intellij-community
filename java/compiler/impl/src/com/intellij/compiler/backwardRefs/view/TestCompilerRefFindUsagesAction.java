@@ -3,6 +3,7 @@ package com.intellij.compiler.backwardRefs.view;
 
 import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
@@ -11,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class TestCompilerRefFindUsagesAction extends TestCompilerReferenceServiceAction {
   public TestCompilerRefFindUsagesAction() {
-    super("Compiler Reference Find Usages");
+    super(JavaCompilerBundle.message("action.compiler.reference.find.usages.text"));
   }
 
   @Override

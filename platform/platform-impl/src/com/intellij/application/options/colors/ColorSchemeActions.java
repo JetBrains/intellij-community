@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.colors;
 
 import com.intellij.application.options.schemes.AbstractSchemeActions;
 import com.intellij.application.options.schemes.AbstractSchemesPanel;
 import com.intellij.application.options.schemes.SchemeNameGenerator;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -59,7 +60,8 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
       VirtualFile importSource = importer.getImportFile();
       if (importSource == null) {
         importSource =
-          SchemeImportUtil.selectImportSource(importer.getSourceExtensions(), getSchemesPanel(), null, "Choose " + importerName);
+          SchemeImportUtil.selectImportSource(importer.getSourceExtensions(), getSchemesPanel(), null,
+                                              IdeBundle.message("label.choose.color.scheme.importer", importerName));
       }
       if (importSource != null) {
         if ("jar".equals(importSource.getExtension())) {

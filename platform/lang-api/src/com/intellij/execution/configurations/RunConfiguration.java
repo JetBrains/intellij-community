@@ -8,10 +8,13 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +52,7 @@ public interface RunConfiguration extends RunProfile, Cloneable {
   /**
    * Sets the name of the configuration.
    */
-  void setName(String name);
+  void setName(@NlsSafe String name);
 
   /**
    * Returns the UI control for editing the run configuration settings. If additional control over validation is required, the object
@@ -108,12 +111,12 @@ public interface RunConfiguration extends RunProfile, Cloneable {
    * Returns the unique identifier of the run configuration. Return null if not applicable.
    * Used only for non-managed RC type.
    */
-  default @Nullable String getId() {
+  default @Nullable @NonNls String getId() {
     return null;
   }
 
   @Transient
-  default @NotNull String getPresentableType() {
+  default @NotNull @NlsActions.ActionText String getPresentableType() {
     if (PlatformUtils.isPhpStorm()) {
       return " (" + StringUtil.first(getType().getDisplayName(), 10, true) + ")";
     }

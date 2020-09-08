@@ -7,6 +7,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -28,7 +29,8 @@ import javax.swing.*;
  * @author dcheryasov
  */
 public class PyMethodParametersInspection extends PyInspection {
-  public String MCS = "mcs";
+  public @NlsSafe String MCS = "mcs";
+  public @NlsSafe String METACLS = "metacls";
 
   @Nullable
   public static PyMethodParametersInspection getInstance(@NotNull PsiElement element) {
@@ -43,7 +45,7 @@ public class PyMethodParametersInspection extends PyInspection {
     //TODO: simplify this (drop this?)
     // it should offer only one default option mcs or metacls, inspection should accept both
     return PythonUiService.getInstance().createComboBoxWithLabel(PyPsiBundle.message("INSP.method.parameters.metaclass.method.first.argument.name"),
-                                                   new String[]{"mcs", "metacls"}, MCS,
+                                                   new String[]{MCS, METACLS}, MCS,
                                    item -> {
                                      MCS = (String)item;
                                    });
@@ -70,7 +72,7 @@ public class PyMethodParametersInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyFunction(final PyFunction node) {
+    public void visitPyFunction(final @NotNull PyFunction node) {
       for (PyInspectionExtension extension : PyInspectionExtension.EP_NAME.getExtensionList()) {
         if (extension.ignoreMethodParameters(node, myTypeEvalContext)) {
           return;
@@ -154,7 +156,7 @@ public class PyMethodParametersInspection extends PyInspection {
               if (!expectedName.equals(pname) && (alternativeName == null || !alternativeName.equals(pname))) {
                 registerProblem(
                   PyUtil.sure(params[0].getNode()).getPsi(),
-                  PyPsiBundle.message("INSP.usually.named.$0", expectedName),
+                  PyPsiBundle.message("INSP.usually.named", expectedName),
                   new RenameParameterQuickFix(expectedName)
                 );
               }
@@ -163,7 +165,7 @@ public class PyMethodParametersInspection extends PyInspection {
               if (!CLS.equals(pname)) {
                 registerProblem(
                   PyUtil.sure(params[0].getNode()).getPsi(),
-                  PyPsiBundle.message("INSP.usually.named.$0", CLS),
+                  PyPsiBundle.message("INSP.usually.named", CLS),
                   new RenameParameterQuickFix(CLS)
                 );
               }

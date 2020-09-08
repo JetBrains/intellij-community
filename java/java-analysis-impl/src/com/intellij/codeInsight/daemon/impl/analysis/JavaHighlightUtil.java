@@ -5,6 +5,7 @@ import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -115,7 +116,7 @@ public final class JavaHighlightUtil {
   }
 
   @NotNull
-  public static String formatMethod(@NotNull PsiMethod method) {
+  public static @NlsSafe String formatMethod(@NotNull PsiMethod method) {
     return PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
                                       PsiFormatUtilBase.SHOW_TYPE);
   }
@@ -166,7 +167,7 @@ public final class JavaHighlightUtil {
   }
 
   @Nullable
-  public static String checkPsiTypeUseInContext(@NotNull PsiType type, @NotNull PsiElement context) {
+  public static @Nls String checkPsiTypeUseInContext(@NotNull PsiType type, @NotNull PsiElement context) {
     if (type instanceof PsiPrimitiveType) return null;
     if (type instanceof PsiArrayType) return checkPsiTypeUseInContext(((PsiArrayType) type).getComponentType(), context);
     if (PsiUtil.resolveClassInType(type) != null) return null;
@@ -181,7 +182,7 @@ public final class JavaHighlightUtil {
   }
 
   @NotNull
-  private static String checkClassType(@NotNull PsiClassType type, @NotNull PsiElement context) {
+  private static @Nls String checkClassType(@NotNull PsiClassType type, @NotNull PsiElement context) {
     String className = PsiNameHelper.getQualifiedClassName(type.getCanonicalText(false), true);
     if (classExists(context, className)) {
       return getClassInaccessibleMessage(context, className);

@@ -15,8 +15,8 @@ import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
-import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyPresentationUtil;
@@ -76,17 +76,17 @@ public class ConvertClosureToMethodIntention extends Intention {
       final PsiElement psiElement = usage.getElement();
       if (PsiUtil.isMethodUsage(psiElement)) continue;
       if (!GroovyLanguage.INSTANCE.equals(psiElement.getLanguage())) {
-        conflicts.putValue(psiElement, GroovyIntentionsBundle.message("closure.is.accessed.outside.of.groovy", fieldName));
+        conflicts.putValue(psiElement, GroovyBundle.message("closure.is.accessed.outside.of.groovy", fieldName));
       }
       else {
         if (psiElement instanceof GrReferenceExpression) {
           fieldUsages.add(psiElement);
           if (PsiUtil.isAccessedForWriting((GrExpression)psiElement)) {
-            conflicts.putValue(psiElement, GroovyIntentionsBundle.message("write.access.to.closure.variable", fieldName));
+            conflicts.putValue(psiElement, GroovyBundle.message("write.access.to.closure.variable", fieldName));
           }
         }
         else if (psiElement instanceof GrArgumentLabel) {
-          conflicts.putValue(psiElement, GroovyIntentionsBundle.message("field.is.used.in.argument.label", fieldName));
+          conflicts.putValue(psiElement, GroovyBundle.message("field.is.used.in.argument.label", fieldName));
         }
       }
     }
@@ -101,7 +101,7 @@ public class ConvertClosureToMethodIntention extends Intention {
     for (MethodSignature s : signatures) {
       final PsiMethod method = MethodSignatureUtil.findMethodBySignature(containingClass, s, true);
       if (method != null) {
-        conflicts.putValue(method, GroovyIntentionsBundle.message("method.with.signature.already.exists",
+        conflicts.putValue(method, GroovyBundle.message("method.with.signature.already.exists",
                                                                   GroovyPresentationUtil.getSignaturePresentation(s)));
       }
     }

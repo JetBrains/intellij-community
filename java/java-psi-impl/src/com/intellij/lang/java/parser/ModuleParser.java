@@ -17,6 +17,7 @@ package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.lang.PsiBuilder;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -320,7 +321,7 @@ public class ModuleParser {
     builder.advanceLexer();
   }
 
-  private static void parseExtras(PsiBuilder builder, @NotNull String message) {
+  private static void parseExtras(PsiBuilder builder, @NotNull @NlsContexts.ParsingError String message) {
     PsiBuilder.Marker extras = builder.mark();
     while (builder.getTokenType() != null) builder.advanceLexer();
     extras.error(message);

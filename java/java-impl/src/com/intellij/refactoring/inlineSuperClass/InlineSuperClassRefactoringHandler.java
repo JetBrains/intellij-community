@@ -77,6 +77,6 @@ public class InlineSuperClassRefactoringHandler extends JavaInlineActionHandler 
   @Nullable
   @Override
   public String getActionName(PsiElement element) {
-    return JavaRefactoringBundle.message("inline.super.class") + "...";
+    return JavaRefactoringBundle.message("inline.super.class.action.name");
   }
 }

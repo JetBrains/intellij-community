@@ -170,7 +170,7 @@ public final class CompositeDocumentationProvider implements DocumentationProvid
   }
 
   @Override
-  public void collectDocComments(@NotNull PsiFile file, @NotNull Consumer<@NotNull PsiDocCommentBase> sink) {
+  public void collectDocComments(@NotNull PsiFile file, @NotNull Consumer<? super @NotNull PsiDocCommentBase> sink) {
     for (DocumentationProvider provider : getAllProviders()) {
       provider.collectDocComments(file, sink);
     }

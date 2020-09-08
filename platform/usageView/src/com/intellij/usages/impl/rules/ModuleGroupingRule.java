@@ -128,7 +128,7 @@ class ModuleGroupingRule implements UsageGroupingRuleEx, DumbAware {
     @Override
     @NotNull
     public String getText(UsageView view) {
-      return StringUtil.notNullize(myItemPresentation.getPresentableText(), "Library");
+      return StringUtil.notNullize(myItemPresentation.getPresentableText(), UsageViewBundle.message("list.item.library"));
     }
 
     public boolean equals(Object o) {
@@ -181,7 +181,7 @@ class ModuleGroupingRule implements UsageGroupingRuleEx, DumbAware {
     }
 
     public String toString() {
-      return UsageViewBundle.message("node.group.module") + getText(null);
+      return UsageViewBundle.message("node.group.module", getText(null));
     }
 
     @Override
@@ -222,7 +222,7 @@ class ModuleGroupingRule implements UsageGroupingRuleEx, DumbAware {
     }
 
     public String toString() {
-      return UsageViewBundle.message("node.group.module.group") + getText(null);
+      return UsageViewBundle.message("node.group.module.group", getText(null));
     }
   }
 }

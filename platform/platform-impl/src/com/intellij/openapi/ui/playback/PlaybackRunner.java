@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.playback;
 
 import com.intellij.ide.IdeEventQueue;
@@ -10,11 +10,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.playback.commands.*;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.StringTokenizer;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -347,7 +349,7 @@ public class PlaybackRunner {
         }
       }
 
-      public abstract void messageEdt(@Nullable PlaybackContext context, String text, Type type);
+      public abstract void messageEdt(@Nullable PlaybackContext context, @NlsContexts.StatusBarText String text, Type type);
     }
   }
 }

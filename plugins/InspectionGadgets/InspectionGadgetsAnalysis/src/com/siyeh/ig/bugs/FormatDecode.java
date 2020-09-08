@@ -21,6 +21,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -117,7 +118,7 @@ final class FormatDecode {
       final String width = matcher.group(3);
       final String precision = matcher.group(4);
       final String dateSpec = matcher.group(5);
-      final String conversion = matcher.group(6);
+      @NonNls final String conversion = matcher.group(6);
 
       int flagBits = 0;
       for (int j = 0; j < flags.length(); j++) {

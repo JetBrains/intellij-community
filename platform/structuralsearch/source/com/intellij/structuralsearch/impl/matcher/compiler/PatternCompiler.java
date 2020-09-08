@@ -588,7 +588,7 @@ public final class PatternCompiler {
       final String problem = ScriptSupport.checkValidScript(script, matchOptions);
       if (problem != null) {
         if (checkForErrors) {
-          throw new MalformedPatternException("Script constraint for " + constraint.getName() + " has problem " + problem);
+          throw new MalformedPatternException(SSRBundle.message("error.script.constraint.for.0.has.problem.1", constraint.getName(), problem));
         }
         else {
           return;

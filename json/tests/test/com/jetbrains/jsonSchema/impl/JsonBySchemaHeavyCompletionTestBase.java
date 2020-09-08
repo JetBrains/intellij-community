@@ -11,7 +11,7 @@ import java.util.Collections;
 
 public abstract class JsonBySchemaHeavyCompletionTestBase extends JsonSchemaHeavyAbstractTest {
   protected void baseCompletionTest(@SuppressWarnings("SameParameterValue") final String folder,
-                                  @SuppressWarnings("SameParameterValue") final String testFile, String @NotNull ... items) throws Exception {
+                                    @SuppressWarnings("SameParameterValue") final String testFile, String @NotNull ... items) throws Exception {
     baseTest(folder, testFile, () -> {
       complete();
       assertStringItems(items);

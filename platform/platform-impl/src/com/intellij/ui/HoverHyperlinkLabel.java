@@ -1,9 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.PlatformColors;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,14 +22,14 @@ import java.util.List;
  * @author Eugene Belyaev
  */
 public class HoverHyperlinkLabel extends JLabel {
-  private String myOriginalText;
+  private @NlsContexts.LinkLabel String myOriginalText;
   private final List<HyperlinkListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  public HoverHyperlinkLabel(String text) {
+  public HoverHyperlinkLabel(@NlsContexts.LinkLabel String text) {
     this(text, PlatformColors.BLUE);
   }
 
-  public HoverHyperlinkLabel(String text, Color color) {
+  public HoverHyperlinkLabel(@NlsContexts.LinkLabel String text, Color color) {
     super(text);
     myOriginalText = text;
     setForeground(color);
@@ -62,7 +64,7 @@ public class HoverHyperlinkLabel extends JLabel {
   }
 
   @Override
-  public void setText(String text) {
+  public void setText(@NlsContexts.LinkLabel String text) {
     if (BasicHTML.isHTMLString(getText())) { // if is currently showing string as html
       super.setText(underlineTextInHtml(text));
     }
@@ -72,6 +74,7 @@ public class HoverHyperlinkLabel extends JLabel {
     myOriginalText = text;
   }
 
+  @Contract(pure = true)
   @NonNls private static String underlineTextInHtml(final String text) {
     return "<html><u>" + StringUtil.escapeXmlEntities(text) + "</u></html>";
   }

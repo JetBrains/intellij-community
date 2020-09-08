@@ -21,6 +21,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -70,11 +73,11 @@ public class ImplementationViewComponent extends JPanel {
   private FileEditor myNonTextEditor;
   private FileEditorProvider myCurrentNonTextEditorProvider;
   private JBPopup myHint;
-  private String myTitle;
+  private @NlsContexts.TabTitle String myTitle;
   private final ActionToolbar myToolbar;
   private JLabel myLabel;
 
-  public void setHint(final JBPopup hint, @NotNull String title) {
+  public void setHint(final JBPopup hint, @NotNull @NlsContexts.TabTitle String title) {
     myHint = hint;
     myTitle = title;
   }
@@ -85,7 +88,7 @@ public class ImplementationViewComponent extends JPanel {
 
   private static class FileDescriptor {
     @NotNull public final VirtualFile myFile;
-    @NotNull public final String myPresentableText;
+    @NotNull public final @NlsSafe String myPresentableText;
 
     FileDescriptor(@NotNull VirtualFile file, ImplementationViewElement element) {
       myFile = file;
@@ -542,7 +545,7 @@ public class ImplementationViewComponent extends JPanel {
   private class EditSourceActionBase extends AnAction {
     private final boolean myFocusEditor;
 
-    EditSourceActionBase(boolean focusEditor, Icon icon, String text) {
+    EditSourceActionBase(boolean focusEditor, Icon icon, @NlsActions.ActionText String text) {
       super(text, null, icon);
       myFocusEditor = focusEditor;
     }

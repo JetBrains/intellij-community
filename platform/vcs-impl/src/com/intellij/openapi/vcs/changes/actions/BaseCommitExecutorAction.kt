@@ -3,6 +3,8 @@ package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.actions.getContextCommitWorkflowHandler
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.vcs.commit.CommitWorkflowHandler
@@ -31,9 +33,9 @@ abstract class BaseCommitExecutorAction : DumbAwareAction() {
   protected open fun getCommitExecutor(handler: CommitWorkflowHandler?) = handler?.getExecutor(executorId)
 
   companion object {
-    fun AnActionEvent.getAmendCommitModePrefix(): String {
+    fun AnActionEvent.useAmendPrefixIfNeeded(templateText: @NlsActions.ActionText String?): @NlsActions.ActionText String {
       val isAmend = getContextCommitWorkflowHandler()?.amendCommitHandler?.isAmendCommitMode == true
-      return if (isAmend) "Amend " else ""
+      return if (isAmend) VcsBundle.message("amend.action.name", templateText) else "" + templateText
     }
   }
 }

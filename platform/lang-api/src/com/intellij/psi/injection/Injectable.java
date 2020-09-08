@@ -19,6 +19,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +39,7 @@ public abstract class Injectable implements Comparable<Injectable> {
   public abstract String getDisplayName();
 
   @Nullable
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   public String getAdditionalDescription() {
     return null;
   }

@@ -11,6 +11,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 
 import java.awt.*;
 import java.util.Arrays;
@@ -64,9 +65,9 @@ public abstract class InspectionTreeTailRenderer<E extends Exception> {
     }
   }
 
-  protected abstract void appendText(String text, SimpleTextAttributes attributes) throws E;
+  protected abstract void appendText(@Nls String text, SimpleTextAttributes attributes) throws E;
 
-  protected abstract void appendText(String text) throws E;
+  protected abstract void appendText(@Nls String text) throws E;
 
   private String getPresentableName(HighlightDisplayLevel level, boolean pluralize) {
     final HighlightSeverity severity = level.getSeverity();

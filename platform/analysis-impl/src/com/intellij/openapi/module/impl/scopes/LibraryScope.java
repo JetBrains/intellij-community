@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.module.impl.scopes;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
@@ -34,7 +35,7 @@ public class LibraryScope extends LibraryScopeBase {
   @NotNull
   @Override
   public String getDisplayName() {
-    return "Library '" + myLibraryName + "'";
+    return AnalysisBundle.message("library.0", myLibraryName);
   }
 
   @Override

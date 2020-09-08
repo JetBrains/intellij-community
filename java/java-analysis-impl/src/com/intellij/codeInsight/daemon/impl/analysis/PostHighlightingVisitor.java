@@ -29,6 +29,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomNamedTarget;
@@ -339,7 +340,7 @@ class PostHighlightingVisitor {
   }
 
   @NotNull
-  private static String getNotUsedForReadingMessage(@NotNull final PsiField field, @NotNull final PsiIdentifier identifier) {
+  private static @NlsContexts.DetailedDescription String getNotUsedForReadingMessage(@NotNull final PsiField field, @NotNull final PsiIdentifier identifier) {
     final String visibility = VisibilityUtil.getVisibilityStringToDisplay(field);
 
     final String message = JavaErrorBundle.message("field.is.not.used.for.reading", visibility, identifier.getText());
@@ -347,7 +348,7 @@ class PostHighlightingVisitor {
     return StringUtil.capitalize(message);
   }
 
-  private HighlightInfo suggestionsToMakeFieldUsed(@NotNull PsiField field, @NotNull PsiIdentifier identifier, @NotNull String message) {
+  private HighlightInfo suggestionsToMakeFieldUsed(@NotNull PsiField field, @NotNull PsiIdentifier identifier, @NotNull @NlsContexts.DetailedDescription String message) {
     HighlightInfo highlightInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
     SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(field, annoName -> {
       QuickFixAction
@@ -559,7 +560,8 @@ class PostHighlightingVisitor {
     VirtualFile file = PsiUtilCore.getVirtualFile(myFile);
     Set<String> imports = file != null ? file.getCopyableUserData(ImportsHighlightUtil.IMPORTS_FROM_TEMPLATE) : null;
     boolean predefinedImport = imports != null && imports.contains(importStatement.getText());
-    String description = !predefinedImport ? JavaAnalysisBundle.message("unused.import.statement") : "Unused import (specified in template)";
+    String description = !predefinedImport ? JavaAnalysisBundle.message("unused.import.statement") :
+                         JavaAnalysisBundle.message("text.unused.import.in.template");
     HighlightInfo info = HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.UNUSED_IMPORT)
         .range(importStatement)
         .descriptionAndTooltip(description)

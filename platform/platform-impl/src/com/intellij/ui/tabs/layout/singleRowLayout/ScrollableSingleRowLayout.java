@@ -10,6 +10,7 @@ import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayout;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -265,7 +266,7 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
 
   public static class ScrollableSingleRowTabsLayoutInfo extends TabsLayoutInfo {
 
-    private final static String ID = "ScrollableSingleRowTabsLayoutInfo";
+    @NonNls private final static String ID = "ScrollableSingleRowTabsLayoutInfo";
     private final static String NAME = "Scrollable Single Row";
 
     private JPanel myPanel;

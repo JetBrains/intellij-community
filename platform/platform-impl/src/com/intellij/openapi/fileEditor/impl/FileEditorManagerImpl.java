@@ -355,7 +355,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     return false;
   }
 
-  public @NotNull String getFileTooltipText(@NotNull VirtualFile file) {
+  public @NotNull @NlsContexts.Tooltip String getFileTooltipText(@NotNull VirtualFile file) {
     List<EditorTabTitleProvider> availableProviders = DumbService.getDumbAwareExtensions(myProject, EditorTabTitleProvider.EP_NAME);
     for (EditorTabTitleProvider provider : availableProviders) {
       String text = provider.getEditorTabTooltipText(myProject, file);
@@ -720,6 +720,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
                                                                  @NotNull VirtualFile file,
                                                                  boolean focusEditor,
                                                                  @Nullable HistoryEntry entry) {
+    if (file instanceof BackedVirtualFile) {
+      file = ((BackedVirtualFile)file).getOriginFile();
+    }
     return openFileImpl4(window, file, entry, new FileEditorOpenOptions().withCurrentTab(true).withFocusEditor(focusEditor));
   }
 

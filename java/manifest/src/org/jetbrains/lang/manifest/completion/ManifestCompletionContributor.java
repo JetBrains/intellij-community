@@ -45,7 +45,7 @@ final class ManifestCompletionContributor extends CompletionContributor {
   ManifestCompletionContributor() {
     extend(CompletionType.BASIC,
            PlatformPatterns.psiElement(ManifestTokenType.HEADER_NAME).withLanguage(ManifestLanguage.INSTANCE),
-           new CompletionProvider<CompletionParameters>() {
+           new CompletionProvider<>() {
              @Override
              public void addCompletions(@NotNull CompletionParameters parameters,
                                         @NotNull ProcessingContext context,
@@ -58,7 +58,7 @@ final class ManifestCompletionContributor extends CompletionContributor {
     );
   }
 
-  private static final InsertHandler<LookupElement> HEADER_INSERT_HANDLER = new InsertHandler<LookupElement>() {
+  private static final InsertHandler<LookupElement> HEADER_INSERT_HANDLER = new InsertHandler<>() {
     @Override
     public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
       context.setAddCompletionChar(false);

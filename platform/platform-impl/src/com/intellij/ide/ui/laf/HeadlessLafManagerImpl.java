@@ -26,23 +26,34 @@ public class HeadlessLafManagerImpl extends LafManager {
   }
 
   @Override
-  public UIManager.LookAndFeelInfo getCurrentLookAndFeel(@NotNull LafType type) {
+  public UIManager.LookAndFeelInfo getCurrentLookAndFeel() {
     return null;
   }
 
   @Override
-  public LafReference getLookAndFeelReference(@NotNull LafType type) {
+  public LafReference getLookAndFeelReference() {
     return null;
   }
 
   @Override
-  public void setLookAndFeelReference(@NotNull LafType type, @NotNull LafReference lafReference) { }
+  public void setLookAndFeelReference(LafReference reference) {}
+
+  @Override
+  public ListCellRenderer<LafReference> getLookAndFeelCellRenderer() {
+    return null;
+  }
+
+  @Override
+  @NotNull
+  public JComponent getSettingsToolbar() {
+    return new JComponent() {};
+  }
 
   @Override
   public void setCurrentLookAndFeel(UIManager.@NotNull LookAndFeelInfo lookAndFeelInfo, boolean lockEditorScheme) { }
 
   @Override
-  public CollectionComboBoxModel<LafReference> getLafComboBoxModel(@NotNull LafManager.LafType type) {
+  public CollectionComboBoxModel<LafReference> getLafComboBoxModel() {
     return new CollectionComboBoxModel<>();
   }
 

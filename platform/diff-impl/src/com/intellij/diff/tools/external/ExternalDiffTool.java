@@ -19,10 +19,12 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.util.ThrowableConvertor;
-import org.jetbrains.annotations.Nls;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -108,7 +110,7 @@ public final class ExternalDiffTool {
     List<DiffRequest> requests = new ArrayList<>();
 
     UserDataHolderBase context = new UserDataHolderBase();
-    List<String> errorRequests = new ArrayList<>();
+    List<DiffRequestProducer> errorRequests = new ArrayList<>();
 
     for (DiffRequestProducer producer : producers) {
       try {
@@ -116,21 +118,23 @@ public final class ExternalDiffTool {
       }
       catch (DiffRequestProducerException e) {
         LOG.warn(e);
-        errorRequests.add(producer.getName());
+        errorRequests.add(producer);
       }
     }
 
     if (!errorRequests.isEmpty()) {
-      new Notification("Diff", DiffBundle.message("can.t.load.some.changes"), StringUtil.join(errorRequests, "<br>"), NotificationType.ERROR).notify(project);
+      HtmlBuilder message = new HtmlBuilder()
+        .appendWithSeparators(HtmlChunk.br(), ContainerUtil.map(errorRequests, producer -> HtmlChunk.text(producer.getName())));
+      new Notification("Diff", DiffBundle.message("can.t.load.some.changes"), message.toString(), NotificationType.ERROR).notify(project);
     }
 
     return requests;
   }
 
   private static <T> T computeWithModalProgress(@Nullable Project project,
-                                        @NotNull @Nls String title,
-                                        boolean canBeCancelled,
-                                        @NotNull ThrowableConvertor<? super ProgressIndicator, T, ? extends Exception> computable)
+                                                @NotNull @NlsContexts.ProgressTitle String title,
+                                                boolean canBeCancelled,
+                                                @NotNull ThrowableConvertor<? super ProgressIndicator, T, ? extends Exception> computable)
     throws Exception {
     return ProgressManager.getInstance().run(new Task.WithResult<T, Exception>(project, title, canBeCancelled) {
       @Override

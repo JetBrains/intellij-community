@@ -47,12 +47,12 @@ public class ExtensionPointDocumentationProviderTest extends LightJavaCodeInsigh
                  provider.getQuickNavigateInfo(docElement, getOriginalElement()));
 
     assertEquals(
-      "<div class='definition'><pre><b>foo.bar</b><br>" +
+      "<div class=\"definition\"><pre><b>foo.bar</b><br/>" +
       pluginXml +
       "<div class='definition'><pre>bar<br>public class <b>MyExtensionPoint</b>\n" +
       "extends <a href=\"psi_element://java.lang.Object\"><code>Object</code></a></pre></div><div class='content'>\n" +
       "   MyExtensionPoint JavaDoc.\n" +
-      " </div><table class='sections'><p></table><table class='sections'><tr><td valign='top' class='section'><p><a href=\"psi_element://bar.MyExtensionPoint#implementationClass\"><code>implementationClass</code></a></td><td valign='top'>String (required)</td><tr><td valign='top' class='section'><p><a href=\"psi_element://bar.MyExtensionPoint#intValue\"><code>&lt;intValue></code></a></td><td valign='top'>Integer</td><br/></table></pre></div><div class='content'><h2>Extension Point Implementation</h2><div class='definition'><pre>bar<br>public interface <b>MyExtension</b></pre></div><div class='content'>\n" +
+      " </div><table class='sections'><p></table><table class=\"sections\"><tr><td class=\"section\" valign=\"top\"><p><a href=\"psi_element://bar.MyExtensionPoint#implementationClass\"><code>implementationClass</code></a></p></td><td valign=\"top\">String (required)</td></tr><tr><td class=\"section\" valign=\"top\"><p><a href=\"psi_element://bar.MyExtensionPoint#intValue\"><code>&lt;intValue&gt;</code></a></p></td><td valign=\"top\">Integer</td></tr><br/></table></pre></div><div class=\"content\"><h2>Extension Point Implementation</h2><div class='definition'><pre>bar<br>public interface <b>MyExtension</b></pre></div><div class='content'>\n" +
       "   My Extension Javadoc.\n" +
       " </div><table class='sections'><p></table></div>",
       provider.generateDoc(docElement, getOriginalElement()));
@@ -74,7 +74,7 @@ public class ExtensionPointDocumentationProviderTest extends LightJavaCodeInsigh
                  provider.getQuickNavigateInfo(docElement, getOriginalElement()));
 
     assertEquals(
-      "<div class='definition'><pre><b>foo.bar</b><br>interfaceExtensionPointDocumentation.xml</pre></div><div class='content'><h2>Extension Point Implementation</h2><div class='definition'><pre>bar<br>public interface <b>MyExtension</b></pre></div><div class='content'>\n" +
+      "<div class=\"definition\"><pre><b>foo.bar</b><br/>interfaceExtensionPointDocumentation.xml</pre></div><div class=\"content\"><h2>Extension Point Implementation</h2><div class='definition'><pre>bar<br>public interface <b>MyExtension</b></pre></div><div class='content'>\n" +
       "   My Extension Javadoc.\n" +
       " </div><table class='sections'><p></table></div>",
       provider.generateDoc(docElement, getOriginalElement()));

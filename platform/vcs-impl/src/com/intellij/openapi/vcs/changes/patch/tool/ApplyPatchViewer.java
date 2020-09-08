@@ -32,13 +32,18 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntArrayList;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -110,7 +115,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     List<EditorEx> editors = Arrays.asList(myResultEditor, myPatchEditor);
     JComponent resultTitle = DiffUtil.createTitle(myPatchRequest.getResultTitle());
     JComponent patchTitle = DiffUtil.createTitle(myPatchRequest.getPatchTitle());
-    List<JComponent> titleComponents = DiffUtil.createSyncHeightComponents(Arrays.asList(resultTitle, patchTitle));
+    List<JComponent> titleComponents = Arrays.asList(resultTitle, patchTitle);
 
     myContentPanel = TwosideContentPanel.createFromHolders(holders);
     myContentPanel.setTitles(titleComponents);
@@ -391,7 +396,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     myContentPanel.repaintDivider();
   }
 
-  public boolean executeCommand(@Nullable String commandName,
+  public boolean executeCommand(@Nullable @NlsContexts.Command String commandName,
                                 @NotNull final Runnable task) {
     return myModel.executeMergeCommand(commandName, null, UndoConfirmationPolicy.DEFAULT, false, null, task);
   }
@@ -533,7 +538,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     }
 
     @NotNull
-    @CalledInAwt
+    @RequiresEdt
     private List<ApplyPatchChange> getSelectedChanges(@NotNull Side side) {
       EditorEx editor = side.select(myResultEditor, myPatchEditor);
       BitSet lines = DiffUtil.getSelectedLines(editor);
@@ -550,7 +555,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
     protected abstract boolean isEnabled(@NotNull ApplyPatchChange change);
 
-    @CalledWithWriteLock
+    @RequiresWriteLock
     protected abstract void apply(@NotNull List<? extends ApplyPatchChange> changes);
   }
 

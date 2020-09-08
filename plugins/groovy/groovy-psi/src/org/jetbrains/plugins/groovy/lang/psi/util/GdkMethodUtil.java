@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
-import com.intellij.openapi.util.NullableComputable;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.RecursionManager;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -12,7 +9,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,21 +43,22 @@ import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.unwrapClassT
  */
 public final class GdkMethodUtil {
 
-  public static final Set<String> COLLECTION_METHOD_NAMES = ContainerUtil.newHashSet(
+  public static final @NonNls Set<String> COLLECTION_METHOD_NAMES = Set.of(
     "each", "eachWithIndex", "any", "every", "reverseEach", "collect", "collectAll", "find", "findAll", "retainAll", "removeAll", "split",
     "groupBy", "groupEntriesBy", "findLastIndexOf", "findIndexValues", "findIndexOf"
   );
-  @NonNls private static final String WITH = "with";
-  @NonNls private static final String IDENTITY = "identity";
+  @NlsSafe private static final String WITH = "with";
+  @NlsSafe private static final String IDENTITY = "identity";
+  @NlsSafe private static final String TAP = "tap";
 
-  @NonNls public static final String EACH_WITH_INDEX = "eachWithIndex";
-  @NonNls public static final String INJECT = "inject";
-  @NonNls public static final String EACH_PERMUTATION = "eachPermutation";
-  @NonNls public static final String WITH_DEFAULT = "withDefault";
-  @NonNls public static final String SORT = "sort";
-  @NonNls public static final String WITH_STREAM = "withStream";
-  @NonNls public static final String WITH_STREAMS = "withStreams";
-  @NonNls public static final String WITH_OBJECT_STREAMS = "withObjectStreams";
+  @NlsSafe public static final String EACH_WITH_INDEX = "eachWithIndex";
+  @NlsSafe public static final String INJECT = "inject";
+  @NlsSafe public static final String EACH_PERMUTATION = "eachPermutation";
+  @NlsSafe public static final String WITH_DEFAULT = "withDefault";
+  @NlsSafe public static final String SORT = "sort";
+  @NlsSafe public static final String WITH_STREAM = "withStream";
+  @NlsSafe public static final String WITH_STREAMS = "withStreams";
+  @NlsSafe public static final String WITH_OBJECT_STREAMS = "withObjectStreams";
 
   private GdkMethodUtil() {
   }
@@ -113,10 +110,11 @@ public final class GdkMethodUtil {
   }
 
   public static boolean isWithName(String name) {
-    return WITH.equals(name) || IDENTITY.equals(name) || "tap".equals(name);
+    return WITH.equals(name) || IDENTITY.equals(name) || TAP.equals(name);
   }
 
   @Nullable
+  @NonNls
   public static String generateOriginInfo(PsiMethod method) {
     PsiClass cc = method.getContainingClass();
     if (cc == null) return null;

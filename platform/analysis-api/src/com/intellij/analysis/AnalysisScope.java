@@ -453,7 +453,7 @@ public class AnalysisScope {
   }
 
   @NotNull
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     switch (myType) {
       case CUSTOM:
         return myScope.getDisplayName();

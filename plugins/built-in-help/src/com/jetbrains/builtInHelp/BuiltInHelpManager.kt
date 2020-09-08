@@ -18,6 +18,7 @@ import java.net.InetAddress
 import java.net.URI
 import java.net.URISyntaxException
 import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 /**
  * Created by Egor.Malyshev on 7/18/2017.
@@ -29,7 +30,7 @@ class BuiltInHelpManager : HelpManager() {
 
     try {
       var url = "http://127.0.0.1:${BuiltInServerOptions.getInstance().effectiveBuiltInServerPort}/help/?${if (helpId != null) URLEncoder.encode(
-        helpId, "UTF-8")
+        helpId, StandardCharsets.UTF_8)
       else "top"}"
       val tryOpenWebSite = java.lang.Boolean.valueOf(Utils.getStoredValue(
         SettingsPage.OPEN_HELP_FROM_WEB, "true"))

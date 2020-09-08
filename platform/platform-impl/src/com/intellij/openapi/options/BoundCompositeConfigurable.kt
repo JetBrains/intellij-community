@@ -1,10 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options
 
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.layout.*
 
 abstract class BoundCompositeConfigurable<T : UnnamedConfigurable>(
-  displayName: String,
+  @NlsContexts.ConfigurableName displayName: String,
   helpTopic: String? = null
 ) : BoundConfigurable(displayName, helpTopic) {
   abstract fun createConfigurables(): List<T>
@@ -59,7 +60,7 @@ abstract class BoundCompositeConfigurable<T : UnnamedConfigurable>(
   }
 }
 
-abstract class BoundCompositeSearchableConfigurable<T : UnnamedConfigurable>(displayName: String, helpTopic: String, private val _id: String = helpTopic)
+abstract class BoundCompositeSearchableConfigurable<T : UnnamedConfigurable>(@NlsContexts.ConfigurableName displayName: String, helpTopic: String, private val _id: String = helpTopic)
   : BoundCompositeConfigurable<T>(displayName, helpTopic), SearchableConfigurable {
   override fun getId(): String = _id
 }

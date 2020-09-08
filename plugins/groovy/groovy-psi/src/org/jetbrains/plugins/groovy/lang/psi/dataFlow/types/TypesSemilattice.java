@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
@@ -164,6 +165,7 @@ class TypeDfaState {
   }
 
   @Override
+  @NonNls
   public String toString() {
     String evicted = myProhibitedCachingVars.isEmpty() ? "" : " (caching prohibited: " + myProhibitedCachingVars.toString() + ")";
     return myVarTypes.toString() + evicted;

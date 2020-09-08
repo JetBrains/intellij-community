@@ -3,13 +3,13 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.plugins.newui.ListPluginComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -32,7 +32,7 @@ public class WelcomeScreenUIManager {
   @NotNull
   private static Font loadFont() {
     @SuppressWarnings("SpellCheckingInspection")
-    String fontPath = "/fonts/Roboto-Light.ttf";
+    @NonNls String fontPath = "/fonts/Roboto-Light.ttf";
     URL url = AppUIUtil.class.getResource(fontPath);
     if (url == null) {
       Logger.getInstance(AppUIUtil.class).warn("Resource missing: " + fontPath);
@@ -57,26 +57,16 @@ public class WelcomeScreenUIManager {
   }
 
   public static Color getProjectsBackground() {
-    if (Registry.is("use.tabbed.welcome.screen")) {
-      return getMainAssociatedComponentBackground();
-    }
-    return JBColor.namedColor("WelcomeScreen.Projects.background", new JBColor(Gray.xFF, Gray.x39));
+    return getMainAssociatedComponentBackground();
   }
 
   public static Color getProjectsSelectionBackground(boolean hasFocus) {
-    if (Registry.is("use.tabbed.welcome.screen")) {
-      return ListPluginComponent.HOVER_COLOR; //use the same as plugins tab use
-    }
-    return hasFocus ? JBColor.namedColor("WelcomeScreen.Projects.selectionBackground", new JBColor(0x3875d6, 0x4b6eaf))
-                    : JBColor.namedColor("WelcomeScreen.Projects.selectionInactiveBackground", new JBColor(Gray.xDD, Gray.x45));
+    return ListPluginComponent.HOVER_COLOR; //use the same as plugins tab use
   }
 
   @NotNull
   public static Color getProjectsSelectionForeground(boolean isSelected, boolean hasFocus) {
-    if (Registry.is("use.tabbed.welcome.screen")) {
-      return UIUtil.getListForeground(); // do not change foreground for selection
-    }
-    return UIUtil.getListForeground(isSelected && hasFocus, true);// do not change foreground for selection when focused
+    return UIUtil.getListForeground(); // do not change foreground for selection
   }
 
   public static Color getMainAssociatedComponentBackground() {

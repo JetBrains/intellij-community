@@ -21,6 +21,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.images.search.ImageTagManager;
@@ -30,7 +31,6 @@ import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.List;
 
 public final class FilterByTagActionGroup extends ActionGroup implements PopupAction {
@@ -65,7 +65,7 @@ public final class FilterByTagActionGroup extends ActionGroup implements PopupAc
         ImageTagManager tagManager = ImageTagManager.getInstance(project);
 
         List<MyToggleAction> tagActions =
-          ContainerUtil.map(tagManager.getAllTags(), tag -> new MyToggleAction(view, new TagFilter(tag, tagManager)));
+          ContainerUtil.map(tagManager.getAllTags(), (@NlsSafe var tag) -> new MyToggleAction(view, new TagFilter(tag, tagManager)));
         group.add(new AnAction(IdeBundle.messagePointer("action.Anonymous.text.all")) {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e) {
@@ -94,7 +94,7 @@ public final class FilterByTagActionGroup extends ActionGroup implements PopupAc
         @Override
         public boolean isSelected(@NotNull AnActionEvent e) {
             TagFilter[] filters = myView.getTagFilters();
-            return filters != null && Arrays.stream(filters).anyMatch(f -> myFilter.getDisplayName().equals(f.getDisplayName()));
+            return filters != null && ContainerUtil.exists(filters, f -> myFilter.getDisplayName().equals(f.getDisplayName()));
         }
 
         @Override

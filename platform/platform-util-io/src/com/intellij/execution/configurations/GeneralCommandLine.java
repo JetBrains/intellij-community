@@ -9,6 +9,7 @@ import com.intellij.execution.Platform;
 import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
@@ -124,18 +125,16 @@ public class GeneralCommandLine implements UserDataHolder {
     return LoadingState.COMPONENTS_LOADED.isOccurred() ? EncodingManager.getInstance().getDefaultConsoleEncoding() : Charset.defaultCharset();
   }
 
-  @NotNull
-  public String getExePath() {
+  public @NotNull @NlsSafe String getExePath() {
     return myExePath;
   }
 
-  @NotNull
-  public GeneralCommandLine withExePath(@NotNull String exePath) {
+  public @NotNull GeneralCommandLine withExePath(@NotNull @NlsSafe String exePath) {
     myExePath = exePath.trim();
     return this;
   }
 
-  public void setExePath(@NotNull String exePath) {
+  public void setExePath(@NotNull @NlsSafe String exePath) {
     withExePath(exePath);
   }
 
@@ -179,7 +178,7 @@ public class GeneralCommandLine implements UserDataHolder {
   }
 
   @NotNull
-  public GeneralCommandLine withEnvironment(@NotNull String key, @NotNull String value) {
+  public GeneralCommandLine withEnvironment(@NonNls @NotNull String key, @NonNls @NotNull String value) {
     getEnvironment().put(key, value);
     return this;
   }
@@ -233,27 +232,27 @@ public class GeneralCommandLine implements UserDataHolder {
     return env;
   }
 
-  public void addParameters(String @NotNull ... parameters) {
+  public void addParameters(@NonNls String @NotNull ... parameters) {
     withParameters(parameters);
   }
 
-  public void addParameters(@NotNull List<String> parameters) {
+  public void addParameters(@NotNull List<@NonNls String> parameters) {
     withParameters(parameters);
   }
 
   @NotNull
-  public GeneralCommandLine withParameters(String @NotNull ... parameters) {
+  public GeneralCommandLine withParameters(@NotNull @NonNls String @NotNull ... parameters) {
     for (String parameter : parameters) addParameter(parameter);
     return this;
   }
 
   @NotNull
-  public GeneralCommandLine withParameters(@NotNull List<String> parameters) {
+  public GeneralCommandLine withParameters(@NotNull List<@NonNls String> parameters) {
     for (String parameter : parameters) addParameter(parameter);
     return this;
   }
 
-  public void addParameter(@NotNull String parameter) {
+  public void addParameter(@NonNls @NotNull String parameter) {
     myProgramParams.add(parameter);
   }
 
@@ -307,6 +306,7 @@ public class GeneralCommandLine implements UserDataHolder {
    *
    * @return single-string representation of this command line.
    */
+  @NlsSafe
   @NotNull
   public String getCommandLineString() {
     return getCommandLineString(null);
@@ -326,16 +326,10 @@ public class GeneralCommandLine implements UserDataHolder {
 
   @NotNull
   public List<String> getCommandLineList(@Nullable String exeName) {
-    List<String> commands = new ArrayList<>();
-    if (exeName != null) {
-      commands.add(exeName);
-    }
-    else if (myExePath != null) {
-      commands.add(myExePath);
-    }
-    else {
-      commands.add("<null>");
-    }
+    List<@NlsSafe String> commands = new ArrayList<>();
+    String exe = StringUtil.notNullize(exeName, StringUtil.notNullize(myExePath, "<null>"));
+    commands.add(exe);
+
     commands.addAll(myProgramParams.getList());
     return commands;
   }

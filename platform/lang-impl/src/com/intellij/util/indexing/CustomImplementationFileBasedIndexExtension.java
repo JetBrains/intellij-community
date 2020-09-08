@@ -17,4 +17,6 @@ public interface CustomImplementationFileBasedIndexExtension<K, V> {
   UpdatableIndex<K, V, FileContent> createIndexImplementation(@NotNull FileBasedIndexExtension<K, V> extension,
                                                               @NotNull IndexStorage<K, V> storage)
     throws StorageException, IOException;
+
+  default void handleInitializationError(@NotNull Throwable e) { }
 }

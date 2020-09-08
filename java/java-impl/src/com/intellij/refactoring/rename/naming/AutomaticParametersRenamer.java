@@ -54,7 +54,7 @@ public class AutomaticParametersRenamer extends AutomaticRenamer {
 
   @Override
   public String entityName() {
-    return "Parameter";
+    return JavaRefactoringBundle.message("automatic.parameter.renamer.entity.name");
   }
 
   @Override

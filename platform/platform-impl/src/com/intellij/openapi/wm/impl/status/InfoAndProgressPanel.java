@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventId;
@@ -20,11 +21,8 @@ import com.intellij.openapi.ui.panel.ProgressPanelBuilder;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.NlsContexts.PopupContent;
-import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
@@ -44,6 +42,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -340,7 +339,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     }
   }
 
-  public @NotNull Pair<String, String> setText(@Nullable String text, @Nullable String requestor) {
+  public @NotNull Pair<@NlsContexts.StatusBarText String, String> setText(@Nullable @NlsContexts.StatusBarText String text, @Nullable String requestor) {
     if (StringUtil.isEmpty(text) && !Objects.equals(requestor, myCurrentRequestor) && !EventLog.LOG_REQUESTOR.equals(requestor)) {
       return new Pair<>(myInfoPanel.getText(), myCurrentRequestor);
     }
@@ -354,7 +353,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     UIUtil.invokeLaterIfNeeded(() -> myRefreshIcon.setVisible(visible));
   }
 
-  void setRefreshToolTipText(String tooltip) {
+  void setRefreshToolTipText(@NlsContexts.Tooltip String tooltip) {
     myRefreshIcon.setToolTipText(tooltip);
   }
 
@@ -665,7 +664,9 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
         ProgressSuspender suspender = getSuspender();
         suspendButton.setVisible(suspender != null);
         if (suspender != null) {
-          String toolTipText = suspender.isSuspended() ? "Resume" : "Pause";
+          String toolTipText = suspender.isSuspended()
+                               ? IdeBundle.message("comment.text.resume")
+                               : IdeBundle.message("comment.text.pause");
           if (!toolTipText.equals(suspendButton.getToolTipText())) {
             updateProgressIcon();
             if (suspender.isSuspended()) {
@@ -980,10 +981,10 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
       myMultiProcessLink.setVisible(showPopup || size > 1);
 
       if (showPopup) {
-        myMultiProcessLink.setText("Hide processes (" + size + ")");
+        myMultiProcessLink.setText(IdeBundle.message("link.hide.processes", size));
       }
       else if (size > 1) {
-        myMultiProcessLink.setText("Show all (" + size + ")");
+        myMultiProcessLink.setText(IdeBundle.message("link.show.all.processes", size));
       }
 
       doLayout();

@@ -69,7 +69,7 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
   }
 
   private static void invoke(@NotNull PsiMethod method, @NotNull Project project, @Nullable final Editor editor) {
-    PsiMethod newMethod = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
+    PsiMethod newMethod = SuperMethodWarningUtil.checkSuperMethod(method);
     if (newMethod == null) return;
 
     if (!newMethod.equals(method)) {

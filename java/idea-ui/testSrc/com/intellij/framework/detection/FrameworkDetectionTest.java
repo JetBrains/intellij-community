@@ -6,7 +6,9 @@ import com.intellij.facet.FacetManager;
 import com.intellij.facet.mock.*;
 import com.intellij.framework.detection.impl.FacetBasedDetectedFrameworkDescription;
 import com.intellij.framework.detection.impl.FrameworkDetectionManager;
+import com.intellij.ide.plugins.DynamicPluginsTestUtilKt;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
@@ -49,7 +51,11 @@ public class FrameworkDetectionTest extends FrameworkDetectionTestCase {
   public void testDynamicDetector() {
     VirtualFile file = createFrameworkConfig("my-config.xml");
     assertNoFrameworksDetected();
-    FrameworkDetector.EP_NAME.getPoint().registerExtension(new MockFacetDetector(), getTestRootDisposable());
+
+    Disposer.register(getTestRootDisposable(), DynamicPluginsTestUtilKt.loadExtensionWithText(
+      "<framework.detector implementation=\"" + MockFacetDetector.class.getName() + "\"/>",
+      MockFacetDetector.class.getClassLoader()));
+
     assertFrameworkDetectedIn(file);
   }
 

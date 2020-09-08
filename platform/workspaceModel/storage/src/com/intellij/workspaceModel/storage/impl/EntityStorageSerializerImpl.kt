@@ -10,11 +10,12 @@ import com.esotericsoftware.kryo.serializers.FieldSerializer
 import com.google.common.collect.HashBiMap
 import com.google.common.collect.HashMultimap
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.util.SmartList
 import com.intellij.util.containers.*
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.containers.ImmutableIntIntUniqueBiMap
-import com.intellij.workspaceModel.storage.impl.containers.ImmutablePositiveIntIntBiMap
-import com.intellij.workspaceModel.storage.impl.containers.ImmutablePositiveIntIntMultiMap
+import com.intellij.workspaceModel.storage.impl.containers.ImmutableNonNegativeIntIntBiMap
+import com.intellij.workspaceModel.storage.impl.containers.ImmutableNonNegativeIntIntMultiMap
 import com.intellij.workspaceModel.storage.impl.containers.LinkedBidirectionalMap
 import com.intellij.workspaceModel.storage.impl.indices.EntityStorageInternalIndex
 import com.intellij.workspaceModel.storage.impl.indices.MultimapStorageIndex
@@ -28,8 +29,10 @@ import java.io.OutputStream
 import java.util.*
 import java.util.HashMap
 import kotlin.collections.ArrayList
+import kotlin.reflect.KClass
 import kotlin.reflect.KVisibility
 import kotlin.reflect.full.memberProperties
+import kotlin.reflect.jvm.jvmErasure
 import kotlin.reflect.jvm.jvmName
 
 class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver,
@@ -149,6 +152,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
     // TODO Scan OCSerializer for useful kryo settings and tricks
     kryo.register(java.util.ArrayList::class.java).instantiator = ObjectInstantiator { ArrayList<Any>() }
     kryo.register(HashMap::class.java).instantiator = ObjectInstantiator { HashMap<Any, Any>() }
+    kryo.register(SmartList::class.java).instantiator = ObjectInstantiator { SmartList<Any>() }
     kryo.register(LinkedHashMap::class.java).instantiator = ObjectInstantiator { LinkedHashMap<Any, Any>() }
     kryo.register(BidirectionalMap::class.java).instantiator = ObjectInstantiator { BidirectionalMap<Any, Any>() }
     kryo.register(HashSet::class.java).instantiator = ObjectInstantiator { HashSet<Any>() }
@@ -163,11 +167,11 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
     kryo.register(ByteArray::class.java)
     kryo.register(ImmutableEntityFamily::class.java)
     kryo.register(RefsTable::class.java)
-    kryo.register(ImmutablePositiveIntIntBiMap::class.java)
+    kryo.register(ImmutableNonNegativeIntIntBiMap::class.java)
     kryo.register(ImmutableIntIntUniqueBiMap::class.java)
     kryo.register(VirtualFileIndex::class.java)
     kryo.register(EntityStorageInternalIndex::class.java)
-    kryo.register(ImmutablePositiveIntIntMultiMap.ByList::class.java)
+    kryo.register(ImmutableNonNegativeIntIntMultiMap.ByList::class.java)
     kryo.register(IntArray::class.java)
     kryo.register(Pair::class.java)
     kryo.register(MultimapStorageIndex::class.java)
@@ -224,16 +228,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
    */
   private fun recursiveClassFinder(kryo: Kryo, entity: Any, simpleClasses: MutableSet<TypeInfo>, objectClasses: MutableSet<TypeInfo>) {
     val kClass = entity::class
-    val typeInfo = TypeInfo(kClass.jvmName, typesResolver.getPluginId(kClass.java))
-    if (kryo.classResolver.getRegistration(kClass.java) != null) return
-
-    val objectInstance = kClass.objectInstance
-    if (objectInstance != null) {
-      objectClasses += typeInfo
-    }
-    else {
-      simpleClasses += typeInfo
-    }
+    if (registerKClass(kClass, kryo, objectClasses, simpleClasses)) return
 
     kClass.memberProperties.forEach {
       val retType = (it.returnType as Any).toString()
@@ -244,7 +239,10 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
       ) return@forEach
 
       if (it.visibility != KVisibility.PUBLIC) return@forEach
-      val property = it.getter.call(entity) ?: return@forEach
+      val property = it.getter.call(entity) ?: run {
+        registerKClass(it.returnType.jvmErasure, kryo, objectClasses, simpleClasses)
+        return@forEach
+      }
       recursiveClassFinder(kryo, property, simpleClasses, objectClasses)
 
       if (property is List<*>) {
@@ -255,9 +253,25 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
     }
   }
 
+  private fun registerKClass(kClass: KClass<out Any>,
+                             kryo: Kryo,
+                             objectClasses: MutableSet<TypeInfo>,
+                             simpleClasses: MutableSet<TypeInfo>): Boolean {
+    val typeInfo = TypeInfo(kClass.jvmName, typesResolver.getPluginId(kClass.java))
+    if (kryo.classResolver.getRegistration(kClass.java) != null) return true
+
+    val objectInstance = kClass.objectInstance
+    if (objectInstance != null) {
+      objectClasses += typeInfo
+    }
+    else {
+      simpleClasses += typeInfo
+    }
+    return false
+  }
+
   override fun serializeCache(stream: OutputStream, storage: WorkspaceEntityStorage) {
     storage as WorkspaceEntityStorageImpl
-    storage.assertConsistencyInStrictMode()
 
     val output = Output(stream, KRYO_BUFFER_SIZE)
     try {
@@ -302,7 +316,10 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
 
       // Write indexes
       kryo.writeClassAndObject(output, storage.indexes.softLinks)
-      kryo.writeClassAndObject(output, storage.indexes.virtualFileIndex)
+
+      kryo.writeClassAndObject(output, storage.indexes.virtualFileIndex.entityId2VirtualFileUrlInfo)
+      kryo.writeClassAndObject(output, storage.indexes.virtualFileIndex.vfu2VirtualFileUrlInfo)
+
       kryo.writeClassAndObject(output, storage.indexes.entitySourceIndex)
       kryo.writeClassAndObject(output, storage.indexes.persistentIdIndex)
     }
@@ -349,7 +366,11 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
 
       // Read indexes
       val softLinks = kryo.readClassAndObject(input) as MultimapStorageIndex
-      val virtualFileIndex = kryo.readClassAndObject(input) as VirtualFileIndex
+
+      val entityId2VirtualFileUrlInfo = kryo.readClassAndObject(input) as HashMap<EntityId, MutableList<VirtualFileIndex.VirtualFileUrlInfo>>
+      val vfu2VirtualFileUrlInfo = kryo.readClassAndObject(input) as HashMap<VirtualFileUrl, MutableList<VirtualFileIndex.VirtualFileUrlInfo>>
+      val virtualFileIndex = VirtualFileIndex(entityId2VirtualFileUrlInfo, vfu2VirtualFileUrlInfo)
+
       val entitySourceIndex = kryo.readClassAndObject(input) as EntityStorageInternalIndex<EntitySource>
       val persistentIdIndex = kryo.readClassAndObject(input) as EntityStorageInternalIndex<PersistentEntityId<*>>
       val storageIndexes = StorageIndexes(softLinks, virtualFileIndex, entitySourceIndex, persistentIdIndex)

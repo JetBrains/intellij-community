@@ -19,10 +19,13 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.psi.PsiElement;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -31,7 +34,7 @@ import java.util.List;
 class B implements AnnotationBuilder {
   @NotNull
   private final AnnotationHolderImpl myHolder;
-  private final String message;
+  private final @Nls String message;
   @NotNull
   private final PsiElement myCurrentElement;
   @NotNull
@@ -45,12 +48,12 @@ class B implements AnnotationBuilder {
   private TextAttributesKey textAttributes;
   private ProblemHighlightType highlightType;
   private Boolean needsUpdateOnTyping;
-  private String tooltip;
+  private @NlsContexts.Tooltip String tooltip;
   private List<FixB> fixes;
   private boolean created;
   private final Throwable myDebugCreationPlace;
 
-  B(@NotNull AnnotationHolderImpl holder, @NotNull HighlightSeverity severity, String message, @NotNull PsiElement currentElement) {
+  B(@NotNull AnnotationHolderImpl holder, @NotNull HighlightSeverity severity, @Nls String message, @NotNull PsiElement currentElement) {
     myHolder = holder;
     this.severity = severity;
     this.message = message;
@@ -62,7 +65,7 @@ class B implements AnnotationBuilder {
                            ThrowableInterner.intern(new Throwable()) : null;
   }
 
-  private void assertNotSet(Object o, String description) {
+  private void assertNotSet(Object o, @NonNls String description) {
     if (o != null) {
       markNotAbandoned(); // it crashed, not abandoned
       throw new IllegalStateException(description + " was set already");
@@ -139,7 +142,7 @@ class B implements AnnotationBuilder {
     }
 
     @Override
-    public String toString() {
+    public @NonNls String toString() {
       return fix+(range==null?"":" at "+range)+(batch == null ? "" : " batch")+(universal == null ? "" : " universal");
     }
   }
@@ -341,8 +344,9 @@ class B implements AnnotationBuilder {
   private static String omitIfEmpty(Object o, String name) {
     return o == null ? "" : ", " + name + "=" + o;
   }
+
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return "Builder{" +
            "message='" + message + '\'' +
            ", myCurrentElement=" + myCurrentElement +

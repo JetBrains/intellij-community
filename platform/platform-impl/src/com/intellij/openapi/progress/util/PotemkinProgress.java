@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +36,7 @@ public class PotemkinProgress extends ProgressWindow implements PingProgress {
   private final LinkedBlockingQueue<InputEvent> myInputEvents = new LinkedBlockingQueue<>();
   private final LinkedBlockingQueue<InvocationEvent> myInvocationEvents = new LinkedBlockingQueue<>();
 
-  public PotemkinProgress(@NotNull String title, @Nullable Project project, @Nullable JComponent parentComponent,
+  public PotemkinProgress(@NotNull @NlsContexts.ProgressTitle String title, @Nullable Project project, @Nullable JComponent parentComponent,
                           @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText) {
     super(cancelText != null,false, project, parentComponent, cancelText);
     setTitle(title);

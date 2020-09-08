@@ -5,6 +5,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.MathUtil;
 import com.intellij.util.NotNullProducer;
 import org.jetbrains.annotations.NotNull;
@@ -160,7 +161,7 @@ public final class ColorUtil {
   }
 
   @NotNull
-  public static String toHtmlColor(@NotNull final Color c) {
+  public static @NlsSafe String toHtmlColor(@NotNull final Color c) {
     return "#"+toHex(c);
   }
 

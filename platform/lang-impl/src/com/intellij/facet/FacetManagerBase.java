@@ -12,6 +12,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ProjectLoadingErrorsNotifier;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +26,7 @@ import java.util.Objects;
 @ApiStatus.Internal
 public abstract class FacetManagerBase extends FacetManager {
   private static final Logger LOG = Logger.getInstance(FacetManagerBase.class);
+  public static final String FEATURE_TYPE = "com.intellij.facetType";
 
   @Override
   @NotNull
@@ -126,7 +128,7 @@ public abstract class FacetManagerBase extends FacetManager {
   @ApiStatus.Internal
   @NotNull
   public static InvalidFacet createInvalidFacet(@NotNull Module module, @NotNull FacetState state, @Nullable Facet<?> underlyingFacet,
-                                                @NotNull String errorMessage,
+                                                @NotNull @NlsContexts.DialogMessage String errorMessage,
                                                 boolean unknownType, boolean reportError) {
     Project project = module.getProject();
     final InvalidFacetType type = InvalidFacetType.getInstance();
@@ -138,7 +140,7 @@ public abstract class FacetManagerBase extends FacetManager {
         FacetLoadingErrorDescription description = new FacetLoadingErrorDescription(facet);
         ProjectLoadingErrorsNotifier.getInstance(project).registerError(description);
         if (unknownType) {
-          UnknownFeaturesCollector.getInstance(project).registerUnknownFeature("com.intellij.facetType", state.getFacetType(), "Facet");
+          UnknownFeaturesCollector.getInstance(project).registerUnknownFeature(FEATURE_TYPE, state.getFacetType(), "Facet");
         }
       }
     }

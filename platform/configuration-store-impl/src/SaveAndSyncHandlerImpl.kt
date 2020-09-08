@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.processOpenedProjects
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
@@ -33,8 +34,8 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.project.stateStore
 import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.EdtScheduledExecutorService
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.CalledInAwt
 import java.beans.PropertyChangeListener
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -108,7 +109,7 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private fun addListeners() {
     val settings = GeneralSettings.getInstance()
     val idleListener = Runnable {
@@ -189,7 +190,7 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
    * On app or project closing save is performed. In EDT. It means that if there is already running save in a pooled thread,
    * deadlock may be occurred because some save activities requires EDT with modality state "not modal" (by intention).
    */
-  @CalledInAwt
+  @RequiresEdt
   override fun saveSettingsUnderModalProgress(componentManager: ComponentManager): Boolean {
     if (!ApplicationManager.getApplication().isDispatchThread) {
       throw IllegalStateException(
@@ -322,6 +323,7 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
 
 private val saveAppAndProjectsSettingsTask = SaveAndSyncHandler.SaveTask()
 
+@NlsContexts.DialogTitle
 private fun getProgressTitle(componentManager: ComponentManager): String {
   return when {
     componentManager is Application -> CommonBundle.message("title.save.app")

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.SmartList;
@@ -31,7 +32,7 @@ public class DslActivationStatus implements PersistentStateComponent<DslActivati
     @Attribute
     public Status status;
     @Attribute
-    public String error;
+    public @NlsSafe String error;
 
     public Entry() {
     }

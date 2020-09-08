@@ -1,8 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -36,12 +38,12 @@ public abstract class ErrorReportSubmitter implements PluginAware {
    * @return an action text to be used in Error Reporter user interface, e.g. "Report to JetBrains".
    */
   @NotNull
-  public abstract String getReportActionText();
+  public abstract @NlsActions.ActionText String getReportActionText();
 
   /**
    * @return a text of a privacy notice to be shown in the dialog (in HTML; links are allowed).
    */
-  public @Nullable String getPrivacyNoticeText() {
+  public @Nullable @DetailedDescription String getPrivacyNoticeText() {
     return null;
   }
 
@@ -73,7 +75,7 @@ public abstract class ErrorReportSubmitter implements PluginAware {
   public boolean submit(IdeaLoggingEvent @NotNull [] events,
                         @Nullable String additionalInfo,
                         @NotNull Component parentComponent,
-                        @NotNull Consumer<SubmittedReportInfo> consumer) {
+                        @NotNull Consumer<? super SubmittedReportInfo> consumer) {
     return trySubmitAsync(events, additionalInfo, parentComponent, consumer);
   }
 
@@ -82,7 +84,7 @@ public abstract class ErrorReportSubmitter implements PluginAware {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   @SuppressWarnings("ALL")
-  public boolean trySubmitAsync(IdeaLoggingEvent[] events, String info, Component parent, Consumer<SubmittedReportInfo> consumer) {
+  public boolean trySubmitAsync(IdeaLoggingEvent[] events, String info, Component parent, Consumer<? super SubmittedReportInfo> consumer) {
     submitAsync(events, info, parent, consumer);
     return true;
   }
@@ -91,7 +93,7 @@ public abstract class ErrorReportSubmitter implements PluginAware {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   @SuppressWarnings("ALL")
-  public void submitAsync(IdeaLoggingEvent[] events, String info, Component parent, Consumer<SubmittedReportInfo> consumer) {
+  public void submitAsync(IdeaLoggingEvent[] events, String info, Component parent, Consumer<? super SubmittedReportInfo> consumer) {
     consumer.consume(submit(events, parent));
   }
 

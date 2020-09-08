@@ -3,6 +3,7 @@ package com.intellij.largeFilesEditor.editor;
 
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
+import org.jetbrains.annotations.NonNls;
 
 class LargeFileEditorState implements FileEditorState {
   long caretPageNumber = 0;
@@ -19,7 +20,7 @@ class LargeFileEditorState implements FileEditorState {
   }
 
   @Override
-  public String toString() {
-    return "[p" + caretPageNumber + ",s" + caretSymbolOffsetInPage + "]";  // 'p' - Page, 's' - Symbol offset in Page
+  public @NonNls String toString() {
+    return "[p" + caretPageNumber + ",s" + caretSymbolOffsetInPage + "]";  // 'p' - Page number, 's' - Symbol offset in Page
   }
 }

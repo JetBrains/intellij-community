@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -23,6 +24,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ui.Util;
 import com.intellij.openapi.roots.JavaModuleExternalPaths;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
@@ -55,6 +57,7 @@ public class JavadocEditor extends ModuleElementsEditor {
   }
 
   @Override
+  @NlsContexts.ConfigurableName
   public String getDisplayName() {
     return getName();
   }
@@ -125,12 +128,13 @@ public class JavadocEditor extends ModuleElementsEditor {
       }).setRemoveAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
-          final List removedItems = TableUtil.removeSelectedItems(myTable);
+          final List<Object[]> removedItems = TableUtil.removeSelectedItems(myTable);
           if (removedItems.size() > 0) {
             saveData();
           }
         }
-      }).setButtonComparator("Add", JavaUiBundle.message("module.javadoc.add.url.button"), "Remove").createPanel();
+      }).setButtonComparator(CommonBundle.message("button.add"), JavaUiBundle.message("module.javadoc.add.url.button"),
+                             CommonBundle.message("button.remove")).createPanel();
 
     final JPanel mainPanel = new JPanel(new BorderLayout());
     mainPanel.add(tablePanel, BorderLayout.CENTER);
@@ -185,7 +189,7 @@ public class JavadocEditor extends ModuleElementsEditor {
     }
 
     @Override
-    public Class getColumnClass(int columnIndex) {
+    public Class<TableItem> getColumnClass(int columnIndex) {
       return TableItem.class;
     }
 
@@ -208,7 +212,7 @@ public class JavadocEditor extends ModuleElementsEditor {
     }
   }
 
-  private static String getName() {
+  private static @NlsContexts.ConfigurableName String getName() {
     return JavaUiBundle.message("module.javadoc.title");
   }
 }

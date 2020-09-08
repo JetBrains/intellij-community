@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.versionBrowser;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.SyncDateFormat;
@@ -36,7 +37,7 @@ public class ChangeBrowserSettings {
   public String CHANGE_AFTER = "";
 
   public boolean USE_USER_FILTER = false;
-  public String USER = "";
+  public @NlsSafe String USER = "";
   public boolean STOP_ON_COPY = false;
 
   @Transient public boolean STRICTLY_AFTER = false;

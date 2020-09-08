@@ -18,6 +18,7 @@ package com.intellij.dvcs.push;
 import com.intellij.dvcs.push.ui.PushTargetEditorListener;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,7 @@ public abstract class PushTargetPanel<T extends PushTarget> extends JPanel {
   abstract public void render(@NotNull ColoredTreeCellRenderer renderer,
                               boolean isSelected,
                               boolean isActive,
-                              @Nullable String forceRenderedText);
+                              @Nullable @Nls String forceRenderedText);
 
   @Nullable
   abstract public T getValue();

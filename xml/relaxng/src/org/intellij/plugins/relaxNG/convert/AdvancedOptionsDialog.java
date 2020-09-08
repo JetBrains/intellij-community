@@ -35,7 +35,7 @@ public class AdvancedOptionsDialog extends DialogWrapper {
 
   protected AdvancedOptionsDialog(Project project, SchemaType inputType, SchemaType outputType) {
     super(project, false);
-    setTitle(RelaxngBundle.message("advanced.conversion.options"));
+    setTitle(RelaxngBundle.message("relaxng.convert-schema.advanced-options.dialog.title"));
 
     if (inputType == SchemaType.DTD) {
       myInputOptions = new AdvancedDtdOptions();

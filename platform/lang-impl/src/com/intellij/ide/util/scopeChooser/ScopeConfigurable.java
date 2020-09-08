@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
@@ -53,7 +54,7 @@ public class ScopeConfigurable extends NamedConfigurable<NamedScope> {
 
   @Override
   public void setDisplayName(final String name) {
-    if (Comparing.strEqual(myScope.getName(), name)){
+    if (Comparing.strEqual(myScope.getScopeId(), name)){
       return;
     }
     final PackageSet packageSet = myScope.getValue();
@@ -62,17 +63,18 @@ public class ScopeConfigurable extends NamedConfigurable<NamedScope> {
 
   @Override
   public NamedScope getEditableObject() {
-    return new NamedScope(myScope.getName(), myIcon, myPanel.getCurrentScope());
+    return new NamedScope(myScope.getScopeId(), myIcon, myPanel.getCurrentScope());
   }
 
   @Override
   public String getBannerSlogan() {
-    return IdeBundle.message("scope.banner.text", myScope.getName());
+    return IdeBundle.message("scope.banner.text", myScope.getScopeId());
   }
 
   @Override
   public String getDisplayName() {
-    return myScope.getName();
+    @NlsSafe String id = myScope.getScopeId();
+    return id;
   }
 
   @NotNull
@@ -122,7 +124,7 @@ public class ScopeConfigurable extends NamedConfigurable<NamedScope> {
     try {
       myPanel.apply();
       final PackageSet packageSet = myPanel.getCurrentScope();
-      myScope = new NamedScope(myScope.getName(), myIcon, packageSet);
+      myScope = new NamedScope(myScope.getScopeId(), myIcon, packageSet);
       myPackageSet = packageSet != null ? packageSet.getText() : null;
       myShareScope = mySharedCheckbox.isSelected();
     }

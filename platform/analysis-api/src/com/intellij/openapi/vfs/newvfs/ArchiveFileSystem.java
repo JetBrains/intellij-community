@@ -21,6 +21,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.function.Function;
 
+import static com.intellij.openapi.util.Pair.pair;
+
 /**
  * Common interface of archive-based file systems (jar://, phar:// etc).
  */
@@ -201,10 +203,10 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
   private final Function<VirtualFile, Pair<byte[], IOException>> myContentGetter = ManagingFS.getInstance().accessDiskWithCheckCanceled(
     file -> {
       try {
-        return Pair.create(getHandler(file).contentsToByteArray(getRelativePath(file)), null);
+        return pair(getHandler(file).contentsToByteArray(getRelativePath(file)), null);
       }
       catch (IOException e) {
-        return Pair.create(null, e);
+        return pair(null, e);
       }
     });
 

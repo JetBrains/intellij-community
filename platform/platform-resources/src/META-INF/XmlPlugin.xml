@@ -27,6 +27,7 @@
     <extensionPoint name="xml.startTagEndToken" interface="com.intellij.psi.xml.StartTagEndTokenProvider" dynamic="true"/>
     <extensionPoint name="xml.schemaProvider" interface="com.intellij.xml.XmlSchemaProvider" dynamic="true"/>
     <extensionPoint name="xml.xmlExtension" interface="com.intellij.xml.XmlExtension" dynamic="true"/>
+    <extensionPoint name="xml.xmlTypedHandlersAdditionalSupport" interface="com.intellij.openapi.editor.XmlTypedHandlersAdditionalSupport" dynamic="true"/>
     <extensionPoint name="xml.namespaceHelper" interface="com.intellij.xml.XmlNamespaceHelper" dynamic="true"/>
     <extensionPoint name="xml.tagNameProvider" interface="com.intellij.xml.XmlTagNameProvider" dynamic="true"/>
     <extensionPoint name="xml.fileNSInfoProvider" interface="com.intellij.psi.xml.XmlFileNSInfoProvider" dynamic="true"/>
@@ -389,7 +390,7 @@
                      enabledByDefault="true" level="ERROR" runForWholeFile="true" unfair="true"
                      implementationClass="com.intellij.xml.util.XmlInvalidIdInspection"/>
     <localInspection language="XML" shortName="XmlWrongRootElement"
-                     bundle="messages.XmlBundle" key="xml.inspection.wrong.root.element"
+                     bundle="messages.XmlBundle" key="xml.inspections.wrong.root.element"
                      groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.codeInspection.htmlInspections.XmlWrongRootElementInspection"/>
@@ -423,11 +424,11 @@
                      groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.xml.util.CheckValidXmlInScriptBodyInspection"/>
     <localInspection language="XML" shortName="RequiredAttributes" enabledByDefault="true" level="WARNING"
-                     bundle="messages.InspectionsBundle" key="inspection.required.attributes.display.name"
+                     bundle="messages.XmlBundle" key="xml.inspections.required.attributes.display.name"
                      groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection"/>
     <localInspection language="HTML" shortName="HtmlExtraClosingTag" enabledByDefault="true" level="WARNING"
-                     bundle="messages.XmlBundle" key="html.inspection.extra.closing.tag"
+                     bundle="messages.XmlBundle" key="html.inspections.extra.closing.tag"
                      groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.codeInspection.htmlInspections.HtmlExtraClosingTagInspection"/>
     <localInspection language="HTML" shortName="HtmlUnknownTag" enabledByDefault="true" level="WARNING"
@@ -595,6 +596,5 @@
                                  anyReferenceClass="true"
                                  targetClass="com.intellij.model.Symbol"
                                  implementationClass="com.intellij.xml.impl.XmlNamedReferenceProvider"/>
-    <notificationAllowlist groupIds="URL does not respond notification"/>
   </extensions>
 </idea-plugin>

@@ -13,7 +13,6 @@ import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer;
 import com.intellij.diff.tools.util.text.TwosideTextDiffProvider;
 import com.intellij.diff.util.*;
-import com.intellij.diff.util.Range;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -30,8 +29,13 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DirtyUI;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -73,7 +77,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void onInit() {
     super.onInit();
     myContentPanel.setPainter(new MyDividerPainter());
@@ -81,7 +85,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void onDispose() {
     myModel.clear();
     myFoldingModel.destroy();
@@ -133,14 +137,14 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void processContextHints() {
     super.processContextHints();
     myInitialScrollHelper.processContext(myRequest);
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void updateContextHints() {
     super.updateContextHints();
     myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
@@ -265,7 +269,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   //
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void onBeforeDocumentChange(@NotNull DocumentEvent e) {
     super.onBeforeDocumentChange(e);
 
@@ -279,7 +283,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     myModel.handleBeforeDocumentChange(side, e);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected boolean doScrollToChange(@NotNull ScrollToPolicy scrollToPolicy) {
     SimpleDiffChange targetChange = scrollToPolicy.select(getNonSkippedDiffChanges());
     if (targetChange == null) targetChange = scrollToPolicy.select(getDiffChanges());
@@ -381,7 +385,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   @NotNull
-  @CalledInAwt
+  @RequiresEdt
   protected List<SimpleDiffChange> getSelectedChanges(@NotNull Side side) {
     EditorEx editor = getEditor(side);
     BitSet lines = DiffUtil.getSelectedLines(editor);
@@ -395,7 +399,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   }
 
   @Nullable
-  @CalledInAwt
+  @RequiresEdt
   protected SimpleDiffChange getSelectedChange(@NotNull Side side) {
     int caretLine = getEditor(side).getCaretModel().getLogicalPosition().line;
 
@@ -501,7 +505,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     @Nullable
     protected abstract Icon getIcon(@NotNull Side side);
 
-    @CalledWithWriteLock
+    @RequiresWriteLock
     protected abstract void doPerform(@NotNull AnActionEvent e, @NotNull Side side, @NotNull List<SimpleDiffChange> changes);
   }
 
@@ -530,7 +534,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       return isEditable(Side.LEFT) && isEditable(Side.RIGHT);
     }
 
-    @CalledWithWriteLock
+    @RequiresWriteLock
     protected abstract void apply(@NotNull List<SimpleDiffChange> changes);
   }
 
@@ -589,7 +593,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     }
   }
 
-  @CalledWithWriteLock
+  @RequiresWriteLock
   public void replaceChange(@NotNull SimpleDiffChange change, @NotNull final Side sourceSide) {
     if (!change.isValid()) return;
     Side outputSide = sourceSide.other();
@@ -600,7 +604,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     myModel.destroyChange(change);
   }
 
-  @CalledWithWriteLock
+  @RequiresWriteLock
   public void appendChange(@NotNull SimpleDiffChange change, @NotNull final Side sourceSide) {
     if (!change.isValid()) return;
     if (change.getStartLine(sourceSide) == change.getEndLine(sourceSide)) return;

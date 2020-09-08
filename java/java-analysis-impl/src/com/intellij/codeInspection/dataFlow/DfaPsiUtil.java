@@ -291,7 +291,7 @@ public final class DfaPsiUtil {
     final PsiCodeBlock body = constructor.getBody();
     if (body == null) return Collections.emptySet();
 
-    return CachedValuesManager.getCachedValue(constructor, new CachedValueProvider<Set<PsiField>>() {
+    return CachedValuesManager.getCachedValue(constructor, new CachedValueProvider<>() {
       @NotNull
       @Override
       public Result<Set<PsiField>> compute() {
@@ -345,15 +345,17 @@ public final class DfaPsiUtil {
           }
 
           @Override
-          protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull InstructionVisitor visitor, @NotNull DfaInstructionState instructionState) {
+          protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull InstructionVisitor visitor,
+                                                                      @NotNull DfaInstructionState instructionState) {
             Instruction instruction = instructionState.getInstruction();
             if (currentBlock == body &&
                 (isCallExposingNonInitializedFields(instruction) ||
-                instruction instanceof ReturnInstruction && !((ReturnInstruction)instruction).isViaException())) {
+                 instruction instanceof ReturnInstruction && !((ReturnInstruction)instruction).isViaException())) {
               for (PsiField field : containingClass.getFields()) {
                 if (!instructionState.getMemoryState().isNotNull(getFactory().getVarFactory().createVariableValue(field))) {
                   map.put(field, false);
-                } else if (!map.containsKey(field)) {
+                }
+                else if (!map.containsKey(field)) {
                   map.put(field, true);
                 }
               }
@@ -392,7 +394,7 @@ public final class DfaPsiUtil {
       return MultiMap.empty();
     }
 
-    return CachedValuesManager.getCachedValue(psiClass, new CachedValueProvider<MultiMap<PsiField, PsiExpression>>() {
+    return CachedValuesManager.getCachedValue(psiClass, new CachedValueProvider<>() {
       @NotNull
       @Override
       public Result<MultiMap<PsiField, PsiExpression>> compute() {

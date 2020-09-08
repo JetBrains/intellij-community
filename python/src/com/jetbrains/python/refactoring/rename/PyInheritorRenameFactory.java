@@ -61,7 +61,7 @@ public class PyInheritorRenameFactory implements AutomaticRenamerFactory {
 
     @Override
     public String entityName() {
-      return "Inheritor Class";
+      return PyBundle.message("refactoring.rename.inheritor.class.entity.name");
     }
   }
 }

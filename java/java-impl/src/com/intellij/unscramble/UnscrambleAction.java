@@ -16,6 +16,7 @@
 package com.intellij.unscramble;
 
 import com.intellij.diagnostic.IdeErrorsDialog;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -38,7 +39,7 @@ public final class UnscrambleAction extends AnAction implements DumbAware {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     String message = e.getData(IdeErrorsDialog.CURRENT_TRACE_KEY);
     if (message != null) {
-      AnalyzeStacktraceUtil.addConsole(project, null, "<Stacktrace>", message);
+      AnalyzeStacktraceUtil.addConsole(project, null, JavaBundle.message("unscramble.unscrambled.stacktrace.tab"), message);
     }
     else {
       new UnscrambleDialog(project).show();

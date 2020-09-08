@@ -2,7 +2,9 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.CommonBundle;
+import com.intellij.core.CoreBundle;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,8 +17,8 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
+import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -178,21 +180,20 @@ public final class PluginInstaller {
     PluginStateManager.fireState(descriptor, true);
   }
 
-  public static @Nullable Path installWithoutRestart(@NotNull Path sourceFile, IdeaPluginDescriptorImpl descriptor, Component parent) {
-    Ref<IOException> ref = new Ref<>();
+  private static @Nullable Path installWithoutRestart(@NotNull Path sourceFile, IdeaPluginDescriptorImpl descriptor, Component parent) {
+    Ref<Throwable> ref = new Ref<>();
     Ref<Path> refTarget = new Ref<>();
+    String pluginName = descriptor.getName();
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       try {
         refTarget.set(unpackPlugin(sourceFile, Paths.get(PathManager.getPluginsPath())));
       }
-      catch (IOException e) {
+      catch (Throwable e) {
+        LOG.warn("Plugin " + descriptor + " failed to install without restart. " + e.getMessage(), e);
         ref.set(e);
       }
-    }, IdeBundle.message("progress.title.installing.plugin"), false, null, parent instanceof JComponent ? (JComponent)parent : null);
-    IOException exception = ref.get();
-    if (exception != null) {
-      Messages.showErrorDialog(parent, IdeBundle.message("message.plugin.installation.failed.0", exception.getMessage()));
-    }
+    }, IdeBundle.message("progress.title.installing.plugin", pluginName), false, null, parent instanceof JComponent ? (JComponent)parent : null);
+    Throwable exception = ref.get();
     PluginStateManager.fireState(descriptor, true);
     return exception != null ? null : refTarget.get();
   }
@@ -211,7 +212,7 @@ public final class PluginInstaller {
     return target;
   }
 
-  private static String rootEntryName(@NotNull Path zip) throws IOException {
+  public static String rootEntryName(@NotNull Path zip) throws IOException {
     try (ZipFile zipFile = new ZipFile(zip.toFile())) {
       Enumeration<? extends ZipEntry> entries = zipFile.entries();
       while (entries.hasMoreElements()) {
@@ -251,19 +252,14 @@ public final class PluginInstaller {
         return false;
       }
 
-      String incompatibleMessage = PluginManagerCore.getIncompatibleMessage(PluginManagerCore.getBuildNumber(),
-                                                                            pluginDescriptor.getSinceBuild(),
-                                                                            pluginDescriptor.getUntilBuild());
-      if (incompatibleMessage != null || PluginManagerCore.isBrokenPlugin(pluginDescriptor)) {
-        StringBuilder builder = new StringBuilder().append("Plugin '").append(pluginDescriptor.getName()).append("'");
-        if (pluginDescriptor.getVersion() != null) {
-          builder.append(" version ").append(pluginDescriptor.getVersion());
-        }
-        builder.append(" is incompatible with this installation");
-        if (incompatibleMessage != null) {
-          builder.append(": ").append(incompatibleMessage);
-        }
-        MessagesEx.showErrorDialog(parent, builder.toString(), CommonBundle.getErrorTitle());
+      PluginLoadingError error = PluginManagerCore.checkBuildNumberCompatibility(pluginDescriptor, PluginManagerCore.getBuildNumber());
+      if (error != null) {
+        MessagesEx.showErrorDialog(parent, error.getDetailedMessage(), CommonBundle.getErrorTitle());
+        return false;
+      }
+      if (PluginManagerCore.isBrokenPlugin(pluginDescriptor)) {
+        String message = CoreBundle.message("plugin.loading.error.long.marked.as.broken", pluginDescriptor.getName(), pluginDescriptor.getVersion());
+        MessagesEx.showErrorDialog(parent, message, CommonBundle.getErrorTitle());
         return false;
       }
 
@@ -331,6 +327,12 @@ public final class PluginInstaller {
           callback.accept(callbackData);
         }
       }
+
+      if (file.toString().endsWith(".zip") && UpdateSettings.getInstance().isKeepPluginsArchive()) {
+        File tempFile = MarketplacePluginDownloadService.INSTANCE.getPluginTempFile();
+        FileUtil.copy(file.toFile(), tempFile);
+        MarketplacePluginDownloadService.INSTANCE.renameFileToZipRoot(tempFile);
+      }
       return true;
     }
     catch (IOException ex) {
@@ -339,6 +341,9 @@ public final class PluginInstaller {
     return false;
   }
 
+  /**
+   * @return true if plugin was successfully installed without restart, false if restart is required
+   */
   public static boolean installAndLoadDynamicPlugin(@NotNull Path file,
                                                     @Nullable Component parent,
                                                     IdeaPluginDescriptorImpl pluginDescriptor) {
@@ -349,7 +354,7 @@ public final class PluginInstaller {
         return DynamicPlugins.loadPlugin(targetDescriptor);
       }
     }
-    return true;
+    return false;
   }
 
   private static void checkInstalledPluginDependencies(@NotNull InstalledPluginsTableModel model,

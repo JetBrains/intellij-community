@@ -20,6 +20,7 @@ import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -158,7 +159,7 @@ public abstract class LightToolWindowManager implements Disposable {
 
   protected final LightToolWindow createContent(@NotNull DesignerEditorPanelFacade designer,
                                                 @NotNull LightToolWindowContent content,
-                                                @NotNull String title,
+                                                @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title,
                                                 @NotNull Icon icon,
                                                 @NotNull JComponent component,
                                                 @NotNull JComponent focusedComponent,

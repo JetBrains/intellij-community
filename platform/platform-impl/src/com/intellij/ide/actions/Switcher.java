@@ -30,12 +30,11 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -61,6 +60,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,7 +91,7 @@ public final class Switcher extends AnAction implements DumbAware {
   public static final Key<SwitcherPanel> SWITCHER_KEY = Key.create("SWITCHER_KEY");
   private static volatile SwitcherPanel SWITCHER = null;
   private static final Color SEPARATOR_COLOR = JBColor.namedColor("Popup.separatorColor", new JBColor(Gray.xC0, Gray.x4B));
-  private static final String TOGGLE_CHECK_BOX_ACTION_ID = "SwitcherRecentEditedChangedToggleCheckBox";
+  @NonNls private static final String TOGGLE_CHECK_BOX_ACTION_ID = "SwitcherRecentEditedChangedToggleCheckBox";
 
   private static final int MINIMUM_HEIGHT = JBUIScale.scale(400);
   private static final int MINIMUM_WIDTH = JBUIScale.scale(500);
@@ -141,7 +141,6 @@ public final class Switcher extends AnAction implements DumbAware {
     }, null);
   }
 
-  @NonNls private static final String SWITCHER_TITLE = "Switcher";
   @NonNls private static InputEvent INIT_EVENT;
 
   @Override
@@ -165,7 +164,7 @@ public final class Switcher extends AnAction implements DumbAware {
         isNewSwitcher = true;
         // Assigns SWITCHER field
         boolean moveBack = e.getInputEvent() != null && e.getInputEvent().isShiftDown();
-        createAndShowSwitcher(project, SWITCHER_TITLE, IdeActions.ACTION_SWITCHER, false, false, !moveBack);
+        createAndShowSwitcher(project, IdeBundle.message("window.title.switcher"), IdeActions.ACTION_SWITCHER, false, false, !moveBack);
         FeatureUsageTracker.getInstance().triggerFeatureUsed(SWITCHER_FEATURE_ID);
       }
     }
@@ -188,11 +187,11 @@ public final class Switcher extends AnAction implements DumbAware {
    */
   @Deprecated
   @Nullable
-  public static SwitcherPanel createAndShowSwitcher(@NotNull AnActionEvent e, @NotNull String title, boolean pinned, final VirtualFile @Nullable [] vFiles) {
+  public static SwitcherPanel createAndShowSwitcher(@NotNull AnActionEvent e, @NotNull @Nls String title, boolean pinned, final VirtualFile @Nullable [] vFiles) {
     return createAndShowSwitcher(e, title, "RecentFiles", pinned, vFiles != null);
   }
 
-  public static SwitcherPanel createAndShowSwitcher(@NotNull AnActionEvent e, @NotNull String title, @NonNls @NotNull String actionId, boolean onlyEdited, boolean pinned) {
+  public static SwitcherPanel createAndShowSwitcher(@NotNull AnActionEvent e, @NotNull @Nls String title, @NonNls @NotNull String actionId, boolean onlyEdited, boolean pinned) {
     if (SWITCHER != null && Objects.equals(SWITCHER.myTitle, title)) return null;
 
     Project project = e.getProject();
@@ -202,7 +201,7 @@ public final class Switcher extends AnAction implements DumbAware {
 
   @Nullable
   private static SwitcherPanel createAndShowSwitcher(@NotNull Project project,
-                                                     @NotNull String title,
+                                                     @NotNull @Nls String title,
                                                      @NotNull String actionId,
                                                      boolean onlyEdited,
                                                      boolean pinned,
@@ -369,7 +368,7 @@ public final class Switcher extends AnAction implements DumbAware {
     };
 
     @SuppressWarnings({"ConstantConditions"})
-    SwitcherPanel(@NotNull final Project project, @NotNull String title, @NotNull String actionId, boolean onlyEdited, boolean pinned,
+    SwitcherPanel(@NotNull final Project project, @NotNull @Nls String title, @NotNull String actionId, boolean onlyEdited, boolean pinned,
                   boolean moveForward)
     {
       setLayout(new BorderLayout());
@@ -494,7 +493,7 @@ public final class Switcher extends AnAction implements DumbAware {
 
       final ListSelectionListener filesSelectionListener = new ListSelectionListener() {
         @Nullable
-        private String getTitle2Text(@Nullable String fullText) {
+        private @NlsSafe String getTitle2Text(@Nullable String fullText) {
           int labelWidth = pathLabel.getWidth();
           if (fullText == null || fullText.length() == 0) return " ";
           while (pathLabel.getFontMetrics(pathLabel.getFont()).stringWidth(fullText) > labelWidth) {
@@ -685,7 +684,7 @@ public final class Switcher extends AnAction implements DumbAware {
       };
     }
 
-    static String getRecentLocationsLabel(@NotNull Supplier<Boolean> showEdited) {
+    static @Nls String getRecentLocationsLabel(@NotNull Supplier<Boolean> showEdited) {
       return showEdited.get() ? IdeBundle.message("recent.locations.changed.locations") : IdeBundle.message("recent.locations.popup.title");
     }
 
@@ -833,7 +832,7 @@ public final class Switcher extends AnAction implements DumbAware {
 
     @NotNull
     private static JPanel createTopPanel(@NotNull JBCheckBox showOnlyEditedFilesCheckBox,
-                                         @NotNull String title,
+                                         @NotNull @NlsContexts.Label String title,
                                          boolean isMovable) {
       JPanel topPanel = new CaptionPanel();
       JBLabel titleLabel = new JBLabel(title);
@@ -1398,15 +1397,16 @@ public final class Switcher extends AnAction implements DumbAware {
       setFocusable(false);
     }
 
-    private static String layoutText(@NotNull String actionId) {
-      String text = "<html>" + IdeBundle.message("recent.files.checkbox.label");
+    private static @NlsContexts.Checkbox String layoutText(@NotNull String actionId) {
+      HtmlBuilder html = new HtmlBuilder().append(IdeBundle.message("recent.files.checkbox.label"));
       ShortcutSet shortcuts = getActiveKeymapShortcuts(actionId);
       if (shortcuts.getShortcuts().length > 0) {
-        text += " <font color=\"" + RecentLocationsAction.Holder.SHORTCUT_HEX_COLOR + "\">"
-                + KeymapUtil.getShortcutsText(shortcuts.getShortcuts()) + "</font>"
-                + "</html>";
+        html
+          .append(" ")
+          .append(HtmlChunk.font(RecentLocationsAction.Holder.SHORTCUT_HEX_COLOR)
+                    .addText(KeymapUtil.getShortcutsText(shortcuts.getShortcuts())));
       }
-      return text;
+      return html.wrapWithHtmlBody().toString();
     }
   }
 
@@ -1457,7 +1457,7 @@ public final class Switcher extends AnAction implements DumbAware {
       myProject = project;
     }
 
-    String getNameForRendering() {
+    @NlsSafe String getNameForRendering() {
       if (myNameForRendering == null) {
         // Recently changed files would also be taken into account (not only open 'visible' files)
         myNameForRendering = EditorTabPresentationUtil.getUniqueEditorTabTitle(myProject, first, second);

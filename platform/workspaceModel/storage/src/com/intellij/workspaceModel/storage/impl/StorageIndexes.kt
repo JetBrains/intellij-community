@@ -5,7 +5,8 @@ import com.google.common.collect.HashBiMap
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.impl.containers.copy
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntityData
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
 import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMappingImpl
 import com.intellij.workspaceModel.storage.impl.indices.EntityStorageInternalIndex
@@ -43,44 +44,99 @@ internal open class StorageIndexes(
   }
 
   fun assertConsistency(storage: AbstractEntityStorage) {
-    // Assert entity source index
-    val entitySourceIndexCopy = entitySourceIndex.index.copy()
-    storage.entitiesByType.entityFamilies.filterNotNull().forEach { family ->
-      family.entities.asSequence().filterNotNull().forEach { data ->
-        val removed = entitySourceIndexCopy.remove(data.createPid(), data.entitySource)
-        assert(removed) { "Entity $data isn't found in entity source index. Entity source: ${data.entitySource}, Id: ${data.createPid()}" }
+    assertEntitySourceIndex(storage)
+
+    assertPersistentIdIndex(storage)
+
+    assertSoftLinksIndex(storage)
+
+    // Assert external mappings
+    for ((_, mappings) in externalMappings) {
+      for ((id, obj) in mappings.index) {
+        assert(storage.entityDataById(id) != null) { "Missing entity by id: $id" }
       }
     }
-    assert(entitySourceIndexCopy.isEmpty()) { "Entity source index has garbage: $entitySourceIndexCopy" }
+  }
 
-    // Assert persistent id index
-    val persistentIdIndexCopy = persistentIdIndex.index.copy()
-    storage.entitiesByType.entityFamilies.filterNotNull().forEach { family ->
-      family.entities.asSequence().filterNotNull().forEach { data ->
-        val persistentId = data.persistentId(storage)
-        if (persistentId != null) {
-          val removed = persistentIdIndexCopy.remove(data.createPid(), persistentId)
-          assert(removed) { "Entity $data isn't found in persistent id index" }
+  private fun assertSoftLinksIndex(storage: AbstractEntityStorage) {
+
+    // XXX skipped size check
+
+    storage.entitiesByType.entityFamilies.forEachIndexed { i, family ->
+      if (family == null) return@forEachIndexed
+      if (family.entities.firstOrNull { it != null } !is SoftLinkable) return@forEachIndexed
+      var mutableId = EntityId(0, i)
+      family.entities.forEach { data ->
+        if (data == null) return@forEach
+        mutableId = mutableId.copy(arrayId = data.id)
+        val expectedLinks = softLinks.getEntriesById(mutableId)
+        if (data is ModuleEntityData) {
+          assertModuleSoftLinks(data, expectedLinks)
+        }
+        else {
+          val actualLinks = (data as SoftLinkable).getLinks()
+          assert(expectedLinks.size == actualLinks.size) { "Different sizes: $expectedLinks, $actualLinks" }
+          assert(expectedLinks.all { it in actualLinks }) { "Different sets: $expectedLinks, $actualLinks" }
         }
       }
     }
-    assert(persistentIdIndexCopy.isEmpty()) { "Persistent id index has garbage: $persistentIdIndexCopy" }
+  }
 
-    // Assert soft links
-    val softLinksCopy = softLinks.index.copy()
-    storage.entitiesByType.entityFamilies.filterNotNull().forEach { family ->
-      family.entities.asSequence().filterNotNull().forEach { data ->
-        if (data is SoftLinkable) {
-          val links = data.getLinks()
-          for (link in links) {
-            val pids = softLinksCopy.getKeys(link)
-            assert(data.createPid() in pids) { "Entity $data isn't found in soft links" }
-            softLinksCopy.remove(data.createPid(), link)
-          }
+  // XXX: Hack to speed up module links assertion
+  private fun assertModuleSoftLinks(entityData: ModuleEntityData, expectedLinks: Set<PersistentEntityId<*>>) {
+    val actualRefs = HashSet<Any>(entityData.dependencies.size)
+    entityData.dependencies.forEach { dependency ->
+      when (dependency) {
+        is ModuleDependencyItem.Exportable.ModuleDependency -> {
+          assert(dependency.module in expectedLinks)
+          actualRefs += dependency.module
         }
+        is ModuleDependencyItem.Exportable.LibraryDependency -> {
+          assert(dependency.library in expectedLinks)
+          actualRefs += dependency.library
+        }
+        else -> Unit
       }
     }
-    assert(softLinksCopy.isEmpty) { "Soft links have garbage: $softLinksCopy" }
+    assert(actualRefs.size == expectedLinks.size)
+  }
+
+  private fun assertPersistentIdIndex(storage: AbstractEntityStorage) {
+
+    var expectedSize = 0
+    storage.entitiesByType.entityFamilies.forEachIndexed { i, family ->
+      if (family == null) return@forEachIndexed
+      if (family.entities.firstOrNull { it != null }?.persistentId(storage) == null) return@forEachIndexed
+      var mutableId = EntityId(0, i)
+      family.entities.forEach { data ->
+        if (data == null) return@forEach
+        mutableId = mutableId.copy(arrayId = data.id)
+        val expectedPersistentId = persistentIdIndex.getEntryById(mutableId)
+        assert(expectedPersistentId == data.persistentId(storage)) { "Entity $data isn't found in persistent id index. PersistentId: ${data.persistentId(storage)}, Id: $mutableId. Expected entity source: $expectedPersistentId" }
+        expectedSize++
+      }
+    }
+
+    assert(expectedSize == persistentIdIndex.index.size) { "Incorrect size of persistent id index. Expected: $expectedSize, actual: ${persistentIdIndex.index.size}" }
+  }
+
+  private fun assertEntitySourceIndex(storage: AbstractEntityStorage) {
+
+    var expectedSize = 0
+    storage.entitiesByType.entityFamilies.forEachIndexed { i, family ->
+      if (family == null) return@forEachIndexed
+      // Optimization to skip useless conversion of classes
+      var mutableId = EntityId(0, i)
+      family.entities.forEach { data ->
+        if (data == null) return@forEach
+        mutableId = mutableId.copy(arrayId = data.id)
+        val expectedEntitySource = entitySourceIndex.getEntryById(mutableId)
+        assert(expectedEntitySource == data.entitySource) { "Entity $data isn't found in entity source index. Entity source: ${data.entitySource}, Id: $mutableId. Expected entity source: $expectedEntitySource" }
+        expectedSize++
+      }
+    }
+
+    assert(expectedSize == entitySourceIndex.index.size) { "Incorrect size of entity source index. Expected: $expectedSize, actual: ${entitySourceIndex.index.size}" }
   }
 }
 
@@ -157,7 +213,7 @@ internal class MutableStorageIndexes(
   fun applyExternalMappingChanges(diff: WorkspaceEntityStorageBuilderImpl,
                                   replaceMap: HashBiMap<EntityId, EntityId>) {
     diff.indexes.externalMappings.keys.asSequence().filterNot { it in externalMappings.keys }.forEach {
-      externalMappings[it] = MutableExternalEntityMappingImpl.from(diff.indexes.externalMappings[it]!!)
+      externalMappings[it] = MutableExternalEntityMappingImpl<Any>()
     }
 
     diff.indexes.externalMappings.forEach { (identifier, index) ->

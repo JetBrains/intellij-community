@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.mvc;
 
@@ -14,12 +14,14 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizer;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.JdomKt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -176,7 +178,7 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
   }
 
-  protected abstract String getNoSdkMessage();
+  protected abstract @DialogMessage String getNoSdkMessage();
 
   protected boolean isSupport(@NotNull Module module) {
     return myFramework.getSdkRoot(module) != null && !myFramework.isAuxModule(module);
@@ -186,10 +188,10 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
   public void checkConfiguration() throws RuntimeConfigurationException {
     final Module module = getModule();
     if (module == null) {
-      throw new RuntimeConfigurationException("Module not specified");
+      throw new RuntimeConfigurationException(GroovyBundle.message("mvc.run.configuration.no.module"));
     }
     if (module.isDisposed()) {
-      throw new RuntimeConfigurationException("Module is disposed");
+      throw new RuntimeConfigurationException(GroovyBundle.message("mvc.run.configuration.disposed.module"));
     }
     if (!isSupport(module)) {
       throw new RuntimeConfigurationException(getNoSdkMessage());
@@ -206,7 +208,7 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
   public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) throws ExecutionException {
     final Module module = getModule();
     if (module == null) {
-      throw new ExecutionException("Module is not specified");
+      throw new ExecutionException(GroovyBundle.message("mvc.run.configuration.no.module"));
     }
 
     if (!isSupport(module)) {

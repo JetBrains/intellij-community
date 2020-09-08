@@ -13,8 +13,8 @@ import org.jetbrains.annotations.NotNull;
  */
 @Deprecated
 public abstract class LocalQuickFixBase implements LocalQuickFix {
-  private final String myName;
-  private final String myFamilyName;
+  private final @IntentionName String myName;
+  private final @IntentionFamilyName String myFamilyName;
 
   /**
    * @param name the name of the quick fix

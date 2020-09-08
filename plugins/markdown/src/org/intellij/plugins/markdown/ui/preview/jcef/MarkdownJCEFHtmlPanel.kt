@@ -2,13 +2,10 @@
 package org.intellij.plugins.markdown.ui.preview.jcef
 
 import com.intellij.openapi.util.Disposer
-import com.intellij.ui.jcef.JBCefJSQuery
 import com.intellij.ui.jcef.JCEFHtmlPanel
-import org.cef.browser.CefBrowser
-import org.cef.handler.CefLoadHandlerAdapter
 import org.intellij.markdown.html.HtmlGenerator
+import org.intellij.plugins.markdown.extensions.MarkdownConfigurableExtension
 import org.intellij.plugins.markdown.extensions.jcef.MarkdownJCEFPreviewExtension
-import org.intellij.plugins.markdown.ui.preview.MarkdownAccessor
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
@@ -18,149 +15,176 @@ class MarkdownJCEFHtmlPanel : JCEFHtmlPanel(getClassUrl()), MarkdownHtmlPanel {
   private val resourceProvider = MyResourceProvider()
   private val browserPipe = BrowserPipe(this)
 
-  private val scrollQuery = requireNotNull(JBCefJSQuery.create(this)) {
-    "Could not create scroll query!"
-  }
+  private val scrollListeners = ArrayList<MarkdownHtmlPanel.ScrollListener>()
 
-  private val scrollListener = ScrollPreservingListener()
+  private val indexContent get() =
+    // language=HTML
+    """
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta http-equiv="Content-Security-Policy" content="$contentSecurityPolicy"/>
+          <meta name="markdown-position-attribute-name" content="${HtmlGenerator.SRC_ATTRIBUTE_NAME}"/>
+          $scriptingLines
+          $stylesLines
+        </head>
+      </html>
+    """
+
+  @Volatile
+  private var delayedContent: String? = null
+  private var firstUpdate = true
+  private var previousRenderClousure: String = ""
 
   init {
     Disposer.register(this, browserPipe)
-    Disposer.register(this, scrollQuery)
     PreviewStaticServer.instance.resourceProvider = resourceProvider
-    extensions.flatMap {
-      it.events.entries
-    }.forEach { (event, handler) ->
+    browserPipe.addBrowserEvents(SET_SCROLL_EVENT)
+    browserPipe.subscribe(BrowserPipe.WINDOW_READY_EVENT) {
+      delayedContent?.let {
+        cefBrowser.executeJavaScript(it, null, 0)
+        delayedContent = null
+      }
+    }
+    browserPipe.subscribe(SET_SCROLL_EVENT) { data ->
+      data.toIntOrNull()?.let { offset ->
+        scrollListeners.forEach { it.onScroll(offset) }
+      }
+    }
+    extensions.flatMap { it.events.entries }.forEach { (event, handler) ->
       browserPipe.addBrowserEvents(event)
       browserPipe.subscribe(event, handler)
     }
-    scrollQuery.addHandler {
-      try {
-        scrollListener.scrollValue = Integer.parseInt(it)
-      }
-      catch (ignored: NumberFormatException) {}
-      null
-    }
-    jbCefClient.addLoadHandler(scrollListener, cefBrowser)
+    super.setHtml(indexContent)
   }
 
-  override fun scrollToMarkdownSrcOffset(offset: Int) {
+  private fun updateDom(renderClosure: String, initialScrollOffset: Int) {
+    previousRenderClousure = renderClosure
+    val scrollCode = if (firstUpdate) {
+      "window.scrollController.scrollTo($initialScrollOffset, true);"
+    }
+    else ""
     val code =
       // language=JavaScript
       """
         (function() {
-          const scrollAction = () => {
-            __IntelliJTools.scrollToOffset($offset, '${HtmlGenerator.SRC_ATTRIBUTE_NAME}');
-            let value = document.documentElement.scrollTop || (document.body && document.body.scrollTop);
-            ${scrollQuery.inject("value")}
+          const action = () => {
+            console.time("incremental-dom-patch");
+            const render = $previousRenderClousure;
+            IncrementalDOM.patch(document.body, () => render());
+            $scrollCode
+            if (IncrementalDOM.notifications.afterPatchListeners) {
+              IncrementalDOM.notifications.afterPatchListeners.forEach(listener => listener());
+            }
+            console.timeEnd("incremental-dom-patch");
           };
-          if ('__IntelliJTools' in window) {
-            scrollAction();
+          if (document.readyState === "loading" || document.readyState === "uninitialized") {
+            document.addEventListener("DOMContentLoaded", () => action(), { once: true });
           }
           else {
-            window.addEventListener('load', scrollAction);
+            action();
           }
         })();
-      """.trimIndent()
-    cefBrowser.executeJavaScript(code, cefBrowser.url, 0)
+      """
+    delayedContent = code
+    cefBrowser.executeJavaScript(code, null, 0)
   }
 
-  override fun prepareHtml(html: String): String {
-    return MarkdownAccessor.getImageRefreshFixAccessor().setStamps(
-      html.replace(
-        "<head>",
-        // language=HTML
-        """
-          <head>
-          <meta http-equiv="Content-Security-Policy" content="$contentSecurityPolicy"/>
-          $stylesLines
-          $scriptingLines
-        """.trimIndent()
-      )
+  override fun setHtml(html: String, initialScrollOffset: Int) {
+    updateDom(IncrementalDOM.generateRenderClosure(html), initialScrollOffset)
+    firstUpdate = false
+  }
+
+  override fun reloadWithOffset(offset: Int) {
+    delayedContent = null
+    firstUpdate = true
+    super.setHtml(indexContent)
+    updateDom(previousRenderClousure, offset)
+  }
+
+  override fun addScrollListener(listener: MarkdownHtmlPanel.ScrollListener) {
+    scrollListeners.add(listener)
+  }
+
+  override fun removeScrollListener(listener: MarkdownHtmlPanel.ScrollListener?) {
+    scrollListeners.remove(listener)
+  }
+
+  override fun scrollToMarkdownSrcOffset(offset: Int) {
+    cefBrowser.executeJavaScript(
+      // language=JavaScript
+      "if (window.scrollController) { window.scrollController.scrollTo($offset); }",
+      null,
+      0
     )
   }
 
   override fun dispose() {
     super.dispose()
-    jbCefClient.removeLoadHandler(scrollListener, cefBrowser)
-  }
-
-  private inner class ScrollPreservingListener: CefLoadHandlerAdapter() {
-    var scrollValue = 0
-
-    override fun onLoadingStateChange(
-      browser: CefBrowser?,
-      isLoading: Boolean,
-      canGoBack: Boolean,
-      canGoForward: Boolean
-    ) {
-      val code = if (isLoading) {
-        // language=JavaScript
-        """
-          var value = document.documentElement.scrollTop || document.body.scrollTop;
-          ${scrollQuery.inject("value")}
-        """.trimIndent()
-      }
-      else {
-        "document.documentElement.scrollTop = ({} || document.body).scrollTop = $scrollValue;"
-      }
-      cefBrowser.executeJavaScript(code, cefBrowser.url, 0)
-    }
   }
 
   private inner class MyResourceProvider : ResourceProvider {
-    private val preloadScript by lazy { browserPipe.inject().toByteArray() }
+    private val internalResources = baseScripts + baseStyles
 
-    override fun canProvide(resourceName: String): Boolean {
-      return resourceName in baseScripts ||
-             extensions.any { it.resourceProvider.canProvide(resourceName) }
-    }
+    override fun canProvide(resourceName: String): Boolean =
+      resourceName in internalResources || extensions.any {
+        it.resourceProvider.canProvide(resourceName)
+      }
 
     override fun loadResource(resourceName: String): ResourceProvider.Resource? {
-      if (resourceName in baseScripts) {
-        if (resourceName == PRELOAD_SCRIPT_FILENAME) {
-          return ResourceProvider.Resource(preloadScript)
-        }
-        return ResourceProvider.loadInternalResource(MarkdownJCEFHtmlPanel::class, resourceName)
+      return when (resourceName) {
+        EVENTS_SCRIPT_FILENAME -> ResourceProvider.Resource(browserPipe.inject().toByteArray())
+        in internalResources -> ResourceProvider.loadInternalResource<MarkdownJCEFHtmlPanel>(resourceName)
+        else ->
+          extensions.map { it.resourceProvider }.firstOrNull {
+            it.canProvide(resourceName)
+          }?.loadResource(resourceName)
       }
-      return extensions.map { it.resourceProvider }.firstOrNull {
-        it.canProvide(resourceName)
-      }?.loadResource(resourceName)
     }
   }
 
   companion object {
-    private val extensions = MarkdownJCEFPreviewExtension.allSorted
+    private const val SET_SCROLL_EVENT = "setScroll"
 
-    private const val PRELOAD_SCRIPT_FILENAME = "preload.js"
+    private val extensions
+      get() = MarkdownJCEFPreviewExtension.allSorted.filter {
+        if (it is MarkdownConfigurableExtension) {
+          it.isEnabled
+        }
+        else true
+      }
+
+    private const val EVENTS_SCRIPT_FILENAME = "events.js"
 
     private val baseScripts = listOf(
-      "scrollToElement.js",
-      "browserPipe.js",
-      PRELOAD_SCRIPT_FILENAME
+      "incremental-dom.min.js",
+      "incremental-dom-additions.js",
+      "BrowserPipe.js",
+      EVENTS_SCRIPT_FILENAME,
+      "ScrollSync.js"
     )
 
-    val scripts = baseScripts + extensions.flatMap { it.scripts }
-    val styles = extensions.flatMap { it.styles }
+    private val baseStyles = emptyList<String>()
 
-    private val scriptingLines by lazy {
+    val scripts get() = baseScripts + extensions.flatMap { it.scripts }
+
+    val styles get() = extensions.flatMap { it.styles }
+
+    private val scriptingLines get() =
       scripts.joinToString("\n") {
         "<script src=\"${PreviewStaticServer.getStaticUrl(it)}\"></script>"
       }
-    }
 
-    private val stylesLines by lazy {
+    private val stylesLines get() =
       styles.joinToString("\n") {
         "<link rel=\"stylesheet\" href=\"${PreviewStaticServer.getStaticUrl(it)}\"/>"
       }
-    }
 
-    private val contentSecurityPolicy by lazy {
+    private val contentSecurityPolicy get() =
       PreviewStaticServer.createCSP(
         scripts.map { PreviewStaticServer.getStaticUrl(it) },
         styles.map { PreviewStaticServer.getStaticUrl(it) }
       )
-    }
 
     private fun getClassUrl(): String {
       val url = try {

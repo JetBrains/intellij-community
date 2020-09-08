@@ -16,7 +16,7 @@
     <facetType implementation="com.intellij.appengine.facet.AppEngineFacetType"/>
     <project.converterProvider implementation="com.intellij.appengine.converter.AppEngineFacetConverterProvider" id="google-app-engine-facet"/>
     <framework.detector implementation="com.intellij.appengine.facet.AppEngineFrameworkDetector"/>
-    <compileServer.plugin classpath="google-app-engine-jps-plugin.jar;appEngine-runtime.jar"/>
+    <compileServer.plugin classpath="java-googleAppEngine-jps.jar;java-googleAppEngine-runtime.jar"/>
 
     <xml.schemaProvider implementation="com.intellij.appengine.descriptor.AppEngineWebSchemaProvider"/>
     <dom.fileMetaData implementation="com.intellij.appengine.descriptor.dom.AppEngineWebFileDescription" rootTagName="appengine-web-app"/>
@@ -30,7 +30,7 @@
 
     <pluginReplacement implementation="com.intellij.appengine.converter.AppEnginePluginReplacement"/>
     <postStartupActivity implementation="com.intellij.appengine.converter.MigrateToCloudToolsNotification"/>
-    <notificationAllowlist groupIds="Migrate to Google Cloud SDK"/>
+    <notificationGroup id="Migrate to Google Cloud SDK" displayType="BALLOON"/>
   </extensions>
 
   <actions>

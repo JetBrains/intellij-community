@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.serialization;
 
 import com.intellij.openapi.util.InvalidDataException;
@@ -11,6 +11,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -23,7 +24,7 @@ public abstract class SerializableInspectionBase extends BaseInspection {
   @SuppressWarnings({"PublicField"})
   public boolean ignoreAnonymousInnerClasses = false;
   @SuppressWarnings({"PublicField"})
-  public String superClassString = "java.awt.Component";
+  public @NonNls String superClassString = "java.awt.Component";
   protected List<String> superClassList = new ArrayList<>();
 
   @Override
@@ -46,7 +47,7 @@ public abstract class SerializableInspectionBase extends BaseInspection {
 
     final JPanel chooserList = UiUtils.createTreeClassChooserList(
       superClassList, InspectionGadgetsBundle.message("ignore.classes.in.hierarchy.column.name"),
-      InspectionGadgetsBundle.message("choose.super.class.to.ignore"));
+      InspectionGadgetsBundle.message("choose.class"));
     UiUtils.setComponentSize(chooserList, 7, 25);
     final CheckBox checkBox = new CheckBox(InspectionGadgetsBundle.message(
       "ignore.anonymous.inner.classes"), this, "ignoreAnonymousInnerClasses");

@@ -115,7 +115,9 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
     Processor<PsiClass> inheritorsProcessor = inheritor -> {
       PsiMethod found = ReadAction.compute(() -> findOverridingMethod(inheritor, method, containingClass));
       if (found != null) {
-        result.add(found);
+        synchronized (result) {
+          result.add(found);
+        }
       }
       return true;
     };

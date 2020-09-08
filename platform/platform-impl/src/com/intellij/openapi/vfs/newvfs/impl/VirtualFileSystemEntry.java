@@ -114,7 +114,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   void registerLink(@NotNull VirtualFileSystem fs) {
     if (fs instanceof LocalFileSystemImpl && is(VFileProperty.SYMLINK) && isValid()) {
-      ((LocalFileSystemImpl)fs).symlinkUpdated(myId, myParent, getPath(), getCanonicalPath());
+      ((LocalFileSystemImpl)fs).symlinkUpdated(myId, myParent, getNameSequence(), getPath(), getCanonicalPath());
     }
   }
 
@@ -354,6 +354,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   @Override
+  @NonNls
   public String toString() {
     if (isValid()) {
       return getUrl();

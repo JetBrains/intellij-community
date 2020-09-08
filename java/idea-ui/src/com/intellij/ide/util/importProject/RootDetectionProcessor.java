@@ -12,6 +12,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -107,7 +108,8 @@ public class RootDetectionProcessor {
       if (myProgressIndicator.isCanceled()) {
         return parentsToSkip;
       }
-      myProgressIndicator.setText2(dir.getPath());
+      @NlsSafe final String path = dir.getPath();
+      myProgressIndicator.setText2(path);
     }
 
     if (FileSystemUtil.isSymLink(dir)) {

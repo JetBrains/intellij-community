@@ -1,6 +1,7 @@
 package com.jetbrains.python.debugger;
 
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NonNls;
 
 public class PyDebuggerException extends Exception {
@@ -13,7 +14,7 @@ public class PyDebuggerException extends Exception {
     super(message, cause);
   }
 
-  public String getTracebackError() {
+  public @NlsSafe String getTracebackError() {
     @NonNls String text = getMessage();
     if (text != null && text.contains("Traceback (most recent call last):")) {
       final String[] lines = text.split("\n");
@@ -23,5 +24,4 @@ public class PyDebuggerException extends Exception {
     }
     return text;
   }
-
 }

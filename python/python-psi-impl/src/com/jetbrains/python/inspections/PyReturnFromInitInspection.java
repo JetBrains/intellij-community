@@ -37,7 +37,7 @@ public class PyReturnFromInitInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyFunction(PyFunction function) {
+    public void visitPyFunction(@NotNull PyFunction function) {
       if (PyUtil.isInitMethod(function)) {
         Collection<PsiElement> offenders = new ArrayList<>();
         findReturnValueInside(function, offenders);

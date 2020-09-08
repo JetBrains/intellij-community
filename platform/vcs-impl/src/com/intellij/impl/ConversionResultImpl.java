@@ -11,7 +11,7 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
 import com.intellij.openapi.vcs.changes.actions.EditAction;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -82,7 +82,7 @@ final class ConversionResultImpl implements ConversionResult {
                               VcsBundle.message("label.select.files.to.be.added.to.version.control"), null, null,
                               VcsShowConfirmationOption.STATIC_SHOW_CONFIRMATION);
       if (selected != null && !selected.isEmpty()) {
-        ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(project);
+        ChangeListManagerEx changeListManager = ChangeListManagerEx.getInstanceEx(project);
         changeListManager.addUnversionedFiles(changeListManager.getDefaultChangeList(), new ArrayList<>(selected));
       }
     }, ModalityState.NON_MODAL, project.getDisposed());

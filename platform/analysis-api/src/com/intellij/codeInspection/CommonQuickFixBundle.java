@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.DynamicBundle;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +17,7 @@ public final class CommonQuickFixBundle extends DynamicBundle {
   private CommonQuickFixBundle() { super(BUNDLE); }
 
   @NotNull
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NlsSafe Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
 

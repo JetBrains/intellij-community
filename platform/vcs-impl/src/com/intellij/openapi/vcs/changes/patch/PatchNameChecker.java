@@ -4,6 +4,8 @@ package com.intellij.openapi.vcs.changes.patch;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,8 +15,9 @@ public final class PatchNameChecker {
   public final static int MAX = 100;
   private final static int MAX_PATH = 255; // Windows path len restrictions
 
+  @Nls
   @Nullable
-  public static String validateName(@NotNull String name) {
+  public static String validateName(@NotNull @NonNls String name) {
     String fileName = new File(name).getName();
     if (StringUtil.isEmptyOrSpaces(fileName)) {
       return IdeBundle.message("error.name.cannot.be.empty");

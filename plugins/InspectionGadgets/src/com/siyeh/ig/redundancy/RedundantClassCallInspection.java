@@ -10,6 +10,7 @@ import com.intellij.util.ArrayUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -52,7 +53,7 @@ public class RedundantClassCallInspection extends AbstractBaseJavaLocalInspectio
   private static abstract class ReplaceRedundantClassCallFix implements LocalQuickFix {
     final String myReplacement;
 
-    ReplaceRedundantClassCallFix(String replacement) {
+    ReplaceRedundantClassCallFix(@NonNls String replacement) {
       myReplacement = replacement;
     }
 
@@ -91,9 +92,8 @@ public class RedundantClassCallInspection extends AbstractBaseJavaLocalInspectio
       return CommonQuickFixBundle.message("fix.replace.with.x", PsiKeyword.INSTANCEOF);
     }
 
-    @NotNull
     @Override
-    String createReplacement(String argText, String classText) {
+    @NotNull @NonNls String createReplacement(String argText, String classText) {
       return argText + " instanceof " + classText;
     }
   }

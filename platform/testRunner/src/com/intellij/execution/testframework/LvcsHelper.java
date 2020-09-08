@@ -14,23 +14,24 @@ public final class LvcsHelper {
   private static final Color GREEN = new JBColor(new Color(220, 250, 220), new Color(44, 66, 60));
 
   public static void addLabel(final TestFrameworkRunningModel model) {
-    String label;
+    String name;
     int color;
 
     AbstractTestProxy root = model.getRoot();
 
     if (root.isInterrupted()) return;
 
+    TestConsoleProperties consoleProperties = model.getProperties();
+    String configName = consoleProperties.getConfiguration().getName();
+
     if (root.isPassed() || root.isIgnored()) {
       color = GREEN.getRGB();
-      label = ExecutionBundle.message("junit.runing.info.tests.passed.label");
+      name = ExecutionBundle.message("junit.running.info.tests.passed.with.test.name.label", configName);
     }
     else {
       color = RED.getRGB();
-      label = ExecutionBundle.message("junit.runing.info.tests.failed.label");
+      name = ExecutionBundle.message("junit.running.info.tests.failed.with.test.name.label", configName);
     }
-    final TestConsoleProperties consoleProperties = model.getProperties();
-    String name = label + " " + consoleProperties.getConfiguration().getName();
 
     Project project = consoleProperties.getProject();
     if (project.isDisposed()) return;

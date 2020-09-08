@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.mvc;
 
 import com.intellij.application.options.ModulesComboBox;
@@ -19,6 +19,7 @@ import com.intellij.ui.StringComboboxEditor;
 import com.intellij.util.TextFieldCompletionProvider;
 import com.intellij.util.TextFieldCompletionProviderDumbAware;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.mvc.util.MvcTargetDialogCompletionUtils;
 
 import javax.swing.*;
@@ -50,7 +51,7 @@ public class MvcRunTargetDialog extends DialogWrapper {
     super(module.getProject(), true);
     myModule = module;
     myFramework = framework;
-    setTitle("Run " + framework.getDisplayName() + " target");
+    setTitle(GroovyBundle.message("mvc.framework.0.run.target.dialog.title", framework.getDisplayName()));
     setUpDialog();
     setModal(true);
     init();
@@ -69,7 +70,9 @@ public class MvcRunTargetDialog extends DialogWrapper {
     }
 
     if (hasOneSupportedModule) {
-      myInteractiveRunAction = new DialogWrapperAction("&Start Grails Console in Interactive Mode") {
+      myInteractiveRunAction = new DialogWrapperAction(
+        GroovyBundle.message("mvc.framework.0.run.target.interactive", myFramework.getDisplayName())
+      ) {
         @Override
         protected void doAction(ActionEvent e) {
           myFramework.runInteractiveConsole(getSelectedModule());

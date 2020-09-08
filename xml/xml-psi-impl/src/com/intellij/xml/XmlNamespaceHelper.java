@@ -85,6 +85,6 @@ public abstract class XmlNamespaceHelper {
   public abstract Set<String> getNamespacesByTagName(@NotNull final String tagName, @NotNull final XmlFile context);
 
   public String getNamespaceAlias(@NotNull final XmlFile file) {
-    return XmlPsiBundle.message("namespace.alias");
+    return XmlPsiBundle.message("xml.terms.namespace.alias");
   }
 }

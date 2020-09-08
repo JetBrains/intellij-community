@@ -16,6 +16,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import git4idea.i18n.GitBundle
+import git4idea.rebase.GitRebaseEntryWithDetails
 import git4idea.rebase.interactive.dialog.GitRebaseCommitsTableView
 import org.jetbrains.annotations.NonNls
 import java.awt.Component
@@ -40,7 +41,7 @@ private fun makeResizable(panel: JPanel, updateHeight: (newHeight: Int) -> Unit)
 internal class CommitMessageCellEditor(
   private val project: Project,
   private val table: GitRebaseCommitsTableView,
-  disposable: Disposable
+  private val disposable: Disposable
 ) : AbstractCellEditor(), TableCellEditor {
   companion object {
     @NonNls
@@ -64,19 +65,23 @@ internal class CommitMessageCellEditor(
     }
   }
 
-  private val commitMessageField = CommitMessage(project, false, false, true).apply {
+  /**
+   * Used to save edit message history for each commit (e.g. for undo/redo)
+   */
+  private val commitMessageForEntry = mutableMapOf<GitRebaseEntryWithDetails, CommitMessage>()
+
+  private var lastUsedCommitMessageField: CommitMessage? = null
+
+  private val hint = createHint()
+
+  private fun createCommitMessage() = CommitMessage(project, false, false, true).apply {
     editorField.addSettingsProvider { editor ->
       editor.scrollPane.border = JBUI.Borders.empty()
       registerCloseEditorShortcut(editor, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK))
       registerCloseEditorShortcut(editor, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.META_DOWN_MASK))
     }
     editorField.setCaretPosition(0)
-  }
-
-  private val hint = createHint()
-
-  init {
-    Disposer.register(disposable, commitMessageField)
+    Disposer.register(disposable, this)
   }
 
   private fun registerCloseEditorShortcut(editor: EditorEx, shortcut: KeyStroke) {
@@ -87,6 +92,8 @@ internal class CommitMessageCellEditor(
 
   override fun getTableCellEditorComponent(table: JTable, value: Any?, isSelected: Boolean, row: Int, column: Int): Component {
     val model = this.table.model
+    val commitMessageField = commitMessageForEntry.getOrPut(model.getEntry(row)) { createCommitMessage() }
+    lastUsedCommitMessageField = commitMessageField
     commitMessageField.text = model.getCommitMessage(row)
     table.setRowHeight(row, savedHeight)
     val componentPanel = object : BorderLayoutPanel() {
@@ -121,7 +128,7 @@ internal class CommitMessageCellEditor(
     return hintLabel
   }
 
-  override fun getCellEditorValue() = commitMessageField.text
+  override fun getCellEditorValue() = lastUsedCommitMessageField?.text ?: ""
 
   override fun isCellEditable(e: EventObject?) = when {
     table.selectedRowCount > 1 -> false

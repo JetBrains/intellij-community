@@ -12,6 +12,7 @@ import git4idea.GitFormatException;
 import git4idea.GitUtil;
 import git4idea.config.GitVersionSpecialty;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -287,10 +288,11 @@ public class GitLogParser<R extends GitLogRecord> {
 
     private final String myPlaceholder;
 
-    GitLogOption(String placeholder) {
+    GitLogOption(@NonNls String placeholder) {
       myPlaceholder = placeholder;
     }
 
+    @NonNls
     private String getPlaceholder() {
       return myPlaceholder;
     }

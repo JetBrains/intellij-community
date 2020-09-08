@@ -11,6 +11,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,6 +33,7 @@ import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.add.PyAddSdkGroupPanel;
 import com.jetbrains.python.sdk.add.PyAddSdkPanel;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -225,10 +227,11 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     return true;
   }
 
-  private static String validateFrameworkSupportsPython3(@NotNull PyFrameworkProjectGenerator generator, @NotNull Sdk sdk) {
+  private static @Nls String validateFrameworkSupportsPython3(@NotNull PyFrameworkProjectGenerator generator, @NotNull Sdk sdk) {
     final String frameworkName = generator.getFrameworkTitle();
     final boolean isPy3k = PythonSdkType.getLanguageLevelForSdk(sdk).isPy3K();
-    return isPy3k && !generator.supportsPython3() ? frameworkName + " is not supported for the selected interpreter" : null;
+    return isPy3k && !generator.supportsPython3() ? PyBundle.message("framework.not.supported.for.the.selected.interpreter", frameworkName)
+                                                  : null;
   }
 
   @NotNull
@@ -329,7 +332,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
   }
 
   @NotNull
-  private static String getProjectInterpreterTitle(@NotNull PyAddSdkPanel panel) {
+  private static @NlsContexts.Separator String getProjectInterpreterTitle(@NotNull PyAddSdkPanel panel) {
     final String name;
     if (panel instanceof PyAddNewEnvironmentPanel) {
       name = PyBundle.message("python.sdk.new.environment.kind", ((PyAddNewEnvironmentPanel)panel).getSelectedPanel().getEnvName());

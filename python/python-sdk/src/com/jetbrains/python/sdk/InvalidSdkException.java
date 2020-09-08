@@ -15,12 +15,15 @@
  */
 package com.jetbrains.python.sdk;
 
+
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
+
 public class InvalidSdkException extends Exception {
-  public InvalidSdkException(String s) {
+  public InvalidSdkException(@DialogMessage String s) {
     super(s);
   }
 
-  public InvalidSdkException(String message, Throwable cause) {
+  public InvalidSdkException(@DialogMessage String message, Throwable cause) {
     super(message, cause);
   }
 }

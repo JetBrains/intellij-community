@@ -1,4 +1,4 @@
 // "Unimplement Class" "true"
-final class A {}
+class A {}
 
 final class B {}

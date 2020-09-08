@@ -2,10 +2,7 @@
 package com.intellij.workspaceModel.storage.bridgeEntities
 
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.SoftLinkable
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileUrlListProperty
 import com.intellij.workspaceModel.storage.impl.references.*
 import java.io.Serializable
@@ -25,13 +22,12 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
 
   @ExperimentalStdlibApi
   override fun getLinks(): Set<PersistentEntityId<*>> {
-    return buildSet {
-      dependencies.forEach { dependency ->
-        when (dependency) {
-          is ModuleDependencyItem.Exportable.ModuleDependency -> this.add(dependency.module)
-          is ModuleDependencyItem.Exportable.LibraryDependency -> this.add(dependency.library)
-          else -> Unit
-        }
+
+    return dependencies.mapNotNullTo(HashSet()) { dependency ->
+      when (dependency) {
+        is ModuleDependencyItem.Exportable.ModuleDependency -> dependency.module
+        is ModuleDependencyItem.Exportable.LibraryDependency -> dependency.library
+        else -> null
       }
     }
   }
@@ -231,12 +227,26 @@ open class SourceRootEntity(
 }
 
 @Suppress("unused")
-class JavaSourceRootEntityData : WorkspaceEntityData<JavaSourceRootEntity>() {
+class JavaSourceRootEntityData : WorkspaceEntityData<JavaSourceRootEntity>(), WithAssertableConsistency {
   var generated: Boolean = false
   lateinit var packagePrefix: String
 
   override fun createEntity(snapshot: WorkspaceEntityStorage): JavaSourceRootEntity = JavaSourceRootEntity(generated, packagePrefix).also {
     addMetaData(it, snapshot)
+  }
+
+  override fun assertConsistency(storage: WorkspaceEntityStorage) {
+    val thisEntity = this.createEntity(storage)
+    val attachedSourceRoot = thisEntity.sourceRoot
+    assert(thisEntity.entitySource == attachedSourceRoot.entitySource) {
+      """
+      |Entity source of source root entity and it's java source root entity differs. 
+      |   Source root entity source: ${attachedSourceRoot.entitySource}
+      |   Java source root source: ${thisEntity.entitySource}
+      |   Source root entity: $attachedSourceRoot
+      |   Java root entity: $thisEntity
+      """.trimMargin()
+    }
   }
 }
 
@@ -254,13 +264,27 @@ class JavaSourceRootEntity(
 fun SourceRootEntity.asJavaSourceRoot(): JavaSourceRootEntity? = referrers(JavaSourceRootEntity::sourceRoot).firstOrNull()
 
 @Suppress("unused")
-class JavaResourceRootEntityData : WorkspaceEntityData<JavaResourceRootEntity>() {
+class JavaResourceRootEntityData : WorkspaceEntityData<JavaResourceRootEntity>(), WithAssertableConsistency {
   var generated: Boolean = false
   lateinit var relativeOutputPath: String
 
   override fun createEntity(snapshot: WorkspaceEntityStorage): JavaResourceRootEntity = JavaResourceRootEntity(generated,
                                                                                                                relativeOutputPath).also {
     addMetaData(it, snapshot)
+  }
+
+  override fun assertConsistency(storage: WorkspaceEntityStorage) {
+    val thisEntity = this.createEntity(storage)
+    val attachedSourceRoot = thisEntity.sourceRoot
+    assert(thisEntity.entitySource == attachedSourceRoot.entitySource) {
+      """
+      |Entity source of source root entity and it's java resource root entity differs. 
+      |   Source root entity source: ${attachedSourceRoot.entitySource}
+      |   Java resource root source: ${thisEntity.entitySource}
+      |   Source root entity: $attachedSourceRoot
+      |   Java root entity: $thisEntity
+      """.trimMargin()
+    }
   }
 }
 
@@ -278,10 +302,24 @@ class JavaResourceRootEntity(
 fun SourceRootEntity.asJavaResourceRoot() = referrers(JavaResourceRootEntity::sourceRoot).firstOrNull()
 
 @Suppress("unused")
-class CustomSourceRootPropertiesEntityData : WorkspaceEntityData<CustomSourceRootPropertiesEntity>() {
+class CustomSourceRootPropertiesEntityData : WorkspaceEntityData<CustomSourceRootPropertiesEntity>(), WithAssertableConsistency {
   lateinit var propertiesXmlTag: String
   override fun createEntity(snapshot: WorkspaceEntityStorage): CustomSourceRootPropertiesEntity {
     return CustomSourceRootPropertiesEntity(propertiesXmlTag).also { addMetaData(it, snapshot) }
+  }
+
+  override fun assertConsistency(storage: WorkspaceEntityStorage) {
+    val thisEntity = this.createEntity(storage)
+    val attachedSourceRoot = thisEntity.sourceRoot
+    assert(thisEntity.entitySource == attachedSourceRoot.entitySource) {
+      """
+      |Entity source of source root entity and it's CustomSourceRootProperties entity differs. 
+      |   Source root entity source: ${attachedSourceRoot.entitySource}
+      |   CustomSourceRootProperties source: ${thisEntity.entitySource}
+      |   Source root entity: $attachedSourceRoot
+      |   CustomSourceRootProperties entity: $thisEntity
+      """.trimMargin()
+    }
   }
 }
 
@@ -298,13 +336,30 @@ class CustomSourceRootPropertiesEntity(
 fun SourceRootEntity.asCustomSourceRoot() = referrers(CustomSourceRootPropertiesEntity::sourceRoot).firstOrNull()
 
 @Suppress("unused")
-class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>() {
+class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>(), WithAssertableConsistency {
   lateinit var url: VirtualFileUrl
   lateinit var excludedUrls: List<VirtualFileUrl>
   lateinit var excludedPatterns: List<String>
 
   override fun createEntity(snapshot: WorkspaceEntityStorage): ContentRootEntity {
     return ContentRootEntity(url, excludedUrls, excludedPatterns).also { addMetaData(it, snapshot) }
+  }
+
+  override fun assertConsistency(storage: WorkspaceEntityStorage) {
+    // Module can have a different entity source in case of OC
+    if (this.entitySource.toString() == "OCEntitySource") return
+
+    val thisEntity = this.createEntity(storage)
+    val attachedModule = thisEntity.module
+    assert(thisEntity.entitySource == attachedModule.entitySource) {
+      """
+      |Entity source of content root entity and it's module entity differs. 
+      |   Module entity source: ${attachedModule.entitySource}
+      |   Content root source: ${thisEntity.entitySource}
+      |   Module entity: $attachedModule
+      |   Content root entity: $thisEntity
+      """.trimMargin()
+    }
   }
 }
 
@@ -327,10 +382,24 @@ open class ContentRootEntity(
  * unnecessary modifications of file.
  */
 @Suppress("unused")
-class SourceRootOrderEntityData : WorkspaceEntityData<SourceRootOrderEntity>() {
+class SourceRootOrderEntityData : WorkspaceEntityData<SourceRootOrderEntity>(), WithAssertableConsistency {
   lateinit var orderOfSourceRoots: List<VirtualFileUrl>
   override fun createEntity(snapshot: WorkspaceEntityStorage): SourceRootOrderEntity {
     return SourceRootOrderEntity(orderOfSourceRoots).also { addMetaData(it, snapshot) }
+  }
+
+  override fun assertConsistency(storage: WorkspaceEntityStorage) {
+    val thisEntity = this.createEntity(storage)
+    val attachedContentRoot = thisEntity.contentRootEntity
+    assert(thisEntity.entitySource == attachedContentRoot.entitySource) {
+      """
+      |Entity source of content root entity and it's SourceRootOrderEntity entity differs. 
+      |   Content root entity source: ${attachedContentRoot.entitySource}
+      |   SourceRootOrderEntity source: ${thisEntity.entitySource}
+      |   Content root entity: $attachedContentRoot
+      |   SourceRootOrderEntity entity: $thisEntity
+      """.trimMargin()
+    }
   }
 }
 
@@ -436,12 +505,24 @@ data class LibraryRoot(
 }
 
 @Suppress("unused")
-class LibraryPropertiesEntityData : WorkspaceEntityData<LibraryPropertiesEntity>() {
+class LibraryPropertiesEntityData : WorkspaceEntityData<LibraryPropertiesEntity>(), WithAssertableConsistency {
   lateinit var libraryType: String
   var propertiesXmlTag: String? = null
 
   override fun createEntity(snapshot: WorkspaceEntityStorage): LibraryPropertiesEntity {
     return LibraryPropertiesEntity(libraryType, propertiesXmlTag).also { addMetaData(it, snapshot) }
+  }
+
+  override fun assertConsistency(storage: WorkspaceEntityStorage) {
+    val propertiesEntity = this.createEntity(storage)
+    val attachedLibrary = propertiesEntity.library
+    assert(attachedLibrary.entitySource == this.entitySource) { """
+      |Entity source of library and it's properties differs. 
+      |   Library entity source: ${attachedLibrary.entitySource}
+      |   Properties entity source: ${this.entitySource}
+      |   Library entity: $attachedLibrary
+      |   Properties entity: $propertiesEntity
+    """.trimMargin() }
   }
 }
 

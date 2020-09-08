@@ -5,6 +5,7 @@ import com.intellij.application.options.IndentOptionsEditor
 import com.intellij.application.options.SmartIndentOptionsEditor
 import com.intellij.lang.Language
 import com.intellij.psi.codeStyle.*
+import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
 
 internal class MarkdownCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() {
@@ -14,7 +15,7 @@ internal class MarkdownCodeStyleSettingsProvider : LanguageCodeStyleSettingsProv
     return MarkdownCodeStyleConfigurable(baseSettings, modelSettings)
   }
 
-  override fun getConfigurableDisplayName() = "Markdown"
+  override fun getConfigurableDisplayName() = MarkdownBundle.message("markdown.settings.name")
 
   override fun customizeSettings(consumer: CodeStyleSettingsCustomizable, settingsType: SettingsType) {
     when (settingsType) {
@@ -24,63 +25,73 @@ internal class MarkdownCodeStyleSettingsProvider : LanguageCodeStyleSettingsProv
       SettingsType.BLANK_LINES_SETTINGS -> {
         consumer.showCustomOption(
           MarkdownCustomCodeStyleSettings::class.java,
-          MarkdownCustomCodeStyleSettings::MAX_LINES_AROUND_HEADER.name, "Around header",
-          CodeStyleSettingsCustomizable.BLANK_LINES
+          MarkdownCustomCodeStyleSettings::MAX_LINES_AROUND_HEADER.name,
+          MarkdownBundle.message("markdown.style.settings.blank.lines.around.header"),
+          CodeStyleSettingsCustomizableOptions.getInstance().BLANK_LINES
         )
 
         consumer.showCustomOption(
           MarkdownCustomCodeStyleSettings::class.java,
-          MarkdownCustomCodeStyleSettings::MAX_LINES_AROUND_BLOCK_ELEMENTS.name, "Around block elements",
-          CodeStyleSettingsCustomizable.BLANK_LINES
+          MarkdownCustomCodeStyleSettings::MAX_LINES_AROUND_BLOCK_ELEMENTS.name,
+          MarkdownBundle.message("markdown.style.settings.blank.lines.around.block.elements"),
+          CodeStyleSettingsCustomizableOptions.getInstance().BLANK_LINES
         )
 
         consumer.showCustomOption(
           MarkdownCustomCodeStyleSettings::class.java,
-          MarkdownCustomCodeStyleSettings::MAX_LINES_BETWEEN_PARAGRAPHS.name, "Between paragraphs",
-          CodeStyleSettingsCustomizable.BLANK_LINES
+          MarkdownCustomCodeStyleSettings::MAX_LINES_BETWEEN_PARAGRAPHS.name,
+          MarkdownBundle.message("markdown.style.settings.blank.lines.between.paragraphs"),
+          CodeStyleSettingsCustomizableOptions.getInstance().BLANK_LINES
         )
 
         consumer.showCustomOption(
           MarkdownCustomCodeStyleSettings::class.java,
-          MarkdownCustomCodeStyleSettings::MIN_LINES_AROUND_HEADER.name, "Around header",
-          CodeStyleSettingsCustomizable.BLANK_LINES_KEEP
+          MarkdownCustomCodeStyleSettings::MIN_LINES_AROUND_HEADER.name,
+          MarkdownBundle.message("markdown.style.settings.blank.lines.around.header"),
+          CodeStyleSettingsCustomizableOptions.getInstance().BLANK_LINES_KEEP
         )
 
         consumer.showCustomOption(
           MarkdownCustomCodeStyleSettings::class.java,
-          MarkdownCustomCodeStyleSettings::MIN_LINES_AROUND_BLOCK_ELEMENTS.name, "Around block elements",
-          CodeStyleSettingsCustomizable.BLANK_LINES_KEEP
+          MarkdownCustomCodeStyleSettings::MIN_LINES_AROUND_BLOCK_ELEMENTS.name,
+          MarkdownBundle.message("markdown.style.settings.blank.lines.around.block.elements"),
+          CodeStyleSettingsCustomizableOptions.getInstance().BLANK_LINES_KEEP
         )
 
         consumer.showCustomOption(
           MarkdownCustomCodeStyleSettings::class.java,
-          MarkdownCustomCodeStyleSettings::MIN_LINES_BETWEEN_PARAGRAPHS.name, "Between paragraphs",
-          CodeStyleSettingsCustomizable.BLANK_LINES_KEEP
+          MarkdownCustomCodeStyleSettings::MIN_LINES_BETWEEN_PARAGRAPHS.name,
+          MarkdownBundle.message("markdown.style.settings.blank.lines.between.paragraphs"),
+          CodeStyleSettingsCustomizableOptions.getInstance().BLANK_LINES_KEEP
         )
       }
       SettingsType.SPACING_SETTINGS -> {
         consumer.showCustomOption(
           MarkdownCustomCodeStyleSettings::class.java,
-          MarkdownCustomCodeStyleSettings::FORCE_ONE_SPACE_BETWEEN_WORDS.name, "Between words",
-          "Force One Space"
+          MarkdownCustomCodeStyleSettings::FORCE_ONE_SPACE_BETWEEN_WORDS.name,
+          MarkdownBundle.message("markdown.style.settings.spacing.between.words"),
+          MarkdownBundle.message("markdown.style.settings.spacing.force.one.space")
         )
 
         consumer.showCustomOption(
           MarkdownCustomCodeStyleSettings::class.java,
-          MarkdownCustomCodeStyleSettings::FORCE_ONE_SPACE_AFTER_HEADER_SYMBOL.name, "After header symbol",
-          "Force One Space"
+          MarkdownCustomCodeStyleSettings::FORCE_ONE_SPACE_AFTER_HEADER_SYMBOL.name,
+          MarkdownBundle.message("markdown.style.settings.spacing.after.header.symbol"),
+          MarkdownBundle.message("markdown.style.settings.spacing.force.one.space")
         )
 
         consumer.showCustomOption(
           MarkdownCustomCodeStyleSettings::class.java,
-          MarkdownCustomCodeStyleSettings::FORCE_ONE_SPACE_AFTER_LIST_BULLET.name, "After list marker",
-          "Force One Space"
+          MarkdownCustomCodeStyleSettings::FORCE_ONE_SPACE_AFTER_LIST_BULLET.name,
+          MarkdownBundle.message("markdown.style.settings.spacing.after.list.marker"),
+          MarkdownBundle.message("markdown.style.settings.spacing.force.one.space")
         )
 
         consumer.showCustomOption(
           MarkdownCustomCodeStyleSettings::class.java,
-          MarkdownCustomCodeStyleSettings::FORCE_ONE_SPACE_AFTER_BLOCKQUOTE_SYMBOL.name, "After blockquote marker",
-          "Force One Space"
+          MarkdownCustomCodeStyleSettings::FORCE_ONE_SPACE_AFTER_BLOCKQUOTE_SYMBOL.name,
+          MarkdownBundle.message("markdown.style.settings.spacing.after.blockquote.marker"),
+          MarkdownBundle.message("markdown.style.settings.spacing.force.one.space")
         )
       }
       else -> {}

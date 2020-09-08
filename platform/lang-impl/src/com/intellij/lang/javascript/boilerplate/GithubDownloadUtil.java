@@ -6,6 +6,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.platform.templates.github.DownloadUtil;
 import com.intellij.platform.templates.github.GeneratorException;
@@ -67,7 +68,7 @@ public final class GithubDownloadUtil {
   public static void downloadContentToFileWithProgressSynchronously(
     @Nullable Project project,
     @NotNull final String url,
-    @NotNull String progressTitle,
+    @NotNull @NlsContexts.ProgressTitle String progressTitle,
     @NotNull final File outputFile,
     @NotNull final String userName,
     @NotNull final String repositoryName,
@@ -76,7 +77,7 @@ public final class GithubDownloadUtil {
     Outcome<File> outcome = DownloadUtil.provideDataWithProgressSynchronously(
       project,
       progressTitle,
-      "Downloading zip archive" + DownloadUtil.CONTENT_LENGTH_TEMPLATE + " ...",
+      LangBundle.message("progress.text.downloading.zip.archive", DownloadUtil.CONTENT_LENGTH_TEMPLATE),
       () -> {
         ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
         downloadAtomically(progress, url, outputFile, userName, repositoryName);

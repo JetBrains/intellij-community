@@ -9,6 +9,8 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.stream.Stream;
+
 /**
  * Utility methods to support Java records
  */
@@ -53,6 +55,21 @@ public final class JavaPsiRecordUtil {
       }
     }
     return null;
+  }
+
+  /**
+   * @param parameter of canonical constructor of the record
+   * @return record component that corresponds to the parameter
+   */
+  @Nullable
+  public static PsiRecordComponent getComponentForCanonicalConstructorParameter(@NotNull PsiParameter parameter) {
+    PsiClass aClass = PsiTreeUtil.getParentOfType(parameter, PsiClass.class);
+    if (aClass == null) return null;
+    String parameterName = parameter.getName();
+    return Stream.of(aClass.getRecordComponents())
+      .filter(component -> parameterName.equals(component.getName()))
+      .findFirst()
+      .orElse(null);
   }
 
   /**

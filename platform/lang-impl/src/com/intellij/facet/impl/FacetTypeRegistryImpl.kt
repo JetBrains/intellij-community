@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.project.ProjectManager
 import org.jetbrains.jps.model.serialization.facet.FacetState
 import java.util.*
@@ -75,7 +76,7 @@ class FacetTypeRegistryImpl : FacetTypeRegistry() {
       for (facet in facets) {
         val facetState = saveFacetWithSubFacets(facet, subFacets) ?: continue
         val pluginName = facetType.pluginDescriptor?.name?.let { " '$it'" } ?: ""
-        val errorMessage = "Plugin$pluginName which provides support for '${facetType.presentableName}' facets is unloaded"
+        val errorMessage = ProjectBundle.message("error.message.plugin.for.facets.unloaded", pluginName, facetType.presentableName)
         val reportError = !ApplicationManager.getApplication().isUnitTestMode
         val invalidFacet = FacetManagerBase.createInvalidFacet(module, facetState, facet.underlyingFacet, errorMessage, true, reportError)
         removeAllSubFacets(model, facet, subFacets)

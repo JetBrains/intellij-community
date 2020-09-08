@@ -33,7 +33,7 @@ public interface ModelBranch extends UserDataHolder {
    *
    * @return the patch object representing all the accumulated changes in the branch.
    */
-  static @NotNull ModelPatch performInBranch(@NotNull Project project, @NotNull Consumer<ModelBranch> action) {
+  static @NotNull ModelPatch performInBranch(@NotNull Project project, @NotNull Consumer<? super ModelBranch> action) {
     return BranchService.getInstance().performInBranch(project, action);
   }
 

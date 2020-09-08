@@ -17,6 +17,7 @@ package com.intellij.util.xml.ui;
 
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.PlatformIcons;
 
 import java.awt.event.ActionEvent;
@@ -26,13 +27,13 @@ import java.awt.event.ActionListener;
  * @author peter
  */
 public class BigStringComponent extends TextFieldWithBrowseButton {
-  private final String myWindowTitle;
+  private final @NlsContexts.DialogTitle String myWindowTitle;
 
-  public BigStringComponent(String windowTitle) {
+  public BigStringComponent(@NlsContexts.DialogTitle String windowTitle) {
     this(true, windowTitle);
   }
 
-  public BigStringComponent(boolean hasBorder, String windowTitle) {
+  public BigStringComponent(boolean hasBorder, @NlsContexts.DialogTitle String windowTitle) {
     super();
     myWindowTitle = windowTitle;
     setButtonIcon(PlatformIcons.OPEN_EDIT_DIALOG_ICON);

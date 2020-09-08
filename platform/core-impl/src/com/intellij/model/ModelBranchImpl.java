@@ -74,7 +74,7 @@ public abstract class ModelBranchImpl extends UserDataHolderBase implements Mode
   }
 
   @NotNull
-  static ModelPatch performInBranch(@NotNull Consumer<ModelBranch> action, @NotNull ModelBranchImpl branch) {
+  static ModelPatch performInBranch(@NotNull Consumer<? super ModelBranch> action, @NotNull ModelBranchImpl branch) {
     action.accept(branch);
     return new ModelPatch() {
       @Override

@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ExpirableRunnable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -425,7 +426,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     });
   }
 
-  private void wrapAction(String shortcut, Predicate<JTable> predicate) {
+  private void wrapAction(String shortcut, Predicate<? super JTable> predicate) {
     Object actionKey = getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).get(KeyStroke.getKeyStroke(shortcut));
     Action action = getActionMap().get(actionKey);
     getActionMap().put(actionKey, new AbstractAction() {
@@ -878,8 +879,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         TableStringConverter converter = getStringConverter();
         if (converter != null) {
           // Use the converter
-          String value = converter.toString(
-            myModel, row, column);
+          @NlsSafe String value = converter.toString(myModel, row, column);
           if (value != null) {
             return value;
           }
@@ -891,7 +891,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         if (o == null) {
           return "";
         }
-        String string = o.toString();
+        @NlsSafe String string = o.toString();
         if (string == null) {
           return "";
         }

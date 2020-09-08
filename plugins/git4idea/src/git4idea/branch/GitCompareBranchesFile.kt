@@ -26,7 +26,13 @@ internal class GitCompareBranchesFile(sessionId: String, private val compareBran
   }
 
   override fun getFileSystem(): GitCompareBranchesVirtualFileSystem = fileSystemInstance
-  override fun getPath(): String = fileSystem.serializePathSafe(pathId) ?: name
+  override fun getPath(): String = try {
+    fileSystem.getPath(pathId)
+  }
+  catch (e: Exception) {
+    name
+  }
+
   override fun getPresentablePath(): String = name
   override fun enforcePresentableName(): Boolean = true
 

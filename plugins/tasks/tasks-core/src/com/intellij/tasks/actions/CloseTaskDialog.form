@@ -15,7 +15,7 @@
           </grid>
         </constraints>
         <properties>
-          <text value="Close task:"/>
+          <text resource-bundle="messages/TaskBundle" key="close.task"/>
         </properties>
       </component>
       <component id="5ff61" class="javax.swing.JLabel" binding="myTaskLabel">
@@ -23,7 +23,7 @@
           <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Task description"/>
+          <text resource-bundle="messages/TaskBundle" key="task.description"/>
         </properties>
       </component>
       <hspacer id="13d67">
@@ -54,7 +54,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="&amp;Update issue state"/>
+              <text resource-bundle="messages/TaskBundle" key="update.issue.state"/>
             </properties>
           </component>
         </children>

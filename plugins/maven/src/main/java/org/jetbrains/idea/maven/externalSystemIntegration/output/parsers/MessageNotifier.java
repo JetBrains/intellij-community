@@ -2,8 +2,10 @@
 package org.jetbrains.idea.maven.externalSystemIntegration.output.parsers;
 
 import com.intellij.build.events.BuildEvent;
+import com.intellij.build.events.BuildEventsNls;
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.events.impl.MessageEventImpl;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -21,9 +23,9 @@ public abstract class MessageNotifier implements MavenLoggedEventParser {
 
   @NotNull private final LogMessageType myType;
   @NotNull private final MessageEvent.Kind myKind;
-  @NotNull private final String myGroup;
+  @NotNull @BuildEventsNls.Title private final String myGroup;
   private final Set<String> myMessages = new HashSet<>();
-  protected MessageNotifier(@NotNull LogMessageType type, @NotNull MessageEvent.Kind kind, @NotNull String group) {
+  protected MessageNotifier(@NotNull LogMessageType type, @NotNull MessageEvent.Kind kind, @NotNull @BuildEventsNls.Title String group) {
 
     myType = type;
     myKind = kind;
@@ -55,6 +57,7 @@ public abstract class MessageNotifier implements MavenLoggedEventParser {
   }
 
   @NotNull
+  @NlsSafe
   protected String getMessage(String line, List<MavenLogEntryReader.MavenLogEntry> toConcat) {
     if (toConcat == null || toConcat.isEmpty()) {
       return line;

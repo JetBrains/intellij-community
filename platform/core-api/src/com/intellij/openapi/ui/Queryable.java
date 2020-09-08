@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,7 @@ public interface Queryable {
 
   final class Util {
     @Nullable
-    public static String print(@NotNull Queryable ui, @Nullable PrintInfo printInfo, @Nullable Contributor contributor) {
+    public static @NonNls String print(@NotNull Queryable ui, @Nullable PrintInfo printInfo, @Nullable Contributor contributor) {
       PrintInfo print = printInfo != null ? printInfo : new PrintInfo();
 
       LinkedHashMap<String, String> map = new LinkedHashMap<>();
@@ -72,7 +73,7 @@ public interface Queryable {
     }
 
     @Nullable
-    public static String print(@NotNull Queryable ui, @Nullable PrintInfo printInfo) {
+    public static @NonNls String print(@NotNull Queryable ui, @Nullable PrintInfo printInfo) {
       return print(ui, printInfo, null);
     }
   }

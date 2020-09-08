@@ -5,8 +5,12 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
+import com.intellij.java.analysis.JavaAnalysisBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Supplier;
 
 /**
  * Represents a value nullability within DFA. Unlike {@link Nullability} may have more fine-grained
@@ -18,21 +22,21 @@ public enum DfaNullability {
   /**
    * Means: exactly null
    */
-  NULL("Null", "null", Nullability.NULLABLE),
-  NULLABLE("Nullable", "nullable", Nullability.NULLABLE),
-  NOT_NULL("Not-null", "non-null", Nullability.NOT_NULL),
-  UNKNOWN("Unknown", "", Nullability.UNKNOWN),
+  NULL("Null", JavaAnalysisBundle.messagePointer("nullability.null"), Nullability.NULLABLE),
+  NULLABLE("Nullable", JavaAnalysisBundle.messagePointer("nullability.nullable"), Nullability.NULLABLE),
+  NOT_NULL("Not-null", JavaAnalysisBundle.messagePointer("nullability.non.null"), Nullability.NOT_NULL),
+  UNKNOWN("Unknown", () -> "", Nullability.UNKNOWN),
   /**
    * Means: non-stable variable declared as Nullable was checked for nullity and flushed afterwards (e.g. by unknown method call),
    * so we are unsure about its nullability anymore.
    */
-  FLUSHED("Flushed", "", Nullability.UNKNOWN);
+  FLUSHED("Flushed", () -> "", Nullability.UNKNOWN);
 
   private final @NotNull String myInternalName;
-  private final @NotNull String myPresentationalName;
+  private final @NotNull Supplier<@Nls String> myPresentationalName;
   private final @NotNull Nullability myNullability;
 
-  DfaNullability(@NotNull String internalName, @NotNull String presentationalName, @NotNull Nullability nullability) {
+  DfaNullability(@NotNull String internalName, @NotNull Supplier<@Nls String> presentationalName, @NotNull Nullability nullability) {
     myInternalName = internalName;
     myPresentationalName = presentationalName;
     myNullability = nullability;
@@ -43,9 +47,8 @@ public enum DfaNullability {
     return myInternalName;
   }
 
-  @NotNull
-  public String getPresentationName() {
-    return myPresentationalName;
+  public @NotNull @Nls String getPresentationName() {
+    return myPresentationalName.get();
   }
 
   @NotNull

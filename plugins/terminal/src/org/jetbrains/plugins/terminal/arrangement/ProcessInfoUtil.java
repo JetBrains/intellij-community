@@ -62,7 +62,7 @@ public final class ProcessInfoUtil {
     String procPath = "/proc/" + pid + "/cwd";
     try {
       File dir = Paths.get(procPath).toRealPath().toFile();
-      if (dir != null && dir.isDirectory()) {
+      if (dir.isDirectory()) {
         return dir.getAbsolutePath();
       }
     }
@@ -74,8 +74,8 @@ public final class ProcessInfoUtil {
     return null;
   }
 
-  @NotNull
-  private static String getCwdOnUnix(int pid) throws ExecutionException {
+  @SuppressWarnings("HardCodedStringLiteral")
+  private static @NotNull String getCwdOnUnix(int pid) throws ExecutionException {
     GeneralCommandLine commandLine = new GeneralCommandLine("lsof", "-a", "-d", "cwd", "-p", String.valueOf(pid), "-Fn");
     CapturingProcessRunner runner = new CapturingProcessRunner(new OSProcessHandler(commandLine));
     ProcessOutput output = runner.runProcess(TIMEOUT_MILLIS);

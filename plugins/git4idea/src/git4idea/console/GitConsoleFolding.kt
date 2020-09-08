@@ -2,11 +2,13 @@
 package git4idea.console
 
 import com.intellij.execution.ConsoleFolding
+import com.intellij.execution.ui.ConsoleView
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.vcs.console.VcsConsoleFolding
 import com.intellij.vcs.console.VcsConsoleFolding.Placeholder
+import com.intellij.vcs.console.VcsConsoleView
 import git4idea.commands.GitImplBase
 import java.util.regex.Matcher
 import java.util.regex.Pattern
@@ -23,7 +25,7 @@ class GitConsoleFolding : VcsConsoleFolding {
       if (start < end && StringUtil.isWhiteSpace(line[start])) start++
 
       if (start < end) {
-        result.add(Placeholder("-c ...", TextRange(start, end)))
+        result.add(Placeholder("-c ...", TextRange(start, end))) // NON-NLS
       }
     }
 
@@ -49,5 +51,9 @@ class GitProgressOutputConsoleFolding : ConsoleFolding() {
 
   override fun shouldFoldLine(project: Project, line: String): Boolean {
     return GitImplBase.looksLikeProgress(line)
+  }
+
+  override fun isEnabledForConsole(consoleView: ConsoleView): Boolean {
+    return consoleView.place == VcsConsoleView.CONSOLE_PLACE
   }
 }

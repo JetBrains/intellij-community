@@ -3,6 +3,7 @@ package com.intellij.ui.mac.touchbar;
 
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +17,7 @@ abstract class TBItem {
   @Nullable String myOptionalContextName;
   final Object myReleaseLock = new Object();
 
-  TBItem(@NotNull String name, @Nullable ItemListener listener) { myName = name; myListener = listener; }
+  TBItem(@NotNull @NonNls String name, @Nullable ItemListener listener) { myName = name;myListener = listener; }
 
   @Override
   public String toString() { return myUid == null ? String.format("%s [null-uid]", myName) : myUid; }

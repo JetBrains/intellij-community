@@ -44,10 +44,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.*;
@@ -56,10 +53,10 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.mac.UpdatableDefaultActionGroup;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -172,22 +169,22 @@ public abstract class DiffRequestProcessor implements Disposable {
   // Update
   //
 
-  @CalledInAwt
+  @RequiresEdt
   protected void reloadRequest() {
     updateRequest(true);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void updateRequest() {
     updateRequest(false);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void updateRequest(boolean force) {
     updateRequest(force, null);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public abstract void updateRequest(boolean force, @Nullable ScrollToPolicy scrollToChangePolicy);
 
   @NotNull
@@ -299,12 +296,12 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @Nullable private ApplyData myQueuedApplyRequest;
 
-  @CalledInAwt
+  @RequiresEdt
   protected void applyRequest(@NotNull DiffRequest request, boolean force, @Nullable ScrollToPolicy scrollToChangePolicy) {
     applyRequest(request, force, scrollToChangePolicy, false);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void applyRequest(@NotNull DiffRequest request, boolean force, @Nullable ScrollToPolicy scrollToChangePolicy, boolean sync) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myIterationState = IterationState.NONE;
@@ -326,7 +323,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void doApplyRequest(@NotNull DiffRequest request, boolean force, @Nullable ScrollToPolicy scrollToChangePolicy) {
     if (!force && request == myActiveRequest) return;
 
@@ -366,13 +363,13 @@ public abstract class DiffRequestProcessor implements Disposable {
     });
   }
 
-  protected void setWindowTitle(@NotNull String title) {
+  protected void setWindowTitle(@NotNull @NlsContexts.DialogTitle String title) {
   }
 
   protected void onAfterNavigate() {
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void onDispose() {
   }
 
@@ -518,7 +515,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     DiffUtil.registerAction(new ShowActionGroupPopupAction(), myMainPanel);
   }
 
-  private void setTitle(@Nullable String title) {
+  private void setTitle(@Nullable @NlsContexts.DialogTitle String title) {
     if (getContextUserData(DiffUserDataKeys.DO_NOT_CHANGE_WINDOW_TITLE) == Boolean.TRUE) return;
     if (title == null) title = DiffBundle.message("diff.files.dialog.title");
     setWindowTitle(title);
@@ -682,25 +679,25 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @NotNull private IterationState myIterationState = IterationState.NONE;
 
-  @CalledInAwt
+  @RequiresEdt
   protected boolean hasNextChange(boolean fromUpdate) {
     return false;
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected boolean hasPrevChange(boolean fromUpdate) {
     return false;
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void goToNextChange(boolean fromDifferences) {
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void goToPrevChange(boolean fromDifferences) {
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected boolean isNavigationEnabled() {
     return false;
   }
@@ -1144,10 +1141,10 @@ public abstract class DiffRequestProcessor implements Disposable {
   //
 
   private interface ViewerState {
-    @CalledInAwt
+    @RequiresEdt
     void init();
 
-    @CalledInAwt
+    @RequiresEdt
     void destroy();
 
     @Nullable
@@ -1208,7 +1205,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
-    @CalledInAwt
+    @RequiresEdt
     public void init() {
       myContentPanel.setContent(myViewer.getComponent());
 
@@ -1217,7 +1214,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
-    @CalledInAwt
+    @RequiresEdt
     public void destroy() {
       Disposer.dispose(myViewer);
     }
@@ -1251,7 +1248,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
-    @CalledInAwt
+    @RequiresEdt
     public void init() {
       myContentPanel.setContent(myViewer.getComponent());
       setTitle(myActiveRequest.getTitle());
@@ -1268,7 +1265,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
-    @CalledInAwt
+    @RequiresEdt
     public void destroy() {
       Disposer.dispose(myViewer);
     }
@@ -1308,7 +1305,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
-    @CalledInAwt
+    @RequiresEdt
     public void init() {
       myContentPanel.setContent(myWrapperViewer.getComponent());
       setTitle(myActiveRequest.getTitle());
@@ -1346,7 +1343,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
-    @CalledInAwt
+    @RequiresEdt
     public void destroy() {
       Disposer.dispose(myViewer);
       Disposer.dispose(myWrapperViewer);

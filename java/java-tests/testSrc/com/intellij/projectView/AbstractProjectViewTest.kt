@@ -8,7 +8,6 @@ import com.intellij.ide.projectView.impl.PackageViewPane
 import com.intellij.ide.projectView.impl.ProjectViewImpl
 import com.intellij.ide.projectView.impl.ProjectViewPane
 import com.intellij.ide.scopeView.ScopeViewPane
-import com.intellij.psi.search.scope.ProblemsScope
 import com.intellij.psi.search.scope.ProjectFilesScope
 import com.intellij.psi.search.scope.packageSet.NamedScope
 import com.intellij.testFramework.PlatformTestUtil
@@ -40,8 +39,6 @@ abstract class AbstractProjectViewTest : TestSourceBasedTestCase() {
   protected fun selectPackagesPane() = selectProjectViewPane(PackageViewPane.ID, null)
 
   protected fun selectProjectFilesPane() = selectScopeViewPane(ProjectFilesScope.INSTANCE)
-
-  protected fun selectProblemsPane() = selectScopeViewPane(ProblemsScope.INSTANCE)
 
   protected fun selectScopeViewPane(scope: NamedScope) = selectProjectViewPane(ScopeViewPane.ID, scope.toString() + "; " + scope.javaClass)
 

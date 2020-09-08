@@ -33,7 +33,7 @@ public final class EditorSettingsExternalizable implements PersistentStateCompon
   public static final UINumericRange TOOLTIPS_DELAY_RANGE = new UINumericRange(500, 1, 5000);
 
   private static final String SOFT_WRAP_FILE_MASKS_ENABLED_DEFAULT = "*";
-  private static final String SOFT_WRAP_FILE_MASKS_DISABLED_DEFAULT = "*.md; *.txt; *.rst; *.adoc";
+  @NonNls private static final String SOFT_WRAP_FILE_MASKS_DISABLED_DEFAULT = "*.md; *.txt; *.rst; *.adoc";
 
   //Q: make it interface?
   public static final class OptionSet {

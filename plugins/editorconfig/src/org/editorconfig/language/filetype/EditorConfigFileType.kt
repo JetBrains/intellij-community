@@ -9,7 +9,7 @@ import javax.swing.Icon
 
 object EditorConfigFileType : LanguageFileType(EditorConfigLanguage) {
   override fun getName() = EditorConfigFileConstants.FILETYPE_NAME
-  override fun getDescription() = EditorConfigBundle["file.type.description"]
+  override fun getDescription() = EditorConfigBundle.get("file.type.description")
   override fun getDefaultExtension() = EditorConfigFileConstants.FILE_EXTENSION
   override fun getIcon(): Icon? = AllIcons.Nodes.Editorconfig
 }

@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,8 +46,8 @@ public abstract class UndoManager {
   public abstract boolean isRedoAvailable(@Nullable FileEditor editor);
 
   @NotNull
-  public abstract Pair<String, String> getUndoActionNameAndDescription(FileEditor editor);
+  public abstract Pair<@NlsActions.ActionText String, @NlsActions.ActionDescription String> getUndoActionNameAndDescription(FileEditor editor);
 
   @NotNull
-  public abstract Pair<String, String> getRedoActionNameAndDescription(FileEditor editor);
+  public abstract Pair<@NlsActions.ActionText String, @NlsActions.ActionDescription String> getRedoActionNameAndDescription(FileEditor editor);
 }

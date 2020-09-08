@@ -19,6 +19,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.ArrayUtil;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.PyNoneType;
@@ -49,7 +50,7 @@ public class PyTupleAssignmentBalanceInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyAssignmentStatement(PyAssignmentStatement node) {
+    public void visitPyAssignmentStatement(@NotNull PyAssignmentStatement node) {
       final PyExpression lhsExpression = PyPsiUtils.flattenParens(node.getLeftHandSideExpression());
       final PyExpression assignedValue = node.getAssignedValue();
       if (!(lhsExpression instanceof PyTupleExpression) || assignedValue == null) return;
@@ -59,7 +60,8 @@ public class PyTupleAssignmentBalanceInspection extends PyInspection {
 
       final int starExpressions = countStarExpressions(targets);
       if (starExpressions > 1) {
-        registerProblem(lhsExpression, "Only one starred expression allowed in assignment");
+        registerProblem(lhsExpression,
+                        PyPsiBundle.message("INSP.tuple.assignment.balance.only.one.starred.expression.allowed.in.assignment"));
         return;
       }
 
@@ -67,10 +69,10 @@ public class PyTupleAssignmentBalanceInspection extends PyInspection {
       if (valuesLength == -1) return;
 
       if (targetsLength > valuesLength + starExpressions) {
-        registerProblem(assignedValue, "Need more values to unpack");
+        registerProblem(assignedValue, PyPsiBundle.message("INSP.tuple.assignment.balance.need.more.values.to.unpack"));
       }
       else if (starExpressions == 0 && targetsLength < valuesLength) {
-        registerProblem(assignedValue, "Too many values to unpack");
+        registerProblem(assignedValue, PyPsiBundle.message("INSP.tuple.assignment.balance.too.many.values.to.unpack"));
       }
     }
 

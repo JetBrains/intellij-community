@@ -2,7 +2,9 @@
 package com.intellij.internal.statistic.eventLog.whitelist
 
 import com.google.gson.GsonBuilder
-import com.intellij.internal.statistic.eventLog.*
+import com.intellij.ide.plugins.DisabledPluginsState
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector
@@ -44,15 +46,15 @@ object WhitelistBuilder {
   @JvmStatic
   fun buildWhitelist(): List<WhitelistGroup> {
     val result = mutableListOf<WhitelistGroup>()
-    collectWhitelistFromExtensions(result, "counter", FUCounterUsageLogger.instantiateCounterCollectors())
-    collectWhitelistFromExtensions(result, "state", ApplicationUsagesCollector.EP_NAME.extensionList)
-    collectWhitelistFromExtensions(result, "state", ProjectUsagesCollector.EP_NAME.extensionList)
+    result.addAll(collectWhitelistFromExtensions("counter", FUCounterUsageLogger.instantiateCounterCollectors()))
+    result.addAll(collectWhitelistFromExtensions("state", ApplicationUsagesCollector.EP_NAME.extensionList))
+    result.addAll(collectWhitelistFromExtensions("state", ProjectUsagesCollector.EP_NAME.extensionList))
     return result
   }
 
-  private fun collectWhitelistFromExtensions(result: MutableList<WhitelistGroup>,
-                                             groupType: String,
-                                             collectors: Collection<FeatureUsagesCollector>) {
+  fun collectWhitelistFromExtensions(groupType: String,
+                                     collectors: Collection<FeatureUsagesCollector>): MutableList<WhitelistGroup> {
+    val result = mutableListOf<WhitelistGroup>()
     for (collector in collectors) {
       val group = collector.group ?: continue
       val whitelistEvents = group.events.groupBy { it.eventId }
@@ -61,6 +63,7 @@ object WhitelistBuilder {
       val whitelistGroup = WhitelistGroup(group.id, groupType, group.version, whitelistEvents)
       result.add(whitelistGroup)
     }
+    return result
   }
 
   private fun buildFields(events: List<BaseEventId>): HashSet<WhitelistField> {
@@ -76,6 +79,7 @@ class WhitelistBuilderAppStarter : ApplicationStarter {
   override fun getCommandName(): String = "buildWhitelist"
 
   override fun main(args: List<String>) {
+    logInstalledPlugins()
     val groups = WhitelistBuilder.buildWhitelist()
     val text = GsonBuilder().setPrettyPrinting().create().toJson(groups)
     if (args.size == 2) {
@@ -85,5 +89,20 @@ class WhitelistBuilderAppStarter : ApplicationStarter {
       println(text)
     }
     exitProcess(0)
+  }
+
+  private fun logInstalledPlugins() {
+    println("Disabled plugins:")
+    for (id in DisabledPluginsState.disabledPlugins()) {
+      println(id.toString())
+    }
+
+    println("\nEnabled plugins:")
+    for (descriptor in PluginManagerCore.getLoadedPlugins()) {
+      val bundled = descriptor.isBundled
+      if (descriptor.isEnabled) {
+        println("${descriptor.name} (bundled=$bundled)")
+      }
+    }
   }
 }

@@ -92,7 +92,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     super(project);
   }
 
-  public void openMessagesView(final VcsErrorViewPanel errorTreeView, @NotNull String tabDisplayName) {
+  public void openMessagesView(final VcsErrorViewPanel errorTreeView, @NotNull @NlsContexts.TabTitle String tabDisplayName) {
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(myProject, () -> {
       final MessageView messageView = MessageView.SERVICE.getInstance(myProject);
@@ -136,7 +136,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   @Override
   @Nullable
   public Collection<VirtualFile> selectFilesToProcess(List<? extends VirtualFile> files,
-                                                      @NlsContexts.DialogTitle String title,
+                                                      String title,
                                                       @Nullable String prompt,
                                                       @Nullable String singleFileTitle,
                                                       @Nullable String singleFilePromptTemplate,
@@ -247,7 +247,9 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     return ArrayUtilRt.toStringArray(list);
   }
 
-  private void showErrorsImpl(final boolean isEmpty, final Getter<? extends VcsException> firstGetter, @NotNull final String tabDisplayName,
+  private void showErrorsImpl(final boolean isEmpty,
+                              final Getter<? extends VcsException> firstGetter,
+                              @NotNull @NlsContexts.TabTitle String tabDisplayName,
                               final Consumer<? super VcsErrorViewPanel> viewFiller) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       if (!isEmpty) {
@@ -281,7 +283,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   @Override
-  public void showErrors(final Map<HotfixData, List<VcsException>> exceptionGroups, @NotNull final String tabDisplayName) {
+  public void showErrors(final Map<HotfixData, List<VcsException>> exceptionGroups, @NotNull String tabDisplayName) {
     showErrorsImpl(exceptionGroups.isEmpty(), () -> {
       final List<VcsException> exceptionList = exceptionGroups.values().iterator().next();
       return exceptionList == null ? null : (exceptionList.isEmpty() ? null : exceptionList.get(0));
@@ -381,7 +383,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   private ChangesBrowserDialog createChangesBrowserDialog(CommittedChangesTableModel changelists,
-                                                          @Nullable String title,
+                                                          @Nullable @NlsContexts.DialogTitle String title,
                                                           @Nullable Component parent,
                                                           Consumer<? super ChangesBrowserDialog> initRunnable) {
     final ChangesBrowserDialog.Mode mode = ChangesBrowserDialog.Mode.Browse;
@@ -395,7 +397,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   @Override
-  public void showChangesListBrowser(@NotNull CommittedChangeList changelist, @Nullable @Nls String title) {
+  public void showChangesListBrowser(@NotNull CommittedChangeList changelist, @Nullable String title) {
     ChangeListViewerDialog dlg = new ChangeListViewerDialog(myProject, changelist, null);
     if (title != null) {
       dlg.setTitle(title);
@@ -404,7 +406,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   @Override
-  public void showWhatDiffersBrowser(@NotNull Collection<Change> changes, @Nullable @Nls String title) {
+  public void showWhatDiffersBrowser(@NotNull Collection<Change> changes, @Nullable String title) {
     ChangeListViewerDialog dlg = new ChangeListViewerDialog(myProject, changes);
     if (title != null) {
       dlg.setTitle(title);
@@ -428,7 +430,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   @Override
   public void showCommittedChangesBrowser(@NotNull CommittedChangesProvider provider,
                                           @NotNull RepositoryLocation location,
-                                          @Nullable @Nls String title,
+                                          @Nullable String title,
                                           @Nullable Component parent) {
     ChangesBrowserSettingsEditor filterUI = provider.createFilterUI(true);
     CommittedChangesFilterDialog filterDialog = new CommittedChangesFilterDialog(myProject, filterUI, provider.createDefaultSettings());
@@ -623,8 +625,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   @NotNull
-  private static String failedText(@NotNull FilePath filePath, @NotNull VcsRevisionNumber revision) {
-    return "Show all affected files for " + filePath.getPath() + " at " + revision.asString() + " failed";
+  private static @Nls String failedText(@NotNull FilePath filePath, @NotNull VcsRevisionNumber revision) {
+    return VcsBundle.message("impl.show.all.affected.files.for.path.at.revision.failed", filePath.getPath(), revision.asString());
   }
 
   private static final class AsynchronousListsLoader extends Task.Backgroundable {

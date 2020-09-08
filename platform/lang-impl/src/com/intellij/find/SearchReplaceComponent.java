@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.BooleanGetter;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -81,7 +82,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   private final DataProvider myDataProviderDelegate;
 
   private boolean myMultilineMode;
-  @NotNull private String myStatusText = "";
+  @NotNull private @NlsContexts.Label String myStatusText = "";
   @NotNull private Color myStatusColor = UIUtil.getLabelForeground();
   private DefaultActionGroup myTouchbarActions;
 
@@ -247,12 +248,12 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     }
   }
 
-  public void setStatusText(@NotNull String status) {
+  public void setStatusText(@NotNull @NlsContexts.Label String status) {
     myStatusText = status;
   }
 
   @NotNull
-  public String getStatusText() {
+  public @NlsContexts.Label String getStatusText() {
     return myStatusText;
   }
 

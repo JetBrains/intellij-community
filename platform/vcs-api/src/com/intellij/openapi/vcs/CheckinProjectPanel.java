@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.commit.CommitWorkflowHandler;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -95,7 +96,7 @@ public interface CheckinProjectPanel extends Refreshable, CommitMessageI {
    *
    * @return the description text.
    */
-  @NotNull
+  @NotNull @Nls
   String getCommitMessage();
 
   @NlsContexts.Button

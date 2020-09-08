@@ -121,7 +121,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
   }
 
   // get 20 scattered elements
-  private static <T> void addDumpsAttachments(List<T> from, Function<T, String> textMapper, List<Attachment> container) {
+  private static <T> void addDumpsAttachments(List<T> from, Function<? super T, String> textMapper, List<? super Attachment> container) {
     int size = Math.min(from.size(), 20);
     int step = from.size() / size;
     for (int i = 0; i < size; i++) {

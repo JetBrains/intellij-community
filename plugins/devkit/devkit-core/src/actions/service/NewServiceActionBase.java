@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.actions.service;
 
 import com.intellij.ide.IdeView;
@@ -15,6 +15,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
@@ -24,9 +26,9 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.xml.util.IncludedXmlTag;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -44,7 +46,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 /**
- * An base class for actions generating service classes (implementation and optionally interface) and registering new service in {@code plugin.xml}.
+ * A base class for actions generating service classes (implementation and optionally interface) and registering new service in {@code plugin.xml}.
  */
 abstract class NewServiceActionBase extends CreateInDirectoryActionBase implements WriteActionAware {
   protected NewServiceActionBase() { }
@@ -207,7 +209,7 @@ abstract class NewServiceActionBase extends CreateInDirectoryActionBase implemen
       }
       else if (myNeedAdjust) {
         myAdjusting = true;
-        myServiceImplementationTextField.setText("impl." + myServiceNameTextField.getText() + "Impl");
+        myServiceImplementationTextField.setText("impl." + myServiceNameTextField.getText() + "Impl"); //NON-NLS
         myAdjusting = false;
       }
     }
@@ -258,8 +260,8 @@ abstract class NewServiceActionBase extends CreateInDirectoryActionBase implemen
 
   static class ServiceCreator { // not private for testing purpose only
     private static final Logger LOG = Logger.getInstance(ServiceCreator.class);
-    private static final String INTERFACE_NAME_PROPERTY = "INTERFACE_NAME";
-    private static final String INTERFACE_PACKAGE_PROPERTY = "INTERFACE_PACKAGE_NAME";
+    private static final @NonNls String INTERFACE_NAME_PROPERTY = "INTERFACE_NAME";
+    private static final @NonNls String INTERFACE_PACKAGE_PROPERTY = "INTERFACE_PACKAGE_NAME";
 
     private final PsiDirectory myDirectory;
     private final String myServiceInterfaceTemplateName;
@@ -365,7 +367,7 @@ abstract class NewServiceActionBase extends CreateInDirectoryActionBase implemen
 
     private void handleException(Throwable t) {
       LOG.info(t);
-      String errorMessage = ElementCreator.getErrorMessage(t);
+      @NlsSafe String errorMessage = ElementCreator.getErrorMessage(t);
       Messages.showMessageDialog(
         getProject(), errorMessage, DevKitBundle.message("error.cannot.create.service.class"), Messages.getErrorIcon());
     }

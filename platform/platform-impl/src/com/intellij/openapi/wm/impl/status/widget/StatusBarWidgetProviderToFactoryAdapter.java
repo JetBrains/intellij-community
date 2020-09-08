@@ -46,6 +46,7 @@ public final class StatusBarWidgetProviderToFactoryAdapter implements StatusBarW
         return result;
       }
       if (ApplicationManager.getApplication().isInternal()) {
+        //noinspection HardCodedStringLiteral
         return widget.ID();
       }
     }

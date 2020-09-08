@@ -34,7 +34,6 @@
     <action id="Vcs.UpdateProject" class="com.intellij.openapi.vcs.update.CommonUpdateProjectAction" icon="AllIcons.Actions.CheckOut">
       <keyboard-shortcut first-keystroke="control T" keymap="$default"/>
     </action>
-
     <group class="com.intellij.openapi.vcs.actions.VcsGroupsWrapper" id="VcsFileGroupPopup" popup="true">
       <add-to-group group-id="VersionControlsGroup" />
     </group>
@@ -87,8 +86,9 @@
 
         <separator/>
         <reference id="Vcs.VcsClone"/>
-        <group id="Vcs.Import" class="com.intellij.ide.actions.NonEmptyActionGroup" popup="true"/>
         <group id="Vcs.Browse" class="com.intellij.ide.actions.NonEmptyActionGroup" popup="true"/>
+        <separator/>
+        <group id="Vcs.Import" class="com.intellij.ide.actions.NonEmptyActionGroup"/>
       </group>
 
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="ToolsMenu"/>
@@ -99,6 +99,9 @@
       <reference ref="ChangesView.CreatePatch"/>
       <reference ref="ChangesView.ApplyPatch"/>
       <reference ref="ChangesView.ApplyPatchFromClipboard"/>
+    </group>
+
+    <group id="Vcs.UmlDiff">
     </group>
 
     <action id="ChangesView.Revert" class="com.intellij.openapi.vcs.changes.actions.RollbackAction"
@@ -208,9 +211,8 @@
       <separator/>
       <reference ref="ChangesView.GroupBy"/>
       <reference ref="ShelvedChanges.ShowHideDeleted"/>
-      <separator/>
-      <action id="ShelfChanges.Settings" class="com.intellij.openapi.vcs.changes.shelf.OpenShelfSettings"
-              icon="AllIcons.General.Settings"/>
+      <reference ref="ExpandAll"/>
+      <reference ref="CollapseAll"/>
     </group>
 
     <!--a group for plugins to add their actions-->
@@ -326,7 +328,7 @@
 
     <action class="com.intellij.openapi.vcs.actions.VcsToolbarLabelAction" id="VcsToolbarLabelAction"/>
 
-    <group id="VcsToobarActions">
+    <group id="VcsToolbarActions">
       <reference ref="VcsToolbarLabelAction"/>
       <reference ref="Vcs.UpdateProject"/>
       <reference ref="CheckinProject"/>
@@ -338,7 +340,7 @@
       <add-to-group group-id="MainToolBarSettings" relative-to-action="ShowSettings" anchor="before"/>
     </group>
 
-    <group id="VcsNavBarToobarActions">
+    <group id="VcsNavBarToolbarActions">
       <reference ref="VcsToolbarLabelAction"/>
       <reference ref="Vcs.UpdateProject"/>
       <reference ref="CheckinProject"/>
@@ -349,7 +351,19 @@
       <add-to-group group-id="NavBarVcsGroup" anchor="first"/>
     </group>
 
-    <!-- Window -->
+    <action id="Vcs.Toolbar.QuickListPopupAction"
+            class="com.intellij.openapi.vcs.actions.VcsQuickActionsToolbarPopup" icon="AllIcons.Actions.More"/>
+
+    <!-- New light VCS toolbar for the root toolbar instead of navbar -->
+    <group id="VcsNavBarToolbarActionsLight">
+       <reference ref="Vcs.UpdateProject"/>
+       <reference ref="CheckinProject"/>
+       <reference ref="ChangesView.ToggleCommitUi"/>
+       <reference ref="Vcs.Toolbar.QuickListPopupAction"/>
+       <add-to-group group-id="NavBarVcsGroupLight" anchor="first"/>
+     </group>
+
+ <!-- Window -->
     <action id="CloseAllUnmodifiedEditors" class="com.intellij.ide.actions.CloseAllUnmodifiedEditorsAction">
       <add-to-group group-id="CloseEditorsGroup" anchor="before" relative-to-action="CloseAllUnpinnedEditors"/>
     </action>
@@ -368,7 +382,7 @@
     </reference>
 
     <action id="Vcs.CopyRevisionNumberAction" class="com.intellij.openapi.vcs.history.actions.CopyRevisionNumberAction"
-            icon="AllIcons.Actions.Copy"/>
+            icon="AllIcons.Actions.Copy" use-shortcut-of="CopyReference"/>
 
     <group id="VcsSelectionHistoryDialog.Popup">
       <reference id="Diff.ShowDiff"/>
@@ -392,7 +406,6 @@
       <separator/>
       <reference ref="ShelvedChanges.ShowHideDeleted"/>
       <reference ref="ShelvedChanges.CleanMarkedToDelete"/>
-      <reference ref="ShelfChanges.Settings"/>
       <separator/>
 
       <add-to-group group-id="Vcs.KeymapGroup" anchor="first"/>

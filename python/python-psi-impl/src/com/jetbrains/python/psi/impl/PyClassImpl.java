@@ -1151,11 +1151,11 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       final List<PyTargetExpression> result = new ArrayList<>();
       statementList.accept(new PyRecursiveElementVisitor() {
         @Override
-        public void visitPyClass(PyClass node) {
+        public void visitPyClass(@NotNull PyClass node) {
         }
 
         @Override
-        public void visitPyAssignmentStatement(final PyAssignmentStatement node) {
+        public void visitPyAssignmentStatement(final @NotNull PyAssignmentStatement node) {
           for (PyExpression expression : node.getTargets()) {
             if (expression instanceof PyTargetExpression) {
               result.add((PyTargetExpression)expression);
@@ -1164,7 +1164,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
         }
 
         @Override
-        public void visitPyWithStatement(PyWithStatement node) {
+        public void visitPyWithStatement(@NotNull PyWithStatement node) {
           StreamEx
             .of(node.getWithItems())
             .map(PyWithItem::getTarget)

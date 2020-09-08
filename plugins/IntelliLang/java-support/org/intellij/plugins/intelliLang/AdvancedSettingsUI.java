@@ -92,7 +92,7 @@ public class AdvancedSettingsUI implements SearchableConfigurable {
       final GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
       final PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass(myField.getText(), scope);
       final TreeClassChooser chooser =
-        factory.createNoInnerClassesScopeChooser("Select Annotation Class", scope, new ClassFilter() {
+        factory.createNoInnerClassesScopeChooser(IntelliLangBundle.message("dialog.title.select.annotation.class"), scope, new ClassFilter() {
           @Override
           public boolean isAccepted(PsiClass aClass) {
             return aClass.isAnnotationType();

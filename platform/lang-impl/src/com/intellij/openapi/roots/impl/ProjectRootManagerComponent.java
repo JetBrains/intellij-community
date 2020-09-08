@@ -36,6 +36,7 @@ import com.intellij.project.ProjectKt;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -43,7 +44,6 @@ import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.FileBasedIndexProjectHandler;
 import com.intellij.util.indexing.UnindexedFilesUpdater;
 import com.intellij.util.messages.MessageBusConnection;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -143,7 +143,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     LocalFileSystem.getInstance().removeWatchedRoots(myRootsToWatch);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void addRootsToWatch() {
     if (myProject.isDefault()) return;
     ApplicationManager.getApplication().assertIsWriteThread();

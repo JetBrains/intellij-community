@@ -15,6 +15,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.SplitterProportionsData;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
@@ -25,7 +26,6 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -39,7 +39,6 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public abstract class ContentChooser<Data> extends DialogWrapper {
@@ -361,9 +360,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
         int max = list.getModel().getSize();
         String indexString = String.valueOf(index + 1);
         int count = String.valueOf(max).length() - indexString.length();
-        char[] spaces = new char[count];
-        Arrays.fill(spaces, ' ');
-        String prefix = indexString + new String(spaces) + "  ";
+        String prefix = indexString + StringUtil.repeatSymbol(' ', count) + "  ";
         append(prefix, SimpleTextAttributes.GRAYED_ATTRIBUTES, false);
       }
 

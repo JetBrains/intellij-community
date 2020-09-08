@@ -31,6 +31,7 @@ import java.util.Set;
  * N.B. during indexing, only {@link DumbAware} providers are run.
  */
 public abstract class PsiAugmentProvider {
+  private static final Logger LOG = Logger.getInstance(PsiAugmentProvider.class);
   public static final ExtensionPointName<PsiAugmentProvider> EP_NAME = ExtensionPointName.create("com.intellij.lang.psiAugmentProvider");
   @SuppressWarnings("rawtypes")
   private /* non-static */ final Key<CachedValue<Map<Class, List>>> myCacheKey = Key.create(getClass().getName());
@@ -109,7 +110,16 @@ public abstract class PsiAugmentProvider {
       List<? extends Psi> augments = provider.getAugments(element, type, nameHint);
       for (Psi augment : augments) {
         if (nameHint == null || !(augment instanceof PsiNamedElement) || nameHint.equals(((PsiNamedElement)augment).getName())) {
-          result.add(augment);
+          try {
+            PsiUtilCore.ensureValid(augment);
+            result.add(augment);
+          }
+          catch (ProcessCanceledException e) {
+            throw e;
+          }
+          catch (Throwable e) {
+            LOG.error(PluginException.createByClass(e, provider.getClass()));
+          }
         }
       }
       return true;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.customize;
 
 import com.intellij.ide.IdeBundle;
@@ -7,6 +7,8 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.JBColor;
@@ -25,6 +27,8 @@ import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.List;
 
+import static com.intellij.openapi.util.text.HtmlChunk.*;
+
 public final class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep implements LinkListener<String> {
   private static final String MAIN = "main";
   private static final String CUSTOMIZE = "customize";
@@ -32,7 +36,7 @@ public final class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep
   private static final TextProvider CUSTOMIZE_TEXT_PROVIDER = new TextProvider() {
     @Override
     public String getText() {
-      return "Customize...";
+      return IdeBundle.message("link.label.wizard.step.plugin.customize");
     }
   };
   private static final String SWITCH_COMMAND = "Switch";
@@ -54,14 +58,14 @@ public final class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep
 
     List<PluginGroups.Group> groups = pluginGroups.getTree();
     for (PluginGroups.Group g : groups) {
-      final String group = g.getName();
-      if (PluginGroups.CORE.equals(group) || myPluginGroups.getSets(group).isEmpty()) continue;
+      final String groupId = g.getId();
+      if (PluginGroups.CORE.equals(groupId) || myPluginGroups.getSets(groupId).isEmpty()) continue;
 
       JPanel groupPanel = new JPanel(new GridBagLayout()) {
         @Override
         public Color getBackground() {
           Color color = UIManager.getColor("Panel.background");
-          return isGroupEnabled(group)? color : ColorUtil.darker(color, 1);
+          return isGroupEnabled(groupId)? color : ColorUtil.darker(color, 1);
         }
       };
       gridPanel.setOpaque(true);
@@ -69,16 +73,20 @@ public final class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep
       gbc.fill = GridBagConstraints.BOTH;
       gbc.gridwidth = GridBagConstraints.REMAINDER;
       gbc.weightx = 1;
-      JLabel titleLabel = new JLabel("<html><body><h2 style=\"text-align:center;\">" + group + "</h2></body></html>", SwingConstants.CENTER) {
+      HtmlBuilder titleHtml = new HtmlBuilder().append(
+        html().child(
+          body().child(
+            tag("h2").attr("style", "text-align:center;").addText(g.getName()))));
+      JLabel titleLabel = new JLabel(titleHtml.toString(), SwingConstants.CENTER) {
         @Override
         public boolean isEnabled() {
-          return isGroupEnabled(group);
+          return isGroupEnabled(groupId);
         }
       };
       groupPanel.add(new JLabel(g.getIcon()), gbc);
       //gbc.insets.bottom = 5;
       groupPanel.add(titleLabel, gbc);
-      JLabel descriptionLabel = new JLabel(pluginGroups.getDescription(group), SwingConstants.CENTER) {
+      JLabel descriptionLabel = new JLabel(pluginGroups.getDescription(groupId), SwingConstants.CENTER) {
         @Override
         public Dimension getPreferredSize() {
           Dimension size = super.getPreferredSize();
@@ -88,7 +96,7 @@ public final class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep
 
         @Override
         public boolean isEnabled() {
-          return isGroupEnabled(group);
+          return isGroupEnabled(groupId);
         }
 
         @Override
@@ -102,10 +110,10 @@ public final class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep
       gbc.weighty = 0;
       JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, SMALL_GAP, SMALL_GAP / 2));
       buttonsPanel.setOpaque(false);
-      if (pluginGroups.getSets(group).size() != 1) {
-        buttonsPanel.add(createLink(CUSTOMIZE_COMMAND + ":" + group, CUSTOMIZE_TEXT_PROVIDER));
+      if (pluginGroups.getSets(groupId).size() != 1) {
+        buttonsPanel.add(createLink(CUSTOMIZE_COMMAND + ":" + groupId, CUSTOMIZE_TEXT_PROVIDER));
       }
-      buttonsPanel.add(createLink(SWITCH_COMMAND + ":" + group, getGroupSwitchTextProvider(group)));
+      buttonsPanel.add(createLink(SWITCH_COMMAND + ":" + groupId, getGroupSwitchTextProvider(groupId)));
       groupPanel.add(buttonsPanel, gbc);
       gridPanel.add(groupPanel);
     }
@@ -179,12 +187,14 @@ public final class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep
     };
   }
 
-  TextProvider getGroupSwitchTextProvider(final String group) {
+  TextProvider getGroupSwitchTextProvider(final String groupId) {
     return new TextProvider() {
       @Override
       public String getText() {
-        return (isGroupEnabled(group) ? "Disable" : "Enable") +
-               (myPluginGroups.getSets(group).size() > 1 ? " All" : "");
+        return IdeBundle.message(
+          "link.label.choice.disable.enable.choice.all",
+          isGroupEnabled(groupId) ? 0 : 1,
+          myPluginGroups.getSets(groupId).size() > 1 ? 0 : 1);
       }
     };
   }
@@ -264,7 +274,8 @@ public final class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep
 
     void update(String group) {
       myGroup = group;
-      myTitleLabel.setText("<html><body><h2 style=\"text-align:left;\">" + group + "</h2></body></html>");
+      HtmlBuilder titleHtml = new HtmlBuilder().append(body().child(tag("h2").attr("style", "text-align:left;").addText(group)));
+      myTitleLabel.setText(titleHtml.toString());
       myContentPanel.removeAll();
       List<IdSet> idSets = myPluginGroups.getSets(group);
       for (final IdSet set : idSets) {
@@ -288,6 +299,6 @@ public final class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep
   }
 
   private interface TextProvider {
-    String getText();
+    @NlsContexts.LinkLabel String getText();
   }
 }

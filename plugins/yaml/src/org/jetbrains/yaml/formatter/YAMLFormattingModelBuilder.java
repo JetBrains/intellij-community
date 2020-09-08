@@ -1,12 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.formatter;
 
 import com.intellij.formatting.Block;
+import com.intellij.formatting.FormattingContext;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.DocumentBasedFormattingModel;
@@ -18,11 +18,11 @@ import org.jetbrains.yaml.YAMLElementTypes;
 import org.jetbrains.yaml.psi.impl.YAMLBlockScalarImpl;
 
 public class YAMLFormattingModelBuilder implements FormattingModelBuilder {
-  @NotNull
   @Override
-  public FormattingModel createModel(PsiElement element, CodeStyleSettings settings) {
-    PsiFile file = element.getContainingFile();
-    Block rootBlock = createBlock(new YAMLFormattingContext(settings, file), element.getNode());
+  public @NotNull FormattingModel createModel(@NotNull FormattingContext formattingContext) {
+    PsiFile file = formattingContext.getContainingFile();
+    CodeStyleSettings settings = formattingContext.getCodeStyleSettings();
+    Block rootBlock = createBlock(new YAMLFormattingContext(settings, file), formattingContext.getNode());
     return new DocumentBasedFormattingModel(rootBlock, settings, file);
   }
 

@@ -191,7 +191,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
         ui.refreshData()
         callback()
       },
-      InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, "Commit", ModalityState.current()
+      InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, VcsBundle.message("commit.progress.title"), ModalityState.current()
     )
 
   override fun dispose() = Unit

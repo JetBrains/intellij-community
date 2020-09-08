@@ -41,14 +41,14 @@ public class RemoveTagIntentionFix extends LocalQuickFixAndIntentionActionOnPsiE
   @NotNull
   @Override
   public String getText() {
-    return XmlAnalysisBundle.message("remove.tag.quickfix.text", myTagName);
+    return XmlAnalysisBundle.message("xml.quickfix.remove.tag.text", myTagName);
   }
 
   @Nls
   @NotNull
   @Override
   public String getFamilyName() {
-    return XmlAnalysisBundle.message("remove.tag.quickfix.family");
+    return XmlAnalysisBundle.message("xml.quickfix.remove.tag.family");
   }
 
   @Override

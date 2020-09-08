@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
@@ -77,7 +78,7 @@ public final class GuiUtils {
   }
 
   @Deprecated
-  public static JPanel makeTitledPanel(JComponent aComponent, String aTitle) {
+  public static JPanel makeTitledPanel(JComponent aComponent, @NlsContexts.BorderTitle String aTitle) {
     JPanel result = makePaddedPanel(aComponent, false, true, false, true);
     return wrapWithBorder(result, IdeBorderFactory.createTitledBorder(aTitle));
   }

@@ -149,7 +149,7 @@ public class UnnecessaryInheritDocInspection extends BaseInspection {
       final PsiElement parent = tag.getParent();
       if (parent instanceof PsiDocTag) {
         final PsiDocTag docTag = (PsiDocTag)parent;
-        final String docTagName = docTag.getName();
+        @NonNls final String docTagName = docTag.getName();
         if ((docTagName.equals("throws") || docTagName.equals("exception")) &&
             !isCheckExceptionAndPresentInThrowsList((PsiMethod)owner, docTag)) {
           return;

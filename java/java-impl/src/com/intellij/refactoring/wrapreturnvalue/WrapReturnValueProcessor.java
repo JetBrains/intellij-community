@@ -17,6 +17,7 @@ package com.intellij.refactoring.wrapreturnvalue;
 
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.PackageUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -46,6 +47,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -67,7 +69,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
   private final String myQualifiedName;
   private final boolean myUseExistingClass;
   private final List<PsiTypeParameter> myTypeParameters;
-  private final String myUnwrapMethodName;
+  @NonNls private final String myUnwrapMethodName;
 
   public WrapReturnValueProcessor(@NotNull String className,
                                   String packageName,
@@ -100,6 +102,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
     }
   }
 
+  @NonNls
   private String calculateUnwrapMethodName() {
     final PsiClass existingClass = JavaPsiFacade.getInstance(myProject).findClass(myQualifiedName, GlobalSearchScope.allScope(myProject));
     if (existingClass != null) {
@@ -253,12 +256,13 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
           }
         }
         if (!foundConstructor) {
-          conflicts.putValue(existingClass, "Existing class does not have appropriate constructor");
+          conflicts.putValue(existingClass,
+                             JavaBundle.message("wrap.return.value.existing.class.does.not.have.appropriate.constructor.conflict"));
         }
       }
       if (myUnwrapMethodName.length() == 0) {
         conflicts.putValue(existingClass,
-                      "Existing class does not have getter for selected field");
+                           JavaBundle.message("wrap.return.value.existing.class.does.not.have.getter.conflict"));
       }
     }
     else {
@@ -266,7 +270,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
         conflicts.putValue(existingClass, RefactorJBundle.message("there.already.exists.a.class.with.the.selected.name"));
       }
       if (myMoveDestination != null && !myMoveDestination.isTargetAccessible(myProject, myMethod.getContainingFile().getVirtualFile())) {
-        conflicts.putValue(myMethod, "Created class won't be accessible in the call place");
+        conflicts.putValue(myMethod, JavaBundle.message("wrap.return.value.created.class.not.accessible.conflict"));
       }
     }
     return showConflicts(conflicts, refUsages.get());

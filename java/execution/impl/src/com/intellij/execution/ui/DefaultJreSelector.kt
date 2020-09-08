@@ -18,6 +18,7 @@ import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.EditorTextFieldWithBrowseButton
+import org.jetbrains.annotations.Nls
 
 abstract class DefaultJreSelector {
   companion object {
@@ -54,6 +55,7 @@ abstract class DefaultJreSelector {
   open fun addChangeListener(listener: Runnable) {
   }
 
+  @Nls
   fun getDescriptionString(): String {
     val (name, description) = getNameAndDescription()
     return " (${name ?: "<no JRE>"} - $description)"

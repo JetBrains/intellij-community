@@ -2,9 +2,9 @@
 package com.intellij.tasks.jira.jql;
 
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.tasks.TaskBundle;
 import icons.TasksCoreIcons;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -28,7 +28,7 @@ public final class JqlFileType extends LanguageFileType {
   @NotNull
   @Override
   public String getDescription() {
-    return "JIRA query";
+    return TaskBundle.message("label.jira.query");
   }
 
   @NotNull
@@ -37,9 +37,8 @@ public final class JqlFileType extends LanguageFileType {
     return DEFAULT_EXTENSION;
   }
 
-  @Nullable
   @Override
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return TasksCoreIcons.Jira;
   }
 }

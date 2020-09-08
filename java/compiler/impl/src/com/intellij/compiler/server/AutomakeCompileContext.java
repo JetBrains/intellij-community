@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,7 +78,7 @@ final class AutomakeCompileContext extends UserDataHolderBase implements Compile
 
   @Nullable
   CompilerMessage createAndAddMessage(CompilerMessageCategory category,
-                                      String message,
+                                      @Nls String message,
                                       @Nullable String url,
                                       int lineNum,
                                       int columnNum,

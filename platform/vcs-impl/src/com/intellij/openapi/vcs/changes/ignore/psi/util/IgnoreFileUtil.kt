@@ -163,12 +163,12 @@ private fun IgnoredFileDescriptor.toText(ignoredFileContentProvider: IgnoredFile
   val ignorePath = path
   val ignoreMask = mask
   return if (ignorePath != null) {
-    val ignoreFileContainingDir = ignoreEntryRoot ?: ignoreFile.parent ?: throw IllegalStateException(
-      "Cannot determine ignore file path for $ignoreFile")
+    val ignoreFileContainingDir = ignoreEntryRoot ?: ignoreFile.parent
+                                  ?: throw IllegalStateException("Cannot determine ignore file path for ${ignoreFile}")
     ignoredFileContentProvider.buildIgnoreEntryContent(ignoreFileContainingDir, this)
   }
   else {
-    ignoreMask ?: throw IllegalStateException("IgnoredFileBean: path and mask cannot be null at the same time")
+    ignoreMask ?: throw IllegalStateException("IgnoredFileBean: path and mask cannot be null at the same time") // NON-NLS
   }
 }
 

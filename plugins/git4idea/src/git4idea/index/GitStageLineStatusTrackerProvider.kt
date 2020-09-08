@@ -1,13 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package git4idea.index.lst
+package git4idea.index
 
 import com.intellij.diff.DiffContentFactoryImpl
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.ex.LocalLineStatusTracker
 import com.intellij.openapi.vcs.impl.LineStatusTrackerContentLoader
 import com.intellij.openapi.vcs.impl.LineStatusTrackerContentLoader.ContentInfo
@@ -17,13 +19,14 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.VcsFileUtil
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitUtil
-import git4idea.index.*
 import git4idea.index.vfs.GitIndexVirtualFileCache
 import git4idea.repo.GitRepositoryManager
 import git4idea.util.GitFileUtils
 import java.nio.charset.Charset
 
 class GitStageLineStatusTrackerProvider : LineStatusTrackerContentLoader {
+  private val LOG = Logger.getInstance(GitStageLineStatusTrackerProvider::class.java)
+
   override fun isMyTracker(tracker: LocalLineStatusTracker<*>): Boolean = tracker is GitStageLineStatusTracker
 
   override fun isTrackedFile(project: Project, file: VirtualFile): Boolean {
@@ -39,7 +42,6 @@ class GitStageLineStatusTrackerProvider : LineStatusTrackerContentLoader {
     val status = GitStageTracker.getInstance(project).status(file) ?: return null
 
     if (!status.isTracked() ||
-        !status.has(ContentVersion.HEAD) ||
         !status.has(ContentVersion.STAGED) ||
         !status.has(ContentVersion.LOCAL)) return null
 
@@ -76,13 +78,20 @@ class GitStageLineStatusTrackerProvider : LineStatusTrackerContentLoader {
     val indexFile = indexFileCache.get(repository.root, status.path(ContentVersion.STAGED))
     val indexDocument = runReadAction { FileDocumentManager.getInstance().getDocument(indexFile) } ?: return null
 
-    val bytes = GitFileUtils.getFileContent(project, repository.root, GitUtil.HEAD,
-                                            VcsFileUtil.relativePath(repository.root, filePath))
-    val charset: Charset = DiffContentFactoryImpl.guessCharset(project, bytes, filePath)
-    val headContent = CharsetToolkit.decodeString(bytes, charset)
-    val correctedText = StringUtil.convertLineSeparators(headContent)
+    if (!status.has(ContentVersion.HEAD)) return StagedTrackerContent("", indexDocument)
 
-    return StagedTrackerContent(correctedText, indexDocument)
+    try {
+      val bytes = GitFileUtils.getFileContent(project, repository.root, GitUtil.HEAD,
+                                              VcsFileUtil.relativePath(repository.root, status.path(ContentVersion.HEAD)))
+      val charset: Charset = DiffContentFactoryImpl.guessCharset(project, bytes, filePath)
+      val headContent = CharsetToolkit.decodeString(bytes, charset)
+      val correctedText = StringUtil.convertLineSeparators(headContent)
+
+      return StagedTrackerContent(correctedText, indexDocument)
+    } catch (e : VcsException) {
+      LOG.warn("Can't load base revision content for ${file.path} with status $status", e)
+      return null
+    }
   }
 
   override fun setLoadedContent(tracker: LocalLineStatusTracker<*>, content: TrackerContent) {

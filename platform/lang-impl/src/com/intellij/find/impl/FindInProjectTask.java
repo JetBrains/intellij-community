@@ -108,10 +108,8 @@ class FindInProjectTask {
     try {
       myProgress.setIndeterminate(true);
       myProgress.setText(FindBundle.message("progress.text.scanning.indexed.files"));
-      Set<VirtualFile> filesForFastWordSearch = ReadAction
-        .nonBlocking(this::getFilesForFastWordSearch)
-        .withDocumentsCommitted(myProject)
-        .executeSynchronously();
+      Set<VirtualFile> filesForFastWordSearch = getFilesForFastWordSearch();
+
       myProgress.setIndeterminate(false);
       if (LOG.isDebugEnabled()) {
         LOG.debug("Searching for " + myFindModel.getStringToFind() + " in " + filesForFastWordSearch.size() + " indexed files");

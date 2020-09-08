@@ -51,8 +51,7 @@ public final class MethodCallUtils {
 
   private MethodCallUtils() {}
 
-  @Nullable
-  public static String getMethodName(@NotNull PsiMethodCallExpression expression) {
+  public static @Nullable @NonNls String getMethodName(@NotNull PsiMethodCallExpression expression) {
     return expression.getMethodExpression().getReferenceName();
   }
 
@@ -222,7 +221,7 @@ public final class MethodCallUtils {
 
   public static boolean isMethodCallOnVariable(@NotNull PsiMethodCallExpression expression,
                                                @NotNull PsiVariable variable,
-                                               @NotNull String methodName) {
+                                               @NotNull @NonNls String methodName) {
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
     @NonNls final String name = methodExpression.getReferenceName();
     if (!methodName.equals(name)) {
@@ -330,7 +329,7 @@ public final class MethodCallUtils {
   }
 
   public static boolean callWithNonConstantString(@NotNull PsiMethodCallExpression expression, boolean considerStaticFinalConstant,
-                                                  String className, String... methodNames) {
+                                                  @NonNls String className, @NonNls String... methodNames) {
     final String methodName = getMethodName(expression);
     boolean found = false;
     for (String name : methodNames) {

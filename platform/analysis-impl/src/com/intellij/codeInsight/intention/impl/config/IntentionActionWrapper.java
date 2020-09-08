@@ -5,6 +5,7 @@ import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.editor.Editor;
@@ -23,7 +24,7 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
                                                      Comparable<IntentionAction> {
   private final IntentionActionBean myExtension;
   private String myFullFamilyName;
-  private String myFamilyName;
+  private @IntentionFamilyName String myFamilyName;
 
   public IntentionActionWrapper(@NotNull IntentionActionBean extension) {
     myExtension = extension;

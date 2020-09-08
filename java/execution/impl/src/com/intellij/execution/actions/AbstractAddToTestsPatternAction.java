@@ -22,6 +22,7 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.testframework.AbstractPatternBasedConfigurationProducer;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -59,26 +60,27 @@ public abstract class AbstractAddToTestsPatternAction<T extends JavaTestConfigur
         getPatterns(configuration).add(getPatternBasedProducer().getQName(aClass));
       }
     } else {
-      JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<T>("Choose suite to add", patternConfigurations) {
-        @Override
-        public PopupStep onChosen(T configuration, boolean finalChoice) {
-          for (PsiElement aClass : classes) {
-            getPatterns(configuration).add(getPatternBasedProducer().getQName(aClass));
+      JBPopupFactory.getInstance().createListPopup(
+        new BaseListPopupStep<>(JavaCompilerBundle.message("popup.title.choose.suite.to.add"), patternConfigurations) {
+          @Override
+          public PopupStep onChosen(T configuration, boolean finalChoice) {
+            for (PsiElement aClass : classes) {
+              getPatterns(configuration).add(getPatternBasedProducer().getQName(aClass));
+            }
+            return FINAL_CHOICE;
           }
-          return FINAL_CHOICE;
-        }
 
-        @Override
-        public Icon getIconFor(T configuration) {
-          return configuration.getIcon();
-        }
+          @Override
+          public Icon getIconFor(T configuration) {
+            return configuration.getIcon();
+          }
 
-        @NotNull
-        @Override
-        public String getTextFor(T value) {
-          return value.getName();
-        }
-      }).showInBestPositionFor(dataContext);
+          @NotNull
+          @Override
+          public String getTextFor(T value) {
+            return value.getName();
+          }
+        }).showInBestPositionFor(dataContext);
     }
   }
 

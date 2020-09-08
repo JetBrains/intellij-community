@@ -81,6 +81,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
            && !field.hasModifierProperty(PsiModifier.STATIC)
            && containingClass != null
            && !(containingClass instanceof PsiSyntheticClass)
+           && !containingClass.isRecord()
            && containingClass.getName() != null;
   }
 
@@ -94,7 +95,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
       ApplicationManager.getApplication().runWriteAction(() -> defaultConstructorFix.invoke(project, editor, file));
       constructors = myClass.getConstructors();
     }
-    Arrays.sort(constructors, new Comparator<PsiMethod>() {
+    Arrays.sort(constructors, new Comparator<>() {
       @Override
       public int compare(PsiMethod c1, PsiMethod c2) {
         final PsiMethod cc1 = RefactoringUtil.getChainedConstructor(c1);
@@ -103,7 +104,8 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
         if (cc2 == c1) return -1;
         if (cc1 == null) {
           return cc2 == null ? 0 : compare(c1, cc2);
-        } else {
+        }
+        else {
           return cc2 == null ? compare(cc1, c2) : compare(cc1, cc2);
         }
       }
@@ -179,7 +181,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     Map<SmartPsiElementPointer<PsiField>, Boolean> fields = myClass.getUserData(FIELDS);
     if (fields == null) myClass.putUserData(FIELDS, fields = ContainerUtil.createConcurrentWeakMap());
     final Map<SmartPsiElementPointer<PsiField>, Boolean> finalFields = fields;
-    return new AbstractCollection<SmartPsiElementPointer<PsiField>>() {
+    return new AbstractCollection<>() {
       @Override
       public boolean add(SmartPsiElementPointer<PsiField> psiVariable) {
         PsiField field = psiVariable.getElement();

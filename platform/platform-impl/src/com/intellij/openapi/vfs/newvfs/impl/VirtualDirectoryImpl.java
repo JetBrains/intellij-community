@@ -456,6 +456,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @NotNull
+  @NonNls
   private static String verboseToString(VirtualFileSystemEntry file) {
     if (file == null) return "null";
     return file + " (name: '" + file.getName()
@@ -469,7 +470,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
            + ") ";
   }
 
-  private static void error(@NonNls String message, VirtualFileSystemEntry[] array, Object... details) {
+  private static void error(@NonNls String message, VirtualFileSystemEntry[] array, @NonNls Object... details) {
     String children = StringUtil.join(array, VirtualDirectoryImpl::verboseToString, "\n");
     String detailsStr = StringUtil.join(ContainerUtil.<Object, Object>map(details, o -> o instanceof Object[] ? Arrays.toString((Object[])o) : o), "\n");
     throw new AssertionError(message + "; children: " + children + "\nDetails: " + detailsStr);

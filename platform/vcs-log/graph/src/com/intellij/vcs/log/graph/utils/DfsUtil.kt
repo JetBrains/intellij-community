@@ -22,11 +22,6 @@ import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
 
 object Dfs {
-  interface NodeVisitor {
-    fun enterNode(node: Int, previousNode: Int, travelDirection: Boolean)
-    fun exitNode(node: Int)
-  }
-
   object NextNode {
     const val NODE_NOT_FOUND = -1
     const val EXIT = -10
@@ -79,62 +74,4 @@ class DfsWalk(private val startNodes: Collection<Int>, private val graph: LiteLi
       }
     }
   }
-}
-
-/*
- * Depth-first walk for a graph. For each node, walks both into upward and downward siblings.
- * Tries to preserve direction of travel: when a node is entered from up-sibling, goes to the down-siblings first.
- * Then goes to the other up-siblings.
- * And when a node is entered from down-sibling, goes to the up-siblings first.
- * Then goes to the other down-siblings.
- * When a node is entered the first time, enterNode is called.
- * When a all the siblings of the node are visited, exitNode is called.
- */
-fun LiteLinearGraph.walk(start: Int, visitor: Dfs.NodeVisitor) {
-  if (start < 0 || start >= nodesCount()) return
-
-  val visited = BitSetFlags(nodesCount(), false)
-
-  val stack = IntStack()
-  stack.push(start) // commit + direction of travel
-
-  outer@ while (!stack.empty()) {
-    val currentNode = stack.peek()
-    val down = isDown(stack)
-    if (!visited.get(currentNode)) {
-      visited.set(currentNode, true)
-      visitor.enterNode(currentNode, getPreviousNode(stack), down)
-    }
-
-    for (nextNode in getNodes(currentNode, if (down) LiteLinearGraph.NodeFilter.DOWN else LiteLinearGraph.NodeFilter.UP)) {
-      if (!visited.get(nextNode)) {
-        stack.push(nextNode)
-        continue@outer
-      }
-    }
-
-    for (nextNode in getNodes(currentNode, if (down) LiteLinearGraph.NodeFilter.UP else LiteLinearGraph.NodeFilter.DOWN)) {
-      if (!visited.get(nextNode)) {
-        stack.push(nextNode)
-        continue@outer
-      }
-    }
-
-    visitor.exitNode(currentNode)
-    stack.pop()
-  }
-}
-
-private fun getPreviousNode(stack: IntStack): Int {
-  return if (stack.size() < 2) {
-    Dfs.NextNode.NODE_NOT_FOUND
-  }
-  else stack.get(stack.size() - 2)
-}
-
-private fun isDown(stack: IntStack): Boolean {
-  val currentNode = stack.peek()
-  val previousNode = getPreviousNode(stack)
-  if (previousNode == Dfs.NextNode.NODE_NOT_FOUND) return true
-  return previousNode < currentNode
 }

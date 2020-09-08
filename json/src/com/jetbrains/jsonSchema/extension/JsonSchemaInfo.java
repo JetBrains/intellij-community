@@ -2,6 +2,7 @@
 package com.jetbrains.jsonSchema.extension;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
@@ -13,6 +14,7 @@ import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.impl.JsonSchemaType;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,8 +27,8 @@ import java.util.Set;
 public class JsonSchemaInfo {
   @Nullable private final JsonSchemaFileProvider myProvider;
   @Nullable private final String myUrl;
-  @Nullable private String myName = null;
-  @Nullable private String myDocumentation = null;
+  @Nullable private @Nls String myName = null;
+  @Nullable private @Nls String myDocumentation = null;
   @NotNull  private final static Set<String> myDumbNames = ContainerUtil.set(
     "schema",
     "lib",
@@ -38,7 +40,7 @@ public class JsonSchemaInfo {
     "config");
 
   // weird cases such as meaningless 'config' as a name, etc.
-  @NotNull private final static Map<String, String> myWeirdNames = ContainerUtil.stringMap(
+  @NotNull private final static Map<String, @Nls String> myWeirdNames = ContainerUtil.stringMap(
     "http://json.schemastore.org/config", "asp.net config",
     "https://schemastore.azurewebsites.net/schemas/json/config.json", "asp.net config",
     "http://json.schemastore.org/2.0.0-csd.2.beta.2018-10-10.json", "sarif-2.0.0-csd.2.beta.2018-10-10",
@@ -84,7 +86,7 @@ public class JsonSchemaInfo {
   }
 
   @NotNull
-  public String getDescription() {
+  public @Nls String getDescription() {
     if (getName() != null) {
       return getName();
     }
@@ -108,20 +110,20 @@ public class JsonSchemaInfo {
   }
 
   @Nullable
-  public String getDocumentation() {
+  public @Nls String getDocumentation() {
     return myDocumentation;
   }
 
-  public void setDocumentation(@Nullable String documentation) {
+  public void setDocumentation(@Nullable @Nls String documentation) {
     myDocumentation = documentation;
   }
 
   @Nullable
-  public String getName() {
+  public @Nls String getName() {
     return myName;
   }
 
-  public void setName(@Nullable String name) {
+  public void setName(@Nullable @Nls String name) {
     myName = name;
   }
 
@@ -131,7 +133,7 @@ public class JsonSchemaInfo {
   }
 
   @NotNull
-  private static String sanitizeName(@NotNull String providerName) {
+  private static @NlsSafe String sanitizeName(@NotNull String providerName) {
     return StringUtil.trimEnd(StringUtil.trimEnd(StringUtil.trimEnd(providerName, ".json"), "-schema"), ".schema");
   }
 

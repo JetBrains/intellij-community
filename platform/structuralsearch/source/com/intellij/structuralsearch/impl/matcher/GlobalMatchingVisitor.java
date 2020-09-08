@@ -44,7 +44,7 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
    */
   private boolean myResult;
 
-  private MatchContext matchContext;
+  private final MatchContext matchContext = new MatchContext(this);
 
   /**
    * @return the current code element to match.
@@ -215,10 +215,6 @@ public class GlobalMatchingVisitor extends AbstractMatchingVisitor {
       matchContext.setResult(saveResult);
       matchContext.restoreMatchedNodes();
     }
-  }
-
-  public void setMatchContext(@NotNull MatchContext matchContext) {
-    this.matchContext = matchContext;
   }
 
   @Override

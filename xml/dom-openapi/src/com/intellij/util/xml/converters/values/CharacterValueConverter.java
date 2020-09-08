@@ -60,6 +60,6 @@ public class CharacterValueConverter extends Converter<String> {
 
   @Override
   public String getErrorMessage(@Nullable final String s, final ConvertContext context) {
-   return XmlDomBundle.message("value.converter.format.exception", s, "char");
+   return XmlDomBundle.message("dom.converter.format.exception", s, "char");
   }
 }

@@ -36,6 +36,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
+import static com.intellij.openapi.util.NlsContexts.ProgressDetails;
+import static com.intellij.openapi.util.NlsContexts.ProgressText;
+
 /**
  * Handles a refresh of SDK's skeletons.
  * Does all the heavy lifting calling skeleton generator, managing blacklists, etc.
@@ -187,7 +190,7 @@ public class PySkeletonRefresher {
     }
   }
 
-  private void indicate(String msg) {
+  private void indicate(@ProgressText String msg) {
     LOG.debug("Progress message: " + msg);
     if (myIndicator != null) {
       myIndicator.checkCanceled();
@@ -196,7 +199,7 @@ public class PySkeletonRefresher {
     }
   }
 
-  private void indicateMinor(String msg) {
+  private void indicateMinor(@ProgressDetails String msg) {
     LOG.debug("Progress message (minor): " + msg);
     if (myIndicator != null) {
       myIndicator.setText2(msg);
@@ -243,7 +246,7 @@ public class PySkeletonRefresher {
       mySkeletonsPath = Objects.requireNonNull(PythonSdkUtil.getSkeletonsPath(mySdk));
       final File skeletonsDir = new File(mySkeletonsPath);
       if (!skeletonsDir.exists() && !skeletonsDir.mkdirs()) {
-        throw new InvalidSdkException("Can't create skeleton dir " + mySkeletonsPath);
+        throw new InvalidSdkException(PyBundle.message("sdk.gen.cannot.create.skeleton.dir", mySkeletonsPath));
       }
     }
     return mySkeletonsPath;

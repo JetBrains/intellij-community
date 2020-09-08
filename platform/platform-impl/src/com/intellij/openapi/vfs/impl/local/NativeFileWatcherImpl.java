@@ -10,10 +10,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
@@ -172,7 +169,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
 
   /* internal stuff */
 
-  private void notifyOnFailure(String cause, @Nullable NotificationListener listener) {
+  private void notifyOnFailure(@NlsContexts.NotificationContent String cause, @Nullable NotificationListener listener) {
     myNotificationSink.notifyUserOnFailure(cause, listener);
   }
 
@@ -186,7 +183,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
 
     if (myStartAttemptCount.incrementAndGet() > MAX_PROCESS_LAUNCH_ATTEMPT_COUNT) {
-      notifyOnFailure(ApplicationBundle.message("watcher.failed.to.start"), null);
+      notifyOnFailure(ApplicationBundle.message("watcher.bailed.out.10x"), null);
       return;
     }
 
@@ -367,8 +364,9 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
         }
       }
       else if (myLastOp == WatcherOp.MESSAGE) {
-        LOG.warn(line);
-        notifyOnFailure(line, NotificationListener.URL_OPENING_LISTENER);
+        String localized = Objects.requireNonNullElse(ApplicationBundle.INSTANCE.messageOrNull(line), line); //NON-NLS
+        LOG.warn(localized);
+        notifyOnFailure(localized, NotificationListener.URL_OPENING_LISTENER);
         myLastOp = null;
       }
       else if (myLastOp == WatcherOp.REMAP || myLastOp == WatcherOp.UNWATCHEABLE) {

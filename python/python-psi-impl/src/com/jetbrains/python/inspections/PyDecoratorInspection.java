@@ -18,6 +18,7 @@ package com.jetbrains.python.inspections;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.quickfix.RemoveDecoratorQuickFix;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyDecorator;
@@ -48,7 +49,7 @@ public class PyDecoratorInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyFunction(final PyFunction node){
+    public void visitPyFunction(final @NotNull PyFunction node){
       PyClass containingClass = node.getContainingClass();
       if (containingClass != null)
         return;
@@ -59,7 +60,8 @@ public class PyDecoratorInspection extends PyInspection {
       for (PyDecorator decorator : decorators.getDecorators()) {
         String name = decorator.getText();
         if (name.equals("@classmethod") || name.equals("@staticmethod"))
-          registerProblem(decorator, "Decorator " + name + " on method outside class", new RemoveDecoratorQuickFix());
+          registerProblem(decorator, PyPsiBundle.message("INSP.decorators.method.only.decorator.on.method.outside.class", name),
+                          new RemoveDecoratorQuickFix());
       }
     }
   }

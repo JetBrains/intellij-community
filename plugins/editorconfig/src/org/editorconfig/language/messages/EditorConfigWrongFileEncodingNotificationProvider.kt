@@ -37,7 +37,7 @@ class EditorConfigWrongFileEncodingNotificationProvider : EditorNotifications.Pr
 
   private fun buildPanel(project: Project, editor: Editor, file: VirtualFile): EditorNotificationPanel? {
     val result = EditorNotificationPanel()
-    result.text(EditorConfigBundle["notification.encoding.message"])
+    result.text(EditorConfigBundle.get("notification.encoding.message"))
 
     val convert = EditorConfigBundle["notification.action.convert"]
     result.createActionLabel(convert) {

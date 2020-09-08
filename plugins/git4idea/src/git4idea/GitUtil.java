@@ -11,6 +11,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -30,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.OpenTHashSet;
@@ -52,7 +55,8 @@ import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitSimplePathsBrowser;
 import git4idea.util.GitUIUtil;
 import git4idea.util.StringScanner;
-import org.jetbrains.annotations.CalledInBackground;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,18 +80,18 @@ public final class GitUtil {
   /**
    * This comment char overrides the standard '#' and any other potentially defined by user via {@code core.commentChar}.
    */
-  public static final String COMMENT_CHAR = "\u0001";
+  public static final @NonNls String COMMENT_CHAR = "\u0001";
 
-  public static final String ORIGIN_HEAD = "origin/HEAD";
+  public static final @NonNls String ORIGIN_HEAD = "origin/HEAD";
 
-  public static final String HEAD = "HEAD";
-  public static final String CHERRY_PICK_HEAD = "CHERRY_PICK_HEAD";
-  public static final String MERGE_HEAD = "MERGE_HEAD";
-  public static final String REBASE_HEAD = "REBASE_HEAD";
+  public static final @NlsSafe String HEAD = "HEAD";
+  public static final @NonNls String CHERRY_PICK_HEAD = "CHERRY_PICK_HEAD";
+  public static final @NonNls String MERGE_HEAD = "MERGE_HEAD";
+  public static final @NonNls String REBASE_HEAD = "REBASE_HEAD";
 
-  private static final String REPO_PATH_LINK_PREFIX = "gitdir:";
+  private static final @NonNls String REPO_PATH_LINK_PREFIX = "gitdir:";
   private final static Logger LOG = Logger.getInstance(GitUtil.class);
-  private static final String HEAD_FILE = "HEAD";
+  private static final @NonNls String HEAD_FILE = "HEAD";
 
   /**
    * A private constructor to suppress instance creation
@@ -125,7 +129,7 @@ public final class GitUtil {
   }
 
   @Nullable
-  private static File findRealRepositoryDir(@NotNull String rootPath, @NotNull String path) {
+  private static File findRealRepositoryDir(@NotNull @NonNls String rootPath, @NotNull @NonNls String path) {
     if (!FileUtil.isAbsolute(path)) {
       String canonicalPath = FileUtil.toCanonicalPath(FileUtil.join(rootPath, path), true);
       if (canonicalPath == null) {
@@ -138,7 +142,7 @@ public final class GitUtil {
   }
 
   @NotNull
-  private static String parsePathToRepository(@NotNull String content) {
+  private static String parsePathToRepository(@NotNull @NonNls String content) {
     content = content.trim();
     return content.startsWith(REPO_PATH_LINK_PREFIX) ? content.substring(REPO_PATH_LINK_PREFIX.length()).trim() : content;
   }
@@ -180,7 +184,7 @@ public final class GitUtil {
    * @throws VcsException if non git files are passed
    */
   @NotNull
-  @CalledInBackground
+  @RequiresBackgroundThread
   public static Map<VirtualFile, List<VirtualFile>> sortFilesByGitRoot(@NotNull Project project,
                                                                        @NotNull Collection<? extends VirtualFile> virtualFiles)
     throws VcsException {
@@ -188,7 +192,7 @@ public final class GitUtil {
   }
 
   @NotNull
-  @CalledInBackground
+  @RequiresBackgroundThread
   public static Map<VirtualFile, List<VirtualFile>> sortFilesByGitRootIgnoringMissing(@NotNull Project project,
                                                                                       @NotNull Collection<? extends VirtualFile> filePaths) {
     try {
@@ -204,7 +208,7 @@ public final class GitUtil {
    * @throws VcsException if non git files are passed
    */
   @NotNull
-  @CalledInBackground
+  @RequiresBackgroundThread
   public static Map<VirtualFile, List<FilePath>> sortFilePathsByGitRoot(@NotNull Project project,
                                                                         @NotNull Collection<? extends FilePath> filePaths)
     throws VcsException {
@@ -212,7 +216,7 @@ public final class GitUtil {
   }
 
   @NotNull
-  @CalledInBackground
+  @RequiresBackgroundThread
   public static Map<VirtualFile, List<FilePath>> sortFilePathsByGitRootIgnoringMissing(@NotNull Project project,
                                                                                        @NotNull Collection<? extends FilePath> filePaths) {
     try {
@@ -225,7 +229,7 @@ public final class GitUtil {
   }
 
   @NotNull
-  @CalledInBackground
+  @RequiresBackgroundThread
   private static Map<VirtualFile, List<VirtualFile>> sortFilesByGitRoot(@NotNull Project project,
                                                                         @NotNull Collection<? extends VirtualFile> virtualFiles,
                                                                         boolean ignoreNonGit)
@@ -241,7 +245,7 @@ public final class GitUtil {
    * @throws VcsException if non git files are passed
    */
   @NotNull
-  @CalledInBackground
+  @RequiresBackgroundThread
   public static Map<GitRepository, List<VirtualFile>> sortFilesByRepository(@NotNull Project project,
                                                                             @NotNull Collection<? extends VirtualFile> filePaths)
     throws VcsException {
@@ -249,7 +253,7 @@ public final class GitUtil {
   }
 
   @NotNull
-  @CalledInBackground
+  @RequiresBackgroundThread
   public static Map<GitRepository, List<VirtualFile>> sortFilesByRepositoryIgnoringMissing(@NotNull Project project,
                                                                                            @NotNull Collection<? extends VirtualFile> virtualFiles) {
     try {
@@ -262,7 +266,7 @@ public final class GitUtil {
   }
 
   @NotNull
-  @CalledInBackground
+  @RequiresBackgroundThread
   private static Map<GitRepository, List<VirtualFile>> sortFilesByRepository(@NotNull Project project,
                                                                              @NotNull Collection<? extends VirtualFile> virtualFiles,
                                                                              boolean ignoreNonGit)
@@ -315,7 +319,7 @@ public final class GitUtil {
    * @param value a value to parse
    * @return timestamp as {@link Date} object
    */
-  public static Date parseTimestamp(String value) {
+  public static Date parseTimestamp(@NonNls String value) {
     final long parsed;
     parsed = Long.parseLong(value.trim());
     return new Date(parsed * 1000);
@@ -325,17 +329,19 @@ public final class GitUtil {
    * Parse UNIX timestamp returned from Git and handle {@link NumberFormatException} if one happens: return new {@link Date} and
    * log the error properly.
    * In some cases git output gets corrupted and this method is intended to catch the reason, why.
-   * @param value      Value to parse.
-   * @param handler    Git handler that was called to received the output.
-   * @param gitOutput  Git output.
+   *
+   * @param value     Value to parse.
+   * @param handler   Git handler that was called to received the output.
+   * @param gitOutput Git output.
    * @return Parsed Date or {@code new Date} in the case of error.
    */
-  public static Date parseTimestampWithNFEReport(String value, GitHandler handler, String gitOutput) {
+  public static Date parseTimestampWithNFEReport(@NonNls String value, GitHandler handler, String gitOutput) {
     try {
       return parseTimestamp(value);
-    } catch (NumberFormatException e) {
+    }
+    catch (NumberFormatException e) {
       LOG.error("annotate(). NFE. Handler: " + handler + ". Output: " + gitOutput, e);
-      return  new Date();
+      return new Date();
     }
   }
 
@@ -356,7 +362,7 @@ public final class GitUtil {
     if (root != null) {
       return root;
     }
-    throw new VcsException("The file " + filePath + " is not under git.");
+    throw new VcsException(GitBundle.message("file.is.not.under.root", filePath));
   }
 
   /**
@@ -402,7 +408,7 @@ public final class GitUtil {
       return root;
     }
     else {
-      throw new VcsException("The file " + file.getPath() + " is not under git.");
+      throw new VcsException(GitBundle.message("file.is.not.under.root", file.getPath()));
     }
   }
 
@@ -439,7 +445,8 @@ public final class GitUtil {
    * @param committerName the name of committer
    * @return just a name if they are equal, or name that includes both author and committer
    */
-  public static String adjustAuthorName(final String authorName, String committerName) {
+  @NlsSafe
+  public static String adjustAuthorName(@NlsSafe String authorName, @NlsSafe String committerName) {
     if (!authorName.equals(committerName)) {
       //noinspection HardCodedStringLiteral
       committerName = authorName + ", via " + committerName;
@@ -458,7 +465,7 @@ public final class GitUtil {
   }
 
   @NotNull
-  @CalledInBackground
+  @RequiresBackgroundThread
   public static Set<GitRepository> getRepositoriesForFiles(@NotNull Project project, @NotNull Collection<? extends VirtualFile> files)
     throws VcsException {
     Set<GitRepository> result = new HashSet<>();
@@ -474,6 +481,7 @@ public final class GitUtil {
    * @param time the time to convert
    * @return the time in git format
    */
+  @NonNls
   public static String gitTime(Date time) {
     long t = time.getTime() / 1000;
     return Long.toString(t);
@@ -485,6 +493,7 @@ public final class GitUtil {
    * @param rev the abbreviated revision number as long
    * @return the revision string
    */
+  @NonNls
   public static String formatLongRev(long rev) {
     return String.format("%015x%x", (rev >>> 4), rev & 0xF);
   }
@@ -540,7 +549,7 @@ public final class GitUtil {
    * @see VcsFileUtil#unescapeGitPath(String, String)
    */
   @NotNull
-  public static String unescapePath(@NotNull String path) throws VcsException {
+  public static String unescapePath(@NotNull @NonNls String path) throws VcsException {
     try {
       return VcsFileUtil.unescapeGitPath(path, GitConfigUtil.getFileNameEncoding());
     }
@@ -559,27 +568,29 @@ public final class GitUtil {
 
 
   @Nullable
-  public static GitRemote findRemoteByName(@NotNull GitRepository repository, @NotNull final String name) {
+  public static GitRemote findRemoteByName(@NotNull GitRepository repository, @NotNull @NonNls String name) {
     return findRemoteByName(repository.getRemotes(), name);
   }
 
   @Nullable
-  public static GitRemote findRemoteByName(Collection<GitRemote> remotes, @NotNull final String name) {
+  public static GitRemote findRemoteByName(Collection<GitRemote> remotes, @NotNull @NonNls String name) {
     return ContainerUtil.find(remotes, remote -> remote.getName().equals(name));
   }
 
   @Nullable
   public static GitRemoteBranch findRemoteBranch(@NotNull GitRepository repository,
-                                                         @NotNull final GitRemote remote,
-                                                         @NotNull final String nameAtRemote) {
-    return ContainerUtil.find(repository.getBranches().getRemoteBranches(), remoteBranch -> remoteBranch.getRemote().equals(remote) &&
-                                                                                        remoteBranch.getNameForRemoteOperations().equals(GitBranchUtil.stripRefsPrefix(nameAtRemote)));
+                                                 @NotNull final GitRemote remote,
+                                                 @NotNull @NonNls String nameAtRemote) {
+    return ContainerUtil.find(repository.getBranches().getRemoteBranches(), remoteBranch -> {
+      return remoteBranch.getRemote().equals(remote) &&
+             remoteBranch.getNameForRemoteOperations().equals(GitBranchUtil.stripRefsPrefix(nameAtRemote));
+    });
   }
 
   @NotNull
   public static GitRemoteBranch findOrCreateRemoteBranch(@NotNull GitRepository repository,
                                                          @NotNull GitRemote remote,
-                                                         @NotNull String branchName) {
+                                                         @NotNull @NonNls String branchName) {
     GitRemoteBranch remoteBranch = findRemoteBranch(repository, remote, branchName);
     return ObjectUtils.notNull(remoteBranch, new GitStandardRemoteBranch(remote, branchName));
   }
@@ -590,7 +601,7 @@ public final class GitUtil {
   }
 
   @NotNull
-  @CalledInBackground
+  @RequiresBackgroundThread
   public static Collection<GitRepository> getRepositoriesFromRoots(@NotNull GitRepositoryManager repositoryManager,
                                                                    @NotNull Collection<? extends VirtualFile> roots) {
     Collection<GitRepository> repositories = new ArrayList<>(roots.size());
@@ -614,7 +625,8 @@ public final class GitUtil {
    */
   @NotNull
   public static Collection<String> getPathsDiffBetweenRefs(@NotNull Git git, @NotNull GitRepository repository,
-                                                           @NotNull String beforeRef, @NotNull String afterRef) throws VcsException {
+                                                           @NotNull @NonNls String beforeRef, @NotNull @NonNls String afterRef)
+    throws VcsException {
     List<String> parameters = Arrays.asList("--name-only", "--pretty=format:");
     String range = beforeRef + ".." + afterRef;
     GitCommandResult result = git.diff(repository, parameters, range);
@@ -641,7 +653,7 @@ public final class GitUtil {
   }
 
   @NotNull
-  @CalledInBackground
+  @RequiresBackgroundThread
   public static GitRepository getRepositoryForFile(@NotNull Project project, @NotNull VirtualFile file) throws VcsException {
     GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(file);
     if (repository == null) throw new GitRepositoryNotFoundException(file);
@@ -649,7 +661,7 @@ public final class GitUtil {
   }
 
   @NotNull
-  @CalledInBackground
+  @RequiresBackgroundThread
   public static GitRepository getRepositoryForFile(@NotNull Project project, @NotNull FilePath file) throws VcsException {
     GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(file);
     if (repository == null) throw new GitRepositoryNotFoundException(file);
@@ -657,7 +669,7 @@ public final class GitUtil {
   }
 
   @NotNull
-  @CalledInBackground
+  @RequiresBackgroundThread
   public static GitRepository getRepositoryForRoot(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
     GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root);
     if (repository == null) throw new GitRepositoryNotFoundException(root);
@@ -701,14 +713,14 @@ public final class GitUtil {
   /**
    * Show changes made in the specified revision.
    *
-   * @param project     the project
-   * @param revision    the revision number
-   * @param file        the file affected by the revision
-   * @param local       pass true to let the diff be editable, i.e. making the revision "at the right" be a local (current) revision.
-   *                    pass false to let both sides of the diff be non-editable.
-   * @param revertable  pass true to let "Revert" action be active.
+   * @param project    the project
+   * @param revision   the revision number
+   * @param file       the file affected by the revision
+   * @param local      pass true to let the diff be editable, i.e. making the revision "at the right" be a local (current) revision.
+   *                   pass false to let both sides of the diff be non-editable.
+   * @param revertable pass true to let "Revert" action be active.
    */
-  public static void showSubmittedFiles(final Project project, final String revision, final VirtualFile file,
+  public static void showSubmittedFiles(final Project project, @NonNls String revision, final VirtualFile file,
                                         final boolean local, final boolean revertable) {
     new Task.Backgroundable(project, GitBundle.message("changes.retrieving", revision)) {
       @Override
@@ -722,7 +734,7 @@ public final class GitUtil {
               .showChangesListBrowser(changeList, GitBundle.message("paths.affected.title", revision)));
         }
         catch (final VcsException e) {
-          UIUtil.invokeLaterIfNeeded(() -> GitUIUtil.showOperationError(project, e, "git show"));
+          UIUtil.invokeLaterIfNeeded(() -> GitUIUtil.showOperationError(project, e, GitBundle.message("operation.name.loading.revision")));
         }
       }
     }.queue();
@@ -763,7 +775,7 @@ public final class GitUtil {
   }
 
   @Nullable
-  public static VirtualFile findRefreshFileOrLog(@NotNull String absolutePath) {
+  public static VirtualFile findRefreshFileOrLog(@NotNull @NonNls String absolutePath) {
     VirtualFile file = LocalFileSystem.getInstance().findFileByPath(absolutePath);
     if (file == null) {
       file = LocalFileSystem.getInstance().refreshAndFindFileByPath(absolutePath);
@@ -775,12 +787,12 @@ public final class GitUtil {
   }
 
   @NotNull
-  public static String toAbsolute(@NotNull VirtualFile root, @NotNull String relativePath) {
+  public static String toAbsolute(@NotNull VirtualFile root, @NotNull @NonNls String relativePath) {
     return StringUtil.trimEnd(root.getPath(), "/") + "/" + StringUtil.trimStart(relativePath, "/");
   }
 
   @NotNull
-  public static Collection<String> toAbsolute(@NotNull final VirtualFile root, @NotNull Collection<String> relativePaths) {
+  public static Collection<String> toAbsolute(@NotNull final VirtualFile root, @NotNull Collection<@NonNls String> relativePaths) {
     return ContainerUtil.map(relativePaths, s -> toAbsolute(root, s));
   }
 
@@ -792,8 +804,8 @@ public final class GitUtil {
    */
   @NotNull
   public static List<Change> findLocalChangesForPaths(@NotNull Project project, @NotNull VirtualFile root,
-                                                      @NotNull Collection<String> affectedPaths, boolean relativePaths) {
-    ChangeListManagerEx changeListManager = (ChangeListManagerEx)ChangeListManager.getInstance(project);
+                                                      @NotNull Collection<@NonNls String> affectedPaths, boolean relativePaths) {
+    ChangeListManagerEx changeListManager = ChangeListManagerEx.getInstanceEx(project);
     List<Change> affectedChanges = new ArrayList<>();
     for (String path : affectedPaths) {
       String absolutePath = relativePaths ? toAbsolute(root, path) : path;
@@ -815,8 +827,10 @@ public final class GitUtil {
     return affectedChanges;
   }
 
-  public static void showPathsInDialog(@NotNull Project project, @NotNull Collection<String> absolutePaths, @NotNull String title,
-                                       @Nullable String description) {
+  public static void showPathsInDialog(@NotNull Project project,
+                                       @NotNull Collection<@NonNls String> absolutePaths,
+                                       @NotNull @NlsContexts.DialogTitle String title,
+                                       @Nullable @NlsContexts.DialogMessage String description) {
     DialogBuilder builder = new DialogBuilder(project);
     builder.setCenterPanel(new GitSimplePathsBrowser(project, absolutePaths));
     if (description != null) {
@@ -827,9 +841,10 @@ public final class GitUtil {
     builder.show();
   }
 
+  @NlsSafe
   @NotNull
-  public static String cleanupErrorPrefixes(@NotNull String msg) {
-    final String[] PREFIXES = { "fatal:", "error:" };
+  public static String cleanupErrorPrefixes(@NotNull @NlsSafe String msg) {
+    final @NonNls String[] PREFIXES = { "fatal:", "error:" };
     msg = msg.trim();
     for (String prefix : PREFIXES) {
       if (msg.startsWith(prefix)) {
@@ -854,15 +869,19 @@ public final class GitUtil {
     return StringUtil.join(repositories, repository -> repository.getPresentableUrl(), UIUtil.BR);
   }
 
+  @Nls
   @NotNull
   public static String mention(@NotNull GitRepository repository) {
-    return getRepositoryManager(repository.getProject()).moreThanOneRoot() ? " in " + getShortRepositoryName(repository) : "";
+    return getRepositoryManager(repository.getProject()).moreThanOneRoot()
+           ? GitBundle.message("mention.in", getShortRepositoryName(repository))
+           : "";
   }
 
+  @Nls
   @NotNull
   public static String mention(@NotNull Collection<? extends GitRepository> repositories) {
     if (repositories.isEmpty()) return "";
-    return " in " + joinShortNames(repositories, -1);
+    return GitBundle.message("mention.in", joinShortNames(repositories, -1));
   }
 
   public static void updateRepositories(@NotNull Collection<? extends GitRepository> repositories) {
@@ -889,7 +908,7 @@ public final class GitUtil {
    * Checks if the given paths are equal only by case.
    * It is expected that the paths are different at least by the case.
    */
-  public static boolean isCaseOnlyChange(@NotNull String oldPath, @NotNull String newPath) {
+  public static boolean isCaseOnlyChange(@NotNull @NonNls String oldPath, @NotNull @NonNls String newPath) {
     if (oldPath.equalsIgnoreCase(newPath)) {
       if (oldPath.equals(newPath)) {
         LOG.info("Comparing perfectly equal paths: " + newPath);
@@ -899,19 +918,22 @@ public final class GitUtil {
     return false;
   }
 
+  @NonNls
   @NotNull
-  public static String getLogStringGitDiffChanges(@NotNull String root,
+  public static String getLogStringGitDiffChanges(@NotNull @NonNls String root,
                                                   @NotNull Collection<? extends GitChangeUtils.GitDiffChange> changes) {
     return getLogString(root, changes, it -> it.getBeforePath(), it -> it.getAfterPath());
   }
 
+  @NonNls
   @NotNull
-  public static String getLogString(@NotNull String root, @NotNull Collection<? extends Change> changes) {
+  public static String getLogString(@NotNull @NonNls String root, @NotNull Collection<? extends Change> changes) {
     return getLogString(root, changes, ChangesUtil::getBeforePath, ChangesUtil::getAfterPath);
   }
 
+  @NonNls
   @NotNull
-  public static <T> String getLogString(@NotNull String root, @NotNull Collection<? extends T> changes,
+  public static <T> String getLogString(@NotNull @NonNls String root, @NotNull Collection<? extends T> changes,
                                         @NotNull Convertor<? super T, ? extends FilePath> beforePathGetter,
                                         @NotNull Convertor<? super T, ? extends FilePath> afterPathGetter) {
     return StringUtil.join(changes, change -> {
@@ -989,7 +1011,7 @@ public final class GitUtil {
     refreshVfs(repository.getRoot(), changes);
   }
 
-  public static boolean isGitRoot(@NotNull String rootDir) {
+  public static boolean isGitRoot(@NotNull @NonNls String rootDir) {
     String dotGit = rootDir + File.separatorChar + DOT_GIT;
     FileAttributes attributes = FileSystemUtil.getAttributes(dotGit);
     if (attributes == null) return false;

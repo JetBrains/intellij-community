@@ -39,7 +39,7 @@ data class Typo(val location: Location, val info: Info, val fixes: LinkedSet<Str
 
   data class Info(val lang: Lang, val rule: Rule, private val myShortMessage: String, val message: String) {
     val shortMessage: String by lazy {
-      myShortMessage.trimToNull() ?: rule.description.trimToNull() ?: rule.category.getName(lang.jLanguage)
+      myShortMessage.trimToNull() ?: rule.description.trimToNull() ?: rule.category.name
     }
 
     val incorrectExample: IncorrectExample? by lazy {
@@ -50,7 +50,7 @@ data class Typo(val location: Location, val info: Info, val fixes: LinkedSet<Str
 
   /** Constructor for LangTool, applies fixes to RuleMatch (Main constructor doesn't apply fixes) */
   constructor(match: RuleMatch, lang: Lang, offset: Int = 0) : this(
-    Location(match.toIntRange(offset), IntRange(match.patternStartPos, match.patternEndPos - 1).withOffset(offset)),
+    Location(match.toIntRange(offset), IntRange(match.patternFromPos, match.patternToPos - 1).withOffset(offset)),
     Info(lang, match.rule, match.shortMessage, match.messageSanitized),
     LinkedSet(match.getSuggestedReplacements())
   )
@@ -59,7 +59,7 @@ data class Typo(val location: Location, val info: Info, val fixes: LinkedSet<Str
     @Deprecated("Use RuleGroup instead")
     @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
     get() {
-      val category = info.rule.category.getCategoryId().id
+      val category = info.rule.category.name
       return Category.values().find { it.name == category }
     }
 

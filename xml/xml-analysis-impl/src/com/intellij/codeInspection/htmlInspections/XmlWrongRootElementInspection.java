@@ -100,14 +100,14 @@ public class XmlWrongRootElementInspection extends HtmlLocalInspectionTool {
           final LocalQuickFix localQuickFix = new MyLocalQuickFix(doctype.getNameElement().getText());
 
           holder.registerProblem(XmlChildRole.START_TAG_NAME_FINDER.findChild(tag.getNode()).getPsi(),
-                                 XmlAnalysisBundle.message("wrong.root.element"),
+                                 XmlAnalysisBundle.message("xml.inspections.wrong.root.element"),
                                  ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, localQuickFix
           );
 
           final ASTNode astNode = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(tag.getNode());
           if (astNode != null) {
             holder.registerProblem(astNode.getPsi(),
-                                   XmlAnalysisBundle.message("wrong.root.element"),
+                                   XmlAnalysisBundle.message("xml.inspections.wrong.root.element"),
                                    ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, localQuickFix
             );
           }
@@ -126,7 +126,7 @@ public class XmlWrongRootElementInspection extends HtmlLocalInspectionTool {
     @Override
     @NotNull
     public String getFamilyName() {
-      return XmlAnalysisBundle.message("change.root.element.to", myText);
+      return XmlAnalysisBundle.message("xml.quickfix.change.root.element.to", myText);
     }
 
     @Override

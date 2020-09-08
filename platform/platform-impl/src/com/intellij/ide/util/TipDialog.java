@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +27,7 @@ import java.util.ArrayList;
 public final class TipDialog extends DialogWrapper {
   private static TipDialog ourInstance;
 
-  private static final String LAST_TIME_TIPS_WERE_SHOWN = "lastTimeTipsWereShown";
+  @NonNls private static final String LAST_TIME_TIPS_WERE_SHOWN = "lastTimeTipsWereShown";
   private final TipPanel myTipPanel;
 
   TipDialog(@NotNull final Window parent) {

@@ -158,7 +158,7 @@ public class JavaTreeGenerator implements TreeGenerator {
     if (type instanceof PsiArrayType) {
       final ASTNode firstChild = typeElement.getFirstChildNode();
       LOG.assertTrue(firstChild.getElementType() == JavaElementType.TYPE);
-      encodeInfoInTypeElement(firstChild, ((PsiArrayType)type).getComponentType());
+      encodeInfoInTypeElement(firstChild, type.getDeepComponentType());
     }
     else if (type instanceof PsiWildcardType) {
       final PsiType bound = ((PsiWildcardType)type).getBound();

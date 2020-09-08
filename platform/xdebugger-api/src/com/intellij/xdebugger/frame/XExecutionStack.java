@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.frame;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.NlsContexts.ListItem;
 import com.intellij.xdebugger.Obsolescent;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +18,7 @@ import java.util.List;
  */
 public abstract class XExecutionStack {
   public static final XExecutionStack[] EMPTY_ARRAY = new XExecutionStack[0];
-  private final String myDisplayName;
+  private final @Nls String myDisplayName;
   private final Icon myIcon;
 
   /**
@@ -51,6 +38,7 @@ public abstract class XExecutionStack {
   }
 
   @NotNull
+  @Nls
   public final String getDisplayName() {
     return myDisplayName;
   }

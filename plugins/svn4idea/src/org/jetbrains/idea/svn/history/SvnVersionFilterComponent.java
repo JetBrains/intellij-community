@@ -3,6 +3,7 @@ package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.StandardVersionFilterComponent;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -73,6 +74,16 @@ public class SvnVersionFilterComponent extends StandardVersionFilterComponent<Ch
   @Override
   protected String getChangeNumberTitle() {
     return SvnBundle.message("revision.title");
+  }
+
+  @Override
+  protected @Nls String getChangeFromParseError() {
+    return SvnBundle.message("error.revision.from.must.be.a.valid.number");
+  }
+
+  @Override
+  protected @Nls String getChangeToParseError() {
+    return SvnBundle.message("error.revision.to.must.be.a.valid.number");
   }
 
   @NotNull

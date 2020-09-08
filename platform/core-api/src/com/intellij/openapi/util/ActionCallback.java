@@ -40,7 +40,7 @@ public class ActionCallback implements Disposable {
     this(null);
   }
 
-  public ActionCallback(String name) {
+  public ActionCallback(@NonNls String name) {
     myName = name;
     myDone = new ExecutionCallback();
     myRejected = new ExecutionCallback();
@@ -95,7 +95,7 @@ public class ActionCallback implements Disposable {
   }
 
   @NotNull
-  public ActionCallback reject(String error) {
+  public ActionCallback reject(@NonNls String error) {
     myError = error;
     setRejected();
     return this;

@@ -12,6 +12,8 @@ import com.intellij.internal.statistic.service.fus.collectors.TooltipActionsLogg
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.TooltipAction
+import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.xml.util.XmlStringUtil
@@ -31,7 +33,7 @@ class DaemonTooltipActionProvider : TooltipActionProvider {
  * @param myFixText is a text to show in tooltip
  * @param myActionText is a text to search for in intentions' actions
  */
-class DaemonTooltipAction(private val myFixText: String, private val myActionText: String, private val myActualOffset: Int) : TooltipAction {
+class DaemonTooltipAction(@NlsActions.ActionText private val myFixText: String, @NlsContexts.Command private val myActionText: String, private val myActualOffset: Int) : TooltipAction {
 
   override fun getText(): String {
     return myFixText

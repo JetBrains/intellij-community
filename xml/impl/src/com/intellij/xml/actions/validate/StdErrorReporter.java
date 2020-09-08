@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -26,7 +27,7 @@ public final class StdErrorReporter extends ErrorReporter {
   private static final Key<NewErrorTreeViewPanel> KEY = Key.create("ValidateXmlAction.KEY");
 
   private final NewErrorTreeViewPanel myErrorsView;
-  private final String myContentName;
+  private final @TabTitle String myContentName;
   private final Project myProject;
 
   public StdErrorReporter(ValidateXmlActionHandler handler, PsiFile psiFile, Runnable rerunAction) {
@@ -61,7 +62,7 @@ public final class StdErrorReporter extends ErrorReporter {
         ContentManagerUtil.cleanupContents(content, myProject, myContentName);
         messageView.getContentManager().addContentManagerListener(new MyContentDisposer(content, messageView));
       },
-      XmlBundle.message("validate.xml.open.message.view.command.name"),
+      XmlBundle.message("xml.validate.open.message.view.command.name"),
       null
     );
   }

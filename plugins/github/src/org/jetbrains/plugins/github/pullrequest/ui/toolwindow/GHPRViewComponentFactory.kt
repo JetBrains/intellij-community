@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
-import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -17,7 +16,6 @@ import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.ui.*
-import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.tabs.JBTabs
 import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.TabsListener
@@ -27,6 +25,7 @@ import com.intellij.util.Processor
 import com.intellij.util.containers.TreeTraversal
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.codereview.ReturnToListComponent
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcsUtil.VcsUtil
@@ -44,6 +43,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesDiffHelper
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesDiffHelperImpl
+import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRBranchesModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRCommitsBrowserComponent.COMMITS_LIST_KEY
 import org.jetbrains.plugins.github.ui.HtmlInfoPanel
@@ -65,7 +65,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
                                         private val dataContext: GHPRDataContext,
                                         private val viewController: GHPRToolWindowTabComponentController,
                                         pullRequest: GHPRIdentifier,
-                                        disposable: Disposable) {
+                                        private val disposable: Disposable) {
   private val dataProvider = dataContext.dataProviderRepository.getDataProvider(pullRequest, disposable)
 
   private val diffHelper = GHPRChangesDiffHelperImpl(project, dataProvider,
@@ -223,14 +223,9 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
   }
 
   private fun createReturnToListSideComponent(): JComponent {
-    return BorderLayoutPanel()
-      .addToRight(LinkLabel<Any>(GithubBundle.message("pull.request.back.to.list"), AllIcons.Actions.Back) { _, _ ->
-        viewController.viewList()
-      }.apply {
-        border = JBUI.Borders.emptyRight(8)
-      })
-      .andTransparent()
-      .withBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM))
+    return ReturnToListComponent.createReturnToListSideComponent(GithubBundle.message("pull.request.back.to.list")) {
+      viewController.viewList()
+    }
   }
 
   private fun createInfoComponent(): JComponent {
@@ -246,7 +241,12 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
                                               dataContext.securityService,
                                               dataContext.repositoryDataService,
                                               dataProvider.detailsData)
-      GHPRDetailsComponent.create(detailsModel, dataContext.avatarIconsProviderFactory)
+
+      val branchesModel = GHPRBranchesModelImpl(model,
+                                                dataProvider.detailsData,
+                                                dataContext.gitRemoteCoordinates.repository,
+                                                disposable)
+      GHPRDetailsComponent.create(detailsModel, branchesModel, dataContext.avatarIconsProviderFactory)
     }.also {
       reloadDetailsAction.registerCustomShortcutSet(it, uiDisposable)
     }

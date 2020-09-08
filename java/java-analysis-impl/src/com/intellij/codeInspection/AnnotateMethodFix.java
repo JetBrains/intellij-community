@@ -5,7 +5,6 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.nullable.NullableStuffInspectionBase;
-import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -30,7 +29,7 @@ import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
 public class AnnotateMethodFix implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance(AnnotateMethodFix.class);
 
-  private final String myAnnotation;
+  protected final String myAnnotation;
   private final String[] myAnnotationsToRemove;
 
   public AnnotateMethodFix(@NotNull String fqn, String @NotNull ... annotationsToRemove) {
@@ -42,13 +41,15 @@ public class AnnotateMethodFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getName() {
-    return getFamilyName() + " " + getPreposition() + " '@" + ClassUtil.extractClassName(myAnnotation) + "'";
-  }
-
-  @IntentionName
-  @NotNull
-  protected String getPreposition() {
-    return "with";
+    if (annotateSelf()) {
+      if (annotateOverriddenMethods()) {
+        return JavaAnalysisBundle.message("inspection.annotate.overridden.method.and.self.quickfix.name",
+                                          ClassUtil.extractClassName(myAnnotation));
+      }
+      return JavaAnalysisBundle.message("inspection.annotate.method.quickfix.name", ClassUtil.extractClassName(myAnnotation));
+    }
+    return JavaAnalysisBundle.message("inspection.annotate.overridden.method.quickfix.name",
+                                      ClassUtil.extractClassName(myAnnotation));
   }
 
   @Override

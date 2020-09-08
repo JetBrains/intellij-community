@@ -4,10 +4,10 @@ package com.jetbrains.python.refactoring.surround.surrounders.statements;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyWhileStatement;
@@ -15,6 +15,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PyWithWhileElseSurrounder extends PyStatementSurrounder {
+  private static final @NlsSafe String TEMPLATE_DESCRIPTION = "while / else";
+
   @Override
   @Nullable
   protected TextRange surroundStatement(@NotNull Project project, @NotNull Editor editor, PsiElement @NotNull [] elements)
@@ -35,6 +37,7 @@ public class PyWithWhileElseSurrounder extends PyStatementSurrounder {
 
   @Override
   public String getTemplateDescription() {
-    return PyBundle.message("surround.with.whileelse.template");
+    //noinspection DialogTitleCapitalization
+    return TEMPLATE_DESCRIPTION;
   }
 }

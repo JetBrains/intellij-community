@@ -5,6 +5,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -200,8 +201,8 @@ public final class ParametersList implements Cloneable {
    */
   public void defineProperty(@NotNull @NonNls String propertyName, @Nullable @NonNls String propertyValue) {
     if (propertyValue == null) return;
-    String exact = "-D" + propertyName;
-    String prefix = "-D" + propertyName + "=";
+    @NlsSafe String exact = "-D" + propertyName;
+    @NlsSafe String prefix = "-D" + propertyName + "=";
     int index = indexOfParameter(o -> o.equals(exact) || o.startsWith(prefix));
     if (index > -1) return;
     String value = propertyValue.isEmpty() ? exact : prefix + expandMacros(propertyValue);
@@ -212,8 +213,8 @@ public final class ParametersList implements Cloneable {
    * Adds {@code -D<propertyName>} to the list; replaces the value of the last property if defined.
    */
   public void addProperty(@NotNull @NonNls String propertyName) {
-    String exact = "-D" + propertyName;
-    String prefix = "-D" + propertyName + "=";
+    @NlsSafe String exact = "-D" + propertyName;
+    @NlsSafe String prefix = "-D" + propertyName + "=";
     replaceOrAddAt(exact, myParameters.size(), o -> o.equals(exact) || o.startsWith(prefix));
   }
 
@@ -223,8 +224,8 @@ public final class ParametersList implements Cloneable {
    */
   public void addProperty(@NotNull @NonNls String propertyName, @Nullable @NonNls String propertyValue) {
     if (propertyValue == null) return;
-    String exact = "-D" + propertyName;
-    String prefix = "-D" + propertyName + "=";
+    @NlsSafe String exact = "-D" + propertyName;
+    @NlsSafe String prefix = "-D" + propertyName + "=";
     String value = propertyValue.isEmpty() ? exact : prefix + expandMacros(propertyValue);
     replaceOrAddAt(value, myParameters.size(), o -> o.equals(exact) || o.startsWith(prefix));
   }
@@ -393,6 +394,7 @@ public final class ParametersList implements Cloneable {
     return map;
   }
 
+  @NonNls
   @Override
   public String toString() {
     return myParameters + (myGroups.isEmpty() ? "" : " and " + myGroups);

@@ -21,7 +21,7 @@ public class ConvertDictCompQuickFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyPsiBundle.message("INTN.Family.convert.dict.comp.expression");
+    return PyPsiBundle.message("QFIX.NAME.convert.dict.comp.expression");
   }
 
   @Override

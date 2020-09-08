@@ -5,6 +5,7 @@ import com.intellij.dvcs.branch.DvcsCompareSettings;
 import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.dvcs.ui.CompareBranchesHelper;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgProjectSettings;
 import org.zmlx.hg4idea.util.HgUtil;
@@ -34,6 +35,7 @@ public class HgCompareBranchesHelper implements CompareBranchesHelper {
     return HgProjectSettings.getInstance(myProject);
   }
 
+  @NlsSafe
   @Override
   @NotNull
   public String formatLogCommand(@NotNull String firstBranch, @NotNull String secondBranch) {

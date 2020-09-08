@@ -30,7 +30,8 @@ import kotlin.properties.Delegates.observable
 private val isCommitToolWindowRegistryValue
   get() = Registry.get("vcs.commit.tool.window")
 
-private val COMMIT_TOOL_WINDOW_CONTENT_FILTER: (String) -> Boolean = { it == LOCAL_CHANGES || it == SHELF }
+// TODO allow specifying preferred tool window for ChangesViewContentEP
+private val COMMIT_TOOL_WINDOW_CONTENT_FILTER: (String) -> Boolean = { it == LOCAL_CHANGES || it == SHELF || it == "Staging Area" }
 
 internal val Project.isCommitToolWindow: Boolean
   get() = ChangesViewContentManager.getInstanceImpl(this)?.isCommitToolWindow == true
@@ -205,7 +206,7 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
 
   companion object {
     const val TOOLWINDOW_ID = ToolWindowId.VCS
-    internal const val COMMIT_TOOLWINDOW_ID = "Commit"
+    internal const val COMMIT_TOOLWINDOW_ID = "Commit" // NON-NLS
 
     @JvmField
     val CONTENT_PROVIDER_SUPPLIER_KEY = Key.create<() -> ChangesViewContentProvider>("CONTENT_PROVIDER_SUPPLIER")
@@ -213,7 +214,7 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
     @JvmStatic
     fun getInstance(project: Project) = project.service<ChangesViewContentI>()
 
-    internal fun getInstanceImpl(project: Project): ChangesViewContentManager? =
+    fun getInstanceImpl(project: Project): ChangesViewContentManager? =
       getInstance(project) as? ChangesViewContentManager
 
     @JvmStatic

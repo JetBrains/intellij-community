@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -38,6 +38,7 @@ import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageViewUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -123,8 +124,8 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   }
 
   @Override
-  protected void showDialogAdvertisement(String actionId) {
-    if (Registry.is("enable.rename.options.inplace", false)) {
+  protected void showDialogAdvertisement(@NonNls String actionId) {
+    if (Registry.is("enable.rename.options.inplace", true)) {
       setAdvertisementText(RefactoringBundle.message("inplace.refactoring.tab.advertisement.text"));
     }
     else {
@@ -168,7 +169,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
 
   @Override
   protected boolean appendAdditionalElement(Collection<PsiReference> refs, Collection<Pair<PsiElement, TextRange>> stringUsages) {
-    boolean showChooser = Registry.is("enable.rename.options.inplace", false) || super.appendAdditionalElement(refs, stringUsages);
+    boolean showChooser = Registry.is("enable.rename.options.inplace", true) || super.appendAdditionalElement(refs, stringUsages);
     PsiNamedElement variable = getVariable();
     if (variable != null) {
       final PsiElement substituted = getSubstituted();
@@ -281,7 +282,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
 
   @Override
   protected void collectAdditionalElementsToRename(@NotNull List<Pair<PsiElement, TextRange>> stringUsages) {
-    if (!Registry.is("enable.rename.options.inplace", false)) return;
+    if (!Registry.is("enable.rename.options.inplace", true)) return;
     if (!RenamePsiElementProcessor.forElement(myElementToRename).isToSearchInComments(myElementToRename)) {
       return;
     }
@@ -336,7 +337,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   @Override
   public void afterTemplateStart() {
     super.afterTemplateStart();
-    if (Registry.is("enable.rename.options.inplace", false)) {
+    if (Registry.is("enable.rename.options.inplace", true)) {
       TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
       PsiNamedElement variable = getVariable();
       if (templateState == null || variable == null) return;

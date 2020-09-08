@@ -292,4 +292,8 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     doTest();
   }
   public void testClassInsideLambda() { doTest(); }
+  public void testMultiDimensionalArrays() {
+    setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
 }

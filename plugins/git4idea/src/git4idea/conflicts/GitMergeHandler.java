@@ -22,6 +22,7 @@ import git4idea.repo.GitConflict.Status;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.status.GitStagingAreaHolder;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +44,7 @@ public class GitMergeHandler {
     myDialogCustomizer = mergeDialogCustomizer;
   }
 
+  @Nls
   @NotNull
   public String loadMergeDescription() {
     return myDialogCustomizer.getMultipleFileMergeDescription(emptyList());

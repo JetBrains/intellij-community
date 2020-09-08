@@ -126,7 +126,7 @@ internal class RCInArbitraryFileManager(private val project: Project) {
     }
 
     if (element.name != "component" || element.getAttributeValue("name") != "ProjectRunConfigurationManager") {
-      LOG.info("Unexpected root element ${element.name} with name=${element.getAttributeValue("name")} in $filePath")
+      LOG.trace("Unexpected root element ${element.name} with name=${element.getAttributeValue("name")} in $filePath")
       return DeletedAndAddedRunConfigs(previouslyLoadedRunConfigs, emptyList())
     }
 

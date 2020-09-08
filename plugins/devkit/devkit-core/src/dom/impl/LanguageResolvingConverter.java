@@ -10,6 +10,7 @@ import com.intellij.util.xml.ResolvingConverter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 
 import java.util.Collection;
 
@@ -51,6 +52,6 @@ class LanguageResolvingConverter extends ResolvingConverter<LanguageResolvingUti
 
   @Override
   public String getErrorMessage(@Nullable String s, ConvertContext context) {
-    return "Cannot resolve language with id ''" + s + "''";
+    return DevKitBundle.message("plugin.xml.convert.language.id.cannot.resolve", s);
   }
 }

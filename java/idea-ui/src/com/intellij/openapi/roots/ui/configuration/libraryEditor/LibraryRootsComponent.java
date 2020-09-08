@@ -29,6 +29,8 @@ import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentation
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.AnActionButton;
@@ -44,6 +46,7 @@ import com.intellij.util.containers.FilteringIterator;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,7 +82,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   private Module myContextModule;
   private LibraryRootsComponent.AddExcludedRootActionButton myAddExcludedRootActionButton;
   private StructureTreeModel<AbstractTreeStructure> myTreeModel;
-  private LibraryRootsComponentDescriptor.RootRemovalHandler myRootRemovalHandler;
+  private final LibraryRootsComponentDescriptor.RootRemovalHandler myRootRemovalHandler;
 
   public LibraryRootsComponent(@Nullable Project project, @NotNull LibraryEditor libraryEditor) {
     this(project, new Computable.PredefinedValueComputable<>(libraryEditor));
@@ -125,18 +128,19 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   }
 
   public void updatePropertiesLabel() {
-    StringBuilder text = new StringBuilder();
+    StringBuilder sb = new StringBuilder();
     final LibraryType<?> type = getLibraryEditor().getType();
     final Set<LibraryKind> excluded =
       type != null ? Collections.singleton(type.getKind()) : Collections.emptySet();
-    for (String description : LibraryPresentationManager.getInstance().getDescriptions(getLibraryEditor().getFiles(OrderRootType.CLASSES),
-                                                                                       excluded)) {
-      if (text.length() > 0) {
-        text.append("\n");
+    for (@Nls String description : LibraryPresentationManager.getInstance().getDescriptions(getLibraryEditor().getFiles(OrderRootType.CLASSES),
+                                                                                            excluded)) {
+      if (sb.length() > 0) {
+        sb.append("\n");
       }
-      text.append(description);
+      sb.append(description);
     }
-    myPropertiesLabel.setText(text.toString());
+    @NlsSafe final String text = sb.toString();
+    myPropertiesLabel.setText(text);
   }
 
   private void init(AbstractTreeStructure treeStructure) {
@@ -232,6 +236,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     toolbarDecorator.setAddAction(new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton button) {
+        if (button.getPreferredPopupPoint() == null) return;
         AttachFilesAction attachFilesAction = new AttachFilesAction(myDescriptor.getAttachFilesActionName());
         if (popupItems.isEmpty()) {
           attachFilesAction.perform();
@@ -399,7 +404,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   }
 
   private class AttachFilesAction extends AttachItemActionBase {
-    AttachFilesAction(String title) {
+    AttachFilesAction(@NlsActions.ActionText String title) {
       super(title);
     }
 
@@ -418,7 +423,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   }
 
   public abstract class AttachItemActionBase extends DumbAwareAction {
-    protected AttachItemActionBase(String text) {
+    protected AttachItemActionBase(@NlsActions.ActionText String text) {
       super(text);
     }
 
@@ -447,7 +452,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   private class AttachItemAction extends AttachItemActionBase {
     private final AttachRootButtonDescriptor myDescriptor;
 
-    protected AttachItemAction(AttachRootButtonDescriptor descriptor, String title, final Icon icon) {
+    protected AttachItemAction(AttachRootButtonDescriptor descriptor, @NlsActions.ActionText String title, final Icon icon) {
       super(title);
       getTemplatePresentation().setIcon(icon);
       myDescriptor = descriptor;
@@ -510,7 +515,14 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     ProjectModelExternalSource externalSource = libraryEditor.getExternalSource();
     if (externalSource != null && hasChanges()) {
       String name = libraryEditor instanceof ExistingLibraryEditor ? ((ExistingLibraryEditor)libraryEditor).getLibrary().getName() : libraryEditor.getName();
-      myModificationOfImportedModelWarningComponent.showWarning(name != null ? "Library '" + name + "'" : "Library", externalSource);
+      final String description;
+      if (name != null) {
+        description = JavaUiBundle.message("library.0", name);
+      }
+      else {
+        description = JavaUiBundle.message("configurable.library.prefix");
+      }
+      myModificationOfImportedModelWarningComponent.showWarning(description, externalSource);
     }
     else {
       myModificationOfImportedModelWarningComponent.hideWarning();

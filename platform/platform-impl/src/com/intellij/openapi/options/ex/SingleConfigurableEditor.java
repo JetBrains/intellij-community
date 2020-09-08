@@ -12,6 +12,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.util.Alarm;
@@ -116,7 +117,7 @@ public class SingleConfigurableEditor extends DialogWrapper {
     return myProject;
   }
 
-  private static String createTitleString(@NotNull Configurable configurable) {
+  private static @NlsContexts.DialogTitle String createTitleString(@NotNull Configurable configurable) {
     String displayName = configurable.getDisplayName();
     LOG.assertTrue(displayName != null, configurable.getClass().getName());
     return displayName.replaceAll("\n", " ");

@@ -64,6 +64,14 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
 
     assertNotNull(fooCall.getType());
   }
+  
+  public void testTypeOfDiamonds() {
+    configure();
+    PsiNewExpression nestedConstructor =
+      PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiNewExpression.class);
+
+    assertNotNull(nestedConstructor.resolveConstructor());
+  }
 
   public void testRecursiveApplicabilityCheck() {
     configure();

@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -38,14 +39,14 @@ public class GroovyResultOfAssignmentUsedInspection extends BaseInspection {
   @Nullable
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox("Inspect anonymous closures", "inspectClosures");
+    optionsPanel.addCheckbox(GroovyBundle.message("checkbox.inspect.anonymous.closures"), "inspectClosures");
     return optionsPanel;
   }
 
   @Override
   @Nullable
   protected String buildErrorString(Object... args) {
-    return "Result of assignment expression used #loc";
+    return GroovyBundle.message("inspection.message.nested.assignment");
   }
 
   @NotNull

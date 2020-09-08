@@ -209,7 +209,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
   }
 
   @NotNull
-  public static String formatClass(@NotNull PsiClass aClass, @FormatClassOptions int options) {
+  public static @NlsSafe String formatClass(@NotNull PsiClass aClass, @FormatClassOptions int options) {
     StringBuilder buffer = new StringBuilder();
 
     if (BitUtil.isSet(options, SHOW_MODIFIERS) && !BitUtil.isSet(options, MODIFIERS_AFTER)) {

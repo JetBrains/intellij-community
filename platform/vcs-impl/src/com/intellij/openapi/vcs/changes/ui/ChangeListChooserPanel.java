@@ -15,8 +15,9 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.ui.*;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.NullableConsumer;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,7 +72,7 @@ public class ChangeListChooserPanel extends JPanel {
       }
 
       @Override
-      @CalledInAwt
+      @RequiresEdt
       protected void nameChanged(String errorMessage) {
         //invoke later because of undo manager problem: when you try to undo changelist after description was already changed manually
         ApplicationManager.getApplication().invokeLater(() -> updateDescription(), ModalityState.current());
@@ -109,11 +110,11 @@ public class ChangeListChooserPanel extends JPanel {
     myExistingListsCombo.setModel(new DefaultComboBoxModel<>(changeLists.toArray(new ChangeList[0])));
   }
 
-  public void setSuggestedName(@NotNull String name) {
+  public void setSuggestedName(@NotNull @Nls String name) {
     setSuggestedName(name, null);
   }
 
-  public void setSuggestedName(@NotNull String name, @Nullable String comment) {
+  public void setSuggestedName(@Nls @NotNull String name, @Nls @Nullable String comment) {
     if (StringUtil.isEmptyOrSpaces(name)) return;
     LocalChangeList changelistByName = getExistingChangelistByName(name);
     if (changelistByName != null) {
@@ -154,12 +155,12 @@ public class ChangeListChooserPanel extends JPanel {
    */
   @Nullable
   public LocalChangeList getSelectedList(Project project) {
-    ChangeListManager manager = ChangeListManager.getInstance(project);
+    ChangeListManagerEx manager = ChangeListManagerEx.getInstanceEx(project);
     String changeListName = myListPanel.getChangeListName();
     LocalChangeList localChangeList = manager.findChangeList(changeListName);
 
     if (localChangeList == null) {
-      localChangeList = ((ChangeListManagerEx)manager).addChangeList(changeListName, myListPanel.getDescription(), myData);
+      localChangeList = manager.addChangeList(changeListName, myListPanel.getDescription(), myData);
       myListPanel.changelistCreatedOrChanged(localChangeList);
     }
     else {

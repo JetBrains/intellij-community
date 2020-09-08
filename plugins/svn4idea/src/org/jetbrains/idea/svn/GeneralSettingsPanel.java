@@ -16,6 +16,7 @@ import org.jetbrains.idea.svn.auth.SvnAuthenticationNotifier;
 import javax.swing.*;
 import java.util.Objects;
 
+import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.USER_CONFIGURATION_PATH;
 
 public class GeneralSettingsPanel implements ConfigurableUi<SvnConfiguration>, Disposable {
@@ -46,8 +47,12 @@ public class GeneralSettingsPanel implements ConfigurableUi<SvnConfiguration>, D
         myConfigurationDirectoryText.setText(path);
       }
     });
-    myCommandLineClient.addBrowseFolderListener("Subversion", "Select path to Subversion executable (1.7+)", project,
-                                                FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
+    myCommandLineClient.addBrowseFolderListener(
+      message("dialog.title.select.path.to.subversion.executable"),
+      message("label.select.path.to.subversion.executable"),
+      project,
+      FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+    );
     myClearAuthButton.addActionListener(
       e -> SvnAuthenticationNotifier.clearAuthenticationCache(myProject, myMainPanel, myConfigurationDirectoryText.getText()));
     myConfigurationDirectoryText.addActionListener(e -> {

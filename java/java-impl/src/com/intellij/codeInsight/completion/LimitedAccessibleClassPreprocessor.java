@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiClass;
@@ -65,7 +66,7 @@ class LimitedAccessibleClassPreprocessor implements Processor<PsiClass> {
   @Override
   public boolean process(PsiClass psiClass) {
     if (myParameters.getInvocationCount() < 2) {
-      if (PsiReferenceExpressionImpl.seemsScrambled(psiClass)) {
+      if (PsiReferenceExpressionImpl.seemsScrambled(psiClass) || JavaCompletionProcessor.seemsInternal(psiClass)) {
         return true;
       }
       String name = psiClass.getName();

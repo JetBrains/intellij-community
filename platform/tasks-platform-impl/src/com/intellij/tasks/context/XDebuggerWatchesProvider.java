@@ -4,6 +4,7 @@ package com.intellij.tasks.context;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.WatchesManagerState;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
@@ -27,7 +28,7 @@ final class XDebuggerWatchesProvider extends WorkingContextProvider {
   @NotNull
   @Override
   public String getDescription() {
-    return "Debugger watches";
+    return TaskBundle.message("debugger.watches");
   }
 
   @Override

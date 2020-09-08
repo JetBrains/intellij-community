@@ -22,7 +22,6 @@ import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.popup.PopupDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import git4idea.GitVcs;
 import git4idea.actions.GitFetch;
 import git4idea.branch.GitBranchIncomingOutgoingManager;
 import git4idea.config.GitVcsSettings;
@@ -162,8 +161,7 @@ public final class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
   private static AnAction createUnsupportedIncomingAction(@NotNull Project project) {
     AnAction updateBranchInfoWithAuthenticationAction = DumbAwareAction.create(
       GitBundle.message("update.checks.not.supported.git.2.9.required"),
-                                                                               e -> ShowSettingsUtil.getInstance()
-                                                                                 .showSettingsDialog(project, GitVcs.NAME));
+      e -> ShowSettingsUtil.getInstance().showSettingsDialog(project, GitBundle.message("settings.git.option.group")));
     Presentation presentation = updateBranchInfoWithAuthenticationAction.getTemplatePresentation();
     presentation.setIcon(AllIcons.General.Warning);
     presentation.setHoveredIcon(AllIcons.General.Warning);

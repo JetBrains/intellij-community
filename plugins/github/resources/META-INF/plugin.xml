@@ -164,6 +164,8 @@
       <reference id="Github.Open.In.Browser"/>
       <action id="Github.PullRequest.Branch.Create"
               class="org.jetbrains.plugins.github.pullrequest.action.GHPRCreateBranchAction"/>
+      <action id="Github.PullRequest.Branch.Update"
+              class="org.jetbrains.plugins.github.pullrequest.action.GHPRUpdateBranchAction"/>
       <action id="Github.PullRequest.Details.Reload"
               class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadDetailsAction" use-shortcut-of="Refresh"/>
     </group>
@@ -202,5 +204,15 @@
       <separator/>
       <action id="Github.Accounts.AddGHEAccount" class="org.jetbrains.plugins.github.authentication.ui.AddGHEAccountAction"/>
     </group>
+
+    <action id="Github.PullRequest.Diff.Comment.Create"
+            class="org.jetbrains.plugins.github.pullrequest.comment.action.GHPRCreateDiffCommentAction">
+      <keyboard-shortcut first-keystroke="control shift X" keymap="$default"/>
+      <keyboard-shortcut first-keystroke="control shift X" keymap="Eclipse" remove="true"/>
+      <keyboard-shortcut first-keystroke="control shift X" keymap="Eclipse (Mac OS X)" remove="true"/>
+      <keyboard-shortcut first-keystroke="meta shift X" keymap="Eclipse (Mac OS X)" remove="true"/>
+      <keyboard-shortcut first-keystroke="control shift X" keymap="Emacs" remove="true"/>
+      <add-to-group group-id="Diff.EditorPopupMenu"/>
+    </action>
   </actions>
 </idea-plugin>

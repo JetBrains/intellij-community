@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.options.MasterDetails;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.DetailsComponent;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -105,7 +106,7 @@ public final class IntentionSettingsConfigurable implements SearchableConfigurab
     }
   }
 
-  public static String getDisplayNameText() {
+  public static @NlsContexts.ConfigurableName String getDisplayNameText() {
     return CodeInsightBundle.message("intention.settings");
   }
 }

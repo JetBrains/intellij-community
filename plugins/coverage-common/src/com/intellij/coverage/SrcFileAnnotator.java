@@ -49,6 +49,7 @@ import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.vcsUtil.VcsUtil;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -501,7 +502,7 @@ public final class SrcFileAnnotator implements Disposable {
     return highlighter;
   }
 
-  private void showEditorWarningMessage(final String message) {
+  private void showEditorWarningMessage(final @Nls String message) {
     Editor textEditor = myEditor;
     PsiFile file = myFile;
     ApplicationManager.getApplication().invokeLater(() -> {

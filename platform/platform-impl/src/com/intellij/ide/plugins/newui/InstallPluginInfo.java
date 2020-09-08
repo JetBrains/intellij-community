@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
@@ -43,7 +44,9 @@ public class InstallPluginInfo {
     myPluginModel = null;
     indicator.removeStateDelegates();
     if (statusBar != null) {
-      String title = (install ? "Installing plugin " : "Update plugin ") + myDescriptor.getName();
+      String title = install
+                     ? IdeBundle.message("dialog.title.installing.plugin", myDescriptor.getName())
+                     : IdeBundle.message("dialog.title.updating.plugin", myDescriptor.getName());
       statusBar.addProgress(indicator, myStatusBarTaskInfo = OneLineProgressIndicator.task(title));
     }
   }

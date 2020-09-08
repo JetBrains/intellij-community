@@ -29,6 +29,7 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +59,7 @@ public interface ChainCallExtractor {
    * for given expression and expressionType
    */
   @Contract(pure = true)
-  default String buildChainCall(PsiVariable variable, PsiExpression expression, PsiType expressionType) {
+  default @NonNls String buildChainCall(PsiVariable variable, PsiExpression expression, PsiType expressionType) {
     if(expression instanceof PsiArrayInitializerExpression) {
       expression = RefactoringUtil.convertInitializerToNormalExpression(expression, expressionType);
     }
@@ -77,6 +78,7 @@ public interface ChainCallExtractor {
    * for given expression and expressionType
    */
   @Contract(pure = true)
+  @NonNls
   String getMethodName(PsiVariable variable, PsiExpression expression, PsiType expressionType);
 
   /**

@@ -3,6 +3,7 @@
 package com.intellij.refactoring.memberPullUp;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -294,7 +295,7 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
   private class PullUpUsageViewDescriptor implements UsageViewDescriptor {
     @Override
     public String getProcessedElementsHeader() {
-      return "Pull up members from class " + DescriptiveNameUtil.getDescriptiveName(mySourceClass);
+      return JavaBundle.message("pull.up.members.usage.view.description.processed.elements.node", DescriptiveNameUtil.getDescriptiveName(mySourceClass));
     }
 
     @Override
@@ -305,7 +306,7 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
     @NotNull
     @Override
     public String getCodeReferencesText(int usagesCount, int filesCount) {
-      return "Class to pull up members to \"" + RefactoringUIUtil.getDescription(myTargetSuperClass, true) + "\"";
+      return JavaBundle.message("pull.up.members.usage.view.description.code.references.node", RefactoringUIUtil.getDescription(myTargetSuperClass, true));
     }
   }
 }

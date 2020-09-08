@@ -2,6 +2,7 @@
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
@@ -74,7 +75,7 @@ final class KeyboardShortcutDialog extends ShortcutDialog<KeyboardShortcut> {
   @Override
   protected void addSystemActionsIfPresented(Group group) {
     if (mySystemShortcuts != null) {
-      Group macOsSysGroup = new Group("MacOS shortcuts", AllIcons.Nodes.KeymapOther);
+      Group macOsSysGroup = new Group(IdeBundle.message("action.group.macos.shortcuts.text"), AllIcons.Nodes.KeymapOther);
       mySystemShortcuts.forEach((ks, actid) -> macOsSysGroup.addActionId(actid));
       group.addGroup(macOsSysGroup);
     }

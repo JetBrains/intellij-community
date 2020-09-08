@@ -5,11 +5,15 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ComponentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -23,7 +27,17 @@ public class ReopenClosedTabAction extends AnAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     final EditorWindow window = getEditorWindow(e);
     if (window != null) {
-      window.restoreClosedTab();
+      if (window.hasClosedTabs()) {
+        window.restoreClosedTab();
+      }
+      return;
+    }
+
+    Project project = e.getProject();
+    if (project == null) return;
+    List<VirtualFile> list = EditorHistoryManager.getInstance(project).getFileList();
+    if (!list.isEmpty()) {
+      FileEditorManager.getInstance(project).openFile(list.get(list.size() - 1), true);
     }
   }
 
@@ -43,6 +57,17 @@ public class ReopenClosedTabAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     final EditorWindow window = getEditorWindow(e);
-    e.getPresentation().setEnabledAndVisible(window != null && window.hasClosedTabs());
+    if (window != null) {
+      e.getPresentation().setEnabledAndVisible(window.hasClosedTabs());
+      return;
+    }
+
+    Project project = e.getProject();
+    if (project != null && !EditorHistoryManager.getInstance(project).getFileList().isEmpty()) {
+      e.getPresentation().setEnabledAndVisible(true);
+      return;
+    }
+
+    e.getPresentation().setEnabledAndVisible(false);
   }
 }

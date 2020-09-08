@@ -203,6 +203,7 @@ public class PyPIPackageUtil {
   private String getLatestPackageVersionFromPyPI(@NotNull Project project, @NotNull String packageName) throws IOException {
     LOG.debug("Requesting the latest PyPI version for the package " + packageName);
     final List<String> versions = getPackageVersionsFromPyPI(packageName, true);
+    if (project.isDisposed()) return null;
     return PyPackagingSettings.getInstance(project).selectLatestVersion(versions);
   }
 
@@ -235,7 +236,7 @@ public class PyPIPackageUtil {
   @Nullable
   public String fetchLatestPackageVersion(@NotNull Project project, @NotNull String packageName) throws IOException {
     String version = null;
-    // Package is on PyPI not a, say, some system package on Ubuntu
+    // Package is on PyPI, not, say, some system package on Ubuntu
     if (PyPIPackageCache.getInstance().containsPackage(packageName)) {
       version = getLatestPackageVersionFromPyPI(project, packageName);
     }

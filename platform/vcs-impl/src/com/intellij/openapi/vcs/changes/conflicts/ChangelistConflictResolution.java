@@ -20,7 +20,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesCommitExecutor;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
@@ -45,7 +45,7 @@ public enum ChangelistConflictResolution {
   MOVE {
     @Override
     public boolean resolveConflict(Project project, Collection<? extends Change> changes, VirtualFile selected) {
-      ChangeListManagerImpl manager = getManager(project);
+      ChangeListManager manager = getManager(project);
       Set<ChangeList> changeLists = new HashSet<>();
       for (Change change : changes) {
         LocalChangeList list = manager.getChangeList(change);
@@ -78,11 +78,11 @@ public enum ChangelistConflictResolution {
   IGNORE {
     @Override
     public boolean resolveConflict(Project project, Collection<? extends Change> changes, VirtualFile selected) {
-      ChangeListManagerImpl manager = getManager(project);
+      ChangelistConflictTracker conflictTracker = ChangelistConflictTracker.getInstance(project);
       for (Change change : changes) {
         VirtualFile file = change.getVirtualFile();
         if (file != null) {
-          manager.getConflictTracker().ignoreConflict(file, true);
+          conflictTracker.ignoreConflict(file, true);
         }
       }
       return true;
@@ -90,7 +90,7 @@ public enum ChangelistConflictResolution {
 
   public abstract boolean resolveConflict(Project project, Collection<? extends Change> changes, VirtualFile selected);
 
-  private static ChangeListManagerImpl getManager(Project project) {
-    return ChangeListManagerImpl.getInstanceImpl(project);
+  private static ChangeListManager getManager(Project project) {
+    return ChangeListManager.getInstance(project);
   }
 }

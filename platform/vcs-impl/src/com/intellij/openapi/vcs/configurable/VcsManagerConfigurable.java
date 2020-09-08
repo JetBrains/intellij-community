@@ -8,11 +8,11 @@ import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfigurableProvider;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictConfigurable;
 import com.intellij.openapi.vcs.changes.ui.IgnoredSettingsPanel;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
@@ -115,7 +115,7 @@ public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.
     }
     result.add(new IssueNavigationConfigurationPanel(myProject));
     if (!myProject.isDefault()) {
-      result.add(new ChangelistConflictConfigurable(ChangeListManagerImpl.getInstanceImpl(myProject)));
+      result.add(new ChangelistConflictConfigurable(myProject));
     }
     result.add(new CommitDialogConfigurable(myProject));
     result.add(new ShelfProjectConfigurable(myProject));
@@ -141,6 +141,7 @@ public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.
   }
 
   @NotNull
+  @NlsSafe
   public static String getVcsConfigurableId(@NotNull String displayName) {
     return "vcs." + displayName;
   }

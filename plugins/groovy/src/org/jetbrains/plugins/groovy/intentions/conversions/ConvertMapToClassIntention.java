@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.conversions;
 
 import com.intellij.codeInsight.intention.impl.CreateClassDialog;
@@ -158,7 +144,7 @@ public class ConvertMapToClassIntention extends Intention {
       if (!(returns.contains(expr))) return false;
     }
     return !(!ApplicationManager.getApplication().isUnitTestMode() && Messages.showYesNoDialog(replacedNewExpression.getProject(),
-                                                                                               GroovyIntentionsBundle.message(
+                                                                                               GroovyBundle.message(
                                                                                                  "do.you.want.to.change.method.return.type",
                                                                                                  method.getName()),
                                                                                                GroovyIntentionsBundle
@@ -175,7 +161,7 @@ public class ConvertMapToClassIntention extends Intention {
         ((GrVariable)parent).getDeclaredType() != null &&
         replacedNewExpression.getType() != null) {
       if (ApplicationManager.getApplication().isUnitTestMode() || Messages.showYesNoDialog(replacedNewExpression.getProject(),
-                                                                                            GroovyIntentionsBundle.message(
+                                                                                            GroovyBundle.message(
                                                                                               "do.you.want.to.change.variable.type",
                                                                                               ((GrVariable)parent).getName()),
                                                                                             GroovyIntentionsBundle.message(
@@ -222,10 +208,11 @@ public class ConvertMapToClassIntention extends Intention {
     final PsiElement parent = parameter.getParent().getParent();
     if (!(parent instanceof PsiMethod)) return null;
     final PsiMethod method = (PsiMethod)parent;
-    if (ApplicationManager.getApplication().isUnitTestMode() ||
-           Messages.showYesNoDialog(map.getProject(), GroovyIntentionsBundle
-             .message("do.you.want.to.change.type.of.parameter.in.method", parameter.getName(), method.getName()),
-                                    GroovyIntentionsBundle.message("convert.map.to.class.intention.name"), Messages.getQuestionIcon()) == Messages.YES) {
+    if (ApplicationManager.getApplication().isUnitTestMode() || Messages.showYesNoDialog(
+      map.getProject(),
+      GroovyBundle.message("do.you.want.to.change.type.of.parameter.in.method", parameter.getName(), method.getName()),
+      GroovyIntentionsBundle.message("convert.map.to.class.intention.name"), Messages.getQuestionIcon()
+    ) == Messages.YES) {
       return parameter;
     }
     return null;

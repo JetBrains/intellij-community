@@ -10,6 +10,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.util.ArrayUtilRt;
@@ -115,12 +116,12 @@ public final class RemoteTemplatesFactory extends ProjectTemplatesFactory {
   private static class RemoteProjectTemplate extends ArchivedProjectTemplate {
     private final ModuleType myModuleType;
     private final String myPath;
-    private final String myDescription;
+    private final @NlsContexts.DetailedDescription String myDescription;
 
-    RemoteProjectTemplate(String name,
+    RemoteProjectTemplate(@NlsContexts.Label String name,
                           Element element,
                           ModuleType moduleType,
-                          String path, String description) {
+                          String path, @NlsContexts.DetailedDescription String description) {
       super(name, element.getChildTextTrim("category"));
       myModuleType = moduleType;
       myPath = path;

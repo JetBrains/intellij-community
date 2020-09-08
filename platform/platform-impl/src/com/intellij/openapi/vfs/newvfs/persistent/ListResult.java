@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -24,6 +25,7 @@ final class ListResult {
   }
 
   @Override
+  @NonNls
   public String toString() {
     return "modStamp: " + modStamp + "; children: " + children;
   }

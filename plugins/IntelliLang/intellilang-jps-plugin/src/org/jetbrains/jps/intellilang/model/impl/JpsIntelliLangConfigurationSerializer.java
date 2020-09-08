@@ -48,7 +48,4 @@ public class JpsIntelliLangConfigurationSerializer extends JpsGlobalExtensionSer
   public void loadExtensionWithDefaultSettings(@NotNull JpsGlobal global) {
     JpsIntelliLangExtensionService.getInstance().setConfiguration(global, new JpsIntelliLangConfigurationImpl());
   }
-
-  @Override
-  public void saveExtension(@NotNull JpsGlobal global, @NotNull Element componentTag) { }
 }

@@ -4,6 +4,7 @@ package com.intellij.vcs.commit
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
@@ -12,7 +13,7 @@ private val LOG = logger<ChangesViewCommitWorkflow>()
 
 class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(project) {
   private val vcsManager = ProjectLevelVcsManager.getInstance(project)
-  private val changeListManager = ChangeListManager.getInstance(project) as ChangeListManagerEx
+  private val changeListManager = ChangeListManagerEx.getInstanceEx(project)
 
   override val isDefaultCommitEnabled: Boolean get() = true
 
@@ -52,7 +53,7 @@ class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(proje
       addResultHandler(getCommitEventDispatcher())
       addResultHandler(ShowNotificationCommitResultHandler(this))
 
-      runCommit("Commit Changes", false)
+      runCommit(VcsBundle.message("commit.changes"), false)
     }
   }
 

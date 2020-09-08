@@ -22,12 +22,12 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.JavaOverridingMethodUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -83,6 +83,7 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
   @Contract(pure = true)
   static StreamEx<ThrowRefType> getRedundantThrowsCandidates(@Nullable final PsiMethod method, final boolean ignoreEntryPoints) {
     if (method == null) return StreamEx.empty();
+    if (method instanceof SyntheticElement) return StreamEx.empty();
     if (ignoreEntryPoints && UnusedDeclarationInspectionBase.isDeclaredAsEntryPoint(method)) return StreamEx.empty();
     if (method.hasModifier(JvmModifier.NATIVE)) return StreamEx.empty();
     if (JavaHighlightUtil.isSerializationRelatedMethod(method, method.getContainingClass())) return StreamEx.empty();
@@ -303,8 +304,7 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
 
     @Contract(pure = true)
     private boolean isInThrowsListOf(@NotNull final PsiMethod method) {
-      return Arrays.stream(method.getThrowsList().getReferencedTypes())
-        .anyMatch(myType::isAssignableFrom);
+      return ContainerUtil.exists(method.getThrowsList().getReferencedTypes(), myType::isAssignableFrom);
     }
 
     @Contract(pure = true)

@@ -35,7 +35,7 @@ final class ImplementationClassCache {
 
   ImplementationClassCache(ExtensionPointName<DomImplementationClassEP> epName) {
     Application app = ApplicationManager.getApplication();
-    if (!Disposer.isDisposing(app)) {
+    if (!app.isDisposed()) {
       epName.getPoint().addExtensionPointListener(new ExtensionPointListener<DomImplementationClassEP>() {
         @Override
         public void extensionAdded(@NotNull DomImplementationClassEP ep, @NotNull PluginDescriptor pluginDescriptor) {

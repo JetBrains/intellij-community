@@ -7,26 +7,35 @@ import com.intellij.codeInsight.intention.choice.ChoiceTitleIntentionAction
 import com.intellij.codeInsight.intention.choice.ChoiceVariantIntentionAction
 import com.intellij.codeInsight.intention.choice.DefaultIntentionActionWithChoice
 import com.intellij.codeInsight.intention.impl.config.LazyEditor
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.codeInspection.util.IntentionName
+import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.grammar.Typo
 import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
+import com.intellij.refactoring.suggested.startOffset
 
 class GrazieReplaceTypoQuickFix(private val typo: Typo) : DefaultIntentionActionWithChoice {
 
-  private class ReplaceTypoTitleAction(family: String, title: String) : ChoiceTitleIntentionAction(family, title), HighPriorityAction
+  private class ReplaceTypoTitleAction(@IntentionFamilyName family: String, @IntentionName title: String) : ChoiceTitleIntentionAction(family, title), HighPriorityAction
 
   override fun getTitle(): ChoiceTitleIntentionAction {
     return ReplaceTypoTitleAction(msg("grazie.grammar.quickfix.replace.typo.text", typo.info.shortMessage), typo.info.shortMessage)
   }
 
-  private inner class ChangeToVariantAction(override val index: Int, private val family: String, private val suggestion: String)
+  private inner class ChangeToVariantAction(
+    override val index: Int,
+    @IntentionFamilyName private val family: String,
+    @NlsSafe private val suggestion: String
+  )
     : ChoiceVariantIntentionAction(), HighPriorityAction {
     override fun getName(): String = suggestion
 
-    override fun getTooltipText(): String = "Replace with '${suggestion}'"
+    override fun getTooltipText(): String = GrazieBundle.message("grazie.grammar.quickfix.replace.typo.tooltip", suggestion)
 
     override fun getFamilyName(): String = family
 
@@ -40,7 +49,7 @@ class GrazieReplaceTypoQuickFix(private val typo: Typo) : DefaultIntentionAction
       val myEditor = editor ?: LazyEditor(file)
 
       val element = typo.location.element ?: return
-      val range = TextRange.create(typo.location.errorRange.start, typo.location.errorRange.endInclusive + 1).shiftRight(element.textOffset)
+      val range = TextRange.create(typo.location.errorRange.start, typo.location.errorRange.endInclusive + 1).shiftRight(element.startOffset)
 
 
       val text = myEditor.document.getText(range)

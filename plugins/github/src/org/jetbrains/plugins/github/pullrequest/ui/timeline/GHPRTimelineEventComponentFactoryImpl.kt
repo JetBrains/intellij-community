@@ -113,17 +113,21 @@ class GHPRTimelineEventComponentFactoryImpl(private val avatarIconsProvider: GHA
       return builder.toString()
     }
 
-    private fun reviewersHTML(added: Collection<GHPullRequestRequestedReviewer> = emptyList(),
-                              removed: Collection<GHPullRequestRequestedReviewer> = emptyList()): String {
+    private fun reviewersHTML(added: Collection<GHPullRequestRequestedReviewer?> = emptyList(),
+                              removed: Collection<GHPullRequestRequestedReviewer?> = emptyList()): String {
       val builder = StringBuilder()
       if (added.isNotEmpty()) {
         builder.append(
-          added.joinToString(prefix = "${GithubBundle.message("pull.request.timeline.requested.review")} ") { "<b>${it.shortName}</b>" })
+          added.joinToString(prefix = "${GithubBundle.message("pull.request.timeline.requested.review")} ") {
+            "<b>${it?.shortName ?: GithubBundle.message("user.someone")}</b>"
+          })
       }
       if (removed.isNotEmpty()) {
         if (builder.isNotEmpty()) builder.append(" ${GithubBundle.message("pull.request.timeline.and")} ")
         builder.append(removed.joinToString(
-          prefix = "${GithubBundle.message("pull.request.timeline.removed.review.request")} ") { "<b>${it.shortName}</b>" })
+          prefix = "${GithubBundle.message("pull.request.timeline.removed.review.request")} ") {
+          "<b>${it?.shortName ?: GithubBundle.message("user.someone")}</b>"
+        })
       }
       return builder.toString()
     }

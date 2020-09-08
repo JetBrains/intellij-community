@@ -23,6 +23,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UExpression;
 import org.jetbrains.uast.UastContextKt;
 import org.jetbrains.uast.UastUtils;
 import org.jetbrains.uast.expressions.UInjectionHost;
@@ -45,7 +46,7 @@ public class I18nizeAction extends AnAction {
   }
 
   @Nullable
-  public static I18nQuickFixHandler getHandler(final AnActionEvent e) {
+  public static I18nQuickFixHandler<?> getHandler(final AnActionEvent e) {
     final Editor editor = getEditor(e);
     if (editor == null) return null;
 
@@ -56,7 +57,7 @@ public class I18nizeAction extends AnAction {
   }
 
   @Nullable
-  public static I18nQuickFixHandler getHandler(@NotNull Editor editor, @NotNull PsiFile psiFile) {
+  public static I18nQuickFixHandler<?> getHandler(@NotNull Editor editor, @NotNull PsiFile psiFile) {
     TextRange range = JavaI18nUtil.getSelectedRange(editor, psiFile);
     if (range == null) return null;
 
@@ -77,7 +78,7 @@ public class I18nizeAction extends AnAction {
     }
 
     for (I18nizeHandlerProvider handlerProvider : I18nizeHandlerProvider.EP_NAME.getExtensions()) {
-      I18nQuickFixHandler handler = handlerProvider.getHandler(psiFile, editor, range);
+      I18nQuickFixHandler<?> handler = handlerProvider.getHandler(psiFile, editor, range);
       if (handler != null) {
         return handler;
       }
@@ -103,10 +104,10 @@ public class I18nizeAction extends AnAction {
     return e.getData(CommonDataKeys.EDITOR);
   }
 
-  public static void doI18nSelectedString(final @NotNull Project project,
-                                          final @NotNull Editor editor,
-                                          final @NotNull PsiFile psiFile,
-                                          final @NotNull I18nQuickFixHandler handler) {
+  public static <T extends UExpression> void doI18nSelectedString(final @NotNull Project project,
+                                                                  final @NotNull Editor editor,
+                                                                  final @NotNull PsiFile psiFile,
+                                                                  final @NotNull I18nQuickFixHandler<T> handler) {
     try {
       handler.checkApplicability(psiFile, editor);
     }
@@ -126,7 +127,7 @@ public class I18nizeAction extends AnAction {
       return;
     }
 
-    final JavaI18nizeQuickFixDialog dialog = handler.createDialog(project, editor, psiFile);
+    final JavaI18nizeQuickFixDialog<T> dialog = handler.createDialog(project, editor, psiFile);
     if (dialog == null) return;
     if (!dialog.showAndGet()) {
       return;
@@ -158,7 +159,7 @@ public class I18nizeAction extends AnAction {
     assert project != null;
     final PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
     if (psiFile == null) return;
-    final I18nQuickFixHandler handler = getHandler(e);
+    final I18nQuickFixHandler<?> handler = getHandler(e);
     if (handler == null) return;
 
     doI18nSelectedString(project, editor, psiFile, handler);

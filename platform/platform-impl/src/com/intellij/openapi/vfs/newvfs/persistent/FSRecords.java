@@ -1,9 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.ide.plugins.StartupAbortedException;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -35,15 +33,12 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap;
 import org.jetbrains.annotations.*;
 
-import javax.swing.*;
-import java.awt.*;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
-import java.util.List;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -342,35 +337,10 @@ public final class FSRecords {
             throw new IOException("Cannot delete filesystem storage files");
           }
         }
-        catch (final IOException e1) {
-          final Runnable warnAndShutdown = () -> {
-            if (ApplicationManager.getApplication().isUnitTestMode()) {
-              //noinspection CallToPrintStackTrace
-              e1.printStackTrace();
-            }
-            else {
-              final String message = "Files in " + basePath + " are locked.\n" +
-                                     ApplicationNamesInfo.getInstance().getProductName() + " will not be able to start up.";
-              if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-                JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, IdeBundle.message("dialog.title.fatal.error"), JOptionPane.ERROR_MESSAGE);
-              }
-              else {
-                //noinspection UseOfSystemOutOrSystemErr
-                System.err.println(message);
-              }
-            }
-            Runtime.getRuntime().halt(1);
-          };
-
-          if (EventQueue.isDispatchThread()) {
-            warnAndShutdown.run();
-          }
-          else {
-            //noinspection SSBasedInspection
-            SwingUtilities.invokeLater(warnAndShutdown);
-          }
-
-          throw new RuntimeException("Can't rebuild filesystem storage ", e1);
+        catch (IOException e1) {
+          e1.addSuppressed(e);
+          LOG.warn("Cannot rebuild filesystem storage", e1);
+          return e1;
         }
 
         return e;
@@ -1046,7 +1016,7 @@ public final class FSRecords {
         VirtualFile parent = PersistentFS.getInstance().findFileById(parentId);
         assert parent != null : parentId + '/' + id + ": " + name + " -> " + symlinkTarget;
         String linkPath = parent.getPath() + '/' + name;
-        ((LocalFileSystemImpl)fs).symlinkUpdated(id, parent, linkPath, symlinkTarget);
+        ((LocalFileSystemImpl)fs).symlinkUpdated(id, parent, name, linkPath, symlinkTarget);
       }
     }
   }

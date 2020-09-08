@@ -4,6 +4,7 @@ package com.intellij.openapi.updateSettings.impl;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Contract;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,6 +36,7 @@ public final class LabelTextReplacingUtil {
     }
   }
 
+  @Contract(pure = true)
   private static String doReplace(String oldText) {
     String newText = StringUtil.replace(oldText, "$PRODUCT$", ApplicationNamesInfo.getInstance().getProductName());
     newText = StringUtil.replace(newText, "$FULLNAME$", ApplicationNamesInfo.getInstance().getFullProductName());

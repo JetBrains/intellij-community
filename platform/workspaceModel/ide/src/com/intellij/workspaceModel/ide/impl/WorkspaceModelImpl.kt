@@ -4,21 +4,25 @@ package com.intellij.workspaceModel.ide.impl
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeProjectLifecycleListener
-import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
 import com.intellij.workspaceModel.storage.VersionedStorageChange
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
+import kotlin.system.measureTimeMillis
 
 class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposable {
 
   private val projectEntities: WorkspaceEntityStorageBuilder
 
-  private val cacheEnabled = !ApplicationManager.getApplication().isUnitTestMode && LegacyBridgeProjectLifecycleListener.cacheEnabled
+  private val cacheEnabled = (!ApplicationManager.getApplication().isUnitTestMode && LegacyBridgeProjectLifecycleListener.cacheEnabled) || forceEnableCaching
   private val cache = if (cacheEnabled) WorkspaceModelCacheImpl(project, this) else null
+  internal var loadedFromCache = false
 
   override val entityStorage: VersionedEntityStorageImpl
 
@@ -26,13 +30,21 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
     // TODO It's possible to load this cache from the moment we know project path
     //  Like in ProjectLifecycleListener or something
 
+    log.debug { "Loading workspace model" }
     val initialContent = WorkspaceModelInitialTestContent.pop()
     when {
       initialContent != null -> projectEntities = WorkspaceEntityStorageBuilder.from(initialContent)
       cache != null -> {
         val activity = StartUpMeasurer.startActivity("(wm) Loading cache")
-        val previousStorage = cache.loadCache()
-        projectEntities = if (previousStorage != null) WorkspaceEntityStorageBuilder.from(previousStorage)
+        val previousStorage: WorkspaceEntityStorage?
+        val loadingCacheTime = measureTimeMillis {
+          previousStorage = cache.loadCache()
+        }
+        projectEntities = if (previousStorage != null) {
+          log.info("Load workspace model from cache in $loadingCacheTime ms")
+          loadedFromCache = true
+          WorkspaceEntityStorageBuilder.from(previousStorage)
+        }
         else WorkspaceEntityStorageBuilder.create()
         activity.end()
       }
@@ -53,9 +65,7 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
   }
 
   override fun <R> updateProjectModelSilent(updater: (WorkspaceEntityStorageBuilder) -> R): R {
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
     val result = updater(projectEntities)
-    projectEntities.resetChanges()
     entityStorage.replaceSilently(projectEntities.toStorage())
     return result
   }
@@ -63,12 +73,20 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
   override fun dispose() = Unit
 
   private fun onBeforeChanged(change: VersionedStorageChange) {
-    if (project.isDisposed || Disposer.isDisposing(project)) return
+    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    if (project.isDisposed) return
     WorkspaceModelTopics.getInstance(project).syncPublisher(project.messageBus).beforeChanged(change)
   }
 
   private fun onChanged(change: VersionedStorageChange) {
-    if (project.isDisposed || Disposer.isDisposing(project)) return
+    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    if (project.isDisposed) return
     WorkspaceModelTopics.getInstance(project).syncPublisher(project.messageBus).changed(change)
+  }
+
+  companion object {
+    private val log = logger<WorkspaceModelImpl>()
+
+    var forceEnableCaching = false
   }
 }

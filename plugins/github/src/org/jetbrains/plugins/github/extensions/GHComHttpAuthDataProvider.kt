@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.extensions
 
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
@@ -32,7 +33,7 @@ private fun getAuthDataOrCancel(project: Project, url: String, login: String?): 
     1 -> GHUpdateTokenHttpAuthDataProvider(project, accounts.first())
     else -> GHSelectAccountHttpAuthDataProvider(project, accounts)
   }
-  val authData = invokeAndWaitIfNeeded { provider.getAuthData(null) }
+  val authData = invokeAndWaitIfNeeded(ModalityState.any()) { provider.getAuthData(null) }
 
   return authData ?: throw ProcessCanceledException()
 }

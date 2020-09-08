@@ -20,6 +20,7 @@ import org.intellij.lang.xpath.psi.XPathElement;
 import org.intellij.lang.xpath.psi.impl.XPathChangeUtil;
 
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 
 public abstract class ReplaceElementFix<TYPE extends XPathElement> extends XPathQuickFixFactory.Fix<TYPE> {
 
@@ -27,7 +28,7 @@ public abstract class ReplaceElementFix<TYPE extends XPathElement> extends XPath
         super(element);
     }
 
-    protected void replace(String expressionText) throws IncorrectOperationException {
+    protected void replace(@NonNls String expressionText) throws IncorrectOperationException {
       PsiElement myElement = getStartElement();
       myElement.replace(XPathChangeUtil.createExpression(myElement, expressionText));
     }

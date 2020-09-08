@@ -8,6 +8,7 @@ import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeEvaluator;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,9 +20,9 @@ import java.util.Map;
 public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
   private final static Logger LOG = Logger.getInstance(GuavaOptionalConversionRule.class);
 
-  public final static String OPTIONAL_CONVERTOR_PATTERN = "Optional.fromNullable($o$.orElse(null))";
-  public final static String GUAVA_OPTIONAL = "com.google.common.base.Optional";
-  public final static String JAVA_OPTIONAL = "java.util.Optional";
+  public final static @NonNls String OPTIONAL_CONVERTOR_PATTERN = "Optional.fromNullable($o$.orElse(null))";
+  public final static @NonNls String GUAVA_OPTIONAL = "com.google.common.base.Optional";
+  public final static @NonNls String JAVA_OPTIONAL = "java.util.Optional";
 
   @Nullable
   @Override
@@ -114,7 +115,7 @@ public class GuavaOptionalConversionRule extends BaseGuavaTypeConversionRule {
   }
 
   @Override
-  protected void fillSimpleDescriptors(Map<String, TypeConversionDescriptorBase> descriptorsMap) {
+  protected void fillSimpleDescriptors(Map<@NonNls String, TypeConversionDescriptorBase> descriptorsMap) {
     descriptorsMap.put("absent", new TypeConversionDescriptor("'_Optional?.absent()", "java.util.Optional.empty()") {
       @Override
       public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) {

@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +38,7 @@ public class MergeRequestImpl extends MergeRequest {
   private static final Logger LOG = Logger.getInstance(MergeRequestImpl.class);
 
   private final DiffContent[] myDiffContents = new DiffContent[3];
-  private String myWindowTitle = null;
+  private @Nls String myWindowTitle = null;
   private String[] myVersionTitles = null;
   private int myResult = DialogWrapper.CANCEL_EXIT_CODE;
   private String myHelpId;
@@ -94,13 +95,14 @@ public class MergeRequestImpl extends MergeRequest {
     myVersionTitles = versionTitles;
   }
 
+  @Nls
   @Override
   public String getWindowTitle() {
     return myWindowTitle;
   }
 
   @Override
-  public void setWindowTitle(String windowTitle) {
+  public void setWindowTitle(@Nls String windowTitle) {
     myWindowTitle = windowTitle;
   }
 

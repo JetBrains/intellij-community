@@ -2,12 +2,14 @@
 package org.jetbrains.idea.maven.server
 
 import com.intellij.openapi.components.*
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.HttpRequests
 import org.jetbrains.idea.maven.execution.SyncBundle
+import org.jetbrains.idea.maven.project.actions.UseWrapperAction
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.*
@@ -52,7 +54,7 @@ class MavenWrapperSupport {
   val DISTS_DIR = "wrapper/dists"
 
   @Throws(IOException::class)
-  fun downloadAndInstallMaven(urlString: String): MavenDistribution {
+  fun downloadAndInstallMaven(urlString: String, indicator: ProgressIndicator?): MavenDistribution {
     val cachedHome = myMapping.myState.mapping.get(urlString)
     if (cachedHome != null) {
       val file = File(cachedHome)
@@ -64,29 +66,29 @@ class MavenWrapperSupport {
       }
     }
 
-
     val zipFile = getZipFile(urlString)
     if (!zipFile.isFile) {
       val partFile = File(zipFile.parentFile, "${zipFile.name}.part-${System.currentTimeMillis()}")
+      indicator?.apply { text = SyncBundle.message("maven.sync.wrapper.dowloading.from", urlString) }
       HttpRequests.request(urlString)
         .forceHttps(true)
         .connectTimeout(30_000)
         .readTimeout(30_000)
-        .saveToFile(partFile, null) //todo: cancel and progress
+        .saveToFile(partFile, indicator)
       FileUtil.rename(partFile, zipFile)
     }
     if (!zipFile.isFile) {
       throw RuntimeException(SyncBundle.message("cannot.download.zip.from", urlString))
     }
-    val home = unpackZipFile(zipFile).canonicalFile
+    val home = unpackZipFile(zipFile, indicator).canonicalFile
     myMapping.myState.mapping[urlString] = home.absolutePath
     return MavenDistribution(home, urlString)
 
   }
 
 
-  private fun unpackZipFile(zipFile: File): File {
-    unzip(zipFile)
+  private fun unpackZipFile(zipFile: File, indicator: ProgressIndicator?): File {
+    unzip(zipFile, indicator)
     val dirs = zipFile.parentFile.listFiles { it -> it.isDirectory }
     if (dirs == null || dirs.size != 1) {
       MavenLog.LOG.warn("Expected exactly 1 top level dir in Maven distribution, found: " + dirs?.asList())
@@ -105,7 +107,8 @@ class MavenWrapperSupport {
     Files.setPosixFilePermissions(mvnExe.toPath(), permissions)
   }
 
-  private fun unzip(zip: File) {
+  private fun unzip(zip: File, indicator: ProgressIndicator?) {
+    indicator?.apply { text = SyncBundle.message("maven.sync.wrapper.unpacking") }
     val unpackDir = zip.parentFile
     val destinationCanonicalPath = unpackDir.canonicalPath
     var errorUnpacking = false
@@ -134,9 +137,11 @@ class MavenWrapperSupport {
 
       }
       errorUnpacking = false
+      indicator?.apply { text = SyncBundle.message("maven.sync.wrapper.unpacked.into", destinationCanonicalPath) }
     }
     finally {
       if (errorUnpacking) {
+        indicator?.apply { text = SyncBundle.message("maven.sync.wrapper.failure") }
         zip.parentFile.listFiles { it -> it.name != zip.name }?.forEach { FileUtil.delete(it) }
       }
     }
@@ -175,11 +180,12 @@ class MavenWrapperSupport {
   companion object {
     @JvmStatic
     fun hasWrapperConfigured(baseDir: VirtualFile): Boolean {
-      return !getWrapperDistributionUrl(baseDir).isNullOrEmpty()
+      return UseWrapperAction.canUseWrapper() && !getWrapperDistributionUrl(baseDir).isNullOrEmpty()
     }
 
     @JvmStatic
     fun getWrapperDistributionUrl(baseDir: VirtualFile?): String? {
+      if (UseWrapperAction.canUseWrapper()) return null
       val wrapperProperties = baseDir?.findChild(".mvn")?.findChild("wrapper")?.findChild("maven-wrapper.properties") ?: return null
 
       val properties = Properties()

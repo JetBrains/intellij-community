@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.lang.UrlClassLoader;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +53,7 @@ public final class DecodeDefaultsUtil {
     return requestor.getClass().getResource(path);
   }
 
-  private static String appendExt(@NotNull String s) {
+  private static String appendExt(@NotNull @NonNls String s) {
     return appendIfNeeded(s, FileStorageCoreUtil.DEFAULT_EXT);
   }
 
@@ -69,5 +70,9 @@ public final class DecodeDefaultsUtil {
       LOG.error(e);
       return null;
     }
+  }
+
+  public static void clearResourceCache() {
+    RESOURCE_CACHE.clear();
   }
 }

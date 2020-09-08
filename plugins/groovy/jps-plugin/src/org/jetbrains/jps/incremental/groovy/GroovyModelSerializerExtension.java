@@ -26,10 +26,6 @@ public class GroovyModelSerializerExtension extends JpsModelSerializerExtension 
         configuration.initExcludes();
         project.getContainer().setChild(JpsGroovySettings.ROLE, configuration);
       }
-
-      @Override
-      public void saveExtension(@NotNull JpsProject project, @NotNull Element componentTag) {
-      }
     }, new GreclipseSettingsSerializer());
   }
 
@@ -50,9 +46,6 @@ public class GroovyModelSerializerExtension extends JpsModelSerializerExtension 
       GreclipseJpsCompilerSettings component = new GreclipseJpsCompilerSettings(new GreclipseSettings());
       project.getContainer().setChild(GreclipseJpsCompilerSettings.ROLE, component);
     }
-
-    @Override
-    public void saveExtension(@NotNull JpsProject project, @NotNull Element componentTag) { }
   }
 
 }

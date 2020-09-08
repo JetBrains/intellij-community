@@ -11,9 +11,9 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -60,12 +60,12 @@ public class ConvertProjectDialog extends DialogWrapper {
       @Override
       public void hyperlinkUpdate(HyperlinkEvent e) {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          @NonNls StringBuilder descriptions = new StringBuilder("<html>The following conversions will be performed:<br>");
+          StringBuilder descriptions = new StringBuilder();
           for (ConversionRunner runner : conversionRunners) {
             descriptions.append(runner.getProvider().getConversionDescription()).append("<br>");
           }
-          descriptions.append("</html>");
-          Messages.showInfoMessage(descriptions.toString(), IdeBundle.message("dialog.title.convert.project"));
+          Messages.showInfoMessage(IdeBundle.message("dialog.message.conversions.will.be.performed", descriptions),
+                                   IdeBundle.message("dialog.title.convert.project"));
         }
       }
     });
@@ -156,7 +156,7 @@ public class ConvertProjectDialog extends DialogWrapper {
     }
   }
 
-  private void showErrorMessage(@NotNull String message) {
+  private void showErrorMessage(@NotNull @NlsContexts.DialogMessage String message) {
     Messages.showErrorDialog(myMainPanel, message, IdeBundle.message("dialog.title.convert.project"));
   }
 

@@ -46,25 +46,25 @@ class PyInlineFunctionHandler : InlineActionHandler() {
     if (project == null || editor == null || element !is PyFunction) return
     val functionScope = ControlFlowCache.getScope(element)
     val error = when {
-      element.isAsync -> "refactoring.inline.function.async"
-      element.isGenerator -> "refactoring.inline.function.generator"
-      PyUtil.isInitOrNewMethod(element) -> "refactoring.inline.function.constructor"
-      PyBuiltinCache.getInstance(element).isBuiltin(element) -> "refactoring.inline.function.builtin"
-      isSpecialMethod(element) -> "refactoring.inline.function.special.method"
-      isUnderSkeletonDir(element) -> "refactoring.inline.function.skeleton.only"
-      hasDecorators(element) -> "refactoring.inline.function.decorator"
-      hasReferencesToSelf(element) -> "refactoring.inline.function.self.referrent"
-      hasStarArgs(element) -> "refactoring.inline.function.star"
-      overridesMethod(element, project) -> "refactoring.inline.function.overrides.method"
-      isOverridden(element) -> "refactoring.inline.function.is.overridden"
-      functionScope.hasGlobals() -> "refactoring.inline.function.global"
-      functionScope.hasNonLocals() -> "refactoring.inline.function.nonlocal"
-      hasNestedFunction(element) -> "refactoring.inline.function.nested"
-      hasNonExhaustiveIfs(element) -> "refactoring.inline.function.interrupts.flow"
+      element.isAsync -> PyBundle.message("refactoring.inline.function.async")
+      element.isGenerator -> PyBundle.message("refactoring.inline.function.generator")
+      PyUtil.isInitOrNewMethod(element) -> PyBundle.message("refactoring.inline.function.constructor")
+      PyBuiltinCache.getInstance(element).isBuiltin(element) -> PyBundle.message("refactoring.inline.function.builtin")
+      isSpecialMethod(element) -> PyBundle.message("refactoring.inline.function.special.method")
+      isUnderSkeletonDir(element) -> PyBundle.message("refactoring.inline.function.skeleton.only")
+      hasDecorators(element) -> PyBundle.message("refactoring.inline.function.decorator")
+      hasReferencesToSelf(element) -> PyBundle.message("refactoring.inline.function.self.referrent")
+      hasStarArgs(element) -> PyBundle.message("refactoring.inline.function.star")
+      overridesMethod(element, project) -> PyBundle.message("refactoring.inline.function.overrides.method")
+      isOverridden(element) -> PyBundle.message("refactoring.inline.function.is.overridden")
+      functionScope.hasGlobals() -> PyBundle.message("refactoring.inline.function.global")
+      functionScope.hasNonLocals() -> PyBundle.message("refactoring.inline.function.nonlocal")
+      hasNestedFunction(element) -> PyBundle.message("refactoring.inline.function.nested")
+      hasNonExhaustiveIfs(element) -> PyBundle.message("refactoring.inline.function.interrupts.flow")
       else -> null
     }
     if (error != null) {
-      CommonRefactoringUtil.showErrorHint(project, editor, PyBundle.message(error), PyBundle.message("refactoring.inline.function.title"), REFACTORING_ID)
+      CommonRefactoringUtil.showErrorHint(project, editor, error, PyBundle.message("refactoring.inline.function.title"), REFACTORING_ID)
       return
     }
     if (!ApplicationManager.getApplication().isUnitTestMode){

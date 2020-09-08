@@ -22,6 +22,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author peter
  */
-public class DefaultCompletionContributor extends CompletionContributor {
+public class DefaultCompletionContributor extends CompletionContributor implements DumbAware {
 
   static void addDefaultAdvertisements(LookupImpl lookup, boolean includePsiFeatures) {
     Project project = lookup.getProject();

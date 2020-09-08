@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -27,6 +28,7 @@ import com.intellij.xml.util.XmlStringUtil;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntMaps;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -213,7 +215,7 @@ public class ParameterInfoComponent extends JPanel {
     }
 
     @Override
-    public String setupUIComponentPresentation(String text,
+    public String setupUIComponentPresentation(@NlsContexts.Label String text,
                                                int highlightStartOffset,
                                                int highlightEndOffset,
                                                boolean isDisabled,
@@ -250,7 +252,7 @@ public class ParameterInfoComponent extends JPanel {
     }
 
     @Override
-    public void setupRawUIComponentPresentation(String htmlText) {
+    public void setupRawUIComponentPresentation(@NlsContexts.Label String htmlText) {
       ParameterInfoController.RawSignatureItem item = new ParameterInfoController.RawSignatureItem(htmlText);
 
       result.current = getCurrentParameterIndex();
@@ -417,13 +419,13 @@ public class ParameterInfoComponent extends JPanel {
       }
     }
 
-    private void setup(String htmlText, Color background) {
+    private void setup(@NlsContexts.Label String htmlText, Color background) {
       setBackground(background);
       getOneLineComponent(0).doSetup(htmlText, background);
       trimComponents(1);
     }
 
-    private String setup(String text,
+    private String setup(@NlsContexts.Label String text,
                          Function<? super String, String> escapeFunction,
                          int highlightStartOffset,
                          int highlightEndOffset,
@@ -466,17 +468,18 @@ public class ParameterInfoComponent extends JPanel {
       return buf.toString();
     }
 
+    @Contract(pure = true)
     private String escapeString(String line, Function<? super String, String> escapeFunction) {
       line = XmlStringUtil.escapeString(line);
       return escapeFunction == null ? line : escapeFunction.fun(line);
     }
 
-    public String setup(final ParameterInfoController.Model result,
-                        final String[] texts,
+    public @NlsContexts.Label String setup(final ParameterInfoController.Model result,
+                        final String @NlsContexts.Label [] texts,
                         Function<? super String, String> escapeFunction,
                         final EnumSet<ParameterInfoUIContextEx.Flag>[] flags,
                         final Color background) {
-      StringBuilder buf = new StringBuilder();
+      @NlsContexts.Label StringBuilder buf = new StringBuilder();
       setBackground(background);
       int index = 0;
       int curOffset = 0;
@@ -484,7 +487,7 @@ public class ParameterInfoComponent extends JPanel {
       final List<Integer> endOffsets = new ArrayList<>();
       TreeMap<TextRange, ParameterInfoUIContextEx.Flag> flagsMap = new TreeMap<>(TEXT_RANGE_COMPARATOR);
       StringBuilder fullLine = new StringBuilder();
-      StringBuilder line = new StringBuilder();
+      @NlsContexts.Label StringBuilder line = new StringBuilder();
       for (int i = 0; i < texts.length; i++) {
         String paramText = escapeString(texts[i], escapeFunction);
         if (paramText == null) break;
@@ -545,7 +548,7 @@ public class ParameterInfoComponent extends JPanel {
       return myLabel.getText();
     }
 
-    private String setup(String text,
+    private String setup(@NlsContexts.Label String text,
                          boolean isDisabled,
                          boolean isStrikeout,
                          Color background,
@@ -569,7 +572,7 @@ public class ParameterInfoComponent extends JPanel {
     }
 
     // flagsMap is supposed to use TEXT_RANGE_COMPARATOR
-    private String setup(@NotNull String text, @NotNull TreeMap<TextRange, ParameterInfoUIContextEx.Flag> flagsMap,
+    private String setup(@NotNull @NlsContexts.Label String text, @NotNull TreeMap<TextRange, ParameterInfoUIContextEx.Flag> flagsMap,
                          @NotNull Color background) {
       if (flagsMap.isEmpty()) {
         return doSetup(text, background);
@@ -580,7 +583,7 @@ public class ParameterInfoComponent extends JPanel {
       }
     }
 
-    private String doSetup(@NotNull String text, @NotNull Color background) {
+    private String doSetup(@NotNull @NlsContexts.Label String text, @NotNull Color background) {
       myLabel.setBackground(background);
       setBackground(background);
 
@@ -591,6 +594,7 @@ public class ParameterInfoComponent extends JPanel {
     }
 
     // flagsMap is supposed to use TEXT_RANGE_COMPARATOR
+    @Contract(pure = true)
     private String buildLabelText(@NotNull final String text, @NotNull final TreeMap<TextRange, ParameterInfoUIContextEx.Flag> flagsMap) {
       final StringBuilder labelText = new StringBuilder(text);
       final Int2IntOpenHashMap faultMap = new Int2IntOpenHashMap();

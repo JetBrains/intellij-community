@@ -70,7 +70,7 @@ public final class FormsInstrumenter extends FormsBuilder {
     if (JavaBuilderUtil.isCompileJavaIncrementally(context)) {
       final ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
       if (logger.isEnabled()) {
-        logger.logCompiledFiles(formsToCompile, getPresentableName(), "Compiling forms:");
+        logger.logCompiledFiles(formsToCompile, "forms", "Compiling forms:");
       }
     }
 

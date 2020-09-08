@@ -17,6 +17,7 @@ package com.intellij.packaging.artifacts;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class ArtifactPointerManager {
@@ -24,7 +25,7 @@ public abstract class ArtifactPointerManager {
     return ServiceManager.getService(project, ArtifactPointerManager.class);
   }
 
-  public abstract ArtifactPointer createPointer(@NotNull String name);
+  public abstract ArtifactPointer createPointer(@NotNull @NlsSafe String name);
 
   public abstract ArtifactPointer createPointer(@NotNull Artifact artifact);
 

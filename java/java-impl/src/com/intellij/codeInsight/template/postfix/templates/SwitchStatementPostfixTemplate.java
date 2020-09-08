@@ -19,6 +19,7 @@ import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.generation.surroundWith.JavaExpressionSurrounder;
 import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -122,12 +123,12 @@ public class SwitchStatementPostfixTemplate extends SurroundPostfixTemplateBase 
 
       @Override
       public String getTemplateDescription() {
-        return "switch (expr) {...}";
+        return JavaBundle.message("switch.stmt.template.description");
       }
     };
   }
 
-  public static PostfixTemplateExpressionSelector selectorTopmost(Condition<PsiElement> additionalFilter) {
+  public static PostfixTemplateExpressionSelector selectorTopmost(Condition<? super PsiElement> additionalFilter) {
     return new PostfixTemplateExpressionSelectorBase(additionalFilter) {
       @Override
       protected List<PsiElement> getNonFilteredExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {

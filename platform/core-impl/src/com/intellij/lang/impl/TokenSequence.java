@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -139,7 +140,7 @@ public class TokenSequence implements TokenList {
     }
 
     private void reportDescendingOffsets(int tokenIndex, int offset, int tokenStart) {
-      StringBuilder sb = new StringBuilder();
+      @NonNls StringBuilder sb = new StringBuilder();
       IElementType tokenType = myLexer.getTokenType();
       sb.append("Token sequence broken")
         .append("\n  this: '").append(myLexer.getTokenText()).append("' (").append(tokenType).append(':')

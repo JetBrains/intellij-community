@@ -1,11 +1,13 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
@@ -20,17 +22,17 @@ import static org.jetbrains.idea.svn.api.ErrorCategory.categoryCodeOf;
 
 public class SvnBindException extends VcsException {
 
-  public static final String ERROR_MESSAGE_FORMAT = "svn: E%d: %s";
+  private static final @NlsSafe String ERROR_MESSAGE_FORMAT = "svn: E%d: %s";
 
   @NotNull private final MultiMap<Integer, String> errors = MultiMap.create();
   @NotNull private final MultiMap<Integer, String> warnings = MultiMap.create();
 
-  public SvnBindException(@NotNull ErrorCode code, @NotNull String message) {
+  public SvnBindException(@NotNull ErrorCode code, @Nls @NotNull String message) {
     super(String.format(ERROR_MESSAGE_FORMAT, code.getCode(), message));
     errors.putValue(code.getCode(), getMessage());
   }
 
-  public SvnBindException(@Nullable String message) {
+  public SvnBindException(@Nls @Nullable String message) {
     this(message, null);
   }
 
@@ -38,8 +40,8 @@ public class SvnBindException extends VcsException {
     this(null, cause);
   }
 
-  public SvnBindException(@Nullable String message, @Nullable Throwable cause) {
-    super(chooseNotNull(message, getMessage(cause)), cause);
+  public SvnBindException(@Nls @Nullable String message, @Nullable Throwable cause) {
+    super(chooseNotNull(message, VcsException.getMessage(cause)), cause);
 
     init(message);
   }

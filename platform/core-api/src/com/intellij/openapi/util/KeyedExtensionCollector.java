@@ -11,6 +11,7 @@ import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +24,7 @@ import java.util.function.Predicate;
 public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   private static final Logger LOG = Logger.getInstance(KeyedExtensionCollector.class);
 
-  protected final String myLock;
+  protected final @NonNls String myLock;
 
   /** Guarded by {@link #myLock} */
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.messages.impl;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
@@ -332,7 +333,7 @@ public class MessageBusImpl implements MessageBus {
   }
 
   protected void doComputeSubscribers(@NotNull Topic<?> topic, @NotNull List<Object> result, boolean subscribeLazyListeners) {
-    // todo — check that handler implements method (not a default implementation)
+    // todo check that handler implements method (not a default implementation)
     for (MessageHandlerHolder subscriber : mySubscribers) {
       subscriber.collectHandlers(topic, result);
     }
@@ -394,22 +395,29 @@ public class MessageBusImpl implements MessageBus {
                                                    @NotNull JobQueue jobQueue,
                                                    @Nullable MessageDeliveryListener messageDeliveryListener,
                                                    @Nullable List<Throwable> exceptions) {
-    jobQueue.current = job;
-    List<Object> handlers = job.handlers;
-    for (int index = job.currentHandlerIndex, size = handlers.size(), lastIndex = size - 1; index < size;) {
-      if (index == lastIndex) {
-        jobQueue.current = null;
-        jobRemoved(jobQueue);
-      }
+    ClientId oldClientId = ClientId.getCurrentOrNull();
+    try {
+      ClientId.trySetCurrentClientId(job.clientId);
+      jobQueue.current = job;
+      List<Object> handlers = job.handlers;
+      for (int index = job.currentHandlerIndex, size = handlers.size(), lastIndex = size - 1; index < size; ) {
+        if (index == lastIndex) {
+          jobQueue.current = null;
+          jobRemoved(jobQueue);
+        }
 
-      job.currentHandlerIndex++;
-      exceptions = invokeListener(job.listenerMethod, job.args, handlers.get(index), job.topic, messageDeliveryListener, exceptions);
-      if (++index != job.currentHandlerIndex) {
-        // handler published some event and message queue including current job was processed as result, so, stop processing
-        return exceptions;
+        job.currentHandlerIndex++;
+        exceptions = invokeListener(job.listenerMethod, job.args, handlers.get(index), job.topic, messageDeliveryListener, exceptions);
+        if (++index != job.currentHandlerIndex) {
+          // handler published some event and message queue including current job was processed as result, so, stop processing
+          return exceptions;
+        }
       }
+      return exceptions;
     }
-    return exceptions;
+    finally {
+      ClientId.trySetCurrentClientId(oldClientId);
+    }
   }
 
   protected boolean hasChildren() {

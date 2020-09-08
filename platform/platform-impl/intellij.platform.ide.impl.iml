@@ -87,6 +87,7 @@
     <orderEntry type="library" scope="RUNTIME" name="org.codehaus.groovy:groovy-templates" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="org.codehaus.groovy:groovy-xml" level="project" />
     <orderEntry type="library" name="Trove4j" level="project" />
+    <orderEntry type="library" name="org.jetbrains.intellij:blockmap:1.0.2" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
   </component>
 </module>

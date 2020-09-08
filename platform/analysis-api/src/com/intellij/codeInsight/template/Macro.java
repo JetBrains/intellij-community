@@ -4,6 +4,7 @@ package com.intellij.codeInsight.template;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupFocusDegree;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +23,7 @@ public abstract class Macro {
   /**
    * @return a presentable string that will be shown in the combobox in <em>Edit Template Variables</em> dialog
    */
-  public abstract String getPresentableName();
+  public abstract @NlsSafe String getPresentableName();
 
   @NonNls
   @NotNull

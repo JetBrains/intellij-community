@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import javax.swing.JComponent
@@ -13,7 +14,7 @@ import javax.swing.JComponent
  * @author yole
  */
 abstract class BoundConfigurable(
-  @Nls private val displayName: String,
+  @NlsContexts.ConfigurableName private val displayName: String,
   @NonNls private val helpTopic: String? = null
 ) : DslConfigurableBase(), Configurable {
   override fun getDisplayName(): String = displayName
@@ -59,7 +60,7 @@ abstract class DslConfigurableBase : UnnamedConfigurable {
   }
 }
 
-abstract class BoundSearchableConfigurable(displayName: String, helpTopic: String, private val _id: String = helpTopic)
+abstract class BoundSearchableConfigurable(@NlsContexts.ConfigurableName displayName: String, helpTopic: String, private val _id: String = helpTopic)
   : BoundConfigurable(displayName, helpTopic), SearchableConfigurable {
   override fun getId(): String = _id
 }

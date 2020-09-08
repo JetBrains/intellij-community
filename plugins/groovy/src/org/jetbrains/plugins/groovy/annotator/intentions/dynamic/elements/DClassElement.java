@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
@@ -31,7 +18,7 @@ public class DClassElement implements DNamedElement {
   @SuppressWarnings("UnusedDeclaration") //used for serialization
   public DClassElement() {
   }
-  
+
   public DClassElement(Project project, String name) {
     myName = name;
     DynamicManager.getInstance(project).getRootElement().mergeAddClass(this);
@@ -74,12 +61,12 @@ public class DClassElement implements DNamedElement {
   }
 
   @Override
-  public String getName() {
+  public @NlsSafe String getName() {
     return myName;
   }
 
   @Override
-  public void setName(String name) {
+  public void setName(@NlsSafe String name) {
     myName = name;
   }
 

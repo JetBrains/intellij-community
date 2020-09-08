@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.ui.FontUtil
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.ListUiUtil
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.VcsUser
@@ -49,8 +50,8 @@ internal object GHPRCommitsBrowserComponent {
       emptyText.text = GithubBundle.message("pull.request.does.not.contain.commits")
     }.also {
       ScrollingUtil.installActions(it)
-      GithubUIUtil.Lists.installSelectionOnFocus(it)
-      GithubUIUtil.Lists.installSelectionOnRightClick(it)
+      ListUiUtil.Selection.installSelectionOnFocus(it)
+      ListUiUtil.Selection.installSelectionOnRightClick(it)
       PopupHandler.installSelectionListPopup(it,
                                              DefaultActionGroup(actionManager.getAction("Github.PullRequest.Changes.Reload")),
                                              ActionPlaces.UNKNOWN, actionManager)

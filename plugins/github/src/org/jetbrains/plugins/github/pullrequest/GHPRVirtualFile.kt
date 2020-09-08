@@ -15,7 +15,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
  * [fileManagerId] is a [org.jetbrains.plugins.github.pullrequest.data.GHPRFilesManagerImpl.id] which is required to differentiate files
  * between launches of a PR toolwindow.
  * This is necessary to make the files appear in "Recent Files" correctly.
- * See [com.intellij.vcs.editor.ComplexPathVirtualFileSystem.Path.sessionId] for details.
+ * See [com.intellij.vcs.editor.ComplexPathVirtualFileSystem.ComplexPath.sessionId] for details.
  */
 abstract class GHPRVirtualFile(protected val fileManagerId: String,
                                val project: Project,

@@ -12,6 +12,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -23,9 +24,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public abstract class ClassBrowser<T extends JComponent> extends BrowseModuleValueActionListener<T> {
-  private final String myTitle;
+  private final @NlsContexts.DialogTitle String myTitle;
 
-  public ClassBrowser(@NotNull Project project, String title) {
+  public ClassBrowser(@NotNull Project project, @NlsContexts.DialogTitle String title) {
     super(project);
     myTitle = title;
   }
@@ -89,11 +90,11 @@ public abstract class ClassBrowser<T extends JComponent> extends BrowseModuleVal
   public abstract static class MainClassBrowser<T extends JComponent> extends ClassBrowser<T> {
     private final Computable<? extends Module> myModuleSelector;
 
-    public MainClassBrowser(@NotNull Project project, @NotNull ConfigurationModuleSelector moduleSelector, String title) {
+    public MainClassBrowser(@NotNull Project project, @NotNull ConfigurationModuleSelector moduleSelector, @NlsContexts.DialogTitle String title) {
       this(project, () -> moduleSelector.getModule(), title);
     }
 
-    public MainClassBrowser(@NotNull Project project, @NotNull Computable<? extends Module> moduleSelector, String title) {
+    public MainClassBrowser(@NotNull Project project, @NotNull Computable<? extends Module> moduleSelector, @NlsContexts.DialogTitle String title) {
       super(project, title);
       myModuleSelector = moduleSelector;
     }

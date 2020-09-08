@@ -16,11 +16,15 @@
 package git4idea.commands;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -76,26 +80,29 @@ public final class GitCompoundResult {
    * Otherwise adds repository URL to the error that repository produced.
    */
   @NotNull
+  @NlsContexts.NotificationContent
   public String getErrorOutputWithReposIndication() {
-    StringBuilder sb = new StringBuilder();
-    for (Map.Entry<GitRepository, Collection<GitCommandResult>> entry: resultsByRepos.entrySet()) {
+    HtmlBuilder sb = new HtmlBuilder();
+    for (Map.Entry<GitRepository, Collection<GitCommandResult>> entry : resultsByRepos.entrySet()) {
       GitRepository repository = entry.getKey();
       List<GitCommandResult> errors = ContainerUtil.filter(entry.getValue(), it -> !it.success());
       if (!errors.isEmpty()) {
-        sb.append("<p>");
+        HtmlBuilder repoError = new HtmlBuilder();
         if (!GitUtil.justOneGitRepository(myProject)) {
-          sb.append("<code>" + repository.getPresentableUrl() + "</code>:<br/>");
+          repoError.append(HtmlChunk.text(repository.getPresentableUrl()).code());
+          repoError.append(":").br();
         }
         for (int i = 0; i < errors.size(); i++) {
-          if (i > 0) sb.append("<br/>");
-          sb.append(errors.get(i).getErrorOutputAsHtmlString());
+          if (i > 0) repoError.br();
+          repoError.appendRaw(errors.get(i).getErrorOutputAsHtmlString());
         }
-        sb.append("</p>");
+        sb.append(repoError.wrapWith("p"));
       }
     }
     return sb.toString();
   }
 
+  @NonNls
   @Override
   public String toString() {
     return "GitCompoundResult: " + StringUtil.join(resultsByRepos.keySet(), repository -> repository.getRoot().getName() + ": " + resultsByRepos.get(repository).toString(), "\n");

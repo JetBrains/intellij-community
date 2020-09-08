@@ -19,6 +19,7 @@ import com.intellij.pom.PomNamedTarget;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomNameStrategy;
 import com.intellij.util.xml.XmlName;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -33,9 +34,11 @@ public interface DomChildrenDescription extends AbstractDomChildrenDescription, 
   String getXmlElementName();
 
   @NotNull
+  @Nls
   String getCommonPresentableName(@NotNull DomNameStrategy strategy);
 
   @NotNull
+  @Nls
   String getCommonPresentableName(@NotNull DomElement parent);
 
 }

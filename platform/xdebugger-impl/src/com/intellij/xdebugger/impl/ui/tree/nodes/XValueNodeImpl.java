@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,6 +45,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
 
   private static final int MAX_NAME_LENGTH = 100;
 
+  @NlsSafe
   private final String myName;
   @Nullable
   private String myRawValue;

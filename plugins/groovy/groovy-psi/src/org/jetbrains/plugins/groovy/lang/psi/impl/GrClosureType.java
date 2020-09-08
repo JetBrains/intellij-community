@@ -8,6 +8,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Lazy;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -165,6 +166,7 @@ public final class GrClosureType extends GrLiteralClassType {
   }
 
   @Override
+  @NonNls
   public String toString() {
     return "PsiType: Closure<*>";
   }

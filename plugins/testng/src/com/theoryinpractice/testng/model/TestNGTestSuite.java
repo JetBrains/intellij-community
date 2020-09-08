@@ -25,6 +25,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiUtilCore;
+import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import org.testng.xml.Parser;
 
@@ -72,7 +73,8 @@ public class TestNGTestSuite extends TestNGTestObject {
       // but yaml parser tries to load classes despite loadClasses = false here and thus it will fail anyway
       //no validation for yaml suites possible
       if (!suiteName.endsWith(".yaml")) { 
-        throw new RuntimeConfigurationException("Unable to parse '" + suiteName + "' specified");
+        throw new RuntimeConfigurationException(
+          TestngBundle.message("testng.dialog.message.unable.to.parse.specified.exception", suiteName));
       }
     }
   }

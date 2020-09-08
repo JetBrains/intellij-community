@@ -103,20 +103,25 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
           boolean notarize = SystemProperties.getBooleanProperty("intellij.build.mac.notarize", true) &&
                              !SystemProperties.getBooleanProperty("build.is.personal", false)
           def jreManager = buildContext.bundledJreManager
+
           // With JRE
-          File jreArchive = jreManager.findJreArchive(OsFamily.MACOS)
-          if (jreArchive.file) {
-            MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath,
-                                          jreArchive.absolutePath, "", notarize)
+          if (buildContext.options.buildDmgWithBundledJre) {
+            File jreArchive = jreManager.findJreArchive(OsFamily.MACOS)
+            if (jreArchive.file) {
+              MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath,
+                                            jreArchive.absolutePath, "", notarize)
+            }
+            else {
+              buildContext.messages.info("Skipping building macOS distribution with bundled JRE because JRE archive is missing")
+            }
           }
-          else {
-            buildContext.messages.info("Skipping building macOS distribution with bundled JRE because JRE archive is missing")
-          }
+
           // Without JRE
           if (buildContext.options.buildDmgWithoutBundledJre) {
             MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath,
                                           null, "-no-jdk", notarize)
           }
+
           buildContext.ant.delete(file: macZipPath)
         }
       }

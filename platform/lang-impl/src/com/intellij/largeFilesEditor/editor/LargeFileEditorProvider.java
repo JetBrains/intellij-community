@@ -14,13 +14,14 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.SingleRootFileViewProvider;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public final class LargeFileEditorProvider implements DefaultPlatformFileEditorProvider, DumbAware {
   public static final String PROVIDER_ID = "LargeFileEditorProvider";
 
-  private static final String CARET_PAGE_NUMBER_ATTR = "caret-page-number";
-  private static final String CARET_PAGE_SYMBOL_OFFSET_ATTR = "caret-page-symbol-offset";
+  private static final @NonNls String CARET_PAGE_NUMBER_ATTR = "caret-page-number";
+  private static final @NonNls String CARET_PAGE_SYMBOL_OFFSET_ATTR = "caret-page-symbol-offset";
 
   @Override
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {

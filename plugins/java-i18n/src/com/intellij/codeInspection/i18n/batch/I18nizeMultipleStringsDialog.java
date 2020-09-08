@@ -310,7 +310,7 @@ public class I18nizeMultipleStringsDialog<D> extends DialogWrapper {
 
     @Override
     public String getColumnName(int column) {
-      return column == 0 ? "Key" : "Value";
+      return column == 0 ? JavaI18nBundle.message("key.column.name") : JavaI18nBundle.message("value.column.name");
     }
 
     @Override

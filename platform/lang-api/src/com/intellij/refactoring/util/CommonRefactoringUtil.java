@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -140,7 +141,7 @@ public final class CommonRefactoringUtil {
     ContainerUtil.addAll(failed, status.getReadonlyFiles());
 
     if (notifyOnFail && (!failed.isEmpty() || seenNonWritablePsiFilesWithoutVirtualFile && readonly.isEmpty())) {
-      StringBuilder message = new StringBuilder(messagePrefix).append('\n');
+      @NlsSafe StringBuilder message = new StringBuilder(messagePrefix).append('\n');
       int i = 0;
       for (VirtualFile virtualFile : failed) {
         String subj = RefactoringBundle.message(virtualFile.isDirectory() ? "directory.description" : "file.description", virtualFile.getPresentableUrl());

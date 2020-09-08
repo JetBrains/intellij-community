@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -120,7 +121,7 @@ public abstract class ReloadablePanel<T> {
     changeUpdateStatus(UpdateStatus.IDLE);
   }
 
-  public final void onValuesUpdateError(@NotNull final String errorMessage) {
+  public final void onValuesUpdateError(@NlsContexts.DialogMessage @NotNull final String errorMessage) {
     UIUtil.invokeLaterIfNeeded(() -> {
       if (getSelectedValue() == null) {
         myErrorMessage.setText(errorMessage);

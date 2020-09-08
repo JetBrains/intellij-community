@@ -15,6 +15,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.lang.jvm.actions.MemberRequestsKt;
@@ -24,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -277,7 +279,8 @@ public final class HighlightClassUtil {
   /**
    * @return true if file correspond to the shebang script
    */
-  public static boolean isJavaHashBangScript(PsiJavaFile containingFile) {
+  public static boolean isJavaHashBangScript(@Nullable PsiFile containingFile) {
+    if (!(containingFile instanceof PsiJavaFile)) return false;
     PsiElement firstChild = containingFile.getFirstChild();
     return firstChild instanceof PsiComment && 
            ((PsiComment)firstChild).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT && 
@@ -523,7 +526,7 @@ public final class HighlightClassUtil {
     return checkCannotInheritFromFinal(baseClass, aClass.getBaseClassReference());
   }
 
-  private static String checkDefaultConstructorThrowsException(@NotNull PsiMethod constructor, PsiClassType @NotNull [] handledExceptions) {
+  private static @NlsContexts.DetailedDescription String checkDefaultConstructorThrowsException(@NotNull PsiMethod constructor, PsiClassType @NotNull [] handledExceptions) {
     PsiClassType[] referencedTypes = constructor.getThrowsList().getReferencedTypes();
     List<PsiClassType> exceptions = new ArrayList<>();
     for (PsiClassType referencedType : referencedTypes) {
@@ -1068,8 +1071,11 @@ public final class HighlightClassUtil {
       PsiClass aClass = (PsiClass)parent;
       PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
       if (nameIdentifier == null) return;
-      if (aClass.isEnum() || aClass.isRecord()) {
-        String description = JavaErrorBundle.message(aClass.isRecord() ? "record.permits" : "permits.after.enum");
+      if (aClass.isEnum() || aClass.isRecord() || aClass.isAnnotationType()) {
+        String description = aClass.isEnum() ? JavaErrorBundle.message("permits.after.enum") : null;
+        if (description == null) {
+          description = JavaErrorBundle.message(aClass.isRecord() ? "record.permits" : "annotation.type.permits");
+        }
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
           .range(list)
           .descriptionAndTooltip(description)
@@ -1090,6 +1096,14 @@ public final class HighlightClassUtil {
       PsiJavaModule currentModule = JavaModuleGraphUtil.findDescriptorByElement(aClass);
       JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(aClass.getProject());
       for (PsiJavaCodeReferenceElement permitted : list.getReferenceElements()) {
+        PsiReferenceParameterList parameterList = permitted.getParameterList();
+        if (parameterList != null && parameterList.getTypeParameterElements().length > 0) {
+          HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameterList)
+            .descriptionAndTooltip(JavaErrorBundle.message("permits.list.generics.are.not.allowed")).create();
+          holder.add(info);
+          QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createDeleteFix(parameterList));
+          continue;
+        }
         @Nullable PsiElement resolve = permitted.resolve();
         if (resolve instanceof PsiClass) {
           PsiClass inheritorClass = (PsiClass)resolve;
@@ -1175,6 +1189,21 @@ public final class HighlightClassUtil {
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createModifierListFix(aClass, PsiModifier.SEALED, true, false));
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createModifierListFix(aClass, PsiModifier.NON_SEALED, true, false));
       return info;
+    }
+    return null;
+  }
+
+  static HighlightInfo checkShebangComment(PsiComment comment) {
+    if (comment.getTextOffset() != 0) {
+      return null;
+    }
+    if (comment.getText().startsWith("#!")) {
+      VirtualFile file = PsiUtilCore.getVirtualFile(comment);
+      if (file != null && "java".equals(file.getExtension())) {
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+          .descriptionAndTooltip(JavaAnalysisBundle.message("text.shebang.mechanism.in.java.files.not.permitted"))
+          .range(comment, 0, 2).create();
+      }
     }
     return null;
   }

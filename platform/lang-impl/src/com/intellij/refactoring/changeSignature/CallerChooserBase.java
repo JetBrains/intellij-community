@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -76,15 +77,17 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
 
   protected abstract M[] findDeepestSuperMethods(M method);
 
+  @NlsContexts.Label
   protected String getEmptyCalleeText() {
     return "";
   }
 
+  @NlsContexts.Label
   protected String getEmptyCallerText() {
     return "";
   }
 
-  public CallerChooserBase(M method, Project project, @NlsContexts.DialogTitle String title, Tree previousTree, String fileName, Consumer<? super Set<M>> callback) {
+  public CallerChooserBase(M method, Project project, @NlsContexts.DialogTitle String title, Tree previousTree, @NlsSafe String fileName, Consumer<? super Set<M>> callback) {
     super(true);
     myMethod = method;
     myProject = project;

@@ -15,15 +15,24 @@
  */
 package com.intellij.packaging.ui;
 
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.options.UnnamedConfigurable;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class ArtifactPropertiesEditor implements UnnamedConfigurable {
-  public static final String VALIDATION_TAB = "Validation";
-  public static final String POST_PROCESSING_TAB = "Post-processing";
-  public static final String PRE_PROCESSING_TAB = "Pre-processing";
+import java.util.function.Supplier;
 
-  public abstract String getTabName();
+public abstract class ArtifactPropertiesEditor implements UnnamedConfigurable {
+  public static final Supplier<@Nls String> VALIDATION_TAB_POINTER =
+    JavaCompilerBundle.messagePointer("ArtifactPropertiesEditor.tab.validation");
+
+  public static final Supplier<@Nls String> POST_PROCESSING_TAB_POINTER =
+    JavaCompilerBundle.messagePointer("ArtifactPropertiesEditor.tab.post.processing");
+
+  public static final Supplier<@Nls String> PRE_PROCESSING_TAB_POINTER
+    = JavaCompilerBundle.messagePointer("ArtifactPropertiesEditor.tab.pre.processing");
+
+  public abstract @Nls String getTabName();
 
   @Override
   public abstract void apply();

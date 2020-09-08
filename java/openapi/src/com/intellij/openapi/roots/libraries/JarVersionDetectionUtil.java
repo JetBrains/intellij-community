@@ -6,6 +6,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.JarUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -38,7 +39,7 @@ public final class JarVersionDetectionUtil {
   }
 
   @Nullable
-  public static String detectJarVersion(@NotNull String detectionClass, @NotNull List<? extends VirtualFile> files) {
+  public static @NlsSafe String detectJarVersion(@NotNull String detectionClass, @NotNull List<? extends VirtualFile> files) {
     VirtualFile jarRoot = LibrariesHelper.getInstance().findRootByClass(files, detectionClass);
     return jarRoot != null && jarRoot.getFileSystem() instanceof JarFileSystem ?
            getMainAttribute(jarRoot, Attributes.Name.IMPLEMENTATION_VERSION) : null;

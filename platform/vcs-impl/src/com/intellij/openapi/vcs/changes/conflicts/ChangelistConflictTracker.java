@@ -43,6 +43,10 @@ public final class ChangelistConflictTracker {
   private final Object myCheckSetLock;
   private final AtomicBoolean myShouldIgnoreModifications = new AtomicBoolean(false);
 
+  public static ChangelistConflictTracker getInstance(@NotNull Project project) {
+    return ChangeListManagerImpl.getInstanceImpl(project).getConflictTracker();
+  }
+
   public ChangelistConflictTracker(@NotNull Project project, @NotNull ChangeListManager changeListManager) {
     myProject = project;
 

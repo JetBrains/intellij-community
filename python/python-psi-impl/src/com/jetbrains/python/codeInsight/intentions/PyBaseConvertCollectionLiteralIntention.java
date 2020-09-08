@@ -54,7 +54,7 @@ public abstract class PyBaseConvertCollectionLiteralIntention extends PyBaseInte
   @NotNull
   @Override
   public String getFamilyName() {
-    return PyPsiBundle.message("INTN.convert.collection.literal.family", myTargetCollectionName);
+    return PyPsiBundle.message("INTN.NAME.convert.collection.literal", myTargetCollectionName);
   }
 
   @Override
@@ -67,13 +67,13 @@ public abstract class PyBaseConvertCollectionLiteralIntention extends PyBaseInte
       return false;
     }
     if (literal instanceof PyTupleExpression) {
-      setText(PyPsiBundle.message("INTN.convert.collection.literal.text", "tuple", myTargetCollectionName));
+      setText(PyPsiBundle.message("INTN.convert.collection.literal", "tuple", myTargetCollectionName));
     }
     else if (literal instanceof PyListLiteralExpression) {
-      setText(PyPsiBundle.message("INTN.convert.collection.literal.text", "list", myTargetCollectionName));
+      setText(PyPsiBundle.message("INTN.convert.collection.literal", "list", myTargetCollectionName));
     }
     else if (literal instanceof PySetLiteralExpression) {
-      setText(PyPsiBundle.message("INTN.convert.collection.literal.text", "set", myTargetCollectionName));
+      setText(PyPsiBundle.message("INTN.convert.collection.literal", "set", myTargetCollectionName));
     }
     else {
       return false;

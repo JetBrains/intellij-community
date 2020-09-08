@@ -17,6 +17,8 @@ package git4idea.crlf;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.GridBag;
@@ -30,7 +32,7 @@ import java.awt.*;
 
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
-import static git4idea.crlf.GitCrlfUtil.RECOMMENDED_VALUE;
+import static git4idea.crlf.GitCrlfUtil.*;
 
 /**
  * Warns the user that CRLF line separators are about to be committed to the repository.
@@ -49,9 +51,8 @@ public class GitCrlfDialog extends DialogWrapper {
   public GitCrlfDialog(@Nullable Project project) {
     super(project, false);
 
-    setOKButtonText("Fix and Commit");
-    setCancelButtonText("Cancel");
-    setTitle("Line Separators Warning");
+    setOKButtonText(GitBundle.message("button.crlf.fix.dialog.fix.and.commit"));
+    setTitle(GitBundle.message("title.crlf.fix.dialog"));
     getCancelAction().putValue(DialogWrapper.FOCUSED_ACTION, true);
 
     init();
@@ -59,20 +60,19 @@ public class GitCrlfDialog extends DialogWrapper {
 
   @Override
   protected Action @NotNull [] createActions() {
-    return new Action[] { getHelpAction(), getOKAction(), new DialogWrapperExitAction("Commit As Is", DONT_SET), getCancelAction() };
+    DialogWrapperExitAction skipButton = new DialogWrapperExitAction(GitBundle.message("button.crlf.fix.dialog.commit.as.is"), DONT_SET);
+    return new Action[]{getHelpAction(), getOKAction(), skipButton, getCancelAction()};
   }
 
   @Override
   protected JComponent createCenterPanel() {
-    JLabel description = new JBLabel(
-      "<html>You are about to commit CRLF line separators to the Git repository.<br/>" +
-      "It is recommended to set the <code>core.autocrlf</code> Git attribute to <code>" + RECOMMENDED_VALUE +
-      "</code> to avoid line separator issues.</html>");
-
-    JLabel additionalDescription = new JBLabel(
-      "<html>If you choose <b>Fix and Commit</b>, <code>git config --global core.autocrlf " + RECOMMENDED_VALUE + "</code> will be executed.<br/>" +
-      "If you choose <b>Commit as Is</b>, the config value won't be changed.</html>");
-
+    String warningText = new HtmlBuilder()
+      .appendRaw(GitBundle.message("text.crlf.fix.dialog.description.warning",
+                                   HtmlChunk.text(ATTRIBUTE_KEY).code(), HtmlChunk.text(RECOMMENDED_VALUE).code()))
+      .wrapWithHtmlBody().toString();
+    String proposedFixText = new HtmlBuilder()
+      .appendRaw(GitBundle.message("text.crlf.fix.dialog.description.proposed.fix", HtmlChunk.text(SUGGESTED_FIX).code()))
+      .wrapWithHtmlBody().toString();
 
     JLabel icon = new JLabel(UIUtil.getWarningIcon(), SwingConstants.LEFT);
     myDontWarn = new JBCheckBox(GitBundle.message("checkbox.dont.warn.again"));
@@ -85,12 +85,11 @@ public class GitCrlfDialog extends DialogWrapper {
       .setDefaultFill(GridBagConstraints.HORIZONTAL);
 
     rootPanel.add(icon, g.nextLine().next().coverColumn(4));
-    rootPanel.add(description, g.next());
-    rootPanel.add(additionalDescription, g.nextLine().next().next().pady(DEFAULT_HGAP));
-    rootPanel.add(myDontWarn,  g.nextLine().next().next().insets(0, 0, 0, 0));
+    rootPanel.add(new JBLabel(warningText), g.next());
+    rootPanel.add(new JBLabel(proposedFixText), g.nextLine().next().next().pady(DEFAULT_HGAP));
+    rootPanel.add(myDontWarn, g.nextLine().next().next().insets(0, 0, 0, 0));
 
     return rootPanel;
-
   }
 
   public boolean dontWarnAgain() {

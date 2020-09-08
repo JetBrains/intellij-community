@@ -3,6 +3,7 @@ package com.intellij.ui.breadcrumbs;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +35,7 @@ public interface BreadcrumbsProvider {
    * @return a text for the specified element
    */
   @NotNull
-  String getElementInfo(@NotNull PsiElement element);
+  @NlsSafe String getElementInfo(@NotNull PsiElement element);
 
   /**
    * @param element that represents a single crumb
@@ -50,7 +51,7 @@ public interface BreadcrumbsProvider {
    * @return a description for the specified element
    */
   @Nullable
-  default String getElementTooltip(@NotNull PsiElement element) {
+  default @NlsSafe String getElementTooltip(@NotNull PsiElement element) {
     return null;
   }
 

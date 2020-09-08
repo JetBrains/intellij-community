@@ -20,6 +20,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -305,7 +306,7 @@ public class CommentedOutCodeInspection extends BaseInspection implements Cleanu
     @Override
     public void visitLabeledStatement(PsiLabeledStatement statement) {
       super.visitLabeledStatement(statement);
-      final String name = statement.getName();
+      @NonNls final String name = statement.getName();
       if (statement.getStatement() == null || name.equals("https") || name.equals("http")) {
         invalidCode = true;
         stopWalking();

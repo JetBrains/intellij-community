@@ -148,7 +148,8 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
     boolean nowCustom = myUseCustomShelfDirectory.isSelected();
     if (nowCustom && !checkAndIgnoreIfCreated(customPath)) {
       PopupUtil
-        .showBalloonForComponent(myShelfDirectoryPath, "Can't find or create new shelf directory", MessageType.WARNING, false, myProject);
+        .showBalloonForComponent(myShelfDirectoryPath,
+                                 VcsBundle.message("configurable.shelf.storage.cant.find.or.create.new.shelf.directory"), MessageType.WARNING, false, myProject);
       return;
     }
     myVcsConfiguration.USE_CUSTOM_SHELF_PATH = nowCustom;
@@ -183,10 +184,10 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
       if (!toFile.exists()) return null;   // check that file can be created after OK button pressed;
       String validationError = null;
       if (!toFile.canRead()) {
-        validationError = "Destination shelf directory should have read access";
+        validationError = VcsBundle.message("configurable.shelf.storage.destination.shelf.directory.should.have.read.access");
       }
       if (!toFile.canWrite()) {
-        validationError = "Destination shelf directory should have write access";
+        validationError = VcsBundle.message("configurable.shelf.storage.destination.shelf.directory.should.have.write.access");
       }
       if (validationError != null) return new ValidationInfo(validationError, myShelfDirectoryPath);
     }

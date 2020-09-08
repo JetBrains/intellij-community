@@ -29,7 +29,7 @@ public class TitledSeparator extends JPanel {
 
   protected final JBLabel myLabel = new JBLabel();
   protected final JSeparator mySeparator = new JSeparator(SwingConstants.HORIZONTAL);
-  private String originalText;
+  private @NlsContexts.Separator String originalText;
 
   public TitledSeparator() {
     this("");
@@ -53,7 +53,7 @@ public class TitledSeparator extends JPanel {
     setOpaque(false);
   }
 
-  public String getText() {
+  public @NlsContexts.Separator String getText() {
     return originalText;
   }
 

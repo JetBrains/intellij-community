@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -149,8 +150,6 @@ public class JavaTypingTest extends BasePlatformTestCase {
 
   public void testQuestionAfterPolyadicBoolean() { doTest('?'); }
 
-  public void testQuestionInVoidContext() { doTest('?'); }
-
   public void testEqualAfterBitwiseOp() { doTest('='); }
 
   public void testEqualAfterBitwiseOp2() {
@@ -201,7 +200,7 @@ public class JavaTypingTest extends BasePlatformTestCase {
     while (m.find()) {
       offsets.add(m.end());
     }
-    Collections.sort(offsets, (a, b) -> b - a); // sort in descending order
+    offsets.sort(Comparator.reverseOrder());
     return offsets;
   }
 }

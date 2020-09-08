@@ -17,9 +17,6 @@ import java.util.List;
  * Global context of matching process
  */
 public class MatchContext {
-  public MatchContext(@NotNull GlobalMatchingVisitor visitor) {
-    matcher = visitor;
-  }
 
   private final Stack<MatchedElementsListener> myMatchedElementsListenerStack = new Stack<>(2);
 
@@ -34,6 +31,10 @@ public class MatchContext {
 
   private final Stack<List<PsiElement>> mySavedMatchedNodes = new Stack<>();
   private List<PsiElement> myMatchedNodes = new SmartList<>();
+
+  public MatchContext(@NotNull GlobalMatchingVisitor visitor) {
+    matcher = visitor;
+  }
 
   public void addMatchedNode(PsiElement node) {
     myMatchedNodes.add(node);
@@ -157,43 +158,37 @@ public class MatchContext {
   }
 
   public void dispatchMatched() {
-    if (myMatchedNodes.isEmpty()) {
-      return;
+    if (!myMatchedNodes.isEmpty() && !dispatchTargetMatch(getResult())) {
+      dispatchCompleteMatch();
     }
-    final MatchResultImpl result = getResult();
-    if (doDispatch(result)) return;
-
-    // There is no substitutions so show the context
-
-    processNoSubstitutionMatch(myMatchedNodes, result);
-    getSink().newMatch(result);
   }
 
-  private boolean doDispatch(@NotNull MatchResult result) {
-    boolean ret = false;
+  private boolean dispatchTargetMatch(@NotNull MatchResult result) {
+    boolean dispatched = false;
 
     for (MatchResult r : result.getChildren()) {
       if ((r.isScopeMatch() && !r.isTarget()) || r.isMultipleMatch()) {
-        ret |= doDispatch(r);
+        dispatched |= dispatchTargetMatch(r);
       }
       else if (r.isTarget()) {
         getSink().newMatch(r);
-        ret = true;
+        dispatched = true;
       }
     }
-    return ret;
+    return dispatched;
   }
 
-  private static void processNoSubstitutionMatch(@NotNull List<? extends PsiElement> matchedNodes, @NotNull MatchResultImpl result) {
-    final boolean complexMatch = matchedNodes.size() > 1;
-    final PsiElement match = matchedNodes.get(0);
+  private void dispatchCompleteMatch() {
+    final MatchResultImpl result = getResult();
+    final boolean complexMatch = myMatchedNodes.size() > 1;
+    final PsiElement match = myMatchedNodes.get(0);
 
     if (!complexMatch) {
       result.setMatchRef(new SmartPsiPointer(match));
       result.setMatchImage(match.getText());
     }
     else {
-      for (final PsiElement matchStatement : matchedNodes) {
+      for (final PsiElement matchStatement : myMatchedNodes) {
         result.addChild(new MatchResultImpl(MatchResult.LINE_MATCH, matchStatement.getText(), new SmartPsiPointer(matchStatement), false));
       }
 
@@ -201,5 +196,6 @@ public class MatchContext {
       result.setMatchImage(match.getText());
       result.setName(MatchResult.MULTI_LINE_MATCH);
     }
+    getSink().newMatch(result);
   }
 }

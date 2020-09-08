@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +18,7 @@ public abstract class DescriptionAwareSchemeActions<T extends Scheme> extends Ab
   }
 
   @Nullable
-  public abstract String getDescription(@NotNull T scheme);
+  public abstract @NlsContexts.DetailedDescription String getDescription(@NotNull T scheme);
 
   protected abstract void setDescription(@NotNull T scheme, @NotNull String newDescription);
 

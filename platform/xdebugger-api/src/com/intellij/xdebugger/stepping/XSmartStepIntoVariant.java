@@ -1,7 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.stepping;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -12,6 +14,7 @@ public abstract class XSmartStepIntoVariant {
     return null;
   }
 
+  @NlsSafe
   public abstract String getText();
 
   /**
@@ -23,6 +26,7 @@ public abstract class XSmartStepIntoVariant {
   }
 
   @Nullable
+  @Nls
   public String getDescription() {
     return null;
   }

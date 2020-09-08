@@ -8,6 +8,7 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import org.jdom.Parent
+import org.jetbrains.annotations.NonNls
 import java.nio.file.Path
 
 @Deprecated("Please use SchemeManager")
@@ -30,7 +31,7 @@ abstract class SchemeManagerFactory {
    * directoryName - like "keymaps".
    */
   @JvmOverloads
-  fun <SCHEME : Any, MUTABLE_SCHEME : SCHEME> create(directoryName: String, processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>, presentableName: String? = null, directoryPath: Path? = null): SchemeManager<SCHEME> {
+  fun <SCHEME : Any, MUTABLE_SCHEME : SCHEME> create(@NonNls directoryName: String, processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>, presentableName: String? = null, directoryPath: Path? = null): SchemeManager<SCHEME> {
     return create(directoryName, processor, presentableName, RoamingType.DEFAULT, directoryPath = directoryPath)
   }
 

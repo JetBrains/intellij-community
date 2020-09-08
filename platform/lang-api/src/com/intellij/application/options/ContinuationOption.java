@@ -13,6 +13,7 @@
 // limitations under the License.
 package com.intellij.application.options;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.codeStyle.CodeStyleConstraints;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.ui.components.fields.IntegerField;
@@ -27,13 +28,13 @@ import java.util.function.Function;
 public class ContinuationOption implements CodeStyleConstraints {
   private @Nullable IntegerField myField;
   private boolean mySupported;
-  private final String myName;
+  private final @NlsContexts.Label String myName;
   private final Function<? super CommonCodeStyleSettings.IndentOptions, Integer> myGetter;
   private final BiConsumer<? super CommonCodeStyleSettings.IndentOptions, ? super Integer> mySetter;
   private final int myDefaultValue;
   private JLabel myLabel;
 
-  public ContinuationOption(String name,
+  public ContinuationOption(@NlsContexts.Label String name,
                             Function<? super CommonCodeStyleSettings.IndentOptions, Integer> getter,
                             BiConsumer<? super CommonCodeStyleSettings.IndentOptions, ? super Integer> setter,
                             int defaultValue) {

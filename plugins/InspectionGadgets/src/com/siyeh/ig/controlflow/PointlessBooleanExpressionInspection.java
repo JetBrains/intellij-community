@@ -30,6 +30,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -261,7 +262,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
     buildSimplifiedExpression(operand, out.append(sign.getText()), tracker);
   }
 
-  private void buildSimplifiedAssignmentExpression(PsiAssignmentExpression expression, StringBuilder out, CommentTracker tracker) {
+  private void buildSimplifiedAssignmentExpression(PsiAssignmentExpression expression, @NonNls StringBuilder out, CommentTracker tracker) {
     final IElementType tokenType = expression.getOperationTokenType();
     final PsiExpression lhs = expression.getLExpression();
 

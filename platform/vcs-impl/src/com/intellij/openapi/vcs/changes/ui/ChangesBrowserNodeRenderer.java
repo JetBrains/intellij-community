@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BooleanGetter;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.FilePathIconProvider;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
@@ -13,6 +14,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.JBInsets;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,12 +49,12 @@ public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
                                     boolean leaf,
                                     int row,
                                     boolean hasFocus) {
-    ChangesBrowserNode node = (ChangesBrowserNode)value;
+    ChangesBrowserNode<?> node = (ChangesBrowserNode<?>)value;
     node.render(this, selected, expanded, hasFocus);
     SpeedSearchUtil.applySpeedSearchHighlighting(tree, this, true, selected);
   }
 
-  public void appendFileName(@Nullable VirtualFile vFile, @NotNull String fileName, Color color) {
+  public void appendFileName(@Nullable VirtualFile vFile, @NotNull @NlsSafe String fileName, Color color) {
     ChangesFileNameDecorator decorator = myProject != null && !myProject.isDefault() && !myProject.isDisposed()
                                          ? ChangesFileNameDecorator.getInstance(myProject) : null;
 
@@ -83,7 +85,7 @@ public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
     }
   }
 
-  public void appendTextWithIssueLinks(@NotNull String text, @NotNull SimpleTextAttributes baseStyle) {
+  public void appendTextWithIssueLinks(@NotNull @Nls String text, @NotNull SimpleTextAttributes baseStyle) {
     if (myIssueLinkRenderer != null) {
       myIssueLinkRenderer.appendTextWithLinks(text, baseStyle);
     }

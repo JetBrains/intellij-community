@@ -97,7 +97,7 @@ public class ExternalizableStringSet extends OrderedSet<String>
    * @param element  the element to write to.
    * @param name  the name of the option.
    */
-  public void writeSettings(Element element, String name) {
+  public void writeSettings(Element element, @NonNls String name) {
     if (hasDefaultValues()) {
       return;
     }

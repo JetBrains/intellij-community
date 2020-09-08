@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBPanel;
@@ -53,7 +54,7 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
     return myApplyAction;
   }
 
-  public void setError(String error) {
+  public void setError(@NlsContexts.DialogMessage String error) {
     myTextField.putClientProperty("JComponent.outline", error != null ? "error" : null);
 
     if (myErrorPopup != null && !myErrorPopup.isDisposed()) Disposer.dispose(myErrorPopup);

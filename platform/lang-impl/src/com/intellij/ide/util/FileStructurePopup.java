@@ -20,7 +20,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup;
-import com.intellij.internal.statistic.eventLog.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.navigation.LocationPresentation;
@@ -100,7 +100,7 @@ import java.util.function.BiPredicate;
  */
 public class FileStructurePopup implements Disposable, TreeActionsOwner {
   private static final Logger LOG = Logger.getInstance(FileStructurePopup.class);
-  private static final String NARROW_DOWN_PROPERTY_KEY = "FileStructurePopup.narrowDown";
+  private static final @NonNls String NARROW_DOWN_PROPERTY_KEY = "FileStructurePopup.narrowDown";
 
   private final Project myProject;
   private final FileEditor myFileEditor;
@@ -109,7 +109,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   private final TreeStructureActionsOwner myTreeActionsOwner;
 
   private JBPopup myPopup;
-  private String myTitle;
+  private @NlsContexts.PopupTitle String myTitle;
 
   private final Tree myTree;
   private final SmartTreeStructure myTreeStructure;
@@ -879,7 +879,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     PropertiesComponent.getInstance().setValue(TreeStructureUtil.getPropertyName(propertyName), state, Sorter.ALPHA_SORTER.equals(action));
   }
 
-  public void setTitle(String title) {
+  public void setTitle(@NlsContexts.PopupTitle String title) {
     myTitle = title;
   }
 
@@ -1064,7 +1064,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     return false;
   }
 
-  static class MyTree extends DnDAwareTree implements PlaceProvider<String> {
+  static class MyTree extends DnDAwareTree implements PlaceProvider {
 
     MyTree(TreeModel treeModel) {
       super(treeModel);

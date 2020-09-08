@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -48,17 +48,17 @@ public class ConvertToJavaHandler implements RefactoringActionHandler {
       }
       else {
         if (!ApplicationManager.getApplication().isUnitTestMode()) {
-          CommonRefactoringUtil.showErrorHint(project, editor, GroovyRefactoringBundle.message("convert.to.java.can.work.only.with.groovy"),
-                                              getRefactoringName(), null);
+          CommonRefactoringUtil.showErrorHint(
+            project, editor,
+            GroovyRefactoringBundle.message("convert.to.java.can.work.only.with.groovy"),
+            GroovyRefactoringBundle.message("convert.to.java.refactoring.name"),
+            null
+          );
           return;
         }
       }
     }
 
     new ConvertToJavaProcessor(project, files.toArray(GroovyFile.EMPTY_ARRAY)).run();
-  }
-
-  private static String getRefactoringName() {
-    return GroovyRefactoringBundle.message("convert.to.java.refactoring.name");
   }
 }

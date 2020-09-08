@@ -33,7 +33,7 @@ public class SnapshotSingleValueIndexStorage<Key, Value> implements VfsAwareInde
   private final SLRUCache<Key, ValueContainer<Value>> myCache;
 
   public SnapshotSingleValueIndexStorage(int cacheSize) {
-    myCache = new SLRUCache<Key, ValueContainer<Value>>(cacheSize, (int)(Math.ceil(cacheSize * 0.25))) {
+    myCache = new SLRUCache<>(cacheSize, (int)(Math.ceil(cacheSize * 0.25))) {
       @NotNull
       @Override
       public ValueContainer<Value> createValue(Key key) {

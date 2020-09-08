@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.uast.UastHintedVisitorAdapter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
@@ -48,7 +49,7 @@ public class UseVirtualFileEqualsInspection extends DevKitUastInspectionBase {
         InheritanceUtil.isInheritor(rhs.getExpressionType(), VirtualFile.class.getName())) {
       final PsiElement sourcePsi = uBinaryExpression.getSourcePsi();
       if (sourcePsi == null) return;
-      holder.registerProblem(sourcePsi, "VirtualFile objects should be compared by equals(), not ==");
+      holder.registerProblem(sourcePsi, DevKitBundle.message("inspections.use.virtual.file.equals"));
     }
   }
 }

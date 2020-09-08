@@ -198,8 +198,6 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
         println(file.path)
       }
       else if (file.fileType === JavaClassFileType.INSTANCE && !file.name.contains('$')) {
-        // Records are not supported by decompiler now -- see IDEA-246839
-        if (file.name == "RecordTest.class") return true
         val decompiled = (psiManager.findFile(file)!! as ClsFileImpl).mirror.text
         assertTrue(file.path, decompiled.startsWith(IdeaDecompiler.BANNER) || file.name.endsWith("-info.class"))
 

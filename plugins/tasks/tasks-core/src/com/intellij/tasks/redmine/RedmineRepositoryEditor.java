@@ -95,10 +95,10 @@ public class RedmineRepositoryEditor extends BaseRepositoryEditor<RedmineReposit
   @Nullable
   @Override
   protected JComponent createCustomPanel() {
-    myProjectLabel = new JBLabel("Project:", SwingConstants.RIGHT);
+    myProjectLabel = new JBLabel(TaskBundle.message("label.project"), SwingConstants.RIGHT);
     myProjectCombo = new ComboBox<>(300);
     //myProjectCombo.setRenderer(new TaskUiUtil.SimpleComboBoxRenderer("Set URL and password/token first"));
-    myProjectCombo.setRenderer(SimpleListCellRenderer.create("Set URL and password/token first", value -> {
+    myProjectCombo.setRenderer(SimpleListCellRenderer.create(TaskBundle.message("label.set.url.password.token.first"), value -> {
       if (myProjectCombo.isPopupVisible()) {
         //if (value.myLevel == 0 && value.myProject != RedmineRepository.UNSPECIFIED_PROJECT) {
         //setFont(UIUtil.getListFont().deriveFont(Font.BOLD));
@@ -111,7 +111,7 @@ public class RedmineRepositoryEditor extends BaseRepositoryEditor<RedmineReposit
       }
     }));
 
-    myAPIKeyLabel = new JBLabel("API Token:", SwingConstants.RIGHT);
+    myAPIKeyLabel = new JBLabel(TaskBundle.message("label.api.token"), SwingConstants.RIGHT);
     myAPIKey = new JPasswordField();
 
     myAllAssigneesCheckBox = new JBCheckBox(TaskBundle.message("checkbox.include.issues.not.assigned.to.me"));
@@ -160,7 +160,7 @@ public class RedmineRepositoryEditor extends BaseRepositoryEditor<RedmineReposit
 
   private final class FetchProjectsTask extends TaskUiUtil.ComboBoxUpdater<RedmineProjectItem> {
     private FetchProjectsTask() {
-      super(RedmineRepositoryEditor.this.myProject, "Downloading Redmine projects...", myProjectCombo);
+      super(RedmineRepositoryEditor.this.myProject, TaskBundle.message("progress.title.downloading.redmine.projects"), myProjectCombo);
     }
 
     @Override

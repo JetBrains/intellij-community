@@ -6,13 +6,11 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TextWithMnemonic;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 
@@ -112,7 +110,7 @@ public abstract class Executor {
    * in {@linkplain TextWithMnemonic#parse(String) text-with-mnemonic} format.
    */
   @NotNull
-  public String getStartActionText(@NotNull String configurationName) {
+  public String getStartActionText(@NlsSafe @NotNull String configurationName) {
     String configName = StringUtil.isEmpty(configurationName) ? "" : " '" + shortenNameIfNeeded(configurationName) + "'";
     return TextWithMnemonic.parse(getStartActionText()).append(configName).toString();
   }
@@ -127,6 +125,7 @@ public abstract class Executor {
   /**
    * Too long names don't fit into UI controls and have to be trimmed
    */
+  @Contract(pure = true)
   public static String shortenNameIfNeeded(@NotNull String name) {
     return StringUtil.trimMiddle(name, Registry.intValue("run.configuration.max.name.length", 80));
   }

@@ -189,7 +189,7 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
     myTestFixture.testRename(name + "." + ext, name + "_after." + ext, newName);
   }
 
-  @SuppressWarnings({ "deprecation"})
+  @SuppressWarnings("deprecation")
   protected void doTestQuickFix(String file, String ext) {
     final PsiReference psiReference = myTestFixture.getReferenceAtCaretPositionWithAssertion(file + "." + ext);
     assertNull("Reference", psiReference.resolve());
@@ -201,7 +201,7 @@ public abstract class HighlightingTestBase extends UsefulTestCase implements Ide
 
     final Project project = myTestFixture.getProject();
     final ProblemDescriptor problemDescriptor = InspectionManager.getInstance(project).createProblemDescriptor(psiReference.getElement(),
-                                                                                                               "foo",
+                                                                                                               "Foo",
                                                                                                                fixes,
                                                                                                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                                                                                                true);

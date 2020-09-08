@@ -10,6 +10,7 @@ import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorAndFontDescriptorsProvider;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -73,7 +74,7 @@ public final class ColorSettingsUtil {
   }
 
   @NotNull
-  private static String toDisplayName(@NotNull TextAttributesKey attributesKey) {
+  private static @NlsContexts.AttributeDescriptor String toDisplayName(@NotNull TextAttributesKey attributesKey) {
     return OptionsBundle.message(
       "options.java.attribute.descriptor.errors.group",
       StringUtil.capitalize(StringUtil.toLowerCase(attributesKey.getExternalName()).replaceAll("_", " ")));

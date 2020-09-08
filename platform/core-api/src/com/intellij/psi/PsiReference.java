@@ -5,6 +5,7 @@ import com.intellij.model.Symbol;
 import com.intellij.model.SymbolResolveResult;
 import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.model.psi.PsiSymbolService;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtilRt;
@@ -79,8 +80,7 @@ public interface PsiReference extends PsiSymbolReference {
    *
    * @return the canonical text of the reference.
    */
-  @NotNull
-  String getCanonicalText();
+  @NotNull @NlsSafe String getCanonicalText();
 
   /**
    * Called when the reference target element has been renamed, in order to change the reference

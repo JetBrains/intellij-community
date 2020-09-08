@@ -20,6 +20,7 @@ import com.intellij.util.text.UniqueNameGenerator;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -502,7 +503,7 @@ public final class ParametrizedDuplicates {
     if (parentClassStart == null) return null;
 
     // It's syntactically correct to write "new Object() {void foo(){}}.foo()" - see JLS 15.9.5
-    String wrapperBodyText = (PsiType.VOID.equals(type) ? "" : "return ") + expression.getText() + ";";
+    @NonNls String wrapperBodyText = (PsiType.VOID.equals(type) ? "" : "return ") + expression.getText() + ";";
     String wrapperClassImmediateCallText = "new " + CommonClassNames.JAVA_LANG_OBJECT + "() { " +
                                            type.getCanonicalText() + " wrapperMethod() {" + wrapperBodyText + "} " +
                                            "}.wrapperMethod()";

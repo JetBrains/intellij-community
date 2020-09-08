@@ -21,21 +21,21 @@
     <useScopeEnlarger implementation="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxScopeEnlarger"/>
     <renamePsiElementProcessor implementation="org.jetbrains.plugins.javaFX.refactoring.JavaFxRenameFxIdFieldProcessor" order="first"/>
 
-    <localInspection language="XML" shortName="JavaFxDefaultTag" groupName="JavaFX"
+    <localInspection language="XML" shortName="JavaFxDefaultTag" groupKey="group.name.javafx"
                      enabledByDefault="true" level="WARNING" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxDefaultTagInspection"
                      key="inspection.java.fx.default.tag.display.name"/>
     <localInspection language="XML" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxUnresolvedFxIdReferenceInspection"
-                     enabledByDefault="true" level="WARNING" groupName="JavaFX"
+                     enabledByDefault="true" level="WARNING" groupKey="group.name.javafx"
                      key="inspection.java.fx.unresolved.fx.id.reference.display.name"/>
     <localInspection language="XML" shortName="JavaFxUnusedImports" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxUnusedImportsInspection"
-                     enabledByDefault="true" level="WARNING" groupName="JavaFX" key="inspection.java.fx.unused.imports.display.name"/>
+                     enabledByDefault="true" level="WARNING" groupKey="group.name.javafx" key="inspection.java.fx.unused.imports.display.name"/>
     <localInspection language="XML" shortName="JavaFxRedundantPropertyValue" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxRedundantPropertyValueInspection"
-                     enabledByDefault="true" level="WARNING" groupName="JavaFX"
+                     enabledByDefault="true" level="WARNING" groupKey="group.name.javafx"
                      key="inspection.java.fx.redundant.property.value.display.name"/>
-    <localInspection language="XML" shortName="JavaFxColorRgb" groupName="JavaFX"
+    <localInspection language="XML" shortName="JavaFxColorRgb" groupKey="group.name.javafx"
                      enabledByDefault="true" level="WARNING" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxColorRgbInspection"
                      key="inspection.java.fx.color.rgb.display.name"/>
-    <localInspection language="XML" shortName="JavaFxEventHandler" groupName="JavaFX"
+    <localInspection language="XML" shortName="JavaFxEventHandler" groupKey="group.name.javafx"
                      enabledByDefault="true" level="WARNING" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxEventHandlerInspection"
                      key="inspection.java.fx.event.handler.display.name"/>
 
@@ -66,7 +66,7 @@
     <getterSetterProvider implementation="org.jetbrains.plugins.javaFX.codeInsight.JavaFxGetterSetterPrototypeProvider"/>
     <packaging.artifactPropertiesProvider implementation="org.jetbrains.plugins.javaFX.packaging.JavaFxArtifactPropertiesProvider"/>
     <packaging.artifactType implementation="org.jetbrains.plugins.javaFX.packaging.JavaFxApplicationArtifactType"/>
-    <compileServer.plugin classpath="javaFX-jps-plugin.jar;common-javaFX-plugin.jar"/>
+    <compileServer.plugin classpath="javaFX-jps.jar;javaFX-common.jar"/>
     <packaging.artifactType implementation="org.jetbrains.plugins.javaFX.packaging.preloader.JavaFxPreloaderArtifactType"/>
     <packaging.artifactPropertiesProvider implementation="org.jetbrains.plugins.javaFX.packaging.preloader.JavaFxPreloaderArtifactPropertiesProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxImplicitUsageProvider"/>

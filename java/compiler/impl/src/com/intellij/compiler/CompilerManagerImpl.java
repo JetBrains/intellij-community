@@ -22,6 +22,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -91,7 +92,7 @@ public class CompilerManagerImpl extends CompilerManager {
     for (ProjectExtensionPointName<?> ep : Arrays.asList(COMPILABLE_TYPE_EP, BackendCompiler.EP_NAME)) {
       ep.addChangeListener(project, () -> {myCachedCompilableTypes = null;}, project);
     }
-    COMPILER_FACTORY_EP.getPoint(project).addExtensionPointListener(new ExtensionPointListener<CompilerFactory>() {
+    COMPILER_FACTORY_EP.getPoint(project).addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull CompilerFactory factory, @NotNull PluginDescriptor pluginDescriptor) {
         Compiler[] compilers = factory.createCompilers(CompilerManagerImpl.this);
@@ -333,7 +334,7 @@ public class CompilerManagerImpl extends CompilerManager {
   }
 
   @Override
-  public void executeTask(@NotNull CompileTask task, @NotNull CompileScope scope, String contentName, Runnable onTaskFinished) {
+  public void executeTask(@NotNull CompileTask task, @NotNull CompileScope scope, @NlsContexts.TabTitle String contentName, Runnable onTaskFinished) {
     final CompileDriver compileDriver = new CompileDriver(myProject);
     compileDriver.executeCompileTask(task, scope, contentName, onTaskFinished);
   }

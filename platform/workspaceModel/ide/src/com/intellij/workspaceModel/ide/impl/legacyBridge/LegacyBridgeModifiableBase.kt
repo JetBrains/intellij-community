@@ -5,9 +5,11 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnBuilder
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.impl.DummyVersionedEntityStorage
 
-abstract class LegacyBridgeModifiableBase(internal val diff: WorkspaceEntityStorageBuilder) {
-  internal val entityStorageOnDiff = VersionedEntityStorageOnBuilder(diff)
+abstract class LegacyBridgeModifiableBase(internal val diff: WorkspaceEntityStorageBuilder, cacheStorageResult: Boolean) {
+  internal val entityStorageOnDiff = if (cacheStorageResult) VersionedEntityStorageOnBuilder(diff)
+  else DummyVersionedEntityStorage(diff)
 
   private var committedOrDisposed = false
 

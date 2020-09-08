@@ -172,7 +172,7 @@ class GHPRTimelineItemComponentFactory(private val detailsDataProvider: GHPRDeta
     }
     val actionText = when (review.state) {
       APPROVED -> GithubBundle.message("pull.request.timeline.approved.changes")
-      CHANGES_REQUESTED -> GithubBundle.message("pull.request.timeline.rejected.changes")
+      CHANGES_REQUESTED -> GithubBundle.message("pull.request.timeline.requested.changes")
       PENDING -> GithubBundle.message("pull.request.timeline.started.review")
       COMMENTED, DISMISSED -> GithubBundle.message("pull.request.timeline.reviewed")
     }

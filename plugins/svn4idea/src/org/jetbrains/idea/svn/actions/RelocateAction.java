@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -19,6 +19,7 @@ import org.jetbrains.idea.svn.info.Info;
 import java.io.File;
 
 import static com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress;
+import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class RelocateAction extends BasicAction {
@@ -28,7 +29,7 @@ public class RelocateAction extends BasicAction {
   @NotNull
   @Override
   protected String getActionName() {
-    return "Relocate working copy to a different URL";
+    return message("action.Subversion.Relocate.description");
   }
 
   @Override
@@ -65,10 +66,16 @@ public class RelocateAction extends BasicAction {
       }
       catch (VcsException e) {
         runOrInvokeLaterAboveProgress(
-          () -> Messages.showErrorDialog(vcs.getProject(), "Error relocating working copy: " + e.getMessage(), "Relocate Working Copy"),
-          null, vcs.getProject());
+          () -> Messages.showErrorDialog(
+            vcs.getProject(),
+            message("dialog.message.error.relocating.working.copy", e.getMessage()),
+            message("dialog.title.relocate.working.copy")
+          ),
+          null,
+          vcs.getProject()
+        );
       }
-    }, "Relocating Working Copy", false, vcs.getProject());
+    }, message("progress.title.relocating.working.copy"), false, vcs.getProject());
   }
 
   @Override

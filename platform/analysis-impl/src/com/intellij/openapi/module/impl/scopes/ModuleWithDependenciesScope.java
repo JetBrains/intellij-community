@@ -1,11 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module.impl.scopes;
 
+import com.intellij.model.ModelBranch;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.DirectoryInfo;
 import com.intellij.openapi.roots.impl.ProjectFileIndexImpl;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.BitUtil;
@@ -36,36 +39,45 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
   private final ProjectFileIndexImpl myProjectFileIndex;
 
   private volatile Set<Module> myModules;
-  private final TObjectIntHashMap<VirtualFile> myRoots = new TObjectIntHashMap<>();
+  private final TObjectIntHashMap<VirtualFile> myRoots;
 
   ModuleWithDependenciesScope(@NotNull Module module, @ScopeConstant int options) {
     super(module.getProject());
     myModule = module;
     myOptions = options;
     myProjectFileIndex = (ProjectFileIndexImpl)ProjectRootManager.getInstance(module.getProject()).getFileIndex();
+    myRoots = calcRoots(null);
+  }
 
+  private TObjectIntHashMap<VirtualFile> calcRoots(@Nullable ModelBranch branch) {
     Set<VirtualFile> roots = new LinkedHashSet<>();
     if (hasOption(CONTENT)) {
       Set<Module> modules = calcModules();
       myModules = new THashSet<>(modules);
       for (Module m : modules) {
         for (ContentEntry entry : ModuleRootManager.getInstance(m).getContentEntries()) {
-          ContainerUtil.addIfNotNull(roots, entry.getFile());
+          ContainerUtil.addIfNotNull(roots, branch == null ? entry.getFile() : branch.findFileByUrl(entry.getUrl()));
         }
       }
     }
     else {
-      OrderEnumerator en = getOrderEnumeratorForOptions();
-      Collections.addAll(roots, en.roots(entry -> {
+      OrderRootsEnumerator en = getOrderEnumeratorForOptions().roots(entry -> {
         if (entry instanceof ModuleOrderEntry || entry instanceof ModuleSourceOrderEntry) return OrderRootType.SOURCES;
         return OrderRootType.CLASSES;
-      }).getRoots());
+      });
+      if (branch == null) {
+        Collections.addAll(roots, en.getRoots());
+      } else {
+        roots.addAll(ContainerUtil.mapNotNull(en.getUrls(), branch::findFileByUrl));
+      }
     }
 
     int i = 1;
+    TObjectIntHashMap<VirtualFile> map = new TObjectIntHashMap<>();
     for (VirtualFile root : roots) {
-      myRoots.put(root, i++);
+      map.put(root, i++);
     }
+    return map;
   }
 
   private OrderEnumerator getOrderEnumeratorForOptions() {
@@ -134,14 +146,31 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
   @Override
   public boolean contains(@NotNull VirtualFile file) {
     DirectoryInfo info = myProjectFileIndex.getInfoForFileOrDirectory(file);
+    TObjectIntHashMap<VirtualFile> roots = getRoots(file);
     if (hasOption(CONTENT)) {
-      return myRoots.contains(ProjectFileIndexImpl.getContentRootForFile(info, file, true));
+      return roots.contains(ProjectFileIndexImpl.getContentRootForFile(info, file, true));
     }
-    if (ProjectFileIndexImpl.isFileInContent(file, info) && myRoots.contains(ProjectFileIndexImpl.getSourceRootForFile(file, info))) {
+    if (ProjectFileIndexImpl.isFileInContent(file, info) && roots.contains(ProjectFileIndexImpl.getSourceRootForFile(file, info))) {
       return true;
     }
-    return myRoots.contains(ProjectFileIndexImpl.getClassRootForFile(file, info));
+    return roots.contains(ProjectFileIndexImpl.getClassRootForFile(file, info));
   }
+
+  private TObjectIntHashMap<VirtualFile> getRoots(@NotNull VirtualFile file) {
+    ModelBranch branch = ModelBranch.getFileBranch(file);
+    return branch != null ? obtainBranchRoots(branch) : myRoots;
+  }
+
+  private TObjectIntHashMap<VirtualFile> obtainBranchRoots(ModelBranch branch) {
+    Pair<Long, TObjectIntHashMap<VirtualFile>> pair = branch.getUserData(BRANCH_ROOTS);
+    long modCount = branch.getBranchedVfsStructureModificationCount();
+    if (pair == null || pair.first != modCount) {
+      pair = Pair.create(modCount, calcRoots(branch));
+    }
+    return pair.second;
+  }
+
+  private static final Key<Pair<Long, TObjectIntHashMap<VirtualFile>>> BRANCH_ROOTS = Key.create("BRANCH_ROOTS");
 
   @Override
   public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
@@ -152,8 +181,9 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
     if (r1 == null) return -1;
     if (r2 == null) return 1;
 
-    int i1 = myRoots.get(r1);
-    int i2 = myRoots.get(r2);
+    TObjectIntHashMap<VirtualFile> roots = getRoots(file1);
+    int i1 = roots.get(r1);
+    int i2 = roots.get(r2);
     if (i1 == 0 && i2 == 0) return 0;
     if (i1 > 0 && i2 > 0) return i2 - i1;
     return i1 > 0 ? 1 : -1;

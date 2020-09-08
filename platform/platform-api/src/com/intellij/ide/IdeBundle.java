@@ -10,12 +10,18 @@ import java.util.function.Supplier;
 
 public final class IdeBundle extends DynamicBundle {
   public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
-    return INSTANCE.getMessage(key, params);
+    if (INSTANCE.containsKey(key)) {
+      return INSTANCE.getMessage(key, params);
+    }
+    return IdeDeprecatedMessagesBundle.message(key, params);
   }
 
   @NotNull
   public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
-    return INSTANCE.getLazyMessage(key, params);
+    if (INSTANCE.containsKey(key)) {
+      return INSTANCE.getLazyMessage(key, params);
+    }
+    return IdeDeprecatedMessagesBundle.messagePointer(key, params);
   }
 
   public static final String BUNDLE = "messages.IdeBundle";

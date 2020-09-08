@@ -17,7 +17,6 @@
 package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.codeInsight.daemon.XmlErrorBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -27,6 +26,7 @@ import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.xml.psi.XmlPsiBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +38,7 @@ public class AddAttributeValueIntentionFix extends LocalQuickFixAndIntentionActi
   @NotNull
   @Override
   public String getText() {
-    return XmlErrorBundle.message("add.attribute.value.quickfix.text");
+    return XmlPsiBundle.message("xml.quickfix.add.attribute.value.text");
   }
 
   @Override

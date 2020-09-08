@@ -18,7 +18,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -37,7 +36,7 @@ final class UiInfoUsageCollector extends ApplicationUsagesCollector {
 
   @Override
   public int getVersion() {
-    return 7;
+    return 8;
   }
 
   @NotNull
@@ -91,9 +90,12 @@ final class UiInfoUsageCollector extends ApplicationUsagesCollector {
   }
 
   private static void addScreenResolutions(Set<MetricEvent> set) {
-    Arrays.stream(GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices())
-      .map(UiInfoUsageCollector::getDeviceScreenInfo)
-      .forEach(x -> addValue(set, "Screen.Resolution", x));
+    GraphicsDevice[] devices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
+    for (int i = 0; i < devices.length; i++) {
+      String info = getDeviceScreenInfo(devices[i]);
+      FeatureUsageData data = new FeatureUsageData().addValue(info).addData("display_id", i);
+      set.add(newMetric("Screen.Resolution", data));
+    }
   }
 
   private static void addNumberOfMonitors(Set<MetricEvent> set) {

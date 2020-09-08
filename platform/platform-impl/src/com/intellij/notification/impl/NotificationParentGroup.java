@@ -11,6 +11,7 @@ import java.util.*;
 /**
  * @author Alexander Lobas
  */
+@Deprecated
 public final class NotificationParentGroup {
   private static final ExtensionPointName<NotificationParentGroupBean> EP_NAME =
     ExtensionPointName.create("com.intellij.notification.parentGroup");

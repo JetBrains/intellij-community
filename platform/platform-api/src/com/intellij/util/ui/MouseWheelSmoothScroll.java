@@ -44,7 +44,7 @@ public final class MouseWheelSmoothScroll {
    * @param e any mouse wheel event
    * @param alternative handle event alternative way, when cannot add animation.
    */
-  public void processMouseWheelEvent(@NotNull MouseWheelEvent e, @Nullable Consumer<MouseWheelEvent> alternative) {
+  public void processMouseWheelEvent(@NotNull MouseWheelEvent e, @Nullable Consumer<? super MouseWheelEvent> alternative) {
     JScrollBar bar = !myScrollEnabled.get() ? null : getEventScrollBar(e);
     if (bar == null) {
       if (alternative != null) alternative.accept(e);
@@ -120,10 +120,10 @@ public final class MouseWheelSmoothScroll {
     private long myStartEventTime = -1, myLastEventTime = -1, myDuration = -1;
     private AnimationSettings mySettings;
 
-    private final Consumer<Integer> BLACK_HOLE = (x) -> {};
-    private @NotNull Consumer<Integer> myConsumer = BLACK_HOLE;
-    private final Predicate<Integer> FALSE_PREDICATE = (value) -> false;
-    private @NotNull Predicate<Integer> myShouldStop = FALSE_PREDICATE;
+    private final Consumer<? super Integer> BLACK_HOLE = (x) -> {};
+    private @NotNull Consumer<? super Integer> myConsumer = BLACK_HOLE;
+    private final Predicate<? super Integer> FALSE_PREDICATE = (value) -> false;
+    private @NotNull Predicate<? super Integer> myShouldStop = FALSE_PREDICATE;
 
     private final Timer myTimer = TimerUtil.createNamedTimer("Inertial Animation Timer", REFRESH_TIME, this);
 
@@ -132,8 +132,8 @@ public final class MouseWheelSmoothScroll {
     }
 
     public final void start(int initValue, int targetValue,
-                            @NotNull Consumer<Integer> consumer,
-                            @Nullable Predicate<Integer> shouldStop,
+                            @NotNull Consumer<? super Integer> consumer,
+                            @Nullable Predicate<? super Integer> shouldStop,
                             @NotNull AnimationSettings settings) {
       mySettings = settings;
       double duration = mySettings.getDuration();

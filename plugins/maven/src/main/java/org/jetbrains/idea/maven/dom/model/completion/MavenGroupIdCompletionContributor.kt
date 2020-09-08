@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom.model.completion
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
@@ -19,7 +20,7 @@ import java.util.function.Predicate
 
 class MavenGroupIdCompletionContributor : MavenCoordinateCompletionContributor("groupId") {
 
-  override fun handleEmptyLookup(parameters: CompletionParameters, editor: Editor): String? {
+  override fun handleEmptyLookup(parameters: CompletionParameters, editor: Editor): @NlsContexts.HintText String? {
     return if (PlaceChecker(parameters).checkPlace().isCorrectPlace()) {
       IndicesBundle.message("maven.dependency.completion.group.empty")
     }

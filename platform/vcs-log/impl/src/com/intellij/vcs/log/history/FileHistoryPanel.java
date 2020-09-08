@@ -99,7 +99,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
       @Override
       protected void navigate(@NotNull CommitId commit) {
         VcsLogContentUtil.runInMainLog(myProject, ui -> {
-          ui.jumpToCommit(commit.getHash(), commit.getRoot());
+          ui.getVcsLog().jumpToCommit(commit.getHash(), commit.getRoot());
         });
       }
     };

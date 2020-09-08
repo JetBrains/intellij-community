@@ -1,32 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
-import com.intellij.DynamicBundle;
+import com.intellij.core.CoreDeprecatedMessagesBundle;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.PropertyKey;
-
-import java.util.function.Supplier;
 
 /**
  * @deprecated use properties from other bundles ({@link com.intellij.lang.LangBundle}, {@link com.intellij.core.CoreBundle},
  * {@link com.intellij.util.indexing.IndexingBundle}) instead
  */
 @Deprecated
-public final class PsiBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.PsiBundle";
-  private static final PsiBundle INSTANCE = new PsiBundle();
-
-  private PsiBundle() { super(BUNDLE); }
-
+public final class PsiBundle {
   @NotNull
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
-    return INSTANCE.getMessage(key, params);
-  }
-
-  @NotNull
-  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
-    return INSTANCE.getLazyMessage(key, params);
+  public static @Nls String message(@NotNull String key, Object @NotNull ... params) {
+    return CoreDeprecatedMessagesBundle.message(key, params);
   }
 }

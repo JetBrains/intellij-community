@@ -23,6 +23,7 @@ internal class ConstFileFeaturesProducer(vararg included: Pair<String, FilePredi
 }
 
 internal class FileFeaturesByProjectPathProducer(vararg included: Pair<String, FilePredictionFeature>) : FileFeaturesProducer {
+  val featuresToAdjust: Set<String> = hashSetOf("path_prefix")
   val features: Array<out Pair<String, FilePredictionFeature>> = included
 
   override fun produce(project: Project): Map<String, FilePredictionFeature> {
@@ -34,7 +35,7 @@ internal class FileFeaturesByProjectPathProducer(vararg included: Pair<String, F
     val result: MutableMap<String, FilePredictionFeature> = hashMapOf()
     for (feature in features) {
       val value = feature.second.toString().toIntOrNull()
-      if (value != null) {
+      if (featuresToAdjust.contains(feature.first) && value != null) {
         result[feature.first] = FilePredictionFeature.numerical(prefixLength + value)
       }
       else {

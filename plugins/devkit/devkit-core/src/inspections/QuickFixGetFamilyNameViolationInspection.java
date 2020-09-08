@@ -12,6 +12,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -38,7 +39,7 @@ public final class QuickFixGetFamilyNameViolationInspection extends DevKitInspec
         final PsiIdentifier identifier = method.getNameIdentifier();
         LOG.assertTrue(identifier != null);
         return new ProblemDescriptor[]{
-          manager.createProblemDescriptor(identifier, "QuickFix's getFamilyName() implementation must not depend on a specific context",
+          manager.createProblemDescriptor(identifier, DevKitBundle.message("inspections.quick.fix.family.name"),
                                           (LocalQuickFix)null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true)};
       }
     }

@@ -2,6 +2,7 @@
 package com.jetbrains.python.refactoring.suggested
 
 import com.intellij.psi.PsiNameIdentifierOwner
+import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.suggested.*
 
 internal class PySuggestedRefactoringAvailability(support: PySuggestedRefactoringSupport) : SuggestedRefactoringAvailability(support) {
@@ -10,7 +11,7 @@ internal class PySuggestedRefactoringAvailability(support: PySuggestedRefactorin
     val declaration = state.declaration
     return when {
       PySuggestedRefactoringSupport.isAvailableForChangeSignature(declaration) -> {
-        SuggestedChangeSignatureData.create(state, USAGES)
+        SuggestedChangeSignatureData.create(state, RefactoringBundle.message("suggested.refactoring.usages"))
       }
       PySuggestedRefactoringSupport.isAvailableForRename(declaration) -> {
         SuggestedRenameData(state.declaration as PsiNameIdentifierOwner, state.oldSignature.name)

@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.navigation.Place;
@@ -28,7 +29,6 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -314,7 +314,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   protected class MyRemoveAction extends MyDeleteAction {
     public MyRemoveAction() {
       //noinspection Convert2Lambda
-      super(new Condition<Object[]>() {
+      super(new Condition<>() {
         @Override
         public boolean value(final Object[] objects) {
           List<MyNode> nodes = new ArrayList<>();
@@ -380,7 +380,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   }
 
   protected abstract static class AbstractAddGroup extends ActionGroup implements ActionGroupWithPreselection {
-    protected AbstractAddGroup(String text, Icon icon) {
+    protected AbstractAddGroup(@NlsActions.ActionText String text, Icon icon) {
       super(text, true);
 
       final Presentation presentation = getTemplatePresentation();
@@ -394,7 +394,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
       }
     }
 
-    public AbstractAddGroup(@Nls String text) {
+    public AbstractAddGroup(@NlsActions.ActionText String text) {
       this(text, IconUtil.getAddIcon());
     }
 

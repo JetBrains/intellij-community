@@ -16,6 +16,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.actions.validate.ValidateXmlHandler;
 import com.thaiopensource.util.PropertyMapBuilder;
@@ -26,6 +27,7 @@ import com.thaiopensource.validate.ValidationDriver;
 import com.thaiopensource.validate.auto.AutoSchemaReader;
 import com.thaiopensource.validate.rng.CompactSchemaReader;
 import com.thaiopensource.validate.rng.RngProperty;
+import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.model.descriptors.RngElementDescriptor;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +41,6 @@ import java.net.MalformedURLException;
 import java.util.concurrent.Future;
 
 public class RngValidateHandler implements ValidateXmlHandler {
-  private static final String CONTENT_NAME = "Validate RELAX NG";
   private static final Key<NewErrorTreeViewPanel> KEY = Key.create("VALIDATING");
 
   @Override
@@ -80,7 +81,8 @@ public class RngValidateHandler implements ValidateXmlHandler {
           return (RngElementDescriptor)descriptor;
         }
       }
-    } catch (NullPointerException e1) {
+    }
+    catch (NullPointerException e1) {
       // OK
     }
     return null;
@@ -89,7 +91,8 @@ public class RngValidateHandler implements ValidateXmlHandler {
   private static void doRun(final Project project, final VirtualFile instanceFile, final VirtualFile schemaFile) {
     saveFiles(instanceFile, schemaFile);
 
-    final MessageViewHelper helper = new MessageViewHelper(project, CONTENT_NAME, KEY);
+    final MessageViewHelper helper = new MessageViewHelper(
+      project, RelaxngBundle.message("relaxng.message-viewer.tab-title.validate-relax-ng"), KEY);
 
     helper.openMessageView(() -> doRun(project, instanceFile, schemaFile));
 
@@ -105,7 +108,8 @@ public class RngValidateHandler implements ValidateXmlHandler {
               SwingUtilities.invokeLater(
                 () -> {
                   helper.close();
-                  WindowManager.getInstance().getStatusBar(project).setInfo("No errors detected");
+                  WindowManager.getInstance().getStatusBar(project).setInfo(
+                    XmlBundle.message("xml.validate.no.errors.detected.status.message"));
                 }
               );
             }
@@ -148,16 +152,20 @@ public class RngValidateHandler implements ValidateXmlHandler {
           final String path = VfsUtilCore.fixIDEAUrl(instanceFile.getUrl());
           try {
             driver.validate(ValidationDriver.uriOrFileInputSource(path));
-          } catch (IOException e1) {
+          }
+          catch (IOException e1) {
             eh.fatalError(new SAXParseException(e1.getMessage(), null, UriOrFile.fileToUri(path), -1, -1, e1));
           }
         }
-      } catch (SAXParseException e1) {
+      }
+      catch (SAXParseException e1) {
         eh.fatalError(e1);
-      } catch (IOException e1) {
+      }
+      catch (IOException e1) {
         eh.fatalError(new SAXParseException(e1.getMessage(), null, UriOrFile.fileToUri(schemaPath), -1, -1, e1));
       }
-    } catch (SAXException | MalformedURLException e1) {
+    }
+    catch (SAXException | MalformedURLException e1) {
       // huh?
       Logger.getInstance(RngValidateHandler.class.getName()).error(e1);
     }

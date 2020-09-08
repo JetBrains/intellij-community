@@ -120,10 +120,14 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
 
     MarkupModelEx markupModel;
     if (highlighter == null) {
+      int line = getLine();
+      if (line >= document.getLineCount()) {
+        return;
+      }
       markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
       TextRange range = myType.getHighlightRange(this);
       if (range != null && !range.isEmpty()) {
-        TextRange lineRange = DocumentUtil.getLineTextRange(document, getLine());
+        TextRange lineRange = DocumentUtil.getLineTextRange(document, line);
         if (range.intersects(lineRange)) {
           highlighter = markupModel.addRangeHighlighter(range.getStartOffset(), range.getEndOffset(),
                                                         DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes,
@@ -131,7 +135,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
         }
       }
       if (highlighter == null) {
-        highlighter = markupModel.addPersistentLineHighlighter(getLine(), DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes);
+        highlighter = markupModel.addPersistentLineHighlighter(line, DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes);
       }
       if (highlighter == null) {
         return;
@@ -258,8 +262,8 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
       }
 
       @Override
-      public Cursor getCursor(int line, int actionId) {
-        if (canMoveTo(line, getFile())) {
+      public Cursor getCursor(int line, VirtualFile file, int actionId) {
+        if (canMoveTo(line, file)) {
           return isCopyAction(actionId) ? DragSource.DefaultCopyDrop : DragSource.DefaultMoveDrop;
         }
 

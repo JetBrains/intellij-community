@@ -19,14 +19,15 @@ import com.intellij.facet.FacetConfiguration;
 import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetEditorTab;
 import com.intellij.facet.ui.FacetValidatorsManager;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.serialization.facet.FacetState;
 
 public class InvalidFacetConfiguration implements FacetConfiguration {
   private final FacetState myFacetState;
-  private final String myErrorMessage;
+  private final @NlsContexts.DialogMessage String myErrorMessage;
 
-  public InvalidFacetConfiguration(FacetState facetState, String errorMessage) {
+  public InvalidFacetConfiguration(FacetState facetState, @NlsContexts.DialogMessage String errorMessage) {
     myFacetState = facetState;
     myErrorMessage = errorMessage;
   }

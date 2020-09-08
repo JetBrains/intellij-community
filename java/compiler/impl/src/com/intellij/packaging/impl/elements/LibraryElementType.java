@@ -35,7 +35,7 @@ public class LibraryElementType extends ComplexPackagingElementType<LibraryPacka
   public static final LibraryElementType LIBRARY_ELEMENT_TYPE = new LibraryElementType();
 
   LibraryElementType() {
-    super("library", JavaCompilerBundle.message("element.type.name.library.files"));
+    super("library", JavaCompilerBundle.messagePointer("element.type.name.library.files"));
   }
 
   @Override
@@ -75,6 +75,6 @@ public class LibraryElementType extends ComplexPackagingElementType<LibraryPacka
 
   @Override
   public String getShowContentActionText() {
-    return "Show Library Files";
+    return JavaCompilerBundle.message("show.library.files");
   }
 }

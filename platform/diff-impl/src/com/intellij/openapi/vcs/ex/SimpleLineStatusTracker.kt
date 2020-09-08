@@ -20,7 +20,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.annotations.CalledInAwt
+import com.intellij.util.concurrency.annotations.RequiresEdt
 
 class SimpleLineStatusTracker(project: Project?,
                               document: Document,
@@ -30,7 +30,7 @@ class SimpleLineStatusTracker(project: Project?,
   override val virtualFile: VirtualFile? = FileDocumentManager.getInstance().getFile(document)
   override fun toRange(block: Block): Range = Range(block.start, block.end, block.vcsStart, block.vcsEnd, null)
 
-  @CalledInAwt
+  @RequiresEdt
   fun setBaseRevision(vcsContent: CharSequence) {
     setBaseRevision(vcsContent, null)
   }

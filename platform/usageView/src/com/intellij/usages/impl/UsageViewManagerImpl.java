@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
@@ -56,7 +57,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
   public UsageViewEx createUsageView(UsageTarget @NotNull [] targets,
                                      Usage @NotNull [] usages,
                                      @NotNull UsageViewPresentation presentation,
-                                     Factory<? extends UsageSearcher> usageSearcherFactory) {
+                                     @Nullable Factory<? extends UsageSearcher> usageSearcherFactory) {
     for (UsageViewFactory factory : UsageViewFactory.EP_NAME.getExtensionList()) {
       UsageViewEx result = factory.createUsageView(targets, usages, presentation, usageSearcherFactory);
       if (result != null) {
@@ -79,11 +80,10 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
   @Override
-  @NotNull
-  public UsageView showUsages(UsageTarget @NotNull [] searchedFor,
-                              Usage @NotNull [] foundUsages,
-                              @NotNull UsageViewPresentation presentation,
-                              Factory<? extends UsageSearcher> factory) {
+  public @NotNull UsageView showUsages(UsageTarget @NotNull [] searchedFor,
+                                       Usage @NotNull [] foundUsages,
+                                       @NotNull UsageViewPresentation presentation,
+                                       @Nullable Factory<? extends UsageSearcher> factory) {
     UsageViewEx usageView = createUsageView(searchedFor, foundUsages, presentation, factory);
     showUsageView(usageView, presentation);
     if (usageView instanceof UsageViewImpl) {
@@ -98,8 +98,9 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
   @Override
-  @NotNull
-  public UsageView showUsages(UsageTarget @NotNull [] searchedFor, Usage @NotNull [] foundUsages, @NotNull UsageViewPresentation presentation) {
+  public @NotNull UsageView showUsages(UsageTarget @NotNull [] searchedFor,
+                                       Usage @NotNull [] foundUsages,
+                                       @NotNull UsageViewPresentation presentation) {
     return showUsages(searchedFor, foundUsages, presentation, null);
   }
 
@@ -163,7 +164,8 @@ public class UsageViewManagerImpl extends UsageViewManager {
         int count = usageView == null ? 0 : usageView.getUsagesCount();
         String notification = StringUtil.capitalizeWords(UsageViewBundle.message("usages.n", count), true);
         LOG.debug(notification +" in "+(System.currentTimeMillis()-start) +"ms.");
-        return new NotificationInfo("Find Usages", UsageViewBundle.message("notification.title.find.usages.finished"), notification);
+        return new NotificationInfo("Find Usages",
+                                    UsageViewBundle.message("notification.title.find.usages.finished"), notification);
       }
     };
     ProgressManager.getInstance().run(task);
@@ -206,7 +208,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
   @NotNull
-  public static String getProgressTitle(@NotNull UsageViewPresentation presentation) {
+  public static @NlsContexts.ProgressTitle String getProgressTitle(@NotNull UsageViewPresentation presentation) {
     String scopeText = presentation.getScopeText();
     String usagesString = StringUtil.capitalize(presentation.getSearchString());
     return UsageViewBundle.message("search.progress.0.in.1", usagesString, scopeText);

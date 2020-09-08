@@ -20,6 +20,7 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsTaskHandler;
@@ -27,6 +28,7 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,12 +59,12 @@ public abstract class DvcsTaskHandler<R extends Repository> extends VcsTaskHandl
     List<R> map = new ArrayList<>();
     if (!problems.isEmpty()) {
       if (ApplicationManager.getApplication().isUnitTestMode() ||
-          Messages.showDialog(myProject,
-                              DvcsBundle.message("dialog.message.following.repositories.already.have.specified", myBranchType, taskName,
-                                                 StringUtil.join(problems, "<br>"), myBranchType),
-                              DvcsBundle.message("dialog.title.already.exists", StringUtil.capitalize(myBranchType)),
-                              new String[]{Messages.getYesButton(), Messages.getNoButton()}, 0,
-                              Messages.getWarningIcon()) == 0) {
+          MessageDialogBuilder
+            .yesNo(DvcsBundle.message("dialog.title.already.exists", StringUtil.capitalize(myBranchType)),
+                   DvcsBundle.message("dialog.message.following.repositories.already.have.specified",
+                                      myBranchType, taskName, StringUtil.join(problems, UIUtil.BR), myBranchType))
+            .icon(Messages.getWarningIcon())
+            .ask(myProject)) {
         checkout(taskName, problems, null);
         map.addAll(problems);
       }

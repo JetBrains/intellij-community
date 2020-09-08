@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -21,6 +22,8 @@ import java.util.Map;
 import static com.intellij.openapi.util.SystemInfo.isMac;
 
 class StartUseVcsDialog extends DialogWrapper {
+  @NonNls private static final String GIT = "Git";
+
   private final Map<String, String> myVcses;
   private VcsCombo myVcsCombo;
   private String mySelected;
@@ -86,8 +89,8 @@ class StartUseVcsDialog extends DialogWrapper {
     ArrayList<String> keys = new ArrayList<>(myVcses.keySet());
     keys.sort((String o1, String o2) -> {
       if (o1.equals(o2)) return 0;
-      if (o1.equals("Git")) return -1;
-      if (o2.equals("Git")) return 1;
+      if (o1.equals(GIT)) return -1;
+      if (o2.equals(GIT)) return 1;
       return o1.compareTo(o2);
     });
     return ArrayUtil.toStringArray(keys);

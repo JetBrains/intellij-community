@@ -3,6 +3,9 @@ package org.jetbrains.intellij.build.impl.compilation.cache
 
 import groovy.transform.CompileStatic
 
+/**
+ * Compiled bytecode of project module, cannot be used for incremental compilation without {@link org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache.JpsCaches}
+ */
 @CompileStatic
 class CompilationOutput {
   final String hash

@@ -34,6 +34,7 @@ import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -598,8 +599,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
   }
 
   public static class FileFilterModel extends FilterModel.PairFilterModel<VcsLogStructureFilter, VcsLogRootFilter> {
-    @NotNull private static final String DIR = "dir:"; // NON-NLS
-    @NotNull private static final String FILE = "file:"; // NON-NLS
+    @NotNull @NonNls private static final String DIR = "dir:";
+    @NotNull @NonNls private static final String FILE = "file:";
     @NotNull private final Set<VirtualFile> myRoots;
 
     public FileFilterModel(@NotNull Set<VirtualFile> roots,

@@ -20,14 +20,11 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
-
-import static com.intellij.openapi.actionSystem.Presentation.STRIP_MNEMONIC;
 
 public class PresentationFactory {
   private static final @NotNull NotNullLazyValue<Boolean> hasAnyLanguagePack =
@@ -60,11 +57,7 @@ public class PresentationFactory {
     return presentation;
   }
 
-  protected void processPresentation(Presentation presentation) {
-    if (SystemInfo.isMac && hasAnyLanguagePack.getValue()) {
-      presentation.putClientProperty(STRIP_MNEMONIC, Boolean.TRUE);
-    }
-  }
+  protected void processPresentation(Presentation presentation) { }
 
   public void reset() {
     ApplicationManager.getApplication().assertIsDispatchThread();

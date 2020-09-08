@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.ui.browser.BulkMovesOnlyChangesFilter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
+import git4idea.i18n.GitBundle;
 import git4idea.index.GitIndexUtil;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +46,7 @@ public class GitBulkMovesOnlyChangesFilter implements BulkMovesOnlyChangesFilter
         GitRepository repository = GitUtil.getRepositoryForRoot(project, root);
         List<GitIndexUtil.StagedFileOrDirectory> treeEntries = GitIndexUtil.listTree(repository, filePaths, revision);
         if (treeEntries.size() != filePaths.size()) {
-          throw new VcsException("Unexpected tree entries: " + revision);
+          throw new VcsException(GitBundle.message("unexpected.tree.entries.error", revision));
         }
 
         for (GitIndexUtil.StagedFileOrDirectory entry : treeEntries) {
@@ -54,7 +55,7 @@ public class GitBulkMovesOnlyChangesFilter implements BulkMovesOnlyChangesFilter
             blobs.put(Pair.create(revision, entry.getPath()), hash);
           }
           else {
-            throw new VcsException("Unexpected tree object: " + entry);
+            throw new VcsException(GitBundle.message("unexpected.tree.object.error", entry));
           }
         }
       }
@@ -105,7 +106,7 @@ public class GitBulkMovesOnlyChangesFilter implements BulkMovesOnlyChangesFilter
     FilePath filePath = revision.getFile();
     GitRevisionNumber number = (GitRevisionNumber)revision.getRevisionNumber();
     String blob = blobs.get(Pair.create(number, filePath));
-    if (blob == null) throw new VcsException(String.format("Blob not found: %s - %s", number, filePath));
+    if (blob == null) throw new VcsException(GitBundle.message("blob.not.found", number, filePath));
     return blob;
   }
 }

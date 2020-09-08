@@ -20,6 +20,7 @@ import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfLongType;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.lang.java.parser.ExpressionParser;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -147,9 +148,7 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
   }
 
   private static boolean isShiftToken(IElementType tokenType) {
-    return tokenType.equals(JavaTokenType.LTLT) ||
-           tokenType.equals(JavaTokenType.GTGT) ||
-           tokenType.equals(JavaTokenType.GTGTGT);
+    return ExpressionParser.SHIFT_OPS.contains(tokenType);
   }
 
   private static class IntegerMultiplicationImplicitCastToLongInspectionFix extends InspectionGadgetsFix {

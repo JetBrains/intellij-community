@@ -70,8 +70,8 @@ interface JpsModuleListSerializer {
   val entitySourceFilter: (EntitySource) -> Boolean
     get() = { true }
 
-  fun loadFileList(reader: JpsFileContentReader, virtualFileManager: VirtualFileUrlManager): List<VirtualFileUrl>
-  fun createSerializer(internalSource: JpsFileEntitySource, fileUrl: VirtualFileUrl): JpsFileEntitiesSerializer<ModuleEntity>
+  fun loadFileList(reader: JpsFileContentReader, virtualFileManager: VirtualFileUrlManager): List<Pair<VirtualFileUrl, String?>>
+  fun createSerializer(internalSource: JpsFileEntitySource, fileUrl: VirtualFileUrl, moduleGroup: String?): JpsFileEntitiesSerializer<ModuleEntity>
   fun saveEntitiesList(entities: Sequence<ModuleEntity>, writer: JpsFileContentWriter)
   fun getFileName(entity: ModuleEntity): String
 

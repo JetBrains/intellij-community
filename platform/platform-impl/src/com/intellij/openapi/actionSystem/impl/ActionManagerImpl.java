@@ -19,9 +19,9 @@ import com.intellij.idea.IdeaLogger;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup;
-import com.intellij.internal.statistic.eventLog.EventFields;
-import com.intellij.internal.statistic.eventLog.EventPair;
-import com.intellij.internal.statistic.eventLog.ObjectEventData;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
+import com.intellij.internal.statistic.eventLog.events.ObjectEventData;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -46,9 +46,7 @@ import com.intellij.openapi.keymap.impl.DefaultKeymap;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.ProjectType;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -125,6 +123,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private static final String PROJECT_TYPE = "project-type";
   private static final String UNREGISTER_ELEMENT_NAME = "unregister";
   private static final String OVERRIDE_TEXT_ELEMENT_NAME = "override-text";
+  private static final String SYNONYM_ELEMENT_NAME = "synonym";
   private static final String PLACE_ATTR_NAME = "place";
   private static final String USE_TEXT_OF_PLACE_ATTR_NAME = "use-text-of-place";
   private static final String RESOURCE_BUNDLE_ATTR_NAME = "resource-bundle";
@@ -152,7 +151,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private boolean myTransparentOnlyUpdate;
   private final Map<OverridingAction, AnAction> myBaseActions = new HashMap<>();
   private int myAnonymousGroupIdCounter;
-  private boolean myPreloadComplete;
 
   ActionManagerImpl() {
     Application app = ApplicationManager.getApplication();
@@ -323,7 +321,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     });
   }
 
-  private static String computeDescription(ResourceBundle bundle, String id, String elementType, String descriptionValue) {
+  @SuppressWarnings("HardCodedStringLiteral")
+  private static @NlsActions.ActionDescription String computeDescription(ResourceBundle bundle, String id, String elementType, String descriptionValue) {
     if (bundle != null) {
       final String key = elementType + "." + id + ".description";
       return AbstractBundle.messageOrDefault(bundle, key, StringUtil.notNullize(descriptionValue));
@@ -333,7 +332,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  private static String computeActionText(ResourceBundle bundle, String id, String elementType, String textValue) {
+  @SuppressWarnings("HardCodedStringLiteral")
+  private static @NlsActions.ActionText String computeActionText(ResourceBundle bundle, String id, String elementType, String textValue) {
     return AbstractBundle.messageOrDefault(bundle, elementType + "." + id + "." + TEXT_ATTR_NAME, StringUtil.notNullize(textValue));
   }
 
@@ -398,14 +398,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       return;
     }
     processRemoveAndReplace(element, actionId, keymap, shortcut);
-  }
-
-  private void assertActionIsGroupOrStub(final AnAction action) {
-    if (myPreloadComplete) return;
-
-    if (!(action instanceof ActionGroup || action instanceof ActionStub || action instanceof ChameleonAction)) {
-      LOG.error("Action : " + action + "; class: " + action.getClass());
-    }
   }
 
   private static void reportActionError(@Nullable PluginId pluginId, @NotNull String message) {
@@ -527,7 +519,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     for (Element e : actionDescriptionElements) {
       Element parent = e.getParentElement();
       String bundleName = parent == null ? null : parent.getAttributeValue(RESOURCE_BUNDLE_ATTR_NAME);
-      processActionsChildElement(e, plugin, getActionsResourceBundle(plugin, bundleName), initialStartup);
+      processActionsChildElement(e, plugin, getActionsResourceBundle(plugin, bundleName));
     }
     StartUpMeasurer.addPluginCost(plugin.getPluginId().getIdString(), "Actions", StartUpMeasurer.getCurrentTime() - startTime);
   }
@@ -680,6 +672,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       else if (OVERRIDE_TEXT_ELEMENT_NAME.equals(e.getName())) {
         processOverrideTextNode(stub, e, plugin.getPluginId(), bundle);
       }
+      else if (SYNONYM_ELEMENT_NAME.equals(e.getName())) {
+        processSynonymNode(stub, e, plugin.getPluginId(), bundle);
+      }
       else {
         reportActionError(plugin.getPluginId(), "unexpected name of element \"" + e.getName() + "\"");
         return null;
@@ -827,7 +822,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         if (ACTION_ELEMENT_NAME.equals(name)) {
           AnAction action = processActionElement(child, plugin, bundle);
           if (action != null) {
-            assertActionIsGroupOrStub(action);
             addToGroupInner(group, action, Constraints.LAST, isSecondary(child));
           }
         }
@@ -846,7 +840,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         else if (REFERENCE_ELEMENT_NAME.equals(name)) {
           AnAction action = processReferenceElement(child, plugin.getPluginId());
           if (action != null) {
-            assertActionIsGroupOrStub(action);
             addToGroupInner(group, action, Constraints.LAST, isSecondary(child));
           }
         }
@@ -864,16 +857,18 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  private void processReferenceNode(final Element element, final PluginId pluginId, boolean initialStartup) {
+  private void processReferenceNode(final Element element,
+                                    final PluginId pluginId,
+                                    @Nullable ResourceBundle bundle) {
     final AnAction action = processReferenceElement(element, pluginId);
     if (action == null) return;
-    if (initialStartup) {
-      assertActionIsGroupOrStub(action);
-    }
 
     for (Element child : element.getChildren()) {
       if (ADD_TO_GROUP_ELEMENT_NAME.equals(child.getName())) {
         processAddToGroupNode(action, child, pluginId, isSecondary(child));
+      }
+      else if (SYNONYM_ELEMENT_NAME.equals(child.getName())) {
+        processSynonymNode(action, child, pluginId, bundle);
       }
     }
   }
@@ -882,11 +877,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
    * @param element description of link
    */
   private void processAddToGroupNode(AnAction action, Element element, PluginId pluginId, boolean secondary) {
-    // Real subclasses of AnAction should not be here
-    if (!(action instanceof Separator)) {
-      assertActionIsGroupOrStub(action);
-    }
-
     String name = action instanceof ActionStub ? ((ActionStub)action).getClassName() : action.getClass().getName();
     String id = action instanceof ActionStub ? ((ActionStub)action).getId() : myAction2Id.get(action);
     String actionName = name + " (" + id + ")";
@@ -969,6 +959,26 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
+  private static void processSynonymNode(AnAction action, Element element, PluginId pluginId, @Nullable ResourceBundle bundle) {
+    if (!SYNONYM_ELEMENT_NAME.equals(element.getName())) {
+      reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
+      return;
+    }
+    String text = element.getAttributeValue(TEXT_ATTR_NAME, "");
+    if (!text.isEmpty()) {
+      action.addSynonym(() -> text);
+    }
+    else {
+      String key = element.getAttributeValue(KEY_ATTR_NAME);
+      if (key != null && bundle != null) {
+        action.addSynonym(() -> BundleBase.message(bundle, key));
+      }
+      else {
+        reportActionError(pluginId, "Can't process synonym: neither text nor resource bundle key is specified");
+      }
+    }
+  }
+
   /**
    * @param parentGroup group which is the parent of the separator. It can be {@code null} in that
    *                    case separator will be added to group described in the <add-to-group ....> subelement.
@@ -979,6 +989,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
       return;
     }
+    @SuppressWarnings("HardCodedStringLiteral")
     String text = element.getAttributeValue(TEXT_ATTR_NAME);
     String key = element.getAttributeValue(KEY_ATTR_NAME);
     Separator separator =
@@ -1105,15 +1116,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   private void processActionsChildElement(@NotNull Element child,
                                           @NotNull IdeaPluginDescriptorImpl plugin,
-                                          @Nullable ResourceBundle bundle,
-                                          boolean initialStartup) {
+                                          @Nullable ResourceBundle bundle) {
     String name = child.getName();
     switch (name) {
       case ACTION_ELEMENT_NAME:
-        AnAction action = processActionElement(child, plugin, bundle);
-        if (action != null) {
-          assertActionIsGroupOrStub(action);
-        }
+        processActionElement(child, plugin, bundle);
         break;
       case GROUP_ELEMENT_NAME:
         processGroupElement(child, plugin, bundle);
@@ -1122,7 +1129,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         processSeparatorNode(null, child, plugin.getPluginId(), bundle);
         break;
       case REFERENCE_ELEMENT_NAME:
-        processReferenceNode(child, plugin.getPluginId(), initialStartup);
+        processReferenceNode(child, plugin.getPluginId(), bundle);
         break;
       case UNREGISTER_ELEMENT_NAME:
         processUnregisterNode(child, plugin.getPluginId());
@@ -1566,7 +1573,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       // and make it impossible to replace the corresponding actions later
       // (via unregisterAction+registerAction, as some app components do)
     }
-    myPreloadComplete = true;
   }
 
   @NotNull

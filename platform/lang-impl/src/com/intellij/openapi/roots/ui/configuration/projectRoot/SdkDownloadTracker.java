@@ -154,7 +154,7 @@ public class SdkDownloadTracker {
   public boolean tryRegisterDownloadingListener(@NotNull Sdk sdk,
                                                 @NotNull Disposable lifetime,
                                                 @NotNull ProgressIndicator indicator,
-                                                @NotNull Consumer<Boolean> onDownloadCompleteCallback) {
+                                                @NotNull Consumer<? super Boolean> onDownloadCompleteCallback) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     PendingDownload pd = findTask(sdk);
     if (pd == null) return false;
@@ -223,7 +223,7 @@ public class SdkDownloadTracker {
 
     final SynchronizedIdentityHashSet<Sdk> myEditableSdks = new SynchronizedIdentityHashSet<>();
     final SynchronizedIdentityHashSet<Runnable> mySdkFailedHandlers = new SynchronizedIdentityHashSet<>();
-    final SynchronizedIdentityHashSet<Consumer<Boolean>> myCompleteListeners = new SynchronizedIdentityHashSet<>();
+    final SynchronizedIdentityHashSet<Consumer<? super Boolean>> myCompleteListeners = new SynchronizedIdentityHashSet<>();
     final SynchronizedIdentityHashSet<Disposable> myDisposables = new SynchronizedIdentityHashSet<>();
 
     final AtomicBoolean myIsDownloading = new AtomicBoolean(false);
@@ -311,7 +311,7 @@ public class SdkDownloadTracker {
 
     void registerListener(@NotNull Disposable lifetime,
                           @NotNull ProgressIndicator uiIndicator,
-                          @NotNull Consumer<Boolean> completedCallback) {
+                          @NotNull Consumer<? super Boolean> completedCallback) {
       myModalityTracker.updateModality();
 
       //there is no need to add yet another copy of the same component

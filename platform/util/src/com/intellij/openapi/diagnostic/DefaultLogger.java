@@ -41,7 +41,7 @@ public class DefaultLogger extends Logger {
   public void info(String message, Throwable t) { }
 
   @Override
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  @SuppressWarnings({"UseOfSystemOutOrSystemErr", "HardCodedStringLiteral"})
   public void warn(@NonNls String message, @Nullable Throwable t) {
     t = checkException(t);
     System.err.println("WARN: " + message);
@@ -57,7 +57,7 @@ public class DefaultLogger extends Logger {
     throw new AssertionError(message, t);
   }
 
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  @SuppressWarnings({"UseOfSystemOutOrSystemErr", "HardCodedStringLiteral"})
   public static void dumpExceptionsToStderr(String message,
                                             @Nullable Throwable t,
                                             String @NotNull ... details) {
@@ -76,7 +76,7 @@ public class DefaultLogger extends Logger {
   @Override
   public void setLevel(Level level) { }
 
-  public static String attachmentsToString(@Nullable Throwable t) {
+  public static @NonNls String attachmentsToString(@Nullable Throwable t) {
     List<Attachment> attachments = ExceptionUtil
       .findCauseAndSuppressed(t, ExceptionWithAttachments.class)
       .stream()

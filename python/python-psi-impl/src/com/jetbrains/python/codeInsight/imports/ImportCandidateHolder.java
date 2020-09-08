@@ -3,6 +3,7 @@ package com.jetbrains.python.codeInsight.imports;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.QualifiedName;
@@ -119,7 +120,7 @@ public class ImportCandidateHolder implements Comparable<ImportCandidateHolder> 
   }
 
   @NotNull
-  public String getPresentableText(@NotNull String myName) {
+  public @NlsSafe String getPresentableText(@NotNull String myName) {
     PyImportElement importElement = getImportElement();
     PsiElement importable = getImportable();
     final StringBuilder sb = new StringBuilder(getQualifiedName(myName, myPath, importElement));

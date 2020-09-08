@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -26,6 +27,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SingleAlarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.ui.EmptyIcon;
@@ -34,6 +36,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,6 +81,8 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   private int myMaxWidth = -1;
   private volatile int myLookupTextWidth = 50;
   private final Object myWidthLock = ObjectUtils.sentinel("lookup width lock");
+  private final SingleAlarm myLookupWidthUpdateAlarm;
+  private final boolean myShrinkLookup;
 
   private final AsyncRendering myAsyncRendering;
 
@@ -110,6 +115,11 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     myNormalMetrics = myLookup.getTopLevelEditor().getComponent().getFontMetrics(myNormalFont);
     myBoldMetrics = myLookup.getTopLevelEditor().getComponent().getFontMetrics(myBoldFont);
     myAsyncRendering = new AsyncRendering(myLookup);
+
+    myLookupWidthUpdateAlarm = new SingleAlarm(this::updateLookupWidthFromVisibleItems, 50);
+    Disposer.register(lookup, () -> Disposer.dispose(myLookupWidthUpdateAlarm));
+
+    myShrinkLookup = Registry.is("ide.lookup.shrink");
   }
 
   private boolean myIsSelected = false;
@@ -354,7 +364,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   private void renderItemName(LookupElement item,
                       Color foreground,
                       @SimpleTextAttributes.StyleAttributeConstant int style,
-                      String name,
+                      @Nls String name,
                       final SimpleColoredComponent nameComponent) {
     final SimpleTextAttributes base = new SimpleTextAttributes(style, foreground);
 
@@ -470,23 +480,46 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     return font == null ? null : bold ? font.deriveFont(Font.BOLD) : font;
   }
 
-  boolean updateLookupWidth(LookupElement item, LookupElementPresentation presentation) {
-    final Font customFont = getFontAbleToDisplay(presentation);
-    if (customFont != null) {
-      item.putUserData(CUSTOM_FONT_KEY, customFont);
-    }
-    int maxWidth = updateMaximumWidth(presentation, item);
-    synchronized (myWidthLock) {
-      if (maxWidth > myLookupTextWidth) {
-        myLookupTextWidth = maxWidth;
-        return true;
+  /**
+   * Update lookup width due to visible in lookup items
+   */
+  void updateLookupWidthFromVisibleItems() {
+    List<LookupElement> visibleItems = myLookup.getVisibleItems();
+
+    int maxWidth = myShrinkLookup ? 0 : myLookupTextWidth;
+    for (var item : visibleItems) {
+      LookupElementPresentation presentation = myAsyncRendering.getLastComputed(item);
+
+      final Font customFont = getFontAbleToDisplay(presentation);
+      if (customFont != null) {
+        item.putUserData(CUSTOM_FONT_KEY, customFont);
       }
-      return false;
+
+      int itemWidth = updateMaximumWidth(presentation, item);
+      if (itemWidth > maxWidth) {
+        maxWidth = itemWidth;
+      }
+    }
+
+    synchronized (myWidthLock) {
+      if (myShrinkLookup || maxWidth > myLookupTextWidth) {
+        myLookupTextWidth = maxWidth;
+        myLookup.requestResize();
+        myLookup.refreshUi(false, false);
+      }
+    }
+  }
+
+  void scheduleUpdateLookupWidthFromVisibleItems(){
+    synchronized (myLookupWidthUpdateAlarm) {
+      if (!myLookupWidthUpdateAlarm.isDisposed()) {
+        myLookupWidthUpdateAlarm.request();
+      }
     }
   }
 
   void itemAdded(@NotNull LookupElement element, @NotNull LookupElementPresentation fastPresentation) {
-    updateLookupWidth(element, fastPresentation);
+    scheduleUpdateLookupWidthFromVisibleItems();
     AsyncRendering.rememberPresentation(element, fastPresentation);
 
     updateItemPresentation(element);

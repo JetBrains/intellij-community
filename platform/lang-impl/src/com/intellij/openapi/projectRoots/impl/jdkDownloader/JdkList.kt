@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
@@ -64,6 +65,7 @@ data class JdkItem(
   val isVisibleOnUI: Boolean,
 
   val jdkMajorVersion: Int,
+  @get:NlsSafe
   val jdkVersion: String,
   private val jdkVendorVersion: String?,
   val suggestedSdkName: String,

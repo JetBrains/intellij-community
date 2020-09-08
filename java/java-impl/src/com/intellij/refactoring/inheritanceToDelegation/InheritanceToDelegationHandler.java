@@ -44,7 +44,7 @@ import java.util.*;
 public class InheritanceToDelegationHandler implements RefactoringActionHandler, ContextAwareActionHandler {
   private static final Logger LOG = Logger.getInstance(InheritanceToDelegationHandler.class);
 
-  private static final MemberInfo.Filter<PsiMember> MEMBER_INFO_FILTER = new MemberInfo.Filter<PsiMember>() {
+  private static final MemberInfo.Filter<PsiMember> MEMBER_INFO_FILTER = new MemberInfo.Filter<>() {
     @Override
     public boolean includeMember(PsiMember element) {
       if (element instanceof PsiMethod) {

@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nls;
 public class PatchSyntaxException extends Exception {
   private final int myLine;
 
-  public PatchSyntaxException(int line, @Nls String message) {
+  public PatchSyntaxException(int line, @Nls(capitalization = Nls.Capitalization.Sentence) String message) {
     super(message);
     myLine = line;
   }

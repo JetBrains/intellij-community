@@ -2,6 +2,7 @@
 
 package com.maddyhome.idea.copyright.actions;
 
+import com.intellij.copyright.CopyrightBundle;
 import com.intellij.copyright.CopyrightManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -18,19 +19,22 @@ import com.maddyhome.idea.copyright.psi.UpdateCopyright;
 import com.maddyhome.idea.copyright.psi.UpdateCopyrightFactory;
 import com.maddyhome.idea.copyright.psi.UpdatePsiFileCopyright;
 import com.maddyhome.idea.copyright.util.FileTypeUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Supplier;
+
 public class UpdateCopyrightProcessor extends AbstractFileProcessor {
-  public static final String TITLE = "Update Copyright";
-  public static final String MESSAGE = "Updating copyrights...";
+  public static final @NotNull Supplier<@Nls String> TITLE = CopyrightBundle.messagePointer("update.copyright.progress.title");
+  public static final @NotNull Supplier<@Nls String> MESSAGE = CopyrightBundle.messagePointer("updating.copyrights.progress.message");
 
   public UpdateCopyrightProcessor(@NotNull Project project, Module module, @NotNull PsiFile file) {
-    super(project, file, TITLE, MESSAGE);
+    super(project, file, TITLE.get(), MESSAGE.get());
     setup(project, module);
   }
 
   public UpdateCopyrightProcessor(@NotNull Project project, Module module, PsiFile @NotNull [] files) {
-    super(project, files, TITLE, MESSAGE);
+    super(project, files, TITLE.get(), MESSAGE.get());
     setup(project, module);
   }
 

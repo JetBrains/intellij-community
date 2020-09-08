@@ -301,7 +301,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
   @NotNull
   @Override
   public String getName() {
-    return "Scene Builder";
+    return JavaFXBundle.message("scene.builder.editor.tab.name");
   }
 
   @Override

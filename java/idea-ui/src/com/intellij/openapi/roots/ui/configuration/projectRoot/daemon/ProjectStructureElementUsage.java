@@ -1,5 +1,6 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -9,10 +10,10 @@ public abstract class ProjectStructureElementUsage {
 
   public abstract ProjectStructureElement getContainingElement();
 
-  public abstract String getPresentableName();
+  public abstract @NlsContexts.Label String getPresentableName();
 
   @Nullable
-  public String getPresentableLocationInElement() {
+  public @NlsContexts.Label String getPresentableLocationInElement() {
     return null;
   }
 

@@ -1,5 +1,5 @@
 // "Unimplement Class" "true"
-final class A {}
+class A {}
 
 sealed class B permits C {}
 

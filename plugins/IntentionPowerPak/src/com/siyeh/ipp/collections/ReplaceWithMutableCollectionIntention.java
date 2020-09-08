@@ -30,7 +30,7 @@ public class ReplaceWithMutableCollectionIntention extends Intention {
   @NotNull
   @Override
   public String getText() {
-    return IntentionPowerPackBundle.defaultableMessage("replace.with.mutable.collection.intention.family.name");
+    return IntentionPowerPackBundle.message("replace.with.mutable.collection.intention.family.name");
   }
 
   @NotNull

@@ -7,20 +7,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiNameHelper;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.compiled.TypeAnnotationContainer;
-import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
-import com.intellij.psi.impl.java.stubs.PsiAnnotationStub;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
-import com.intellij.psi.impl.java.stubs.PsiModifierListStub;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
-import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.SmartList;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,18 +57,6 @@ public class TypeInfo {
   public final boolean isEllipsis;
   private TypeAnnotationContainer myTypeAnnotations;
 
-  static final class TypeInfoWithAnnotationStubs extends TypeInfo {
-    private final PsiAnnotationStub[] myAnnotationStubs;
-
-    TypeInfoWithAnnotationStubs(String text,
-                                byte arrayCount,
-                                boolean ellipsis,
-                                PsiAnnotationStub @NotNull [] annotationStubs) {
-      super(text, arrayCount, ellipsis);
-      myAnnotationStubs = annotationStubs;
-    }
-  }
-
   /**
    * Creates a non-array type info
    * 
@@ -110,27 +92,6 @@ public class TypeInfo {
    */
   public @NotNull TypeAnnotationContainer getTypeAnnotations() {
     return myTypeAnnotations == null ? TypeAnnotationContainer.EMPTY : myTypeAnnotations;
-  }
-
-  @NotNull
-  public TypeInfo applyAnnotations(@NotNull StubBase<?> owner) {
-    PsiModifierListStub modifierList = owner.findChildStubByType(JavaStubElementTypes.MODIFIER_LIST);
-    if (modifierList == null) return this;
-
-    List<PsiAnnotationStub> annotationStubs = null;
-    for (StubElement child : modifierList.getChildrenStubs()) {
-      if (!(child instanceof PsiAnnotationStub)) continue;
-      PsiAnnotationStub annotationStub = (PsiAnnotationStub)child;
-      if (PsiImplUtil.isTypeAnnotation(annotationStub.getPsiElement())) {
-        if (annotationStubs == null) annotationStubs = new SmartList<>();
-        annotationStubs.add(annotationStub);
-      }
-    }
-
-    PsiAnnotationStub[] stubArray = PsiAnnotationStub.EMPTY_ARRAY;
-    if (annotationStubs != null) stubArray = annotationStubs.toArray(PsiAnnotationStub.EMPTY_ARRAY);
-    if (stubArray.length == 0) return this;
-    return new TypeInfoWithAnnotationStubs(text, arrayCount, isEllipsis, stubArray);
   }
 
   @NotNull
@@ -190,13 +151,21 @@ public class TypeInfo {
 
       assert typeElement != null : element + " in " + parentStub;
 
-      isEllipsis = LightTreeUtil.firstChildOfType(tree, typeElement, JavaTokenType.ELLIPSIS) != null;
+      LighterASTNode nested = LightTreeUtil.firstChildOfType(tree, typeElement, JavaElementType.TYPE);
 
-      while (true) {
-        LighterASTNode nested = LightTreeUtil.firstChildOfType(tree, typeElement, JavaElementType.TYPE);
-        if (nested == null) break;
+      if (nested != null) {
+        // Java-style array
+        for (LighterASTNode child : tree.getChildren(typeElement)) {
+          IElementType tokenType = child.getTokenType();
+          if (tokenType == JavaTokenType.LBRACKET) {
+            arrayCount++;
+          }
+          else if (tokenType == JavaTokenType.ELLIPSIS) {
+            arrayCount++;
+            isEllipsis = true;
+          }
+        }
         typeElement = nested;
-        arrayCount++;  // Java-style array
       }
 
       text = LightTreeUtil.toFilteredString(tree, typeElement, null);
@@ -274,22 +243,20 @@ public class TypeInfo {
     }
   }
 
+  /**
+   * @param typeInfo
+   * @return type text without annotations
+   */
   @Nullable
   public static String createTypeText(@NotNull TypeInfo typeInfo) {
     if (typeInfo == NULL || typeInfo.text == null) {
       return null;
     }
-    if (typeInfo.arrayCount == 0 && !(typeInfo instanceof TypeInfoWithAnnotationStubs)) {
+    if (typeInfo.arrayCount == 0) {
       return typeInfo.text;
     }
 
     StringBuilder buf = new StringBuilder();
-
-    if (typeInfo instanceof TypeInfoWithAnnotationStubs) {
-      for (PsiAnnotationStub stub : ((TypeInfoWithAnnotationStubs)typeInfo).myAnnotationStubs) {
-        buf.append(stub.getText()).append(' ');
-      }
-    }
 
     buf.append(typeInfo.text);
 

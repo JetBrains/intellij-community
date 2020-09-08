@@ -9,7 +9,7 @@ import com.intellij.openapi.vcs.configurable.VcsOptionsTopHitProviderBase
 import com.intellij.ui.layout.*
 
 
-private val svnOptionGroupName get() = SvnBundle.message("subversion.name")
+private val svnOptionGroupName get() = SvnVcs.VCS_DISPLAY_NAME
 private fun configuration(project: Project) = SvnConfiguration.getInstance(project)
 
 // @formatter:off

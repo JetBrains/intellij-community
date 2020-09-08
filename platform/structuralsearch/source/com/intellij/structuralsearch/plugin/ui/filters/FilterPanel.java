@@ -49,7 +49,6 @@ public class FilterPanel implements FilterTable {
   @NotNull final Project myProject;
   private CompiledPattern myCompiledPattern;
   NamedScriptableDefinition myConstraint;
-  boolean myShown = false;
   LanguageFileType myFileType;
 
   final Header myHeader = new Header();
@@ -212,9 +211,6 @@ public class FilterPanel implements FilterTable {
 
   public void setCompiledPattern(@Nullable CompiledPattern compiledPattern) {
     myCompiledPattern = compiledPattern;
-    if (myCompiledPattern == null) {
-      myShown = false;
-    }
     showFilters();
   }
 
@@ -227,7 +223,6 @@ public class FilterPanel implements FilterTable {
       return;
     }
     myConstraint = constraint;
-    myShown = false;
     showFilters();
   }
 
@@ -236,7 +231,7 @@ public class FilterPanel implements FilterTable {
   }
 
   private void showFilters() {
-    if (myConstraint == null || myShown) {
+    if (myConstraint == null) {
       return;
     }
     if (!isValid()) {
@@ -276,7 +271,6 @@ public class FilterPanel implements FilterTable {
                                        showAddFilterPopup(table, new RelativePoint(table, table.getMousePosition()));
                                      });
     }
-    myShown = true;
   }
 
   public void setConstraintChangedCallback(Runnable callback) {

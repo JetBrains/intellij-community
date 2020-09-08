@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle.arrangement.std;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,9 +29,9 @@ import org.jetbrains.annotations.Nullable;
 public class ArrangementSettingsToken implements Comparable<ArrangementSettingsToken> {
 
   @NotNull protected String myId;
-  @NotNull protected String myRepresentationName;
+  @NotNull protected @Nls String myRepresentationName;
 
-  public ArrangementSettingsToken(@NotNull String id, @NotNull String name) {
+  public ArrangementSettingsToken(@NotNull String id, @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name) {
     myId = id;
     myRepresentationName = name;
   }
@@ -41,7 +42,7 @@ public class ArrangementSettingsToken implements Comparable<ArrangementSettingsT
   }
   
   @NotNull
-  public String getRepresentationValue() {
+  public @Nls String getRepresentationValue() {
     return myRepresentationName;
   }
 

@@ -11,6 +11,7 @@ import com.intellij.util.containers.Interner;
 import com.intellij.util.containers.WeakInterner;
 import gnu.trove.TObjectHashingStrategy;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -133,7 +134,7 @@ public abstract class InspectionTreeNode implements TreeNode {
     return getChildren().isEmpty();
   }
 
-  public abstract String getPresentableText();
+  public abstract @Nls String getPresentableText();
 
   @NotNull
   public List<? extends InspectionTreeNode> getChildren() {

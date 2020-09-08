@@ -35,10 +35,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.ZipperUpdater;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -56,13 +53,13 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.NullableConsumer;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsUser;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -326,7 +323,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     return actions.toArray(new Action[0]);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void runExecutor(ApplyPatchExecutor<AbstractFilePatchInProgress<?>> executor) {
     Collection<AbstractFilePatchInProgress<?>> included = getIncluded();
     if (included.isEmpty()) {
@@ -464,7 +461,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     return reader;
   }
 
-  private void addNotificationAndWarn(@NotNull String errorMessage) {
+  private void addNotificationAndWarn(@NotNull @NlsContexts.Label String errorMessage) {
     LOG.warn(errorMessage);
     myErrorNotificationPanel.setText(errorMessage);
     myErrorNotificationPanel.setVisible(true);
@@ -475,7 +472,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     myErrorNotificationPanel.setVisible(false);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void syncUpdatePatchFileAndScheduleReloadIfNeeded(@Nullable VirtualFile eventFile) {
     // if dialog is modal and refresh called not from dispatch thread then
     // fireEvents in RefreshQueueImpl will not be triggered because of wrong modality state inside those thread -> defaultMS == NON_MODAL
@@ -1188,7 +1185,8 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       @Override
       public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
         throws DiffRequestProducerException, ProcessCanceledException {
-        throw new DiffRequestProducerException("Cannot find base for '" + (beforePath != null ? beforePath : afterPath) + "'");
+        throw new DiffRequestProducerException(
+          VcsBundle.message("changes.error.cannot.find.base.for.path", beforePath != null ? beforePath : afterPath));
       }
     };
   }

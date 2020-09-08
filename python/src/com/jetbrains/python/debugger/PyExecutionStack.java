@@ -16,6 +16,7 @@
 package com.jetbrains.python.debugger;
 
 import com.intellij.xdebugger.frame.XExecutionStack;
+import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,13 +33,13 @@ public class PyExecutionStack extends XExecutionStack {
   private PyStackFrame myTopFrame;
 
   public PyExecutionStack(@NotNull final PyDebugProcess debugProcess, @NotNull final PyThreadInfo threadInfo) {
-    super(threadInfo.getName());
+    super(threadInfo.getName()); //NON-NLS
     myDebugProcess = debugProcess;
     myThreadInfo = threadInfo;
   }
 
   public PyExecutionStack(@NotNull final PyDebugProcess debugProcess, @NotNull final PyThreadInfo threadInfo, final @Nullable Icon icon) {
-    super(threadInfo.getName(), icon);
+    super(threadInfo.getName(), icon); //NON-NLS
     myDebugProcess = debugProcess;
     myThreadInfo = threadInfo;
   }
@@ -57,7 +58,7 @@ public class PyExecutionStack extends XExecutionStack {
   @Override
   public void computeStackFrames(int firstFrameIndex, XStackFrameContainer container) {
     if (myThreadInfo.getState() != PyThreadInfo.State.SUSPENDED) {
-      container.errorOccurred("Frames not available in non-suspended state");
+      container.errorOccurred(PyBundle.message("debugger.stack.frames.not.available.in.non.suspended.state"));
       return;
     }
 

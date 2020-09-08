@@ -74,7 +74,8 @@ private fun loadDetails(
           "",
           error,
           NotificationType.ERROR,
-          null
+          null,
+          "git.log.could.not.load.changes.of.commit"
         )
         VcsNotifier.getInstance(project).notify(notification)
       }

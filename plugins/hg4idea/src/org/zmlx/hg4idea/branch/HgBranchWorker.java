@@ -47,7 +47,9 @@ public class HgBranchWorker {
       ApplicationManager.getApplication().invokeLater(() -> displayCompareDialog(branchName, getCurrentBranchOrRev(repositories), myCompareInfo, selectedRepository));
     }
     catch (VcsException e) {
-      VcsNotifier.getInstance(myProject).notifyError(HgBundle.message("hg4idea.branch.compare.error"), e.getMessage());
+      VcsNotifier.getInstance(myProject).notifyError("hg.compare.with.branch.error",
+                                                     HgBundle.message("hg4idea.branch.compare.error"),
+                                                     e.getMessage());
     }
   }
 

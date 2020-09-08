@@ -18,6 +18,7 @@ import org.jdom.Attribute;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +35,7 @@ final class XmlReader {
   static final String APPLICATION_SERVICE = "com.intellij.applicationService";
   static final String PROJECT_SERVICE = "com.intellij.projectService";
   static final String MODULE_SERVICE = "com.intellij.moduleService";
-  private static final String ATTRIBUTE_AREA = "area";
+  private static final @NonNls String ATTRIBUTE_AREA = "area";
 
   @SuppressWarnings("BooleanMethodIsAlwaysInverted")
   static boolean isSuitableForOs(@NotNull String os) {
@@ -218,7 +219,8 @@ final class XmlReader {
       catch (IOException | JDOMException e) {
         String message = "Plugin " + rootDescriptor + " misses optional descriptor " + configFile;
         if (context.ignoreMissingSubDescriptor) {
-          LOG.info(message, e);
+          LOG.info(message);
+          LOG.debug(e);
         }
         else {
           throw new RuntimeException(message, e);

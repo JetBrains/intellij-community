@@ -67,7 +67,7 @@ public final class JavaSharedImplUtil {
       }
 
       if (PsiUtil.isJavaToken(child, JavaTokenType.LBRACKET)) {
-        annotations.add(current == null ? PsiAnnotation.EMPTY_ARRAY : ContainerUtil.toArray(current, PsiAnnotation.ARRAY_FACTORY));
+        annotations.add(0, current == null ? PsiAnnotation.EMPTY_ARRAY : ContainerUtil.toArray(current, PsiAnnotation.ARRAY_FACTORY));
         current = null;
         if (stop) return annotations;
       }

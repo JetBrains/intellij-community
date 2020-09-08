@@ -8,6 +8,7 @@ import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -61,7 +62,7 @@ public final class UnversionedDiffRequestProducer implements ChangeDiffRequestCh
   public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
     throws DiffRequestProducerException, ProcessCanceledException {
     VirtualFile file = myPath.getVirtualFile();
-    if (file == null) throw new DiffRequestProducerException("Can't show diff - file not found");
+    if (file == null) throw new DiffRequestProducerException(DiffBundle.message("error.cant.show.diff.file.not.found"));
     return createRequest(myProject, file);
   }
 

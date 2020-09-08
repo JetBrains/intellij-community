@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +46,7 @@ public final class VcsRoot {
     return hashcode;
   }
 
+  @NonNls
   @Override
   public String toString() {
     return String.format("VcsRoot{vcs=%s, path=%s}", myVcs, myPath);

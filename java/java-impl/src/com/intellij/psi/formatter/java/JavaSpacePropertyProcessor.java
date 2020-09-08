@@ -6,6 +6,7 @@ import com.intellij.formatting.Spacing;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.JavaParserDefinition;
+import com.intellij.lang.java.parser.ExpressionParser;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -1066,13 +1067,13 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
       else if (i == JavaTokenType.GT || i == JavaTokenType.LT || i == JavaTokenType.GE || i == JavaTokenType.LE) {
         createSpaceInCode(mySettings.SPACE_AROUND_RELATIONAL_OPERATORS);
       }
-      else if (i == JavaTokenType.PLUS || i == JavaTokenType.MINUS) {
+      else if (ExpressionParser.ADDITIVE_OPS.contains(i)) {
         createSpaceInCode(mySettings.SPACE_AROUND_ADDITIVE_OPERATORS);
       }
-      else if (i == JavaTokenType.ASTERISK || i == JavaTokenType.DIV || i == JavaTokenType.PERC) {
+      else if (ExpressionParser.MULTIPLICATIVE_OPS.contains(i)) {
         createSpaceInCode(mySettings.SPACE_AROUND_MULTIPLICATIVE_OPERATORS);
       }
-      else if (i == JavaTokenType.LTLT || i == JavaTokenType.GTGT || i == JavaTokenType.GTGTGT) {
+      else if (ExpressionParser.SHIFT_OPS.contains(i)) {
         createSpaceInCode(mySettings.SPACE_AROUND_SHIFT_OPERATORS);
       }
       else {

@@ -23,8 +23,9 @@ import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
 import com.intellij.vcs.log.ui.frame.MainFrame;
 import com.intellij.vcs.log.ui.frame.VcsLogEditorDiffPreview;
 import com.intellij.vcs.log.ui.table.GraphTableModel;
-import com.intellij.vcs.log.ui.table.VcsLogColumn;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
+import com.intellij.vcs.log.ui.table.column.Date;
+import com.intellij.vcs.log.ui.table.column.TableColumnWidthProperty;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
@@ -223,16 +224,16 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
       else if (MainVcsLogUiProperties.BEK_SORT_TYPE.equals(property)) {
         myRefresher.onSortTypeChange(myUiProperties.get(MainVcsLogUiProperties.BEK_SORT_TYPE));
       }
-      else if (CommonUiProperties.COLUMN_ORDER.equals(property)) {
+      else if (CommonUiProperties.COLUMN_ID_ORDER.equals(property)) {
         getTable().onColumnOrderSettingChanged();
       }
       else if (property instanceof VcsLogHighlighterProperty) {
         getTable().repaint();
       }
-      else if (property instanceof CommonUiProperties.TableColumnProperty) {
-        getTable().forceReLayout(((CommonUiProperties.TableColumnProperty)property).getColumn());
+      else if (property instanceof TableColumnWidthProperty) {
+        getTable().forceReLayout(((TableColumnWidthProperty)property).getColumn());
       }
-      else if (property.equals(CommonUiProperties.PREFER_COMMIT_DATE) && getTable().getTableColumn(VcsLogColumn.DATE) != null) {
+      else if (property.equals(CommonUiProperties.PREFER_COMMIT_DATE) && getTable().getTableColumn(Date.INSTANCE) != null) {
         getTable().repaint();
       }
     }

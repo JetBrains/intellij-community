@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.elements;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.impl.ui.ArchiveElementPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
@@ -30,7 +31,7 @@ public class ArchivePackagingElement extends CompositeElementWithManifest<Archiv
   }
 
   @Attribute(NAME_ATTRIBUTE)
-  public String getArchiveFileName() {
+  public @NlsSafe String getArchiveFileName() {
     return myArchiveFileName;
   }
 

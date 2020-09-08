@@ -2,7 +2,6 @@
 package com.intellij.grazie.grammar
 
 import com.intellij.grazie.GrazieTestBase
-import com.intellij.grazie.ide.language.plain.PlainTextGrammarCheckingStrategy
 import org.junit.Assert
 import org.junit.Test
 
@@ -11,21 +10,21 @@ class GrammarCheckerTests : GrazieTestBase() {
   @Test
   fun `test empty text`() {
     val token = plain("")
-    val fixes = GrammarChecker.check(token, PlainTextGrammarCheckingStrategy())
+    val fixes = check(token)
     assertIsEmpty(fixes)
   }
 
   @Test
   fun `test correct text`() {
     val token = plain("Hello world")
-    val fixes = GrammarChecker.check(token, PlainTextGrammarCheckingStrategy())
+    val fixes = check(token)
     assertIsEmpty(fixes)
   }
 
   @Test
   fun `test few lines of correct text`() {
     val tokens = plain("Hello world!\n", "This is the start of a message.\n", "The end is also here.")
-    val fixes = GrammarChecker.check(tokens, PlainTextGrammarCheckingStrategy())
+    val fixes = check(tokens)
     assertIsEmpty(fixes)
   }
 
@@ -34,7 +33,7 @@ class GrammarCheckerTests : GrazieTestBase() {
   fun `test one line of text with one typo`() {
     val text = "Tot he world, my dear friend"
     val tokens = plain(text).toList()
-    val fixes = GrammarChecker.check(tokens, PlainTextGrammarCheckingStrategy())
+    val fixes = check(tokens)
     fixes.single().assertTypoIs(IntRange(0, 5), listOf("To the"), text)
   }
 
@@ -42,7 +41,7 @@ class GrammarCheckerTests : GrazieTestBase() {
   fun `test few lines of text with typo on first line`() {
     val text = listOf("Tot he world, my dear friend!\n", "This is the start of a message.\n", "The end is also here world\n")
     val tokens = plain(text)
-    val fixes = GrammarChecker.check(tokens, PlainTextGrammarCheckingStrategy())
+    val fixes = check(tokens)
     fixes.single().assertTypoIs(IntRange(0, 5), listOf("To the"), text[0])
   }
 
@@ -50,7 +49,7 @@ class GrammarCheckerTests : GrazieTestBase() {
   fun `test few lines of text with typo on last line`() {
     val text = listOf("Hello world!\n", "This is the start of a message.\n", "It is a the friend\n")
     val tokens = plain(text)
-    val fixes = GrammarChecker.check(tokens, PlainTextGrammarCheckingStrategy())
+    val fixes = check(tokens)
     fixes.single().assertTypoIs(IntRange(6, 10), listOf("a", "the"), text[2])
   }
 
@@ -58,11 +57,11 @@ class GrammarCheckerTests : GrazieTestBase() {
   fun `test few lines of text with few typos`() {
     val text = listOf("Hello. World,, tot he.\n", "This are my friend.")
     val tokens = plain(text)
-    val fixes = GrammarChecker.check(tokens, PlainTextWithoutSpacesGrammarCheckingStrategy()).toList()
+    val fixes = check(tokens).toList()
     Assert.assertEquals(3, fixes.size)
     fixes[0].assertTypoIs(IntRange(12, 13), listOf(","), text[0])
     fixes[1].assertTypoIs(IntRange(15, 20), listOf("to the"), text[0])
-    fixes[2].assertTypoIs(IntRange(0, 7), listOf("This is"), text[1])
+    fixes[2].assertTypoIs(IntRange(0, 3), listOf("These"), text[1])
   }
 
   @Test
@@ -70,10 +69,10 @@ class GrammarCheckerTests : GrazieTestBase() {
     val text = listOf("English text.  Hello. World,, tot he.  \n  ", "     This is the next Javadoc string.   \n",
                       "    This are my friend.    ")
     val tokens = plain(text)
-    val fixes = GrammarChecker.check(tokens, PlainTextWithoutSpacesGrammarCheckingStrategy()).toList()
+    val fixes = check(tokens).toList()
     Assert.assertEquals(3, fixes.size)
     fixes[0].assertTypoIs(IntRange(27, 28), listOf(","), text[0])
     fixes[1].assertTypoIs(IntRange(30, 35), listOf("to the"), text[0])
-    fixes[2].assertTypoIs(IntRange(4, 11), listOf("This is"), text[2])
+    fixes[2].assertTypoIs(IntRange(4, 7), listOf("These"), text[2])
   }
 }

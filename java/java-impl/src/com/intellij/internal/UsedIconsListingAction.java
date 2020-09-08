@@ -42,7 +42,7 @@ public class UsedIconsListingAction extends AnAction {
     final MultiMap<String, PsiExpression> calls = new MultiMap<>();
 
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-    Processor<PsiReference> consumer = new Processor<PsiReference>() {
+    Processor<PsiReference> consumer = new Processor<>() {
       @Override
       public boolean process(PsiReference reference) {
         PsiCallExpression call = PsiTreeUtil.getParentOfType(reference.getElement(), PsiCallExpression.class, false);
@@ -117,7 +117,7 @@ public class UsedIconsListingAction extends AnAction {
         }
       },
 
-      new Processor<PsiFile>() {
+      new Processor<>() {
         @Override
         public boolean process(PsiFile file) {
           file.accept(new XmlRecursiveElementVisitor() {

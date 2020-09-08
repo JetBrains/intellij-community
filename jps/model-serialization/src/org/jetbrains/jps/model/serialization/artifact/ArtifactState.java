@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.serialization.artifact;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -15,7 +16,7 @@ import java.util.List;
 @Tag("artifact")
 public class ArtifactState {
   @NonNls public static final String NAME_ATTRIBUTE = "name";
-  private String myName;
+  private @NlsSafe String myName;
   private String myOutputPath;
   private String myArtifactType = "plain";
   private boolean myBuildOnMake;
@@ -24,7 +25,7 @@ public class ArtifactState {
   private String myExternalSystemId;
 
   @Attribute(NAME_ATTRIBUTE)
-  public String getName() {
+  public @NlsSafe String getName() {
     return myName;
   }
 
@@ -38,7 +39,7 @@ public class ArtifactState {
     return myBuildOnMake;
   }
 
-  @Attribute(value = SerializationConstants.EXTERNAL_SYSTEM_ID_ATTRIBUTE)
+  @Attribute(SerializationConstants.EXTERNAL_SYSTEM_ID_ATTRIBUTE)
   public String getExternalSystemId() {
     return myExternalSystemId;
   }
@@ -67,7 +68,7 @@ public class ArtifactState {
     myArtifactType = artifactType;
   }
 
-  public void setName(String name) {
+  public void setName(@NlsSafe String name) {
     myName = name;
   }
 

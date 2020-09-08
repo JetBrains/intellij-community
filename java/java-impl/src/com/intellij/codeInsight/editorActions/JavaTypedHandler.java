@@ -23,6 +23,7 @@ import com.intellij.codeInsight.completion.JavaClassReferenceCompletionContribut
 import com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
+import com.intellij.lang.java.parser.ExpressionParser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -189,6 +190,11 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     return Result.CONTINUE;
   }
 
+  /**
+   * Automatically inserts parentheses if != or == was typed after a&b, a|b or a^b where a and b are numbers.
+   *
+   * @return true if the '=' char was processed
+   */
   private static boolean handleEquality(Project project, Editor editor, PsiFile file, int offsetBefore) {
     if (offsetBefore == 0) return false;
     Document doc = editor.getDocument();
@@ -244,22 +250,19 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
                     JavaTokenType.STRING_LITERAL, JavaTokenType.TEXT_BLOCK_LITERAL);
 
   private static final TokenSet UNWANTED_TOKEN_BEFORE_QUESTION =
-    TokenSet.create(
-      // inside assignment
-      JavaTokenType.EQ, JavaTokenType.ASTERISKEQ, JavaTokenType.DIVEQ, JavaTokenType.PERCEQ, JavaTokenType.PLUSEQ, JavaTokenType.MINUSEQ,
-      JavaTokenType.LTLTEQ, JavaTokenType.GTGTEQ, JavaTokenType.GTGTGTEQ, JavaTokenType.ANDEQ, JavaTokenType.OREQ, JavaTokenType.XOREQ,
-      // inside another ?:
-      JavaTokenType.QUEST, JavaTokenType.COLON);
+    TokenSet.orSet(ExpressionParser.ASSIGNMENT_OPS, TokenSet.create(JavaTokenType.QUEST, JavaTokenType.COLON));
 
   private static final TokenSet WANTED_TOKEN_BEFORE_QUESTION =
-    TokenSet.create(
-      // Tokens that may appear before ?: in void context
-      JavaTokenType.ARROW, JavaTokenType.SEMICOLON, JavaTokenType.LBRACE, JavaTokenType.RBRACE,
-      // Tokens that may appear before ?: in polyadic expression that may have non-boolean result
-      JavaTokenType.OR, JavaTokenType.XOR, JavaTokenType.AND, JavaTokenType.LTLT, JavaTokenType.GTGT,
-      JavaTokenType.GTGTGT, JavaTokenType.PLUS, JavaTokenType.MINUS, JavaTokenType.ASTERISK, JavaTokenType.DIV,
-      JavaTokenType.PERC);
+    // Tokens that may appear before ?: in polyadic expression that may have non-boolean result
+    TokenSet.orSet(
+      TokenSet.create(JavaTokenType.OR, JavaTokenType.XOR, JavaTokenType.AND),
+      ExpressionParser.SHIFT_OPS, ExpressionParser.ADDITIVE_OPS, ExpressionParser.MULTIPLICATIVE_OPS);
 
+  /**
+   * Automatically insert parentheses around the ?: when necessary.
+   *
+   * @return true if question mark was handled
+   */
   private static boolean handleQuestionMark(Project project, Editor editor, PsiFile file, int offsetBefore) {
     if (offsetBefore == 0) return false;
     HighlighterIterator it = ((EditorEx)editor).getHighlighter().createIterator(offsetBefore);
@@ -271,11 +274,11 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
       it.retreat();
       if (it.atEnd()) return false;
       curToken = it.getTokenType();
-      if (curToken == JavaTokenType.LPARENTH || curToken == JavaTokenType.LBRACKET) {
+      if (curToken == JavaTokenType.LPARENTH || curToken == JavaTokenType.LBRACKET || curToken == JavaTokenType.LBRACE) {
         nesting--;
         if (nesting < 0) return false;
       }
-      else if (curToken == JavaTokenType.RPARENTH || curToken == JavaTokenType.RBRACKET) {
+      else if (curToken == JavaTokenType.RPARENTH || curToken == JavaTokenType.RBRACKET || curToken == JavaTokenType.RBRACE) {
         nesting++;
       }
       else if (nesting == 0) {
@@ -294,22 +297,14 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     if (cond == null || cond.getThenExpression() != null || cond.getElseExpression() != null) return true;
     PsiExpression condition = cond.getCondition();
     if (PsiUtilCore.hasErrorElementChild(condition)) return true;
-    PsiExpression parenthesisStart = null;
     // intVal+bool? => intVal+(bool?)
     if (condition instanceof PsiPolyadicExpression && !PsiType.BOOLEAN.equals(condition.getType())) {
       PsiExpression lastOperand = ArrayUtil.getLastElement(((PsiPolyadicExpression)condition).getOperands());
       if (lastOperand != null && PsiType.BOOLEAN.equals(lastOperand.getType())) {
-        parenthesisStart = lastOperand;
+        int openingOffset = lastOperand.getTextRange().getStartOffset();
+        int closingOffset = cond.getTextRange().getEndOffset();
+        wrapWithParentheses(file, doc, openingOffset, closingOffset);
       }
-    }
-    // bool? in void context => (bool?)
-    if (ExpressionUtils.isVoidContext(cond) && PsiType.BOOLEAN.equals(condition.getType())) {
-      parenthesisStart = cond;
-    }
-    if (parenthesisStart != null) {
-      int openingOffset = parenthesisStart.getTextRange().getStartOffset();
-      int closingOffset = cond.getTextRange().getEndOffset();
-      wrapWithParentheses(file, doc, openingOffset, closingOffset);
     }
     return true;
   }

@@ -6,7 +6,7 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.internal.statistic.IdeActivity;
-import com.intellij.internal.statistic.eventLog.*;
+import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
@@ -24,7 +24,7 @@ import static com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesC
 public final class RunConfigurationUsageTriggerCollector {
   public static final String GROUP = "run.configuration.exec";
   private static final ObjectEventField ADDITIONAL_FIELD = EventFields.createAdditionalDataField(GROUP, "started");
-  private static final StringEventField EXECUTOR = EventFields.String("executor").withCustomRule("run_config_executor");
+  private static final StringEventField EXECUTOR = EventFields.StringValidatedByCustomRule("executor", "run_config_executor");
 
   @NotNull
   public static IdeActivity trigger(@NotNull Project project,

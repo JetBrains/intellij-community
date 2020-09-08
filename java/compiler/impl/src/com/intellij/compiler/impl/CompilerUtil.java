@@ -4,6 +4,7 @@ package com.intellij.compiler.impl;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -79,7 +80,7 @@ public final class CompilerUtil {
     }
   }
 
-  public static <T extends Throwable> void runInContext(CompileContext context, String title, ThrowableRunnable<T> action) throws T {
+  public static <T extends Throwable> void runInContext(CompileContext context, @NlsContexts.ProgressText String title, ThrowableRunnable<T> action) throws T {
     ProgressIndicator indicator = context.getProgressIndicator();
     if (title != null) {
       indicator.pushState();

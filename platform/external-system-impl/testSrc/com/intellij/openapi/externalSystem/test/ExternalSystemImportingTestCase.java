@@ -308,7 +308,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     assertModuleDeps(moduleName, LibraryOrderEntry.class, expectedDeps);
   }
 
-  protected void assertModuleLibDeps(BiPredicate<String, String> predicate, String moduleName, String... expectedDeps) {
+  protected void assertModuleLibDeps(BiPredicate<? super String, ? super String> predicate, String moduleName, String... expectedDeps) {
     assertModuleDeps(predicate, moduleName, LibraryOrderEntry.class, expectedDeps);
   }
 
@@ -340,7 +340,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     assertModuleDeps(equalsPredicate(), moduleName, clazz, expectedDeps);
   }
 
-  private void assertModuleDeps(BiPredicate<String, String> predicate, String moduleName, Class clazz, String... expectedDeps) {
+  private void assertModuleDeps(BiPredicate<? super String, ? super String> predicate, String moduleName, Class clazz, String... expectedDeps) {
     assertOrderedElementsAreEqual(predicate, collectModuleDepsNames(moduleName, clazz), expectedDeps);
   }
 
@@ -360,7 +360,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     return getModuleDep(moduleName, depName, ModuleOrderEntry.class);
   }
 
-  private List<String> collectModuleDepsNames(String moduleName, Predicate<OrderEntry> predicate) {
+  private List<String> collectModuleDepsNames(String moduleName, Predicate<? super OrderEntry> predicate) {
     List<String> actual = new ArrayList<>();
 
     for (OrderEntry e : getRootManager(moduleName).getOrderEntries()) {

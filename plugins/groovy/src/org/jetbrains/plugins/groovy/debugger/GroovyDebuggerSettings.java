@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.debugger;
 
 import com.intellij.openapi.options.Configurable;
@@ -32,8 +32,7 @@ public class GroovyDebuggerSettings extends XDebuggerSettings<GroovyDebuggerSett
         return singletonList(SimpleConfigurable.create("reference.idesettings.debugger.groovy", GroovyBundle.message("groovy.debug.caption"),
                                                        "reference.idesettings.debugger.groovy", GroovySteppingConfigurableUi.class, this));
       case HOTSWAP:
-        return singletonList(SimpleConfigurable.create("reference.idesettings.debugger.groovy", GroovyBundle.message("groovy.debug.caption"),
-                                                       "reference.idesettings.debugger.groovy", GroovyHotSwapConfigurableUi.class, this));
+        return singletonList(new GroovyHotSwapConfigurable(this));
     }
     return Collections.emptyList();
   }

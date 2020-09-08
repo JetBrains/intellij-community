@@ -3,18 +3,23 @@ package org.jetbrains.idea.devkit.actions.updateFromSources
 
 import com.intellij.CommonBundle
 import com.intellij.execution.configurations.JavaParameters
+import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessOutputTypes
+import com.intellij.ide.plugins.PluginInstaller
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.notification.*
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -23,20 +28,27 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEnumerator
-import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.systemIndependentPath
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.task.ProjectTaskManager
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.PathUtil
 import com.intellij.util.Restarter
-import com.intellij.util.SystemProperties
+import com.intellij.util.TimeoutUtil
+import com.intellij.util.io.inputStream
+import com.intellij.util.io.isFile
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.util.PsiUtil
 import java.io.File
+import java.nio.file.Paths
 import java.util.*
 import kotlin.collections.LinkedHashSet
 
@@ -47,9 +59,10 @@ private val notificationGroup by lazy {
 }
 
 internal open class UpdateIdeFromSourcesAction
- @JvmOverloads constructor(private val forceShowSettings: Boolean = false)
-  : AnAction(if (forceShowSettings) "Update IDE from Sources Settings..." else "Update IDE from Sources...",
-             "Builds an installation of IntelliJ IDEA from the currently opened sources and replace the current installation by it.", null), DumbAware {
+@JvmOverloads constructor(private val forceShowSettings: Boolean = false)
+  : AnAction(if (forceShowSettings) DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.show.settings.text")
+             else DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.text"),
+             DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.description"), null), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     if (forceShowSettings || UpdateFromSourcesSettings.getState().showSettings) {
@@ -57,28 +70,30 @@ internal open class UpdateIdeFromSourcesAction
       if (!ok) return
     }
 
-    fun error(message: String) {
+    fun error(@NlsContexts.DialogMessage message : String) {
       Messages.showErrorDialog(project, message, CommonBundle.getErrorTitle())
     }
 
     val state = UpdateFromSourcesSettings.getState()
     val devIdeaHome = project.basePath ?: return
-    val workIdeHome = state.workIdePath ?: PathManager.getHomePath()
+    val workIdeHome = state.actualIdePath
+    val restartAutomatically = state.restartAutomatically
     if (!ApplicationManager.getApplication().isRestartCapable && FileUtil.pathsEqual(workIdeHome, PathManager.getHomePath())) {
-      return error("This IDE cannot restart itself so updating from sources isn't supported")
+      return error(DevKitBundle.message("action.UpdateIdeFromSourcesAction.error.ide.cannot.restart"))
     }
 
     val notIdeHomeMessage = checkIdeHome(workIdeHome)
     if (notIdeHomeMessage != null) {
-      return error("$workIdeHome is not a valid IDE home: $notIdeHomeMessage")
+      return error(DevKitBundle.message("action.UpdateIdeFromSourcesAction.error.work.home.not.valid.ide.home",
+                                        workIdeHome, notIdeHomeMessage))
     }
 
     val scriptFile = File(devIdeaHome, "build/scripts/idea_ultimate.gant")
     if (!scriptFile.exists()) {
-      return error("$scriptFile doesn't exist")
+      return error(DevKitBundle.message("action.UpdateIdeFromSourcesAction.error.build.scripts.not.exists", scriptFile))
     }
     if (!scriptFile.readText().contains(includeBinAndRuntimeProperty)) {
-      return error("The build scripts is out-of-date, please update to the latest 'master' sources.")
+      return error(DevKitBundle.message("action.UpdateIdeFromSourcesAction.error.build.scripts.out.of.date"))
     }
 
     val bundledPluginDirsToSkip: List<String>
@@ -100,16 +115,16 @@ internal open class UpdateIdeFromSourcesAction
       nonBundledPluginDirsToInclude = emptyList()
     }
 
-    val deployDir = "$devIdeaHome/out/deploy"
-    val distRelativePath = "dist"
-    val backupDir = "$devIdeaHome/out/backup-before-update-from-sources"
+    val deployDir = "$devIdeaHome/out/deploy" // NON-NLS
+    val distRelativePath = "dist" // NON-NLS
+    val backupDir = "$devIdeaHome/out/backup-before-update-from-sources" // NON-NLS
     val params = createScriptJavaParameters(devIdeaHome, project, deployDir, distRelativePath, scriptFile,
                                             buildEnabledPluginsOnly, bundledPluginDirsToSkip, nonBundledPluginDirsToInclude) ?: return
     ProjectTaskManager.getInstance(project)
       .buildAllModules()
       .onSuccess {
         if (!it.isAborted && !it.hasErrors()) {
-          runUpdateScript(params, project, workIdeHome, "$deployDir/$distRelativePath", backupDir)
+          runUpdateScript(params, project, workIdeHome, deployDir, distRelativePath, backupDir, restartAutomatically)
         }
       }
   }
@@ -118,11 +133,11 @@ internal open class UpdateIdeFromSourcesAction
     val homeDir = File(workIdeHome)
     if (!homeDir.exists()) return null
 
-    if (homeDir.isFile) return "it is not a directory"
-    val buildTxt = if (SystemInfo.isMac) "Resources/build.txt" else "build.txt"
+    if (homeDir.isFile) return DevKitBundle.message("action.UpdateIdeFromSourcesAction.error.work.home.not.valid.ide.home.not.directory")
+    val buildTxt = if (SystemInfo.isMac) "Resources/build.txt" else "build.txt" // NON-NLS
     for (name in listOf("bin", buildTxt)) {
       if (!File(homeDir, name).exists()) {
-        return "'$name' doesn't exist"
+        return DevKitBundle.message("action.UpdateIdeFromSourcesAction.error.work.home.not.valid.ide.home.not.exists", name)
       }
     }
     return null
@@ -131,24 +146,26 @@ internal open class UpdateIdeFromSourcesAction
   private fun runUpdateScript(params: JavaParameters,
                               project: Project,
                               workIdeHome: String,
-                              builtDistPath: String,
-                              backupDir: String) {
-    object : Task.Backgroundable(project, "Updating from Sources", true) {
+                              deployDirPath: String,
+                              distRelativePath: String,
+                              backupDir: String,
+                              restartAutomatically: Boolean) {
+    val builtDistPath = "$deployDirPath/$distRelativePath"
+    object : Task.Backgroundable(project, DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.title"), true) {
       override fun run(indicator: ProgressIndicator) {
-        indicator.text = "Updating IDE from sources..."
+        indicator.text = DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.progress.text")
         backupImportantFilesIfNeeded(workIdeHome, backupDir, indicator)
-        indicator.text2 = "Deleting $builtDistPath"
+        indicator.text2 = DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.progress.delete", builtDistPath)
         FileUtil.delete(File(builtDistPath))
-        indicator.text2 = "Starting gant script"
-        val scriptHandler = params.createOSProcessHandler()
-        val errorLines = Collections.synchronizedList(ArrayList<String>())
+        indicator.text2 = DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.progress.start.gant.script")
+        val commandLine = params.toCommandLine()
+        commandLine.isRedirectErrorStream = true
+        val scriptHandler = OSProcessHandler(commandLine)
+        val output = Collections.synchronizedList(ArrayList<@NlsSafe String>())
         scriptHandler.addProcessListener(object : ProcessAdapter() {
           override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-            LOG.debug("script: ${event.text}")
-            if (outputType == ProcessOutputTypes.STDERR) {
-              errorLines.add(event.text)
-            }
-            else if (outputType == ProcessOutputTypes.STDOUT) {
+            output.add(event.text)
+            if (outputType == ProcessOutputTypes.STDOUT) {
               indicator.text2 = event.text
             }
           }
@@ -159,10 +176,19 @@ internal open class UpdateIdeFromSourcesAction
             }
 
             if (event.exitCode != 0) {
-              val errorText = errorLines.joinToString("\n")
-              notificationGroup.createNotification(title = "Update from Sources Failed",
-                                                   content = "Build script finished with ${event.exitCode}: $errorText",
-                                                   type = NotificationType.ERROR).notify(project)
+              notificationGroup.createNotification(title = DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.failed.title"),
+                                                   content = DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.failed.content",
+                                                                                  event.exitCode),
+                                                   type = NotificationType.ERROR)
+                .addAction(NotificationAction.createSimple(DevKitBundle.message("action.UpdateIdeFromSourcesAction.notification.action.view.output")) {
+                  FileEditorManager.getInstance(project).openFile(LightVirtualFile("output.txt", output.joinToString("")), true)
+                })
+                .addAction(NotificationAction.createSimple(DevKitBundle.message("action.UpdateIdeFromSourcesAction.notification.action.view.debug.log")) {
+                  val logFile = LocalFileSystem.getInstance().refreshAndFindFileByPath("$deployDirPath/log/debug.log") ?: return@createSimple // NON-NLS
+                  logFile.refresh(true, false)
+                  FileEditorManager.getInstance(project).openFile(logFile, true)
+                })
+                .notify(project)
               return
             }
 
@@ -172,13 +198,11 @@ internal open class UpdateIdeFromSourcesAction
             }
 
             val command = generateUpdateCommand(builtDistPath, workIdeHome)
-            if (indicator.isShowing) {
-              restartWithCommand(command)
+            if (restartAutomatically) {
+              ApplicationManager.getApplication().invokeLater { scheduleRestart(command, deployDirPath, project) }
             }
             else {
-              notificationGroup.createNotification(title = "Update from Sources",
-                                                   content = "New installation is prepared from sources. <a href=\"#\">Restart</a>?",
-                                                   listener = NotificationListener { _, _ -> restartWithCommand(command) }).notify(project)
+              showRestartNotification(command, deployDirPath, project)
             }
           }
         })
@@ -191,6 +215,35 @@ internal open class UpdateIdeFromSourcesAction
     }.queue()
   }
 
+  private fun showRestartNotification(command: Array<String>, deployDirPath: String, project: Project) {
+    notificationGroup.createNotification(title = DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.success.title"),
+                                         content = DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.success.content"),
+                                         listener = NotificationListener { _, _ -> restartWithCommand(command, deployDirPath) }).notify(project)
+  }
+
+  private fun scheduleRestart(command: Array<String>, deployDirPath: String, project: Project) {
+    object : Task.Modal(project, DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.success.title"), true) {
+      override fun run(indicator: ProgressIndicator) {
+        indicator.isIndeterminate = false
+        var progress = 0
+        for (i in 10 downTo 1) {
+          indicator.text = DevKitBundle.message(
+            "action.UpdateIdeFromSourcesAction.progress.text.new.installation.prepared.ide.will.restart", i)
+          repeat(10) {
+            indicator.fraction = 0.01 * progress++
+            indicator.checkCanceled()
+            TimeoutUtil.sleep(100)
+          }
+        }
+        restartWithCommand(command, deployDirPath)
+      }
+
+      override fun onCancel() {
+        showRestartNotification(command, deployDirPath, project)
+      }
+    }.setCancelText(DevKitBundle.message("action.UpdateIdeFromSourcesAction.button.postpone")).queue()
+  }
+
   private fun backupImportantFilesIfNeeded(workIdeHome: String,
                                            backupDirPath: String,
                                            indicator: ProgressIndicator) {
@@ -201,7 +254,7 @@ internal open class UpdateIdeFromSourcesAction
     }
 
     LOG.debug("Backing up files from $workIdeHome to $backupDir")
-    indicator.text2 = "Backing up files"
+    indicator.text2 = DevKitBundle.message("action.UpdateIdeFromSourcesAction.backup.progress.text")
     FileUtil.createDirectory(backupDir)
     File(workIdeHome, "bin").listFiles()
       ?.filter { it.name !in safeToDeleteFilesInBin && it.extension !in safeToDeleteExtensions }
@@ -213,21 +266,23 @@ internal open class UpdateIdeFromSourcesAction
   }
 
   private fun startCopyingFiles(builtDistPath: String, workIdeHome: String, project: Project) {
-    object : Task.Backgroundable(project, "Updating from Sources", true) {
+    object : Task.Backgroundable(project, DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.title"), true) {
       override fun run(indicator: ProgressIndicator) {
-        indicator.text = "Copying files to IDE distribution..."
-        indicator.text2 = "Deleting old files"
+        indicator.text = DevKitBundle.message("action.UpdateIdeFromSourcesAction.copy.progress.text")
+        indicator.text2 = DevKitBundle.message("action.UpdateIdeFromSourcesAction.copy.delete.old.files.text")
         FileUtil.delete(File(workIdeHome))
         indicator.checkCanceled()
-        indicator.text2 = "Copying new files"
+        indicator.text2 = DevKitBundle.message("action.UpdateIdeFromSourcesAction.copy.copy.new.files.text")
         FileUtil.copyDir(File(builtDistPath), File(workIdeHome))
         indicator.checkCanceled()
-        Notification("Update from Sources", "Update from Sources", "New installation is prepared at $workIdeHome.",
+        Notification("Update from Sources", DevKitBundle.message("action.UpdateIdeFromSourcesAction.notification.title"),
+                     DevKitBundle.message("action.UpdateIdeFromSourcesAction.notification.content", workIdeHome),
                      NotificationType.INFORMATION).notify(project)
       }
     }.queue()
   }
 
+  @Suppress("HardCodedStringLiteral")
   private fun generateUpdateCommand(builtDistPath: String, workIdeHome: String): Array<String> {
     if (SystemInfo.isWindows) {
       val restartLogFile = File(PathManager.getLogPath(), "update-from-sources.log")
@@ -271,9 +326,38 @@ internal open class UpdateIdeFromSourcesAction
     return arrayOf("/bin/sh", "-c", command.joinToString(" && "))
   }
 
-  private fun restartWithCommand(command: Array<String>) {
+  private fun restartWithCommand(command: Array<String>, deployDirPath: String) {
+    updatePlugins(deployDirPath)
     Restarter.doNotLockInstallFolderOnRestart()
     (ApplicationManager.getApplication() as ApplicationImpl).restart(ApplicationEx.FORCE_EXIT or ApplicationEx.EXIT_CONFIRMED or ApplicationEx.SAVE, command)
+  }
+
+  private fun updatePlugins(deployDirPath: String) {
+    val pluginsDir = Paths.get(deployDirPath).resolve("artifacts/${ApplicationInfo.getInstance().build.productCode}-plugins")
+    val pluginsXml = pluginsDir.resolve("plugins.xml")
+    if (!pluginsXml.isFile()) {
+      LOG.warn("Cannot read non-bundled plugins from $pluginsXml, they won't be updated")
+      return
+    }
+    val plugins = try {
+      pluginsXml.inputStream().reader().use {
+        MarketplaceRequests.parsePluginList(it)
+      }
+    }
+    catch (e: Exception) {
+      LOG.error("Failed to parse $pluginsXml", e)
+      return
+    }
+    val existingCustomPlugins =
+      PluginManagerCore.getLoadedPlugins().asSequence().filter { !it.isBundled }.associateBy { it.pluginId.idString }
+    LOG.debug("Existing custom plugins: $existingCustomPlugins")
+    val pluginsToUpdate =
+      plugins.mapNotNull { node -> existingCustomPlugins[node.pluginId.idString]?.let { it to node } }
+    for ((existing, update) in pluginsToUpdate) {
+      val pluginFile = pluginsDir.resolve(update.downloadUrl)
+      LOG.debug("Adding update command: ${existing.pluginPath} to $pluginFile")
+      PluginInstaller.installAfterRestart(pluginFile, false, existing.pluginPath, update)
+    }
   }
 
   private fun createScriptJavaParameters(devIdeaHome: String,
@@ -321,6 +405,8 @@ internal open class UpdateIdeFromSourcesAction
     params.programParametersList.add(classpath.pathsString)
     params.programParametersList.add("--main")
     params.programParametersList.add("gant.Gant")
+    params.programParametersList.add("--debug")
+    params.programParametersList.add("-Dsome_unique_string_42_239")
     params.programParametersList.add("--file")
     params.programParametersList.add(scriptFile.absolutePath)
     params.programParametersList.add("update-from-sources")
@@ -360,11 +446,13 @@ private const val includeBinAndRuntimeProperty = "intellij.build.generate.bin.an
 
 internal class UpdateIdeFromSourcesSettingsAction : UpdateIdeFromSourcesAction(true)
 
+@NonNls
 private val safeToDeleteFilesInHome = setOf(
   "bin", "help", "jre", "jre64", "jbr", "lib", "license", "plugins", "redist", "MacOS", "Resources",
   "build.txt", "product-info.json", "Install-Linux-tar.txt", "Install-Windows-zip.txt", "ipr.reg"
 )
 
+@NonNls
 private val safeToDeleteFilesInBin = setOf(
   "append.bat", "appletviewer.policy", "format.sh", "format.bat",
   "fsnotifier", "fsnotifier64",
@@ -380,6 +468,7 @@ private val safeToDeleteFilesInBin = setOf(
   "idea64.vmoptions",
   "log.xml",
 */
-  )
+)
 
+@NonNls
 private val safeToDeleteExtensions = setOf("exe", "dll", "dylib", "so", "ico", "svg", "png", "py")

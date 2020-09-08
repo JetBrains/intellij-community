@@ -8,10 +8,14 @@ import com.intellij.ui.jcef.JBCefJSQuery
 
 /**
  * Message passing interface for the JCEF browser preview.
- * See [browserPipe.js] for the browser side support code.
+ * See [BrowserPipe.js] for the browser side support code.
  */
 class BrowserPipe(private val browser: JBCefBrowser) : Disposable {
   private val events = HashMap<String, JBCefJSQuery>()
+
+  init {
+    addBrowserEvents(WINDOW_READY_EVENT)
+  }
 
   /**
    * Generate javascript code to register events.
@@ -26,7 +30,7 @@ class BrowserPipe(private val browser: JBCefBrowser) : Disposable {
         });
         """.trimIndent()
       )
-    }.toString()
+    }.append("window.addEventListener(\"load\", () => messagePipe.post(\"$WINDOW_READY_EVENT\"));").toString()
   }
 
   /**
@@ -75,5 +79,9 @@ class BrowserPipe(private val browser: JBCefBrowser) : Disposable {
 
   override fun dispose() {
     events.values.forEach(Disposer::dispose)
+  }
+
+  companion object {
+    const val WINDOW_READY_EVENT = "documentReady"
   }
 }

@@ -29,6 +29,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
+import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.util.TestNGUtil;
 
@@ -82,7 +83,7 @@ public class TestNGTestPattern extends TestNGTestObject {
             collectTestMethods(classes, psiClass, methodName, searchScope);
           }
         } else {
-          throw new CantRunException("No tests found in class " + className);
+          throw new CantRunException(TestngBundle.message("dialog.message.no.tests.found.in.class", className));
         }
       }
     }
@@ -116,7 +117,7 @@ public class TestNGTestPattern extends TestNGTestObject {
         };
       calculateDependencies(null, classes, searchScope, TestNGUtil.getAllTestClasses(projectFilter, false));
       if (classes.size() == 0) {
-        throw new CantRunException("No tests found in for patterns \"" + StringUtil.join(patterns, " || ") + '\"');
+        throw new CantRunException(TestngBundle.message("dialog.message.no.tests.found.in.for.patterns", StringUtil.join(patterns, " || ")));
       }
     }
   }
@@ -138,7 +139,7 @@ public class TestNGTestPattern extends TestNGTestObject {
   public void checkConfiguration() throws RuntimeConfigurationException {
     final Set<String> patterns = myConfig.getPersistantData().getPatterns();
     if (patterns.isEmpty()) {
-      throw new RuntimeConfigurationWarning("No pattern selected");
+      throw new RuntimeConfigurationWarning(TestngBundle.message("testng.dialog.message.no.pattern.selected.warning"));
     }
   }
 }

@@ -27,7 +27,7 @@ public interface FileTypeConsumer {
 
   void consume(@NotNull FileType fileType);
 
-  void consume(@NotNull FileType fileType, @NonNls String extensions);
+  void consume(@NotNull FileType fileType, @NonNls String semicolonDelimitedExtensions);
 
   void consume(@NotNull FileType fileType, FileNameMatcher @NotNull ... matchers);
 

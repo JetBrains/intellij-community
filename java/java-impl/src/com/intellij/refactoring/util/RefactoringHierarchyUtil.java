@@ -186,7 +186,7 @@ public final class RefactoringHierarchyUtil {
   private static void _findImplementingClasses(PsiClass anInterface, final Set<? super PsiClass> visited, final Collection<? super PsiClass> result) {
     LOG.assertTrue(anInterface.isInterface());
     visited.add(anInterface);
-    ClassInheritorsSearch.search(anInterface, false).forEach(new PsiElementProcessorAdapter<>(new PsiElementProcessor<PsiClass>() {
+    ClassInheritorsSearch.search(anInterface, false).forEach(new PsiElementProcessorAdapter<>(new PsiElementProcessor<>() {
       @Override
       public boolean execute(@NotNull PsiClass aClass) {
         if (!aClass.isInterface()) {

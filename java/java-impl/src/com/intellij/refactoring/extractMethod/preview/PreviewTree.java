@@ -14,6 +14,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.tree.TreeUtil;
 import one.util.streamex.IntStreamEx;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +48,8 @@ class PreviewTree implements Disposable {
     tree.setShowsRootHandles(true);
     tree.setRootVisible(false);
     tree.setCellRenderer(new PreviewTreeRenderer());
-    tree.setName("ExtractMethodPreview");
+    @NonNls String treeName = "ExtractMethodPreview";
+    tree.setName(treeName);
     tree.getSelectionModel().addTreeSelectionListener(
       e -> ApplicationManager.getApplication().invokeLater(
         () -> onSelectionUpdate()));

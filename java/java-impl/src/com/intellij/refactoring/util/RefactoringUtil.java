@@ -42,6 +42,7 @@ import com.intellij.util.containers.Stack;
 import com.intellij.util.text.UniqueNameGenerator;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -975,7 +976,7 @@ public final class RefactoringUtil {
     final PsiElement body = lambdaExpression.getBody();
     if (!(body instanceof PsiExpression)) return (PsiCodeBlock)body;
 
-    String newLambdaText = "{";
+    @NonNls String newLambdaText = "{";
     if (!PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression))) newLambdaText += "return ";
     newLambdaText += "a;}";
 
@@ -997,6 +998,7 @@ public final class RefactoringUtil {
     return (PsiCodeBlock)CodeStyleManager.getInstance(project).reformat(body.replace(codeBlock));
   }
 
+  @NlsContexts.DialogMessage
   public static String checkEnumConstantInSwitchLabel(PsiExpression expr) {
     if (PsiImplUtil.getSwitchLabel(expr) != null) {
       PsiReferenceExpression ref = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(expr), PsiReferenceExpression.class);

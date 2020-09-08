@@ -639,15 +639,17 @@ public class Splitter extends JPanel implements Splittable {
         float proportion;
         if (isVertical()) {
           if (getHeight() > 0) {
-            proportion = MathUtil.clamp(MathUtil.clamp((float)myPoint.y / (float)Splitter.this.getHeight(), 
-                                                       getMinProportion(true), 1 - getMinProportion(false)), .0f, 1.0f);
+            float min = getMinProportion(true);
+            float max = 1 - getMinProportion(false);
+            proportion = MathUtil.clamp(Math.min(max, Math.max((float)myPoint.y / (float)Splitter.this.getHeight(), min)), .0f, 1.0f);
             setProportion(proportion);
           }
         }
         else {
           if (getWidth() > 0) {
-            proportion = MathUtil.clamp(MathUtil.clamp((float)myPoint.x / (float)Splitter.this.getWidth(), 
-                                                       getMinProportion(true), 1 - getMinProportion(false)), .0f, 1.0f);
+            float min = getMinProportion(true);
+            float max = 1 - getMinProportion(false);
+            proportion = MathUtil.clamp(Math.min(max, Math.max((float)myPoint.x / (float)Splitter.this.getWidth(), min)), .0f, 1.0f);
             setProportion(proportion);
           }
         }

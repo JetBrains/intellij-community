@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.remote.RemoteFile
+import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 
 class PyUnsupportedPackageManager(sdk: Sdk) : PyPackageManagerImpl(sdk) {
@@ -18,12 +19,12 @@ class PyUnsupportedPackageManager(sdk: Sdk) : PyPackageManagerImpl(sdk) {
                                       showProgress: Boolean,
                                       workingDir: String?): ProcessOutput {
     if (sdk.homePath == null) {
-      throw ExecutionException("Cannot find Python interpreter for SDK ${sdk.name}")
+      throw ExecutionException(PySdkBundle.message("python.sdk.cannot.find.python.interpreter.for.sdk", sdk.name))
     }
     if (sdk.sdkAdditionalData !is PyRemoteSdkAdditionalDataBase) {
-      throw PyExecutionException("Invalid remote SDK", helperPath, args)
+      throw PyExecutionException(PySdkBundle.message("python.sdk.invalid.remote.sdk"), helperPath, args)
     }
-    throw PyExecutionException("Package managing is not supported for SDK ${sdk.name}", helperPath, args)
+    throw PyExecutionException(PySdkBundle.message("python.sdk.package.managing.not.supported.for.sdk", sdk.name), helperPath, args)
   }
 
   override fun subscribeToLocalChanges() {

@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.DevKitBundle;
 
 import java.util.Objects;
 
@@ -31,7 +32,7 @@ public class UniqueToolbarIdInspection extends DevKitInspectionBase {
                 if (expressions.length > 0) {
                   String text = expressions[0].getText();
                   if (text.equals("\"\"") || text.endsWith(".UNKNOWN")) {
-                    holder.registerProblem(expressions[0], "Specify unique toolbar id");
+                    holder.registerProblem(expressions[0], DevKitBundle.message("inspections.unique.toolbar.id"));
                   }
                 }
               }

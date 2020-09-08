@@ -19,6 +19,8 @@ package com.intellij.ide.util.frameworkSupport;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +30,7 @@ import java.util.List;
 
 public abstract class FrameworkSupportProviderBase extends FrameworkSupportProvider {
 
-  protected FrameworkSupportProviderBase(final @NonNls @NotNull String id, final @NotNull String title) {
+  protected FrameworkSupportProviderBase(final @NonNls @NotNull String id, final @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title) {
     super(id, title);
   }
 
@@ -39,7 +41,7 @@ public abstract class FrameworkSupportProviderBase extends FrameworkSupportProvi
     return Collections.emptyList();
   }
 
-  public String getVersionLabelText() {
+  public @NlsContexts.Label String getVersionLabelText() {
     return "Version:";
   }
 

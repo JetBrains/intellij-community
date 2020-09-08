@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.findUsages;
 
 import com.intellij.find.FindBundle;
@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PredefinedSearchScopeProvider;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SeparatorFactory;
@@ -127,6 +126,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
     if (myFindUsagesOptions instanceof PersistentFindUsagesOptions) {
       ((PersistentFindUsagesOptions)myFindUsagesOptions).storeDefaults(myProject);
     }
+    FindUsagesStatisticsCollector.logOptions(myProject, myFindUsagesOptions);
     return myFindUsagesOptions;
   }
 
@@ -283,7 +283,7 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
   }
 
   protected final void addScopeData(FeatureUsageData data, SearchScope scope) {
-    if (PredefinedSearchScopeProvider.getInstance().getPredefinedScopes(myProject, null, true, true, false, false, true).contains(scope)) {
+    if (FindUsagesStatisticsCollector.SearchableScopeField.isPredefinedScope(myProject, scope)) {
       data.addData("searchScope", scope.getDisplayName());
     }
   }

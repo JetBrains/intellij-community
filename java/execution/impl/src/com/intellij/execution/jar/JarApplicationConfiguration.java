@@ -14,6 +14,7 @@ import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.execution.target.java.JavaLanguageRuntimeType;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
@@ -109,7 +110,7 @@ public class JarApplicationConfiguration extends LocatableConfigurationBase impl
     ProgramParametersUtil.checkWorkingDirectoryExist(this, getProject(), null);
     File jarFile = new File(getJarPath());
     if (!jarFile.exists()) {
-      throw new RuntimeConfigurationWarning("JAR file '" + jarFile.getAbsolutePath() + "' doesn't exist");
+      throw new RuntimeConfigurationWarning(JavaCompilerBundle.message("dialog.message.jar.file.doesn.t.exist", jarFile.getAbsolutePath()));
     }
     JavaRunConfigurationExtensionManager.checkConfigurationIsValid(this);
   }

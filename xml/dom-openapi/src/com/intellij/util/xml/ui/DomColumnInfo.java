@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xml.ui;
 
+import com.intellij.openapi.util.NlsContexts.ColumnName;
 import com.intellij.util.ui.ColumnInfo;
 
 import javax.swing.table.DefaultTableCellRenderer;
@@ -26,11 +27,11 @@ import javax.swing.table.TableCellRenderer;
 public abstract class DomColumnInfo<T, Aspect> extends ColumnInfo<T, Aspect> {
   private final TableCellRenderer myRenderer;
 
-  public DomColumnInfo(String name) {
+  public DomColumnInfo(@ColumnName String name) {
     this(name, new DefaultTableCellRenderer());
   }
 
-  public DomColumnInfo(String name, final TableCellRenderer renderer) {
+  public DomColumnInfo(@ColumnName String name, final TableCellRenderer renderer) {
     super(name);
     myRenderer = renderer;
   }

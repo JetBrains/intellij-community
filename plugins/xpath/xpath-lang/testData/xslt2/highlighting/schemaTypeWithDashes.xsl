@@ -12,7 +12,7 @@
       <test><xsl:value-of select="$var1"/></test>
       <xsl:variable name="var2" as="nsx:customType2">BBB</xsl:variable> <!-- green, correct -->
       <test><xsl:value-of select="$var2"/></test>
-      <xsl:variable name="var3" as="<error descr="Unknown Type">nsx:customType2-blam</error>">CCC</xsl:variable> <!-- green, bug -->
+      <xsl:variable name="var3" as="<error descr="Unknown type">nsx:customType2-blam</error>">CCC</xsl:variable> <!-- green, bug -->
       <test><xsl:value-of select="$var3"/></test>
     </result>
 

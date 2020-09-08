@@ -303,6 +303,15 @@ class FeatureUsageData {
     return addDataInternal(key, value)
   }
 
+  /**
+   * The data reported by this method will be available ONLY for ad-hoc analysis.
+   *
+   * @param key key can contain "-", "_", latin letters or digits. All not allowed symbols will be replaced with "_" or "?".
+   */
+  internal fun addListLongData(@NonNls key: String, value: List<Long>): FeatureUsageData {
+    return addDataInternal(key, value)
+  }
+
   internal fun addObjectData(@NonNls key: String, value: Map<String, Any>): FeatureUsageData {
     return addDataInternal(key, value)
   }

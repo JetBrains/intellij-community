@@ -21,6 +21,7 @@ import javax.swing.event.TreeModelListener;
 import javax.swing.tree.*;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
@@ -119,13 +120,13 @@ public final class AsyncTreeModelTest {
       -> checkTreePaths(test.tree, list, test::done)))))));
   }
 
-  private static void collectTreePaths(@NotNull JTree tree, @NotNull ArrayList<TreePath> list, @NotNull Runnable task) {
+  private static void collectTreePaths(@NotNull JTree tree, @NotNull List<? super TreePath> list, @NotNull Runnable task) {
     list.clear();
     forEachRow(tree, list::add);
     task.run();
   }
 
-  private static void checkTreePaths(@NotNull JTree tree, @NotNull ArrayList<TreePath> list, @NotNull Runnable task) {
+  private static void checkTreePaths(@NotNull JTree tree, @NotNull List<TreePath> list, @NotNull Runnable task) {
     Iterator<TreePath> iterator = list.iterator();
     forEachRow(tree, path -> {
       assertTrue(iterator.hasNext());
@@ -326,7 +327,7 @@ public final class AsyncTreeModelTest {
     testPathState(tree, "    'root'\n", task);
   }
 
-  private static void forEachRow(JTree tree, Consumer<TreePath> consumer) {
+  private static void forEachRow(JTree tree, Consumer<? super TreePath> consumer) {
     int count = tree.getRowCount();
     for (int row = 0; row < count; row++) {
       consumer.accept(tree.getPathForRow(row));
@@ -352,41 +353,41 @@ public final class AsyncTreeModelTest {
     sb.append("\n");
   }
 
-  private static void testAsync(Supplier<TreeNode> root, @NotNull Consumer<ModelTest> consumer) {
+  private static void testAsync(Supplier<? extends TreeNode> root, @NotNull Consumer<? super ModelTest> consumer) {
     testAsync(root, consumer, false);
     testAsync(root, consumer, true);
   }
 
-  private static void testAsync(Supplier<TreeNode> root, @NotNull Consumer<ModelTest> consumer, boolean showLoadingNode) {
+  private static void testAsync(Supplier<? extends TreeNode> root, @NotNull Consumer<? super ModelTest> consumer, boolean showLoadingNode) {
     testEventDispatchThread(root, consumer, showLoadingNode);
     testBackgroundThread(root, consumer, showLoadingNode);
     testBackgroundPool(root, consumer, showLoadingNode);
   }
 
-  private static void testEventDispatchThread(Supplier<TreeNode> root, Consumer<ModelTest> consumer, boolean showLoadingNode) {
+  private static void testEventDispatchThread(Supplier<? extends TreeNode> root, Consumer<? super ModelTest> consumer, boolean showLoadingNode) {
     testEventDispatchThread(root, consumer, showLoadingNode, TreeTest.FAST);
     testEventDispatchThread(root, consumer, showLoadingNode, TreeTest.SLOW);
   }
 
-  private static void testEventDispatchThread(Supplier<TreeNode> root, Consumer<ModelTest> consumer, boolean showLoadingNode, int delay) {
+  private static void testEventDispatchThread(Supplier<? extends TreeNode> root, Consumer<? super ModelTest> consumer, boolean showLoadingNode, int delay) {
     new AsyncTest(showLoadingNode, new EventDispatchThreadModel(delay, root)).start(consumer, getSecondsToWait(delay));
   }
 
-  private static void testBackgroundThread(Supplier<TreeNode> root, Consumer<ModelTest> consumer, boolean showLoadingNode) {
+  private static void testBackgroundThread(Supplier<? extends TreeNode> root, Consumer<? super ModelTest> consumer, boolean showLoadingNode) {
     testBackgroundThread(root, consumer, showLoadingNode, TreeTest.FAST);
     testBackgroundThread(root, consumer, showLoadingNode, TreeTest.SLOW);
   }
 
-  private static void testBackgroundThread(Supplier<TreeNode> root, Consumer<ModelTest> consumer, boolean showLoadingNode, int delay) {
+  private static void testBackgroundThread(Supplier<? extends TreeNode> root, Consumer<? super ModelTest> consumer, boolean showLoadingNode, int delay) {
     if (consumer != null) new AsyncTest(showLoadingNode, new BackgroundThreadModel(delay, root)).start(consumer, getSecondsToWait(delay));
   }
 
-  private static void testBackgroundPool(Supplier<TreeNode> root, Consumer<ModelTest> consumer, boolean showLoadingNode) {
+  private static void testBackgroundPool(Supplier<? extends TreeNode> root, Consumer<? super ModelTest> consumer, boolean showLoadingNode) {
     testBackgroundPool(root, consumer, showLoadingNode, TreeTest.FAST);
     testBackgroundPool(root, consumer, showLoadingNode, TreeTest.SLOW);
   }
 
-  private static void testBackgroundPool(Supplier<TreeNode> root, Consumer<ModelTest> consumer, boolean showLoadingNode, int delay) {
+  private static void testBackgroundPool(Supplier<? extends TreeNode> root, Consumer<? super ModelTest> consumer, boolean showLoadingNode, int delay) {
     if (consumer != null) new AsyncTest(showLoadingNode, new BackgroundPoolModel(delay, root)).start(consumer, getSecondsToWait(delay));
   }
 
@@ -424,7 +425,7 @@ public final class AsyncTreeModelTest {
     private final TreeModel model;
     private volatile JTree tree;
 
-    private ModelTest(long delay, Supplier<TreeNode> root) {
+    private ModelTest(long delay, Supplier<? extends TreeNode> root) {
       this(new SlowModel(delay, root));
     }
 
@@ -436,7 +437,7 @@ public final class AsyncTreeModelTest {
       return model;
     }
 
-    void start(@NotNull Consumer<ModelTest> consumer, int seconds) {
+    void start(@NotNull Consumer<? super ModelTest> consumer, int seconds) {
       if (PRINT) System.out.println("start " + toString());
       assert !SwingUtilities.isEventDispatchThread() : "test should be started on the main thread";
       long time = System.currentTimeMillis();
@@ -510,7 +511,7 @@ public final class AsyncTreeModelTest {
       });
     }
 
-    private void updateModelAndWait(Consumer<TreeModel> consumer, @NotNull Runnable task) {
+    private void updateModelAndWait(Consumer<? super TreeModel> consumer, @NotNull Runnable task) {
       runOnModelThread(() -> {
         consumer.accept(model);
         runOnSwingThreadWhenProcessingDone(task);
@@ -547,12 +548,12 @@ public final class AsyncTreeModelTest {
       }
     }
 
-    private void resolve(@NotNull TreePath path, @NotNull Consumer<TreePath> consumer) {
+    private void resolve(@NotNull TreePath path, @NotNull Consumer<? super TreePath> consumer) {
       AsyncTreeModel model = (AsyncTreeModel)tree.getModel();
       model.resolve(path).onError(promise::setError).onSuccess(consumer);
     }
 
-    private void visit(@NotNull TreeVisitor visitor, boolean allowLoading, @NotNull Consumer<TreePath> consumer) {
+    private void visit(@NotNull TreeVisitor visitor, boolean allowLoading, @NotNull Consumer<? super TreePath> consumer) {
       AsyncTreeModel model = (AsyncTreeModel)tree.getModel();
       model.accept(visitor, allowLoading).onError(promise::setError).onSuccess(consumer);
     }
@@ -587,7 +588,7 @@ public final class AsyncTreeModelTest {
   private static class SlowModel extends DefaultTreeModel implements Disposable {
     private final long delay;
 
-    private SlowModel(long delay, Supplier<TreeNode> root) {
+    private SlowModel(long delay, Supplier<? extends TreeNode> root) {
       super(root == null ? null : root.get());
       this.delay = delay;
     }
@@ -650,7 +651,7 @@ public final class AsyncTreeModelTest {
   private static final class EventDispatchThreadModel extends SlowModel implements InvokerSupplier {
     private final Invoker invoker = Invoker.forEventDispatchThread(this);
 
-    private EventDispatchThreadModel(long delay, Supplier<TreeNode> root) {
+    private EventDispatchThreadModel(long delay, Supplier<? extends TreeNode> root) {
       super(delay, root);
     }
 
@@ -664,7 +665,7 @@ public final class AsyncTreeModelTest {
   private static final class BackgroundThreadModel extends SlowModel implements InvokerSupplier {
     private final Invoker invoker = Invoker.forBackgroundThreadWithReadAction(this);
 
-    private BackgroundThreadModel(long delay, Supplier<TreeNode> root) {
+    private BackgroundThreadModel(long delay, Supplier<? extends TreeNode> root) {
       super(delay, root);
     }
 
@@ -678,7 +679,7 @@ public final class AsyncTreeModelTest {
   private static final class BackgroundPoolModel extends SlowModel implements InvokerSupplier {
     private final Invoker invoker = Invoker.forBackgroundPoolWithReadAction(this);
 
-    private BackgroundPoolModel(long delay, Supplier<TreeNode> root) {
+    private BackgroundPoolModel(long delay, Supplier<? extends TreeNode> root) {
       super(delay, root);
     }
 

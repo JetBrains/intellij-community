@@ -6,8 +6,12 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeGlassPaneUtil;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.docking.DockContainer;
@@ -15,14 +19,19 @@ import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.ui.tabs.JBTabsEx;
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.update.Activatable;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.RoundRectangle2D;
 import java.util.concurrent.CopyOnWriteArraySet;
+
+import static javax.swing.SwingConstants.*;
 
 public final class DockableEditorTabbedContainer implements DockContainer.Persistent, Activatable {
   private final EditorsSplitters mySplitters;
@@ -33,6 +42,8 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
   private JBTabs myCurrentOver;
   private Image myCurrentOverImg;
   private TabInfo myCurrentOverInfo;
+  private MyDropAreaPainter myCurrentPainter;
+  private Disposable myGlassPaneListenersDisposable = Disposer.newDisposable();
 
   private final boolean myDisposeWhenEmpty;
 
@@ -118,16 +129,20 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
   @Override
   public void add(@NotNull DockableContent content, RelativePoint dropTarget) {
     EditorWindow window = null;
+    final EditorTabbedContainer.DockableEditor dockableEditor = (EditorTabbedContainer.DockableEditor)content;
+    VirtualFile file = dockableEditor.getFile();
+    int dropSide = getCurrentDropSide();
     if (myCurrentOver != null) {
       final DataProvider provider = myCurrentOver.getDataProvider();
       if (provider != null) {
         window = EditorWindow.DATA_KEY.getData(provider);
       }
+      if (window != null && dropSide != -1) {
+        window.split(dropSide == BOTTOM || dropSide == TOP ? JSplitPane.VERTICAL_SPLIT : JSplitPane.HORIZONTAL_SPLIT,
+                     true, file, false, dropSide != LEFT && dropSide != TOP);
+        return;
+      }
     }
-
-    final EditorTabbedContainer.DockableEditor dockableEditor = (EditorTabbedContainer.DockableEditor)content;
-    VirtualFile file = dockableEditor.getFile();
-
 
     if (window == null || window.isDisposed()) {
       window = mySplitters.getOrCreateCurrentWindow(file);
@@ -141,6 +156,11 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
 
     ((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(myProject)).openFileImpl2(window, file, true);
     window.setFilePinned(file, dockableEditor.isPinned());
+  }
+
+  @MagicConstant(intValues = {TOP, LEFT, BOTTOM, RIGHT, -1})
+  public int getCurrentDropSide() {
+    return myCurrentOver instanceof JBTabsEx ? ((JBTabsEx)myCurrentOver).getDropSide() : -1;
   }
 
   @Override
@@ -161,6 +181,13 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
     if (myCurrentOver != null) {
       myCurrentOver.processDropOver(myCurrentOverInfo, point);
     }
+    if (myCurrentPainter == null) {
+      myCurrentPainter = new MyDropAreaPainter();
+      myGlassPaneListenersDisposable = Disposer.newDisposable("GlassPaneListeners");
+      Disposer.register(mySplitters.parentDisposable, myGlassPaneListenersDisposable);
+      IdeGlassPaneUtil.find(myCurrentOver.getComponent()).addPainter(myCurrentOver.getComponent(), myCurrentPainter, myGlassPaneListenersDisposable);
+    }
+    myCurrentPainter.processDropOver();
 
     return myCurrentOverImg;
   }
@@ -172,6 +199,10 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
       myCurrentOver = null;
       myCurrentOverInfo = null;
       myCurrentOverImg = null;
+
+      Disposer.dispose(myGlassPaneListenersDisposable);
+      myGlassPaneListenersDisposable = Disposer.newDisposable();
+      myCurrentPainter = null;
     }
   }
 
@@ -221,6 +252,55 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
     if (!myWasEverShown) {
       myWasEverShown = true;
       getSplitters().openFiles();
+    }
+  }
+
+  private class MyDropAreaPainter extends AbstractPainter {
+    private Shape myBoundingBox;
+    private final Color myColor = JBColor.namedColor("dropArea.base", 0x4f4fff, 0x5081c0);
+
+    @Override
+    public boolean needsRepaint() {
+      return myBoundingBox != null;
+    }
+
+    @Override
+    public void executePaint(Component component, Graphics2D g) {
+      if (myBoundingBox == null) return;
+      GraphicsUtil.setupAAPainting(g);
+      g.setColor(ColorUtil.toAlpha(myColor, 200));
+      g.setStroke(new BasicStroke(2));
+      g.draw(myBoundingBox);
+      g.setColor(ColorUtil.toAlpha(myColor, 40));
+      g.fill(myBoundingBox);
+    }
+
+    private void processDropOver() {
+      myBoundingBox = null;
+      setNeedsRepaint(true);
+
+      Rectangle r = new Rectangle(myCurrentOver.getComponent().getBounds());
+      int currentDropSide = getCurrentDropSide();
+      if (currentDropSide == -1) {
+        return;
+      }
+      switch (currentDropSide) {
+        case TOP:
+          r.height /= 2;
+          break;
+        case LEFT:
+          r.width /= 2;
+          break;
+        case RIGHT:
+          r.width /= 2;
+          r.x += r.width;
+          break;
+        case BOTTOM:
+          r.height /= 2;
+          r.y += r.height;
+          break;
+      }
+      myBoundingBox = new RoundRectangle2D.Double(r.x, r.y, r.width, r.height, 16, 16);
     }
   }
 }

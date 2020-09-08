@@ -177,7 +177,7 @@ class JdkInstaller {
     catch (t: Throwable) {
       //if we were cancelled in the middle or failed, let's clean up
       targetDir.delete()
-      markerFile(targetDir).delete()
+      markerFile(targetDir)?.delete()
       throw t
     }
     finally {
@@ -212,11 +212,11 @@ class JdkInstaller {
     return request
   }
 
-  private fun markerFile(installDir: Path) = installDir.parent.resolve(".${installDir.fileName}.intellij")
+  private fun markerFile(installDir: Path): Path? = installDir.parent?.resolve(".${installDir.fileName}.intellij")
 
   private fun writeMarkerFile(request: JdkInstallRequest) {
     val installDir = request.installDir
-    val markerFile = markerFile(installDir)
+    val markerFile = markerFile(installDir) ?: return
     try {
       request.item.writeMarkerFile(markerFile)
     }
@@ -226,16 +226,20 @@ class JdkInstaller {
     }
   }
 
-  fun findJdkItemForInstalledJdk(jdkHome: String) = findJdkItem(File(jdkHome))
-
-  private fun findJdkItem(jdkHome: File): JdkItem? {
-    // Java package install dir have several folders up from it, e.g. Contents/Home on macOS
-    val markerFile = generateSequence(jdkHome, { file -> file.parentFile })
-                       .takeWhile { it.isDirectory }
-                       .take(5)
-                       .map { markerFile(it.toPath()) }
-                       .firstOrNull { it.isFile() } ?: return null
+  fun findJdkItemForInstalledJdk(jdkHome: String?): JdkItem? {
     try {
+      if (jdkHome == null) return null
+
+      val jdkPath = Paths.get(jdkHome)
+      if (!jdkPath.isDirectory()) return null
+
+      // Java package install dir have several folders up from it, e.g. Contents/Home on macOS
+      val markerFile = generateSequence(jdkPath, { file -> file.parent })
+                         .takeWhile { it.isDirectory() }
+                         .take(5)
+                         .mapNotNull { markerFile(it) }
+                         .firstOrNull { it.isFile() } ?: return null
+
       val json = JdkListParser.readTree(markerFile.readBytes())
       return JdkListParser.parseJdkItem(json, JdkPredicate.createInstance())
     }

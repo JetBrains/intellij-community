@@ -27,6 +27,8 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.openapi.util.NlsContexts.TabTitle;
+
 /**
  * @author gregsh
  */
@@ -34,10 +36,9 @@ public interface LanguageConsoleView extends ConsoleView, Disposable {
   @NotNull
   Project getProject();
 
-  @NotNull
-  String getTitle();
+  @NotNull @TabTitle String getTitle();
 
-  void setTitle(@NotNull String title);
+  void setTitle(@TabTitle @NotNull String title);
 
   @NotNull
   PsiFile getFile();

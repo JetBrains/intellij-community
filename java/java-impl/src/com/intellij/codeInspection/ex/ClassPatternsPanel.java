@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiNameHelper;
@@ -72,10 +73,9 @@ class ClassPatternsPanel extends JPanel {
         myTable.repaint();
       })
       .setRemoveActionUpdater(e -> myTable.getSelectedRow() >= 0);
-    add(SeparatorFactory.createSeparator("Mark code as entry point if qualified name matches", null), BorderLayout.NORTH);
+    add(SeparatorFactory.createSeparator(JavaBundle.message("class.patterns.separator.mark.code.as.entry.point.if.qualified.name.matches"), null), BorderLayout.NORTH);
     add(toolbarDecorator.createPanel(), BorderLayout.CENTER);
-    add(new MultiLineLabel("Leave method blank to represent constructors\n" +
-                           "Any * will match against one or more characters in the qualified name (including dots)"), BorderLayout.SOUTH);
+    add(new MultiLineLabel(JavaBundle.message("label.class.pattern.syntax.explanation")), BorderLayout.SOUTH);
     setPreferredSize(new JBDimension(-1, 250));
   }
 
@@ -142,7 +142,7 @@ class ClassPatternsPanel extends JPanel {
       final String subst = pattern.method.replace("*", "");
       if (!subst.isEmpty()) {
         if (!nameHelper.isIdentifier(subst)) {
-          return "Method pattern '" + pattern.method + "' must be a valid java identifier, only '*' are accepted as placeholders";
+          return JavaBundle.message("class.patterns.error.method.pattern.0.must.be.a.valid.java.identifier", pattern.method);
         }
       }
     }
@@ -159,7 +159,7 @@ class ClassPatternsPanel extends JPanel {
     @Nullable
     @Override
     public String getErrorText(String inputString) {
-      String errorMessage = "Pattern must be a valid java qualified name, only '*' are accepted as placeholders";
+      String errorMessage = JavaBundle.message("class.patterns.error.class.pattern.0.must.be.a.valid.java.qualifier");
       if (inputString.startsWith(".")) return errorMessage;
       final String qName = inputString.replace("*", "").replace(".", "");
       return !StringUtil.isEmpty(qName) && !myNameHelper.isQualifiedName(qName) ? errorMessage : null;
@@ -177,10 +177,13 @@ class ClassPatternsPanel extends JPanel {
   }
 
   private class MyTableModel extends AbstractTableModel implements ItemRemovable {
-    private final String[] myNames;
+    private final @NlsContexts.ColumnName String[] myNames;
 
     MyTableModel() {
-      myNames = new String[] {"With Subclasses",  "Class", "Method"};
+      myNames = new String[] {
+        JavaBundle.message("column.name.with.subclasses.entry.point"),
+        JavaBundle.message("column.name.class.entry.point"), 
+        JavaBundle.message("column.name.method.entry.point")};
     }
 
     @Override
@@ -209,7 +212,7 @@ class ClassPatternsPanel extends JPanel {
     }
 
     @Override
-    public String getColumnName(int column) {
+    public @NlsContexts.ColumnName String getColumnName(int column) {
       return myNames[column];
     }
 

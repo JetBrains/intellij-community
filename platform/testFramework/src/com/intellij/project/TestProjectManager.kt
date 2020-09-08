@@ -34,7 +34,7 @@ private var CHECK_START = System.currentTimeMillis()
 private val LOG_PROJECT_LEAKAGE = System.getProperty("idea.log.leaked.projects.in.tests", "true")!!.toBoolean()
 
 @ApiStatus.Internal
-internal class TestProjectManager : ProjectManagerExImpl() {
+open class TestProjectManager : ProjectManagerExImpl() {
   companion object {
     @JvmStatic
     fun getInstanceExIfCreated(): TestProjectManager? {

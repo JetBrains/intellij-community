@@ -2,6 +2,7 @@
 package com.intellij.diff.merge;
 
 import com.intellij.CommonBundle;
+import com.intellij.DynamicBundle;
 import com.intellij.configurationStore.StoreReloadManager;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.merge.MergeTool.MergeViewer;
@@ -26,7 +27,6 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 
 import static com.intellij.openapi.project.ProjectUtil.isProjectOrWorkspaceFile;
 
@@ -52,7 +52,7 @@ public final class MergeUtil {
   @Nls
   @NotNull
   public static String getResolveActionTitle(@NotNull MergeResult result, @Nullable MergeRequest request, @Nullable MergeContext context) {
-    Function<MergeResult, String> getter = DiffUtil.getUserData(request, context, DiffUserDataKeysEx.MERGE_ACTION_CAPTIONS);
+    Function<MergeResult, @Nls String> getter = DiffUtil.getUserData(request, context, DiffUserDataKeysEx.MERGE_ACTION_CAPTIONS);
     String message = getter != null ? getter.fun(result) : null;
     if (message != null) return message;
 
@@ -133,7 +133,7 @@ public final class MergeUtil {
   public static boolean showExitWithoutApplyingChangesDialog(@NotNull JComponent component,
                                                              @NotNull MergeRequest request,
                                                              @NotNull MergeContext context) {
-    Couple<String> customMessage = DiffUtil.getUserData(request, context, DiffUserDataKeysEx.MERGE_CANCEL_MESSAGE);
+    Couple<@Nls String> customMessage = DiffUtil.getUserData(request, context, DiffUserDataKeysEx.MERGE_CANCEL_MESSAGE);
     if (customMessage != null) {
       String title = customMessage.first;
       String message = customMessage.second;
@@ -150,7 +150,8 @@ public final class MergeUtil {
       return true;
     }
     return MessageDialogBuilder
-      .yesNo(actionName, DiffBundle.message("label.merge.unsaved.changes.discard.and.do.anyway", actionName.toLowerCase(Locale.ENGLISH)))
+      .yesNo(actionName, DiffBundle.message("label.merge.unsaved.changes.discard.and.do.anyway",
+                                            actionName.toLowerCase(DynamicBundle.getLocale())))
       .yesText(DiffBundle.message("button.discard.changes.and.do", actionName))
       .noText(DiffBundle.message("button.continue.merge"))
       .ask(parent);

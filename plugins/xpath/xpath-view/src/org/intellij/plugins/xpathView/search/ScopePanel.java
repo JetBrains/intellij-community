@@ -24,8 +24,10 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -116,8 +118,9 @@ public class ScopePanel extends JPanel implements Disposable{
                 firePropertyChange("scope", null, getSelectedScope());
             }
         });
-        myDirectory.setText(scope.getPath());
-        myDirectory.addBrowseFolderListener("Select Path", "Select Path", myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor());
+        final @NlsSafe String path = scope.getPath();
+        myDirectory.setText(path);
+        myDirectory.addBrowseFolderListener(XPathBundle.message("dialog.title.select.path"), XPathBundle.message("label.select.path"), myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor());
 
         myRecursive.setSelected(scope.isRecursive());
     }

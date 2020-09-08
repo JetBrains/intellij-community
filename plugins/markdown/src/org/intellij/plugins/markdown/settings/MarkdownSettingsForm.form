@@ -29,7 +29,7 @@
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="Preview browser:"/>
+                  <text resource-bundle="messages/MarkdownBundle" key="markdown.settings.preview.browser.title"/>
                 </properties>
               </component>
               <component id="16681" class="com.intellij.openapi.ui.ComboBox" binding="myPreviewProvider" custom-create="true">
@@ -40,14 +40,6 @@
               </component>
             </children>
           </grid>
-          <component id="94d00" class="com.intellij.ui.components.JBCheckBox" binding="myUseGrayscaleRenderingForJBCheckBox" default-binding="true">
-            <constraints>
-              <grid row="4" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text resource-bundle="messages/MarkdownBundle" key="markdown.settings.preview.use.grayscale"/>
-            </properties>
-          </component>
           <component id="43c6b" class="com.intellij.ui.components.JBLabel">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
@@ -129,7 +121,7 @@
               <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Markdown Extensions"/>
+              <text resource-bundle="messages/MarkdownBundle" key="markdown.settings.preview.extensions.name"/>
             </properties>
           </component>
           <component id="fac69" class="com.intellij.ui.ContextHelpLabel" binding="myExtensionsHelpMessage" custom-create="true">

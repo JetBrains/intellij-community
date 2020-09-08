@@ -132,7 +132,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
   @NotNull
   private static LineMarkerInfo<PsiElement> createSuperMethodLineMarkerInfo(@NotNull PsiElement name, @NotNull Icon icon) {
     ArrowUpLineMarkerInfo info = new ArrowUpLineMarkerInfo(name, icon, MarkerType.OVERRIDING_METHOD);
-    return NavigateAction.setNavigateAction(info, "Go to super method", IdeActions.ACTION_GOTO_SUPER);
+    return NavigateAction.setNavigateAction(info, JavaBundle.message("action.go.to.super.method.text"), IdeActions.ACTION_GOTO_SUPER);
   }
 
   private static int getCategory(@NotNull PsiElement element, @NotNull CharSequence documentChars) {
@@ -222,7 +222,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
       PsiElement range = getMethodRange(method);
       ArrowUpLineMarkerInfo upInfo =
         new ArrowUpLineMarkerInfo(range, AllIcons.Gutter.SiblingInheritedMethod, MarkerType.SIBLING_OVERRIDING_METHOD);
-      return NavigateAction.setNavigateAction(upInfo, "Go to super method", IdeActions.ACTION_GOTO_SUPER);
+      return NavigateAction.setNavigateAction(upInfo, JavaBundle.message("action.go.to.super.method.text"), IdeActions.ACTION_GOTO_SUPER);
     });
   }
 
@@ -273,7 +273,8 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
                                                  icon, type.getTooltip(),
                                                  type.getNavigationHandler(),
                                                  GutterIconRenderer.Alignment.RIGHT);
-      NavigateAction.setNavigateAction(info, aClass.isInterface() ? "Go to implementation(s)" : "Go to subclass(es)", IdeActions.ACTION_GOTO_IMPLEMENTATION);
+      NavigateAction.setNavigateAction(info, aClass.isInterface() ? JavaBundle.message("action.go.to.implementation.text")
+                                                                  : JavaBundle.message("action.go.to.subclass.text"), IdeActions.ACTION_GOTO_IMPLEMENTATION);
       return Collections.singletonList(info);
     }
     return Collections.emptyList();
@@ -316,7 +317,8 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
                                                              icon, type.getTooltip(),
                                                              type.getNavigationHandler(),
                                                              GutterIconRenderer.Alignment.RIGHT);
-      NavigateAction.setNavigateAction(info, overrides ? "Go to overriding methods" : "Go to implementation(s)", IdeActions.ACTION_GOTO_IMPLEMENTATION);
+      NavigateAction.setNavigateAction(info, overrides ? JavaBundle.message("action.go.to.overriding.methods.text")
+                                                       : JavaBundle.message("action.go.to.implementation.text"), IdeActions.ACTION_GOTO_IMPLEMENTATION);
       result.add(info);
     }
     return result;

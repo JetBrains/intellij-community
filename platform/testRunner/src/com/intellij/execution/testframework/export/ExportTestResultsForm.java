@@ -6,6 +6,8 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,7 +42,7 @@ public class ExportTestResultsForm {
 
   private final EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
 
-  public ExportTestResultsForm(ExportTestResultsConfiguration config, String defaultFileName, String defaultFolder) {
+  public ExportTestResultsForm(ExportTestResultsConfiguration config, String defaultFileName, @NlsSafe String defaultFolder) {
     ActionListener listener = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -148,7 +150,7 @@ public class ExportTestResultsForm {
   }
 
   @Nullable
-  public String validate() {
+  public @NlsContexts.Label String validate() {
     if (getExportFormat() == ExportTestResultsConfiguration.ExportFormat.UserTemplate) {
       if (StringUtil.isEmpty(myCustomTemplateField.getText())) {
         return ExecutionBundle.message("export.test.results.custom.template.path.empty");
@@ -169,9 +171,8 @@ public class ExportTestResultsForm {
     return null;
   }
 
-  public void showMessage(@Nullable String message) {
+  public void showMessage(@Nullable @NlsContexts.Label String message) {
     myMessageLabel.setText(message);
-    boolean visible = myMessageLabel.isVisible();
     myMessageLabel.setVisible(message != null);
   }
 

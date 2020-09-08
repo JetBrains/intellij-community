@@ -40,12 +40,17 @@ public class HgQPopCommand {
       .executeInCurrentThread(myRepository.getRoot(), "qpop", Collections.singletonList("--all"));
     if (HgErrorUtil.hasErrorsInCommandExecution(result)) {
       new HgCommandResultNotifier(project)
-        .notifyError(result, HgBundle.message("action.hg4idea.QPop.error"), HgBundle.message("action.hg4idea.QPop.error.msg"));
+        .notifyError("hg.qpop.error",
+                     result,
+                     HgBundle.message("action.hg4idea.QPop.error"),
+                     HgBundle.message("action.hg4idea.QPop.error.msg"));
     }
     else {
       assert result != null;
       if (!result.getErrorLines().isEmpty()) {
-        VcsNotifier.getInstance(project).notifyWarning(HgBundle.message("action.hg4idea.QPop.error.warning"), result.getRawError());
+        VcsNotifier.getInstance(project).notifyWarning("hg.qpop.completed.with.errors",
+                                                       HgBundle.message("action.hg4idea.QPop.error.warning"),
+                                                       result.getRawError());
       }
     }
     myRepository.update();

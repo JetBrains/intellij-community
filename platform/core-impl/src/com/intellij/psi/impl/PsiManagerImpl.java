@@ -24,6 +24,7 @@ import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -187,7 +188,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
     myTreeChangeListeners.remove(listener);
   }
 
-  private static String logPsi(@Nullable PsiElement element) {
+  private static @NonNls String logPsi(@Nullable PsiElement element) {
     return element == null ? " null" : element.getClass().getName();
   }
 

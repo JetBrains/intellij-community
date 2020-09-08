@@ -27,7 +27,7 @@ class HelpContentRequestHandler : HelpRequestHandlerBase() {
       return true
     }
 
-    if (!urlDecoder.parameters().isEmpty()) {
+    if (urlDecoder.parameters().isNotEmpty()) {
       for (name: String in urlDecoder.parameters().keys) {
         val param = urlDecoder.parameters()[name]
         if (param != null && (param.isEmpty() || StringUtil.isEmpty(param[0]))) {

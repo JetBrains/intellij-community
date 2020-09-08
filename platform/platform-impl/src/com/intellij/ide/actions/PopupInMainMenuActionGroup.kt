@@ -3,7 +3,7 @@ package com.intellij.ide.actions
 
 import com.intellij.openapi.actionSystem.ActionPlaces
 
-private class PopupInMainMenuActionGroup : NonTrivialActionGroup() {
+class PopupInMainMenuActionGroup : NonTrivialActionGroup() {
   override fun isPopup(place: String): Boolean {
     return place == ActionPlaces.MAIN_MENU
   }

@@ -1,5 +1,6 @@
 package com.intellij.vcs.log.ui;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
@@ -46,6 +47,7 @@ public interface VcsLogColorManager {
    * Returns long name for this file path (to be shown in the tooltip, etc.).
    */
   @NotNull
+  @NlsSafe
   default String getLongName(@NotNull FilePath path) {
     return path.getPresentableUrl();
   }

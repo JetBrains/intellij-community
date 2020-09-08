@@ -1,9 +1,10 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.auth.AuthenticationService;
@@ -17,8 +18,8 @@ public class ProxyCallback extends AuthCallbackCase {
 
   private static final Logger LOG = Logger.getInstance(ProxyCallback.class);
 
-  private static final String CANNOT_AUTHENTICATE_TO_PROXY = "Could not authenticate to proxy server";
-  private static final String PROXY_AUTHENTICATION_FAILED = "Proxy authentication failed";
+  private static final @NonNls String CANNOT_AUTHENTICATE_TO_PROXY = "Could not authenticate to proxy server";
+  private static final @NonNls String PROXY_AUTHENTICATION_FAILED = "Proxy authentication failed";
 
   private PasswordAuthentication myProxyAuthentication;
 

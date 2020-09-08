@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -307,7 +308,7 @@ public final class EditorWindow {
     myTabbedPane.setWaveColor(index, color);
   }
 
-  private void setTitleAt(int index, @NotNull String text) {
+  private void setTitleAt(int index, @NlsContexts.TabTitle @NotNull String text) {
     myTabbedPane.setTitleAt(index, text);
   }
 
@@ -315,7 +316,7 @@ public final class EditorWindow {
     myTabbedPane.setBackgroundColorAt(index, color);
   }
 
-  private void setToolTipTextAt(int index, @Nullable String text) {
+  private void setToolTipTextAt(int index, @Nullable @NlsContexts.Tooltip String text) {
     myTabbedPane.setToolTipTextAt(index, text);
   }
 
@@ -415,6 +416,7 @@ public final class EditorWindow {
           return myEditor.getFocusComponent();
         }
       });
+      setFocusCycleRoot(true);
     }
 
     @Override
@@ -534,6 +536,10 @@ public final class EditorWindow {
   }
 
   public @Nullable EditorWindow split(int orientation, boolean forceSplit, @Nullable VirtualFile virtualFile, boolean focusNew) {
+    return split(orientation, forceSplit, virtualFile, focusNew, true);
+  }
+
+  public @Nullable EditorWindow split(int orientation, boolean forceSplit, @Nullable VirtualFile virtualFile, boolean focusNew, boolean fileIsSecondaryComponent) {
     checkConsistency();
     if (!splitAvailable()) {
       return null;
@@ -562,9 +568,17 @@ public final class EditorWindow {
       EditorWithProviderComposite selectedEditor = getSelectedEditor();
       panel.remove(myTabbedPane.getComponent());
       panel.add(splitter, BorderLayout.CENTER);
-      splitter.setFirstComponent(myPanel);
+      if (fileIsSecondaryComponent) {
+        splitter.setFirstComponent(myPanel);
+      } else {
+        splitter.setSecondComponent(myPanel);
+      }
       myPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
-      splitter.setSecondComponent(res.myPanel);
+      if (fileIsSecondaryComponent) {
+        splitter.setSecondComponent(res.myPanel);
+      } else {
+        splitter.setFirstComponent(res.myPanel);
+      }
       // open only selected file in the new splitter instead of opening all tabs
       VirtualFile file = selectedEditor.getFile();
       if (virtualFile == null) {

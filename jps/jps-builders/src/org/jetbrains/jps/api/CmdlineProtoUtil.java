@@ -2,6 +2,7 @@
 package org.jetbrains.jps.api;
 
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
@@ -97,7 +98,7 @@ public final class CmdlineProtoUtil {
     return CmdlineRemoteProto.Message.KeyValuePair.newBuilder().setKey(key).setValue(value).build();
   }
 
-  public static CmdlineRemoteProto.Message.Failure createFailure(String description, @Nullable Throwable cause) {
+  public static CmdlineRemoteProto.Message.Failure createFailure(@Nls(capitalization = Nls.Capitalization.Sentence) String description, @Nullable Throwable cause) {
     final CmdlineRemoteProto.Message.Failure.Builder builder = CmdlineRemoteProto.Message.Failure.newBuilder();
     if (description != null) {
       builder.setDescription(description);
@@ -121,19 +122,19 @@ public final class CmdlineProtoUtil {
       .setType(CmdlineRemoteProto.Message.ControllerMessage.Type.CANCEL_BUILD_COMMAND).build();
   }
 
-  public static BuilderMessage createCompileProgressMessageResponse(String text) {
+  public static BuilderMessage createCompileProgressMessageResponse(@Nls(capitalization = Nls.Capitalization.Sentence) String text) {
     return createCompileMessage(BuildMessage.Kind.PROGRESS, text, null, -1L, -1L, -1L, -1, -1, -1.0f);
   }
 
-  public static BuilderMessage createCompileProgressMessageResponse(String text, float done) {
+  public static BuilderMessage createCompileProgressMessageResponse(@Nls(capitalization = Nls.Capitalization.Sentence) String text, float done) {
     return createCompileMessage(BuildMessage.Kind.PROGRESS, text, null, -1L, -1L, -1L, -1, -1, done);
   }
 
   public static BuilderMessage createCompileMessage(final BuildMessage.Kind kind,
-                                                                               String text,
-                                                                               String path,
-                                                                               long beginOffset, long endOffset, long offset, long line,
-                                                                               long column, float done) {
+                                                    @Nls(capitalization = Nls.Capitalization.Sentence) String text,
+                                                    String path,
+                                                    long beginOffset, long endOffset, long offset, long line,
+                                                    long column, float done) {
 
     final BuilderMessage.CompileMessage.Builder builder = BuilderMessage.CompileMessage.newBuilder();
     switch (kind) {

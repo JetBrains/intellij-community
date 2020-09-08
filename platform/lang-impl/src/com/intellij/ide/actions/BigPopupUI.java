@@ -7,6 +7,7 @@ import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ScrollingUtil;
@@ -61,7 +62,7 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
   protected abstract JPanel createSettingsPanel();
 
   @NotNull
-  protected abstract String getInitialHint();
+  protected abstract @NlsContexts.PopupAdvertisement String getInitialHint();
 
   @NotNull
   protected abstract String getAccessibleName();

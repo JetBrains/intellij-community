@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -62,7 +63,7 @@ public final class ActionsTree {
   private static final String ROOT = "ROOT";
 
   private String myFilter = null;
-  private @Nullable Condition<AnAction> myBaseFilter;
+  private Condition<? super AnAction> myBaseFilter;
 
   private final Map<String, String> myPluginNames = ActionsTreeUtil.createPluginActionsMap();
 
@@ -133,6 +134,7 @@ public final class ActionsTree {
       }
 
       @Nullable
+      @NlsActions.ActionDescription
       private String getDescription(@NotNull MouseEvent e) {
         TreePath path = myTree.getPathForLocation(e.getX(), e.getY());
         DefaultMutableTreeNode node = path == null ? null : (DefaultMutableTreeNode)path.getLastPathComponent();
@@ -157,7 +159,7 @@ public final class ActionsTree {
     myKeymap = keymap;
   }
 
-  public void setBaseFilter(@Nullable Condition<AnAction> baseFilter) { myBaseFilter = baseFilter; }
+  public void setBaseFilter(@Nullable Condition<? super AnAction> baseFilter) { myBaseFilter = baseFilter; }
 
   public JComponent getComponent() {
     return myComponent;
@@ -200,7 +202,7 @@ public final class ActionsTree {
     reset(myKeymap, currentQuickListIds, filter, null);
   }
 
-  private @Nullable Condition<AnAction> combineWithBaseFilter(@Nullable Condition<AnAction> actionFilter) {
+  private @Nullable Condition<? super AnAction> combineWithBaseFilter(@Nullable Condition<? super AnAction> actionFilter) {
     if (actionFilter != null)
       return myBaseFilter != null ? Conditions.and(myBaseFilter, actionFilter) : actionFilter;
     return myBaseFilter;
@@ -216,7 +218,8 @@ public final class ActionsTree {
 
     ActionManager actionManager = ActionManager.getInstance();
     Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myComponent));
-    Condition<AnAction> condFilter = combineWithBaseFilter(ActionsTreeUtil.isActionFiltered(actionManager, keymap, shortcut, filter, true));
+    Condition<? super AnAction>
+      condFilter = combineWithBaseFilter(ActionsTreeUtil.isActionFiltered(actionManager, keymap, shortcut, filter, true));
     Group mainGroup = ActionsTreeUtil.createMainGroup(project, keymap, allQuickLists, filter, true, condFilter);
 
     if ((filter != null && filter.length() > 0 || shortcut != null) && mainGroup.initIds().isEmpty()) {

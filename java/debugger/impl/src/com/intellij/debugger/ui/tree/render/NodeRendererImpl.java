@@ -2,6 +2,7 @@
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
@@ -30,7 +31,7 @@ public abstract class NodeRendererImpl implements NodeRenderer {
 
   protected BasicRendererProperties myProperties;
   private final String myDefaultName;
-  private Function<Type, CompletableFuture<Boolean>> myIsApplicableChecker = null;
+  private Function<? super Type, ? extends CompletableFuture<Boolean>> myIsApplicableChecker = null;
 
   protected NodeRendererImpl() {
     this(DEFAULT_NAME, false);
@@ -85,7 +86,7 @@ public abstract class NodeRendererImpl implements NodeRenderer {
   }
 
   @ApiStatus.Internal
-  public void setIsApplicableChecker(@NotNull Function<Type, CompletableFuture<Boolean>> isApplicableAsync) {
+  public void setIsApplicableChecker(@NotNull Function<? super Type, ? extends CompletableFuture<Boolean>> isApplicableAsync) {
     myIsApplicableChecker = isApplicableAsync;
   }
 
@@ -176,7 +177,7 @@ public abstract class NodeRendererImpl implements NodeRenderer {
 
     @Override
     public void customizeRenderer(SimpleColoredComponent renderer) {
-      renderer.append(myRenderer.getName() + " renderer");
+      renderer.append(JavaDebuggerBundle.message("renderer.name", myRenderer.getName()));
     }
 
     @Override

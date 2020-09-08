@@ -13,6 +13,7 @@ import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ConstructionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,7 +57,8 @@ public class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspection 
     @NotNull
     @Override
     public String getName() {
-      return CommonQuickFixBundle.message("fix.replace.with.x", myEmpty ? "Collections.emptyList()" : "Collections.singletonList()");
+      final @NonNls String s = myEmpty ? "Collections.emptyList()" : "Collections.singletonList()";
+      return CommonQuickFixBundle.message("fix.replace.with.x", s);
     }
 
     @NotNull
@@ -99,7 +101,7 @@ public class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspection 
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      final String methodName = methodExpression.getReferenceName();
+      final @NonNls String methodName = methodExpression.getReferenceName();
       if (!"asList".equals(methodName)) {
         return;
       }

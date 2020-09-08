@@ -11,7 +11,7 @@ import org.junit.Assume
 object KotlinTester {
   private fun canUseKotlin(): Boolean =
     try {
-      Class.forName("org.jetbrains.kotlin.idea.JvmPluginStartupComponent")
+      Class.forName("org.jetbrains.kotlin.idea.run.KotlinRunConfiguration")
       true
     }
     catch (e: ClassNotFoundException) {

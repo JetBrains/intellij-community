@@ -56,7 +56,7 @@ public final class TestClassCollector {
         if (rootPath != null && !baseDir.startsWith(rootPath)) continue;
 
         String pathSeparator = baseDir.getFileSystem().getSeparator();
-        Files.walkFileTree(baseDir, new SimpleFileVisitor<Path>() {
+        Files.walkFileTree(baseDir, new SimpleFileVisitor<>() {
           @Override
           public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
             ProgressManager.checkCanceled();
@@ -74,7 +74,7 @@ public final class TestClassCollector {
                 int modifiers = aClass.getModifiers();
                 if (Modifier.isAbstract(modifiers) ||
                     !Modifier.isPublic(modifiers) ||
-                   aClass.isMemberClass() && !Modifier.isStatic(modifiers)) {
+                    aClass.isMemberClass() && !Modifier.isStatic(modifiers)) {
                   return result;
                 }
                 if (classPredicate.test(aClass)) {

@@ -22,7 +22,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,7 +31,7 @@ import java.awt.event.ActionEvent;
 
 public class UnsafeUsagesDialog extends DialogWrapper {
   private JEditorPane myMessagePane;
-  private final String[] myConflictDescriptions;
+  private final String @Nls [] myConflictDescriptions;
   public static final int VIEW_USAGES_EXIT_CODE = NEXT_USER_EXIT_CODE;
 
   public UnsafeUsagesDialog(String[] conflictDescriptions, Project project) {
@@ -63,7 +63,7 @@ public class UnsafeUsagesDialog extends DialogWrapper {
     panel.add(new JLabel(RefactoringBundle.message("the.following.problems.were.found")), BorderLayout.NORTH);
     panel.add(scrollPane, BorderLayout.CENTER);
 
-    @NonNls StringBuilder buf = new StringBuilder();
+    @Nls StringBuilder buf = new StringBuilder();
     for (String description : myConflictDescriptions) {
       buf.append(description);
       buf.append("<br><br>");

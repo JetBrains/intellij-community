@@ -28,7 +28,7 @@ public class SwingActionDelegate extends AnAction implements DumbAware {
   @Nullable
   protected JComponent getComponent(AnActionEvent event) {
     JComponent component = ComponentUtil.getParentOfType(JComponent.class, event.getData(CONTEXT_COMPONENT));
-    Function<String, JComponent> function = component == null ? null : ComponentUtil.getClientProperty(component, FUNCTION);
+    Function<? super String, JComponent> function = component == null ? null : ComponentUtil.getClientProperty(component, FUNCTION);
     return function == null ? component : function.apply(mySwingActionId);
   }
 
@@ -56,7 +56,7 @@ public class SwingActionDelegate extends AnAction implements DumbAware {
    *                  or {@code null} to remove mapping for the given base component
    */
   @ApiStatus.Experimental
-  public static void configureMapping(@NotNull JComponent component, @Nullable Function<String, JComponent> mapping) {
+  public static void configureMapping(@NotNull JComponent component, @Nullable Function<? super String, JComponent> mapping) {
     component.putClientProperty(FUNCTION, mapping);
   }
 

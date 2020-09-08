@@ -78,7 +78,7 @@ open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors
     return ContainerUtil.union(userMacroNames, systemMacroNames)
   }
 
-  override fun getValue(name: String) = macros.get(name)
+  override fun getValue(name: String) = macros[name]
 
   override fun removeAllMacros() {
     if (macros.isNotEmpty()) {
@@ -104,7 +104,7 @@ open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors
       macros.remove(name)
     }
     else {
-      if (macros.get(name) == value) {
+      if (macros[name] == value) {
         return false
       }
 
@@ -165,10 +165,10 @@ open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors
         continue
       }
 
-      if (value.length > 1 && value[value.length - 1] == '/') {
+      if (value.lastOrNull() == '/') {
         value = value.substring(0, value.length - 1)
       }
-      newMacros.put(name, value)
+      newMacros[name] = value
     }
 
     val newIgnoredMacros = mutableListOf<String>()
@@ -177,6 +177,10 @@ open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors
       if (!ignoredName.isNullOrEmpty()) {
         newIgnoredMacros.add(ignoredName)
       }
+    }
+
+    EP_NAME.forEachExtensionSafe { contributor ->
+      contributor.forceRegisterPathMacros(newMacros)
     }
 
     macros = if (newMacros.isEmpty()) emptyMap() else Collections.unmodifiableMap(newMacros)

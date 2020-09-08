@@ -55,10 +55,7 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
     private const val splitterProportionKey = "XThreadsFramesViewSplitterKey"
     private const val splitterProportionDefaultValue = 0.5f
 
-    private val Disposable.isDisposed get() = Disposer.isDisposed(this)
-    private val Disposable.isDisposing get() = Disposer.isDisposing(this)
-
-    private val Disposable.isAlive get() = !isDisposed && !isDisposing
+    private val Disposable.isAlive get() = !Disposer.isDisposed(this)
     private val Disposable.isNotAlive get() = !isAlive
 
     private fun Disposable.onTermination(disposable: Disposable) = Disposer.register(this, disposable)

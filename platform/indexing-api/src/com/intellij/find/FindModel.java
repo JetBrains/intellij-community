@@ -15,6 +15,7 @@
  */
 package com.intellij.find;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -575,7 +576,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @return the directory used as a scope, or null if the selected scope is not "Directory".
    */
   @Nullable
-  public String getDirectoryName() {
+  public @NlsSafe String getDirectoryName() {
     return directoryName;
   }
 
@@ -584,7 +585,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    *
    * @param directoryName the directory scope.
    */
-  public void setDirectoryName(@Nullable String directoryName) {
+  public void setDirectoryName(@NlsSafe @Nullable String directoryName) {
     boolean changed = !StringUtil.equals(directoryName, directoryName);
     this.directoryName = directoryName;
     if (changed) {
@@ -735,7 +736,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    * @return the module name, or null if the selected scope is not "Module".
    */
   @Nullable
-  public String getModuleName() {
+  public @NlsSafe String getModuleName() {
     return moduleName;
   }
 
@@ -745,7 +746,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    *
    * @param moduleName the name of the module used as the scope.
    */
-  public void setModuleName(String moduleName) {
+  public void setModuleName(@NlsSafe String moduleName) {
     boolean changed = !StringUtil.equals(moduleName, this.moduleName);
     this.moduleName = moduleName;
     if (changed) {

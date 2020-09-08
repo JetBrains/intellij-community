@@ -18,6 +18,7 @@ package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBList;
@@ -34,7 +35,7 @@ abstract class FileTemplateTabAsList extends FileTemplateTab {
   private final JList<FileTemplate> myList = new JBList<>();
   private MyListModel myModel;
 
-  FileTemplateTabAsList(String title) {
+  FileTemplateTabAsList(@NlsContexts.TabTitle String title) {
     super(title);
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myList.setCellRenderer(SimpleListCellRenderer.create((label, value, index) -> {

@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +69,7 @@ public class RunAnythingRecentProjectProvider extends RunAnythingAnActionProvide
   static class RecentProjectElement extends RunAnythingItemBase {
     @NotNull private final ReopenProjectAction myValue;
 
-    RecentProjectElement(@NotNull ReopenProjectAction value, @NotNull String command, @Nullable Icon icon) {
+    RecentProjectElement(@NotNull ReopenProjectAction value, @NotNull @Nls String command, @Nullable Icon icon) {
       super(command, icon);
       myValue = value;
     }

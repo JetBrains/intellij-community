@@ -13,6 +13,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
@@ -711,7 +712,7 @@ public final class MavenProjectsTree {
     if (isManagedFile(path)) return true;
 
     for (MavenProject each : getProjects()) {
-      if (FileUtil.pathsEqual(path, each.getPath())) return true;
+      if (PathUtil.pathEqualsTo(each.getFile(), path)) return true;
       if (each.getModulePaths().contains(path)) return true;
     }
     return false;

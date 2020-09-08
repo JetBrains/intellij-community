@@ -100,7 +100,7 @@ class CommunityRepositoryModules {
     plugin("intellij.java.guiForms.designer") {
       directoryName = "uiDesigner"
       mainJarName = "uiDesigner.jar"
-      withModule("intellij.java.guiForms.jps", "jps/ui-designer-jps-plugin.jar")
+      withModule("intellij.java.guiForms.jps", "jps/java-guiForms-jps.jar")
     },
     plugin("intellij.properties") {
       withModule("intellij.properties.psi", "properties.jar")
@@ -123,7 +123,7 @@ class CommunityRepositoryModules {
     plugin("intellij.platform.langInjection") {
       withModule("intellij.java.langInjection", "IntelliLang.jar")
       withModule("intellij.xml.langInjection", "IntelliLang.jar")
-      withModule("intellij.java.langInjection.jps", "intellilang-jps-plugin.jar")
+      withModule("intellij.java.langInjection.jps")
       doNotCreateSeparateJarForLocalizableResources()
     },
     plugin("intellij.tasks.core") {
@@ -205,7 +205,7 @@ class CommunityRepositoryModules {
       withModule("intellij.devkit.jps")
     },
     plugin("intellij.eclipse") {
-      withModule("intellij.eclipse.jps", "eclipse-jps-plugin.jar", null)
+      withModule("intellij.eclipse.jps", "eclipse-jps.jar", null)
       withModule("intellij.eclipse.common")
     },
     plugin("intellij.java.coverage") {
@@ -213,7 +213,7 @@ class CommunityRepositoryModules {
       withProjectLibrary("JaCoCo") //todo[nik] convert to module library
     },
     plugin("intellij.errorProne") {
-      withModule("intellij.errorProne.jps", "jps/error-prone-jps-plugin.jar")
+      withModule("intellij.errorProne.jps", "jps/errorProne-jps.jar")
     },
     plugin("intellij.cucumber.java") {
       withModule("intellij.cucumber.jvmFormatter")
@@ -246,10 +246,14 @@ class CommunityRepositoryModules {
     plugin("intellij.android.smali") {
       withModule("intellij.android.smali")
     },
-    plugin("intellij.statsCollector") {
-      withModule("intellij.statsCollector.logEvents")
-      withModule("intellij.statsCollector.completionRanker")
+    plugin("intellij.completionMlRanking"),
+    plugin("intellij.completionMlRankingModels") {
+      bundlingRestrictions.includeInEapOnly = true
     },
+    plugin("intellij.statsCollector") {
+      bundlingRestrictions.includeInEapOnly = true
+    },
+    plugin("intellij.statsCollector"),
     plugin("intellij.jps.cache"),
     plugin("intellij.space") {
       withProjectLibrary("space-idea-sdk")
@@ -375,6 +379,7 @@ class CommunityRepositoryModules {
       withModuleLibrary("precompiled-usb-devices", "android.sdktools.usb-devices", "")
 
       withModule("intellij.android.jps", "jps/android-jps-plugin.jar", null)
+      withModule("intellij.android.jps.model")
 
       withProjectLibrary("kxml2") //todo[nik] move to module libraries
 

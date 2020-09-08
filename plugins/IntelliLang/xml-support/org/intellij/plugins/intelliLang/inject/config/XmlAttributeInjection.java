@@ -15,6 +15,7 @@
  */
 package org.intellij.plugins.intelliLang.inject.config;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
@@ -27,13 +28,10 @@ import static org.intellij.plugins.intelliLang.inject.InjectorUtils.appendString
 
 public class XmlAttributeInjection extends AbstractTagInjection {
 
-  @NotNull @NonNls
-  private StringMatcher myAttributeNameMatcher = StringMatcher.NONE;
-  @NotNull @NonNls
-  private String myAttributeNamespace = "";
+  private @NotNull @NlsSafe StringMatcher myAttributeNameMatcher = StringMatcher.NONE;
+  private @NotNull @NlsSafe String myAttributeNamespace = "";
 
-  @NotNull
-  public String getAttributeName() {
+  public @NotNull String getAttributeName() {
     return myAttributeNameMatcher.getPattern();
   }
 
@@ -41,8 +39,7 @@ public class XmlAttributeInjection extends AbstractTagInjection {
     myAttributeNameMatcher = StringMatcher.create(attributeName);
   }
 
-  @NotNull
-  public String getAttributeNamespace() {
+  public @NotNull @NlsSafe String getAttributeNamespace() {
     return myAttributeNamespace;
   }
 
@@ -55,7 +52,7 @@ public class XmlAttributeInjection extends AbstractTagInjection {
     return element instanceof XmlAttribute && matches((XmlAttribute)element);
   }
 
-  public String getGeneratedName() {
+  public @NlsSafe String getGeneratedName() {
     final String tag = getTagName();
     final String attributeName = getAttributeName();
     if (!attributeName.equals(StringMatcher.NONE.getPattern())) {

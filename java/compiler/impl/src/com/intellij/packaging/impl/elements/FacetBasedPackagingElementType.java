@@ -7,11 +7,13 @@ import com.intellij.facet.FacetTypeRegistry;
 import com.intellij.ide.util.ChooseElementsDialog;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.ui.ArtifactEditorContext;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,11 +21,25 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
 public abstract class FacetBasedPackagingElementType<E extends PackagingElement<?>, F extends Facet> extends PackagingElementType<E> {
   private final FacetTypeId<F> myFacetType;
 
-  protected FacetBasedPackagingElementType(@NotNull @NonNls String id, @NotNull String presentableName, FacetTypeId<F> facetType) {
+  /**
+   * @deprecated This constructor is meant to provide the binary compatibility with the external plugins.
+   * Please use the constructor that accepts a messagePointer for {@link PackagingElementType#myPresentableName}
+   */
+  @Deprecated
+  protected FacetBasedPackagingElementType(@NotNull @NonNls String id,
+                                           @NotNull @Nls(capitalization = Nls.Capitalization.Title) String presentableName,
+                                           FacetTypeId<F> facetType) {
+    this(id, () -> presentableName, facetType);
+  }
+
+  protected FacetBasedPackagingElementType(@NotNull @NonNls String id,
+                                           @NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Title) String> presentableName,
+                                           FacetTypeId<F> facetType) {
     super(id, presentableName);
     myFacetType = facetType;
   }
@@ -64,14 +80,14 @@ public abstract class FacetBasedPackagingElementType<E extends PackagingElement<
 
   protected abstract E createElement(Project project, F facet);
 
-  protected abstract String getDialogTitle();
+  protected abstract @NlsContexts.DialogTitle String getDialogTitle();
 
-  protected abstract String getDialogDescription();
+  protected abstract @NlsContexts.Label String getDialogDescription();
 
   protected abstract String getItemText(F item);
 
   private final class ChooseFacetsDialog extends ChooseElementsDialog<F> {
-    private ChooseFacetsDialog(Project project, List<? extends F> items, String title, String description) {
+    private ChooseFacetsDialog(Project project, List<? extends F> items, @NlsContexts.DialogTitle String title, @NlsContexts.Label String description) {
       super(project, items, title, description, true);
     }
 

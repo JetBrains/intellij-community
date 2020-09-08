@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -43,6 +44,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,11 +64,12 @@ import java.io.File;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
+import java.util.function.Supplier;
 
 public class FileChooserDialogImpl extends DialogWrapper implements FileChooserDialog, PathChooserDialog, FileLookup {
   @NonNls public static final String FILE_CHOOSER_SHOW_PATH_PROPERTY = "FileChooser.ShowPath";
   private static final String RECENT_FILES_KEY = "file.chooser.recent.files";
-  public static final String DRAG_N_DROP_HINT = "Drag and drop a file into the space above to quickly locate it in the tree";
+  public static final @NotNull Supplier<@Nls String> DRAG_N_DROP_HINT = IdeBundle.messagePointer("tooltip.drag.drop.file");
   private final FileChooserDescriptor myChooserDescriptor;
   protected FileSystemTreeImpl myFileSystemTree;
   private Project myProject;
@@ -100,7 +103,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     setTitle(getChooserTitle(descriptor));
   }
 
-  private static String getChooserTitle(final FileChooserDescriptor descriptor) {
+  private static @NlsContexts.DialogTitle String getChooserTitle(final FileChooserDescriptor descriptor) {
     final String title = descriptor.getTitle();
     return title != null ? title : UIBundle.message("file.chooser.default.title");
   }
@@ -224,7 +227,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
         return new Dimension(myPathTextField.getField().getWidth(), super.getPreferredSize().height);
       }
     };
-    files.setCellRenderer(SimpleListCellRenderer.create((label, value, index) -> {
+    files.setCellRenderer(SimpleListCellRenderer.create((var label, @NlsContexts.Label var value, var index) -> {
       label.setText(value);
       VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(value));
       label.setIcon(file == null ? EmptyIcon.ICON_16 : IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, null));
@@ -328,7 +331,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     panel.add(scrollPane, BorderLayout.CENTER);
     panel.setPreferredSize(JBUI.size(400));
 
-    JLabel dndLabel = new JLabel(DRAG_N_DROP_HINT, SwingConstants.CENTER);
+    JLabel dndLabel = new JLabel(DRAG_N_DROP_HINT.get(), SwingConstants.CENTER);
     dndLabel.setFont(JBUI.Fonts.miniFont());
     dndLabel.setForeground(UIUtil.getLabelDisabledForeground());
     panel.add(dndLabel, BorderLayout.SOUTH);

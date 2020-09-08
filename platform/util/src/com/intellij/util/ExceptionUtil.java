@@ -2,9 +2,11 @@
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,6 +73,7 @@ public final class ExceptionUtil extends ExceptionUtilRt {
     return getThrowableText(new Throwable());
   }
 
+  @NlsSafe
   @NotNull
   public static String getThrowableText(@NotNull Throwable t) {
     StringWriter writer = new StringWriter();
@@ -78,11 +81,13 @@ public final class ExceptionUtil extends ExceptionUtilRt {
     return writer.getBuffer().toString();
   }
 
+  @NlsSafe
   @NotNull
   public static String getThrowableText(@NotNull Throwable aThrowable, @NotNull String stackFrameSkipPattern) {
     return ExceptionUtilRt.getThrowableText(aThrowable, stackFrameSkipPattern);
   }
 
+  @NlsSafe
   @NotNull
   public static String getUserStackTrace(@NotNull Throwable aThrowable, Logger logger) {
     String result = getThrowableText(aThrowable, "com.intellij.");
@@ -146,7 +151,7 @@ public final class ExceptionUtil extends ExceptionUtilRt {
   }
 
   @NotNull
-  public static String getNonEmptyMessage(@NotNull Throwable t, @NotNull String defaultMessage) {
+  public static @NlsSafe String getNonEmptyMessage(@NotNull Throwable t, @NotNull @Nls String defaultMessage) {
     String message = t.getMessage();
     return !StringUtil.isEmptyOrSpaces(message) ? message : defaultMessage;
   }

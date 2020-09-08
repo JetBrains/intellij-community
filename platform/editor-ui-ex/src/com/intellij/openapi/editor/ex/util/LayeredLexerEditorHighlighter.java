@@ -25,6 +25,7 @@ import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.text.MergingCharSequence;
 import gnu.trove.TIntIntHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -466,6 +467,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     }
 
     @Override
+    @NonNls
     public String toString() {
       return "MappedRange{range=" + range + ", outerToken=" + outerToken + '}';
     }
@@ -599,6 +601,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
   }
 
   @Override
+  @NonNls
   public String toString() {
     return myText.toString();
   }

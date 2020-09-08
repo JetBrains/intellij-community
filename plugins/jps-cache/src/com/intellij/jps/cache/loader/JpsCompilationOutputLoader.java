@@ -126,7 +126,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
       return;
     }
 
-    indicatorManager.setText(this, "Applying changes...");
+    indicatorManager.setText(this, "Applying JPS Caches...");
     ContainerUtil.map(myTmpFolderToModuleName.entrySet(),
                       entry -> EXECUTOR_SERVICE.submit(() -> {
                         String moduleName = entry.getValue();

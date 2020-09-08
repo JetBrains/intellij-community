@@ -25,7 +25,6 @@ import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.psi.search.GlobalSearchScope
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonHelper
 import com.intellij.execution.target.value.TargetEnvironmentFunction
@@ -45,18 +44,8 @@ class PyTestSettingsEditor(configuration: PyAbstractTestConfiguration) :
   PyAbstractTestSettingsEditor(
     create(
       configuration,
-      CustomOption(
-        PyTestConfiguration::keywords.name,
-        PyBundle.message("python.testing.nose.custom.options.keywords"),
-        PyRunTargetVariant.PATH,
-        PyRunTargetVariant.PYTHON
-      ),
-      CustomOption(
-        PyTestConfiguration::parameters.name,
-        PyBundle.message("python.testing.nose.custom.options.parameters"),
-        PyRunTargetVariant.PATH,
-        PyRunTargetVariant.PYTHON
-      )
+      PyTestCustomOption(PyTestConfiguration::keywords, PyRunTargetVariant.PATH, PyRunTargetVariant.PYTHON),
+      PyTestCustomOption(PyTestConfiguration::parameters, PyRunTargetVariant.PATH, PyRunTargetVariant.PYTHON)
     ))
 
 class PyPyTestExecutionEnvironment(configuration: PyTestConfiguration, environment: ExecutionEnvironment) :
@@ -80,10 +69,10 @@ class PyPyTestExecutionEnvironment(configuration: PyTestConfiguration, environme
 class PyTestConfiguration(project: Project, factory: PyTestFactory)
   : PyAbstractTestConfiguration(project, factory, PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.PY_TEST)),
     PyTestConfigurationWithCustomSymbol {
-  @ConfigField
+  @ConfigField("runcfg.pytest.config.keywords")
   var keywords: String = ""
 
-  @ConfigField
+  @ConfigField("runcfg.pytest.config.parameters")
   var parameters: String = ""
 
   override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? =

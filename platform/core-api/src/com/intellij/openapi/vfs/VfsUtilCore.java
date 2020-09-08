@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
@@ -38,9 +39,9 @@ import java.util.Set;
 public class VfsUtilCore {
   private static final Logger LOG = Logger.getInstance(VfsUtilCore.class);
 
-  private static final String MAILTO = "mailto";
+  private static final @NonNls String MAILTO = "mailto";
 
-  public static final String LOCALHOST_URI_PATH_PREFIX = "localhost/";
+  public static final @NonNls String LOCALHOST_URI_PATH_PREFIX = "localhost/";
   public static final char VFS_SEPARATOR_CHAR = '/';
   public static final String VFS_SEPARATOR = "/";
 
@@ -108,13 +109,13 @@ public class VfsUtilCore {
    * @param root candidate to be parent file (Project base dir, any content roots etc.)
    * @return relative path of {@code file} or full path if {@code root} is not actual ancestor of {@code file}
    */
-  public static @Nullable String getRelativeLocation(@Nullable VirtualFile file, @NotNull VirtualFile root) {
+  public static @Nullable @NlsSafe String getRelativeLocation(@Nullable VirtualFile file, @NotNull VirtualFile root) {
     if (file == null) return null;
     String path = getRelativePath(file, root);
     return path != null ? path : file.getPresentableUrl();
   }
 
-  public static @Nullable String getRelativePath(@NotNull VirtualFile file, @NotNull VirtualFile ancestor) {
+  public static @Nullable @NlsSafe String getRelativePath(@NotNull VirtualFile file, @NotNull VirtualFile ancestor) {
     return getRelativePath(file, ancestor, VFS_SEPARATOR_CHAR);
   }
 
@@ -127,7 +128,7 @@ public class VfsUtilCore {
    * @param separator character to use as files separator
    * @return the relative path or {@code null} if {@code ancestor} is not ancestor for {@code file}
    */
-  public static @Nullable String getRelativePath(@NotNull VirtualFile file, @NotNull VirtualFile ancestor, char separator) {
+  public static @Nullable @NlsSafe String getRelativePath(@NotNull VirtualFile file, @NotNull VirtualFile ancestor, char separator) {
     if (!file.getFileSystem().equals(ancestor.getFileSystem())) {
       return null;
     }
@@ -388,7 +389,7 @@ public class VfsUtilCore {
     return files.isEmpty() ? VirtualFile.EMPTY_ARRAY : files.toArray(VirtualFile.EMPTY_ARRAY);
   }
 
-  public static @NotNull String urlToPath(@Nullable String url) {
+  public static @NotNull @NlsSafe String urlToPath(@Nullable String url) {
     return url == null ? "" : VirtualFileManager.extractPath(url);
   }
 
@@ -551,7 +552,7 @@ public class VfsUtilCore {
     }
   }
 
-  public static @NotNull String fixIDEAUrl(@NotNull String ideaUrl) {
+  public static @NotNull @NlsSafe String fixIDEAUrl(@NotNull String ideaUrl) {
     String ideaProtocolMarker = "://";
     int idx = ideaUrl.indexOf(ideaProtocolMarker);
     if (idx >= 0) {
@@ -566,7 +567,7 @@ public class VfsUtilCore {
     return ideaUrl;
   }
 
-  public static @Nullable VirtualFile findRelativeFile(@NotNull String uri, @Nullable VirtualFile base) {
+  public static @Nullable VirtualFile findRelativeFile(@NotNull @NonNls String uri, @Nullable VirtualFile base) {
     if (base != null) {
       if (!base.isValid()){
         LOG.error("Invalid file name: " + base.getName() + ", url: " + uri);

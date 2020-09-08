@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerListener;
 import org.jetbrains.annotations.NonNls;
@@ -25,9 +26,7 @@ import java.util.List;
 public interface ToolWindow extends BusyObject {
   Key<Boolean> SHOW_CONTENT_ICON = new Key<>("ContentIcon");
 
-  @NonNls
-  @NotNull
-  String getId();
+  @NonNls @NotNull String getId();
 
   /**
    * @throws IllegalStateException if tool window isn't installed.
@@ -133,24 +132,22 @@ public interface ToolWindow extends BusyObject {
   /**
    * @return Window title. Returns {@code null} if window has no title.
    */
-  @Nullable
-  String getTitle();
+  @NlsContexts.TabTitle @Nullable String getTitle();
 
   /**
    * Sets new window title.
    */
-  void setTitle(String title);
+  void setTitle(@NlsContexts.TabTitle String title);
 
   /**
    * @return Window stripe button text.
    */
-  @NotNull
-  String getStripeTitle();
+  @NlsContexts.TabTitle @NotNull String getStripeTitle();
 
   /**
    * Sets new window stripe button text.
    */
-  void setStripeTitle(@NotNull String title);
+  void setStripeTitle(@NlsContexts.TabTitle @NotNull String title);
 
   /**
    * @return Whether the window is available or not.

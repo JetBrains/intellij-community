@@ -2,6 +2,7 @@
 @file:JvmName("Responses")
 package org.jetbrains.io
 
+import com.intellij.openapi.util.NlsSafe
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufAllocator
 import io.netty.buffer.ByteBufUtil
@@ -31,8 +32,8 @@ fun response(content: CharSequence, charset: Charset = CharsetUtil.US_ASCII): Fu
 
 fun HttpResponse.addNoCache(): HttpResponse {
   @Suppress("SpellCheckingInspection")
-  headers().add(HttpHeaderNames.CACHE_CONTROL, "no-cache, no-store, must-revalidate, max-age=0")
-  headers().add(HttpHeaderNames.PRAGMA, "no-cache")
+  headers().add(HttpHeaderNames.CACHE_CONTROL, "no-cache, no-store, must-revalidate, max-age=0")//NON-NLS
+  headers().add(HttpHeaderNames.PRAGMA, "no-cache")//NON-NLS
   return this
 }
 
@@ -69,11 +70,11 @@ fun HttpResponse.addCommonHeaders() {
     headers().set(HttpHeaderNames.X_FRAME_OPTIONS, "SameOrigin")
   }
   @Suppress("SpellCheckingInspection")
-  headers().set("X-Content-Type-Options", "nosniff")
-  headers().set("x-xss-protection", "1; mode=block")
+  headers().set("X-Content-Type-Options", "nosniff")//NON-NLS
+  headers().set("x-xss-protection", "1; mode=block")//NON-NLS
 
   if (status() < HttpResponseStatus.MULTIPLE_CHOICES) {
-    headers().set(HttpHeaderNames.ACCEPT_RANGES, "bytes")
+    headers().set(HttpHeaderNames.ACCEPT_RANGES, "bytes")//NON-NLS
   }
 }
 
@@ -104,6 +105,7 @@ internal fun createStatusResponse(responseStatus: HttpResponseStatus, request: H
     return DefaultFullHttpResponse(HttpVersion.HTTP_1_1, responseStatus, Unpooled.EMPTY_BUFFER)
   }
 
+  @NlsSafe
   val builder = StringBuilder()
   val message = responseStatus.toString()
   builder.append("<!doctype html><title>").append(message).append("</title>").append("<h1 style=\"text-align: center\">").append(message).append("</h1>")

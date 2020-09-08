@@ -29,7 +29,7 @@ public class BrowserSelector {
     this(browser -> allowDefaultBrowser || browser != null);
   }
 
-  public BrowserSelector(@NotNull final Condition<WebBrowser> browserCondition) {
+  public BrowserSelector(final @NotNull Condition<? super WebBrowser> browserCondition) {
     myModel = createBrowsersComboModel(browserCondition);
     myBrowserComboWithBrowse = new ComboboxWithBrowseButton(new ComboBox(myModel));
     myBrowserComboWithBrowse.addActionListener(e -> {
@@ -68,7 +68,7 @@ public class BrowserSelector {
     return myBrowserComboWithBrowse;
   }
 
-  private static MutableCollectionComboBoxModel<WebBrowser> createBrowsersComboModel(@NotNull Condition<WebBrowser> browserCondition) {
+  private static MutableCollectionComboBoxModel<WebBrowser> createBrowsersComboModel(@NotNull Condition<? super WebBrowser> browserCondition) {
     List<WebBrowser> list = new ArrayList<>();
     if (browserCondition.value(null)) {
       list.add(null);

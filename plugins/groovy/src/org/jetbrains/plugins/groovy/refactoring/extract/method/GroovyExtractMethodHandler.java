@@ -22,6 +22,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -51,6 +52,8 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
 /**
  * @author ilyas
@@ -266,7 +269,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     }
   }
 
-  static String getRefactoringName() {
+  static @Nls(capitalization = Title) String getRefactoringName() {
     return GroovyRefactoringBundle.message("extract.method.title");
   }
 }

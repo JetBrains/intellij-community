@@ -191,7 +191,7 @@ public class ReplaceConstructorWithFactoryDialog extends RefactoringDialog {
     final String name = myNameField.getEnteredName();
     final PsiNameHelper nameHelper = PsiNameHelper.getInstance(myContainingClass.getProject());
     if (!nameHelper.isIdentifier(name)) {
-      throw new ConfigurationException("'" + name + "' is invalid factory method name");
+      throw new ConfigurationException(JavaRefactoringBundle.message("replace.constructor.factory.error.invalid.factory.method.name", name));
     }
   }
 }

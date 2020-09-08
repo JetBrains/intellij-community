@@ -19,6 +19,7 @@ import com.intellij.codeInsight.template.postfix.templates.SurroundPostfixTempla
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -29,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class PyPrintPostfixTemplate extends SurroundPostfixTemplateBase {
 
-  public static final String DESCR = "print(expr)";
+  public static final @NlsSafe String DESCR = "print(expr)";
 
   protected PyPrintPostfixTemplate() {
     super("print", DESCR, PyPostfixUtils.PY_PSI_INFO, PyPostfixUtils.selectorTopmost());
@@ -66,6 +67,7 @@ public class PyPrintPostfixTemplate extends SurroundPostfixTemplateBase {
 
       @Override
       public String getTemplateDescription() {
+        //noinspection DialogTitleCapitalization
         return DESCR;
       }
     };

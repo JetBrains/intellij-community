@@ -48,7 +48,7 @@ public class I18nizeTest extends LightJavaCodeInsightTestCase {
     doTest("i18nizedExpr");
   }
 
-  private void doTest(String i18nizedText) {
+  private <T extends UExpression> void doTest(String i18nizedText) {
     configureByFile(getBasePath() + "/before" + getTestName(false) + "." + "java");
     I18nizeAction action = new I18nizeAction();
     DataContext dataContext = DataManager.getInstance().getDataContext(getEditor().getComponent());
@@ -56,7 +56,7 @@ public class I18nizeTest extends LightJavaCodeInsightTestCase {
     action.update(event);
     @NonNls String afterFile = getBasePath() + "/after" + getTestName(false) + "." + "java";
     boolean afterFileExists = new File(PathManagerEx.getTestDataPath() + afterFile).exists();
-    I18nQuickFixHandler handler = I18nizeAction.getHandler(event);
+    I18nQuickFixHandler<T> handler = (I18nQuickFixHandler<T>)I18nizeAction.getHandler(event);
     try {
       if (handler != null) {
         handler.checkApplicability(getFile(), getEditor());
@@ -68,7 +68,7 @@ public class I18nizeTest extends LightJavaCodeInsightTestCase {
     assertEquals(afterFileExists, event.getPresentation().isEnabled());
 
     if (afterFileExists) {
-      UInjectionHost literalExpression = I18nizeAction.getEnclosingStringLiteral(getFile(), getEditor());
+      T literalExpression = handler.getEnclosingLiteral(getFile(), getEditor());
       assertNotNull(handler);
       ApplicationManager.getApplication().runWriteAction(() -> {
         handler.performI18nization(getFile(),
@@ -93,6 +93,9 @@ public class I18nizeTest extends LightJavaCodeInsightTestCase {
 
   public void testLongConcat() {doTest();}
   public void testCharacterLiteral() {doTest();}
+  public void testNestedConcatenation() {doTest();}
+  public void testConcatenationInTernary() {doTest();}
+  public void testAssignment() {doTest();}
 
   public void testShortenClassReferences() {
     doTest("p.MyBundle.message(\"key\")");
@@ -104,8 +107,19 @@ public class I18nizeTest extends LightJavaCodeInsightTestCase {
     UStringConcatenationsFacade concatenation = UStringConcatenationsFacade.createFromTopConcatenation(enclosingStringLiteral);
     assertNotNull(concatenation);
     ArrayList<UExpression> args = new ArrayList<>();
-    Assert.assertEquals("Not a valid java identifier part in {0, choice, 0#prefix|1#suffix}", JavaI18nUtil.buildUnescapedFormatString(concatenation, args, getProject()));
+    Assert.assertEquals("Not a valid java identifier part in {0, choice, 0#prefix|1#'<'br/'>'suffix}", JavaI18nUtil.buildUnescapedFormatString(concatenation, args, getProject()));
     assertSize(1, args);
     assertEquals("prefix ? 0 : 1", args.get(0).getSourcePsi().getText());
+  }
+
+  public void testGeneratedChoicePatternWithConcatenation() {
+    configureByFile(getBasePath() + "/before" + getTestName(false) + "." + "java");
+    UInjectionHost enclosingStringLiteral = I18nizeAction.getEnclosingStringLiteral(getFile(), getEditor());
+    UStringConcatenationsFacade concatenation = UStringConcatenationsFacade.createFromTopConcatenation(enclosingStringLiteral);
+    assertNotNull(concatenation);
+    ArrayList<UExpression> args = new ArrayList<>();
+    Assert.assertEquals("Not a valid {0} identifier part in {2, choice, 0#{1} prefix|1#suffix}", JavaI18nUtil.buildUnescapedFormatString(concatenation, args, getProject()));
+    assertSize(3, args);
+    assertEquals("prefix ? 0 : 1", args.get(2).getSourcePsi().getText());
   }
 }

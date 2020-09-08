@@ -15,6 +15,7 @@
  */
 package com.intellij.java.propertyBased;
 
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.pom.java.LanguageLevel;
@@ -38,6 +39,19 @@ class JavaCompletionPolicy extends CompletionPolicy {
     if (isBuggyInjection(file)) return null;
 
     return super.getExpectedVariant(editor, file, leaf, ref);
+  }
+
+  @Override
+  public boolean areDuplicatesOk(@NotNull LookupElement item1, @NotNull LookupElement item2) {
+    return areSameNamedFieldsInSameClass(item1.getObject(), item2.getObject()) || super.areDuplicatesOk(item1, item2);
+  }
+
+  private static boolean areSameNamedFieldsInSameClass(Object o1, Object o2) {
+    if (o1 instanceof PsiField && o2 instanceof PsiField && !o1.equals(o2)) {
+      PsiClass clazz = ((PsiField)o1).getContainingClass();
+      return clazz != null && clazz == ((PsiField)o2).getContainingClass();
+    }
+    return false;
   }
 
   // a language where there are bugs in completion which maintainers of this Java-specific test can't or don't want to fix
@@ -85,10 +99,14 @@ class JavaCompletionPolicy extends CompletionPolicy {
         }
       }
     }
-    if (target instanceof PsiField &&
-        SyntaxTraverser.psiApi().parents(ref).find(e -> e instanceof PsiMethod && ((PsiMethod)e).isConstructor()) != null) {
-      // https://youtrack.jetbrains.com/issue/IDEA-174744 on red code
-      return false;
+    if (target instanceof PsiField) {
+      if (SyntaxTraverser.psiApi().parents(ref).find(e -> e instanceof PsiMethod && ((PsiMethod)e).isConstructor()) != null) {
+        // https://youtrack.jetbrains.com/issue/IDEA-174744 on red code
+        return false;
+      }
+      if (!((PsiField)target).hasModifierProperty(PsiModifier.STATIC) && anno != null) {
+        return false;
+      }
     }
     if (isStaticWithInstanceQualifier(ref, target)) {
       return false;

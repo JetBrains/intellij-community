@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch;
 
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.VcsBundle;
 import org.jetbrains.annotations.NotNull;
@@ -29,8 +31,7 @@ public final class RelativePathCalculator {
     return s1.equals(s2);
   }
 
-  @NotNull
-  public String execute() {
+  public @NlsSafe @NotNull String execute() {
     if (stringEqual(myShifted, myBase)) {
       return ".";
     }
@@ -92,13 +93,14 @@ public final class RelativePathCalculator {
     return false;
   }
 
-  @Nullable
-  public static String getMovedString(final String beforeName, final String afterName) {
+  public static @NlsContexts.Label @Nullable String getMovedString(final String beforeName, final String afterName) {
     if (beforeName != null && afterName != null && !stringEqual(beforeName, afterName)) {
-      final RelativePathCalculator calculator = new RelativePathCalculator(beforeName, afterName);
+      RelativePathCalculator calculator = new RelativePathCalculator(beforeName, afterName);
       String result = calculator.execute();
-      final String key = calculator.isRename() ? "change.file.renamed.to.text" : "change.file.moved.to.text";
-      return VcsBundle.message(key, result);
+
+      return calculator.isRename()
+             ? VcsBundle.message("change.file.renamed.to.text", result)
+             : VcsBundle.message("change.file.moved.to.text", result);
     }
     return null;
   }

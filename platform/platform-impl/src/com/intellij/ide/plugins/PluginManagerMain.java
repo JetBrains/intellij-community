@@ -274,23 +274,25 @@ public abstract class PluginManagerMain {
     if (!disabled.isEmpty() || !disabledDependants.isEmpty()) {
       String message = "";
       if (disabled.size() == 1) {
-        message += "Updated plugin '" + disabled.iterator().next().getName() + "' is disabled.";
+        message += IdeBundle.message("plugin.manager.main.suggest.to.enable.message.part1", disabled.iterator().next().getName());
       }
       else if (!disabled.isEmpty()) {
-        message += "Updated plugins " + StringUtil.join(disabled, pluginDescriptor -> pluginDescriptor.getName(), ", ") + " are disabled.";
+        message += IdeBundle.message("plugin.manager.main.suggest.to.enable.message.part2", StringUtil.join(disabled, pluginDescriptor -> pluginDescriptor.getName(), ", "));
       }
 
       if (!disabledDependants.isEmpty()) {
         message += "<br>";
-        message += "Updated plugin" + (list.size() > 1 ? "s depend " : " depends ") + "on disabled";
+        message += IdeBundle.message("plugin.manager.main.suggest.to.enable.message.part3", list.size());
+        message += " ";
         if (disabledDependants.size() == 1) {
-          message += " plugin '" + disabledDependants.iterator().next().getName() + "'.";
+          message += IdeBundle.message("plugin.manager.main.suggest.to.enable.message.part4", disabledDependants.iterator().next().getName());
         }
         else {
-          message += " plugins " + StringUtil.join(disabledDependants, pluginDescriptor -> pluginDescriptor.getName(), ", ") + ".";
+          message += IdeBundle.message("plugin.manager.main.suggest.to.enable.message.part5", StringUtil.join(disabledDependants, pluginDescriptor -> pluginDescriptor.getName(), ", "));
         }
       }
-      message += " Disabled plugins " + (disabled.isEmpty() ? "and plugins which depend on disabled " :"") + "won't be activated after restart.";
+      message += " ";
+      message += IdeBundle.message(disabled.isEmpty() ? "plugin.manager.main.suggest.to.enable.message.part6" : "plugin.manager.main.suggest.to.enable.message.part7");
 
       boolean result;
       if (!disabled.isEmpty() && !disabledDependants.isEmpty()) {
@@ -305,13 +307,12 @@ public abstract class PluginManagerMain {
         result = code == Messages.YES;
       }
       else {
-        message += "<br>Would you like to enable ";
+        message += "<br>";
         if (!disabled.isEmpty()) {
-          message += "updated plugin" + (disabled.size() > 1 ? "s" : "");
+          message += IdeBundle.message("plugin.manager.main.suggest.to.enable.message.part8", disabled.size());
         }
         else {
-          message += "plugin " +
-                     StringUtil.pluralize("dependency", disabledDependants.size());
+          message += IdeBundle.message("plugin.manager.main.suggest.to.enable.message.part9", disabledDependants.size());
         }
         message += "?";
         result = MessageDialogBuilder.yesNo(IdeBundle.message("dialog.title.dependent.plugins.found"), XmlStringUtil.wrapInHtml(message)).guessWindowAndAsk();
@@ -360,7 +361,7 @@ public abstract class PluginManagerMain {
 
   public static void notifyPluginsUpdated(@Nullable Project project) {
     ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-    String title = IdeBundle.message("updates.plugins.ready.title", ApplicationNamesInfo.getInstance().getFullProductName());
+    String title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
     String action = IdeBundle.message("ide.restart.required.notification",
                                       IdeBundle.message(app.isRestartCapable() ? "ide.restart.action" : "ide.shutdown.action"));
     Notification notification = UpdateChecker.getNotificationGroup().createNotification(title, "", NotificationType.INFORMATION, null, "plugins.updated.suggest.restart");

@@ -35,7 +35,7 @@ class SameSignatureCallParametersProvider {
     psiElement().afterLeaf("(").withParent(
       psiElement(PsiReferenceExpression.class).withParent(
         psiElement(PsiExpressionList.class).withParent(PsiCall.class))).with(
-      new PatternCondition<PsiElement>("Method call completed with parameter hints") {
+      new PatternCondition<>("Method call completed with parameter hints") {
         @Override
         public boolean accepts(@NotNull PsiElement element, ProcessingContext context) {
           PsiElement e = element.getParent();
@@ -78,7 +78,7 @@ class SameSignatureCallParametersProvider {
 
     LookupElementBuilder element = LookupElementBuilder.create(lookupString).withIcon(icon);
     boolean makeFinalIfNeeded = PsiTreeUtil.isAncestor(takeParametersFrom, call, true);
-    element = element.withInsertHandler(new InsertHandler<LookupElement>() {
+    element = element.withInsertHandler(new InsertHandler<>() {
       @Override
       public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
         context.commitDocument();

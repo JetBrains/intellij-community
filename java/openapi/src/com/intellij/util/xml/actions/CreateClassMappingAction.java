@@ -18,6 +18,7 @@ package com.intellij.util.xml.actions;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -85,10 +86,10 @@ public abstract class CreateClassMappingAction<T extends DomElement> extends Cre
 
   protected @NlsContexts.DialogTitle String getChooserTitle() {
     String text = getTemplatePresentation().getText();
-    if (text.endsWith("...")) {
+    if (text != null && text.endsWith("...")) {
       text = StringUtil.trimEnd(text, "...");
     }
-    return "Choose " + text + " Class";
+    return JavaBundle.message("create.class.mapping.dialog.title", text);
   }
 
   protected abstract DomElement createElement(T context);

@@ -47,10 +47,5 @@ public class JpsAppEngineModelSerializerExtension extends JpsModelSerializerExte
       return new JpsAppEngineModuleExtensionImpl(
         XmlSerializer.deserialize(facetConfigurationElement, AppEngineModuleExtensionProperties.class));
     }
-
-    @Override
-    protected void saveExtension(JpsAppEngineModuleExtension extension, Element facetConfigurationTag, JpsModule module) {
-      XmlSerializer.serializeInto(((JpsAppEngineModuleExtensionImpl)extension).getProperties(), facetConfigurationTag);
-    }
   }
 }

@@ -25,10 +25,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
@@ -2934,7 +2931,7 @@ public class AbstractTreeUi {
     return null;
   }
 
-  private static String getLoadingNodeText() {
+  private static @Nls String getLoadingNodeText() {
     return IdeBundle.message("progress.searching");
   }
 

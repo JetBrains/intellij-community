@@ -18,6 +18,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -88,7 +90,7 @@ public final class GlobalSearchScopesCore {
     @NotNull
     @Override
     public String getDisplayName() {
-      return mySet.getName();
+      return mySet.getPresentableName();
     }
 
     @NotNull
@@ -127,7 +129,7 @@ public final class GlobalSearchScopesCore {
     }
 
     @Override
-    public String toString() {
+    public @NonNls String toString() {
       return "FilterScope adapted from "+mySet;
     }
   }
@@ -169,7 +171,7 @@ public final class GlobalSearchScopesCore {
     @NotNull
     @Override
     public String getDisplayName() {
-      return AnalysisBundle.message("psi.search.scope.production.files");
+      return getProjectProductionFilesScopeName();
     }
   }
 
@@ -201,7 +203,7 @@ public final class GlobalSearchScopesCore {
     @NotNull
     @Override
     public String getDisplayName() {
-      return AnalysisBundle.message("psi.search.scope.test.files");
+      return getProjectTestFilesScopeName();
     }
   }
 
@@ -252,7 +254,7 @@ public final class GlobalSearchScopesCore {
     }
 
     @Override
-    public String toString() {
+    public @NonNls String toString() {
       return "directory scope: " + myDirectory + "; withSubdirs:"+myWithSubdirectories;
     }
 
@@ -336,7 +338,7 @@ public final class GlobalSearchScopesCore {
     }
 
     @Override
-    public String toString() {
+    public @NonNls String toString() {
       return "Directories scope: directories " + myDirectories + ", directories with subdirectories " + myDirectoriesWithSubdirectories;
     }
 
@@ -409,6 +411,13 @@ public final class GlobalSearchScopesCore {
       Iterable<VirtualFile> allDirs = ContainerUtil.concat(myDirectories, myDirectoriesWithSubdirectories);
       return AnalysisBundle.message("display.name.directories.0", StringUtil.join(allDirs, file -> "'" + file.getName() + "'", ", "));
     }
+  }
 
+  public static @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String getProjectProductionFilesScopeName() {
+    return AnalysisBundle.message("psi.search.scope.production.files");
+  }
+
+  public static @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String getProjectTestFilesScopeName() {
+    return AnalysisBundle.message("psi.search.scope.test.files");
   }
 }

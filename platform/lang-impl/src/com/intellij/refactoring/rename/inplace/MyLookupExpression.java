@@ -13,6 +13,8 @@ import com.intellij.codeInsight.template.TextResult;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -27,15 +29,15 @@ import java.util.LinkedHashSet;
 public class MyLookupExpression extends Expression {
   protected final String myName;
   protected final LookupElement[] myLookupItems;
-  private final String myAdvertisementText;
+  private final @NlsContexts.PopupAdvertisement String myAdvertisementText;
   private volatile LookupFocusDegree myLookupFocusDegree = LookupFocusDegree.FOCUSED;
 
-  public MyLookupExpression(String name,
-                            @Nullable LinkedHashSet<String> names,
+  public MyLookupExpression(@NlsSafe String name,
+                            @Nullable LinkedHashSet<@NlsSafe String> names,
                             @Nullable PsiNamedElement elementToRename,
                             @Nullable PsiElement nameSuggestionContext,
                             boolean shouldSelectAll,
-                            String advertisement) {
+                            @NlsContexts.PopupAdvertisement String advertisement) {
     myName = name;
     myAdvertisementText = advertisement;
     myLookupItems = initLookupItems(names, elementToRename, nameSuggestionContext, shouldSelectAll);

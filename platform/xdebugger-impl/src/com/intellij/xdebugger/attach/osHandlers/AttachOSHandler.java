@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.attach.osHandlers;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.attach.EnvironmentAwareHost;
 import com.intellij.xdebugger.attach.LocalAttachHost;
 import org.jetbrains.annotations.NotNull;
@@ -100,7 +101,7 @@ public abstract class AttachOSHandler {
       return osType;
     }
     catch (ExecutionException ex) {
-      throw new ExecutionException("Error while calculating the remote operating system", ex);
+      throw new ExecutionException(XDebuggerBundle.message("dialog.message.error.while.calculating.remote.operating.system"), ex);
     }
   }
 

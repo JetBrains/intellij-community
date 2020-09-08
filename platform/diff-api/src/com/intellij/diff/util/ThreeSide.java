@@ -37,7 +37,7 @@ public enum ThreeSide {
   //
 
   @Nullable
-  @Contract("!null, !null, !null -> !null; null, null, null -> null")
+  @Contract(value = "!null, !null, !null -> !null; null, null, null -> null", pure = true)
   public <T> T select(@Nullable T left, @Nullable T base, @Nullable T right) {
     if (myIndex == 0) return left;
     if (myIndex == 1) return base;
@@ -46,6 +46,7 @@ public enum ThreeSide {
   }
 
   @NotNull
+  @Contract(pure = true)
   public <T> T selectNotNull(@NotNull T left, @NotNull T base, @NotNull T right) {
     if (myIndex == 0) return left;
     if (myIndex == 1) return base;
@@ -53,6 +54,7 @@ public enum ThreeSide {
     throw new IllegalStateException();
   }
 
+  @Contract(pure = true)
   public int select(int left, int base, int right) {
     if (myIndex == 0) return left;
     if (myIndex == 1) return base;
@@ -60,34 +62,40 @@ public enum ThreeSide {
     throw new IllegalStateException();
   }
 
+  @Contract(pure = true)
   public int select(int @NotNull [] array) {
     assert array.length == 3;
     return array[myIndex];
   }
 
+  @Contract(pure = true)
   public <T> T select(T @NotNull [] array) {
     assert array.length == 3;
     return array[myIndex];
   }
 
   @NotNull
+  @Contract(pure = true)
   public <T> T selectNotNull(T @NotNull [] array) {
     assert array.length == 3;
     return array[myIndex];
   }
 
+  @Contract(pure = true)
   public <T> T select(@NotNull List<T> list) {
     assert list.size() == 3;
     return list.get(myIndex);
   }
 
   @NotNull
+  @Contract(pure = true)
   public <T> T selectNotNull(@NotNull List<T> list) {
     assert list.size() == 3;
     return list.get(myIndex);
   }
 
   @Nullable
+  @Contract(pure = true)
   public static <T> ThreeSide fromValue(@NotNull List<? extends T> list, @Nullable T value) {
     assert list.size() == 3;
     int index = list.indexOf(value);

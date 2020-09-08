@@ -239,10 +239,10 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
       void beforeNodeChanged(U x);
       void nodeChanged(U x);
     }
-    private final Function<U, String> myNamer;
-    private final Function<U, N> myFactory;
+    private final @NotNull Function<? super U, String> myNamer;
+    private final @NotNull Function<? super U, ? extends N> myFactory;
     private final U myRootObject;
-    private final Function<U, Iterable<U>> myStructure;
+    private final Function<? super U, ? extends Iterable<U>> myStructure;
     private final boolean myUseIdentityHashing;
     private SpeedSearchSupply mySpeedSearch;
     private Map<U, N> myNodeCache;
@@ -250,8 +250,8 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     private final EventDispatcher<Listener<U>> myNodeChanged = (EventDispatcher)EventDispatcher.create(Listener.class);
 
     public SearchTreeModel(@NotNull N root, @NotNull SpeedSearchSupply speedSearch,
-                           @NotNull Function<U, String> namer, @NotNull Function<U, N> nodeFactory,
-                           @NotNull Function<U, Iterable<U>> structure, boolean useIdentityHashing) {
+                           @NotNull Function<? super U, String> namer, @NotNull Function<? super U, ? extends N> nodeFactory,
+                           @NotNull Function<? super U, ? extends Iterable<U>> structure, boolean useIdentityHashing) {
       super(root);
       myRootObject = Objects.requireNonNull(getUserObject(root));
       mySpeedSearch = speedSearch;
@@ -366,7 +366,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
       return myUseIdentityHashing ? new IdentityHashMap<>() : new HashMap<>();
     }
 
-    private boolean computeAcceptCache(@NotNull U object, @NotNull Set<U> cache) {
+    private boolean computeAcceptCache(@NotNull U object, @NotNull Set<? super U> cache) {
       boolean isAccepted = false;
       Iterable<U> children = getChildren(object);
       for (U child : children) {
@@ -389,7 +389,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     }
 
     @NotNull
-    public Function<U, Iterable<U>> getStructure() {
+    public Function<? super U, ? extends Iterable<U>> getStructure() {
       return myStructure;
     }
 
@@ -403,7 +403,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
       return (N)node.getChildAt(i);
     }
 
-    private void filterChildren(@Nullable U object, @NotNull Condition<U> filter) {
+    private void filterChildren(@Nullable U object, @NotNull Condition<? super U> filter) {
       if (object == null) return;
       N node = getNode(object);
       filterDirectChildren(node, filter);
@@ -413,7 +413,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
       }
     }
 
-    private void filterDirectChildren(@NotNull N node, @NotNull Condition<U> filter) {
+    private void filterDirectChildren(@NotNull N node, @NotNull Condition<? super U> filter) {
       Set<U> accepted = new LinkedHashSet<>();
 
       for (U child : getChildren(getUserObject(node))) {
@@ -424,7 +424,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
       mergeAcceptedNodes(node, accepted);
     }
 
-    private void mergeAcceptedNodes(@NotNull N node, Set<U> accepted) {
+    private void mergeAcceptedNodes(@NotNull N node, Set<? extends U> accepted) {
       int k = 0;
       N cur = getChildSafe(node, 0);
       IntArrayList newIds = new IntArrayList();

@@ -3,6 +3,7 @@ package com.intellij.psi;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.util.PsiUtil;
@@ -61,7 +62,7 @@ public abstract class PsiNameHelper {
    */
   public abstract boolean isQualifiedName(@Nullable String text);
 
-  public static @NotNull String getShortClassName(@NotNull String referenceText) {
+  public static @NotNull @NlsSafe String getShortClassName(@NotNull String referenceText) {
     int lessPos = referenceText.length();
     int bracesBalance = 0;
     int i;

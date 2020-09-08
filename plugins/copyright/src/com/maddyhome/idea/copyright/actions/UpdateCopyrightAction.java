@@ -137,7 +137,7 @@ public class UpdateCopyrightAction extends BaseAnalysisAction {
       public void onSuccess() {
         if (!preparations.isEmpty()) {
           if (!FileModificationService.getInstance().preparePsiElementsForWrite(preparations.keySet())) return;
-          final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, UpdateCopyrightProcessor.TITLE, true);
+          final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, UpdateCopyrightProcessor.TITLE.get(), true);
           progressTask.setMinIterationTime(200);
           progressTask.setTask(new UpdateCopyrightSequentialTask(preparations, progressTask));
           CommandProcessor.getInstance().executeCommand(project, () -> {

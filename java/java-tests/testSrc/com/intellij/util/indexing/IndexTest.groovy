@@ -68,6 +68,7 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.exceptionCases.IllegalArgumentExceptionCase
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.*
+import com.intellij.util.indexing.impl.IndexDebugProperties
 import com.intellij.util.indexing.impl.MapIndexStorage
 import com.intellij.util.indexing.impl.MapReduceIndex
 import com.intellij.util.indexing.impl.UpdatableValueContainer
@@ -924,6 +925,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     StringIndex index = createIndex(getTestName(false), new EnumeratorStringDescriptor(), true)
 
     try {
+      IndexDebugProperties.IS_UNIT_TEST_MODE = false;
       assertFalse(index.update("qwe/asd", "some_string"))
       def rebuildThrowable = index.getRebuildThrowable()
       assertInstanceOf(rebuildThrowable, StorageException.class)
@@ -931,6 +933,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       assertInstanceOf(rebuildCause, IncorrectOperationException.class)
     }
     finally {
+      IndexDebugProperties.IS_UNIT_TEST_MODE = true;
       index.dispose()
     }
   }
@@ -1415,4 +1418,28 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       assert indexQueries > 0 && indexQueries < 5
     }
   }
+
+  void 'test no caching on write action inside ignoreDumbMode'() {
+    RecursionManager.disableMissedCacheAssertions(testRootDisposable)
+
+    def clazz = myFixture.addClass('class Foo {}')
+    assert clazz == myFixture.findClass('Foo')
+
+    DumbServiceImpl.getInstance(project).setDumb(true)
+
+    def stubQuery = CachedValuesManager.getManager(project).createCachedValue {
+      CachedValueProvider.Result.create(myFixture.javaFacade.findClass('Foo', GlobalSearchScope.allScope(project)),
+                                        PsiModificationTracker.MODIFICATION_COUNT)
+    }
+
+    FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY) {
+      assert clazz == stubQuery.getValue()
+      WriteCommandAction.runWriteCommandAction(project) {
+        clazz.setName('Bar')
+      }
+      assert null == stubQuery.getValue()
+    }
+
+  }
+
 }

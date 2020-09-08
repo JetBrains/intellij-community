@@ -49,7 +49,7 @@ public final class InvertedIndexUtil {
         else {
           for (IntIterator intIterator = mainIntersection.iterator(); intIterator.hasNext(); ) {
             int id = intIterator.nextInt();
-            if (predicate.contains(id)) {
+            if (predicate.contains(id) && (idChecker == null || idChecker.contains(id))) {
               copy.add(id);
             }
           }

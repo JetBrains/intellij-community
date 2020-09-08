@@ -7,6 +7,7 @@ import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.intention.impl.CreateClassDialog;
 import com.intellij.codeInsight.intention.impl.CreateSubclassAction;
+import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -96,7 +97,7 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
     }
     if (targetClass instanceof PsiAnonymousClass &&
         toMove.stream().map(MemberInfoBase::getOverrides).anyMatch(Objects::nonNull)) {
-      conflicts.putValue(targetClass, "Unable to push implements to anonymous class");
+      conflicts.putValue(targetClass, JavaBundle.message("push.down.anonymous.conflict"));
     }
     new PushDownConflicts((PsiClass)pushDownData.getSourceClass(), toMove.toArray(new MemberInfo[0]), conflicts)
       .checkTargetClassConflicts(targetClass, context);

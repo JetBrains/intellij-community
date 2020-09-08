@@ -2,6 +2,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
@@ -545,7 +546,7 @@ public class AnnotationUtil {
   }
 
   @Nullable
-  public static String getStringAttributeValue(@NotNull PsiAnnotation anno, @Nullable final String attributeName) {
+  public static @NlsSafe String getStringAttributeValue(@NotNull PsiAnnotation anno, @Nullable final String attributeName) {
     PsiAnnotationMemberValue attrValue = anno.findAttributeValue(attributeName);
     return attrValue == null ? null : getStringAttributeValue(attrValue);
   }
@@ -765,5 +766,33 @@ public class AnnotationUtil {
       return Arrays.asList(((PsiArrayInitializerMemberValue)attributeValue).getInitializers());
     }
     return ContainerUtil.createMaybeSingletonList(attributeValue);
+  }
+
+  /**
+   * @param annotation annotation
+   * @return type that relates to that annotation
+   */
+  public static @Nullable PsiType getRelatedType(PsiAnnotation annotation) {
+    PsiAnnotationOwner owner = annotation.getOwner();
+    if (owner instanceof PsiType) {
+      return (PsiType)owner;
+    }
+    PsiType type = null;
+    if (owner instanceof PsiModifierList) {
+      PsiElement parent = ((PsiModifierList)owner).getParent();
+      if (parent instanceof PsiVariable) {
+        type = ((PsiVariable)parent).getType();
+      }
+      if (parent instanceof PsiMethod) {
+        type = ((PsiMethod)parent).getReturnType();
+      }
+      if (type != null) {
+        if (AnnotationTargetUtil.isTypeAnnotation(annotation)) {
+          return type.getDeepComponentType();
+        }
+        return type;
+      }
+    }
+    return null;
   }
 }

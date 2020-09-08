@@ -220,8 +220,10 @@ public class YouTrackRepository extends BaseRepositoryImpl {
   private Task createIssue(Element element) {
     final String id = element.getAttributeValue("id");
     if (id == null) return null;
+    //noinspection HardCodedStringLiteral
     final String summary = element.getAttributeValue("summary");
     if (summary == null) return null;
+    //noinspection HardCodedStringLiteral
     final String description = element.getAttributeValue("description");
 
     String type = element.getAttributeValue("type");

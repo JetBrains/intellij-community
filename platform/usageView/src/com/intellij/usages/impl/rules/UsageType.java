@@ -46,7 +46,7 @@ public final class UsageType {
   public static final UsageType DELEGATE_TO_ANOTHER_INSTANCE = new UsageType(UsageViewBundle.messagePointer("usage.type.delegate.to.another.instance.method"));
   public static final UsageType DELEGATE_TO_ANOTHER_INSTANCE_PARAMETERS_CHANGED = new UsageType(UsageViewBundle.messagePointer("usage.type.delegate.to.another.instance.method.parameters.changed"));
 
-  private final Supplier<String> myNameComputable;
+  private final Supplier<@Nls(capitalization = Nls.Capitalization.Sentence) String> myNameComputable;
 
   /**
    * @deprecated Use {@link #UsageType(Supplier)} for I18n.
@@ -56,7 +56,7 @@ public final class UsageType {
     myNameComputable = () -> name;
   }
 
-  public UsageType(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) Supplier<String> nameComputable) {
+  public UsageType(@NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Sentence) String> nameComputable) {
     myNameComputable = nameComputable;
   }
 
@@ -68,7 +68,7 @@ public final class UsageType {
   }
 
   @Override
-  public String toString() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) String toString() {
     return myNameComputable.get();
   }
 }

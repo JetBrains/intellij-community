@@ -18,6 +18,7 @@ package org.intellij.plugins.intelliLang.pattern;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiType;
 import org.intellij.plugins.intelliLang.Configuration;
+import org.intellij.plugins.intelliLang.IntelliLangBundle;
 import org.intellij.plugins.intelliLang.util.AbstractAnnotationNotApplicableInspection;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jetbrains.annotations.NonNls;
@@ -37,7 +38,7 @@ public class PatternAnnotationNotApplicable extends AbstractAnnotationNotApplica
 
   @Override
   protected String getDescriptionTemplate() {
-    return "Pattern Annotation is only applicable to elements of type String";
+    return IntelliLangBundle.message("inspection.message.pattern.annotation.only.applicable.to.elements.type.string");
   }
 
   @Override

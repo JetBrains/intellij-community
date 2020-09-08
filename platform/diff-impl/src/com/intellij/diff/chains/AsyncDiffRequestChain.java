@@ -9,8 +9,8 @@ import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.util.EventDispatcher;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.CalledInBackground;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +45,7 @@ public abstract class AsyncDiffRequestChain extends DiffRequestChainBase {
   }
 
   @NotNull
-  @CalledInBackground
+  @RequiresBackgroundThread
   public ListSelection<? extends DiffRequestProducer> loadRequestsInBackground() {
     try {
       return loadRequestProducers();
@@ -55,7 +55,7 @@ public abstract class AsyncDiffRequestChain extends DiffRequestChainBase {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void onAssigned(boolean isAssigned) {
     if (isAssigned) {
       if (myAssignments == 0 && myIndicator == null) {
@@ -74,7 +74,7 @@ public abstract class AsyncDiffRequestChain extends DiffRequestChainBase {
   }
 
   @Nullable
-  @CalledInAwt
+  @RequiresEdt
   private ProgressIndicator startLoading() {
     if (myRequests != null) return null;
 
@@ -87,7 +87,7 @@ public abstract class AsyncDiffRequestChain extends DiffRequestChainBase {
     }, null);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void applyLoadedChanges(@NotNull ListSelection<? extends DiffRequestProducer> producers) {
     if (myRequests != null) return;
 
@@ -99,11 +99,11 @@ public abstract class AsyncDiffRequestChain extends DiffRequestChainBase {
   }
 
   @NotNull
-  @CalledInBackground
+  @RequiresBackgroundThread
   protected abstract ListSelection<? extends DiffRequestProducer> loadRequestProducers() throws DiffRequestProducerException;
 
   public interface Listener extends EventListener {
-    @CalledInAwt
+    @RequiresEdt
     void onRequestsLoaded();
   }
 }

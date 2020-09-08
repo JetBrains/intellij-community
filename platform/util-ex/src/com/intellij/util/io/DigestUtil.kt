@@ -3,6 +3,7 @@ package com.intellij.util.io
 
 import com.intellij.util.lazyPub
 import java.io.IOException
+import java.io.InputStream
 import java.math.BigInteger
 import java.nio.file.Path
 import java.security.MessageDigest
@@ -30,6 +31,9 @@ object DigestUtil {
   @JvmStatic
   fun sha256(): MessageDigest = sha256.cloneDigest()
   private val sha256 by lazyPub { getMessageDigest("SHA-256") }
+
+  @JvmStatic
+  fun digestToHash(digest: MessageDigest) = bytesToHex(digest.digest())
 
   @JvmStatic
   fun sha256Hex(input: ByteArray): String = bytesToHex(sha256().digest(input))
@@ -66,17 +70,27 @@ object DigestUtil {
   @JvmStatic
   fun updateContentHash(digest: MessageDigest, path: Path) {
     try {
-      val buff = ByteArray(512 * 1024)
-      path.inputStream().use { iz ->
-        while (true) {
-          val sz = iz.read(buff)
-          if (sz <= 0) break
-          digest.update(buff, 0, sz)
-        }
+      path.inputStream().use {
+        updateContentHash(digest, it)
       }
     }
     catch (e: IOException) {
       throw RuntimeException("Failed to read $path. ${e.message}", e)
+    }
+  }
+
+  @JvmStatic
+  fun updateContentHash(digest: MessageDigest, inputStream: InputStream) {
+    val buff = ByteArray(512 * 1024)
+    try {
+      while (true) {
+        val sz = inputStream.read(buff)
+        if (sz <= 0) break
+        digest.update(buff, 0, sz)
+      }
+    }
+    catch (e: IOException) {
+      throw RuntimeException("Failed to read stream. ${e.message}", e)
     }
   }
 

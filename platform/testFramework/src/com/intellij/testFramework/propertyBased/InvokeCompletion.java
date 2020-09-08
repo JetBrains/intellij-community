@@ -62,7 +62,9 @@ public class InvokeCompletion extends ActionOnFile {
 
   @Override
   public void performCommand(@NotNull Environment env) {
-    int offset = generateDocOffset(env, "Invoke basic completion at offset %s");
+    int offset = generateDocOffset(env, null);
+    env.logMessage("Invoke basic completion at " + MadTestingUtil.getPositionDescription(offset, getDocument()));
+
     String selectionCharacters = myPolicy.getPossibleSelectionCharacters();
     char c = selectionCharacters.charAt(env.generateValue(Generator.integers(0, selectionCharacters.length() - 1), null));
     performActionAt(offset, c, env);
@@ -183,8 +185,8 @@ public class InvokeCompletion extends ActionOnFile {
     return expectedEnd == caretOffset && getFile().getText().substring(0, caretOffset).endsWith(expectedVariant);
   }
 
-  private static void checkNoDuplicates(List<LookupElement> items) {
-    Set<List<?>> presentations = new HashSet<>();
+  private void checkNoDuplicates(List<LookupElement> items) {
+    Map<List<?>, LookupElement> presentations = new HashMap<>();
     for (LookupElement item : items) {
       LookupElementPresentation p = TestLookupElementPresentation.renderReal(item);
       if (seemsTruncated(p.getItemText()) || seemsTruncated(p.getTailText()) || seemsTruncated(p.getTypeText())) {
@@ -196,7 +198,8 @@ public class InvokeCompletion extends ActionOnFile {
                                         p.getTailFragments(),
                                         p.getTypeText(), TestLookupElementPresentation.unwrapIcon(p.getTypeIcon()), p.isTypeGrayed(),
                                         p.isStrikeout());
-      if (!presentations.add(info)) {
+      var prev = presentations.put(info, item);
+      if (prev != null && !myPolicy.areDuplicatesOk(prev, item)) {
         TestCase.fail("Duplicate suggestions: " + p);
       }
     }

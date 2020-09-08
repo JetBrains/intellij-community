@@ -11,12 +11,12 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Thrown on accessing indices when they're not ready, in so-called dumb mode. Possible fixes:
  * <ul>
- * <li> If {@link com.intellij.openapi.actionSystem.AnAction#actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent)} is in stack trace,
+ * <li> If {@link com.intellij.openapi.actionSystem.AnAction#actionPerformed} is in stack trace,
  * consider making the action not implement {@link DumbAware}.
  *
  * <li> A {@link DumbAware} action, having got this exception, may just notify the user that the requested activity is not possible while
  * indexing is in progress. It can be done via a dialog (see {@link com.intellij.openapi.ui.Messages}) or a status bar balloon
- * (see {@link DumbService#showDumbModeNotification(String)}, {@link com.intellij.openapi.actionSystem.ex.ActionUtil#showDumbModeWarning(com.intellij.openapi.actionSystem.AnActionEvent...)}).
+ * (see {@link DumbService#showDumbModeNotification(String)}, {@link com.intellij.openapi.actionSystem.ex.ActionUtil#showDumbModeWarning} (com.intellij.openapi.actionSystem.AnActionEvent...)}).
  *
  * <li> If index access is performed from some non-urgent invokeLater activity, consider replacing it with
  * {@link DumbService#smartInvokeLater(Runnable)}. Note that this 'later' can be very late, several minutes may pass. So if that code

@@ -9,11 +9,12 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowInfo
 import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
+import org.jetbrains.annotations.NonNls
 import java.util.*
 
 class DesktopLayout(private val idToInfo: MutableMap<String, WindowInfoImpl> = HashMap<String, WindowInfoImpl>()) {
   companion object {
-    internal const val TAG = "layout"
+    @NonNls internal const val TAG = "layout"
   }
 
   fun copy(): DesktopLayout {

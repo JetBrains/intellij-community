@@ -12,8 +12,10 @@ import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.XmlTypedHandlersAdditionalSupport;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
@@ -55,14 +57,14 @@ public final class HtmlUtil {
   @NonNls private static final String CHARSET_PREFIX = CHARSET + "=";
   @NonNls public static final String HTML5_DATA_ATTR_PREFIX = "data-";
 
-  public static final String SCRIPT_TAG_NAME = "script";
-  public static final String STYLE_TAG_NAME = "style";
-  public static final String TEMPLATE_TAG_NAME = "template";
+  @NlsSafe public static final String SCRIPT_TAG_NAME = "script";
+  @NlsSafe public static final String STYLE_TAG_NAME = "style";
+  @NlsSafe public static final String TEMPLATE_TAG_NAME = "template";
 
-  public static final String STYLE_ATTRIBUTE_NAME = STYLE_TAG_NAME;
-  public static final String SRC_ATTRIBUTE_NAME = "src";
-  public static final String ID_ATTRIBUTE_NAME = "id";
-  public static final String CLASS_ATTRIBUTE_NAME = "class";
+  @NlsSafe public static final String STYLE_ATTRIBUTE_NAME = STYLE_TAG_NAME;
+  @NlsSafe public static final String SRC_ATTRIBUTE_NAME = "src";
+  @NlsSafe public static final String ID_ATTRIBUTE_NAME = "id";
+  @NlsSafe public static final String CLASS_ATTRIBUTE_NAME = "class";
 
   @NonNls public static final String MATH_ML_NAMESPACE = "http://www.w3.org/1998/Math/MathML";
   @NonNls public static final String SVG_NAMESPACE = "http://www.w3.org/2000/svg";
@@ -606,14 +608,7 @@ public final class HtmlUtil {
   }
 
   public static boolean supportsXmlTypedHandlers(@NotNull PsiFile file) {
-    Language language = file.getLanguage();
-    while (language != null) {
-      if ("JavaScript".equals(language.getID())) return true;
-      if ("Dart".equals(language.getID())) return true;
-      language = language.getBaseLanguage();
-    }
-
-    return false;
+    return XmlTypedHandlersAdditionalSupport.supportsTypedHandlers(file);
   }
 
   public static boolean hasHtmlPrefix(@NotNull String url) {
@@ -696,7 +691,7 @@ public final class HtmlUtil {
   }
 
   @Contract("!null -> !null")
-  public static String getTagPresentation(@Nullable XmlTag tag) {
+  public static @NlsSafe String getTagPresentation(@Nullable XmlTag tag) {
     if (tag == null) return null;
     StringBuilder builder = new StringBuilder(tag.getLocalName());
     String idValue = getAttributeValue(tag, ID_ATTRIBUTE_NAME);

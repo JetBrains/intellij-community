@@ -18,7 +18,7 @@ public abstract class ExecutorRegistry {
   @SuppressWarnings("MethodMayBeStatic")
   @Deprecated
   public final Executor @NotNull [] getRegisteredExecutors() {
-    // do not return array from EP — to avoid accidental mutation
+    // do not return array from EP to avoid accidental mutation
     return Executor.EXECUTOR_EXTENSION_NAME.getExtensionList().toArray(new Executor[0]);
   }
 

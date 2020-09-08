@@ -6,6 +6,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.InputRedirectAware;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.ide.macro.MacrosDialog;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
@@ -18,7 +19,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.fields.ExtendableTextField;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -119,7 +119,7 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
   public static <S extends CommonProgramRunConfigurationParameters> SettingsEditorFragment<S, ?> createEnvParameters() {
     EnvironmentVariablesComponent env = new EnvironmentVariablesComponent();
     env.setLabelLocation(BorderLayout.WEST);
-    UIUtil.setMonospaced(env.getComponent().getTextField());
+    setMonospaced(env.getComponent().getTextField());
     SettingsEditorFragment<S, JComponent> fragment =
       new SettingsEditorFragment<>("environmentVariables", ExecutionBundle.message("environment.variables.fragment.name"),
                                    ExecutionBundle.message("group.operating.system"), env,
@@ -135,5 +135,9 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
                                    s -> true);
     fragment.setHint(ExecutionBundle.message("environment.variables.fragment.hint"));
     return fragment;
+  }
+
+  public static void setMonospaced(Component field) {
+    field.setFont(EditorUtil.getEditorFont());
   }
 }

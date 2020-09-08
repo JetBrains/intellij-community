@@ -55,7 +55,7 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
 
   @Override
   public JComponent createOptionsPanel() {
-    myLibraryEditorComponent = new LibraryRootsComponent(myProject, () -> getLibraryEditor());
+    myLibraryEditorComponent = new LibraryRootsComponent(myProject, this::getLibraryEditor);
     myLibraryEditorComponent.addListener(() -> {
       myContext.getDaemonAnalyzer().queueUpdate(myProjectStructureElement);
       updateName();

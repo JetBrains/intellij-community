@@ -123,7 +123,9 @@ fun createSdkByGenerateTask(generateSdkHomePath: Task.WithResult<String, Executi
                             suggestedSdkName: String?): Sdk? {
   val homeFile = try {
     val homePath = ProgressManager.getInstance().run(generateSdkHomePath)
-    StandardFileSystems.local().refreshAndFindFileByPath(homePath) ?: throw ExecutionException("Directory $homePath not found")
+    StandardFileSystems.local().refreshAndFindFileByPath(homePath) ?: throw ExecutionException(
+      PyBundle.message("python.sdk.directory.not.found", homePath)
+    )
   }
   catch (e: ExecutionException) {
     val description = PyPackageManagementService.toErrorDescription(listOf(e), baseSdk) ?: return null

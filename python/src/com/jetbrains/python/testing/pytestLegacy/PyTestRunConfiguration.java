@@ -156,7 +156,7 @@ public class PyTestRunConfiguration extends AbstractPythonLegacyTestRunConfigura
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     if (StringUtil.isEmptyOrSpaces(myTestToRun)) {
-      throw new RuntimeConfigurationError("Please specify target folder or script");
+      throw new RuntimeConfigurationError(PyBundle.message("runcfg.testing.specify.target.folder.or.script"));
     }
     Sdk sdk = PythonSdkUtil.findSdkByPath(getInterpreterPath());
     if (sdk != null && !VFSTestFrameworkListener.getInstance().isTestFrameworkInstalled(sdk, PyNames.PY_TEST)) {

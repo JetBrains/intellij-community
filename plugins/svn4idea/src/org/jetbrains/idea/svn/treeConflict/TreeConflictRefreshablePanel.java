@@ -12,21 +12,19 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.history.*;
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.BeforeAfter;
-import com.intellij.util.containers.Convertor;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.VcsBackgroundTask;
 import gnu.trove.TLongArrayList;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.ConflictedSvnChange;
@@ -37,45 +35,37 @@ import org.jetbrains.idea.svn.conflict.ConflictAction;
 import org.jetbrains.idea.svn.conflict.ConflictReason;
 import org.jetbrains.idea.svn.conflict.ConflictVersion;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
-import org.jetbrains.idea.svn.history.SvnHistoryProvider;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
 
 import static com.intellij.openapi.application.ModalityState.defaultModalityState;
-import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
+import static com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier.showOverChangesView;
 import static com.intellij.vcsUtil.VcsUtil.getFilePathOnNonLocal;
+import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.history.SvnHistorySession.getCurrentCommittedRevision;
 
 public class TreeConflictRefreshablePanel implements Disposable {
-  public static final String TITLE = "Resolve tree conflict";
   private final ConflictedSvnChange myChange;
   private final SvnVcs myVcs;
   private SvnRevisionNumber myCommittedRevision;
   private final FilePath myPath;
   private final CompositeDisposable myChildDisposables = new CompositeDisposable();
   private final TLongArrayList myRightRevisionsList;
-  @NotNull private final String myLoadingTitle;
   @NotNull private final JBLoadingPanel myDetailsPanel;
   @NotNull private final BackgroundTaskQueue myQueue;
   private volatile ProgressIndicator myIndicator = new EmptyProgressIndicator();
 
-  public TreeConflictRefreshablePanel(@NotNull Project project,
-                                      @NotNull String loadingTitle,
-                                      @NotNull BackgroundTaskQueue queue,
-                                      Change change) {
+  public TreeConflictRefreshablePanel(@NotNull Project project, @NotNull BackgroundTaskQueue queue, @NotNull ConflictedSvnChange change) {
     myVcs = SvnVcs.getInstance(project);
-    assert change instanceof ConflictedSvnChange;
-    myChange = (ConflictedSvnChange)change;
+    myChange = change;
     myPath = ChangesUtil.getFilePath(myChange);
     myRightRevisionsList = new TLongArrayList();
 
-    myLoadingTitle = loadingTitle;
     myQueue = queue;
     myDetailsPanel = new JBLoadingPanel(new BorderLayout(), this);
   }
@@ -106,7 +96,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
     return myDetailsPanel;
   }
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   private BeforeAfter<ConflictSidePresentation> processDescription(@NotNull ProgressIndicator indicator,
                                                                    TreeConflictDescription description) throws VcsException {
     if (description == null) return null;
@@ -159,14 +149,17 @@ public class TreeConflictRefreshablePanel implements Disposable {
   @NotNull
   private ConflictSidePresentation createSide(@Nullable ConflictVersion version, @Nullable Revision untilThisOther, boolean isLeft)
     throws VcsException {
-    ConflictSidePresentation result = EmptyConflictSide.getInstance();
+    ConflictSidePresentation result = EmptyConflictSide.INSTANCE;
     if (version != null &&
         (myChange.getBeforeRevision() == null ||
          myCommittedRevision == null ||
          !isLeft ||
          !myCommittedRevision.getRevision().isValid() ||
          myCommittedRevision.getRevision().getNumber() != version.getPegRevision())) {
-      HistoryConflictSide side = new HistoryConflictSide(myVcs, version, untilThisOther);
+
+      FilePath remotePath =
+        getFilePathOnNonLocal(version.getRepositoryRoot().appendPath(version.getPath(), false).toDecodedString(), version.isDirectory());
+      HistoryConflictSide side = new HistoryConflictSide(myVcs, remotePath, Revision.of(version.getPegRevision()), untilThisOther);
       if (untilThisOther != null && !isLeft) {
         side.setListToReportLoaded(myRightRevisionsList);
       }
@@ -176,37 +169,35 @@ public class TreeConflictRefreshablePanel implements Disposable {
     return result;
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void refresh() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     myDetailsPanel.startLoading();
-    Loader task = new Loader(myVcs.getProject(), myLoadingTitle);
+    Loader task = new Loader(myVcs.getProject());
     myIndicator = new BackgroundableProcessIndicator(task);
     myQueue.run(task, defaultModalityState(), myIndicator);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected JPanel dataToPresentation(BeforeAfter<BeforeAfter<ConflictSidePresentation>> data) {
     final JPanel wrapper = new JPanel(new BorderLayout());
     final JPanel main = new JPanel(new GridBagLayout());
 
     final GridBagConstraints gb = new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                                                          JBUI.insets(1), 0, 0);
-    final String pathComment = myCommittedRevision == null ? "" :
-                               " (current: " +
-                               myChange.getBeforeRevision().getRevisionNumber().asString() +
-                               ", committed: " +
-                               myCommittedRevision.asString() +
-                               ")";
-    final JLabel name = new JLabel(myPath.getName() + pathComment);
+    String pathDescription = myCommittedRevision == null
+                             ? myPath.getName()
+                             : message("label.path.revisions.info", myPath.getName(),
+                                       myChange.getBeforeRevision().getRevisionNumber().asString(), myCommittedRevision.asString());
+    final JLabel name = new JLabel(pathDescription);
     name.setFont(name.getFont().deriveFont(Font.BOLD));
     gb.insets.top = 5;
     main.add(name, gb);
     ++gb.gridy;
     gb.insets.top = 10;
-    appendDescription(myChange.getBeforeDescription(), main, gb, data.getBefore(), myPath.isDirectory());
-    appendDescription(myChange.getAfterDescription(), main, gb, data.getAfter(), myPath.isDirectory());
+    appendDescription(myChange.getBeforeDescription(), main, gb, data.getBefore());
+    appendDescription(myChange.getAfterDescription(), main, gb, data.getAfter());
     wrapper.add(main, BorderLayout.NORTH);
     return wrapper;
   }
@@ -214,7 +205,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
   private void appendDescription(TreeConflictDescription description,
                                  JPanel main,
                                  GridBagConstraints gb,
-                                 BeforeAfter<ConflictSidePresentation> ba, boolean directory) {
+                                 BeforeAfter<ConflictSidePresentation> ba) {
     if (description == null) return;
     JLabel descriptionLbl = new JLabel(description.toPresentableString());
     descriptionLbl.setForeground(JBColor.RED);
@@ -224,22 +215,22 @@ public class TreeConflictRefreshablePanel implements Disposable {
     gb.insets.top = 0;
     addResolveButtons(description, main, gb);
 
-    addSide(main, gb, ba.getBefore(), description.getSourceLeftVersion(), "Left", directory);
-    addSide(main, gb, ba.getAfter(), description.getSourceRightVersion(), "Right", directory);
+    addSide(main, gb, ba.getBefore(),
+            message("label.conflict.left.side", ConflictSidePresentation.getDescription(description.getSourceLeftVersion(), myChange)));
+    addSide(main, gb, ba.getAfter(),
+            message("label.conflict.right.side", ConflictSidePresentation.getDescription(description.getSourceRightVersion(), myChange)));
   }
 
   private void addResolveButtons(TreeConflictDescription description, JPanel main, GridBagConstraints gb) {
-    final FlowLayout flowLayout = new FlowLayout(FlowLayout.LEFT, 5, 5);
-    JPanel wrapper = new JPanel(flowLayout);
-    final JButton both = new JButton("Both");
-    final JButton merge = new JButton("Merge");
-    final JButton left = new JButton("Accept Yours");
-    final JButton right = new JButton("Accept Theirs");
-    enableAndSetListener(createBoth(description), both);
+    JPanel wrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+
+    final JButton merge = new JButton(message("button.resolve.conflict.merge"));
+    final JButton left = new JButton(message("button.resolve.conflict.accept.yours"));
+    final JButton right = new JButton(message("button.resolve.conflict.accept.theirs"));
     enableAndSetListener(createMerge(description), merge);
     enableAndSetListener(createLeft(description), left);
     enableAndSetListener(createRight(description), right);
-    //wrapper.add(both);
+
     if (merge.isEnabled()) {
       wrapper.add(merge);
     }
@@ -255,16 +246,24 @@ public class TreeConflictRefreshablePanel implements Disposable {
     return new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        int ok = Messages.showOkCancelDialog(myVcs.getProject(), "Accept theirs for " + filePath(myPath) + "?",
-                                             TITLE, Messages.getQuestionIcon());
+        int ok = Messages.showOkCancelDialog(
+          myVcs.getProject(),
+          message("dialog.message.accept.theirs.for.path", filePath(myPath)),
+          message("dialog.title.resolve.tree.conflict"),
+          Messages.getQuestionIcon()
+        );
         if (Messages.OK != ok) return;
         FileDocumentManager.getInstance().saveAllDocuments();
         final Paths paths = getPaths(description);
         ProgressManager.getInstance().run(
-          new VcsBackgroundTask<TreeConflictDescription>(myVcs.getProject(), "Accepting theirs for: " + filePath(paths.myMainPath),
-                                                         PerformInBackgroundOption.ALWAYS_BACKGROUND,
-                                                         Collections.singletonList(description),
-                                                         true) {
+          new VcsBackgroundTask<TreeConflictDescription>(
+            myVcs.getProject(),
+            message("progress.title.accepting.theirs.for.path", filePath(paths.myMainPath)),
+            PerformInBackgroundOption.ALWAYS_BACKGROUND,
+            Collections.singletonList(description),
+            true
+          ) {
+
             @Override
             protected void process(TreeConflictDescription d) throws VcsException {
               new SvnTreeConflictResolver(myVcs, paths.myMainPath, paths.myAdditionalPath).resolveSelectTheirsFull();
@@ -274,8 +273,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
             public void onSuccess() {
               super.onSuccess();
               if (executedOk()) {
-                VcsBalloonProblemNotifier
-                  .showOverChangesView(myProject, "Theirs accepted for " + filePath(paths.myMainPath), MessageType.INFO);
+                showOverChangesView(myProject, message("message.theirs.accepted.for.file", filePath(paths.myMainPath)), MessageType.INFO);
               }
             }
           });
@@ -316,16 +314,24 @@ public class TreeConflictRefreshablePanel implements Disposable {
     return new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        int ok = Messages.showOkCancelDialog(myVcs.getProject(), "Accept yours for " + filePath(myPath) + "?",
-                                             TITLE, Messages.getQuestionIcon());
+        int ok = Messages.showOkCancelDialog(
+          myVcs.getProject(),
+          message("dialog.message.accept.yours.for.path", filePath(myPath)),
+          message("dialog.title.resolve.tree.conflict"),
+          Messages.getQuestionIcon()
+        );
         if (Messages.OK != ok) return;
         FileDocumentManager.getInstance().saveAllDocuments();
         final Paths paths = getPaths(description);
         ProgressManager.getInstance().run(
-          new VcsBackgroundTask<TreeConflictDescription>(myVcs.getProject(), "Accepting yours for: " + filePath(paths.myMainPath),
-                                                         PerformInBackgroundOption.ALWAYS_BACKGROUND,
-                                                         Collections.singletonList(description),
-                                                         true) {
+          new VcsBackgroundTask<TreeConflictDescription>(
+            myVcs.getProject(),
+            message("progress.title.accepting.yours.for.path", filePath(paths.myMainPath)),
+            PerformInBackgroundOption.ALWAYS_BACKGROUND,
+            Collections.singletonList(description),
+            true
+          ) {
+
             @Override
             protected void process(TreeConflictDescription d) throws VcsException {
               new SvnTreeConflictResolver(myVcs, paths.myMainPath, paths.myAdditionalPath).resolveSelectMineFull();
@@ -335,8 +341,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
             public void onSuccess() {
               super.onSuccess();
               if (executedOk()) {
-                VcsBalloonProblemNotifier
-                  .showOverChangesView(myProject, "Yours accepted for " + filePath(paths.myMainPath), MessageType.INFO);
+                showOverChangesView(myProject, message("message.yours.accepted.for.file", filePath(paths.myMainPath)), MessageType.INFO);
               }
             }
           });
@@ -368,10 +373,6 @@ public class TreeConflictRefreshablePanel implements Disposable {
     return newFilePath.getName() + " (" + Objects.requireNonNull(newFilePath.getParentPath()).getPath() + ")";
   }
 
-  private static ActionListener createBoth(TreeConflictDescription description) {
-    return null;
-  }
-
   private static void enableAndSetListener(final ActionListener al, final JButton b) {
     if (al == null) {
       b.setEnabled(false);
@@ -381,24 +382,19 @@ public class TreeConflictRefreshablePanel implements Disposable {
     }
   }
 
-  private void addSide(JPanel main,
-                       GridBagConstraints gb,
-                       ConflictSidePresentation before,
-                       ConflictVersion leftVersion, final String name, boolean directory) {
-    final String leftPresentation = leftVersion == null ? name + ": (" + (directory ? "directory" : "file") +
-                                                          (myChange.getBeforeRevision() == null ? ") added" : ") unversioned") :
-                                    name + ": " + toSystemIndependentName(ConflictVersion.toPresentableString(leftVersion));
+  private static void addSide(JPanel main,
+                              GridBagConstraints gb,
+                              ConflictSidePresentation conflictSide,
+                              @NlsContexts.Label String description) {
     gb.insets.top = 10;
-    main.add(new JLabel(leftPresentation), gb);
+    main.add(new JBLabel(description), gb);
     ++gb.gridy;
     gb.insets.top = 0;
 
-    if (before != null) {
-      JPanel panel = before.createPanel();
+    if (conflictSide != null) {
+      JPanel panel = conflictSide.createPanel();
       if (panel != null) {
-        //gb.fill = GridBagConstraints.HORIZONTAL;
         main.add(panel, gb);
-        //gb.fill = GridBagConstraints.NONE;
         ++gb.gridy;
       }
     }
@@ -410,136 +406,12 @@ public class TreeConflictRefreshablePanel implements Disposable {
     Disposer.dispose(myChildDisposables);
   }
 
-  private interface ConflictSidePresentation extends Disposable {
-    JPanel createPanel();
-
-    void load() throws VcsException;
-  }
-
-  private static class EmptyConflictSide implements ConflictSidePresentation {
-    private static final EmptyConflictSide ourInstance = new EmptyConflictSide();
-
-    public static EmptyConflictSide getInstance() {
-      return ourInstance;
-    }
-
-    @Override
-    public JPanel createPanel() {
-      return null;
-    }
-
-    @Override
-    public void dispose() {
-    }
-
-    @Override
-    public void load() {
-    }
-  }
-
-  private abstract static class AbstractConflictSide<T> implements ConflictSidePresentation, Convertor<T, VcsRevisionNumber> {
-    protected final Project myProject;
-    protected final ConflictVersion myVersion;
-
-    private AbstractConflictSide(Project project, ConflictVersion version) {
-      myProject = project;
-      myVersion = version;
-    }
-  }
-
-  private static final class HistoryConflictSide extends AbstractConflictSide<VcsFileRevision> {
-    public static final int LIMIT = 10;
-    private final VcsAppendableHistoryPartnerAdapter mySessionAdapter;
-    private final SvnHistoryProvider myProvider;
-    private final FilePath myPath;
-    private final SvnVcs myVcs;
-    private final Revision myPeg;
-    private FileHistoryPanelImpl myFileHistoryPanel;
-    private TLongArrayList myListToReportLoaded;
-
-    private HistoryConflictSide(SvnVcs vcs, ConflictVersion version, final Revision peg) throws VcsException {
-      super(vcs.getProject(), version);
-      myVcs = vcs;
-      myPeg = peg;
-      myPath =
-        getFilePathOnNonLocal(version.getRepositoryRoot().appendPath(version.getPath(), false).toDecodedString(), version.isDirectory());
-
-      mySessionAdapter = new VcsAppendableHistoryPartnerAdapter();
-      /*mySessionAdapter.reportCreatedEmptySession(new SvnHistorySession(myVcs, Collections.<VcsFileRevision>emptyList(),
-        myPath, SvnUtil.checkRepositoryVersion15(myVcs, version.getPath()), null, true));*/
-      myProvider = (SvnHistoryProvider)myVcs.getVcsHistoryProvider();
-    }
-
-    public void setListToReportLoaded(TLongArrayList listToReportLoaded) {
-      myListToReportLoaded = listToReportLoaded;
-    }
-
-    @Override
-    public VcsRevisionNumber convert(VcsFileRevision o) {
-      return o.getRevisionNumber();
-    }
-
-    @Override
-    public void load() throws VcsException {
-      Revision from = Revision.of(myVersion.getPegRevision());
-      myProvider.reportAppendableHistory(myPath, mySessionAdapter, from, myPeg, myPeg == null ? LIMIT : 0, myPeg, true);
-      VcsAbstractHistorySession session = mySessionAdapter.getSession();
-      if (myListToReportLoaded != null && session != null) {
-        List<VcsFileRevision> list = session.getRevisionList();
-        for (VcsFileRevision revision : list) {
-          myListToReportLoaded.add(((SvnRevisionNumber)revision.getRevisionNumber()).getRevision().getNumber());
-        }
-      }
-    }
-
-    @Override
-    public void dispose() {
-      if (myFileHistoryPanel != null) {
-        Disposer.dispose(myFileHistoryPanel);
-      }
-    }
-
-    @Override
-    public JPanel createPanel() {
-      VcsAbstractHistorySession session = mySessionAdapter.getSession();
-      if (session == null) return EmptyConflictSide.getInstance().createPanel();
-      List<VcsFileRevision> list = session.getRevisionList();
-      if (list.isEmpty()) {
-        return EmptyConflictSide.getInstance().createPanel();
-      }
-      VcsFileRevision last = null;
-      if (!list.isEmpty() && myPeg == null && list.size() == LIMIT ||
-          myPeg != null && myPeg.getNumber() > 0 &&
-          myPeg.equals(((SvnRevisionNumber)list.get(list.size() - 1).getRevisionNumber()).getRevision())) {
-        last = list.remove(list.size() - 1);
-      }
-      myFileHistoryPanel = new FileHistoryPanelImpl(myVcs, myPath, session, myProvider, new FileHistoryRefresherI() {
-        @Override
-        public void refresh(boolean canUseCache) {
-          //we will not refresh
-        }
-
-        @Override
-        public void selectContent() {
-        }
-
-        @Override
-        public boolean isInRefresh() {
-          return false;
-        }
-      }, true);
-      myFileHistoryPanel.setBottomRevisionForShowDiff(last);
-      myFileHistoryPanel.setBorder(BorderFactory.createLineBorder(JBColor.border()));
-      return myFileHistoryPanel;
-    }
-  }
-
   private final class Loader extends Task.Backgroundable {
     private BeforeAfter<BeforeAfter<ConflictSidePresentation>> myData;
     private VcsException myException;
 
-    private Loader(@Nullable Project project, @NotNull String title) {
-      super(project, title, false);
+    private Loader(@Nullable Project project) {
+      super(project, message("progress.title.loading.tree.conflict.details"), false);
     }
 
     @Override
@@ -556,7 +428,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
     @Override
     public void onSuccess() {
       if (myException != null) {
-        VcsBalloonProblemNotifier.showOverChangesView(myProject, myException.getMessage(), MessageType.ERROR);
+        showOverChangesView(myProject, myException.getMessage(), MessageType.ERROR);
       }
       else {
         myDetailsPanel.add(dataToPresentation(myData));

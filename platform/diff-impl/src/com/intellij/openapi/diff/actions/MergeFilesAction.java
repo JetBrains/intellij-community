@@ -60,7 +60,7 @@ public class MergeFilesAction extends AnAction implements DumbAware {
       DiffManager.getInstance().showMerge(project, request);
     }
     catch (InvalidDiffRequestException err) {
-      Messages.showErrorDialog(err.getLocalizedMessage(), DiffBundle.message("merge.files.dialog.title"));
+      Messages.showErrorDialog(err.getMessage(), DiffBundle.message("merge.files.dialog.title"));
     }
   }
 }
