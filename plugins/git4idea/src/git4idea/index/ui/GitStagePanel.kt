@@ -54,7 +54,7 @@ import javax.swing.JPanel
 
 val GIT_STAGE_TRACKER = DataKey.create<GitStageTracker>("GitStageTracker")
 
-internal class GitStagePanel(private val tracker: GitStageTracker, disposableParent: Disposable) :
+internal class GitStagePanel(private val tracker: GitStageTracker, vertical: Boolean, disposableParent: Disposable) :
   JPanel(BorderLayout()), DataProvider, Disposable {
   private val project = tracker.project
 
@@ -95,14 +95,18 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
     leftPanel.add(toolbar.component, BorderLayout.NORTH)
     leftPanel.add(treeMessageSplitter, BorderLayout.CENTER)
 
-    val diffPreview = GitStageDiffPreview(project, tree, tracker, this)
-    diffPreview.getToolbarWrapper().setVerticalSizeReferent(toolbar.component)
+    if (vertical) {
+      add(leftPanel, BorderLayout.CENTER)
+    } else {
+      val diffPreview = GitStageDiffPreview(project, tree, tracker, this)
+      diffPreview.getToolbarWrapper().setVerticalSizeReferent(toolbar.component)
 
-    val commitDiffSplitter = OnePixelSplitter("git.stage.commit.diff.splitter", 0.5f)
-    commitDiffSplitter.firstComponent = leftPanel
-    commitDiffSplitter.secondComponent = diffPreview.component
+      val commitDiffSplitter = OnePixelSplitter("git.stage.commit.diff.splitter", 0.5f)
+      commitDiffSplitter.firstComponent = leftPanel
+      commitDiffSplitter.secondComponent = diffPreview.component
 
-    add(commitDiffSplitter, BorderLayout.CENTER)
+      add(commitDiffSplitter, BorderLayout.CENTER)
+    }
 
     tracker.addListener(MyGitStageTrackerListener(), this)
     project.messageBus.connect(this).subscribe(GitChangeProvider.TOPIC, MyGitChangeProviderListener())

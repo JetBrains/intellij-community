@@ -20,7 +20,7 @@ class GitStageContentProvider(private val project: Project) : ChangesViewContent
   override fun initContent(): JComponent {
     val tracker = GitStageTracker.getInstance(project)
     disposable = Disposer.newDisposable("Git Stage Content Provider")
-    return GitStagePanel(tracker, disposable!!)
+    return GitStagePanel(tracker, isCommitToolWindow(project), disposable!!)
   }
 
   override fun disposeContent() {
@@ -44,3 +44,5 @@ class GitStageDisplayNameSupplier : Supplier<String> {
     return GitBundle.message("stage.tab.name")
   }
 }
+
+private fun isCommitToolWindow(project: Project) = ChangesViewContentManager.getInstanceImpl(project)?.isCommitToolWindow == true
