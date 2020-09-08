@@ -61,13 +61,20 @@ class NavBarModifier(onChange: () -> Unit, disposable: Disposable) {
 
     val runDebugGroup = CustomActionsSchema.getInstance().getCorrectedAction("ToolbarRunGroup")
     val navBarVcsGroup = CustomActionsSchema.getInstance().getCorrectedAction("NavBarVcsGroup")
+    val codeWithMeGroup = CustomActionsSchema.getInstance().getCorrectedAction("CodeWithMeAction")
 
     group.getChildren(null).forEach { child ->
       when (child) {
         runDebugGroup -> {
-          if(isNewRunDebug()) {
-            getNewRunDebug(child) ?: runDebugGroup
-          } else runDebugGroup
+          if (isNewRunDebug()) {
+            getNewRunDebug(child)?.let {
+              codeWithMeGroup?.let {
+                resultGroup.add(it)
+              }
+              it
+            } ?: runDebugGroup
+          }
+          else runDebugGroup
         }
 
         navBarVcsGroup -> {

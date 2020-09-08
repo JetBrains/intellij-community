@@ -27,8 +27,8 @@ import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogProgress;
+import com.intellij.vcs.log.impl.VcsLogImpl;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
-import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
 import com.intellij.vcs.log.ui.frame.ProgressStripe;
 import com.intellij.vcs.log.ui.frame.VcsLogCommitDetailsListPanel;
@@ -142,7 +142,7 @@ public final class VcsLogUiUtil {
   }
 
   @NotNull
-  public static History installNavigationHistory(@NotNull VcsLogUiEx ui) {
+  public static History installNavigationHistory(@NotNull AbstractVcsLogUi ui) {
     History history = new History(new VcsLogPlaceNavigator(ui));
     ui.getTable().getSelectionModel().addListSelectionListener((e) -> {
       if (!history.isNavigatingNow() && !e.getValueIsAdjusting()) {
@@ -210,9 +210,9 @@ public final class VcsLogUiUtil {
 
   private static final class VcsLogPlaceNavigator implements Place.Navigator {
     @NonNls private static final String PLACE_KEY = "Vcs.Log.Ui.History.PlaceKey";
-    @NotNull private final VcsLogUiEx myUi;
+    @NotNull private final AbstractVcsLogUi myUi;
 
-    private VcsLogPlaceNavigator(@NotNull VcsLogUiEx ui) {
+    private VcsLogPlaceNavigator(@NotNull AbstractVcsLogUi ui) {
       myUi = ui;
     }
 
@@ -234,7 +234,7 @@ public final class VcsLogUiUtil {
       CommitId commitId = (CommitId)value;
       ActionCallback callback = new ActionCallback();
 
-      ListenableFuture<Boolean> future = myUi.jumpToCommit(commitId.getHash(), commitId.getRoot());
+      ListenableFuture<Boolean> future = ((VcsLogImpl)myUi.getVcsLog()).jumpToCommit(commitId.getHash(), commitId.getRoot());
 
       Futures.addCallback(future, new FutureCallback<Boolean>() {
         @Override

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.BlockUtils;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.JavaPsiPatternUtil;
@@ -169,7 +170,7 @@ public class StatementExtractor {
     }
 
     @Override
-    public String toString() {
+    public @NlsSafe String toString() {
       if (myThenBranch == EMPTY) {
         return "if(" + getCondition(true) + ") {" + myElseBranch + "}";
       }

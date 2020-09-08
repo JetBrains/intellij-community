@@ -27,10 +27,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -45,6 +42,7 @@ public class TestStatusLine extends NonOpaquePanel {
   protected final JProgressBar myProgressBar = new JProgressBar();
   protected final SimpleColoredComponent myState = new SimpleColoredComponent();
   private final JPanel myProgressPanel;
+  private @Nls String mySuffix = "";
 
   public TestStatusLine() {
     super(new BorderLayout());
@@ -85,6 +83,7 @@ public class TestStatusLine extends NonOpaquePanel {
     if (duration == null || endTime == 0) {
       //running tests
       formatCounts(failuresCount, ignoredTestsCount, passedCount, testsTotal);
+      myState.append(mySuffix);
       return;
     }
 
@@ -97,9 +96,9 @@ public class TestStatusLine extends NonOpaquePanel {
     formatCounts(failuresCount, ignoredTestsCount, passedCount, testsTotal);
 
     myState.append(" – " + StringUtil.formatDuration(duration, "\u2009"), SimpleTextAttributes.GRAY_ATTRIBUTES);
+    myState.append(mySuffix);
   }
 
-  @SuppressWarnings("DialogTitleCapitalization")
   private void formatCounts(int failuresCount, int ignoredTestsCount, int passedCount, int testsTotal) {
     boolean something = false;
     if (failuresCount > 0) {
@@ -174,6 +173,7 @@ public class TestStatusLine extends NonOpaquePanel {
     UIUtil.invokeLaterIfNeeded(() -> {
       myState.clear();
       myState.append(progressStatus_text);
+      myState.append(mySuffix);
     });
   }
 
@@ -181,5 +181,10 @@ public class TestStatusLine extends NonOpaquePanel {
   @NotNull
   public String getStateText() {
     return myState.toString();
+  }
+
+  @ApiStatus.Internal
+  public void setSuffix(@Nls String suffix) {
+    mySuffix = suffix;
   }
 }

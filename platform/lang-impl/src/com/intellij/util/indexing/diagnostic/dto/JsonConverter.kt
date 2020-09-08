@@ -65,6 +65,8 @@ private fun IndexingJobStatistics.aggregateStatsPerIndexer(): List<JsonFileProvi
     .mapNotNull { (indexId, stats) ->
       JsonFileProviderIndexStatistics.JsonStatsPerIndexer(
         indexId,
+        stats.numberOfFiles,
+        stats.numberOfFilesIndexedByExtensions,
         calculatePercentages(stats.indexingTime.sumTime, totalIndexingTimePerIndexer)
       )
     }
@@ -168,6 +170,7 @@ private fun ProjectIndexingHistory.aggregateStatsPerIndexer(): List<JsonProjectI
       indexId,
       indexIdToIndexingTimePart.getValue(indexId),
       stats.totalNumberOfFiles,
+      stats.totalNumberOfFilesIndexedByExtensions,
       JsonFileSize(stats.totalBytes),
       indexIdToProcessingSpeed.getValue(indexId)
     )

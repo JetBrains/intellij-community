@@ -2279,6 +2279,7 @@ public class UsageViewImpl implements UsageViewEx {
             Messages.showYesNoCancelDialog(myProject, message, title, options[0], options[1], options[2], Messages.getErrorIcon());
           if (answer == Messages.YES) {
             refreshUsages();
+            return;
           }
           else if (answer == Messages.CANCEL) {
             return;

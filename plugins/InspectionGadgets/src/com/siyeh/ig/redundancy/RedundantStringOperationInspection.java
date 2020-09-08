@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -305,8 +306,9 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       final PsiElement outermostEqualsExpr = getOutermostEquals(call);
       final SubstringEqualsToCharAtEqualsQuickFix fix = new SubstringEqualsToCharAtEqualsQuickFix(outermostEqualsExpr.getText(),
                                                                                                   converted);
+      final @NlsSafe String message = InspectionGadgetsBundle.message("inspection.x.call.can.be.replaced.with.y", "substring()", "charAt()");
       return myManager.createProblemDescriptor(outermostEqualsExpr,
-                                               InspectionGadgetsBundle.message("inspection.x.call.can.be.replaced.with.y", "substring()", "charAt()"),
+                                               message,
                                                fix,
                                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly);
     }
@@ -617,8 +619,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
         ct.replaceAndRestoreComments(element, convertTo);
       }
 
-      @Nullable
-      private static String getTargetString(@NotNull final PsiMethodCallExpression call,
+      private static @NonNls @Nullable String getTargetString(@NotNull final PsiMethodCallExpression call,
                                             @NotNull Function<@NotNull PsiElement, @NotNull String> textExtractor) {
         final PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
         if (qualifierCall == null) return null;
@@ -728,7 +729,8 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message("remove.redundant.string.fix.text", myBindCallName, "substring");
+      final @NonNls String methodName = "substring";
+      return InspectionGadgetsBundle.message("remove.redundant.string.fix.text", myBindCallName, methodName);
     }
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -849,7 +851,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiNewExpression expression = (PsiNewExpression)descriptor.getPsiElement();
       final PsiExpressionList argList = expression.getArgumentList();
-      assert argList != null;
+      if (argList == null) return;
       final PsiExpression[] args = argList.getExpressions();
       CommentTracker commentTracker = new CommentTracker();
       final String argText = (args.length == 1) ? commentTracker.text(args[0]) : "\"\"";

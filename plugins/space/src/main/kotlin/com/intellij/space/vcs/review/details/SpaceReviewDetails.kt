@@ -2,14 +2,11 @@ package com.intellij.space.vcs.review.details
 
 
 import circlet.code.api.CodeReviewWithCount
-import circlet.code.api.CommitSetReviewRecord
-import circlet.code.api.MergeRequestRecord
 import circlet.platform.client.KCircletClient
-import circlet.platform.client.resolve
-import circlet.platform.client.toRef
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.vcs.SpaceProjectInfo
 import com.intellij.space.vcs.SpaceRepoInfo
 import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.impl.SingleHeightTabs
@@ -22,10 +19,11 @@ import java.awt.BorderLayout
 import javax.swing.JPanel
 
 internal class SpaceReviewDetails(project: Project,
-                         lifetime: Lifetime,
-                         private val client: KCircletClient,
-                         private val repoInfo: Set<SpaceRepoInfo>,
-                         private val currentReview: MutableProperty<CodeReviewWithCount?>) {
+                                  lifetime: Lifetime,
+                                  private val client: KCircletClient,
+                                  private val spaceProjectInfo: SpaceProjectInfo,
+                                  private val repoInfo: Set<SpaceRepoInfo>,
+                                  private val currentReview: MutableProperty<CodeReviewWithCount?>) {
   private val sequentialLifetimes: SequentialLifetimes = SequentialLifetimes(lifetime)
 
   val view: JPanel = JPanel(BorderLayout()).apply {
@@ -37,11 +35,7 @@ internal class SpaceReviewDetails(project: Project,
       view.removeAll()
       if (cr == null) return@forEach
       val detailsLifetime = sequentialLifetimes.next()
-      val detailsVm = when (val codeReviewRecord = cr.review.resolve()) {
-        is MergeRequestRecord -> MergeRequestDetailsVm(detailsLifetime, project, codeReviewRecord.toRef(client.arena), client)
-        is CommitSetReviewRecord -> CommitSetReviewDetailsVm(detailsLifetime, project, codeReviewRecord.toRef(client.arena), client)
-        else -> throw IllegalArgumentException("Unable to resolve CodeReviewRecord")
-      }
+      val detailsVm = createReviewDetailsVm(detailsLifetime, project, client, spaceProjectInfo, repoInfo, cr.review)
 
       val uiDisposable = Disposer.newDisposable()
 

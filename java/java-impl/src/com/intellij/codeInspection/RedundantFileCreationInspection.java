@@ -5,11 +5,16 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.siyeh.ig.PsiReplacementUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
+import java.util.List;
 
 public class RedundantFileCreationInspection extends AbstractBaseJavaLocalInspectionTool {
 
@@ -22,33 +27,34 @@ public class RedundantFileCreationInspection extends AbstractBaseJavaLocalInspec
       public void visitNewExpression(PsiNewExpression newExpression) {
         super.visitNewExpression(newExpression);
 
-        final String[] targetTypes = new String[] {
-          "java.io.FileInputStream", "java.io.FileOutputStream", "java.io.FileReader","java.io.FileWriter",
-          "java.io.PrintStream", "java.io.PrintWriter", "java.util.Formatter"
-        };
+        final List<String> targetTypes = Arrays.asList(
+          CommonClassNames.JAVA_IO_FILE_INPUT_STREAM, CommonClassNames.JAVA_IO_FILE_OUTPUT_STREAM,
+          CommonClassNames.JAVA_IO_FILE_READER, CommonClassNames.JAVA_IO_FILE_WRITER,
+          CommonClassNames.JAVA_IO_PRINT_STREAM, CommonClassNames.JAVA_IO_PRINT_WRITER,
+          CommonClassNames.JAVA_UTIL_FORMATTER
+        );
 
         final PsiType type = newExpression.getType();
-        if (!TypeUtils.typeEquals(type, targetTypes)) {
+        if (type == null || !targetTypes.contains(type.getCanonicalText())) {
           return;
         }
 
-        final PsiMethod streamConstructor = newExpression.resolveConstructor();
-        if (streamConstructor == null) return;
-        final PsiParameter[] streamParams = streamConstructor.getParameterList().getParameters();
-        if (streamParams.length != 1) return;
+        final PsiMethod constructor = newExpression.resolveConstructor();
+        if (constructor == null) return;
+        final PsiParameter[] params = constructor.getParameterList().getParameters();
 
-        if (!TypeUtils.typeEquals("java.io.File", streamParams[0].getType())) return;
+        if (params.length == 0 || !TypeUtils.isJavaIoFile(params[0].getType())) return;
 
-        final PsiExpressionList streamArgList = newExpression.getArgumentList();
-        if (streamArgList == null) return;
+        final PsiExpressionList argList = newExpression.getArgumentList();
+        if (argList == null) return;
 
-        final PsiExpression[] streamArgs = streamArgList.getExpressions();
-        if (streamArgs.length != 1) return;
+        final PsiExpression[] args = argList.getExpressions();
+        if (args.length == 0) return;
 
-        PsiExpression streamArg = streamArgs[0];
-        if (!(streamArg instanceof PsiNewExpression)) return;
+        PsiNewExpression arg = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(args[0]), PsiNewExpression.class);
+        if (arg == null) return;
 
-        final PsiMethod fileConstructor = ((PsiNewExpression)streamArg).resolveConstructor();
+        final PsiMethod fileConstructor = arg.resolveConstructor();
         if (fileConstructor == null) return;
 
         final PsiParameter[] fileParams = fileConstructor.getParameterList().getParameters();
@@ -56,10 +62,12 @@ public class RedundantFileCreationInspection extends AbstractBaseJavaLocalInspec
 
         if (!TypeUtils.isJavaLangString(fileParams[0].getType())) return;
 
-        PsiExpressionList fileArgList = ((PsiNewExpression)streamArg).getArgumentList();
+        PsiExpressionList fileArgList = arg.getArgumentList();
         if (fileArgList == null) return;
 
-        holder.registerProblem(streamArg,
+        if (!canReplacedWithConstructorTakesFilename(constructor)) return;
+
+        holder.registerProblem(arg,
                                JavaBundle.message("inspection.redundant.file.creation.description"),
                                ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                new TextRange(0, fileArgList.getStartOffsetInParent()),
@@ -67,6 +75,25 @@ public class RedundantFileCreationInspection extends AbstractBaseJavaLocalInspec
 
       }
     };
+  }
+
+  private static boolean canReplacedWithConstructorTakesFilename(PsiMethod method) {
+    PsiClass containingClass = method.getContainingClass();
+    if (containingClass == null) return false;
+
+    List<PsiType> methodParams = ContainerUtil.map(method.getParameterList().getParameters(), param -> param.getType());
+    assert !methodParams.isEmpty();
+
+    for (final PsiMethod candidate : containingClass.getMethods()) {
+      if (!candidate.isConstructor() || candidate.equals(method)) continue;
+      List<PsiType> candidateParams = ContainerUtil.map(candidate.getParameterList().getParameters(), param -> param.getType());
+      if (candidateParams.size() != methodParams.size()) continue;
+      if (TypeUtils.isJavaLangString(candidateParams.get(0)) &&
+          methodParams.subList(1, methodParams.size()).equals(candidateParams.subList(1, candidateParams.size()))) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static class DeleteRedundantFileCreationFix implements LocalQuickFix {
@@ -80,19 +107,18 @@ public class RedundantFileCreationInspection extends AbstractBaseJavaLocalInspec
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      assert element instanceof PsiNewExpression;
+      if (!(element instanceof PsiNewExpression)) return;
 
-      final PsiNewExpression newExpression = (PsiNewExpression)descriptor.getPsiElement();
+      final PsiNewExpression newExpression = (PsiNewExpression)element;
       final PsiExpressionList argList = newExpression.getArgumentList();
-      assert argList != null;
+      if (argList == null) return;
 
       final PsiExpression[] args = argList.getExpressions();
-      assert args.length == 1;
+      if (args.length != 1) return;
 
       CommentTracker commentTracker = new CommentTracker();
-      final String argText = commentTracker.text(args[0]);
 
-      PsiReplacementUtil.replaceExpression(newExpression, argText, commentTracker);
+      commentTracker.replace(newExpression, args[0]);
     }
   }
 }

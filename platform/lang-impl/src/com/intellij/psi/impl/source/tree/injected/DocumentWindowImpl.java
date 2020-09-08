@@ -630,7 +630,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
     if (offsetInLeftFragment == offsetInRightFragment) return offsetInLeftFragment;
 
     // heuristics: return offset closest to the caret
-    Editor editor =  EditorFactory.getInstance().editors(getDelegate()).findFirst().orElse(null);
+    Editor editor = EditorFactory.getInstance().editors(getDelegate()).findFirst().orElse(null);
     if (editor != null) {
       if (editor instanceof EditorWindow) editor = ((EditorWindow)editor).getDelegate();
       int caret = editor.getCaretModel().getOffset();
@@ -666,7 +666,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
           return preferLeftFragment ? prevEnd : currentStart - 1;
         }
         if (offset == 0) {
-          return preferLeftFragment && i != 0 ? prevEnd : currentStart;
+          return currentStart;
         }
         int length = currentEnd - currentStart;
         if (offset < length || offset == length && preferLeftFragment) {

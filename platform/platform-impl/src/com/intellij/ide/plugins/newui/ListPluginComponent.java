@@ -178,9 +178,12 @@ public class ListPluginComponent extends JPanel {
           myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
         }
         else {
+          boolean isEnabled = isEnabledState();
+          updateEnabledStateIcon(isEnabled);
+
           myLayout.addButtonComponent(myEnableDisableButton = enableDisableButton);
           myEnableDisableButton.setOpaque(false);
-          myEnableDisableButton.setSelected(isEnabledState());
+          myEnableDisableButton.setSelected(isEnabled);
           myEnableDisableButton.addActionListener(e -> myPluginModel.changeEnableDisable(myPlugin));
         }
       }
@@ -414,12 +417,13 @@ public class ListPluginComponent extends JPanel {
       }
     }
     if (calcColor && !myMarketplace) {
-      boolean enabled = !myUninstalled && (MyPluginModel.isInstallingOrUpdate(myPlugin) || myPluginModel.isEnabled(myPlugin));
+      boolean enabled = !myUninstalled && (MyPluginModel.isInstallingOrUpdate(myPlugin) || isEnabledState());
       if (!enabled) {
         nameForeground = otherForeground = DisabledColor;
       }
     }
 
+    myNameComponent.setHorizontalTextPosition(SwingConstants.LEFT);
     myNameComponent.setForeground(nameForeground);
 
     if (myRating != null) {
@@ -440,7 +444,7 @@ public class ListPluginComponent extends JPanel {
     Ref<@Nls String> enableAction = new Ref<>();
     String message = myPluginModel.getErrorMessage(myPlugin, enableAction);
     boolean errors = message != null;
-    updateIcon(errors, myUninstalled || !myPluginModel.isEnabled(myPlugin));
+    updateIcon(errors, myUninstalled || !isEnabledState());
 
     if (myAlignButton != null) {
       myAlignButton.setVisible(myRestartButton != null);
@@ -542,11 +546,24 @@ public class ListPluginComponent extends JPanel {
   }
 
   public void updateEnabledState() {
+    boolean isEnabled = isEnabledState();
     if (!myUninstalled && myEnableDisableButton != null) {
-      myEnableDisableButton.setSelected(isEnabledState());
+      myEnableDisableButton.setSelected(isEnabled);
     }
+    updateEnabledStateIcon(isEnabled);
+
     updateErrors();
     setSelection(mySelection, false);
+  }
+
+  private void updateEnabledStateIcon(boolean isEnabled) {
+    boolean isEnabledForProject = isEnabled &&
+                                  !myPlugin.isEnabled();
+
+    Icon icon = isEnabledForProject ?
+                AllIcons.General.ProjectConfigurable :
+                null;
+    myNameComponent.setIcon(icon);
   }
 
   public void updateAfterUninstall(boolean needRestartForUninstall) {

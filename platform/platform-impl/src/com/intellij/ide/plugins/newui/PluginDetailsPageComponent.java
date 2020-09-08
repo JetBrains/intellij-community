@@ -8,9 +8,13 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -19,7 +23,6 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.border.CustomLineBorder;
-import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
@@ -42,11 +45,11 @@ import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.ImageView;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -72,10 +75,10 @@ public class PluginDetailsPageComponent extends MultiPanel {
   private JButton myRestartButton;
   private InstallButton myInstallButton;
   private JButton myUpdateButton;
-  private JButton myEnableDisableButton;
-  private JBOptionButton myEnableDisableUninstallButton;
+  private JComponent myGearButton;
   private JComponent myErrorComponent;
   private JTextField myVersion;
+  private JLabel myEnabledForProject;
   private JLabel myVersionSize;
   private TagPanel myTagPanel;
   private JLabel myDate;
@@ -93,7 +96,6 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
   public IdeaPluginDescriptor myPlugin;
   private IdeaPluginDescriptor myUpdateDescriptor;
-  private AbstractAction myEnableDisableAction;
 
   private ListPluginComponent myShowComponent;
 
@@ -226,24 +228,11 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myInstallButton
       .addActionListener(e -> myPluginModel.installOrUpdatePlugin(this, myPlugin, null, ModalityState.stateForComponent(myInstallButton)));
 
-    myEnableDisableButton = new JButton();
-    myEnableDisableButton.addActionListener(e -> myPluginModel.changeEnableDisable(myPlugin));
-    ColorButton.setWidth72(myEnableDisableButton);
-    myNameAndButtons.addButtonComponent(myEnableDisableButton);
-
-    myEnableDisableAction = new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        myPluginModel.changeEnableDisable(myPlugin);
-      }
-    };
-    AbstractAction uninstallAction = new AbstractAction(IdeBundle.message("plugins.configurable.uninstall.button")) {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        doUninstall();
-      }
-    };
-    myNameAndButtons.addButtonComponent(myEnableDisableUninstallButton = new MyOptionButton(myEnableDisableAction, uninstallAction));
+    myGearButton = TabbedPaneHeaderComponent.createToolbar(
+      IdeBundle.message("plugin.settings.link.title"),
+      createGearActions()
+    );
+    myNameAndButtons.addButtonComponent(myGearButton);
 
     for (Component component : myNameAndButtons.getButtonComponents()) {
       component.setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
@@ -261,8 +250,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myVersion = new JTextField();
     myVersion.putClientProperty("TextFieldWithoutMargins", Boolean.TRUE);
     myVersion.setEditable(false);
-    myVersion.setFont(UIUtil.getLabelFont());
-    PluginManagerConfigurable.setTinyFont(myVersion);
+    setFont(myVersion);
     myVersion.setBorder(null);
     myVersion.setOpaque(false);
     myVersion.setForeground(ListPluginComponent.GRAY_COLOR);
@@ -276,8 +264,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     });
 
     myVersionSize = new JLabel();
-    myVersionSize.setFont(UIUtil.getLabelFont());
-    PluginManagerConfigurable.setTinyFont(myVersionSize);
+    setFont(myVersionSize);
 
     int offset = JBUIScale.scale(10);
     JPanel panel1 = new NonOpaquePanel(new TextHorizontalLayout(offset));
@@ -291,7 +278,12 @@ public class PluginDetailsPageComponent extends MultiPanel {
     }
     myVendor = new LinkPanel(panel1, false, null, TextHorizontalLayout.FIX_LABEL);
 
-    JPanel panel2 = new NonOpaquePanel(new TextHorizontalLayout(myMarketplace ? offset : JBUIScale.scale(7)) {
+    myEnabledForProject = new JLabel();
+    myEnabledForProject.setHorizontalTextPosition(SwingConstants.LEFT);
+    myEnabledForProject.setForeground(ListPluginComponent.GRAY_COLOR);
+    setFont(myEnabledForProject);
+
+    TextHorizontalLayout layout = myMarketplace ? new TextHorizontalLayout(offset) {
       @Override
       public void layoutContainer(Container parent) {
         super.layoutContainer(parent);
@@ -312,9 +304,13 @@ public class PluginDetailsPageComponent extends MultiPanel {
           }
         }
       }
-    });
+    } : new TextHorizontalLayout(JBUIScale.scale(7));
+
+    JPanel panel2 = new NonOpaquePanel(layout);
     panel2.add(myTagPanel = new TagPanel(mySearchListener));
-    panel2.add(myVersion);
+    (myMarketplace ? panel2 : panel1).add(myVersion);
+    panel2.add(myEnabledForProject);
+
     myDate =
       ListPluginComponent.createRatingLabel(panel2, TextHorizontalLayout.FIX_LABEL, "", null, ListPluginComponent.GRAY_COLOR, true);
     centerPanel.add(panel2);
@@ -333,8 +329,10 @@ public class PluginDetailsPageComponent extends MultiPanel {
     bottomPanel.add(myLicensePanel);
     myLicensePanel.setBorder(JBUI.Borders.emptyBottom(20));
 
-    myHomePage = new LinkPanel(bottomPanel, true, null, null);
-    bottomPanel.add(new JLabel());
+    if (myMarketplace) {
+      myHomePage = new LinkPanel(bottomPanel);
+      bottomPanel.add(new JLabel());
+    }
 
     Object constraints = JBUIScale.scale(700);
     bottomPanel.add(myDescriptionComponent = createDescriptionComponent(view -> {
@@ -352,6 +350,14 @@ public class PluginDetailsPageComponent extends MultiPanel {
     if (myMarketplace) {
       bottomPanel.add(mySize = new JLabel());
     }
+    else {
+      myHomePage = new LinkPanel(bottomPanel);
+    }
+  }
+
+  private static void setFont(@NotNull JComponent component) {
+    component.setFont(UIUtil.getLabelFont());
+    PluginManagerConfigurable.setTinyFont(component);
   }
 
   @NotNull
@@ -508,6 +514,9 @@ public class PluginDetailsPageComponent extends MultiPanel {
       mySize.setText(IdeBundle.message("plugins.configurable.size.0", size));
       mySize.setVisible(!StringUtil.isEmptyOrSpaces(size));
     }
+    else {
+      updateEnabledForProject();
+    }
 
     String vendor = myPlugin.isBundled() ? null : StringUtil.trim(myPlugin.getVendor());
     if (StringUtil.isEmptyOrSpaces(vendor)) {
@@ -641,8 +650,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
       myInstallButton.setVisible(!installed);
 
       myUpdateButton.setVisible(false);
-      myEnableDisableButton.setVisible(false);
-      myEnableDisableUninstallButton.setVisible(false);
+      myGearButton.setVisible(false);
     }
     else {
       myInstallButton.setVisible(false);
@@ -665,23 +673,15 @@ public class PluginDetailsPageComponent extends MultiPanel {
           myRestartButton.setVisible(true);
         }
         myUpdateButton.setVisible(false);
-        myEnableDisableButton.setVisible(false);
-        myEnableDisableUninstallButton.setVisible(false);
       }
       else {
         myRestartButton.setVisible(false);
 
-        boolean bundled = myPlugin.isBundled();
-        String title = myPluginModel.getEnabledTitle(myPlugin);
+        updateEnabledForProject();
 
         myUpdateButton.setVisible(myUpdateDescriptor != null && !installedWithoutRestart);
-
-        myEnableDisableButton.setVisible(bundled);
-        myEnableDisableButton.setText(title);
-
-        myEnableDisableUninstallButton.setVisible(!bundled);
-        myEnableDisableAction.putValue(Action.NAME, title);
       }
+      myGearButton.setVisible(!uninstalled);
 
       updateEnableForNameAndIcon();
       updateIcon();
@@ -760,23 +760,28 @@ public class PluginDetailsPageComponent extends MultiPanel {
     updateIcon();
     updateEnableForNameAndIcon();
     updateErrors();
+    updateEnabledForProject();
 
-    boolean bundled = myPlugin.isBundled();
-    String title = myPluginModel.getEnabledTitle(myPlugin);
-
-    myEnableDisableButton.setText(title);
-    myEnableDisableUninstallButton.setText(title);
     myUpdateButton.setVisible(myUpdateDescriptor != null);
-    myEnableDisableButton.setVisible(bundled);
-    myEnableDisableUninstallButton.setVisible(!bundled);
 
     fullRepaint();
   }
 
-  private void doUninstall() {
-    if (MyPluginModel.showUninstallDialog(this, myPlugin.getName(), 1)) {
-      myPluginModel.uninstallAndUpdateUi(this, myPlugin);
-    }
+  private void updateEnabledForProject() {
+    boolean isEnabled = myPluginModel.isEnabled(myPlugin);
+    boolean isEnabledForProject = myPluginModel.isEnabledForProject(myPlugin);
+
+    String text = isEnabled ?
+                  (isEnabledForProject ?
+                   IdeBundle.message("plugins.configurable.enabled.for.current.project") :
+                   IdeBundle.message("plugins.configurable.enabled.for.all.projects")) :
+                  null;
+    myEnabledForProject.setText(text);
+
+    Icon icon = isEnabled && isEnabledForProject ?
+                AllIcons.General.ProjectConfigurable :
+                null;
+    myEnabledForProject.setIcon(icon);
   }
 
   public void startLoading() {
@@ -826,5 +831,147 @@ public class PluginDetailsPageComponent extends MultiPanel {
     }
     String notes = myPlugin.getChangeNotes();
     return StringUtil.isEmptyOrSpaces(notes) ? null : notes;
+  }
+
+  private void enablePlugin() {
+    myPluginModel.enablePlugins(Set.of(myPlugin));
+  }
+
+  private void disablePlugin() {
+    myPluginModel.disablePlugins(Set.of(myPlugin));
+  }
+
+  private @NotNull DefaultActionGroup createGearActions() {
+    DefaultActionGroup result = new DefaultActionGroup();
+
+    result.add(new EnableForAllProjectsAction());
+    result.add(new EnableForCurrentProjectAction());
+    result.addSeparator();
+    result.add(new DisableForAllProjectsAction());
+    result.add(new DisableForCurrentProjectAction());
+    result.addSeparator();
+    result.add(new UninstallAction());
+
+    return result;
+  }
+
+  private final class EnableForAllProjectsAction extends DumbAwareAction {
+
+    private EnableForAllProjectsAction() {
+      super(IdeBundle.message("plugins.configurable.enable.for.all.projects"));
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation()
+        .setVisible(!myPluginModel.isEnabled(myPlugin));
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      Project project = e.getProject();
+      if (project != null) {
+        ProjectPluginTracker.getInstance(project)
+          .unregisterProjectPlugin(myPlugin);
+      }
+
+      enablePlugin();
+    }
+  }
+
+  private final class EnableForCurrentProjectAction extends DumbAwareAction {
+
+    private EnableForCurrentProjectAction() {
+      super(IdeBundle.message("plugins.configurable.enable.for.current.project"));
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      boolean isVisible = e.getProject() != null &&
+                          !myPluginModel.isEnabled(myPlugin) &&
+                          !myPluginModel.isEnabledForProject(myPlugin);
+      e.getPresentation().setVisible(isVisible);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      Project project = e.getProject();
+      assert project != null;
+
+      ProjectPluginTracker.getInstance(project)
+        .registerProjectPlugin(myPlugin);
+
+      enablePlugin();
+    }
+  }
+
+  private final class DisableForAllProjectsAction extends DumbAwareAction {
+
+    private DisableForAllProjectsAction() {
+      super(IdeBundle.message("plugins.configurable.disable.for.all.projects"));
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation()
+        .setVisible(myPluginModel.isEnabled(myPlugin));
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      Project project = e.getProject();
+      if (project != null) {
+        ProjectPluginTracker.getInstance(project)
+          .unregisterProjectPlugin(myPlugin);
+      }
+
+      disablePlugin();
+    }
+  }
+
+  private final class DisableForCurrentProjectAction extends DumbAwareAction {
+
+    private DisableForCurrentProjectAction() {
+      super(IdeBundle.message("plugins.configurable.disable.for.current.project"));
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      boolean visible = e.getProject() != null &&
+                        myPluginModel.isEnabled(myPlugin) &&
+                        myPluginModel.isEnabledForProject(myPlugin);
+      e.getPresentation().setVisible(visible);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      Project project = e.getProject();
+      assert project != null;
+
+      ProjectPluginTracker.getInstance(project)
+        .unregisterProjectPlugin(myPlugin);
+
+      myPluginModel.disablePlugins(Set.of(myPlugin));
+    }
+  }
+
+  private final class UninstallAction extends DumbAwareAction {
+
+    private UninstallAction() {
+      super(IdeBundle.message("plugins.configurable.uninstall"));
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation()
+        .setEnabledAndVisible(!myPlugin.isBundled());
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      if (MyPluginModel.showUninstallDialog(PluginDetailsPageComponent.this, myPlugin.getName(), 1)) {
+        myPluginModel.uninstallAndUpdateUi(PluginDetailsPageComponent.this, myPlugin);
+      }
+    }
   }
 }

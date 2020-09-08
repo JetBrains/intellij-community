@@ -41,10 +41,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -155,26 +152,37 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
 
       if (parent instanceof PsiAssignmentExpression) {
         expression = (PsiExpression)parent;
-        PsiVariable variable = getAppendedVariable(expression);
+
+        PsiReferenceExpression lhs = getAppendedExpression(expression);
+        if (lhs == null) return false;
+        PsiVariable variable = ObjectUtils.tryCast(lhs.resolve(), PsiVariable.class);
 
         if (variable != null) {
           PsiLoopStatement commonLoop = getOutermostCommonLoop(expression, variable);
           return commonLoop != null &&
                  !ControlFlowUtils.isExecutedOnceInLoop(PsiTreeUtil.getParentOfType(expression, PsiStatement.class), commonLoop) &&
-                 !isUsedCompletely(variable, commonLoop);
+                 !isUsedCompletely(variable, commonLoop) && checkQualifier(lhs, commonLoop);
         }
       }
       return false;
     }
 
+    private static boolean checkQualifier(PsiReferenceExpression lhs, PsiLoopStatement commonLoop) {
+      while (true) {
+        PsiExpression qualifierExpression = PsiUtil.skipParenthesizedExprDown(lhs.getQualifierExpression());
+        if (qualifierExpression == null || qualifierExpression instanceof PsiQualifiedExpression) return true;
+        PsiReferenceExpression ref = ObjectUtils.tryCast(qualifierExpression, PsiReferenceExpression.class);
+        if (ref == null) return false;
+        PsiVariable varRef = ObjectUtils.tryCast(ref.resolve(), PsiVariable.class);
+        if (varRef == null) return false;
+        if (PsiTreeUtil.isAncestor(commonLoop, varRef, true) || VariableAccessUtils.variableIsAssigned(varRef, commonLoop)) return false;
+        lhs = ref;
+      }
+    }
+
     private static boolean isUsedCompletely(PsiVariable variable, PsiLoopStatement loop) {
-      return ReferencesSearch.search(variable, new LocalSearchScope(loop)).anyMatch(ref -> {
-        PsiExpression expression = ObjectUtils.tryCast(ref.getElement(), PsiExpression.class);
-        if (expression == null) return false;
-        PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-        while (parent instanceof PsiTypeCastExpression || parent instanceof PsiConditionalExpression) {
-          parent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
-        }
+      return VariableAccessUtils.getVariableReferences(variable, loop).stream().anyMatch(expression -> {
+        PsiElement parent = ExpressionUtils.getPassThroughParent(expression);
         if (parent instanceof PsiExpressionList ||
             parent instanceof PsiAssignmentExpression &&
             PsiTreeUtil.isAncestor(((PsiAssignmentExpression)parent).getRExpression(), expression, false)) {
@@ -268,19 +276,21 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
   @Contract("null -> null")
   @Nullable
   private static PsiVariable getAppendedVariable(PsiExpression expression) {
+    PsiReferenceExpression lhs = getAppendedExpression(expression);
+    if (lhs == null) return null;
+    return ObjectUtils.tryCast(lhs.resolve(), PsiVariable.class);
+  }
+
+  @Contract("null -> null")
+  @Nullable
+  private static PsiReferenceExpression getAppendedExpression(PsiExpression expression) {
     PsiElement parent = expression;
     while (parent instanceof PsiParenthesizedExpression || parent instanceof PsiPolyadicExpression) {
       parent = parent.getParent();
     }
-    if (!(parent instanceof PsiAssignmentExpression)) {
-      return null;
-    }
-    PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)parent).getLExpression());
-    if (!(lhs instanceof PsiReferenceExpression)) {
-      return null;
-    }
-    final PsiElement element = ((PsiReferenceExpression)lhs).resolve();
-    return element instanceof PsiVariable ? (PsiVariable)element : null;
+    if (!(parent instanceof PsiAssignmentExpression)) return null;
+    return ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)parent).getLExpression()),
+                               PsiReferenceExpression.class);
   }
 
   @Override
@@ -345,8 +355,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       myNullSafe = safe;
     }
 
-    @NotNull
-    String generateNewStringBuilder(PsiExpression initializer, CommentTracker ct) {
+    @NonNls @NotNull String generateNewStringBuilder(PsiExpression initializer, CommentTracker ct) {
       if (ExpressionUtils.isNullLiteral(initializer)) {
         return ct.text(initializer);
       }
@@ -461,7 +470,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
         }
         if (operands.length > 1 && operands[0] == ref && TypeUtils.isJavaLangString(operands[1].getType())) return;
       }
-      String text = builderVariable.getName() + ".toString()";
+      @NonNls String text = builderVariable.getName() + ".toString()";
       if (myNullables.contains(ref) && !isNotNullContext(ref)) {
         text = builderVariable.getName() + "==null?null:" + text;
         if (parent instanceof PsiExpression) {
@@ -498,7 +507,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       PsiMethod method = call.resolveMethod();
       if(method != null) {
         PsiExpression[] args = call.getArgumentList().getExpressions();
-        String name = method.getName();
+        @NonNls String name = method.getName();
         switch(name) {
           case "length":
           case "chars":
@@ -667,7 +676,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       StringBuilderReplacer replacer = new StringBuilderReplacer(myTargetType, myNullSafe);
       replacer.replaceAll(variable, builderVariable, loop, ct);
       String convertToString = myNullSafe ? CommonClassNames.JAVA_LANG_STRING + ".valueOf(" + newName + ")" : newName + ".toString()";
-      String toString = variable.getName() + " = " + convertToString + ";";
+      @NonNls String toString = variable.getName() + " = " + convertToString + ";";
 
       PsiExpression initializer = variable.getInitializer();
       switch (status) {

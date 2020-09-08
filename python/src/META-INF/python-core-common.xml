@@ -456,6 +456,11 @@
     <extensionPoint qualifiedName="Pythonid.dataViewPanelFactory"
                     interface="com.jetbrains.python.debugger.containerview.PyDataViewPanelFactory"
                     dynamic="true"/>
+
+    <!-- Experimental sdk EP, avoid using it -->
+    <extensionPoint qualifiedName="Pythonid.pySdkProvider"
+                    interface="com.jetbrains.python.sdk.PySdkProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -531,6 +536,10 @@
     <inspectionExtension implementation="com.jetbrains.python.inspections.PyThirdPartyInspectionExtension"/>
 
     <condaSdkCustomizer implementation="com.jetbrains.python.sdk.conda.PyCondaSdkDefaultCustomizer"/>
+
+    <!-- Experimental packaging extensions-->
+    <pySdkProvider implementation="com.jetbrains.python.sdk.pipenv.PyPipEnvSdkProvider"/>
+    <packageManagerProvider implementation="com.jetbrains.python.sdk.pipenv.PyPipenvPackageManagerProvider"/>
   </extensions>
 
   <actions>

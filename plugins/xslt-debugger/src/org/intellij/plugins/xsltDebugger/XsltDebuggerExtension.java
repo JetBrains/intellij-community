@@ -115,12 +115,12 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
     assert jdk != null;
     final JavaVersion version = JavaVersion.tryParse(jdk.getVersionString());
     if (version == null || version.feature < 5 || version.feature > 8) {  // todo: get rid of PortableRemoteObject usages in debugger
-      throw new CantRunException("The XSLT Debugger requires Java 1.5 - 1.8 to run");
+      throw new CantRunException(XsltDebuggerBundle.message("dialog.message.xslt.debugger.requires.java.to.run"));
     }
 
     // TODO: fix and remove
     if (configuration.getOutputType() != XsltRunConfiguration.OutputType.CONSOLE) {
-      throw new CantRunException("XSLT Debugger requires Output Type == CONSOLE");
+      throw new CantRunException(XsltDebuggerBundle.message("dialog.message.xslt.debugger.requires.output.type.console"));
     }
 
     try {
@@ -129,7 +129,7 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
       extensionData.putUserData(PORT, port);
     } catch (IOException e) {
       LOG.info(e);
-      throw new CantRunException("Unable to find a free network port");
+      throw new CantRunException(XsltDebuggerBundle.message("dialog.message.unable.to.find.free.network.port"));
     }
 
     String token = UUID.randomUUID().toString();
@@ -154,7 +154,7 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
     File trove4j = new File(PathUtil.getJarPathForClass(THashMap.class));
     parameters.getClassPath().addTail(trove4j.getAbsolutePath());
 
-    String type = parameters.getVMParametersList().getPropertyValue("xslt.transformer.type");
+    String type = parameters.getVMParametersList().getPropertyValue("xslt.transformer.type"); //NON-NLS
     if ("saxon".equalsIgnoreCase(type)) {
       addPathToClasspath(parameters, findSaxonJar(xsltDebuggerClassesRoot, SAXON_6_JAR));
     }
@@ -167,11 +167,11 @@ public class XsltDebuggerExtension extends XsltRunnerExtension {
         addXalan(parameters, xsltDebuggerClassesRoot);
       }
       else if (!xalanPresent) {
-        throw new CantRunException("Unsupported Xalan version is present in classpath.");
+        throw new CantRunException(XsltDebuggerBundle.message("dialog.message.unsupported.xalan.version.present.in.classpath"));
       }
     }
     else if (type != null) {
-      throw new CantRunException("Unsupported Transformer type '" + type + "'");
+      throw new CantRunException(XsltDebuggerBundle.message("dialog.message.unsupported.transformer.type", type));
     }
     else if (StringUtil.toLowerCase(parameters.getClassPath().getPathsString()).contains("xalan")) {
       if (isValidXalanPresent(parameters) == Boolean.TRUE) {

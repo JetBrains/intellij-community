@@ -83,7 +83,7 @@ class MLSorter : CompletionFinalSorter() {
     val prefix = lookup.prefix()
 
     if (!this::sortingRestrictions.isInitialized) {
-      sortingRestrictions = SortingRestriction.forLanguage(lookupStorage.language)
+      sortingRestrictions = SortingRestriction.forLanguage(lookupStorage.language, lookupStorage.model?.version() ?: "")
     }
 
     val element2score = mutableMapOf<LookupElement, Double?>()
@@ -125,11 +125,8 @@ class MLSorter : CompletionFinalSorter() {
     val rankingModel = lookupStorage.model
 
     lookupStorage.initUserFactors(lookup.project)
-    val commonSessionFactors = SessionFactorsUtils.updateSessionFactors(lookupStorage, items)
-    val contextFactors = lookupStorage.contextFactors
-    val features = RankingFeatures(lookupStorage.userFactors, contextFactors, commonSessionFactors)
     val relevanceObjects = lookup.getRelevanceObjects(items, false)
-    val tracker = ModelTimeTracker()
+    val calculatedElementFeatures = mutableListOf<ElementFeatures>()
     for (element in items) {
       val position = positionsBefore.getValue(element)
       val (relevance, additional) = RelevanceUtil.asRelevanceMaps(relevanceObjects.getOrDefault(element, emptyList()))
@@ -138,7 +135,25 @@ class MLSorter : CompletionFinalSorter() {
       lookupStorage.performanceTracker.trackElementFeaturesCalculation(PrefixMatchingUtil.baseName) {
         PrefixMatchingUtil.calculateFeatures(element, prefix, additional)
       }
+      calculatedElementFeatures.add(ElementFeatures(relevance, additional))
+    }
+
+    val lookupFeatures = mutableMapOf<String, Any>()
+    for (elementFeatureProvider in LookupFeatureProvider.forLanguage(lookupStorage.language)) {
+      val features = elementFeatureProvider.calculateFeatures(calculatedElementFeatures)
+      lookupFeatures.putAll(features)
+    }
+
+    val commonSessionFactors = SessionFactorsUtils.updateSessionFactors(lookupStorage, items)
+    val contextFactors = lookupStorage.contextFactors
+    val features = RankingFeatures(lookupStorage.userFactors, contextFactors, commonSessionFactors, lookupFeatures)
+
+    val tracker = ModelTimeTracker()
+    for ((i, element) in items.withIndex()) {
+      val (relevance, additional) = calculatedElementFeatures[i]
+
       val score = tracker.measure {
+        val position = positionsBefore.getValue(element)
         val elementFeatures = features.withElementFeatures(relevance, additional)
         val score = calculateElementScore(rankingModel, element, position, elementFeatures, queryLength)
         sortingRestrictions.itemScored(elementFeatures)
@@ -265,8 +280,10 @@ class MLSorter : CompletionFinalSorter() {
 
   interface SortingRestriction {
     companion object {
-      fun forLanguage(language: Language): SortingRestriction {
-        if (language.id.equals("Java", ignoreCase = true) && !ApplicationManager.getApplication().isUnitTestMode) {
+      fun forLanguage(language: Language, version: String): SortingRestriction {
+        if (language.id.equals("Java", ignoreCase = true)
+            && version.equals("0.2.1", ignoreCase = true)
+            && !ApplicationManager.getApplication().isUnitTestMode) {
           return SortOnlyWithRecommendersScore()
         }
         return SortAll()

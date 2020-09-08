@@ -11,4 +11,7 @@ class MetadataConsistencyTest {
 
   @Test
   fun testScalaMetadata() = ExperimentScalaMLRankingProvider().assertModelMetadataConsistent()
+
+  @Test
+  fun testJavaMetadata() = ExperimentJavaMLRankingProvider().assertModelMetadataConsistent()
 }

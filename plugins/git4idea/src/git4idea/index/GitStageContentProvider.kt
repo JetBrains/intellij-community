@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
 import com.intellij.ui.content.Content
 import com.intellij.util.NotNullFunction
@@ -20,7 +21,13 @@ class GitStageContentProvider(private val project: Project) : ChangesViewContent
   override fun initContent(): JComponent {
     val tracker = GitStageTracker.getInstance(project)
     disposable = Disposer.newDisposable("Git Stage Content Provider")
-    return GitStagePanel(tracker, disposable!!)
+    val gitStagePanel = GitStagePanel(tracker, isCommitToolWindow(project), disposable!!)
+    project.messageBus.connect(disposable!!).subscribe(ChangesViewContentManagerListener.TOPIC, object : ChangesViewContentManagerListener {
+      override fun toolWindowMappingChanged() {
+        gitStagePanel.setDiffPreviewInEditor(isCommitToolWindow(project))
+      }
+    })
+    return gitStagePanel
   }
 
   override fun disposeContent() {
@@ -44,3 +51,5 @@ class GitStageDisplayNameSupplier : Supplier<String> {
     return GitBundle.message("stage.tab.name")
   }
 }
+
+private fun isCommitToolWindow(project: Project) = ChangesViewContentManager.getInstanceImpl(project)?.isCommitToolWindow == true

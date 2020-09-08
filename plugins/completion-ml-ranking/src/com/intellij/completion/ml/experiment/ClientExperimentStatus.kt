@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.registry.Registry
 
 class ClientExperimentStatus : ExperimentStatus {
   companion object {
@@ -51,7 +52,12 @@ class ClientExperimentStatus : ExperimentStatus {
     val properties = PropertiesComponent.getInstance()
     for (languageSettings in experimentConfig.languages) {
       val bucket = EventLogConfiguration.bucket % languageSettings.experimentBucketsCount
-      val groupNumber = if (languageSettings.includeGroups.size > bucket) languageSettings.includeGroups[bucket] else experimentConfig.version
+      val overriddenGroupNumber = Registry.intValue("completion.ml.override.experiment.group.number")
+      val groupNumber = when {
+        overriddenGroupNumber in languageSettings.includeGroups -> overriddenGroupNumber
+        languageSettings.includeGroups.size > bucket -> languageSettings.includeGroups[bucket]
+        else -> experimentConfig.version
+      }
       val group = experimentConfig.groups.find { it.number == groupNumber }
       val groupInfo = if (group == null) ExperimentInfo(false, experimentConfig.version)
       else ExperimentInfo(true, group.number, group.useMLRanking, group.showArrows, group.calculateFeatures)

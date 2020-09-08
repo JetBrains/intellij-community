@@ -3,7 +3,8 @@ package com.intellij.completion.ml.sorting
 
 class RankingFeatures(private val user: Map<String, Any>,
                       private val context: Map<String, Any>,
-                      private val commonSession: Map<String, Any>) {
+                      private val commonSession: Map<String, Any>,
+                      private val lookup: Map<String, Any>) {
   private var relevance: Map<String, Any> = emptyMap()
   private var additional: Map<String, Any> = emptyMap()
 
@@ -15,11 +16,11 @@ class RankingFeatures(private val user: Map<String, Any>,
   }
 
   fun featureValue(name: String): Any? {
-    return relevance[name] ?: additional[name] ?: context[name] ?: commonSession[name] ?: user[name]
+    return relevance[name] ?: additional[name] ?: context[name] ?: commonSession[name] ?: user[name] ?: lookup[name]
   }
 
   fun hasFeature(name: String): Boolean {
-    return name in relevance || name in additional || name in context || name in commonSession || name in user
+    return name in relevance || name in additional || name in context || name in commonSession || name in user || name in lookup
   }
 
   fun withElementFeatures(defaultRelevance: Map<String, Any>, additionalRelevance: Map<String, Any>): RankingFeatures {

@@ -27,6 +27,8 @@ data class JsonFileProviderIndexStatistics(
 
   data class JsonStatsPerIndexer(
     val indexId: String,
+    val numberOfFiles: Int,
+    val numberOfFilesIndexedByExtensions: Int,
     val partOfTotalIndexingTime: JsonPercentages
   )
 }

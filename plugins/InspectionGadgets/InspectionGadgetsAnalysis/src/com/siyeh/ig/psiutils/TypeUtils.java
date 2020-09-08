@@ -54,16 +54,6 @@ public final class TypeUtils {
     return targetType != null && targetType.equalsToText(typeName);
   }
 
-  @Contract("null, _ -> false")
-  public static boolean typeEquals(@Nullable PsiType targetType, @NonNls String @NotNull ... typeNames) {
-    for (String typeName : typeNames) {
-      if (typeEquals(typeName, targetType)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   public static PsiClassType getType(@NotNull String fqName, @NotNull PsiElement context) {
     final Project project = context.getProject();
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
@@ -90,6 +80,11 @@ public final class TypeUtils {
     final Integer sourcePrecision = typePrecisions.get(sourceType);
     final Integer targetPrecision = typePrecisions.get(targetType);
     return sourcePrecision != null && targetPrecision != null && targetPrecision.intValue() < sourcePrecision.intValue();
+  }
+
+  @Contract("null -> false")
+  public static boolean isJavaIoFile(@Nullable PsiType targetType) {
+    return typeEquals(CommonClassNames.JAVA_IO_FILE, targetType);
   }
 
   @Contract("null -> false")

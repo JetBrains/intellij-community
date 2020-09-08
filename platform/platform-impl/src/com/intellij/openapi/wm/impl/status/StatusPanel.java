@@ -15,6 +15,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.JBMenuItem;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
@@ -41,7 +42,7 @@ import java.awt.event.MouseEvent;
  */
 class StatusPanel extends JPanel {
   private Notification myCurrentNotification;
-  @Nullable private String myTimeText;
+  private @NlsSafe @Nullable String myTimeText;
   private boolean myDirty;
   private boolean myAfterClick;
   private Alarm myLogAlarm;
@@ -65,7 +66,9 @@ class StatusPanel extends JPanel {
         Rectangle boundsForTrim = new Rectangle(withoutTime, bounds.height);
         return super.truncateText(text, boundsForTrim, fm, textR, iconR, withoutTime) + myTimeText;
       }
-      return super.truncateText(text, bounds, fm, textR, iconR, maxWidth);
+      else {
+        return super.truncateText(text, bounds, fm, textR, iconR, maxWidth);
+      }
     }
   };
 
@@ -193,9 +196,9 @@ class StatusPanel extends JPanel {
   public boolean updateText(@Nullable @NlsContexts.StatusBarText String nonLogText) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    final Project project = getActiveProject();
-    final Trinity<Notification, String, Long> statusMessage = EventLog.getStatusMessage(project);
-    final Alarm alarm = getAlarm();
+    Project project = getActiveProject();
+    Trinity<Notification, @NlsContexts.StatusBarText String, Long> statusMessage = EventLog.getStatusMessage(project);
+    Alarm alarm = getAlarm();
     myCurrentNotification = StringUtil.isEmpty(nonLogText) && statusMessage != null && alarm != null ? statusMessage.first : null;
 
     if (alarm != null) {

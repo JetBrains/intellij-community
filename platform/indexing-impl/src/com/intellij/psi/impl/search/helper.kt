@@ -169,16 +169,23 @@ private class Layer<T>(
 
     for (wordRequest: WordRequest<T> in wordRequests) {
       progress.checkCanceled()
+      val occurrenceProcessor: OccurrenceProcessor = wordRequest.occurrenceProcessor(processor)
       val byRequest = theMap.getOrPut(wordRequest.searchWordRequest) {
         Pair(SmartList(), LinkedHashMap())
       }
-      val occurrenceProcessors: MutableCollection<OccurrenceProcessor> = when (val injectionInfo = wordRequest.injectionInfo) {
-        InjectionInfo.NoInjection -> byRequest.first
-        is InjectionInfo.InInjection -> byRequest.second.getOrPut(injectionInfo.languageInfo) {
-          SmartList()
-        }
+      val injectionInfo = wordRequest.injectionInfo
+      if (injectionInfo == InjectionInfo.NoInjection || injectionInfo == InjectionInfo.IncludeInjections) {
+        byRequest.first.add(occurrenceProcessor)
       }
-      occurrenceProcessors += wordRequest.occurrenceProcessor(processor)
+      if (injectionInfo is InjectionInfo.InInjection || injectionInfo == InjectionInfo.IncludeInjections) {
+        val languageInfo: LanguageInfo = if (injectionInfo is InjectionInfo.InInjection) {
+          injectionInfo.languageInfo
+        }
+        else {
+          LanguageInfo.NoLanguage
+        }
+        byRequest.second.getOrPut(languageInfo) { SmartList() }.add(occurrenceProcessor)
+      }
     }
 
     return theMap.map { (wordRequest: WordRequestInfo, byRequest) ->

@@ -15,6 +15,7 @@ import com.intellij.ide.projectView.impl.nodes.ModuleGroupNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -29,7 +30,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -840,7 +840,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
       final int count = paths.length;
 
-      final JLabel label = new JLabel(count + " " + StringUtil.pluralize("item", count));
+      JLabel label = new JLabel(LangBundle.message("dragged.item.count", count));
       label.setOpaque(true);
       label.setForeground(RenderingUtil.getForeground(myTree));
       label.setBackground(RenderingUtil.getBackground(myTree));

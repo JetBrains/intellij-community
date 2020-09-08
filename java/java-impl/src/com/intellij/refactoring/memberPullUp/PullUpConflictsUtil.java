@@ -256,14 +256,18 @@ public final class PullUpConflictsUtil {
         if (!modifierList.hasModifierProperty(PsiModifier.PRIVATE)) {
           for (PsiClass subClass : ClassInheritorsSearch.search(superClass)) {
             if (method.getContainingClass() != subClass) {
-              MethodSignature signature = ((PsiMethod) member).getSignature(TypeConversionUtil.getSuperClassSubstitutor(superClass, subClass, PsiSubstitutor.EMPTY));
+              MethodSignature signature =
+                ((PsiMethod)member).getSignature(TypeConversionUtil.getSuperClassSubstitutor(superClass, subClass, PsiSubstitutor.EMPTY));
               final PsiMethod wouldBeOverriden = MethodSignatureUtil.findMethodBySignature(subClass, signature, false);
-              if (wouldBeOverriden != null && VisibilityUtil.compare(VisibilityUtil.getVisibilityModifier(wouldBeOverriden.getModifierList()),
-                                                                     VisibilityUtil.getVisibilityModifier(modifierList)) > 0) {
-                conflictsList.putValue(wouldBeOverriden, StringUtil.capitalize(JavaRefactoringBundle
-                                                                                 .message("push.up.super.class.signature.conflict",
-                                                                                          RefactoringUIUtil.getDescription(method, true),
-                                                                                          RefactoringUIUtil.getDescription(subClass, true))));
+              if (wouldBeOverriden != null) {
+                String modifier = VisibilityUtil.getVisibilityModifier(wouldBeOverriden.getModifierList());
+                if (VisibilityUtil.compare(modifier, VisibilityUtil.getVisibilityModifier(modifierList)) > 0) {
+                  String message = JavaRefactoringBundle.message("push.up.super.class.signature.conflict",
+                                                                 RefactoringUIUtil.getDescription(method, true),
+                                                                 RefactoringUIUtil.getDescription(subClass, true),
+                                                                 modifier);
+                  conflictsList.putValue(wouldBeOverriden, StringUtil.capitalize(message));
+                }
               }
             }
           }

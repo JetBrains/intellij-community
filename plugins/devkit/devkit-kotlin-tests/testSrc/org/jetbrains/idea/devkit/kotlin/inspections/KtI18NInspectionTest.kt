@@ -4,10 +4,14 @@ package org.jetbrains.idea.devkit.kotlin.inspections
 import com.intellij.codeInspection.i18n.I18nInspection
 import com.intellij.codeInspection.i18n.NlsInfo
 import com.intellij.psi.PsiClassOwner
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.annotations.Nls
 
 class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
+  override fun getProjectDescriptor(): LightProjectDescriptor {
+    return JAVA_8
+  }
 
   fun testFunctionParameters() {
     myFixture.enableInspections(I18nInspection())
@@ -214,10 +218,30 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.configureByText("Foo.kt", """
         fun foo() {
           @org.jetbrains.annotations.NonNls val buffer = StringBuilder()
-          buffer.<error descr="[MISSING_DEPENDENCY_SUPERCLASS] Cannot access 'java.lang.Appendable' which is a supertype of 'java.lang.StringBuilder'. Check your module classpath for missing or conflicting dependencies">append</error>("foo bar")
+          buffer.append("foo bar")
           val other = StringBuilder()
-          other.<error descr="[MISSING_DEPENDENCY_SUPERCLASS] Cannot access 'java.lang.Appendable' which is a supertype of 'java.lang.StringBuilder'. Check your module classpath for missing or conflicting dependencies">append</error>(<warning descr="Hardcoded string literal: \"foo bar\"">"foo bar"</warning>)
+          other.append(<warning descr="Hardcoded string literal: \"foo bar\"">"foo bar"</warning>)
         }
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+  
+  fun testStringBuilder2() {
+    val inspection = I18nInspection()
+    inspection.setIgnoreForAllButNls(true)
+    inspection.setReportUnannotatedReferences(true)
+    myFixture.enableInspections(inspection)
+    myFixture.configureByText("Foo.kt", """
+        import org.jetbrains.annotations.*
+
+        fun foo() {
+          @Nls val buffer = StringBuilder()
+          fill(buffer)
+          consume(buffer.toString())
+        }
+        
+        fun consume(@Nls <warning descr="[UNUSED_PARAMETER] Parameter 's' is never used">s</warning> : String) {}
+        fun fill(<warning descr="[UNUSED_PARAMETER] Parameter 'sb' is never used">sb</warning>: StringBuilder) {}
     """.trimIndent())
     myFixture.testHighlighting()
   }
@@ -226,9 +250,11 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.enableInspections(I18nInspection())
     myFixture.configureByText("Foo.kt", """
         fun debug(@org.jetbrains.annotations.NonNls <warning descr="[UNUSED_PARAMETER] Parameter 'lazyMessage' is never used">lazyMessage</warning>: () -> String) {}
+        fun debug2(@org.jetbrains.annotations.NonNls <warning descr="[UNUSED_PARAMETER] Parameter 'lazyMessage' is never used">lazyMessage</warning>: java.util.function.Supplier<String>) {}
     
         fun test() {
             debug { "foo" }
+            debug2 { "foo" }
         }
     """.trimIndent())
     myFixture.testHighlighting()

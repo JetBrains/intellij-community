@@ -2306,7 +2306,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static @NotNull @NonNls String getQualifiedName(@Nullable @NonNls String packageName, @NotNull @NonNls String className) {
+  public static @NotNull @NlsSafe String getQualifiedName(@Nullable @NonNls String packageName, @NotNull @NonNls String className) {
     if (packageName == null || packageName.isEmpty()) {
       return className;
     }

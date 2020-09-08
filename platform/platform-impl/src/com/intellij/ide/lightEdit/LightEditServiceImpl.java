@@ -124,8 +124,8 @@ public final class LightEditServiceImpl implements LightEditService,
   }
 
   @Override
-  public boolean openFile(@NotNull VirtualFile file) {
-    if (LightEditUtil.isLightEditEnabled() && myFilePatterns.match(file)) {
+  public boolean openFile(@NotNull VirtualFile file, boolean force) {
+    if (force || LightEditUtil.isLightEditEnabled() && myFilePatterns.match(file)) {
       doWhenActionManagerInitialized(() -> {
         doOpenFile(file);
       });
