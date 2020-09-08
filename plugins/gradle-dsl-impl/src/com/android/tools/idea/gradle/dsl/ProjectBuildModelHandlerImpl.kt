@@ -36,10 +36,6 @@ import kotlin.concurrent.withLock
  * [modify] if you require more fine grained control please use [ProjectBuildModel.get].
  */
 class ProjectBuildModelHandlerImpl(val project: Project) : ProjectBuildModelHandler {
-  /**
-   * The time stamp of the last sync before the [ProjectBuildModel] was created.
-   */
-  private var modelSyncTime : Long = -1L
   private var projectBuildModel: ProjectBuildModel? = null
   private val lock: Lock = ReentrantLock()
 
@@ -78,15 +74,17 @@ class ProjectBuildModelHandlerImpl(val project: Project) : ProjectBuildModelHand
    * Returns the [ProjectBuildModel], refreshes it if it falls out of date.
    */
   private fun projectModel(): ProjectBuildModel {
-    return ProjectBuildModel.get(project);
+    val checkers = UpToDateChecker.EXTENSION_POINT_NAME.extensionList
+    return projectBuildModel?.takeUnless { checkers.any {! it.checkUpToDate(project) } }
+           ?: ProjectBuildModel.get(project).also { checkers.forEach{it.setUpToDate(project)} }
   }
 
   /**
    * DO NOT use outside of tests.
    */
   @VisibleForTesting
-  constructor(project: Project, projectModel: ProjectBuildModel, lastSync: Long = -1L) : this(project) {
+  constructor(project: Project, projectModel: ProjectBuildModel) : this(project) {
     projectBuildModel = projectModel
-    modelSyncTime = lastSync
+    UpToDateChecker.EXTENSION_POINT_NAME.extensionList.forEach{it.setUpToDate(project)}
   }
 }

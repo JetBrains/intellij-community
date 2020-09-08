@@ -17,6 +17,7 @@
 
   <extensionPoints>
     <extensionPoint name="parserFactory" interface="com.android.tools.idea.gradle.dsl.parser.GradleDslConverterFactory" dynamic="true"/>
+    <extensionPoint name="upToDateChecker" interface="com.android.tools.idea.gradle.dsl.UpToDateChecker" dynamic="true"/>
   </extensionPoints>
 
 
