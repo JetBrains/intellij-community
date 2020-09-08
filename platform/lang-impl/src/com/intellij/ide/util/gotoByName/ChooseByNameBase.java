@@ -39,6 +39,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlBuilder;
@@ -73,6 +74,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,7 +99,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   protected final ChooseByNameModel myModel;
   @NotNull
   protected ChooseByNameItemProvider myProvider;
-  final String myInitialText;
+  final @NlsSafe String myInitialText;
   private boolean mySearchInAnyPlace;
 
   Component myPreviouslyFocusedComponent;
@@ -116,8 +118,8 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   JScrollPane myListScrollPane; // Located in the layered pane
   private final SmartPointerListModel<Object> myListModel = new SmartPointerListModel<>();
   protected final JList<Object> myList = new JBList<>(myListModel);
-  private final List<Pair<String, Integer>> myHistory = new ArrayList<>();
-  private final List<Pair<String, Integer>> myFuture = new ArrayList<>();
+  private final List<Pair<@NlsSafe String, Integer>> myHistory = new ArrayList<>();
+  private final List<Pair<@NlsSafe String, Integer>> myFuture = new ArrayList<>();
 
   protected ChooseByNamePopupComponent.Callback myActionListener;
 
@@ -142,7 +144,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
 
   private boolean myClosedByShiftEnter;
   final int myInitialIndex;
-  private String myFindUsagesTitle;
+  @Nls private String myFindUsagesTitle;
   private ShortcutSet myCheckBoxShortcut;
   private final boolean myInitIsDone;
   private boolean myAlwaysHasMore;
@@ -237,7 +239,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     myToolArea = toolArea;
   }
 
-  public void setFindUsagesTitle(@Nullable String findUsagesTitle) {
+  public void setFindUsagesTitle(@Nullable @Nls String findUsagesTitle) {
     myFindUsagesTitle = findUsagesTitle;
   }
 
@@ -675,7 +677,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
            SwingUtilities.isDescendingFrom(component, toolWindowComponent);
   }
 
-  private void addCard(@NotNull JComponent comp, @NotNull String cardId) {
+  private void addCard(@NotNull JComponent comp, @NotNull @NonNls String cardId) {
     JPanel wrapper = new JPanel(new BorderLayout());
     wrapper.add(comp, BorderLayout.EAST);
     myCardContainer.add(wrapper, cardId);
@@ -761,6 +763,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   }
 
   @NotNull
+  @NlsSafe
   public String getTrimmedText() {
     return StringUtil.trimLeading(StringUtil.notNullize(myTextField.getText()));
   }
@@ -1479,7 +1482,8 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   }
 
   @NotNull
-  private static String patternToLowerCase(@NotNull String pattern) {
+  @NlsSafe
+  private static String patternToLowerCase(@NotNull @NlsSafe String pattern) {
     return StringUtil.toLowerCase(pattern);
   }
 
@@ -1539,10 +1543,10 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       final String text = getTrimmedText();
       final String prefixPattern = myFindUsagesTitle + " '" + text + "'";
       presentation.setCodeUsagesString(prefixPattern);
-      presentation.setUsagesInGeneratedCodeString(prefixPattern + " in generated code");
+      presentation.setUsagesInGeneratedCodeString(LangBundle.message("list.item.in.generated.code", prefixPattern));
       presentation.setTabName(prefixPattern);
       presentation.setTabText(prefixPattern);
-      presentation.setTargetsNodeText("Unsorted " + StringUtil.toLowerCase(patternToLowerCase(prefixPattern)));
+      presentation.setTargetsNodeText(LangBundle.message("list.item.unsorted", StringUtil.toLowerCase(patternToLowerCase(prefixPattern))));
       PsiElement[] elements = getElements();
       final List<PsiElement> targets = new ArrayList<>();
       final Set<Usage> usages = new LinkedHashSet<>();

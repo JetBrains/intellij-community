@@ -27,6 +27,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -45,10 +46,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
@@ -514,7 +512,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     private final boolean myShowNonPopupGroups;
     private final List<List<ActionGroup>> myPaths = new ArrayList<>();
 
-    @Nullable private String myBestGroupName;
+    @Nullable @ActionText private String myBestGroupName;
     private boolean myBestNameComputed;
 
     public GroupMapping() {
@@ -526,7 +524,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     }
 
     @NotNull
-    public static GroupMapping createFromText(String text) {
+    public static GroupMapping createFromText(@ActionText String text) {
       GroupMapping mapping = new GroupMapping();
       mapping.addPath(singletonList(new DefaultActionGroup(text, false)));
       return mapping;
@@ -542,12 +540,14 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       return Comparing.compare(getFirstGroupName(), o.getFirstGroupName());
     }
 
+    @ActionText
     @Nullable
     public String getBestGroupName() {
       if (myBestNameComputed) return myBestGroupName;
       return getFirstGroupName();
     }
 
+    @Nls
     @Nullable
     private String getFirstGroupName() {
       List<ActionGroup> path = ContainerUtil.getFirstItem(myPaths);
@@ -572,6 +572,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       return ContainerUtil.map(myPaths, path -> getPathName(path));
     }
 
+    @Nls
     @Nullable
     private String getPathName(@NotNull List<? extends ActionGroup> path) {
       String name = "";
@@ -581,6 +582,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       return StringUtil.nullize(name);
     }
 
+    @Nls
     @Nullable
     private String getActualPathName(@NotNull List<? extends ActionGroup> path, @NotNull DataContext context) {
       String name = "";
@@ -592,8 +594,9 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       return StringUtil.nullize(name);
     }
 
+    @Nls
     @NotNull
-    private String appendGroupName(@NotNull String prefix, @NotNull ActionGroup group, @NotNull Presentation presentation) {
+    private String appendGroupName(@NotNull @Nls String prefix, @NotNull ActionGroup group, @NotNull Presentation presentation) {
       if (group.isPopup() || myShowNonPopupGroups) {
         String groupName = getActionGroupName(presentation);
         if (!StringUtil.isEmptyOrSpaces(groupName)) {
@@ -605,6 +608,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       return prefix;
     }
 
+    @ActionText
     @Nullable
     private static String getActionGroupName(@NotNull Presentation presentation) {
       String text = presentation.getText();
@@ -699,6 +703,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       return myPresentation != null;
     }
 
+    @ActionText
     @Nullable
     public String getGroupName() {
       if (myGroupMapping == null) return null;
@@ -731,7 +736,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   @DirtyUI
   public static class GotoActionListCellRenderer extends DefaultListCellRenderer {
     public static final Border TOGGLE_BUTTON_BORDER = JBUI.Borders.empty(0, 2);
-    private final Function<? super OptionDescription, String> myGroupNamer;
+    private final Function<? super OptionDescription, @ActionText String> myGroupNamer;
     private final boolean myUseListFont;
 
     public GotoActionListCellRenderer(Function<? super OptionDescription, String> groupNamer) {
@@ -859,6 +864,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       return panel;
     }
 
+    @ActionText
     @NotNull
     private static String calcHit(@NotNull OptionDescription value) {
       if (value instanceof RegistryTextOptionDescriptor) {
@@ -870,7 +876,8 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
         .replace("  ", " "); // avoid extra spaces from mnemonics and xml conversion
     }
 
-    private static String cutName(String name, String shortcutText, JList list, JPanel panel, SimpleColoredComponent nameComponent) {
+    @ActionText
+    private static String cutName(@ActionText String name, @NlsSafe String shortcutText, JList list, JPanel panel, SimpleColoredComponent nameComponent) {
       if (!list.isShowing() || list.getWidth() <= 0) {
         return StringUtil.first(name, 60, true); // fallback to previous behaviour
       }
@@ -928,16 +935,17 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       panel.setBorder(TOGGLE_BUTTON_BORDER);
     }
 
+    @ActionText
     @NotNull
-    private static String getName(@Nullable String text, @Nullable String groupName, boolean toggle) {
+    private static String getName(@Nullable @ActionText String text, @Nullable @ActionText String groupName, boolean toggle) {
       return toggle && StringUtil.isNotEmpty(groupName)
              ? StringUtil.isNotEmpty(text) ? groupName + ": " + text
                                            : groupName : StringUtil.notNullize(text);
     }
 
     private static void appendWithColoredMatches(SimpleColoredComponent nameComponent,
-                                                 @NotNull String name,
-                                                 @NotNull String pattern,
+                                                 @NotNull @ActionText String name,
+                                                 @NotNull @NlsSafe String pattern,
                                                  Color fg,
                                                  boolean selected) {
       SimpleTextAttributes plain = new SimpleTextAttributes(STYLE_PLAIN, fg);
