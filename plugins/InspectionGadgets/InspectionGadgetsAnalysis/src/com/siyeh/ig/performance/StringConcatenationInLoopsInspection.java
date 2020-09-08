@@ -155,26 +155,37 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
 
       if (parent instanceof PsiAssignmentExpression) {
         expression = (PsiExpression)parent;
-        PsiVariable variable = getAppendedVariable(expression);
+
+        PsiReferenceExpression lhs = getAppendedExpression(expression);
+        if (lhs == null) return false;
+        PsiVariable variable = ObjectUtils.tryCast(lhs.resolve(), PsiVariable.class);
 
         if (variable != null) {
           PsiLoopStatement commonLoop = getOutermostCommonLoop(expression, variable);
           return commonLoop != null &&
                  !ControlFlowUtils.isExecutedOnceInLoop(PsiTreeUtil.getParentOfType(expression, PsiStatement.class), commonLoop) &&
-                 !isUsedCompletely(variable, commonLoop);
+                 !isUsedCompletely(variable, commonLoop) && checkQualifier(lhs, commonLoop);
         }
       }
       return false;
     }
 
+    private static boolean checkQualifier(PsiReferenceExpression lhs, PsiLoopStatement commonLoop) {
+      while (true) {
+        PsiExpression qualifierExpression = PsiUtil.skipParenthesizedExprDown(lhs.getQualifierExpression());
+        if (qualifierExpression == null || qualifierExpression instanceof PsiThisExpression) return true;
+        PsiReferenceExpression ref = ObjectUtils.tryCast(qualifierExpression, PsiReferenceExpression.class);
+        if (ref == null) return false;
+        PsiVariable varRef = ObjectUtils.tryCast(ref.resolve(), PsiVariable.class);
+        if (varRef == null) return false;
+        if (PsiTreeUtil.isAncestor(commonLoop, varRef, true) || VariableAccessUtils.variableIsAssigned(varRef, commonLoop)) return false;
+        lhs = ref;
+      }
+    }
+
     private static boolean isUsedCompletely(PsiVariable variable, PsiLoopStatement loop) {
-      return ReferencesSearch.search(variable, new LocalSearchScope(loop)).anyMatch(ref -> {
-        PsiExpression expression = ObjectUtils.tryCast(ref.getElement(), PsiExpression.class);
-        if (expression == null) return false;
-        PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-        while (parent instanceof PsiTypeCastExpression || parent instanceof PsiConditionalExpression) {
-          parent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
-        }
+      return VariableAccessUtils.getVariableReferences(variable, loop).stream().anyMatch(expression -> {
+        PsiElement parent = ExpressionUtils.getPassThroughParent(expression);
         if (parent instanceof PsiExpressionList ||
             parent instanceof PsiAssignmentExpression &&
             PsiTreeUtil.isAncestor(((PsiAssignmentExpression)parent).getRExpression(), expression, false)) {
@@ -268,19 +279,21 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
   @Contract("null -> null")
   @Nullable
   private static PsiVariable getAppendedVariable(PsiExpression expression) {
+    PsiReferenceExpression lhs = getAppendedExpression(expression);
+    if (lhs == null) return null;
+    return ObjectUtils.tryCast(lhs.resolve(), PsiVariable.class);
+  }
+
+  @Contract("null -> null")
+  @Nullable
+  private static PsiReferenceExpression getAppendedExpression(PsiExpression expression) {
     PsiElement parent = expression;
     while (parent instanceof PsiParenthesizedExpression || parent instanceof PsiPolyadicExpression) {
       parent = parent.getParent();
     }
-    if (!(parent instanceof PsiAssignmentExpression)) {
-      return null;
-    }
-    PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)parent).getLExpression());
-    if (!(lhs instanceof PsiReferenceExpression)) {
-      return null;
-    }
-    final PsiElement element = ((PsiReferenceExpression)lhs).resolve();
-    return element instanceof PsiVariable ? (PsiVariable)element : null;
+    if (!(parent instanceof PsiAssignmentExpression)) return null;
+    return ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)parent).getLExpression()),
+                               PsiReferenceExpression.class);
   }
 
   @Override
