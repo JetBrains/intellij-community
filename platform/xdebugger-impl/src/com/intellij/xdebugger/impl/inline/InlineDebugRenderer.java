@@ -21,6 +21,8 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.paint.EffectPainter;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.xdebugger.impl.frame.XWatchesView;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,11 +33,22 @@ import java.util.function.Consumer;
 
 final class InlineDebugRenderer implements EditorCustomElementRenderer {
   private final SimpleColoredText myText;
+  private final boolean myCustomNode;
+  private XValueNodeImpl myValueNode;
+  private XWatchesView myView;
   private @Nullable final Consumer<Inlay> myOnClick;
-  private boolean hovered = false;
+  private boolean isHovered = false;
+  private int myRemoveOffset = Integer.MAX_VALUE;
+  private boolean isRemoved = false;
 
-  InlineDebugRenderer(SimpleColoredText text, @Nullable Consumer<Inlay> onClick) {
+  InlineDebugRenderer(SimpleColoredText text,
+                      XValueNodeImpl valueNode,
+                      XWatchesView view,
+                      @Nullable Consumer<Inlay> onClick) {
     myText = text;
+    myCustomNode = valueNode instanceof InlineWatchNodeImpl;
+    myValueNode = valueNode;
+    myView = view;
     myOnClick = onClick;
   }
 
@@ -49,16 +62,20 @@ final class InlineDebugRenderer implements EditorCustomElementRenderer {
   }
 
 
-  public void onClick(Inlay inlay) {
-    if (myOnClick != null) {
+  public void onClick(Inlay inlay, @NotNull EditorMouseEvent event) {
+    if (myCustomNode && event.getMouseEvent().getX() >= myRemoveOffset) {
+      myView.removeWatches(Collections.singletonList(myValueNode));
+      isRemoved = true;
+      inlay.update();
+    } else if (myOnClick != null) {
       myOnClick.accept(inlay);
     }
   }
 
 
   public void onMouseExit(Inlay inlay, @NotNull EditorMouseEvent event) {
-    boolean oldState = hovered;
-    hovered = false;
+    boolean oldState = isHovered;
+    isHovered = false;
     ((EditorEx)event.getEditor()).setCustomCursor(InlineDebugRenderer.class, null);
     if (oldState) {
       inlay.update();
@@ -66,8 +83,8 @@ final class InlineDebugRenderer implements EditorCustomElementRenderer {
   }
 
   public void onMouseMove(Inlay inlay, @NotNull EditorMouseEvent event) {
-    boolean oldState = hovered;
-    hovered = true;
+    boolean oldState = isHovered;
+    isHovered = true;
     ((EditorEx)event.getEditor()).setCustomCursor(InlineDebugRenderer.class, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     if (!oldState) {
       inlay.update();
@@ -81,10 +98,15 @@ final class InlineDebugRenderer implements EditorCustomElementRenderer {
 
   @Override
   public int calcWidthInPixels(@NotNull Inlay inlay) {
+    if (isRemoved) return 1;
+
     FontInfo fontInfo = getFontInfo(inlay.getEditor());
     int width = fontInfo.fontMetrics().stringWidth(myText.toString() + " ");
-    if (hovered) {
-      width += AllIcons.General.ArrowDown.getIconWidth();
+    if (isHovered) {
+      width += myCustomNode ? AllIcons.Actions.Close.getIconWidth() : AllIcons.General.ArrowDown.getIconWidth();
+    }
+    if (myCustomNode) {
+      width += AllIcons.Debugger.Watch.getIconWidth();
     }
     return width;
   }
@@ -93,6 +115,7 @@ final class InlineDebugRenderer implements EditorCustomElementRenderer {
 
   @Override
   public void paint(@NotNull Inlay inlay, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes) {
+    if (isRemoved) return;
     EditorImpl editor = (EditorImpl)inlay.getEditor();
     TextAttributes inlineAttributes = getAttributes(editor);
     if (inlineAttributes == null || inlineAttributes.getForegroundColor() == null) return;
@@ -114,17 +137,26 @@ final class InlineDebugRenderer implements EditorCustomElementRenderer {
     }
 
     int curX = r.x + (2 * margin);
+    if (myCustomNode) {
+      AllIcons.Debugger.Watch.paintIcon(inlay.getEditor().getComponent(), g, curX + metrics.charWidth(' '), r.y + gap);
+      curX += AllIcons.Debugger.Watch.getIconWidth();
+    }
     for (int i = 0; i < myText.getTexts().size(); i++) {
       String curText = myText.getTexts().get(i);
       SimpleTextAttributes attr = myText.getAttributes().get(i);
 
-      Color fgColor = hovered ? inlineAttributes.getForegroundColor() : attr.getFgColor();
+      Color fgColor = isHovered ? inlineAttributes.getForegroundColor() : attr.getFgColor();
       g.setColor(fgColor);
       g.drawString(curText, curX, r.y + metrics.getAscent());
       curX += fontInfo.fontMetrics().stringWidth(curText);
     }
-    if (hovered) {
-      AllIcons.General.ArrowDown.paintIcon(inlay.getEditor().getComponent(), g, curX, r.y);
+    if (isHovered) {
+      if (myCustomNode) {
+        AllIcons.Actions.Close.paintIcon(inlay.getEditor().getComponent(), g, curX, r.y);
+        myRemoveOffset = curX;
+      } else {
+        AllIcons.General.ArrowDown.paintIcon(inlay.getEditor().getComponent(), g, curX, r.y);
+      }
     }
 
     paintEffects(g, r, editor, inlineAttributes, fontInfo, metrics);
@@ -170,7 +202,7 @@ final class InlineDebugRenderer implements EditorCustomElementRenderer {
   private TextAttributes getAttributes(Editor editor) {
     TextAttributes attributes = editor.getColorsScheme().getAttributes(DebuggerColors.INLINED_VALUES);
 
-    if (hovered) {
+    if (isHovered) {
       TextAttributes attr = new TextAttributes();
       attr.copyFrom(attributes);
       attr.setForegroundColor(JBUI.CurrentTheme.Link.linkColor());

@@ -5,6 +5,7 @@ import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDNativeTarget;
 import com.intellij.openapi.CompositeDisposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -176,4 +177,10 @@ public class XInlineWatchesViewImpl extends XWatchesViewImpl implements XInlineW
     DnDManager.getInstance().unregisterTarget(this, getTree());
     super.dispose();
   }
+
+  public void showInplaceEditor(XSourcePosition position, Editor mainEditor) {
+    InlineWatchInplaceEditor inplaceEditor = new InlineWatchInplaceEditor(position, getTree(), mainEditor, this);
+    inplaceEditor.show();
+  }
+
 }

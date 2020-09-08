@@ -17,7 +17,7 @@ import java.util.Arrays;
 import java.util.List;
 
 class InlineWatchesRootNode extends WatchesRootNode {
-  private final XInlineWatchesView myInlineWatchesView;
+  private final XInlineWatchesViewImpl myInlineWatchesView;
   private final XValueGroupNodeImpl myInlinesRootNode;
   private final InlinesGroup myInlinesGroup;
 
@@ -153,5 +153,14 @@ class InlineWatchesRootNode extends WatchesRootNode {
   public void removeAllChildren() {
     getInlineWatchChildren().clear();
     fireNodeStructureChanged();
+  }
+
+  @Override
+  public void editWatch(@Nullable WatchNodeImpl node) {
+    if (node instanceof InlineWatchNodeImpl) {
+      new WatchInplaceEditor(this, myInlineWatchesView, node, node).show();
+    } else {
+      super.editWatch(node);
+    }
   }
 }

@@ -2,7 +2,6 @@
 package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
 import com.intellij.xdebugger.impl.actions.XDebuggerActionBase;
@@ -18,12 +17,6 @@ final class AddInlineWatchAction extends XDebuggerActionBase {
   @Override
   protected DebuggerActionHandler getHandler(@NotNull DebuggerSupport debuggerSupport) {
     return debuggerSupport.getAddToInlineWatchesActionHandler();
-  }
-
-  @Override
-  public void update(@NotNull AnActionEvent event) {
-    Presentation presentation = event.getPresentation();
-    presentation.setEnabledAndVisible(true);
   }
 
   @Override

@@ -26,22 +26,7 @@ import java.util.concurrent.TimeoutException;
 public class XAddToInlineWatchesFromEditorActionHandler extends XDebuggerActionHandler {
   @Override
   protected boolean isEnabled(@NotNull XDebugSession session, DataContext dataContext) {
-    Promise<String> textPromise = getTextToEvaluate(dataContext, session);
-    // in the case of async expression evaluation just enable the action
-    if (textPromise.getState() == Promise.State.PENDING) {
-      return true;
-    }
-    // or disable on rejected
-    else if (textPromise.getState() == Promise.State.REJECTED) {
-      return false;
-    }
-    // else the promise is already fulfilled, get it's value
-    try {
-      return textPromise.blockingGet(0) != null;
-    }
-    catch (TimeoutException | ExecutionException e) {
-      return false;
-    }
+    return true;
   }
 
   @NotNull
@@ -66,19 +51,25 @@ public class XAddToInlineWatchesFromEditorActionHandler extends XDebuggerActionH
   protected void perform(@NotNull XDebugSession session, DataContext dataContext) {
     getTextToEvaluate(dataContext, session)
       .onSuccess(text -> {
-        if (text == null) return;
         UIUtil.invokeLaterIfNeeded(() -> {
           XDebugSessionTab tab = ((XDebugSessionImpl)session).getSessionTab();
           if (tab != null) {
+            final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
             XInlineWatchesViewImpl watchesView = (XInlineWatchesViewImpl)tab.getWatchesView();
             Set<Integer> processedLines = new HashSet<>();
             for (XSourcePosition position : XDebuggerUtilImpl.getAllCaretsPositions(session.getProject(), dataContext)) {
               if (processedLines.add(position.getLine())) {
-                watchesView.addInlineWatchExpression(XExpressionImpl.fromText(text), -1, position, true);
+                if (text != null) {
+                  watchesView.addInlineWatchExpression(XExpressionImpl.fromText(text), -1, position, true);
+                } else {
+                  watchesView.showInplaceEditor(position, editor);
+                }
               }
             }
           }
         });
-      });
+      }).onError(e -> {
+
+    });
   }
 }

@@ -52,7 +52,7 @@ public class DebuggerInlayListener implements EditorMouseMotionListener, EditorM
   public void mouseClicked(@NotNull EditorMouseEvent event) {
     Inlay inlay = event.getInlay();
     if (inlay != null && inlay.getRenderer() instanceof InlineDebugRenderer) {
-      ((InlineDebugRenderer)inlay.getRenderer()).onClick(inlay);
+      ((InlineDebugRenderer)inlay.getRenderer()).onClick(inlay, event);
     }
   }
 

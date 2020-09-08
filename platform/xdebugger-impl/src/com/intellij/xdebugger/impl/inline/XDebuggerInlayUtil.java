@@ -31,6 +31,8 @@ import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEditorLinePainter;
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
+import com.intellij.xdebugger.impl.frame.XWatchesView;
+import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.NotNull;
@@ -87,8 +89,17 @@ public final class XDebuggerInlayUtil {
             XDebuggerTreeInlayPopup.showTreePopup(creator, descriptor, inlay, e, point, project, () -> {
             });
           };
+
+          boolean customNode = valueNode instanceof InlineWatchNodeImpl;
+          XWatchesView view = null;
+          if (customNode) {
+            XDebugSessionTab tab = ((XDebugSessionImpl)session).getSessionTab();
+            if (tab != null) {
+               view = tab.getWatchesView();
+            }
+          }
           //e.getInlayModel().getInlineElementsInRange(insertOffset, insertOffset, InlineDebugHintRenderer.class).forEach(Disposer::dispose);
-          e.getInlayModel().addAfterLineEndElement(offset, true, new InlineDebugRenderer(variablePresentation, onClick));
+          e.getInlayModel().addAfterLineEndElement(offset, true, new InlineDebugRenderer(variablePresentation, valueNode, view, onClick));
         }
       });
       return true;
