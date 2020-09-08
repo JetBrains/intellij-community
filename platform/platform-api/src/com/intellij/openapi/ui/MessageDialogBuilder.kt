@@ -124,8 +124,7 @@ sealed class MessageDialogBuilder<T : MessageDialogBuilder<T>>(protected val tit
   }
 
   class YesNoCancel internal constructor(title: String, message: String) : MessageDialogBuilder<YesNoCancel>(title, message) {
-    @NlsContexts.Button
-    private var cancelText: String? = null
+    @NlsContexts.Button private var cancelText: String? = null
 
     fun cancelText(cancelText: @NlsContexts.Button String): YesNoCancel {
       this.cancelText = cancelText

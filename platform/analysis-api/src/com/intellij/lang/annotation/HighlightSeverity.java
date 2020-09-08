@@ -8,14 +8,15 @@ import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 /**
  * Defines a highlighting severity level for an annotation.
 
  * @see Annotation
  */
 public final class HighlightSeverity implements Comparable<HighlightSeverity> {
-  @NlsSafe
-  public final String myName;
+  public final @NlsSafe String myName;
   public final int myVal;
 
   /**
@@ -77,9 +78,7 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
     return value;
   }
 
-  @NotNull
-  @NlsSafe
-  public String getName() {
+  public @NlsSafe @NotNull String getName() {
     return myName;
   }
 
@@ -94,25 +93,21 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
   }
 
   @Override
-  public boolean equals(final Object o) {
+  public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    final HighlightSeverity that = (HighlightSeverity)o;
-
-    if (myVal != that.myVal) return false;
-    return myName.equals(that.myName);
+    HighlightSeverity that = (HighlightSeverity)o;
+    return myVal == that.myVal && myName.equals(that.myName);
   }
 
   @Override
   public int hashCode() {
-    int result = myName != null ? myName.hashCode() : 0;
-    return 31 * result + myVal;
+    return 31 * Objects.hashCode(myName) + myVal;
   }
 
   @Override
-  @NlsSafe
-  public String toString() {
+  public @NlsSafe String toString() {
     return myName;
   }
 }
