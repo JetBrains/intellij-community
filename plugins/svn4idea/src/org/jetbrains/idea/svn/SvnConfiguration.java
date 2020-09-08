@@ -356,7 +356,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
     return myInteractiveManager;
   }
 
-  public void getServerFilesManagers(final Ref<SvnServerFileManager> systemManager, final Ref<SvnServerFileManager> userManager) {
+  public void getServerFilesManagers(final Ref<SvnServerFileManagerImpl> systemManager, final Ref<SvnServerFileManagerImpl> userManager) {
     systemManager.set(new SvnServerFileManagerImpl(new IdeaSVNConfigFile(SYSTEM_CONFIGURATION_PATH.getValue().resolve(SERVERS_FILE_NAME))));
     userManager.set(new SvnServerFileManagerImpl(getServersFile()));
   }

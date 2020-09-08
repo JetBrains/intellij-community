@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import org.jetbrains.idea.svn.config.DefaultProxyGroup;
@@ -6,7 +6,7 @@ import org.jetbrains.idea.svn.config.ProxyGroup;
 
 import java.util.*;
 
-public class SvnServerFileManagerImpl implements SvnServerFileManager {
+public class SvnServerFileManagerImpl {
   private final DefaultProxyGroup myDefaultGroup;
   private final Map<String, ProxyGroup> myGroups;
   private final IdeaSVNConfigFile myFile;
@@ -20,12 +20,10 @@ public class SvnServerFileManagerImpl implements SvnServerFileManager {
     myDefaultGroup = file.getDefaultGroup();
   }
 
-  @Override
   public DefaultProxyGroup getDefaultGroup() {
     return (DefaultProxyGroup) myDefaultGroup.copy();
   }
 
-  @Override
   public Map<String, ProxyGroup> getGroups() {
     // return deep copy
     final Map<String, ProxyGroup> result = new HashMap<>(myGroups);
@@ -35,7 +33,6 @@ public class SvnServerFileManagerImpl implements SvnServerFileManager {
     return result;
   }
 
-  @Override
   public void updateUserServerFile(final Collection<ProxyGroup> newUserGroups) {
     final Map<String, ProxyGroup> oldGroups = getGroups();
 
@@ -54,7 +51,6 @@ public class SvnServerFileManagerImpl implements SvnServerFileManager {
     myFile.save();
   }
 
-  @Override
   public void updateFromFile() {
     myFile.updateGroups();
   }

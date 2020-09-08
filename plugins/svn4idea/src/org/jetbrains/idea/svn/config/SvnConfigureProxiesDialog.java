@@ -12,7 +12,7 @@ import com.intellij.ui.components.JBTabbedPane;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnConfiguration;
-import org.jetbrains.idea.svn.SvnServerFileManager;
+import org.jetbrains.idea.svn.SvnServerFileManagerImpl;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Revision;
@@ -41,8 +41,8 @@ public class SvnConfigureProxiesDialog extends DialogWrapper implements Validati
 
     setTitle(message("dialog.title.edit.http.proxies.settings"));
 
-    final Ref<SvnServerFileManager> systemManager = new Ref<>();
-    final Ref<SvnServerFileManager> userManager = new Ref<>();
+    final Ref<SvnServerFileManagerImpl> systemManager = new Ref<>();
+    final Ref<SvnServerFileManagerImpl> userManager = new Ref<>();
 
     SvnConfiguration.getInstance(project).getServerFilesManagers(systemManager, userManager);
 
