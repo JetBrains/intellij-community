@@ -86,6 +86,31 @@ class GitLogIndexTest : GitSingleRepoTest() {
     TestCase.assertEquals(expected, actual)
   }
 
+  fun `test text filter with multiple patterns`() {
+    val keyword1 = "keyword1"
+    val keyword2 = "keyword2"
+    val expected = mutableSetOf<Int>()
+
+    val file = "file.txt"
+    touch(file, "content")
+    repo.addCommit("some message without any keywords")
+
+    append(file, "more content")
+    expected.add(getCommitIndex(repo.addCommit("message with $keyword1")))
+
+    append(file, "some more content")
+    expected.add(getCommitIndex(repo.addCommit("message with $keyword2")))
+
+    append(file, "even more content")
+    repo.addCommit("some other message")
+
+    indexAll()
+
+    val actual = dataGetter.filter(listOf(VcsLogFilterObject.fromPatternsList(listOf(keyword1, keyword2))))
+
+    TestCase.assertEquals(expected.sorted(), actual.sorted())
+  }
+
   fun `test author filter`() {
     val file = "file.txt"
     touch(file, "content")
@@ -100,6 +125,36 @@ class GitLogIndexTest : GitSingleRepoTest() {
     indexAll()
 
     val actual = dataGetter.filter(listOf(VcsLogFilterObject.fromUser(author, setOf(author, defaultUser))))
+
+    TestCase.assertEquals(expected, actual)
+  }
+
+  fun `test text and author filter`() {
+    val author = VcsUserImpl("Name", "name@server.com")
+    val keyword = "keyword"
+    val expected = mutableSetOf<Int>()
+
+    val file = "file.txt"
+    touch(file, "content")
+    repo.addCommit("some message")
+
+    setupUsername(project, author.name, author.email)
+
+    append(file, "content 2")
+    expected.add(getCommitIndex(repo.addCommit("some message with $keyword")))
+
+    append(file, "content 3")
+    repo.addCommit("some other message")
+
+    setupDefaultUsername(project)
+
+    append(file, "even more content")
+    repo.addCommit("some other message with $keyword")
+
+    indexAll()
+
+    val actual = dataGetter.filter(listOf(VcsLogFilterObject.fromUser(author, setOf(author, defaultUser)),
+                                          VcsLogFilterObject.fromPattern(keyword)))
 
     TestCase.assertEquals(expected, actual)
   }
