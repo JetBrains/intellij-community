@@ -24,6 +24,8 @@ import static com.intellij.openapi.ui.Messages.showErrorDialog;
 import static com.intellij.openapi.ui.Messages.showInfoMessage;
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static org.jetbrains.idea.svn.SvnBundle.message;
+import static org.jetbrains.idea.svn.SvnUtil.SYSTEM_CONFIGURATION_PATH;
+import static org.jetbrains.idea.svn.config.SvnIniFile.SERVERS_FILE_NAME;
 
 public class SvnConfigureProxiesDialog extends DialogWrapper implements ValidationListener, TestConnectionPerformer {
   private final SvnConfigureProxiesComponent mySystemTab;
@@ -40,14 +42,12 @@ public class SvnConfigureProxiesDialog extends DialogWrapper implements Validati
 
     setTitle(message("dialog.title.edit.http.proxies.settings"));
 
-    final Ref<ServersFileManager> systemManager = new Ref<>();
-    final Ref<ServersFileManager> userManager = new Ref<>();
-
-    SvnConfiguration.getInstance(project).getServerFilesManagers(systemManager, userManager);
+    var systemManager = new ServersFileManager(new SvnIniFile(SYSTEM_CONFIGURATION_PATH.getValue().resolve(SERVERS_FILE_NAME)));
+    var userManager = new ServersFileManager(SvnConfiguration.getInstance(project).getServersFile());
 
     myValidator = new GroupsValidator(this);
-    mySystemTab = new SvnConfigureProxiesComponent(systemManager.get(), myValidator, this);
-    myUserTab = new SvnConfigureProxiesComponent(userManager.get(), myValidator, this);
+    mySystemTab = new SvnConfigureProxiesComponent(systemManager, myValidator, this);
+    myUserTab = new SvnConfigureProxiesComponent(userManager, myValidator, this);
 
     init();
 

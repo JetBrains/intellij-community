@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.VcsAnnotationRefresher;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +14,6 @@ import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.auth.*;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.config.ServersFileKeys;
-import org.jetbrains.idea.svn.config.ServersFileManager;
 import org.jetbrains.idea.svn.config.SvnIniFile;
 import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.jetbrains.idea.svn.update.MergeRootInfo;
@@ -26,7 +24,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-import static org.jetbrains.idea.svn.SvnUtil.SYSTEM_CONFIGURATION_PATH;
 import static org.jetbrains.idea.svn.SvnUtil.USER_CONFIGURATION_PATH;
 import static org.jetbrains.idea.svn.config.SvnIniFile.CONFIG_FILE_NAME;
 import static org.jetbrains.idea.svn.config.SvnIniFile.SERVERS_FILE_NAME;
@@ -81,7 +78,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
   }
 
   @NotNull
-  private SvnIniFile getServersFile() {
+  public SvnIniFile getServersFile() {
     if (myServersFile == null) {
       myServersFile = new SvnIniFile(getConfigurationPath().resolve(SERVERS_FILE_NAME));
     }
@@ -356,11 +353,6 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
       myInteractiveManager.setAuthenticationProvider(myInteractiveProvider);
     }
     return myInteractiveManager;
-  }
-
-  public void getServerFilesManagers(final Ref<ServersFileManager> systemManager, final Ref<ServersFileManager> userManager) {
-    systemManager.set(new ServersFileManager(new SvnIniFile(SYSTEM_CONFIGURATION_PATH.getValue().resolve(SERVERS_FILE_NAME))));
-    userManager.set(new ServersFileManager(getServersFile()));
   }
 
   public boolean isAutoUpdateAfterCommit() {
