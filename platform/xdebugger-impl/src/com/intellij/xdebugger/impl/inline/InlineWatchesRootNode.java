@@ -6,6 +6,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.impl.frame.WatchInplaceEditor;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.*;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +40,7 @@ class InlineWatchesRootNode extends WatchesRootNode {
       }
     };
     for (InlineWatch watchExpression : inlineWathcesExpressions) {
-      myInlinesGroup.getChildren().add(new InlineWatchNodeImpl(myTree, this, watchExpression, stackFrame));
+      myInlinesGroup.getChildren().add(new InlineWatchNodeImpl(myTree, myInlinesRootNode, watchExpression, stackFrame));
     }
   }
 
@@ -47,7 +48,7 @@ class InlineWatchesRootNode extends WatchesRootNode {
                                        InlineWatch watch,
                                        int index,
                                        boolean navigateToWatchNode) {
-    InlineWatchNodeImpl message = new InlineWatchNodeImpl(myTree, this, watch, frame);
+    InlineWatchNodeImpl message = new InlineWatchNodeImpl(myTree, myInlinesRootNode, watch, frame);
     if (index == -1) {
       myInlinesGroup.getChildren().add(message);
       index = myInlinesGroup.getChildren().size() - 1;
@@ -55,7 +56,7 @@ class InlineWatchesRootNode extends WatchesRootNode {
     else {
       myInlinesGroup.getChildren().add(index, message);
     }
-    fireNodeInserted(index);
+    fireInlineNodeInserted(index);
     message.computePresentationIfNeeded();
     TreeUtil.selectNode(myTree, message);
     if (navigateToWatchNode) {
@@ -63,7 +64,7 @@ class InlineWatchesRootNode extends WatchesRootNode {
     }
   }
 
-  public void fireNodeInserted(int index) {
+  public void fireInlineNodeInserted(int index) {
     myTree.getTreeModel().nodesWereInserted(myInlinesRootNode, new int[]{index});
   }
 
@@ -74,7 +75,14 @@ class InlineWatchesRootNode extends WatchesRootNode {
     children.removeAll(inlines);
 
     if (indices.length > 0) {
-      myTree.getTreeModel().nodesWereRemoved(myInlinesRootNode, indices, removed);
+      inlineNodeRemoved(indices, removed);
+    }
+  }
+
+  private void inlineNodeRemoved(int[] indices, TreeNode[] removed) {
+    myTree.getTreeModel().nodesWereRemoved(myInlinesRootNode, indices, removed);
+    for (TreeNode node : removed) {
+      ((InlineWatchNodeImpl)node).nodeRemoved();
     }
   }
 
@@ -141,18 +149,26 @@ class InlineWatchesRootNode extends WatchesRootNode {
 
   @Override
   public int removeChildNode(XDebuggerTreeNode node) {
-    int result = super.removeChildNode(node);
-    if (result == -1) {
-      result = removeChildNode(getInlineWatchChildren(), node);
+    if (node instanceof InlineWatchNodeImpl) {
+      List<? extends InlineWatchNode> children = getInlineWatchChildren();
+      int index = children.indexOf(node);
+      if (index != -1) {
+        children.remove(node);
+        inlineNodeRemoved(new int[]{index}, new TreeNode[]{node});
+      }
+      return index;
     }
-    return result;
+    else {
+      return super.removeChildNode(node);
+    }
   }
 
 
   @Override
   public void removeAllChildren() {
     getInlineWatchChildren().clear();
-    fireNodeStructureChanged();
+    fireNodeStructureChanged(myInlinesRootNode);
+    super.removeAllChildren();
   }
 
   @Override
@@ -162,5 +178,23 @@ class InlineWatchesRootNode extends WatchesRootNode {
     } else {
       super.editWatch(node);
     }
+  }
+
+  public void moveUp(WatchNode node) {
+    int index = getIndex(node) - 1; // -1 because of Inlines root node at the beginning
+    if (index > 0) {
+      ContainerUtil.swapElements(getWatchChildren(), index, index - 1);
+    }
+    fireNodeStructureChanged();
+    getTree().setSelectionRow(index);
+  }
+
+  public void moveDown(WatchNode node) {
+    int index = getIndex(node) - 1; // -1 because of Inlines root node at the beginning
+    if (index < getWatchChildren().size() - 1) {
+      ContainerUtil.swapElements(getWatchChildren(), index, index + 1);
+    }
+    fireNodeStructureChanged();
+    getTree().setSelectionRow(index + 2);
   }
 }

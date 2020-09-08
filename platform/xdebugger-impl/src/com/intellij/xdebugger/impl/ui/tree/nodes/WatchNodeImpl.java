@@ -28,7 +28,7 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
     this(tree, parent, expression, new XWatchValue(expression, tree, stackFrame));
   }
 
-  protected WatchNodeImpl(XDebuggerTree tree, WatchesRootNode parent, XExpression expression, XNamedValue value) {
+  protected WatchNodeImpl(XDebuggerTree tree, XDebuggerTreeNode parent, XExpression expression, XNamedValue value) {
     super(tree, parent, expression.getExpression(), value);
     myExpression = expression;
   }

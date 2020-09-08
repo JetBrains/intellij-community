@@ -132,7 +132,6 @@ public class XInlineWatchesViewImpl extends XWatchesViewImpl implements XInlineW
     List<XDebuggerTreeNode> toRemove = new ArrayList<>();
     List<InlineWatchNode> toRemoveInlines = new ArrayList<>();
     for (XDebuggerTreeNode node : nodes) {
-
       if (node instanceof InlineWatchNode) {
         int index = inlineWatchChildren.indexOf(node);
         if (index != -1) {

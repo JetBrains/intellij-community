@@ -39,7 +39,6 @@ final class InlineDebugRenderer implements EditorCustomElementRenderer {
   private @Nullable final Consumer<Inlay> myOnClick;
   private boolean isHovered = false;
   private int myRemoveOffset = Integer.MAX_VALUE;
-  private boolean isRemoved = false;
 
   InlineDebugRenderer(SimpleColoredText text,
                       XValueNodeImpl valueNode,
@@ -65,7 +64,6 @@ final class InlineDebugRenderer implements EditorCustomElementRenderer {
   public void onClick(Inlay inlay, @NotNull EditorMouseEvent event) {
     if (myCustomNode && event.getMouseEvent().getX() >= myRemoveOffset) {
       myView.removeWatches(Collections.singletonList(myValueNode));
-      isRemoved = true;
       inlay.update();
     } else if (myOnClick != null) {
       myOnClick.accept(inlay);
@@ -98,8 +96,6 @@ final class InlineDebugRenderer implements EditorCustomElementRenderer {
 
   @Override
   public int calcWidthInPixels(@NotNull Inlay inlay) {
-    if (isRemoved) return 1;
-
     FontInfo fontInfo = getFontInfo(inlay.getEditor());
     int width = fontInfo.fontMetrics().stringWidth(myText.toString() + " ");
     if (isHovered) {
@@ -115,7 +111,6 @@ final class InlineDebugRenderer implements EditorCustomElementRenderer {
 
   @Override
   public void paint(@NotNull Inlay inlay, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes) {
-    if (isRemoved) return;
     EditorImpl editor = (EditorImpl)inlay.getEditor();
     TextAttributes inlineAttributes = getAttributes(editor);
     if (inlineAttributes == null || inlineAttributes.getForegroundColor() == null) return;

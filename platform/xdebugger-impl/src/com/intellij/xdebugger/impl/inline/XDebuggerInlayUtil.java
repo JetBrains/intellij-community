@@ -99,7 +99,11 @@ public final class XDebuggerInlayUtil {
             }
           }
           //e.getInlayModel().getInlineElementsInRange(insertOffset, insertOffset, InlineDebugHintRenderer.class).forEach(Disposer::dispose);
-          e.getInlayModel().addAfterLineEndElement(offset, true, new InlineDebugRenderer(variablePresentation, valueNode, view, onClick));
+          InlineDebugRenderer renderer = new InlineDebugRenderer(variablePresentation, valueNode, view, onClick);
+          Inlay<InlineDebugRenderer> inlay = e.getInlayModel().addAfterLineEndElement(offset, true, renderer);
+          if (customNode) {
+            ((InlineWatchNodeImpl)valueNode).inlayCreated(inlay);
+          }
         }
       });
       return true;

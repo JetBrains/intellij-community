@@ -3,7 +3,10 @@ package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ThreeState;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.Obsolescent;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
@@ -12,17 +15,23 @@ import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import com.intellij.xdebugger.impl.ui.tree.actions.XFetchValueActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNode {
   private final InlineWatch myWatch;
+  private final List<Inlay> inlays = new ArrayList<Inlay>();
 
   public InlineWatchNodeImpl(@NotNull XDebuggerTree tree,
-                             @NotNull WatchesRootNode parent,
+                             @NotNull XDebuggerTreeNode parent,
                              @NotNull InlineWatch watch,
                              @Nullable XStackFrame stackFrame) {
     super(tree, parent, watch.getExpression(), new XInlineWatchValue(watch.getExpression(), tree, stackFrame, watch.getPosition()));
@@ -38,6 +47,17 @@ public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNod
   @Override
   public @NotNull XSourcePosition getPosition() {
     return myWatch.getPosition();
+  }
+
+  void inlayCreated(Inlay<InlineDebugRenderer> inlay) {
+    inlays.add(inlay);
+  }
+
+  public void nodeRemoved() {
+    UIUtil.invokeLaterIfNeeded(() -> {
+      inlays.forEach(Disposer::dispose);
+      inlays.clear();
+    });
   }
 
   private static class XInlineWatchValue extends XNamedValue {
