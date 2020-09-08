@@ -56,6 +56,11 @@ public final class InjectedLanguageUtil {
   public static final Key<IElementType> INJECTED_FRAGMENT_TYPE = Key.create("INJECTED_FRAGMENT_TYPE");
   public static final Key<Boolean> FRANKENSTEIN_INJECTION = InjectedLanguageManager.FRANKENSTEIN_INJECTION;
 
+  private static final Comparator<PsiFile> LONGEST_INJECTION_HOST_RANGE_COMPARATOR = Comparator.comparing(
+    psiFile -> InjectedLanguageManager.getInstance(psiFile.getProject()).getInjectionHost(psiFile),
+    Comparator.nullsLast(Comparator.comparingInt(PsiElement::getTextLength))
+  );
+
   @NotNull
   static PsiElement loadTree(@NotNull PsiElement host, @NotNull PsiFile containingFile) {
     if (containingFile instanceof DummyHolder) {
@@ -808,7 +813,7 @@ public final class InjectedLanguageUtil {
       .map(documentWindow -> PsiDocumentManager.getInstance(containingFile.getProject()).getPsiFile(documentWindow))
       .filter(file -> file != null && file.getLanguage() == LanguageSubstitutors.getInstance()
         .substituteLanguage(language, file.getVirtualFile(), file.getProject()))
-      .max(Comparator.comparingInt(PsiElement::getTextLength))
+      .max(LONGEST_INJECTION_HOST_RANGE_COMPARATOR)
       .orElse(null);
   }
 
