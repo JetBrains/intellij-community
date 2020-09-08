@@ -109,10 +109,9 @@ class ModuleRootComponentBridge(
     moduleBridge.entityStorage.current, accessor)
 
   fun getModifiableModel(diff: WorkspaceEntityStorageBuilder,
-                         accessor: RootConfigurationAccessor): ModifiableRootModel = ModifiableRootModelBridgeImpl(diff,
-                                                                                                                   moduleBridge,
-                                                                                                                   moduleBridge.entityStorage.current,
-                                                                                                                   accessor,
+                         initialStorage: WorkspaceEntityStorage,
+                         accessor: RootConfigurationAccessor): ModifiableRootModel = ModifiableRootModelBridgeImpl(diff, moduleBridge,
+                                                                                                                   initialStorage, accessor,
                                                                                                                    false)
 
 
