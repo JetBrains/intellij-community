@@ -256,11 +256,9 @@ public final class PluginDownloader {
     }
 
     UpdateSettings updateSettingsService = ServiceManager.getServiceIfCreated(UpdateSettings.class);
-    if (updateSettingsService != null) {
-      PluginInstaller.installAfterRestart(myFile.toPath(), !updateSettingsService.isKeepPluginsArchive(), myOldFile, myDescriptor);
-    } else {
-      PluginInstaller.installAfterRestart(myFile.toPath(), true, myOldFile, myDescriptor);
-    }
+    boolean keepPluginsArchive = updateSettingsService != null && updateSettingsService.isKeepPluginsArchive();
+    // NOTE: This could be called before Application has been created because of Rider is trying to install plugins from Wizard
+    PluginInstaller.installAfterRestart(myFile.toPath(),!keepPluginsArchive, myOldFile, myDescriptor);
 
     InstalledPluginsState state = InstalledPluginsState.getInstanceIfLoaded();
     if (state != null) {
