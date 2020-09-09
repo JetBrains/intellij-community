@@ -34,20 +34,7 @@ class A extends B {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         final A a = (A) o;
-        return a7 == a.a7 &&
-                a8 == a.a8 &&
-                a9 == a.a9 &&
-                a10 == a.a10 &&
-                Float.compare(a.a11, a11) == 0 &&
-                Double.compare(a.a12, a12) == 0 &&
-                com.google.common.base.Objects.equal(a1, a.a1) &&
-                com.google.common.base.Objects.equal(a2, a.a2) &&
-                com.google.common.base.Objects.equal(a3, a.a3) &&
-                com.google.common.base.Objects.equal(a4, a.a4) &&
-                com.google.common.base.Objects.equal(a5, a.a5) &&
-                com.google.common.base.Objects.equal(a6, a.a6) &&
-                com.google.common.base.Objects.equal(a13, a.a13) &&
-                com.google.common.base.Objects.equal(a14, a.a14);
+        return a7 == a.a7 && a8 == a.a8 && a9 == a.a9 && a10 == a.a10 && Float.compare(a.a11, a11) == 0 && Double.compare(a.a12, a12) == 0 && com.google.common.base.Objects.equal(a1, a.a1) && com.google.common.base.Objects.equal(a2, a.a2) && com.google.common.base.Objects.equal(a3, a.a3) && com.google.common.base.Objects.equal(a4, a.a4) && com.google.common.base.Objects.equal(a5, a.a5) && com.google.common.base.Objects.equal(a6, a.a6) && com.google.common.base.Objects.equal(a13, a.a13) && com.google.common.base.Objects.equal(a14, a.a14);
     }
 
     @Override
