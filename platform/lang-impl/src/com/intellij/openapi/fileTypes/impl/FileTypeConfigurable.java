@@ -2,7 +2,6 @@
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.CommonBundle;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.lightEdit.LightEditFilePatterns;
 import com.intellij.ide.lightEdit.LightEditService;
@@ -15,6 +14,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -58,15 +58,14 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
   public JComponent createComponent() {
     myFileTypePanel = new FileTypePanel();
     myFileTypePanel.myIgnorePanel.setBorder(
-      IdeBorderFactory.createTitledBorder(IdeBundle.message("editbox.ignore.files.and.folders"), false, TITLE_INSETS).setShowLine(false));
+      IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetype.ignore.group"), false, TITLE_INSETS).setShowLine(false));
     myRecognizedFileType = new RecognizedFileTypes(myFileTypePanel.myRecognizedFileTypesPanel);
     myPatterns = new PatternsPanel(myFileTypePanel.myPatternsPanel);
     myHashBangs = new HashBangPanel(myFileTypePanel.myHashBangPanel);
     myRecognizedFileType.myFileTypesList.addListSelectionListener(__ -> updateExtensionList());
     myFileTypePanel.myIgnoreFilesField.setColumns(30);
-    //noinspection DialogTitleCapitalization - it's an option label
     myFileTypePanel.myOpenWithLightEditPanel.setBorder(
-      IdeBorderFactory.createTitledBorder(IdeBundle.message("editbox.open.in.light.edit.mode"), false, TITLE_INSETS).setShowLine(false));
+      IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetype.light.edit.group"), false, TITLE_INSETS).setShowLine(false));
     myFileTypePanel.myLightEditHintLabel.setForeground(JBColor.GRAY);
     myFileTypePanel.myLightEditHintLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
     return myFileTypePanel.myWholePanel;
@@ -169,13 +168,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
   private void updateExtensionList() {
     FileType type = myRecognizedFileType.getSelectedFileType();
     if (type == null) return;
-    List<String> extensions = new ArrayList<>();
-
-    for (FileNameMatcher assoc : myTempPatternsTable.getAssociations(type)) {
-      extensions.add(assoc.getPresentableString());
-    }
-
-    myPatterns.refill(extensions);
+    myPatterns.refill(myTempPatternsTable.getAssociations(type));
     myHashBangs.refill(myTempPatternsTable.getHashBangPatterns(type));
   }
 
@@ -343,13 +336,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       panel.setLayout(new BorderLayout());
 
       myFileTypesList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-      myFileTypesList.setCellRenderer(new FileTypeRenderer(() -> {
-        List<FileType> result = new ArrayList<>();
-        for (int i = 0; i < myFileTypesList.getModel().getSize(); i++) {
-          result.add(myFileTypesList.getModel().getElementAt(i));
-        }
-        return result;
-      }));
+      myFileTypesList.setCellRenderer(new FileTypeRenderer(myFileTypesList.getModel()));
 
       new DoubleClickListener() {
         @Override
@@ -532,11 +519,13 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       return myList.getSelectedValue();
     }
 
-    private void refill(@NotNull List<String> extensions) {
+    private void refill(List<FileNameMatcher> matchers) {
       clearList();
-      Collections.sort(extensions);
-      for (String extension : extensions) {
-        getListModel().addElement(extension);
+      List<FileNameMatcher> copy = new ArrayList<>(matchers);
+      Collections.sort(copy, Comparator.comparing(FileNameMatcher::getPresentableString));
+      DefaultListModel<String> model = (DefaultListModel<String>)myList.getModel();
+      for (FileNameMatcher matcher : copy) {
+        model.addElement(matcher.getPresentableString());
       }
       ScrollingUtil.ensureSelectionExists(myList);
     }
@@ -599,11 +588,12 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       return myList.getSelectedValue();
     }
 
-    private void refill(@NotNull List<String> values) {
+    private void refill(List<String> patterns) {
       clearList();
-      Collections.sort(values);
-      for (String extension : values) {
-        getListModel().addElement(extension);
+      Collections.sort(patterns);
+      DefaultListModel<String> model = (DefaultListModel<String>)myList.getModel();
+      for (@NlsSafe String pattern : patterns) {
+        model.addElement(pattern);
       }
       ScrollingUtil.ensureSelectionExists(myList);
     }
