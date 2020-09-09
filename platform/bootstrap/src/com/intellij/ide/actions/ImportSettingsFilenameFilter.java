@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
@@ -13,7 +14,7 @@ import java.util.function.Predicate;
  * This class is serialized into StartupActionScript stream and must thus reside in bootstrap module.
  */
 public final class ImportSettingsFilenameFilter implements Predicate<String>, Serializable {
-  public static final String SETTINGS_JAR_MARKER = "IntelliJ IDEA Global Settings";
+  public static final @NonNls String SETTINGS_JAR_MARKER = "IntelliJ IDEA Global Settings";
 
   private static final long serialVersionUID = 201708031943L;
 

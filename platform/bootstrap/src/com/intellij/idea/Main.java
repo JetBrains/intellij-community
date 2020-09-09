@@ -10,6 +10,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -51,10 +52,10 @@ public final class Main {
   private static final String AWT_HEADLESS = "java.awt.headless";
   private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
   private static final String[] NO_ARGS = ArrayUtilRt.EMPTY_STRING_ARRAY;
-  private static final List<String> HEADLESS_COMMANDS = Arrays.asList(
+  private static final List<@NonNls String> HEADLESS_COMMANDS = Arrays.asList(
     "ant", "duplocate", "dump-shared-index", "traverseUI", "buildAppcodeCache", "format", "keymap", "update", "inspections", "intentions",
     "rdserver-headless", "thinClient-headless");
-  private static final List<String> GUI_COMMANDS = Arrays.asList("diff", "merge");
+  private static final List<@NonNls String> GUI_COMMANDS = Arrays.asList("diff", "merge");
 
   private static boolean isHeadless;
   private static boolean isCommandLine;
@@ -64,10 +65,10 @@ public final class Main {
   private Main() { }
 
   public static void main(String[] args) {
-    LinkedHashMap<String, Long> startupTimings = new LinkedHashMap<>();
+    LinkedHashMap<@NonNls String, Long> startupTimings = new LinkedHashMap<>();
     startupTimings.put("startup begin", System.nanoTime());
 
-    if (args.length == 1 && "%f".equals(args[0])) {
+    if (args.length == 1 && "%f".equals(args[0])) { // NON-NLS
       args = NO_ARGS;
     }
 
@@ -97,7 +98,7 @@ public final class Main {
     }
   }
 
-  private static void bootstrap(String[] args, LinkedHashMap<String, Long> startupTimings) throws Exception {
+  private static void bootstrap(String[] args, LinkedHashMap<@NonNls String, Long> startupTimings) throws Exception {
     startupTimings.put("properties loading", System.nanoTime());
     PathManager.loadProperties();
 
@@ -117,7 +118,7 @@ public final class Main {
     WindowsCommandLineProcessor.ourMainRunnerClass = klass;
     Method startMethod = klass.getMethod("start", String.class, String[].class, LinkedHashMap.class);
     startMethod.setAccessible(true);
-    startMethod.invoke(null, Main.class.getName() + "Impl", args, startupTimings);
+    startMethod.invoke(null, Main.class.getName() + "Impl", args, startupTimings); //NON-NLS
   }
 
   private static void installPluginUpdates() {
@@ -167,7 +168,7 @@ public final class Main {
           return false;
         }
       }
-      else if (arg.equals("-l") || arg.equals("--line") || arg.equals("-c") || arg.equals("--column")) {
+      else if (arg.equals("-l") || arg.equals("--line") || arg.equals("-c") || arg.equals("--column")) { // NON-NLS
         return true;
       }
     }
@@ -191,7 +192,7 @@ public final class Main {
     }
 
     String firstArg = args[0];
-    return HEADLESS_COMMANDS.contains(firstArg) || firstArg.length() < 20 && firstArg.endsWith("inspect");
+    return HEADLESS_COMMANDS.contains(firstArg) || firstArg.length() < 20 && firstArg.endsWith("inspect"); //NON-NLS
   }
 
   private static boolean checkGraphics() {
