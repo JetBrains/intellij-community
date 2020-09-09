@@ -142,11 +142,7 @@ class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
 
     return new ChangeFileEncodingAction(true) {
       @Override
-      protected boolean chosen(Document document,
-                               Editor editor,
-                               VirtualFile virtualFile,
-                               byte[] bytes,
-                               @NotNull Charset charset) {
+      protected boolean chosen(Document document, Editor editor, VirtualFile virtualFile, byte[] bytes, @NotNull Charset charset) {
         onChosen.consume(charset);
         return true;
       }
