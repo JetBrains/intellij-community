@@ -24,9 +24,9 @@ final class JBProtocolShutdownCommand extends JBProtocolCommand {
       ApplicationManager.getApplication().exit();
     }
     else {
-      MessageDialogBuilder.YesNo confirmExitDialog = MessageDialogBuilder.yesNo(ApplicationBundle.message("exit.confirm.title"), target)
-        .yesText(ApplicationBundle.message("command.exit")).noText(
-          CommonBundle.getCancelButtonText());
+      MessageDialogBuilder.YesNo confirmExitDialog = MessageDialogBuilder.yesNo(ApplicationBundle.message("exit.confirm.title"), message)
+        .yesText(ApplicationBundle.message("command.exit"))
+        .noText(CommonBundle.getCancelButtonText());
       if (confirmExitDialog.guessWindowAndAsk()) {
         ApplicationManagerEx.getApplicationEx().exit(true, true);
       }

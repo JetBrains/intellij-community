@@ -246,6 +246,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return myCommandLineMode;
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
   public final boolean isLightEditMode() {
     return Main.isLightEdit();
   }
@@ -256,9 +257,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   @Override
-  public @NotNull <T> Future<T> executeOnPooledThread(@SuppressWarnings("BoundedWildcard") @NotNull Callable<T> action) {
+  public @NotNull <T> Future<T> executeOnPooledThread(@NotNull Callable<T> action) {
     Callable<T> actionDecorated = ClientId.decorateCallable(action);
-    return ourThreadExecutorsService.submit(new Callable<T>() {
+    return ourThreadExecutorsService.submit(new Callable<>() {
       @Override
       public T call() {
         if (isDisposed()) {
