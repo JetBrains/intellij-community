@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.history
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -8,8 +9,10 @@ import com.intellij.util.Consumer
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.TimedVcsCommit
 import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.index.IndexDataGetter
+import com.intellij.vcs.log.data.index.IndexedDetails.Companion.createMetadata
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.graph.utils.BfsWalk
@@ -20,7 +23,6 @@ import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import git4idea.GitCommit
 import git4idea.GitUtil
-import git4idea.GitVcs
 import git4idea.history.GitHistoryTraverser.Traverse
 
 class GitHistoryTraverserImpl(
@@ -90,8 +92,13 @@ class GitHistoryTraverserImpl(
     return TimedVcsCommitImpl(hash, parents, timestamp)
   }
 
-  override fun loadMetadata(ids: List<TraverseCommitId>): List<VcsCommitMetadata> =
-    GitLogUtil.collectMetadata(project, GitVcs.getInstance(project), root, ids.map { toHash(it).asString() })
+  override fun loadMetadata(ids: List<TraverseCommitId>): List<VcsCommitMetadata> {
+    val storage = logData.storage
+    val factory = project.service<VcsLogObjectsFactory>()
+    return ids.map { id ->
+      createMetadata(id, dataGetter, storage, factory)!!
+    }
+  }
 
   override fun loadFullDetails(ids: List<TraverseCommitId>, fullDetailsHandler: (GitCommit) -> Unit) {
     GitLogUtil.readFullDetailsForHashes(project, root, ids.map { toHash(it).asString() }, requirements, Consumer<GitCommit> {
