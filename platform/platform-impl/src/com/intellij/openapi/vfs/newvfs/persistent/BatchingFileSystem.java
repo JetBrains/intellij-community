@@ -5,13 +5,12 @@ import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Map;
 
 @ApiStatus.Internal
 public interface BatchingFileSystem {
-  @Nullable
+  @NotNull
   Map<String, FileAttributes> listWithAttributes(@NotNull VirtualFile dir, @NotNull Collection<String> childNames);
 }

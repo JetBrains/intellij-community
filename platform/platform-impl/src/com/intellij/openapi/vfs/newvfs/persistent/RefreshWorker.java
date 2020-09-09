@@ -186,12 +186,10 @@ public final class RefreshWorker {
       for (VirtualFile file : chs) {
         nameToFile.put(file.getName(), file);
       }
-      if (map != null) {
-        for (Map.Entry<String, FileAttributes> e : map.entrySet()) {
-          String name = e.getKey();
-          FileAttributes attributes = e.getValue();
-          updatedMap.add(Pair.create(nameToFile.get(name), VfsImplUtil.getAttributesWithCaseSensitivity(fs, attributes)));
-        }
+      for (Map.Entry<String, FileAttributes> e : map.entrySet()) {
+        String name = e.getKey();
+        FileAttributes attributes = e.getValue();
+        updatedMap.add(Pair.create(nameToFile.get(name), VfsImplUtil.getAttributesWithCaseSensitivity(fs, attributes)));
       }
     }
     else {
