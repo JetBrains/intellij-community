@@ -56,7 +56,11 @@ interface GitHistoryTraverser {
    * Load commits details with its changes.
    * If commit contains huge amount of changes, this method can be slow, so use it only if you need changes.
    */
-  fun loadFullDetails(ids: List<TraverseCommitId>, fullDetailsHandler: (GitCommit) -> Unit)
+  fun loadFullDetails(
+    ids: List<TraverseCommitId>,
+    requirements: GitCommitRequirements = GitCommitRequirements.DEFAULT,
+    fullDetailsHandler: (GitCommit) -> Unit
+  )
 
   /**
    * Allows to request commit details loading. They will be loaded synchronously after [traverse] execution.
@@ -64,7 +68,11 @@ interface GitHistoryTraverser {
   interface Traverse {
     fun loadMetadataLater(id: TraverseCommitId, onLoad: (VcsCommitMetadata) -> Unit)
 
-    fun loadFullDetailsLater(id: TraverseCommitId, onLoad: (GitCommit) -> Unit)
+    fun loadFullDetailsLater(
+      id: TraverseCommitId,
+      requirements: GitCommitRequirements = GitCommitRequirements.DEFAULT,
+      onLoad: (GitCommit) -> Unit
+    )
   }
 
   sealed class TraverseCommitsFilter {

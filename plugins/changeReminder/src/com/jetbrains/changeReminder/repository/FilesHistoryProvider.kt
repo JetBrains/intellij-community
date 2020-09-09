@@ -29,10 +29,15 @@ internal class FilesHistoryProvider(
   private fun getCommitsData(traverser: GitHistoryTraverser, files: Collection<FilePath>): Collection<Commit> {
     val commitsWithFiles = files.mapNotNull { filesHistoryCache[it] }.flatten()
     val commitsData = mutableSetOf<Commit>()
+
+    val requirements = GitCommitRequirements(
+      diffRenameLimit = GitCommitRequirements.DiffRenameLimit.NO_RENAMES,
+      diffInMergeCommits = GitCommitRequirements.DiffInMergeCommits.NO_DIFF
+    )
     var commitsWithFilesCount = 0
     traverser.traverseFromHead(GitHistoryTraverser.TraverseType.BFS) { commitId ->
       if (commitId in commitsWithFiles) {
-        loadFullDetailsLater(commitId) { commit ->
+        loadFullDetailsLater(commitId, requirements) { commit ->
           val affectedPaths = commit.affectedPaths
           if (affectedPaths.size in 1..MAX_HISTORY_COMMIT_SIZE) {
             commitsData.add(Commit(commitId, commit.commitTime, commit.author.name, affectedPaths))
@@ -46,11 +51,7 @@ internal class FilesHistoryProvider(
   }
 
   fun getFilesHistory(root: VirtualFile, files: Collection<FilePath>): Collection<Commit> {
-    val requirements = GitCommitRequirements(
-      diffRenameLimit = GitCommitRequirements.DiffRenameLimit.NO_RENAMES,
-      diffInMergeCommits = GitCommitRequirements.DiffInMergeCommits.NO_DIFF
-    )
-    val traverser = GitHistoryTraverserImpl(project, root, dataManager, dataGetter, requirements)
+    val traverser = GitHistoryTraverserImpl(project, root, dataManager, dataGetter)
 
     filesHistoryCache.retainAll(files)
     filesHistoryCache.putAll(

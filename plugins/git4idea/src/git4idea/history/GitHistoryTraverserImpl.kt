@@ -29,8 +29,7 @@ class GitHistoryTraverserImpl(
   private val project: Project,
   override val root: VirtualFile,
   private val logData: VcsLogData,
-  private val dataGetter: IndexDataGetter,
-  private val requirements: GitCommitRequirements = GitCommitRequirements.DEFAULT
+  private val dataGetter: IndexDataGetter
 ) : GitHistoryTraverser {
   override fun toHash(id: TraverseCommitId) = logData.storage.getCommitId(id)?.takeIf { it.root == root }!!.hash
 
@@ -100,7 +99,7 @@ class GitHistoryTraverserImpl(
     }
   }
 
-  override fun loadFullDetails(ids: List<TraverseCommitId>, fullDetailsHandler: (GitCommit) -> Unit) {
+  override fun loadFullDetails(ids: List<TraverseCommitId>, requirements: GitCommitRequirements, fullDetailsHandler: (GitCommit) -> Unit) {
     GitLogUtil.readFullDetailsForHashes(project, root, ids.map { toHash(it).asString() }, requirements, Consumer<GitCommit> {
       fullDetailsHandler(it)
     })
@@ -113,8 +112,8 @@ class GitHistoryTraverserImpl(
       requests.add(Request.LoadMetadata(id, onLoad))
     }
 
-    override fun loadFullDetailsLater(id: TraverseCommitId, onLoad: (GitCommit) -> Unit) {
-      requests.add(Request.LoadFullDetails(id, onLoad))
+    override fun loadFullDetailsLater(id: TraverseCommitId, requirements: GitCommitRequirements, onLoad: (GitCommit) -> Unit) {
+      requests.add(Request.LoadFullDetails(id, requirements, onLoad))
     }
 
     fun loadDetails() {
@@ -132,22 +131,27 @@ class GitHistoryTraverserImpl(
     }
 
     private fun loadFullDetails(loadFullDetailsRequests: List<Request.LoadFullDetails>) {
-      val handlers = mutableMapOf<Hash, MutableList<(GitCommit) -> Unit>>()
+      val handlers = mutableMapOf<Hash, MutableMap<GitCommitRequirements, MutableList<(GitCommit) -> Unit>>>()
       loadFullDetailsRequests.forEach { request ->
         traverser.toHash(request.id).let { hash ->
-          handlers.getOrPut(hash) { mutableListOf() }.add(request.onLoad)
+          val requirementsToHandlers = handlers.getOrPut(hash) { mutableMapOf() }
+          requirementsToHandlers.getOrPut(request.requirements) { mutableListOf() }.add(request.onLoad)
         }
       }
-      traverser.loadFullDetails(loadFullDetailsRequests.map { it.id }) { details ->
-        handlers[details.id]?.forEach { onLoad ->
-          onLoad(details)
+
+      val requirementTypes = loadFullDetailsRequests.map { it.requirements }.distinct()
+      requirementTypes.forEach { requirements ->
+        traverser.loadFullDetails(loadFullDetailsRequests.map { it.id }, requirements) { details ->
+          handlers[details.id]?.get(requirements)?.forEach { onLoad ->
+            onLoad(details)
+          }
         }
       }
     }
 
     sealed class Request(val id: TraverseCommitId) {
       class LoadMetadata(id: TraverseCommitId, val onLoad: (VcsCommitMetadata) -> Unit) : Request(id)
-      class LoadFullDetails(id: TraverseCommitId, val onLoad: (GitCommit) -> Unit) : Request(id)
+      class LoadFullDetails(id: TraverseCommitId, val requirements: GitCommitRequirements, val onLoad: (GitCommit) -> Unit) : Request(id)
     }
   }
 }
