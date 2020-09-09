@@ -38,13 +38,8 @@ final class AnnotationContext {
     myNext = next;
   }
 
-  AnnotationContext chainWith(@Nullable PsiModifierListOwner other) {
-    if (myNext != null) {
-      throw new IllegalStateException("Already chained");
-    }
-    if (this.equals(EMPTY)) return fromModifierListOwner(other);
-    if (other == null) return this;
-    return new AnnotationContext(myOwner, myType, () -> Stream.of(other));
+  AnnotationContext withType(PsiType type) {
+    return new AnnotationContext(myOwner, type, myNext);
   }
 
   public @Nullable PsiModifierListOwner getOwner() {
@@ -75,8 +70,27 @@ final class AnnotationContext {
 
   static @NotNull AnnotationContext fromModifierListOwner(@Nullable PsiModifierListOwner owner) {
     if (owner instanceof PsiMethod) {
-      return new AnnotationContext(owner, ((PsiMethod)owner).getReturnType())
-        .chainWith(getKotlinProperty(owner));
+      PsiMethod method = (PsiMethod)owner;
+      return new AnnotationContext(owner, (method).getReturnType(), () -> {
+        HashSet<PsiMethod> visited = new HashSet<>();
+        return StreamEx.ofNullable(getKotlinProperty(owner))
+          .append(StreamEx.ofTree(method, m -> StreamEx.of(m.findSuperMethods()).filter(visited::add)).skip(1));
+      });
+    }
+    if (owner instanceof PsiParameter) {
+      PsiParameter parameter = (PsiParameter)owner;
+      PsiMethod method = ObjectUtils.tryCast(parameter.getDeclarationScope(), PsiMethod.class);
+      if (method != null) {
+        int index = method.getParameterList().getParameterIndex(parameter);
+        if (index >= 0) {
+          Supplier<Stream<PsiModifierListOwner>> supplier = () -> {
+            HashSet<PsiMethod> visited = new HashSet<>();
+            return StreamEx.ofTree(method, m -> StreamEx.of(m.findSuperMethods()).filter(visited::add)).skip(1)
+              .map(m -> m.getParameterList().getParameter(index)).select(PsiModifierListOwner.class);
+          };
+          return new AnnotationContext(owner, ((PsiVariable)owner).getType(), supplier);
+        }
+      }
     }
     if (owner instanceof PsiVariable) {
       return new AnnotationContext(owner, ((PsiVariable)owner).getType());
@@ -140,12 +154,12 @@ final class AnnotationContext {
       }
     }
     if (method == null) return EMPTY;
-    PsiModifierListOwner finalNext = next;
-    return new AnnotationContext(method, returnType, () -> {
-      HashSet<PsiMethod> visited = new HashSet<>();
-      return StreamEx.ofNullable(finalNext)
-        .append(StreamEx.ofTree(method, m -> StreamEx.of(m.findSuperMethods()).filter(visited::add)).skip(1));
-    });
+    AnnotationContext result = fromModifierListOwner(method).withType(returnType);
+    if (next != null) {
+      PsiModifierListOwner finalNext = next;
+      return new AnnotationContext(result.myOwner, result.myType, () -> StreamEx.of(finalNext).append(result.secondaryItems()));
+    }
+    return result;
   }
 
   private static @Nullable PsiModifierListOwner getKotlinProperty(@NotNull PsiModifierListOwner owner) {
@@ -190,14 +204,7 @@ final class AnnotationContext {
       PsiSubstitutor substitutor = ((PsiMethodCallExpression)psi).getMethodExpression().advancedResolve(false).getSubstitutor();
       parameterType = substitutor.substitute(parameterType);
     }
-    int index = method.getParameterList().getParameterIndex(parameter);
-    if (index < 0) return EMPTY;
-    Supplier<Stream<PsiModifierListOwner>> supplier = () -> {
-      HashSet<PsiMethod> visited = new HashSet<>();
-      return StreamEx.ofTree(method, m -> StreamEx.of(m.findSuperMethods()).filter(visited::add)).skip(1)
-        .map(m -> m.getParameterList().getParameter(index)).select(PsiModifierListOwner.class);
-    };
-    return new AnnotationContext(parameter, parameterType, supplier);
+    return fromModifierListOwner(parameter).withType(parameterType);
   }
 
   @NotNull
