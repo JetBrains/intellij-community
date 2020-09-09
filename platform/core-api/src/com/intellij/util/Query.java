@@ -13,8 +13,10 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 public interface Query<Result> extends Iterable<Result> {
+
   /**
    * Get all of the results in the {@link Collection}
+   *
    * @return results in a collection or empty collection if no results found.
    */
   @NotNull
@@ -22,6 +24,7 @@ public interface Query<Result> extends Iterable<Result> {
 
   /**
    * Get the first result or {@code null} if no results have been found.
+   *
    * @return first result of the search or {@code null} if no results.
    */
   @Nullable
@@ -32,9 +35,10 @@ public interface Query<Result> extends Iterable<Result> {
    * The consumer might be called on different threads, but by default these calls are mutually exclusive, so no additional
    * synchronization inside consumer is necessary. If you need to process results in parallel, run {@code forEach()} on
    * the result of {@link #allowParallelProcessing()}.
+   *
    * @param consumer - a processor search results should be fed to.
    * @return {@code true} if the search was completed normally,
-   *         {@code false} if the occurrence processing was cancelled by the processor.
+   * {@code false} if the occurrence processing was cancelled by the processor.
    */
   boolean forEach(@NotNull Processor<? super Result> consumer);
 
@@ -52,7 +56,6 @@ public interface Query<Result> extends Iterable<Result> {
    * Use this method only if your predicate is stateless and side-effect free.
    *
    * @param predicate predicate to test on query results
-   *
    * @return true if given predicate is satisfied for all query results.
    */
   @Contract(pure = true)
@@ -66,7 +69,6 @@ public interface Query<Result> extends Iterable<Result> {
    * Use this method only if your predicate is stateless and side-effect free.
    *
    * @param predicate predicate to test on query results
-   *
    * @return true if given predicate is satisfied for at least one query result.
    */
   @Contract(pure = true)
