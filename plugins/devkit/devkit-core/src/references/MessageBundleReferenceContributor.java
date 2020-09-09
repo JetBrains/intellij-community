@@ -33,8 +33,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.dom.Action;
 import org.jetbrains.idea.devkit.dom.ActionOrGroup;
 import org.jetbrains.idea.devkit.dom.Extension;
+import org.jetbrains.idea.devkit.dom.OverrideText;
 import org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
@@ -128,12 +130,39 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
     public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
       Project project = getElement().getProject();
 
+      final GlobalSearchScope scope = ProjectScope.getContentScope(project);
+
       CommonProcessors.CollectUniquesProcessor<ActionOrGroup> processor = new CommonProcessors.CollectUniquesProcessor<>();
       if (myIsAction) {
-        IdeaPluginRegistrationIndex.processAction(project, myId, ProjectScope.getContentScope(project), processor);
+        IdeaPluginRegistrationIndex.processAction(project, myId, scope, processor);
+
+        // action.ActionId.<override-text@place>.text
+        if (processor.getResults().isEmpty()) {
+          String place = StringUtil.substringAfterLast(myId, ".");
+          if (StringUtil.isEmpty(place)) return ResolveResult.EMPTY_ARRAY;
+          
+          String idWithoutPlaceSuffix = StringUtil.substringBeforeLast(myId, ".");
+
+          IdeaPluginRegistrationIndex.processAction(project, idWithoutPlaceSuffix, scope, processor);
+
+          boolean foundOverrideText = false;
+          for (ActionOrGroup result : processor.getResults()) {
+            Action action = (Action)result;
+            for (OverrideText overrideText : action.getOverrideTexts()) {
+              if (place.equals(overrideText.getPlace().getStringValue())) {
+                foundOverrideText = true;
+                break;
+              }
+            }
+          }
+          
+          if (!foundOverrideText) {
+            return ResolveResult.EMPTY_ARRAY;
+          }
+        }
       }
       else {
-        IdeaPluginRegistrationIndex.processGroup(project, myId, ProjectScope.getContentScope(project), processor);
+        IdeaPluginRegistrationIndex.processGroup(project, myId, scope, processor);
       }
 
       return JBIterable
