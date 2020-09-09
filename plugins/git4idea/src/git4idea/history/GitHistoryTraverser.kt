@@ -31,6 +31,8 @@ interface GitHistoryTraverser {
 
   /**
    * Return all commits from repository fit by [TraverseCommitsFilter].
+   *
+   * Note that may become unreachable from any branches, so it's better to check that given commits are reachable during [traverse]
    */
   fun filterCommits(filter: TraverseCommitsFilter): Collection<TraverseCommitId>
 
@@ -40,7 +42,7 @@ interface GitHistoryTraverser {
   fun toHash(id: TraverseCommitId): Hash
 
   /**
-   * Load commit hash with timestamp.
+   * Load commit hash with timestamp and parents.
    */
   fun loadTimedCommit(id: TraverseCommitId): TimedVcsCommit
 
@@ -66,8 +68,16 @@ interface GitHistoryTraverser {
   }
 
   sealed class TraverseCommitsFilter {
+    /**
+     * Note that author filter may return commits from another roots, so check that given commits are from [root] during [traverse]
+     */
     class Author(val author: VcsUser) : TraverseCommitsFilter()
 
+    /**
+     * Commits filter result by [file] has some specific aspects:
+     *   * contains only accurate renames (file name change without content change)
+     *   * contains all trivial merge commits whose subtrees contain [file] changes
+     */
     class File(val file: FilePath) : TraverseCommitsFilter()
   }
 
