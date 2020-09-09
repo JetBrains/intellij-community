@@ -86,7 +86,7 @@ class GitHistoryTraverserImpl(
 
   override fun loadTimedCommit(id: TraverseCommitId): TimedVcsCommit {
     val parents = dataGetter.getParents(id)!!
-    val timestamp = dataGetter.getAuthorTime(id)!!
+    val timestamp = dataGetter.getCommitTime(id)!!
     val hash = toHash(id)
     return TimedVcsCommitImpl(hash, parents, timestamp)
   }
