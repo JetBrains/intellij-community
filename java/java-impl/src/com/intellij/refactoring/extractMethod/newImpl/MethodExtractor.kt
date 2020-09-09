@@ -44,6 +44,11 @@ class MethodExtractor {
   fun doExtract(file: PsiFile, range: TextRange, @NlsContexts.DialogTitle refactoringName: String, helpId: String) {
     val project = file.project
     val editor = PsiEditorUtil.findEditor(file) ?: return
+    val activeExtractor = InplaceMethodExtractor.getActiveExtractor(editor)
+    if (activeExtractor != null) {
+      activeExtractor.restartInDialog()
+      return
+    }
     try {
       if (!CommonRefactoringUtil.checkReadOnlyStatus(file.project, file)) return
       val statements = ExtractSelector().suggestElementsToExtract(file, range)
@@ -62,7 +67,7 @@ class MethodExtractor {
     }
     catch (e: ExtractException) {
       val message = JavaRefactoringBundle.message("extract.method.error.prefix") + " " + (e.message ?: "")
-      CommonRefactoringUtil.showErrorHint(project, editor, message, refactoringName, HelpID.EXTRACT_METHOD)
+      CommonRefactoringUtil.showErrorHint(project, editor, message, refactoringName, helpId)
       showError(editor, e.problems)
     }
   }
