@@ -89,6 +89,7 @@ public class BaseListPopupStep<T> extends BaseStep<T> implements ListPopupStep<T
 
   @Override
   public @NotNull String getTextFor(T value) {
+    //noinspection HardCodedStringLiteral (can't be fixed without upgrading the inspection or breaking clients)
     return value.toString();
   }
 

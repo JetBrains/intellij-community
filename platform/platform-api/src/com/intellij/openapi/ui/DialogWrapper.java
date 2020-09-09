@@ -145,7 +145,7 @@ public abstract class DialogWrapper {
 
   protected final @NotNull Disposable myDisposable = new Disposable() {
     @Override
-    public String toString() {
+    public @NonNls String toString() {
       return DialogWrapper.this.toString();
     }
 

@@ -83,6 +83,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
   }
 
   protected @NlsContexts.Label String getTextFor(@NotNull T value) {
+    //noinspection HardCodedStringLiteral (can't be fixed without upgrading the inspection or breaking clients)
     return value.toString();
   }
 
