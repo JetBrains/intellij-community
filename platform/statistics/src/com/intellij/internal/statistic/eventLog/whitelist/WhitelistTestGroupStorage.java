@@ -7,8 +7,8 @@ import com.intellij.internal.statistic.eventLog.EventLogBuild;
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerKt;
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
-import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogTestWhitelistPersistence;
-import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistPersistence;
+import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogMetadataPersistence;
+import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogTestMetadataPersistence;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService.WLGroups;
@@ -26,13 +26,13 @@ import java.util.stream.Collectors;
 public class WhitelistTestGroupStorage extends BaseWhitelistStorage {
   protected final ConcurrentMap<String, EventGroupRules> eventsValidators = new ConcurrentHashMap<>();
   private final Object myLock = new Object();
-  private final @NotNull EventLogTestWhitelistPersistence myTestWhitelistPersistence;
-  private final @NotNull EventLogWhitelistPersistence myWhitelistPersistence;
+  private final @NotNull EventLogTestMetadataPersistence myTestMetadataPersistence;
+  private final @NotNull EventLogMetadataPersistence myMetadataPersistence;
   private final @NotNull String myRecorderId;
 
   WhitelistTestGroupStorage(@NotNull String recorderId) {
-    myTestWhitelistPersistence = new EventLogTestWhitelistPersistence(recorderId);
-    myWhitelistPersistence = new EventLogWhitelistPersistence(recorderId);
+    myTestMetadataPersistence = new EventLogTestMetadataPersistence(recorderId);
+    myMetadataPersistence = new EventLogMetadataPersistence(recorderId);
     updateValidators();
     myRecorderId = recorderId;
   }
@@ -56,8 +56,8 @@ public class WhitelistTestGroupStorage extends BaseWhitelistStorage {
     synchronized (myLock) {
       eventsValidators.clear();
       isWhiteListInitialized.set(false);
-      WLGroups productionGroups = EventLogTestWhitelistPersistence.loadTestWhitelist(myWhitelistPersistence);
-      WLGroups testGroups = EventLogTestWhitelistPersistence.loadTestWhitelist(myTestWhitelistPersistence);
+      WLGroups productionGroups = EventLogTestMetadataPersistence.loadCachedEventGroupsSchemes(myMetadataPersistence);
+      WLGroups testGroups = EventLogTestMetadataPersistence.loadCachedEventGroupsSchemes(myTestMetadataPersistence);
       final Map<String, EventGroupRules> result = createValidators(testGroups, productionGroups.rules);
 
       eventsValidators.putAll(result);
@@ -66,7 +66,7 @@ public class WhitelistTestGroupStorage extends BaseWhitelistStorage {
   }
 
   public @NotNull WLGroups loadProductionGroups() {
-    return EventLogTestWhitelistPersistence.loadTestWhitelist(myWhitelistPersistence);
+    return EventLogTestMetadataPersistence.loadCachedEventGroupsSchemes(myMetadataPersistence);
   }
 
   protected @NotNull Map<String, EventGroupRules> createValidators(@NotNull WLGroups groups,
@@ -79,26 +79,26 @@ public class WhitelistTestGroupStorage extends BaseWhitelistStorage {
   }
 
   public void addTestGroup(@NotNull LocalWhitelistGroup group) throws IOException {
-    EventLogTestWhitelistPersistence.addTestGroup(myRecorderId, group);
+    EventLogTestMetadataPersistence.addTestGroup(myRecorderId, group);
     updateValidators();
   }
 
   protected void cleanup() {
     synchronized (myLock) {
       eventsValidators.clear();
-      myTestWhitelistPersistence.cleanup();
+      myTestMetadataPersistence.cleanup();
     }
   }
 
   public @NotNull List<LocalWhitelistGroup> loadLocalWhitelistGroups() {
-    ArrayList<FUStatisticsWhiteListGroupsService.WLGroup> localWhitelistGroups =
-      EventLogTestWhitelistPersistence.loadTestWhitelist(myTestWhitelistPersistence).groups;
+    ArrayList<FUStatisticsWhiteListGroupsService.WLGroup> testGroupsSchemes =
+      EventLogTestMetadataPersistence.loadCachedEventGroupsSchemes(myTestMetadataPersistence).groups;
     ArrayList<LocalWhitelistGroup> groups = new ArrayList<>();
     Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    for (FUStatisticsWhiteListGroupsService.WLGroup group : localWhitelistGroups) {
+    for (FUStatisticsWhiteListGroupsService.WLGroup group : testGroupsSchemes) {
       if (group.id == null || group.rules == null || group.rules.event_id == null) continue;
       Set<String> eventIds = group.rules.event_id;
-      if (eventIds.contains(EventLogTestWhitelistPersistence.TEST_RULE)) {
+      if (eventIds.contains(EventLogTestMetadataPersistence.TEST_RULE)) {
         groups.add(new LocalWhitelistGroup(group.id, false));
       }
       else {
@@ -109,7 +109,7 @@ public class WhitelistTestGroupStorage extends BaseWhitelistStorage {
   }
 
   public void updateTestGroups(@NotNull List<LocalWhitelistGroup> groups) throws IOException {
-    myTestWhitelistPersistence.updateTestGroups(groups);
+    myTestMetadataPersistence.updateTestGroups(groups);
     updateValidators();
   }
 

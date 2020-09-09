@@ -3,11 +3,11 @@ package com.intellij.internal.statistic.eventLog.validator.persistence;
 
 import org.jetbrains.annotations.NotNull;
 
-public class WhitelistPathSettings {
+public class EventsSchemePathSettings {
   @NotNull private final String myCustomPath;
   private final boolean myUseCustomPath;
 
-  public WhitelistPathSettings(@NotNull String customPath, boolean useCustomPath) {
+  public EventsSchemePathSettings(@NotNull String customPath, boolean useCustomPath) {
     myCustomPath = customPath;
     myUseCustomPath = useCustomPath;
   }

@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.whitelist.storage
 
-import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistPersistence
+import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogMetadataPersistence
 import com.intellij.internal.statistic.eventLog.whitelist.EventLogMetadataLoader
 import com.intellij.internal.statistic.eventLog.whitelist.WhitelistStorage
 
@@ -37,25 +37,25 @@ class TestWhitelistStorageBuilder(private val recorderId: String = "TEST") {
   }
 
   fun build(): TestWhitelistStorage {
-    val persistence = TestEventLogWhitelistPersistence(recorderId, cachedContent, cachedLastModified)
+    val persistence = TestEventLogMetadataPersistence(recorderId, cachedContent, cachedLastModified)
     val loader = TestEventLogWhitelistLoader(serverContentProvider, serverLastModified)
     return TestWhitelistStorage(recorderId, persistence, loader)
   }
 }
 
 class TestWhitelistStorage(
-  recorderId: String, persistence: EventLogWhitelistPersistence, loader: EventLogMetadataLoader
+  recorderId: String, persistence: EventLogMetadataPersistence, loader: EventLogMetadataLoader
 ) : WhitelistStorage(recorderId, persistence, loader) {
   fun getGroups(): Set<String> {
     return HashSet<String>(eventsValidators.keys)
   }
 }
 
-private class TestEventLogWhitelistPersistence(recorderId: String, private var content: String?, private var modified: Long) : EventLogWhitelistPersistence(recorderId) {
-  override fun getCachedMetadata(): String? = content
+private class TestEventLogMetadataPersistence(recorderId: String, private var content: String?, private var modified: Long) : EventLogMetadataPersistence(recorderId) {
+  override fun getCachedEventsScheme(): String? = content
 
-  override fun cacheWhiteList(gsonWhiteListContent: String, lastModified: Long) {
-    content = gsonWhiteListContent
+  override fun cacheEventsScheme(eventsSchemeJson: String, lastModified: Long) {
+    content = eventsSchemeJson
     modified = lastModified
   }
 

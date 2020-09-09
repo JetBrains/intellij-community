@@ -21,9 +21,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public class EventLogTestWhitelistPersistence extends BaseEventLogWhitelistPersistence {
-  private static final Logger LOG =
-    Logger.getInstance(EventLogTestWhitelistPersistence.class);
+public class EventLogTestMetadataPersistence extends BaseEventLogMetadataPersistence {
+  private static final Logger LOG = Logger.getInstance(EventLogTestMetadataPersistence.class);
 
   public static final String TEST_RULE = "{util#fus_test_mode}";
 
@@ -33,15 +32,15 @@ public class EventLogTestWhitelistPersistence extends BaseEventLogWhitelistPersi
   @NotNull
   private final String myRecorderId;
 
-  public EventLogTestWhitelistPersistence(@NotNull String recorderId) {
+  public EventLogTestMetadataPersistence(@NotNull String recorderId) {
     myRecorderId = recorderId;
   }
 
   @Override
   @Nullable
-  public String getCachedMetadata() {
+  public String getCachedEventsScheme() {
     try {
-      final File file = getWhitelistFile();
+      final File file = getEventsTestSchemeFile();
       if (file.exists()) {
         return FileUtil.loadFile(file);
       }
@@ -54,7 +53,7 @@ public class EventLogTestWhitelistPersistence extends BaseEventLogWhitelistPersi
 
   public void cleanup() {
     try {
-      FileUtil.delete(getWhitelistFile());
+      FileUtil.delete(getEventsTestSchemeFile());
     }
     catch (IOException e) {
       LOG.error(e);
@@ -80,10 +79,10 @@ public class EventLogTestWhitelistPersistence extends BaseEventLogWhitelistPersi
 
   private static void addNewGroup(@NotNull String recorderId,
                                   @NotNull WLGroup group) throws IOException {
-    final EventLogTestWhitelistPersistence persistence = new EventLogTestWhitelistPersistence(recorderId);
-    final WLGroups whitelist = loadTestWhitelist(persistence);
+    final EventLogTestMetadataPersistence persistence = new EventLogTestMetadataPersistence(recorderId);
+    final WLGroups whitelist = loadCachedEventGroupsSchemes(persistence);
 
-    saveNewGroup(group, whitelist, persistence.getWhitelistFile());
+    saveNewGroup(group, whitelist, persistence.getEventsTestSchemeFile());
   }
 
   public static void saveNewGroup(@NotNull WLGroup group,
@@ -98,8 +97,8 @@ public class EventLogTestWhitelistPersistence extends BaseEventLogWhitelistPersi
   }
 
   @NotNull
-  public static WLGroups loadTestWhitelist(@NotNull BaseEventLogWhitelistPersistence persistence) {
-    final String existing = persistence.getCachedMetadata();
+  public static WLGroups loadCachedEventGroupsSchemes(@NotNull BaseEventLogMetadataPersistence persistence) {
+    final String existing = persistence.getCachedEventsScheme();
     if (StringUtil.isNotEmpty(existing)) {
       try {
         return FUStatisticsWhiteListGroupsService.parseWhiteListContent(existing);
@@ -132,7 +131,7 @@ public class EventLogTestWhitelistPersistence extends BaseEventLogWhitelistPersi
   }
 
   @NotNull
-  public File getWhitelistFile() throws IOException {
+  public File getEventsTestSchemeFile() throws IOException {
     return getDefaultMetadataFile(myRecorderId, TEST_EVENTS_SCHEME_FILE, DEPRECATED_TEST_EVENTS_SCHEME_FILE);
   }
 
@@ -148,6 +147,6 @@ public class EventLogTestWhitelistPersistence extends BaseEventLogWhitelistPersi
       }
     }
     Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    FileUtil.writeToFile(getWhitelistFile(), gson.toJson(whitelist));
+    FileUtil.writeToFile(getEventsTestSchemeFile(), gson.toJson(whitelist));
   }
 }

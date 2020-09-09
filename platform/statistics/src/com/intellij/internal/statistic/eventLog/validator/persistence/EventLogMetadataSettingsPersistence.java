@@ -15,19 +15,19 @@ import java.util.HashMap;
 import java.util.Map;
 
 @State(name = "EventLogWhitelist", storages = @Storage(StoragePathMacros.CACHE_FILE))
-public class EventLogWhitelistSettingsPersistence implements PersistentStateComponent<Element> {
+public class EventLogMetadataSettingsPersistence implements PersistentStateComponent<Element> {
   private final Map<String, Long> myLastModifications = new HashMap<>();
-  private final Map<String, WhitelistPathSettings> myRecorderToPathSettings = new HashMap<>();
+  private final Map<String, EventsSchemePathSettings> myRecorderToPathSettings = new HashMap<>();
 
-  private static final String WHITELIST_MODIFY = "update";
+  private static final String MODIFY = "update";
   private static final String RECORDER_ID = "recorder-id";
   private static final String LAST_MODIFIED = "last-modified";
   private static final String PATH = "path";
   private static final String CUSTOM_PATH = "custom-path";
   private static final String USE_CUSTOM_PATH = "use-custom-path";
 
-  public static EventLogWhitelistSettingsPersistence getInstance() {
-    return ApplicationManager.getApplication().getService(EventLogWhitelistSettingsPersistence.class);
+  public static EventLogMetadataSettingsPersistence getInstance() {
+    return ApplicationManager.getApplication().getService(EventLogMetadataSettingsPersistence.class);
   }
 
   public long getLastModified(@NotNull String recorderId) {
@@ -39,18 +39,18 @@ public class EventLogWhitelistSettingsPersistence implements PersistentStateComp
   }
 
   @Nullable
-  public WhitelistPathSettings getPathSettings(@NotNull String recorderId) {
+  public EventsSchemePathSettings getPathSettings(@NotNull String recorderId) {
     return myRecorderToPathSettings.get(recorderId);
   }
 
-  public void setPathSettings(@NotNull String recorderId, @NotNull WhitelistPathSettings settings) {
+  public void setPathSettings(@NotNull String recorderId, @NotNull EventsSchemePathSettings settings) {
     myRecorderToPathSettings.put(recorderId, settings);
   }
 
   @Override
   public void loadState(@NotNull final Element element) {
     myLastModifications.clear();
-    for (Element update : element.getChildren(WHITELIST_MODIFY)) {
+    for (Element update : element.getChildren(MODIFY)) {
       final String recorder = update.getAttributeValue(RECORDER_ID);
       if (StringUtil.isNotEmpty(recorder)) {
         final long lastUpdate = parseLastUpdate(update);
@@ -65,7 +65,7 @@ public class EventLogWhitelistSettingsPersistence implements PersistentStateComp
         String customPath = path.getAttributeValue(CUSTOM_PATH);
         if (customPath == null) continue;
         boolean useCustomPath = parseUseCustomPath(path);
-        myRecorderToPathSettings.put(recorder, new WhitelistPathSettings(customPath, useCustomPath));
+        myRecorderToPathSettings.put(recorder, new EventsSchemePathSettings(customPath, useCustomPath));
       }
     }
   }
@@ -93,16 +93,16 @@ public class EventLogWhitelistSettingsPersistence implements PersistentStateComp
     final Element element = new Element("state");
 
     for (Map.Entry<String, Long> entry : myLastModifications.entrySet()) {
-      final Element update = new Element(WHITELIST_MODIFY);
+      final Element update = new Element(MODIFY);
       update.setAttribute(RECORDER_ID, entry.getKey());
       update.setAttribute(LAST_MODIFIED, String.valueOf(entry.getValue()));
       element.addContent(update);
     }
 
-    for (Map.Entry<String, WhitelistPathSettings> entry : myRecorderToPathSettings.entrySet()) {
+    for (Map.Entry<String, EventsSchemePathSettings> entry : myRecorderToPathSettings.entrySet()) {
       final Element path = new Element(PATH);
       path.setAttribute(RECORDER_ID, entry.getKey());
-      WhitelistPathSettings value = entry.getValue();
+      EventsSchemePathSettings value = entry.getValue();
       path.setAttribute(CUSTOM_PATH, value.getCustomPath());
       path.setAttribute(USE_CUSTOM_PATH, String.valueOf(value.isUseCustomPath()));
       element.addContent(path);

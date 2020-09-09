@@ -12,23 +12,23 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 
-public class EventLogWhitelistPersistence extends BaseEventLogWhitelistPersistence {
+public class EventLogMetadataPersistence extends BaseEventLogMetadataPersistence {
   private static final String DEPRECATED_EVENTS_SCHEME_FILE = "white-list.json";
   public static final String EVENTS_SCHEME_FILE = "events-scheme.json";
 
-  private static final Logger LOG = Logger.getInstance(EventLogWhitelistPersistence.class);
+  private static final Logger LOG = Logger.getInstance(EventLogMetadataPersistence.class);
   @NotNull
   private final String myRecorderId;
 
-  public EventLogWhitelistPersistence(@NotNull String recorderId) {
+  public EventLogMetadataPersistence(@NotNull String recorderId) {
     myRecorderId = recorderId;
   }
 
   @Override
   @Nullable
-  public String getCachedMetadata() {
+  public String getCachedEventsScheme() {
     try {
-      File file = getWhitelistFile();
+      File file = getEventsSchemeFile();
       if (file.exists()) return FileUtil.loadFile(file);
     }
     catch (IOException e) {
@@ -38,8 +38,8 @@ public class EventLogWhitelistPersistence extends BaseEventLogWhitelistPersisten
   }
 
   @NotNull
-  private File getWhitelistFile() throws IOException {
-    WhitelistPathSettings settings = EventLogWhitelistSettingsPersistence.getInstance().getPathSettings(myRecorderId);
+  private File getEventsSchemeFile() throws IOException {
+    EventsSchemePathSettings settings = EventLogMetadataSettingsPersistence.getInstance().getPathSettings(myRecorderId);
     if (settings != null && settings.isUseCustomPath()) {
       return new File(settings.getCustomPath());
     }
@@ -52,11 +52,11 @@ public class EventLogWhitelistPersistence extends BaseEventLogWhitelistPersisten
     }
   }
 
-  public void cacheWhiteList(@NotNull String gsonWhiteListContent, long lastModified) {
+  public void cacheEventsScheme(@NotNull String eventsSchemeJson, long lastModified) {
     try {
       final File file = getDefaultFile();
-      FileUtil.writeToFile(file, gsonWhiteListContent);
-      EventLogWhitelistSettingsPersistence.getInstance().setLastModified(myRecorderId, lastModified);
+      FileUtil.writeToFile(file, eventsSchemeJson);
+      EventLogMetadataSettingsPersistence.getInstance().setLastModified(myRecorderId, lastModified);
     }
     catch (IOException e) {
       LOG.error(e);
@@ -78,7 +78,7 @@ public class EventLogWhitelistPersistence extends BaseEventLogWhitelistPersisten
   }
 
   public long getLastModified() {
-    return EventLogWhitelistSettingsPersistence.getInstance().getLastModified(myRecorderId);
+    return EventLogMetadataSettingsPersistence.getInstance().getLastModified(myRecorderId);
   }
 
   @NotNull

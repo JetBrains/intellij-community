@@ -2,7 +2,7 @@
 package com.intellij.internal.statistics.whitelist.storage
 
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
-import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogTestWhitelistPersistence
+import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogTestMetadataPersistence
 import com.intellij.internal.statistic.eventLog.whitelist.WhitelistTestGroupStorage
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -30,7 +30,7 @@ internal abstract class WhitelistBaseStorageTest : BasePlatformTestCase() {
 
     WhitelistTestGroupStorage.cleanupAll()
     for (recorder in recordersToCleanUp) {
-      val file = EventLogTestWhitelistPersistence(recorder).whitelistFile
+      val file = EventLogTestMetadataPersistence(recorder).eventsTestSchemeFile
       try {
         FileUtil.delete(File(file.parent))
       }

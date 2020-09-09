@@ -6,7 +6,7 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.StatisticsDevKitUtil
 import com.intellij.internal.statistic.actions.OpenEventsSchemeFileAction.Companion.openFileInEditor
-import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogTestWhitelistPersistence
+import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogTestMetadataPersistence
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 
@@ -17,7 +17,7 @@ class OpenEventsTestSchemeFileAction(private val myRecorderId: String = Statisti
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
 
-    val file = EventLogTestWhitelistPersistence(myRecorderId).whitelistFile
+    val file = EventLogTestMetadataPersistence(myRecorderId).eventsTestSchemeFile
     openFileInEditor(file, project)
   }
 }

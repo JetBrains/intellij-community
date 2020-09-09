@@ -12,14 +12,14 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 
-abstract public class BaseEventLogWhitelistPersistence {
-  private static final Logger LOG = Logger.getInstance(BaseEventLogWhitelistPersistence.class);
+abstract public class BaseEventLogMetadataPersistence {
+  private static final Logger LOG = Logger.getInstance(BaseEventLogMetadataPersistence.class);
 
   public static final String DEPRECATED_FUS_METADATA_DIR = "event-log-whitelist";
   public static final String FUS_METADATA_DIR = "event-log-metadata";
 
   @Nullable
-  public abstract String getCachedMetadata();
+  public abstract String getCachedEventsScheme();
 
   public static File getDefaultMetadataFile(@NotNull String recorderId,
                                             @NotNull String fileName,

@@ -4,7 +4,7 @@ package com.intellij.internal.statistics.whitelist.validator
 import com.intellij.internal.statistic.eventLog.EventLogBuild
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
-import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistPersistence
+import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogMetadataPersistence
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules
 import com.intellij.internal.statistic.eventLog.whitelist.EventLogMetadataLoader
@@ -43,7 +43,7 @@ abstract class BaseSensitiveDataValidatorTest  : UsefulTestCase() {
   }
 
   internal fun newValidator(content: String, customBuild: String? = null): TestSensitiveDataValidator {
-    val storage = object : WhitelistStorage("TEST", TestEventLogWhitelistPersistence(content), TestEventLogWhitelistLoader(content)) {
+    val storage = object : WhitelistStorage("TEST", TestEventLogMetadataPersistence(content), TestEventLogWhitelistLoader(content)) {
       override fun createValidators(build: EventLogBuild?,
                                     groups: FUStatisticsWhiteListGroupsService.WLGroups): MutableMap<String, EventGroupRules> {
         if (customBuild != null) {
@@ -80,8 +80,8 @@ internal class TestSensitiveDataValidator(storage: WhitelistStorage) : Sensitive
   }
 }
 
-class TestEventLogWhitelistPersistence(private val myContent: String) : EventLogWhitelistPersistence("TEST") {
-  override fun getCachedMetadata(): String? {
+class TestEventLogMetadataPersistence(private val myContent: String) : EventLogMetadataPersistence("TEST") {
+  override fun getCachedEventsScheme(): String? {
     return myContent
   }
 }
