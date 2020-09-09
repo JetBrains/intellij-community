@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
@@ -29,7 +28,6 @@ import java.util.List;
  * @author spleaner
  */
 public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRenderer, TableCellEditor, JBPopupListener {
-
   private final T[] myValues;
   private WeakReference<ListPopup> myPopupRef;
   private ChangeEvent myChangeEvent = null;
@@ -40,13 +38,13 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
 
   private Runnable myFinalRunnable;
 
-  public ComboBoxTableRenderer(final T[] values) {
+  public ComboBoxTableRenderer(T[] values) {
     myValues = values;
     setFont(UIUtil.getButtonFont());
     setBorder(JBUI.Borders.empty(0, 5));
   }
 
-  public ComboBoxTableRenderer withClickCount(int clickCount) {
+  public ComboBoxTableRenderer<T> withClickCount(int clickCount) {
     myClickCount = clickCount;
     return this;
   }
@@ -58,7 +56,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     if (myValues != null) {
       String oldText = getText();
       Icon oldIcon = getIcon();
-      for(T v : myValues) {
+      for (T v : myValues) {
         setText(getTextFor(v));
         setIcon(getIconFor(v));
 
@@ -79,7 +77,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     return getPreferredSize();
   }
 
-  private static Dimension addIconSize(final Dimension d) {
+  private static Dimension addIconSize(Dimension d) {
     return new Dimension(d.width + AllIcons.General.ArrowDown.getIconWidth() + JBUIScale.scale(2),
                          Math.max(d.height, AllIcons.General.ArrowDown.getIconHeight()));
   }
@@ -96,7 +94,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     return null;
   }
 
-  protected Runnable onChosen(@NotNull final T value) {
+  protected Runnable onChosen(@NotNull T value) {
     stopCellEditing(value);
 
     return () -> stopCellEditing(value);
@@ -107,40 +105,39 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     super.paintComponent(g);
 
     if (!StringUtil.isEmpty(getText())) {
-      final Rectangle r = getBounds();
-      final Insets i = getInsets();
-      final int x = r.width - i.right - AllIcons.General.ArrowDown.getIconWidth();
-      final int y = i.top + (r.height - i.top - i.bottom - AllIcons.General.ArrowDown.getIconHeight()) / 2;
+      Rectangle r = getBounds();
+      Insets i = getInsets();
+      int x = r.width - i.right - AllIcons.General.ArrowDown.getIconWidth();
+      int y = i.top + (r.height - i.top - i.bottom - AllIcons.General.ArrowDown.getIconHeight()) / 2;
       AllIcons.General.ArrowDown.paintIcon(this, g, x, y);
     }
   }
 
   @Override
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-    @SuppressWarnings("unchecked") final T t = (T)value;
+    @SuppressWarnings("unchecked") T t = (T)value;
     customizeComponent(t, table, isSelected);
     return this;
   }
 
   @Override
-  public Component getTableCellEditorComponent(JTable table, final Object value, boolean isSelected, final int row, final int column) {
-    @SuppressWarnings("unchecked") final T t = (T)value;
+  public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+    @SuppressWarnings("unchecked") T t = (T)value;
     myValue = t;
     customizeComponent(t, table, true);
 
-    //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> showPopup(t, row));
 
     return this;
   }
 
-  protected boolean isApplicable(final T value, final int row) {
+  protected boolean isApplicable(T value, int row) {
     return true;
   }
 
-  private void showPopup(final T value, final int row) {
+  private void showPopup(T value, int row) {
     List<T> filtered = ContainerUtil.findAll(myValues, t -> isApplicable(t, row));
-    final ListPopup popup = JBPopupFactory.getInstance().createListPopup(new ListStep<T>(filtered, value) {
+    ListPopup popup = JBPopupFactory.getInstance().createListPopup(new ListStep<>(filtered, value) {
       @Override
       @NotNull
       public String getTextFor(T value) {
@@ -159,7 +156,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
       }
 
       @Override
-      public PopupStep onChosen(T selectedValue, boolean finalChoice) {
+      public PopupStep<?> onChosen(T selectedValue, boolean finalChoice) {
         myFinalRunnable = ComboBoxTableRenderer.this.onChosen(selectedValue);
         return FINAL_CHOICE;
       }
@@ -187,7 +184,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     fireEditingCanceled();
   }
 
-  protected void customizeComponent(final T value, final JTable table, final boolean isSelected) {
+  protected void customizeComponent(T value, JTable table, boolean isSelected) {
     setOpaque(true);
     setText(value == null ? "" : getTextFor(value));
     setIcon(value == null ? null : getIconFor(value));
@@ -202,11 +199,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
 
   @Override
   public boolean isCellEditable(EventObject event) {
-    if (event instanceof MouseEvent) {
-      return ((MouseEvent)event).getClickCount() >= myClickCount;
-    }
-
-    return true;
+    return !(event instanceof MouseEvent) || ((MouseEvent)event).getClickCount() >= myClickCount;
   }
 
   @Override
@@ -214,7 +207,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     return true;
   }
 
-  private void stopCellEditing(final T value) {
+  private void stopCellEditing(T value) {
     myValue = value;
     stopCellEditing();
   }
@@ -266,7 +259,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
 
   private void hidePopup() {
     if (myPopupRef != null) {
-      final ListPopup popup = myPopupRef.get();
+      ListPopup popup = myPopupRef.get();
       if (popup != null && popup.isVisible()) {
         popup.cancel();
       }

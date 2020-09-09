@@ -46,6 +46,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
   private Set<FileType> myTempFileTypes;
   private FileTypeAssocTable<FileType> myTempPatternsTable;
   private FileTypeAssocTable<Language> myTempTemplateDataLanguages;
+  @SuppressWarnings("rawtypes")
   private final Map<UserFileType, UserFileType> myOriginalToEditedMap = new HashMap<>();
   private FileType myFileTypeToPreselect;
 
@@ -74,7 +75,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
   private void updateFileTypeList() {
     List<FileType> types = ContainerUtil.filter(myTempFileTypes, fileType -> !fileType.isReadOnly());
     types.sort((o1, o2) -> o1.getDescription().compareToIgnoreCase(o2.getDescription()));
-    myRecognizedFileType.setFileTypes(types.toArray(FileType.EMPTY_ARRAY));
+    myRecognizedFileType.setFileTypes(types);
   }
 
   @NotNull
@@ -84,11 +85,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
 
   @Override
   public void apply() {
-    Set<UserFileType> modifiedUserTypes = myOriginalToEditedMap.keySet();
-    for (UserFileType oldType : modifiedUserTypes) {
-      oldType.copyFrom(myOriginalToEditedMap.get(oldType));
-    }
-    myOriginalToEditedMap.clear();
+    copyTypeMap();
 
     FileTypeManagerImpl fileTypeManager = (FileTypeManagerImpl)FileTypeManager.getInstance();
     ApplicationManager.getApplication().runWriteAction(() -> {
@@ -101,6 +98,15 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
 
     LightEditService.getInstance().setSupportedFilePatterns(
       LightEditFilePatterns.parse(myFileTypePanel.myLightEditPatternsField.getText()));
+  }
+
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  private void copyTypeMap() {
+    Set<UserFileType> modifiedUserTypes = myOriginalToEditedMap.keySet();
+    for (UserFileType oldType : modifiedUserTypes) {
+      oldType.copyFrom(myOriginalToEditedMap.get(oldType));
+    }
+    myOriginalToEditedMap.clear();
   }
 
   @Override
@@ -120,8 +126,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       myRecognizedFileType.selectFileType(myFileTypeToPreselect);
     }
 
-    myFileTypePanel.myLightEditPatternsField.setText(
-      LightEditService.getInstance().getSupportedFilePatterns().toSeparatedString());
+    myFileTypePanel.myLightEditPatternsField.setText(LightEditService.getInstance().getSupportedFilePatterns().toSeparatedString());
   }
 
   @Override
@@ -140,7 +145,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
   @Override
   public void disposeUIResources() {
     if (myFileTypePanel != null) {
-      myRecognizedFileType.setFileTypes(FileType.EMPTY_ARRAY);
+      myRecognizedFileType.setFileTypes(Collections.emptyList());
       myPatterns.clearList();
       myHashBangs.clearList();
     }
@@ -176,10 +181,10 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     FileType fileType = myRecognizedFileType.getSelectedFileType();
     if (!canBeModified(fileType)) return;
 
-    UserFileType userFileType = (UserFileType)fileType;
-    UserFileType ftToEdit = myOriginalToEditedMap.get(userFileType);
+    UserFileType<?> userFileType = (UserFileType<?>)fileType;
+    UserFileType<?> ftToEdit = myOriginalToEditedMap.get(userFileType);
     if (ftToEdit == null) ftToEdit = userFileType.clone();
-    @SuppressWarnings("unchecked") TypeEditor editor = new TypeEditor(myRecognizedFileType.myFileTypesList, ftToEdit, FileTypesBundle.message("filetype.edit.existing.title"));
+    @SuppressWarnings({"unchecked", "rawtypes"}) TypeEditor editor = new TypeEditor(myRecognizedFileType.myFileTypesList, ftToEdit, FileTypesBundle.message("filetype.edit.existing.title"));
     if (editor.showAndGet()) {
       myOriginalToEditedMap.put(userFileType, ftToEdit);
     }
@@ -217,19 +222,16 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
 
   private void editPattern() {
     String item = myPatterns.getSelectedItem();
-    if (item == null) return;
-
-    editPattern(item);
+    if (item != null) {
+      editPattern(item);
+    }
   }
 
   private void editPattern(@Nullable String item) {
     FileType type = myRecognizedFileType.getSelectedFileType();
     if (type == null) return;
 
-    String title =
-      item == null
-      ? FileTypesBundle.message("filetype.edit.add.pattern.title")
-      : FileTypesBundle.message("filetype.edit.edit.pattern.title");
+    String title = item == null ? FileTypesBundle.message("filetype.edit.add.pattern.title") : FileTypesBundle.message("filetype.edit.edit.pattern.title");
 
     Language oldLanguage = item == null ? null : myTempTemplateDataLanguages.findAssociatedFileType(item);
     FileTypePatternDialog dialog = new FileTypePatternDialog(item, type, oldLanguage);
@@ -290,10 +292,8 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     editPattern(null);
   }
 
-  @Nullable
-  private FileType findExistingFileType(@NotNull FileNameMatcher matcher) {
+  private @Nullable FileType findExistingFileType(@NotNull FileNameMatcher matcher) {
     FileType type = myTempPatternsTable.findAssociatedFileType(matcher);
-
     if (type != null && type != FileTypes.UNKNOWN) {
       return type;
     }
@@ -314,6 +314,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     myTempPatternsTable.removeAssociation(matcher, type);
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myPatterns.myList, true));
   }
+
   private void removeHashBang() {
     FileType type = myRecognizedFileType.getSelectedFileType();
     if (type == null) return;
@@ -324,14 +325,14 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myHashBangs.myList, true));
   }
 
-  @NotNull
   @Override
-  public String getHelpTopic() {
+  public @NotNull String getHelpTopic() {
     return "preferences.fileTypes";
   }
 
   class RecognizedFileTypes {
     private final JList<FileType> myFileTypesList = new JBList<>(new DefaultListModel<>());
+
     RecognizedFileTypes(@NotNull JPanel panel) {
       panel.setLayout(new BorderLayout());
 
@@ -440,7 +441,8 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       return myFileTypesList.getSelectedValue();
     }
 
-    void setFileTypes(FileType @NotNull [] types) {
+    @SuppressWarnings("DuplicatedCode")
+    void setFileTypes(Iterable<FileType> types) {
       DefaultListModel<FileType> listModel = (DefaultListModel<FileType>)myFileTypesList.getModel();
       listModel.clear();
       for (FileType type : types) {
@@ -488,13 +490,8 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     }
 
     void clearList() {
-      getListModel().clear();
+      ((DefaultListModel<String>)myList.getModel()).clear();
       myList.clearSelection();
-    }
-
-    @NotNull
-    private DefaultListModel<String> getListModel() {
-      return (DefaultListModel<String>)myList.getModel();
     }
 
     void select(@NotNull String pattern) {
@@ -564,13 +561,8 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     }
 
     void clearList() {
-      getListModel().clear();
+      ((DefaultListModel<String>)myList.getModel()).clear();
       myList.clearSelection();
-    }
-
-    @NotNull
-    private DefaultListModel<String> getListModel() {
-      return (DefaultListModel<String>)myList.getModel();
     }
 
     void select(@NotNull String pattern) {
@@ -620,7 +612,8 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     if (conflict != null && conflict.fileType != type) {
       FileType existingFileType = conflict.fileType;
       if (!conflict.writeable) {
-        String message = conflict.exact ? FileTypesBundle.message("filetype.edit.hashbang.exists.exact.error", existingFileType.getDescription())
+        String message = conflict.exact
+                         ? FileTypesBundle.message("filetype.edit.hashbang.exists.exact.error", existingFileType.getDescription())
                          : FileTypesBundle.message("filetype.edit.hashbang.exists.similar.error", existingFileType.getDescription(), conflict.existingHashBang);
         Messages.showMessageDialog(myHashBangs.myList, message, title, Messages.getErrorIcon());
         return;
@@ -660,11 +653,12 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     boolean writeable; //file type can be changed
     String existingHashBang; // the hashbang of the conflicting file type
   }
+
   private static boolean isStandardFileType(@NotNull FileType fileType) {
     return FileTypeManager.getInstance().getStdFileType(fileType.getName()) == fileType;
   }
 
-  // check if there is a conflict between new hasbang and existing ones
+  // check if there is a conflict between new hashbang and existing ones
   private HashBangConflict checkHashBangConflict(@NotNull String hashbang) {
     HashBangConflict conflict = new HashBangConflict();
     for (Map.Entry<String, FileType> entry : myTempPatternsTable.getInternalRawHashBangPatterns().entrySet()) {
@@ -692,9 +686,8 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     return null;
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return getHelpTopic();
   }
 }
