@@ -707,11 +707,12 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   @Tag
+  @NlsContexts.DetailedDescription
   public String getDescription() {
     return myDescription;
   }
 
-  public void setDescription(@Nullable String description) {
+  public void setDescription(@NlsContexts.DetailedDescription @Nullable String description) {
     myDescription = StringUtil.nullize(description);
     schemeState = SchemeState.POSSIBLY_CHANGED;
   }

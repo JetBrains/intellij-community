@@ -14,6 +14,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,12 +32,12 @@ import java.util.zip.ZipInputStream;
  * @author Dmitry Avdeev
  */
 public class LocalArchivedTemplate extends ArchivedProjectTemplate {
-  public static final String DESCRIPTION_PATH = Project.DIRECTORY_STORE_FOLDER + "/description.html";
-  static final String TEMPLATE_DESCRIPTOR = Project.DIRECTORY_STORE_FOLDER + "/project-template.xml";
-  static final String TEMPLATE_META_XML = "template-meta.xml";
+  public static final @NonNls String DESCRIPTION_PATH = Project.DIRECTORY_STORE_FOLDER + "/description.html";
+  static final @NonNls String TEMPLATE_DESCRIPTOR = Project.DIRECTORY_STORE_FOLDER + "/project-template.xml";
+  static final @NonNls String TEMPLATE_META_XML = "template-meta.xml";
   static final String META_TEMPLATE_DESCRIPTOR_PATH = Project.DIRECTORY_STORE_FOLDER + "/"+TEMPLATE_META_XML;
-  public static final String UNENCODED_ATTRIBUTE = "unencoded";
-  static final String ROOT_FILE_NAME = "root";
+  public static @NonNls final String UNENCODED_ATTRIBUTE = "unencoded";
+  static final @NonNls String ROOT_FILE_NAME = "root";
 
   private final URL myArchivePath;
   private final ModuleType myModuleType;
@@ -200,10 +201,10 @@ public class LocalArchivedTemplate extends ArchivedProjectTemplate {
   }
 
   static class RootDescription {
-    private static final String ROOTS_ELEMENT = "roots";
-    private static final String ROOT_ELEMENT = "root";
-    private static final String INDEX_ATTRIBUTE = "index";
-    private static final String PATH_ATTRIBUTE = "path";
+    private static final @NonNls String ROOTS_ELEMENT = "roots";
+    private static final @NonNls String ROOT_ELEMENT = "root";
+    private static final @NonNls String INDEX_ATTRIBUTE = "index";
+    private static final @NonNls String PATH_ATTRIBUTE = "path";
     final VirtualFile myFile;
     final String myRelativePath;
     final int myIndex;

@@ -232,6 +232,7 @@ public class ConflictsDialog extends DialogWrapper{
       private final @NlsContexts.Tooltip String myConflictDescription;
 
       DescriptionOnlyUsage(@NotNull @NlsContexts.Tooltip String conflictDescription) {
+        //noinspection HardCodedStringLiteral
         myConflictDescription = StringUtil.unescapeXmlEntities(conflictDescription)
           .replaceAll("<code>", "")
           .replaceAll("</code>", "")

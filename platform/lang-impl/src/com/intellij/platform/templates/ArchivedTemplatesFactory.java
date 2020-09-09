@@ -56,7 +56,7 @@ public class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
 
   @NotNull
   static String getCustomTemplatesPath() {
-    return PathManager.getConfigPath() + "/projectTemplates";
+    return PathManager.getConfigPath() + "/projectTemplates"; //NON-NLS
   }
 
   @NotNull
