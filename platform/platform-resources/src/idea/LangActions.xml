@@ -209,7 +209,7 @@
     </action>
 
     <action id="ViewNavigationBar" class="com.intellij.ide.actions.ViewNavigationBarAction">
-      <add-to-group group-id="UIToggleActions" relative-to-action="ViewStatusBarWidgetsGroup" anchor="after"/>
+      <add-to-group group-id="ViewToolbarActionsGroup"/>
       <override-text place="NavBar"/>
     </action>
 
@@ -505,9 +505,20 @@
       <reference ref="SearchEverywhere"/>
     </group>
 
-    <action id="RunDebugConfigAction" class="com.intellij.execution.segmentedRunDebugWidget.SegmentedRDCAction">
-      <add-to-group group-id="ToolbarRunGroup" anchor="first"/>
-    </action>
+
+    <group id="NewToolbarActions">
+      <group id="LeftToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.LeftToolbarGroup">
+        <reference id="Back"/>
+        <reference id="Forward"/>
+        <action id="SegmentedVcsControlAction" class="com.intellij.execution.segmentedVcsWidget.SegmentedVcsControlAction"/>
+        <action id="SearchEverywhereNewToolbarAction" class="com.intellij.ide.navigationToolbar.experimental.SearchEverywhereNewToolbarAction"/>
+      </group>
+      <group id="CenterToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.CenterToolbarGroup">
+      </group>
+      <group id="RightToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.RightToolbarGroup">
+        <action id="RunDebugConfigAction" class="com.intellij.execution.segmentedRunDebugWidget.SegmentedRDCAction"/>
+      </group>
+    </group>
 
     <group id="SegmentedRunDebugConfigActionGroup">
       <!--<group class="com.intellij.execution.segmentedRunDebugWidget.RDCPillLabelGroup"/>-->
@@ -1409,6 +1420,6 @@
     <action class="com.intellij.execution.actions.ActivateRunToolWindowAction" id="ActivateRunToolWindow">
       <add-to-group group-id="ActivateToolWindowActions"/>
     </action>
-    
+
   </actions>
 </idea-plugin>

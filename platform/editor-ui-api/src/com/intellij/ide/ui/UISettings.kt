@@ -165,9 +165,13 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
 
   var showNavigationBar: Boolean
     get() = state.showNavigationBar
-    set(value) {
-      state.showNavigationBar = value
+    set(b) {
+      ToolbarSettings.getInstance().setNavBarVisible(b)
+      fireUISettingsChanged()
     }
+
+  val showToolbarInNavigationBar: Boolean
+    get() =  ToolbarSettings.getInstance().getShowToolbarInNavigationBar()
 
   var showMembersInNavigationBar: Boolean
     get() = state.showMembersInNavigationBar
@@ -211,9 +215,10 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
   var showMainToolbar: Boolean
-    get() = state.showMainToolbar
+    get() =  state.showMainToolbar
     set(value) {
-      state.showMainToolbar = value
+      ToolbarSettings.getInstance().setToolbarVisible(value)
+      fireUISettingsChanged()
     }
 
   var showIconsInMenus: Boolean
@@ -428,11 +433,6 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.mergeMainMenuWithWindowTitle = value
     }
 
-  val showNewNavbarVcsGroup: Boolean
-    get() = Registry.`is`("ide.new.navbar.vcs.group", false)
-
-  val showNewToolbar: Boolean
-    get() = Registry.`is`("ide.new.navbar", false)
 
   init {
     // TODO Remove the registry keys and migration code in 2019.3
@@ -579,6 +579,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
     const val MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY = "ide.win.frame.decoration"
+
     @JvmStatic
     val mergeMainMenuWithWindowTitleOverrideValue = System.getProperty(MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY)?.toBoolean()
     val isMergeMainMenuWithWindowTitleOverridden = mergeMainMenuWithWindowTitleOverrideValue != null

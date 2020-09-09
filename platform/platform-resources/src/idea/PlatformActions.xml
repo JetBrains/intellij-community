@@ -562,16 +562,30 @@
               <synonym key="action.ToggleZenMode.enter"/>
             </action>
           </group>
+
           <group id="UIToggleActions">
             <separator/>
-            <action id="ViewToolBar" class="com.intellij.ide.actions.ViewToolbarAction"/>
+            <action id="ViewMainMenu" class="com.intellij.ide.actions.ViewMainMenuAction"/>
+            <group id="ViewToolbarActionsGroup" class="com.intellij.ide.actions.toolbar.experimental.ViewToolbarActionsGroup"/>
             <action id="ViewToolButtons" class="com.intellij.ide.actions.ViewToolWindowButtonsAction"/>
             <action id="ViewStatusBar" class="com.intellij.ide.actions.ViewStatusBarAction"/>
             <group id="ViewStatusBarWidgetsGroup" class="com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup" popup="true"/>
-            <action id="ViewMainMenu" class="com.intellij.ide.actions.ViewMainMenuAction"/>
             <action id="ViewInplaceComments" class="com.intellij.ide.actions.ViewInplaceCommentsAction"/>
           </group>
         </group>
+        <action id="ViewToolBar" class="com.intellij.ide.actions.ViewToolbarAction">
+          <add-to-group group-id="ViewToolbarActionsGroup"/>
+        </action>
+
+        <group id="ViewToolbarNewGroup" class="com.intellij.ide.actions.toolbar.experimental.ViewToolbarNewActionGroup" popup="true">
+          <add-to-group group-id="UIToggleActions" relative-to-action="ViewToolButtons" anchor="before"/>
+          <action id="ViewNewToolbarAction" class="com.intellij.ide.actions.toolbar.experimental.ViewNewToolbarAction"/>
+          <action id="ViewObsoleteToolbarAction" class="com.intellij.ide.actions.toolbar.experimental.ViewObsoleteToolbarAction"/>
+          <action id="ViewObsoleteNavBarAction" class="com.intellij.ide.actions.toolbar.experimental.ViewObsoleteNavBarAction"/>
+          <separator/>
+          <action id="CustomizeToolbarAction" class="com.intellij.ide.actions.CustomizeToolbarAction"/>
+        </group>
+
         <action id="EditSource" class="com.intellij.ide.actions.EditSourceAction" icon="AllIcons.Actions.EditSource"/>
         <action id="OpenInRightSplit" class="com.intellij.ide.actions.OpenInRightSplitAction" icon="AllIcons.Actions.SplitVertically" />
         <action id="ViewSource" class="com.intellij.ide.actions.ViewSourceAction"/>
@@ -808,7 +822,7 @@
     </group>
 
     <group id="NavBarVcsGroup"/>
-    <group id="NavBarVcsGroupLight"/>
+    <group id="SegmentedVcsActionsBarGroup"/>
 
     <group id="EditorPopupMenu">
       <reference ref="$Cut"/>
