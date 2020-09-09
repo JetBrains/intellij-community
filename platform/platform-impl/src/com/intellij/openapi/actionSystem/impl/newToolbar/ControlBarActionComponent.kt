@@ -80,7 +80,7 @@ class ControlBarActionComponent(actionGroup: ActionGroup) :
       }
 
       val createToolbarButton = super.createToolbarButton(action, buttonLook, place, presentation, minimumSize)
-      createToolbarButton.border = JBUI.Borders.empty()
+      createToolbarButton.border =  JBUI.Borders.empty(0, 3)
       return createToolbarButton
     }
 
@@ -105,8 +105,6 @@ class ControlBarActionComponent(actionGroup: ActionGroup) :
         }
         else {
           val component = createToolbarButton(action)
-
-          component.border = JBUI.Borders.empty()
           addMetadata(component, i, actions.size)
           add(ACTION_BUTTON_CONSTRAINT, component)
         }
@@ -117,7 +115,7 @@ class ControlBarActionComponent(actionGroup: ActionGroup) :
 
     override fun paint(g: Graphics) {
       super.paint(g)
-      painter.paintActionBarBorder( this, g)
+      painter.paintActionBarBorder(this, g)
     }
 
    private fun addMetadata(component: JComponent, index: Int, count: Int) {

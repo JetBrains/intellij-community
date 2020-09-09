@@ -108,24 +108,37 @@ internal class ControlBarPainter {
                           if (MacUIUtil.USE_QUARTZ) RenderingHints.VALUE_STROKE_PURE else RenderingHints.VALUE_STROKE_NORMALIZE)
 
       val borderColor = JBColor.border()
+      for(i in 0 until component.componentCount - 1) {
+        val comp = component.getComponent(i)
+        val bounds = comp.bounds
+
+        g2.paint2DLine(bounds.maxX, bw.toDouble(), bounds.maxX, (component.height - (bw * 2)).toDouble(), LinePainter2D.StrokeType.INSIDE,
+                       1.0,
+                       borderColor)
+      }
+
       var arc = DarculaUIUtil.BUTTON_ARC.float
 
       val border: Path2D = Path2D.Float(Path2D.WIND_EVEN_ODD)
       border.append(RoundRectangle2D.Float(bw, bw, component.width - (bw * 2), component.height - (bw * 2), arc, arc), false)
 
       arc = if (arc > lw) arc - lw else 0.0f
-      border.append(RoundRectangle2D.Float(bw + lw, bw + lw, component.width - ((bw + lw) * 2), component.height - ((bw + lw) * 2), arc, arc), false)
+      border.append(RoundRectangle2D.Float(bw + lw, bw + lw, component.width - ((bw + lw) * 2), component.height - ((bw + lw) * 2), arc,
+                                           arc), false)
 
-      g2.color = borderColor
+      g2.paint = GradientPaint(bw, bw,
+                               JBColor.namedColor(
+                                  "Button.startBorderColor",
+                                   JBColor.namedColor("Button.darcula.outlineStartColor",0xbfbfbf)),
+                               bw, component.height - (bw * 2),
+                               JBColor
+                                 .namedColor("Button.endBorderColor",
+                                             JBColor.namedColor(
+                                               "Button.darcula.outlineEndColor",
+                                               0xb8b8b8)))
       g2.fill(border)
 
-      for(i in 0 until component.componentCount - 1) {
-        val comp = component.getComponent(i)
-        val bounds = comp.bounds
 
-        g2.paint2DLine(bounds.maxX, bw.toDouble(), bounds.maxX, (component.height - (bw * 2)).toDouble(), LinePainter2D.StrokeType.INSIDE, 1.0,
-                       borderColor)
-      }
     }
     finally {
       g2.dispose()
