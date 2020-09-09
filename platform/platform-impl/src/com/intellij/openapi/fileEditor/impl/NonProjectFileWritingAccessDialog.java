@@ -27,14 +27,8 @@ public class NonProjectFileWritingAccessDialog extends DialogWrapper {
   private JRadioButton myUnlockAllButton;
 
   public NonProjectFileWritingAccessDialog(@NotNull Project project, @NotNull List<? extends VirtualFile> nonProjectFiles) {
-    this(project, nonProjectFiles, "Non-Project Files");
-  }
-
-  public NonProjectFileWritingAccessDialog(@NotNull Project project,
-                                           @NotNull List<? extends VirtualFile> nonProjectFiles,
-                                           @NotNull String filesType) {
     super(project);
-    setTitle(IdeBundle.message("dialog.title.0.protection", filesType));
+    setTitle(IdeBundle.message("dialog.title.non.project.files.protection"));
 
     myFileList.setPreferredSize(ReadOnlyStatusDialog.getDialogPreferredSize());
 
