@@ -131,14 +131,16 @@ fun Project.guessProjectDir() : VirtualFile? {
 }
 
 /**
- * Tries to guess the main module directory
+ * Returns some directory which is located near module files.
  *
- * Please use this method only in case if no any additional information about module location
- *  eg. some contained files or etc.
+ * There is no such thing as "base directory" for a module in IntelliJ project model. A module may have multiple content roots, or not have
+ * content roots at all. The module configuration file (.iml) may be located far away from the module files or doesn't exist at all. So this
+ * method tries to suggest some directory which is related to the module but due to its heuristics nature its result shouldn't be used for
+ * real actions as is, user should be able to review and change it. For example it can be used as a default selection in a file chooser.
  */
 fun Module.guessModuleDir(): VirtualFile? {
   val contentRoots = rootManager.contentRoots.filter { it.isDirectory }
-  return contentRoots.find { it.name == name } ?: contentRoots.firstOrNull()
+  return contentRoots.find { it.name == name } ?: contentRoots.firstOrNull() ?: moduleFile?.parent
 }
 
 @JvmOverloads
