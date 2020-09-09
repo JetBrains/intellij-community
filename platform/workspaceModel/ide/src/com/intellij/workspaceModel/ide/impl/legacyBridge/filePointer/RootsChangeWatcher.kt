@@ -102,17 +102,21 @@ internal class RootsChangeWatcher(val project: Project): Disposable {
       override fun before(events: List<VFileEvent>): Unit = events.forEach { event ->
         val (oldUrl, newUrl) = getUrls(event) ?: return@forEach
 
-        rootFilePointers.onVfsChange(oldUrl, newUrl)
+        if (oldUrl != newUrl) {
+          rootFilePointers.onVfsChange(oldUrl, newUrl)
+        }
       }
 
       override fun after(events: List<VFileEvent>) = events.forEach { event ->
         if (event is VFilePropertyChangeEvent) propertyChanged(event)
 
         val (oldUrl, newUrl) = getUrls(event) ?: return@forEach
-        updateCollection(roots, oldUrl, newUrl)
-        updateCollection(jarDirectories, oldUrl, newUrl)
-        updateCollection(recursiveJarDirectories, oldUrl, newUrl)
-        updateModuleName(oldUrl, newUrl)
+        if (oldUrl != newUrl) {
+          updateCollection(roots, oldUrl, newUrl)
+          updateCollection(jarDirectories, oldUrl, newUrl)
+          updateCollection(recursiveJarDirectories, oldUrl, newUrl)
+          updateModuleName(oldUrl, newUrl)
+        }
       }
 
       private fun updateModuleName(oldUrl: String, newUrl: String) {
