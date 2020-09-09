@@ -1,7 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util.ui;
+package com.intellij.util.ui.scroll;
 
 import com.intellij.openapi.util.registry.Registry;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,11 +13,12 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import static com.intellij.util.ui.MouseWheelSmoothScroll.*;
-import static com.intellij.util.ui.SmoothScrollUtil.*;
+import static com.intellij.util.ui.scroll.MouseWheelSmoothScroll.*;
+import static com.intellij.util.ui.scroll.SmoothScrollUtil.*;
 import static java.lang.Math.abs;
 import static java.lang.Math.max;
 
+@ApiStatus.Experimental
 public final class TouchScroll {
   private final InertialAnimator horizontal = new InertialAnimator(), vertical = new InertialAnimator();
   private final FlingManager horizontalFling = new FlingManager(), verticalFling = new FlingManager();

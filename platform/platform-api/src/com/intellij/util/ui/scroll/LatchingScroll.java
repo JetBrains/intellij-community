@@ -1,32 +1,56 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util.ui;
+package com.intellij.util.ui.scroll;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.MouseWheelEvent;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-public class LatchingScroll {
+/**
+ * The utility class that helps to avoid accidental scroll in perpendicular direction.
+ */
+public final class LatchingScroll {
+
+  /**
+   * When set to {@link Boolean#TRUE} for component then latching will be ignored.
+   */
+  public static final Key<Boolean> IGNORE_SCROLL_LATCHING = Key.create("IGNORE_SCROLL_LATCHING");
 
   private final List<MyScrollEvent> myScrollEvents = new LinkedList<>();
 
-  public boolean test(MouseWheelEvent event) {
+  /**
+   * Checks, if current event should be ignored.
+   *
+   * The class tracks all events which are passed into this method,
+   * and calculates, if current one should be ignored. With some expire time
+   * previous events are removed from tracker.
+   */
+  public boolean shouldBeIgnored(MouseWheelEvent event) {
+    var source = (JScrollPane)event.getSource();
+    if (UIUtil.isClientPropertyTrue(getViewportView(source), IGNORE_SCROLL_LATCHING)) {
+      return false;
+    }
+
     myScrollEvents.add(new MyScrollEvent(event.getWhen(), event.getPreciseWheelRotation(), event.isShiftDown()));
     double xs = 0.0, ys = 0.0;
 
-    Iterator<MyScrollEvent> iterator = myScrollEvents.iterator();
+    var iterator = myScrollEvents.iterator();
     while (iterator.hasNext()) {
       MyScrollEvent se = iterator.next();
-      if (se.getWhen() + getTime() < event.getWhen()) {
+      if (se.getWhen() + getExpireAfter() < event.getWhen()) {
         iterator.remove();
       } else {
-        double rotation = Math.abs(se.getRotation());
         if (se.isHorizontal()) {
-          xs += rotation;
+          xs += Math.abs(se.getRotation());
         } else {
-          ys += rotation;
+          ys += Math.abs(se.getRotation());
         }
       }
     }
@@ -36,17 +60,25 @@ public class LatchingScroll {
 
     double thatAngle = getAngle();
     if (angle <= thatAngle && !isHorizontal || angle >= 90 - thatAngle && isHorizontal) {
-      return false;
+      return true;
     }
 
-    return true;
+    return false;
   }
 
-  private long getTime() {
+  private static @Nullable Component getViewportView(@NotNull JScrollPane pane) {
+    JViewport viewport = pane.getViewport();
+    if (viewport != null) {
+      return viewport.getView();
+    }
+    return null;
+  }
+
+  private static long getExpireAfter() {
     return Math.max(Registry.intValue("idea.latching.scrolling.time"), 0);
   }
 
-  private double getAngle() {
+  private static double getAngle() {
     return Math.min(Math.max(Registry.doubleValue("idea.latching.scrolling.angle"), 0.0), 45.0);
   }
 

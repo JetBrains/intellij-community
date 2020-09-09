@@ -10,6 +10,10 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.*;
+import com.intellij.util.ui.scroll.LatchingScroll;
+import com.intellij.util.ui.scroll.MouseWheelSmoothScroll;
+import com.intellij.util.ui.scroll.TouchScroll;
+import com.intellij.util.ui.scroll.TouchScrollUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -245,7 +249,7 @@ public class JBScrollPane extends JScrollPane {
           } else {
             if (LatchingScroll.isEnabled()) {
               if (myLatchingScroll == null) myLatchingScroll = new LatchingScroll();
-              if (!myLatchingScroll.test(event)) {
+              if (myLatchingScroll.shouldBeIgnored(event)) {
                 event.consume();
               }
             }
