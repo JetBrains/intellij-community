@@ -3,6 +3,7 @@ package git4idea.stash
 
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vcs.VcsBundle
@@ -28,11 +29,11 @@ import javax.swing.event.HyperlinkEvent
 object GitStashOperations {
 
   @JvmStatic
-  fun dropStashWithConfirmation(project: Project, root: VirtualFile, parentComponent: Component, stash: StashInfo): Boolean {
-    if (Messages.YES != Messages.showYesNoDialog(parentComponent,
-                                                 GitBundle.message("git.unstash.drop.confirmation.message", stash.stash, stash.message),
-                                                 GitBundle.message("git.unstash.drop.confirmation.title", stash.stash),
-                                                 Messages.getQuestionIcon())) return false
+  fun dropStashWithConfirmation(project: Project, root: VirtualFile, parentComponent: Component?, stash: StashInfo): Boolean {
+    val dialogBuilder = yesNo(GitBundle.message("git.unstash.drop.confirmation.title", stash.stash),
+                              GitBundle.message("git.unstash.drop.confirmation.message", stash.stash, stash.message)).icon(Messages.getQuestionIcon())
+    val confirmed = if (parentComponent != null) dialogBuilder.ask(parentComponent) else dialogBuilder.ask(project)
+    if (!confirmed) return false
 
     val h = GitLineHandler(project, root, GitCommand.STASH)
     h.addParameters("drop", stash.stash)
@@ -52,11 +53,11 @@ object GitStashOperations {
   }
 
   @JvmStatic
-  fun clearStashesWithConfirmation(project: Project, root: VirtualFile, parentComponent: Component): Boolean {
-    if (Messages.YES != Messages.showYesNoDialog(parentComponent,
-                                                 GitBundle.message("git.unstash.clear.confirmation.message"),
-                                                 GitBundle.message("git.unstash.clear.confirmation.title"),
-                                                 Messages.getWarningIcon())) return false
+  fun clearStashesWithConfirmation(project: Project, root: VirtualFile, parentComponent: Component?): Boolean {
+    val dialogBuilder = yesNo(GitBundle.message("git.unstash.clear.confirmation.title"),
+                              GitBundle.message("git.unstash.clear.confirmation.message")).icon(Messages.getWarningIcon())
+    val confirmed = if (parentComponent != null) dialogBuilder.ask(parentComponent) else dialogBuilder.ask(project)
+    if (!confirmed) return false
 
     val h = GitLineHandler(project, root, GitCommand.STASH)
     h.addParameters("clear")
