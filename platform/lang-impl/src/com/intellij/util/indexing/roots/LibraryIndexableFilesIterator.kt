@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ConcurrentBitSet
 import com.intellij.util.indexing.IndexingBundle
 
-class LibraryIndexableFilesProvider(val library: Library) : IndexableFilesProvider {
+class LibraryIndexableFilesIterator(val library: Library) : IndexableFilesIterator {
   override fun getDebugName() = library.name.takeUnless { it.isNullOrEmpty() }?.let { "Library '$it'" } ?: library.toString()
 
   override fun getIndexingProgressText(): String? {

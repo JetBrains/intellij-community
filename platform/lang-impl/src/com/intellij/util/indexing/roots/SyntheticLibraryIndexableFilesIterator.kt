@@ -10,9 +10,9 @@ import com.intellij.util.containers.ConcurrentBitSet
 import com.intellij.util.indexing.IndexingBundle
 import org.jetbrains.annotations.Nullable
 
-internal class SyntheticLibraryIndexableFilesProvider(
+internal class SyntheticLibraryIndexableFilesIterator(
   private val syntheticLibrary: SyntheticLibrary
-) : IndexableFilesProvider {
+) : IndexableFilesIterator {
 
   private fun getName() = (syntheticLibrary as? ItemPresentation)?.presentableText
 

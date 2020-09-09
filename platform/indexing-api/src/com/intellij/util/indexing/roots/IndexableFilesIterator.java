@@ -13,18 +13,19 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Provides files to be indexed for a project structure entity (module, library, SDK, etc.)
+ * Provides a named file set to be indexed for a single project structure entity (module, library, SDK, etc.)
  * Allows the indexing infrastructure to prioritize indexing by some predicate.
  *
- * @see ModuleIndexableFilesProvider
- * @see LibraryIndexableFilesProvider
- * @see SyntheticLibraryIndexableFilesProvider
- * @see SdkIndexableFilesProvider
- * @see IndexableSetContributorFilesProvider
+ * @see ModuleIndexableFilesIterator
+ * @see LibraryIndexableFilesIterator
+ * @see SyntheticLibraryIndexableFilesIterator
+ * @see SdkIndexableFilesIterator
+ * @see IndexableSetContributorFilesIterator
  */
 @Debug.Renderer(text = "getClass().getName() + \":\" + getDebugName()")
-@ApiStatus.Internal
-public interface IndexableFilesProvider {
+@ApiStatus.Experimental
+@ApiStatus.OverrideOnly
+public interface IndexableFilesIterator {
 
   /**
    * Presentable name that can be shown in logs and used for debugging purposes.

@@ -12,7 +12,7 @@ import com.intellij.util.containers.ConcurrentBitSet
 import com.intellij.util.indexing.IndexingBundle
 import org.jetbrains.annotations.NotNull
 
-internal class ModuleIndexableFilesProvider(val module: Module) : IndexableFilesProvider {
+internal class ModuleIndexableFilesIterator(val module: Module) : IndexableFilesIterator {
   override fun getDebugName() = "Module '${module.name}'"
 
   override fun getIndexingProgressText(): @NotNull String {

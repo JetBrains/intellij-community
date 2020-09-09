@@ -9,7 +9,7 @@ import com.intellij.util.containers.ConcurrentBitSet
 import com.intellij.util.indexing.IndexableSetContributor
 import com.intellij.util.indexing.IndexingBundle
 
-internal class IndexableSetContributorFilesProvider(private val indexableSetContributor: IndexableSetContributor) : IndexableFilesProvider {
+internal class IndexableSetContributorFilesIterator(private val indexableSetContributor: IndexableSetContributor) : IndexableFilesIterator {
   override fun getDebugName() = getName().takeUnless { it.isNullOrEmpty() }?.let { "IndexableSetContributor '$it'" }
                                 ?: indexableSetContributor.toString()
 
