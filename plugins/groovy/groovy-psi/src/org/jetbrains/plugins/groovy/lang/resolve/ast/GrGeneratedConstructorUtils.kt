@@ -135,7 +135,7 @@ private fun processSuperClasses(containingClass: GrTypeDefinition, anno: PsiAnno
   fun collectSupers(owner: PsiClass?) {
     if (owner == null || !visited.add(owner) || GROOVY_OBJECT_SUPPORT == owner.qualifiedName) return
     collectSupers(owner.superClass)
-    acceptClass(owner, acceptSuperProperties, false, acceptSuperFields, false, collector)
+    acceptClass(owner, acceptSuperProperties, false, acceptSuperFields, false, anno, collector)
   }
   collectSupers(superClass)
 }
@@ -145,7 +145,7 @@ fun processThisClass(containingClass: PsiClass, anno: PsiAnnotation, collector: 
   val includeProperties = inferBooleanAttribute(anno, TupleConstructorAttributes.INCLUDE_PROPERTIES) ?: true
   val includeBeans = inferBooleanAttribute(anno, TupleConstructorAttributes.ALL_PROPERTIES) ?: false
   val includeStatic = inferBooleanAttribute(anno, "includeStatic") ?: false
-  acceptClass(containingClass, includeProperties, includeBeans, includeFields, includeStatic, collector)
+  acceptClass(containingClass, includeProperties, includeBeans, includeFields, includeStatic, anno, collector)
 }
 
 private fun acceptClass(clazz: PsiClass,
@@ -153,6 +153,7 @@ private fun acceptClass(clazz: PsiClass,
                         includeBeans: Boolean,
                         includeFields: Boolean,
                         includeStatic: Boolean,
+                        annotation: PsiAnnotation,
                         collector: MutableCollection<PsiNamedElement>) {
   val (properties, setters, fields) = getGroupedClassMembers(clazz)
 
@@ -176,7 +177,7 @@ private fun acceptClass(clazz: PsiClass,
 
   if (includeFields) {
     for (field in fields) {
-      if (field.hasModifierProperty(GrModifier.FINAL) && field.initializer != null) continue
+      if (annotation.hasQualifiedName(GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR) && field.hasModifierProperty(GrModifier.FINAL) && field.initializer != null) continue
       addParameter(field)
     }
   }

@@ -165,4 +165,18 @@ class X {
 
 }"""
   }
+
+  @Test
+  void 'field with initializer'() {
+    doTest """
+@MapConstructor(includeFields = true)
+class MapConstructorTestClass {
+    private final Integer number = 123
+}
+
+
+void mapConstructorTest() {
+    final o0 = new MapConstructorTestClass(number:333)
+}"""
+  }
 }
