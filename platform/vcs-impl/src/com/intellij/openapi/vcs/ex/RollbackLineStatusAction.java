@@ -21,8 +21,13 @@ import java.util.BitSet;
 
 public class RollbackLineStatusAction extends LineStatusActionBase {
   @Override
-  protected void doAction(@NotNull LineStatusTrackerI<?> tracker, @NotNull Editor editor) {
-    rollback(tracker, editor);
+  protected void doAction(@NotNull LineStatusTrackerI<?> tracker, @NotNull Editor editor, @Nullable Range range) {
+    if (range != null) {
+      rollback(tracker, range, editor);
+    }
+    else {
+      rollback(tracker, editor);
+    }
   }
 
   public static void rollback(@NotNull LineStatusTrackerI<?> tracker, @NotNull Editor editor) {

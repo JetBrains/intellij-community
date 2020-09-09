@@ -90,10 +90,10 @@ public class LineStatusMarkerDrawUtil {
     }
   }
 
-  private static void paintChangedLines(@NotNull Graphics2D g,
-                                        @NotNull Editor editor,
-                                        @NotNull List<? extends ChangedLines<DefaultLineFlags>> block,
-                                        int framingBorder) {
+  public static void paintChangedLines(@NotNull Graphics2D g,
+                                       @NotNull Editor editor,
+                                       @NotNull List<? extends ChangedLines<DefaultLineFlags>> block,
+                                       int framingBorder) {
     EditorImpl editorImpl = (EditorImpl)editor;
 
     Color borderColor = getGutterBorderColor(editor);
@@ -311,6 +311,10 @@ public class LineStatusMarkerDrawUtil {
 
     public DiffStripeTextAttributes(byte type) {
       myType = type;
+    }
+
+    public byte getType() {
+      return myType;
     }
 
     @Override
