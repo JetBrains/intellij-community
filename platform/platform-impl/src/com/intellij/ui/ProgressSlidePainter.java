@@ -93,10 +93,7 @@ final class ProgressSlidePainter {
 
     do {
       var newSlide = tryGetNextSlide();
-      if (newSlide == null) return;
-
-      if (newSlide.isEmpty())
-        return;
+      if (newSlide == null || newSlide.isEmpty()) return;
 
       if (newSlide.progress <= currentProgress) {
         StartupUiUtil.drawImage(g, newSlide.image, 0, 0, null);
@@ -111,23 +108,10 @@ final class ProgressSlidePainter {
     int index = myNextSlideIndex;
     if (index >= myPrefetchedSlides.length()) return null;
 
-    var start = System.currentTimeMillis();
-    do {
-      var slide = myPrefetchedSlides.get(index);
-      if (slide != null) {
-        myPrefetchedSlides.set(index, Slide.Empty);
-        //noinspection NonAtomicOperationOnVolatileField
-        myNextSlideIndex++;
-        return slide;
-      } else if (System.currentTimeMillis() - start > 1) {
-        ourLogger.warn("Cannot get the next slide for 1 ms");
-        myPrefetchedSlides.set(index, Slide.Empty);
-        //noinspection NonAtomicOperationOnVolatileField
-        myNextSlideIndex++;
-        return Slide.Empty;
-      }
-
-      Thread.onSpinWait();
-    } while (true);
+    var slide = myPrefetchedSlides.get(index);
+    myPrefetchedSlides.set(index, Slide.Empty);
+    //noinspection NonAtomicOperationOnVolatileField
+    myNextSlideIndex++;
+    return slide;
   }
 }
