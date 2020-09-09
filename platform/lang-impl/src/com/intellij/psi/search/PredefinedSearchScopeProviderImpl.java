@@ -4,6 +4,7 @@ package com.intellij.psi.search;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.hierarchy.HierarchyBrowserBase;
 import com.intellij.ide.scratch.ScratchesSearchScope;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -230,7 +231,7 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
     final HierarchyBrowserBase hierarchyBrowserBase = (HierarchyBrowserBase)component;
     final PsiElement[] elements = hierarchyBrowserBase.getAvailableElements();
     if (elements.length > 0) {
-      result.add(new LocalSearchScope(elements, "Hierarchy '" + name + "' (visible nodes only)"));
+      result.add(new LocalSearchScope(elements, LangBundle.message("predefined.search.scope.hearchy.scope.display.name", name)));
     }
   }
 
