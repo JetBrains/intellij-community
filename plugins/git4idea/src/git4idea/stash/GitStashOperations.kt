@@ -1,11 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.stash
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.ThrowableComputable
@@ -27,63 +23,54 @@ import git4idea.repo.GitRepositoryManager
 import git4idea.ui.StashInfo
 import git4idea.util.GitUIUtil
 import java.awt.Component
-import java.util.*
 import javax.swing.event.HyperlinkEvent
 
 object GitStashOperations {
+
   @JvmStatic
   fun dropStashWithConfirmation(project: Project, root: VirtualFile, parentComponent: Component, stash: StashInfo): Boolean {
-    if (Messages.YES == Messages.showYesNoDialog(parentComponent,
+    if (Messages.YES != Messages.showYesNoDialog(parentComponent,
                                                  GitBundle.message("git.unstash.drop.confirmation.message", stash.stash, stash.message),
                                                  GitBundle.message("git.unstash.drop.confirmation.title", stash.stash),
-                                                 Messages.getQuestionIcon())) {
-      val current = ModalityState.current()
-      ProgressManager.getInstance().run(object : Task.Modal(
-        project,
+                                                 Messages.getQuestionIcon())) return false
+
+    val h = GitLineHandler(project, root, GitCommand.STASH)
+    h.addParameters("drop", stash.stash)
+    try {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        ThrowableComputable<Unit, VcsException> { Git.getInstance().runCommand(h).throwOnError() },
         GitBundle.message("unstash.dialog.remove.stash.progress.indicator.title", stash.stash),
-        true
-      ) {
-        override fun run(indicator: ProgressIndicator) {
-          val h = GitLineHandler(project, root, GitCommand.STASH)
-          h.addParameters("drop", stash.stash)
-          try {
-            Git.getInstance().runCommand(h).throwOnError()
-          }
-          catch (ex: VcsException) {
-            ApplicationManager.getApplication().invokeLater(
-              {
-                GitUIUtil.showOperationError(project, ex, h.printableCommandLine())
-              }, current)
-          }
-        }
-      })
+        true,
+        project
+      )
       return true
+    }
+    catch (ex: VcsException) {
+      GitUIUtil.showOperationError(project, ex, h.printableCommandLine())
     }
     return false
   }
 
   @JvmStatic
-  fun clearStashesWithConfirmation(project: Project,
-                                   root: VirtualFile,
-                                   parentComponent: Component): Boolean {
-    if (Messages.YES == Messages.showYesNoDialog(parentComponent,
+  fun clearStashesWithConfirmation(project: Project, root: VirtualFile, parentComponent: Component): Boolean {
+    if (Messages.YES != Messages.showYesNoDialog(parentComponent,
                                                  GitBundle.message("git.unstash.clear.confirmation.message"),
-                                                 GitBundle.message("git.unstash.clear.confirmation.title"), Messages.getWarningIcon())) {
-      val h = GitLineHandler(project, root, GitCommand.STASH)
-      h.addParameters("clear")
-      object : Task.Modal(project, GitBundle.message("unstash.clearing.stashes"), false) {
-        override fun run(indicator: ProgressIndicator) {
-          val result = Git.getInstance().runCommand(h)
-          if (!result.success()) {
-            ApplicationManager.getApplication().invokeLater {
-              GitUIUtil.showOperationError(project,
-                                           GitBundle.message("unstash.clearing.stashes"),
-                                           result.errorOutputAsJoinedString)
-            }
-          }
-        }
-      }.queue()
+                                                 GitBundle.message("git.unstash.clear.confirmation.title"),
+                                                 Messages.getWarningIcon())) return false
+
+    val h = GitLineHandler(project, root, GitCommand.STASH)
+    h.addParameters("clear")
+    try {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        ThrowableComputable<Unit, VcsException> { Git.getInstance().runCommand(h).throwOnError() },
+        GitBundle.message("unstash.clearing.stashes"),
+        false,
+        project
+      )
       return true
+    }
+    catch (ex: VcsException) {
+      GitUIUtil.showOperationError(project, ex, h.printableCommandLine())
     }
     return false
   }
@@ -116,28 +103,25 @@ object GitStashOperations {
   }
 
   @JvmStatic
-  fun unstash(project: Project, root: VirtualFile, stash: StashInfo,
-              branch: String?, popStash: Boolean, reinstateIndex: Boolean): Boolean {
-    val h = unstashHandler(project, root, stash, branch, popStash, reinstateIndex)
+  fun unstash(project: Project, root: VirtualFile, stash: StashInfo, branch: String?, popStash: Boolean, reinstateIndex: Boolean): Boolean {
     val completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(
       {
         //better to use quick to keep consistent state with ui
         val repository = GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(root)!!
         val hash = Git.getInstance().resolveReference(repository, stash.stash)
-        unstash(project, Collections.singletonMap(root, hash),
-                { h },
+        unstash(project, mapOf(Pair(root, hash)),
+                { unstashHandler(project, root, stash, branch, popStash, reinstateIndex) },
                 UnstashConflictResolver(project, root, stash))
       },
       GitBundle.message("unstash.unstashing"),
       true,
       project
     )
-    if (completed) {
-      VcsNotifier.getInstance(project).notifySuccess("git.unstash.patch.applied",
-                                                     "", VcsBundle.message("patch.apply.success.applied.text"))
-      return true
-    }
-    return false
+    if (!completed) return false
+
+    VcsNotifier.getInstance(project).notifySuccess("git.unstash.patch.applied", "",
+                                                   VcsBundle.message("patch.apply.success.applied.text"))
+    return true
   }
 
   private fun unstashHandler(project: Project,
@@ -168,11 +152,9 @@ private class UnstashConflictResolver(project: Project,
 
   override fun notifyUnresolvedRemain() {
     VcsNotifier.getInstance(myProject).notifyImportantWarning("git.unstash.with.unresolved.conflicts",
-                                                              GitBundle.message(
-                                                                "unstash.dialog.unresolved.conflict.warning.notification.title"),
-                                                              GitBundle.message(
-                                                                "unstash.dialog.unresolved.conflict.warning.notification.message"))
-    { _, event ->
+                                                              GitBundle.message("unstash.dialog.unresolved.conflict.warning.notification.title"),
+                                                              GitBundle.message("unstash.dialog.unresolved.conflict.warning.notification.message")
+    ) { _, event ->
       if (event.eventType == HyperlinkEvent.EventType.ACTIVATED) {
         if (event.description == "resolve") {
           UnstashConflictResolver(myProject, root, stashInfo).mergeNoProceed()
@@ -196,7 +178,7 @@ private class UnstashMergeDialogCustomizer(private val stashInfo: StashInfo) : M
     return XmlStringUtil.wrapInHtml(
       GitBundle.message(
         "unstash.conflict.dialog.description.label.text",
-        XmlStringUtil.wrapInHtmlTag(stashInfo.stash + "\"" + stashInfo.message + "\"", "code")
+        XmlStringUtil.wrapInHtmlTag("${stashInfo.stash}\"${stashInfo.message}\"", "code")
       )
     )
   }
