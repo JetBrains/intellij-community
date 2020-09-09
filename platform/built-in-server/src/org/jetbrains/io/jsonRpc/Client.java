@@ -50,7 +50,7 @@ public abstract class Client extends UserDataHolderBase {
       if (!future.isSuccess()) {
         Throwable cause = future.cause();
         if (cause == null) {
-          promise.setError("No success");
+          promise.setError("No success"); //NON-NLS
         }
         else {
           promise.setError(cause);

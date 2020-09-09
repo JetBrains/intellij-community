@@ -17,6 +17,7 @@
 package org.jetbrains.builtInWebServer.ssi;
 
 import io.netty.buffer.ByteBufUtf8Writer;
+import kotlin.Suppress;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.ParseException;
@@ -28,6 +29,7 @@ import java.util.List;
  * @author Paul Speed
  * @author David Becker
  */
+@SuppressWarnings("HardCodedStringLiteral")
 public class SsiConditional implements SsiCommand {
   @SuppressWarnings("SpellCheckingInspection")
   @Override
