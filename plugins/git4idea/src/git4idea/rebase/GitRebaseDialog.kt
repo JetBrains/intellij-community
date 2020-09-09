@@ -2,6 +2,7 @@
 package git4idea.rebase
 
 import com.intellij.dvcs.DvcsUtil
+import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressManager
@@ -9,16 +10,20 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.popup.IconButton
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.CollectionComboBoxModel
+import com.intellij.ui.InplaceButton
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.popup.list.ListPopupImpl
+import com.intellij.util.BooleanFunction
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import git4idea.*
@@ -33,6 +38,7 @@ import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Container
 import java.awt.Insets
@@ -144,8 +150,7 @@ internal class GitRebaseDialog(private val project: Project,
   fun gitRoot(): VirtualFile = rootField.item.root
 
   fun getSelectedParams(): GitRebaseParams {
-    val selectedBranch = branchField.item
-    val branch = if (currentBranch?.name != selectedBranch) selectedBranch else null
+    val branch = branchField.item
 
     val newBase = if (GitRebaseOption.ONTO in selectedOptions) getTextField(ontoField).text else null
     val upstream = getTextField(upstreamField).text
@@ -279,7 +284,7 @@ internal class GitRebaseDialog(private val project: Project,
     for (b in localBranches) {
       branchField.addItem(b.name)
     }
-    branchField.item = currentBranch?.name.orEmpty()
+    branchField.item = null
 
     updateBaseFields()
   }
@@ -365,31 +370,49 @@ internal class GitRebaseDialog(private val project: Project,
 
   private fun createOntoLabel() = CmdLabel("--onto",
                                            Insets(1, 1, 1, 0),
-                                           JBDimension(JBUI.scale(60), branchField.preferredSize.height)).apply {
+                                           JBDimension(JBUI.scale(80), branchField.preferredSize.height, true)).apply {
     isVisible = false
+
+    addComponent(createOntoHelpButton())
+  }
+
+  private fun createOntoHelpButton() = InplaceButton(
+    IconButton(GitBundle.message("rebase.dialog.help"), AllIcons.General.ContextHelp),
+    ActionListener {
+      showRebaseHelpPopup()
+    }
+  ).apply {
+    border = JBUI.Borders.empty(1)
+  }
+
+  private fun showRebaseHelpPopup() {
+    val helpPopup = GitRebaseHelpPopupPanel()
+    JBPopupFactory
+      .getInstance()
+      .createComponentPopupBuilder(helpPopup, helpPopup.helpLink)
+      .setMayBeParent(true)
+      .setFocusable(true)
+      .setRequestFocus(true)
+      .setCancelOnWindowDeactivation(false)
+      .createPopup()
+      .showUnderneathOf(rootPane)
   }
 
   private fun createOntoField() = ComboBox<PresentableRef>(MutableCollectionComboBoxModel()).apply {
     setMinimumAndPreferredWidth(JBUI.scale(if (showRootField()) 220 else 310))
     isEditable = true
     isVisible = false
-    editor = object : BasicComboBoxEditor() {
-      override fun createEditorComponent() = JBTextField().apply {
-        emptyText.text = GitBundle.message("rebase.dialog.onto.field")
-      }
-    }
-    ui = FlatComboBoxUI(outerInsets = Insets(BW.get(), 0, BW.get(), 0))
+    editor = createFieldEditor(GitBundle.message("rebase.dialog.new.base"))
+    @Suppress("UsePropertyAccessSyntax")
+    setUI(FlatComboBoxUI(outerInsets = Insets(BW.get(), 0, BW.get(), 0)))
   }
 
   private fun createUpstreamField() = ComboBox<PresentableRef>(MutableCollectionComboBoxModel()).apply {
     setMinimumAndPreferredWidth(JBUI.scale(185))
     isEditable = true
-    editor = object : BasicComboBoxEditor() {
-      override fun createEditorComponent() = JBTextField().apply {
-        emptyText.text = GitBundle.message("rebase.dialog.upstream.field.placeholder")
-      }
-    }
-    ui = FlatComboBoxUI(outerInsets = Insets(BW.get(), 0, BW.get(), 0))
+    editor = createFieldEditor(GitBundle.message("rebase.dialog.target"))
+    @Suppress("UsePropertyAccessSyntax")
+    setUI(FlatComboBoxUI(outerInsets = Insets(BW.get(), 0, BW.get(), 0)))
   }
 
   private fun createRootField() = ComboBox(CollectionComboBoxModel(repositories)).apply {
@@ -409,14 +432,19 @@ internal class GitRebaseDialog(private val project: Project,
   private fun createBranchField() = ComboBox<String>(MutableCollectionComboBoxModel()).apply {
     isSwingPopup = false
     isEditable = true
-    editor = object : BasicComboBoxEditor() {
-      override fun createEditorComponent() = JBTextField().apply {
-        emptyText.text = GitBundle.message("rebase.dialog.branch.field")
-      }
-    }
+    editor = createFieldEditor(GitBundle.message("rebase.dialog.branch.field"))
     ui = FlatComboBoxUI(
       outerInsets = Insets(BW.get(), 0, BW.get(), 0),
       popupEmptyText = GitBundle.message("merge.branch.popup.empty.text"))
+  }
+
+  private fun createFieldEditor(@Nls placeHolder: String) = object : BasicComboBoxEditor() {
+    override fun createEditorComponent() = object : JBTextField() {
+      init {
+        putClientProperty("StatusVisibleFunction", BooleanFunction<JBTextField> { textField -> textField.text.isNullOrEmpty() })
+        emptyText.text = placeHolder
+      }
+    }
   }
 
   private fun createPanel() = JPanel().apply {
@@ -488,7 +516,17 @@ internal class GitRebaseDialog(private val project: Project,
     updateTopPanel()
     updateBottomPanel()
     updateOptionsPanel()
+    updatePlaceholders()
     rerender()
+  }
+
+  private fun updatePlaceholders() {
+    (getTextField(upstreamField) as JBTextField).apply {
+      emptyText.text = if (GitRebaseOption.ONTO in selectedOptions)
+        GitBundle.message("rebase.dialog.old.base")
+      else
+        GitBundle.message("rebase.dialog.target")
+    }
   }
 
   private fun rerender() {
