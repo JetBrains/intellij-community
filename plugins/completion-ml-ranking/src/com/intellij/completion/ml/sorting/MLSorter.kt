@@ -139,7 +139,6 @@ class MLSorter : CompletionFinalSorter() {
       calculatedElementFeatures.add(ElementFeatures(relevance, additional))
     }
 
-    val meaningfulRelevance = meaningfulRelevanceExtractor.meaningfulFeatures()
     val lookupFeatures = mutableMapOf<String, Any>()
     for (elementFeatureProvider in LookupFeatureProvider.forLanguage(lookupStorage.language)) {
       val features = elementFeatureProvider.calculateFeatures(calculatedElementFeatures)
@@ -148,7 +147,8 @@ class MLSorter : CompletionFinalSorter() {
 
     val commonSessionFactors = SessionFactorsUtils.updateSessionFactors(lookupStorage, items)
     val contextFactors = lookupStorage.contextFactors
-    val features = RankingFeatures(lookupStorage.userFactors, contextFactors, commonSessionFactors, lookupFeatures)
+    val meaningfulRelevance = meaningfulRelevanceExtractor.meaningfulFeatures()
+    val features = RankingFeatures(lookupStorage.userFactors, contextFactors, commonSessionFactors, lookupFeatures, meaningfulRelevance)
 
     val tracker = ModelTimeTracker()
     for ((i, element) in items.withIndex()) {
@@ -156,7 +156,7 @@ class MLSorter : CompletionFinalSorter() {
 
       val score = tracker.measure {
         val position = positionsBefore.getValue(element)
-        val elementFeatures = features.withElementFeatures(relevance, additional, meaningfulRelevance)
+        val elementFeatures = features.withElementFeatures(relevance, additional)
         val score = calculateElementScore(rankingModel, element, position, elementFeatures, queryLength)
         sortingRestrictions.itemScored(elementFeatures)
         return@measure score
@@ -263,11 +263,10 @@ class MLSorter : CompletionFinalSorter() {
 
     fun processFeatures(features: Map<String, Any>) {
       for (feature in features) {
-        if (feature.key in meaningful) continue
-        if (feature.key !in values) {
-          values[feature.key] = feature.value
-        } else if (values[feature.key] != feature.value) {
-          meaningful.add(feature.key)
+        when (values[feature.key]) {
+          null -> values[feature.key] = feature.value
+          feature.value -> Unit
+          else -> meaningful.add(feature.key)
         }
       }
     }

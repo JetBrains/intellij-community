@@ -4,16 +4,16 @@ package com.intellij.completion.ml.sorting
 class RankingFeatures(private val user: Map<String, Any>,
                       private val context: Map<String, Any>,
                       private val commonSession: Map<String, Any>,
-                      private val lookup: Map<String, Any>) {
+                      private val lookup: Map<String, Any>,
+                      private val meaningfulRelevance: Set<String>) {
   private var relevance: Map<String, Any> = emptyMap()
   private var additional: Map<String, Any> = emptyMap()
-  private var meaningful: Set<String> = emptySet()
 
   /*
    * Names of features that affect default ranking
    */
-  fun relevanceFeatures(): Set<String> {
-    return relevance.keys.intersect(meaningful)
+  fun meaningfulRelevanceFeatures(): Set<String> {
+    return meaningfulRelevance
   }
 
   fun featureValue(name: String): Any? {
@@ -25,11 +25,9 @@ class RankingFeatures(private val user: Map<String, Any>,
   }
 
   fun withElementFeatures(defaultRelevance: Map<String, Any>,
-                          additionalRelevance: Map<String, Any>,
-                          meaningfulRelevance: Set<String>): RankingFeatures {
+                          additionalRelevance: Map<String, Any>): RankingFeatures {
     this.relevance = defaultRelevance
     this.additional = additionalRelevance
-    this.meaningful = meaningfulRelevance
 
     return this
   }
