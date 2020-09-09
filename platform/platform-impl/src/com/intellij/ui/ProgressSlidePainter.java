@@ -4,8 +4,6 @@ package com.intellij.ui;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ProgressSlide;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.ui.scale.ScaleContext;
-import com.intellij.util.ImageLoader;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +17,7 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
 
 final class ProgressSlidePainter {
   private static final int PREFETCH_PARALLEL_COUNT = 5;
-  private static final int PREFETCH_BUFFER_SIZE = 32;
+  private static final int PREFETCH_BUFFER_SIZE = 15;
   private static final Logger ourLogger = Logger.getInstance(ProgressSlidePainter.class);
 
   private final List<ProgressSlide> myProgressSlides;
@@ -27,6 +25,8 @@ final class ProgressSlidePainter {
   private final AtomicReferenceArray<Slide> myPrefetchedSlides;
   private final AtomicInteger myPrefetchSlideIndex;
   private volatile int myNextSlideIndex = 0;
+
+  private final SplashSlideLoader mySlideLoader;
 
   private static class Slide {
     private static final Slide Empty = new Slide(0, null);
@@ -44,11 +44,12 @@ final class ProgressSlidePainter {
     }
   }
 
-  ProgressSlidePainter(@NotNull ApplicationInfoEx appInfo) {
+  ProgressSlidePainter(@NotNull ApplicationInfoEx appInfo, SplashSlideLoader slideLoader) {
     myProgressSlides = appInfo.getProgressSlides();
     myProgressSlides.sort(Comparator.comparing(it -> it.progressRation));
     myPrefetchedSlides = new AtomicReferenceArray<>(myProgressSlides.size());
     myPrefetchSlideIndex = new AtomicInteger(0);
+    mySlideLoader = slideLoader;
   }
 
   private boolean isFinished() {
@@ -63,8 +64,7 @@ final class ProgressSlidePainter {
           int slideIndex = myPrefetchSlideIndex.getAndIncrement();
           if (slideIndex >= myProgressSlides.size()) return;
 
-          if (slideIndex < myNextSlideIndex)
-          {
+          if (slideIndex < myNextSlideIndex) {
             // current slide will not be shown
             myPrefetchedSlides.set(slideIndex, Slide.Empty);
             continue;
@@ -74,8 +74,7 @@ final class ProgressSlidePainter {
             Thread.onSpinWait();
 
           var slide = myProgressSlides.get(slideIndex);
-          var image = ImageLoader.loadFromUrl(slide.url, Splash.class, ImageLoader.ALLOW_FLOAT_SCALING, null, ScaleContext.create());
-
+          var image = mySlideLoader.loadImage(slide.url, false /*to avoid oom*/);
           if (image == null) {
             ourLogger.error("Cannot load slide by url: " + slide.url);
             myPrefetchedSlides.set(slideIndex, Slide.Empty);
