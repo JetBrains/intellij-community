@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.serialization
 
-import com.intellij.openapi.externalSystem.model.project.dependencies.ProjectDependenciesImpl
+import com.intellij.openapi.externalSystem.model.project.dependencies.*
 import io.github.classgraph.ClassGraph
 import io.github.classgraph.ClassInfo
 import org.assertj.core.api.Assertions.assertThat
@@ -145,6 +145,36 @@ class ToolingSerializerTest {
   @Throws(Exception::class)
   fun `project dependencies serialization test`() {
     doTest(ProjectDependenciesImpl::class.java)
+
+    val projectDependencies = ProjectDependenciesImpl()
+    val mainCompileDependencies = DependencyScopeNode(1, "compileClasspath", "project : (compileClasspath)", "")
+    val mainRuntimeDependencies = DependencyScopeNode(1, "runtimeClasspath", "project : (runtimeClasspath)", "")
+    val mainDependency = ArtifactDependencyNodeImpl(2, "dep", "dep", "1.0")
+    val mainNestedDependency = ArtifactDependencyNodeImpl(3, "nestedDep", "nestedDep", "1.1")
+    mainDependency.dependencies.add(mainNestedDependency)
+    mainRuntimeDependencies.dependencies.add(mainDependency)
+    mainRuntimeDependencies.dependencies.add(ReferenceNode(3))
+    val mainComponentDependencies = ComponentDependenciesImpl("main", mainCompileDependencies, mainRuntimeDependencies)
+    projectDependencies.add(mainComponentDependencies)
+
+    val testCompileDependencies = DependencyScopeNode(1, "testCompileClasspath", "project : (testCompileClasspath)", "")
+    val testRuntimeDependencies = DependencyScopeNode(1, "testRuntimeClasspath", "project : (testRuntimeClasspath)", "")
+    val testDependency = ArtifactDependencyNodeImpl(2, "dep", "dep", "1.0")
+    val testNestedDependency = ArtifactDependencyNodeImpl(3, "nestedDep", "nestedDep", "1.0")
+    testDependency.dependencies.add(testNestedDependency)
+    testRuntimeDependencies.dependencies.add(testDependency)
+    testRuntimeDependencies.dependencies.add(ReferenceNode(3))
+    val testComponentDependencies = ComponentDependenciesImpl("test", testCompileDependencies, testRuntimeDependencies)
+    projectDependencies.add(testComponentDependencies)
+
+    val bytes = ToolingSerializer().write(projectDependencies, ProjectDependenciesImpl::class.java)
+    val deserializedObject = ToolingSerializer().read(bytes, ProjectDependenciesImpl::class.java)
+
+    val deserializedMainNestedDependency = deserializedObject!!.componentsDependencies[0].runtimeDependenciesGraph.dependencies[0].dependencies[0]
+    assertThat(deserializedMainNestedDependency).isEqualToComparingFieldByField(mainNestedDependency)
+
+    val deserializedTestNestedDependency = deserializedObject.componentsDependencies[1].runtimeDependenciesGraph.dependencies[0].dependencies[0]
+    assertThat(deserializedTestNestedDependency).isEqualToComparingFieldByField(testNestedDependency)
   }
 
   @Throws(IOException::class)
