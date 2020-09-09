@@ -4,9 +4,11 @@ package com.intellij.openapi.vcs.ex;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.Interval;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -73,13 +75,15 @@ public class VisibleRangeMerger<T> {
   }
 
   private void processLine(@NotNull Range range, int start, int end, byte type, @NotNull T flags) {
-    Interval interval1 = EditorUtil.logicalLineToYRange(myEditor, start);
-    int visualStart = interval1.intervalStart();
+    Pair<@NotNull Interval, @Nullable Interval> pair1 = EditorUtil.logicalLineToYRange(myEditor, start);
+    int visualStart = pair1.first.intervalStart();
 
-    int sharedPrefixHeight = 0;
-    if (start > 0) {
-      Interval intervalBefore = EditorUtil.logicalLineToYRange(myEditor, start - 1);
-      sharedPrefixHeight = Math.max(0, intervalBefore.intervalEnd() - interval1.intervalStart());
+    int sharedPrefixHeight;
+    if (pair1.second == null) {
+      sharedPrefixHeight = pair1.first.intervalEnd() - pair1.first.intervalStart() + 1;
+    }
+    else {
+      sharedPrefixHeight = pair1.second.intervalStart() - pair1.first.intervalStart();
     }
 
     if (start == end) {
@@ -91,11 +95,16 @@ public class VisibleRangeMerger<T> {
       }
     }
     else {
-      Interval interval2 = EditorUtil.logicalLineToYRange(myEditor, end - 1);
-      int visualEnd = interval2.intervalEnd() + 1;
+      Pair<@NotNull Interval, @Nullable Interval> pair2 = EditorUtil.logicalLineToYRange(myEditor, end - 1);
+      int visualEnd = pair2.first.intervalEnd() + 1;
 
-      Interval intervalAfter = EditorUtil.logicalLineToYRange(myEditor, end);
-      int sharedSuffixHeight = Math.max(0, interval2.intervalEnd() - intervalAfter.intervalStart());
+      int sharedSuffixHeight;
+      if (pair2.second == null) {
+        sharedSuffixHeight = pair2.first.intervalEnd() - pair2.first.intervalStart() + 1;
+      }
+      else {
+        sharedSuffixHeight = pair2.first.intervalEnd() - pair2.second.intervalEnd();
+      }
 
       if (type == Range.EQUAL || type == Range.MODIFIED) {
         appendChange(range, new ChangedLines<>(visualStart, visualEnd, type, flags));

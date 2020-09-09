@@ -17,8 +17,11 @@ package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.impl.Interval;
+import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -67,13 +70,27 @@ public class EditorUtilTest extends LightPlatformCodeInsightTestCase {
     EditorTestUtil.configureSoftWraps(getEditor(), 10);
     int lineHeight = getEditor().getLineHeight();
 
-    Interval i1 = EditorUtil.logicalLineToYRange(getEditor(), 1);
-    assertEquals(lineHeight, i1.intervalStart());
-    assertEquals(lineHeight * 2, i1.intervalEnd());
+    @NotNull Pair<@NotNull Interval, @Nullable Interval> p1 = EditorUtil.logicalLineToYRange(getEditor(), 1);
+    assertEquals(lineHeight, p1.first.intervalStart());
+    assertEquals(lineHeight * 2, p1.first.intervalEnd());
+    assertEquals(lineHeight, p1.second.intervalStart());
+    assertEquals(lineHeight * 2, p1.second.intervalEnd());
 
-    Interval i2 = EditorUtil.logicalLineToYRange(getEditor(), 2);
-    assertEquals(lineHeight * 2, i2.intervalStart());
-    assertEquals(lineHeight * 4, i2.intervalEnd());
+    @NotNull Pair<@NotNull Interval, @Nullable Interval> p2 = EditorUtil.logicalLineToYRange(getEditor(), 2);
+    assertEquals(lineHeight * 2, p2.first.intervalStart());
+    assertEquals(lineHeight * 4, p2.first.intervalEnd());
+    assertEquals(lineHeight * 2, p2.second.intervalStart());
+    assertEquals(lineHeight * 4, p2.second.intervalEnd());
+  }
+
+  public void testLogicalLineToYRangeShared() {
+    createEditor("line1\nline2\n");
+    EditorTestUtil.addFoldRegion(getEditor(), 5, 6, "...", true);
+
+    @NotNull Pair<@NotNull Interval, @Nullable Interval> p = EditorUtil.logicalLineToYRange(getEditor(), 1);
+    assertEquals(0, p.first.intervalStart());
+    assertEquals(getEditor().getLineHeight(), p.first.intervalEnd());
+    assertNull(p.second);
   }
 
   public void testYToLogicalLineRange() {
