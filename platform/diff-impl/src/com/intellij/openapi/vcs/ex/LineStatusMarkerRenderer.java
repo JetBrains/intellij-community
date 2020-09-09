@@ -9,9 +9,11 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.LineStatusMarkerDrawUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.update.DisposableUpdate;
@@ -31,6 +33,9 @@ import static java.util.Collections.emptyList;
 public abstract class LineStatusMarkerRenderer {
   private static final Logger LOG = getInstance(LineStatusMarkerRenderer.class);
 
+  public static final Key<MarkerData> TOOLTIP_KEY = Key.create("LineStatusMarkerRenderer.Tooltip.Id");
+  public static final Key<Boolean> MAIN_KEY = Key.create("LineStatusMarkerRenderer.Main.Id");
+
   @NotNull protected final LineStatusTrackerI<?> myTracker;
   private final MarkupEditorFilter myEditorFilter;
 
@@ -44,15 +49,20 @@ public abstract class LineStatusMarkerRenderer {
     myEditorFilter = getEditorFilter();
 
     Document document = myTracker.getDocument();
-    MarkupModel markupModel = DocumentMarkupModel.forDocument(document, myTracker.getProject(), true);
-    myHighlighter = markupModel.addRangeHighlighter(null, 0, document.getTextLength(), DiffDrawUtil.LST_LINE_MARKER_LAYER,
-                                                    HighlighterTargetArea.LINES_IN_RANGE);
-    myHighlighter.setGreedyToLeft(true);
-    myHighlighter.setGreedyToRight(true);
+    MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, myTracker.getProject(), true);
+    myHighlighter = markupModel.addRangeHighlighterAndChangeAttributes(null, 0, document.getTextLength(),
+                                                                       DiffDrawUtil.LST_LINE_MARKER_LAYER,
+                                                                       HighlighterTargetArea.LINES_IN_RANGE,
+                                                                       false, it -> {
+        it.setGreedyToLeft(true);
+        it.setGreedyToRight(true);
 
-    myHighlighter.setLineMarkerRenderer(new MyActiveGutterRenderer());
+        it.setLineMarkerRenderer(new MyActiveGutterRenderer());
+        if (myEditorFilter != null) it.setEditorFilter(myEditorFilter);
 
-    if (myEditorFilter != null) myHighlighter.setEditorFilter(myEditorFilter);
+        // ensure key is there in MarkupModelListener.afterAdded event
+        it.putUserData(MAIN_KEY, true);
+      });
 
     myUpdateQueue = new MergingUpdateQueue("LineStatusMarkerRenderer", 100, true, ANY_COMPONENT, myTracker.getDisposable());
 
@@ -82,10 +92,9 @@ public abstract class LineStatusMarkerRenderer {
     if (shouldPaintErrorStripeMarkers()) {
       List<? extends Range> ranges = myTracker.getRanges();
       if (ranges != null) {
-        MarkupModel markupModel = DocumentMarkupModel.forDocument(myTracker.getDocument(), myTracker.getProject(), true);
+        MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(myTracker.getDocument(), myTracker.getProject(), true);
         for (Range range : ranges) {
           RangeHighlighter highlighter = createTooltipRangeHighlighter(range, markupModel);
-          if (myEditorFilter != null) highlighter.setEditorFilter(myEditorFilter);
           myTooltipHighlighters.add(highlighter);
         }
       }
@@ -93,19 +102,24 @@ public abstract class LineStatusMarkerRenderer {
   }
 
   @NotNull
-  private static RangeHighlighter createTooltipRangeHighlighter(@NotNull Range range,
-                                                                @NotNull MarkupModel markupModel) {
+  private RangeHighlighter createTooltipRangeHighlighter(@NotNull Range range, @NotNull MarkupModelEx markupModel) {
     TextRange textRange = DiffUtil.getLinesRange(markupModel.getDocument(), range.getLine1(), range.getLine2(), false);
     TextAttributes attributes = new LineStatusMarkerDrawUtil.DiffStripeTextAttributes(range.getType());
 
-    RangeHighlighter highlighter = markupModel.addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(),
-                                                                   DiffDrawUtil.LST_LINE_MARKER_LAYER, attributes,
-                                                                   HighlighterTargetArea.LINES_IN_RANGE);
-    highlighter.setThinErrorStripeMark(true);
-    highlighter.setGreedyToLeft(true);
-    highlighter.setGreedyToRight(true);
+    return markupModel.addRangeHighlighterAndChangeAttributes(null, textRange.getStartOffset(), textRange.getEndOffset(),
+                                                              DiffDrawUtil.LST_LINE_MARKER_LAYER,
+                                                              HighlighterTargetArea.LINES_IN_RANGE,
+                                                              false, it -> {
+        it.setThinErrorStripeMark(true);
+        it.setGreedyToLeft(true);
+        it.setGreedyToRight(true);
 
-    return highlighter;
+        it.setTextAttributes(attributes);
+        if (myEditorFilter != null) it.setEditorFilter(myEditorFilter);
+
+        // ensure key is there in MarkupModelListener.afterAdded event
+        it.putUserData(TOOLTIP_KEY, new MarkerData(range.getType()));
+      });
   }
 
   private void destroyHighlighters() {
@@ -214,6 +228,14 @@ public abstract class LineStatusMarkerRenderer {
     @Override
     public String getAccessibleName() {
       return DiffBundle.message("vcs.marker.changed.line");
+    }
+  }
+
+  public static class MarkerData {
+    public final byte type;
+
+    public MarkerData(byte type) {
+      this.type = type;
     }
   }
 }
