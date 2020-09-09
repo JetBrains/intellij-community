@@ -1,8 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase
 
+import com.intellij.icons.AllIcons
+import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.ui.HyperlinkLabel
+import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.layout.*
 import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.ui.JBImageIcon
@@ -10,22 +13,31 @@ import com.intellij.util.ui.StartupUiUtil
 import git4idea.i18n.GitBundle
 import java.awt.BorderLayout
 import java.awt.Image
+import java.awt.event.KeyAdapter
+import java.awt.event.KeyEvent
 import javax.imageio.ImageIO
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
+import javax.swing.SwingConstants
 
 class GitRebaseHelpPopupPanel : JPanel() {
 
   val helpLink = createHelpLink()
 
   private val rebaseBranchImage = createImageComponent(REBASE_BRANCH_IMG)
-  private val rebaseBranchPartImage = createImageComponent(REBASE_BRANCH_PART_IMG)
 
   private val content = createContent()
 
   init {
     add(content, BorderLayout.CENTER)
+    addKeyListener(object : KeyAdapter() {
+      override fun keyPressed(e: KeyEvent?) {
+        if (e?.keyCode == KeyEvent.VK_SPACE) {
+          helpLink.doClick()
+        }
+      }
+    })
   }
 
   private fun createContent(): JPanel = panel {
@@ -36,19 +48,15 @@ class GitRebaseHelpPopupPanel : JPanel() {
       rebaseBranchImage()
     }
     row {
-      label(GitBundle.message("rebase.help.rebase.branch.part"))
-    }
-    row {
-      rebaseBranchPartImage()
-    }
-    row {
       helpLink()
     }
   }
 
-  private fun createHelpLink() = HyperlinkLabel().apply {
-    setHyperlinkText(GitBundle.message("rebase.help.link"))
-    setHyperlinkTarget("https://git-scm.com/docs/git-rebase")
+  private fun createHelpLink() = LinkLabel<Any?>(GitBundle.message("rebase.help.link"),
+                                                 AllIcons.Ide.External_link_arrow,
+                                                 LinkListener { _, _ -> BrowserUtil.browse("https://git-scm.com/docs/git-rebase") }).apply {
+    iconTextGap = 0
+    setHorizontalTextPosition(SwingConstants.LEFT)
   }
 
   private fun createImageComponent(imagePath: String): JComponent {
@@ -80,7 +88,6 @@ class GitRebaseHelpPopupPanel : JPanel() {
     private val LOG = logger<GitRebaseHelpPopupPanel>()
 
     private const val REBASE_BRANCH_IMG = "/images/rebase-branch"
-    private const val REBASE_BRANCH_PART_IMG = "/images/rebase-branch-part"
 
     private const val DARK_POSTFIX = "-dark"
     private const val HIDPI_POSTFIX = "@2x"
