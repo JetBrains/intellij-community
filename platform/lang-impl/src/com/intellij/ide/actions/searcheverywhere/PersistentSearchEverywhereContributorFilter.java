@@ -14,12 +14,12 @@ public class PersistentSearchEverywhereContributorFilter<T> {
 
   private final ChooseByNameFilterConfiguration<? super T> myPersistentConfiguration;
   private final List<T> myElements;
-  private final Function<? super T, String> myTextExtractor;
+  private final Function<? super T, @Nls String> myTextExtractor;
   private final Function<? super T, ? extends Icon> myIconExtractor;
 
   public PersistentSearchEverywhereContributorFilter(@NotNull List<T> elements,
                                                      @NotNull ChooseByNameFilterConfiguration<? super T> configuration,
-                                                     Function<? super T, String> textExtractor,
+                                                     Function<? super T, @Nls String> textExtractor,
                                                      Function<? super T, ? extends Icon> iconExtractor) {
     myElements = elements;
     myPersistentConfiguration = configuration;

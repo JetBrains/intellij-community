@@ -132,7 +132,7 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
       ApplicationManager.getApplication().invokeLater(run), equalityProviders);
     myShownContributors = contributors;
     myShortcutSupplier = shortcutSupplier;
-    Map<String, String> namesMap = ContainerUtil.map2Map(contributors, c -> Pair.create(c.getSearchProviderId(), c.getFullGroupName()));
+    Map<String, @Nls String> namesMap = ContainerUtil.map2Map(contributors, c -> Pair.create(c.getSearchProviderId(), c.getFullGroupName()));
     myContributorsFilter = isAllTabNeeded()
                            ? new PersistentSearchEverywhereContributorFilter<>(
                                 ContainerUtil.map(contributors, c -> c.getSearchProviderId()),
