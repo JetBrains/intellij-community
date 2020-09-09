@@ -41,9 +41,7 @@ public class MarkAsOriginalTypeAction extends DumbAwareAction {
       JBIterable.of(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY))
         .filter(file -> isApplicableFor(file) && typeManager.isMarkedAsPlainText(file));
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    boolean enabled = e.getProject() != null && !selectedFiles.isEmpty();
     Set<FileType> fileTypes = selectedFiles.map(file -> fileTypeManager.getFileTypeByFileName(file.getNameSequence())).toSet();
-
     if (fileTypes.size() == 1) {
       FileType original = fileTypes.iterator().next();
       String originalName = StringUtil.defaultIfEmpty(original.getDescription(), original.getName());
@@ -51,7 +49,7 @@ public class MarkAsOriginalTypeAction extends DumbAwareAction {
       e.getPresentation().setText(text);
       e.getPresentation().setIcon(original.getIcon());
     }
-    e.getPresentation().setEnabledAndVisible(enabled);
+
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null && !selectedFiles.isEmpty());
   }
-    
 }
