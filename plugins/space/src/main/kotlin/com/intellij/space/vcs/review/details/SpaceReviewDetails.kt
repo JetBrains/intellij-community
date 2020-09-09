@@ -45,7 +45,7 @@ internal class SpaceReviewDetails(project: Project,
           currentReview.value = null
         }
       }
-      val commits = TabInfo(SpaceReviewCommitListPanel(detailsVm, repoInfo).view).apply {
+      val commits = TabInfo(SpaceReviewCommitListPanel(detailsVm).view).apply {
         text = SpaceBundle.message("review.tab.name.commits")
         sideComponent = ReturnToListComponent.createReturnToListSideComponent(SpaceBundle.message("action.reviews.back.to.list")) {
           currentReview.value = null

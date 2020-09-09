@@ -40,7 +40,7 @@ object SpaceReviewCommitListFactory {
     }
 
     commitList.addListSelectionListener {
-      reviewDetailsVm.selectedCommit.value = commitList.selectedValue.commitWithGraph
+      reviewDetailsVm.selectedCommit.value = commitList.selectedValue?.commitWithGraph
     }
 
     return ScrollPaneFactory.createScrollPane(commitList, true).apply {

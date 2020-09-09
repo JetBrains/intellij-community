@@ -79,6 +79,8 @@ internal open class CrDetailsVm<R : CodeReviewRecord>(
   val selectedCommit: MutableProperty<GitCommitWithGraph?> = Property.createMutable(null)
 }
 
+private const val MAX_CHANGES_TO_LOAD = 1024
+
 internal class MergeRequestDetailsVm(
   lifetime: Lifetime,
   ideaProject: Project,
@@ -91,8 +93,10 @@ internal class MergeRequestDetailsVm(
   private val branchPair: Property<MergeRequestBranchPair> = cellProperty { review.live.branchPair }
 
   val repository: Property<String> = cellProperty { branchPair.live.repository }
-  val targetBranchInfo = cellProperty { branchPair.live.targetBranchInfo }
-  val sourceBranchInfo = cellProperty { branchPair.live.sourceBranchInfo }
+  val targetBranchInfo: Property<MergeRequestBranch?> = cellProperty { branchPair.live.targetBranchInfo }
+  val sourceBranchInfo: Property<MergeRequestBranch?> = cellProperty { branchPair.live.sourceBranchInfo }
+
+  val repoInfo = spaceReposInfo.firstOrNull { it.name == repository.value }
 
   val changes = mapInit(commits, selectedCommit, null) { allCommits, selectedCommit ->
     val revisions = if (selectedCommit != null) {
@@ -100,7 +104,12 @@ internal class MergeRequestDetailsVm(
     }
     else allCommits?.map { RevisionInReview(it.repositoryInReview.name, it.commitWithGraph.commit.id) }
 
-    revisions?.let { client.codeReview.getReviewChanges(BatchInfo("0", 1024), projectKey.identifier, reviewId, it).data }
+    revisions?.let {
+      client.codeReview.getReviewChanges(BatchInfo("0", MAX_CHANGES_TO_LOAD),
+                                         projectKey.identifier,
+                                         reviewId,
+                                         it).data
+    }
   }
 }
 
@@ -119,6 +128,15 @@ internal class CommitSetReviewDetailsVm(
     )
   }
 
+  val reposInCurrentProject: Property<Map<String, SpaceRepoInfo?>?> = mapInit(commitsByRepos, null) { commitsByRepos ->
+    val spaceReposByName = spaceReposInfo.associateBy(SpaceRepoInfo::name)
+
+    commitsByRepos?.keys?.associateBy(
+      { it.name },
+      { spaceReposByName[it.name] }
+    )
+  }
+
   val changesByRepos = mapInit(commitsByRepos, selectedCommit, null) { commitsByRepos, selectedCommit ->
     commitsByRepos ?: return@mapInit null
 
@@ -133,8 +151,11 @@ internal class CommitSetReviewDetailsVm(
       .associateBy(
         { it.key },
         {
-          val revisions = it.value.map { RevisionInReview(it.repositoryName, it.commit.id) }
-          client.codeReview.getReviewChanges(BatchInfo("0", 1024), projectKey.identifier, reviewId, revisions).data
+          val revisions = it.value.map { commit -> RevisionInReview(commit.repositoryName, commit.commit.id) }
+          client.codeReview.getReviewChanges(BatchInfo("0", MAX_CHANGES_TO_LOAD),
+                                             projectKey.identifier,
+                                             reviewId,
+                                             revisions).data
         }
       )
   }
@@ -145,8 +166,6 @@ fun buildReviewUrl(projectKey: ProjectKey, reviewNumber: Int): String {
     .review(reviewNumber)
     .absoluteHref(SpaceSettings.getInstance().serverSettings.server)
 }
-
-
 
 internal fun createReviewDetailsVm(lifetime: Lifetime,
                                    project: Project,
