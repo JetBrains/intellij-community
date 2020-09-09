@@ -156,6 +156,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   public void toggle(boolean selected) {
     setSelected(selected);
     if (selected) {
+      myComponent.scrollRectToVisible(new Rectangle(new Point(0, 50), myComponent.getPreferredSize()));
       IdeFocusManager.getGlobalInstance().requestFocus(getEditorComponent(), false);
     }
   }
