@@ -49,7 +49,7 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
   @NonNls private static final String ACTION = "action.";
   @NonNls private static final String GROUP = "group.";
   @NonNls private static final String TEXT = ".text";
-  @NonNls private static final String DESC = ".description";
+  @NonNls private static final String DESCRIPTION = ".description";
   @NonNls private static final String BUNDLE_PROPERTIES = "Bundle.properties";
 
   @NonNls private static final String TOOLWINDOW_STRIPE_PREFIX = "toolwindow.stripe.";
@@ -73,9 +73,9 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
           String text = ((PropertyKeyImpl)element).getText();
           return JBIterable.of(
             createActionReference(element, text, ACTION, TEXT),
-            createActionReference(element, text, ACTION, DESC),
+            createActionReference(element, text, ACTION, DESCRIPTION),
             createActionReference(element, text, GROUP, TEXT),
-            createActionReference(element, text, GROUP, DESC),
+            createActionReference(element, text, GROUP, DESCRIPTION),
             createToolwindowIdReference(element, text),
             createExportableIdReference(element, text)
           ).filter(Objects::nonNull).toArray(PsiReference.EMPTY_ARRAY);
@@ -86,7 +86,7 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
           if (!text.startsWith(prefix) || !text.endsWith(suffix)) return null;
 
           String id = text.replace(prefix, "").replace(suffix, "");
-          return new DevKitActionReference(id, prefix, element);
+          return new ActionOrGroupIdReference(element, id, prefix);
         }
 
         @Nullable
@@ -111,11 +111,13 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
     return virtualFile().ofType(PropertiesFileType.INSTANCE).withName(StandardPatterns.string().endsWith(BUNDLE_PROPERTIES));
   }
 
-  private static final class DevKitActionReference extends PsiPolyVariantReferenceBase<PsiElement> {
+
+  private static final class ActionOrGroupIdReference extends PsiPolyVariantReferenceBase<PsiElement> {
+
     private final String myId;
     private final boolean myIsAction;
 
-    private DevKitActionReference(String id, String prefix, @NotNull PsiElement element) {
+    private ActionOrGroupIdReference(@NotNull PsiElement element, String id, String prefix) {
       super(element, TextRange.allOf(id).shiftRight(prefix.length()));
       myIsAction = prefix.equals(ACTION);
       myId = id;
@@ -249,32 +251,55 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
 
   public static class ImplicitUsageProvider extends ImplicitPropertyUsageProvider {
 
-    @NonNls public static final String ICON_TOOLTIP_PREFIX = "icon.";
-    @NonNls public static final String ICON_TOOLTIP_SUFFIX = ".tooltip";
+    @NonNls private static final String ICON_TOOLTIP_PREFIX = "icon.";
+    @NonNls private static final String ICON_TOOLTIP_SUFFIX = ".tooltip";
 
     @Override
     protected boolean isUsed(@NotNull Property property) {
       PsiFile file = property.getContainingFile();
       String fileName = file.getName();
       if (!fileName.endsWith(BUNDLE_PROPERTIES)) return false;
+
       String name = property.getName();
       if (name == null) return false;
 
-      if ((name.startsWith(ACTION) || name.startsWith(GROUP)) &&
-          (name.endsWith(TEXT) || name.endsWith(DESC)) ||
-          (name.startsWith(EXPORTABLE_PREFIX) && name.endsWith(EXPORTABLE_SUFFIX)) ||
-          name.startsWith(TOOLWINDOW_STRIPE_PREFIX)) {
+      if (isActionOrGroupKey(name) ||
+          isExportableKey(name) ||
+          isToolwindowKey(name)) {
         PsiElement key = property.getFirstChild();
         PsiReference[] references = key == null ? PsiReference.EMPTY_ARRAY : key.getReferences();
-        return ContainerUtil.exists(references, reference -> {
+
+        boolean hasResolve = ContainerUtil.exists(references, reference -> {
           boolean unresolved = reference instanceof PsiPolyVariantReference
                                ? ((PsiPolyVariantReference)reference).multiResolve(false).length == 0
                                : reference.resolve() == null;
           return !unresolved;
         });
+        return hasResolve && isPluginProject(property);
       }
 
+      return isIconTooltipKey(name) && isPluginProject(property);
+    }
+
+    private static boolean isActionOrGroupKey(String name) {
+      return (name.startsWith(ACTION) || name.startsWith(GROUP)) &&
+             (name.endsWith(TEXT) || name.endsWith(DESCRIPTION));
+    }
+
+    private static boolean isExportableKey(String name) {
+      return name.startsWith(EXPORTABLE_PREFIX) && name.endsWith(EXPORTABLE_SUFFIX);
+    }
+
+    private static boolean isToolwindowKey(String name) {
+      return name.startsWith(TOOLWINDOW_STRIPE_PREFIX);
+    }
+
+    private static boolean isIconTooltipKey(String name) {
       return name.startsWith(ICON_TOOLTIP_PREFIX) && name.endsWith(ICON_TOOLTIP_SUFFIX);
+    }
+
+    private static boolean isPluginProject(Property property) {
+      return PsiUtil.isPluginProject(property.getProject());
     }
   }
 }
