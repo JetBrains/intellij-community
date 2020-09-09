@@ -334,20 +334,21 @@ public abstract class PluginManagerMain {
   }
 
   public interface PluginEnabler {
-    void enablePlugins(Set<? extends IdeaPluginDescriptor> disabled);
-    void disablePlugins(Set<? extends IdeaPluginDescriptor> disabled);
+    void enablePlugins(@NotNull Set<? extends IdeaPluginDescriptor> plugins);
+
+    void disablePlugins(@NotNull Set<? extends IdeaPluginDescriptor> plugins);
 
     boolean isDisabled(@NotNull PluginId pluginId);
 
     class HEADLESS implements PluginEnabler {
       @Override
-      public void enablePlugins(Set<? extends IdeaPluginDescriptor> disabled) {
-        DisabledPluginsState.enablePlugins(disabled, true);
+      public void enablePlugins(@NotNull Set<? extends IdeaPluginDescriptor> plugins) {
+        DisabledPluginsState.enablePlugins(plugins, true);
       }
 
       @Override
-      public void disablePlugins(Set<? extends IdeaPluginDescriptor> disabled) {
-        for (IdeaPluginDescriptor descriptor : disabled) {
+      public void disablePlugins(@NotNull Set<? extends IdeaPluginDescriptor> plugins) {
+        for (IdeaPluginDescriptor descriptor : plugins) {
           PluginManagerCore.disablePlugin(descriptor.getPluginId());
         }
       }

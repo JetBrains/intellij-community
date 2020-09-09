@@ -137,7 +137,8 @@ public class InstalledPluginsTableModel {
     }
   }
 
-  public void enableRows(IdeaPluginDescriptor @NotNull [] ideaPluginDescriptors, @NotNull Boolean value) {
+  protected final void enableRows(@NotNull Set<? extends IdeaPluginDescriptor> ideaPluginDescriptors,
+                                  @NotNull Boolean value) {
     Map<PluginId, Boolean> tempEnabled = new HashMap<>(myEnabled);
     setNewEnabled(ideaPluginDescriptors, tempEnabled, value);
 
@@ -150,13 +151,13 @@ public class InstalledPluginsTableModel {
     }
   }
 
-  private static void setNewEnabled(IdeaPluginDescriptor @NotNull [] ideaPluginDescriptors,
-                                    @NotNull Map<PluginId, Boolean> enabledContainer,
+  private static void setNewEnabled(@NotNull Set<? extends IdeaPluginDescriptor> ideaPluginDescriptors,
+                                    @NotNull Map<PluginId, Boolean> enabledMap,
                                     @NotNull Boolean value) {
     for (IdeaPluginDescriptor ideaPluginDescriptor : ideaPluginDescriptors) {
       PluginId currentPluginId = ideaPluginDescriptor.getPluginId();
-      Boolean enabled = enabledContainer.get(currentPluginId) == null ? Boolean.FALSE : value;
-      enabledContainer.put(currentPluginId, enabled);
+      Boolean enabled = enabledMap.get(currentPluginId) == null ? Boolean.FALSE : value;
+      enabledMap.put(currentPluginId, enabled);
     }
   }
 
@@ -174,24 +175,17 @@ public class InstalledPluginsTableModel {
     return myEnabled;
   }
 
-  private boolean suggestToChangeDependencies(IdeaPluginDescriptor @NotNull [] descriptorsWithChangedEnabledState,
-                                              @NotNull Map<PluginId, Boolean> enabledContainer,
+  private boolean suggestToChangeDependencies(@NotNull Set<? extends IdeaPluginDescriptor> descriptorsWithChangedEnabledState,
+                                              @NotNull Map<PluginId, Boolean> enabledMap,
                                               @NotNull Boolean newEnabledState) {
     List<IdeaPluginDescriptor> descriptorsToCheckDependencies = new ArrayList<>();
     if (newEnabledState) {
-      Collections.addAll(descriptorsToCheckDependencies, descriptorsWithChangedEnabledState);
+      descriptorsToCheckDependencies.addAll(descriptorsWithChangedEnabledState);
     }
     else {
       descriptorsToCheckDependencies.addAll(getAllPlugins());
-      descriptorsToCheckDependencies.removeAll(Arrays.asList(descriptorsWithChangedEnabledState));
-
-      for (Iterator<IdeaPluginDescriptor> iterator = descriptorsToCheckDependencies.iterator(); iterator.hasNext(); ) {
-        IdeaPluginDescriptor descriptor = iterator.next();
-        final Boolean enabled = enabledContainer.get(descriptor.getPluginId());
-        if (enabled == null || !enabled) {
-          iterator.remove();
-        }
-      }
+      descriptorsToCheckDependencies.removeAll(descriptorsWithChangedEnabledState);
+      descriptorsToCheckDependencies.removeIf(descriptor -> isDisabled(descriptor, enabledMap));
     }
 
     Set<PluginId> deps = new HashSet<>();
@@ -208,7 +202,7 @@ public class InstalledPluginsTableModel {
           return FileVisitResult.CONTINUE;
         }
 
-        Boolean enabled = enabledContainer.get(depId);
+        Boolean enabled = enabledMap.get(depId);
         if (enabled == null) {
           return FileVisitResult.TERMINATE;
         }
@@ -247,12 +241,17 @@ public class InstalledPluginsTableModel {
       IdeaPluginDescriptor pluginDescriptor = PluginManagerCore.getPlugin(pluginId);
       return "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + (pluginDescriptor == null ? pluginId.getIdString() : pluginDescriptor.getName());
     }, "<br>");
-    String message = newEnabledState
-                     ? IdeBundle.message("dialog.message.enable.required.plugins", descriptorsWithChangedEnabledState.length, deps.size(), listOfDependencies)
-                     : IdeBundle.message("dialog.message.disable.dependent.plugins", deps.size(), descriptorsWithChangedEnabledState.length, listOfDependencies);
+
+    int descriptorsWithChangedEnabledStateCount = descriptorsWithChangedEnabledState.size();
+    String message = newEnabledState ?
+                     IdeBundle.message("dialog.message.enable.required.plugins", descriptorsWithChangedEnabledStateCount, deps.size(),
+                                       listOfDependencies) :
+                     IdeBundle.message("dialog.message.disable.dependent.plugins", deps.size(), descriptorsWithChangedEnabledStateCount,
+                                       listOfDependencies);
     if (Messages.showOkCancelDialog(message, newEnabledState ? IdeBundle.message("dialog.title.enable.required.plugins")
                                                              : IdeBundle.message("dialog.title.disable.dependent.plugins"),
-                                    newEnabledState ? IdeBundle.message("button.enable") : IdeBundle.message("button.disable"), Messages.getCancelButton(), Messages.getQuestionIcon()) == Messages.OK) {
+                                    newEnabledState ? IdeBundle.message("button.enable") : IdeBundle.message("button.disable"),
+                                    Messages.getCancelButton(), Messages.getQuestionIcon()) == Messages.OK) {
       for (PluginId pluginId : deps) {
         myEnabled.put(pluginId, newEnabledState);
       }
@@ -262,5 +261,17 @@ public class InstalledPluginsTableModel {
   }
 
   protected void handleBeforeChangeEnableState(@NotNull IdeaPluginDescriptor descriptor, boolean value) {
+  }
+
+  protected static boolean isEnabled(@NotNull IdeaPluginDescriptor descriptor,
+                                     @NotNull Map<PluginId, Boolean> enabledMap) {
+    Boolean enabled = enabledMap.get(descriptor.getPluginId());
+    return enabled == null || enabled;
+  }
+
+  protected static boolean isDisabled(@NotNull IdeaPluginDescriptor descriptor,
+                                      @NotNull Map<PluginId, Boolean> enabledMap) {
+    Boolean enabled = enabledMap.get(descriptor.getPluginId());
+    return enabled == null || !enabled;
   }
 }

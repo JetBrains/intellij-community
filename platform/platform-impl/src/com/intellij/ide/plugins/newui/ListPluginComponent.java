@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -33,9 +32,8 @@ import javax.swing.*;
 import javax.swing.plaf.ButtonUI;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.ListIterator;
+import java.util.*;
 
 /**
  * @author Alexander Lobas
@@ -180,7 +178,12 @@ public class ListPluginComponent extends JPanel {
         else {
           myLayout.addButtonComponent(myEnableDisableButton = enableDisableButton);
           myEnableDisableButton.setOpaque(false);
-          myEnableDisableButton.addActionListener(e -> myPluginModel.changeEnableDisable(myPlugin));
+          myEnableDisableButton.addActionListener(e -> {
+            myPluginModel.changeEnableDisable(
+              Set.of(myPlugin),
+              !myPluginModel.isEnabled(myPlugin)
+            );
+          });
           updateEnabledStateUI();
         }
       }
@@ -660,13 +663,15 @@ public class ListPluginComponent extends JPanel {
       return;
     }
 
-    Pair<Boolean, IdeaPluginDescriptor[]> result = getSelectionNewState(selection);
+    boolean state = getSelectionNewState(selection);
+    Set<? extends IdeaPluginDescriptor> plugins = getSelectedDescriptors(selection);
+
     group.add(new MyAnAction(
-      result.first ? IdeBundle.message("plugins.configurable.enable.button") : IdeBundle.message("plugins.configurable.disable.button"),
+      state ? IdeBundle.message("plugins.configurable.enable.button") : IdeBundle.message("plugins.configurable.disable.button"),
       null, KeyEvent.VK_SPACE) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        myPluginModel.changeEnableDisable(result.second, result.first);
+        myPluginModel.changeEnableDisable(plugins, state);
       }
     });
 
@@ -752,13 +757,10 @@ public class ListPluginComponent extends JPanel {
         return;
       }
       if (keyCode == KeyEvent.VK_SPACE) {
-        if (selection.size() == 1) {
-          myPluginModel.changeEnableDisable(selection.get(0).myPlugin);
-        }
-        else {
-          Pair<Boolean, IdeaPluginDescriptor[]> result = getSelectionNewState(selection);
-          myPluginModel.changeEnableDisable(result.second, result.first);
-        }
+        myPluginModel.changeEnableDisable(
+          getSelectedDescriptors(selection),
+          getSelectionNewState(selection)
+        );
       }
       else if (keyCode == EventHandler.DELETE_CODE) {
         for (ListPluginComponent component : selection) {
@@ -788,8 +790,7 @@ public class ListPluginComponent extends JPanel {
     return myPlugin;
   }
 
-  @NotNull
-  private static Pair<Boolean, IdeaPluginDescriptor[]> getSelectionNewState(@NotNull List<? extends ListPluginComponent> selection) {
+  private static boolean getSelectionNewState(@NotNull List<? extends ListPluginComponent> selection) {
     boolean state = selection.get(0).isEnabledState();
     boolean setTrue = false;
 
@@ -800,13 +801,15 @@ public class ListPluginComponent extends JPanel {
       }
     }
 
-    int size = selection.size();
-    IdeaPluginDescriptor[] plugins = new IdeaPluginDescriptor[size];
-    for (int i = 0; i < size; i++) {
-      plugins[i] = selection.get(i).myPlugin;
-    }
+    return setTrue || !state;
+  }
 
-    return Pair.create(setTrue || !state, plugins);
+  private static @NotNull Set<? extends IdeaPluginDescriptor> getSelectedDescriptors(@NotNull List<? extends ListPluginComponent> selection) {
+    Set<IdeaPluginDescriptor> plugins = new HashSet<>();
+    for (ListPluginComponent component : selection) {
+      plugins.add(component.myPlugin);
+    }
+    return plugins;
   }
 
   @NotNull

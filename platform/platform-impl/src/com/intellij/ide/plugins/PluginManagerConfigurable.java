@@ -872,9 +872,14 @@ public class PluginManagerConfigurable
             };
             group.descriptors.addAll(entry.getValue());
             group.sortByName();
-            group.rightAction = new LinkLabel<>("", null, (__, ___) -> myPluginModel
-              .changeEnableDisable(ContainerUtil.toArray(group.descriptors, IdeaPluginDescriptor[]::new),
-                                   group.rightAction.getText().startsWith("Enable")));
+            group.rightAction = new LinkLabel<>(
+              "",
+              null,
+              (__, ___) -> myPluginModel.changeEnableDisable(
+                Set.copyOf(group.descriptors),
+                group.rightAction.getText().startsWith("Enable")
+              )
+            );
             group.titleWithEnabled(myPluginModel);
             groups.add(group);
           }
@@ -1550,28 +1555,29 @@ public class PluginManagerConfigurable
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      IdeaPluginDescriptor[] descriptors;
+      Set<IdeaPluginDescriptor> descriptors = new HashSet<>();
       PluginsGroup group = myPluginModel.getDownloadedGroup();
 
       if (group == null || group.ui == null) {
         ApplicationInfoImpl appInfo = (ApplicationInfoImpl)ApplicationInfo.getInstance();
-        List<IdeaPluginDescriptor> descriptorList = new ArrayList<>();
 
         for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
           if (!appInfo.isEssentialPlugin(descriptor.getPluginId()) &&
               !descriptor.isBundled() && descriptor.isEnabled() != myEnable) {
-            descriptorList.add(descriptor);
+            descriptors.add(descriptor);
           }
         }
-
-        descriptors = descriptorList.toArray(new IdeaPluginDescriptor[0]);
       }
       else {
-        descriptors = group.ui.plugins.stream().filter(component -> myPluginModel.isEnabled(component.myPlugin) != myEnable)
-          .map(component -> component.myPlugin).toArray(IdeaPluginDescriptor[]::new);
+        for (ListPluginComponent component : group.ui.plugins) {
+          IdeaPluginDescriptor plugin = component.myPlugin;
+          if (myPluginModel.isEnabled(plugin) != myEnable) {
+            descriptors.add(plugin);
+          }
+        }
       }
 
-      if (descriptors.length > 0) {
+      if (!descriptors.isEmpty()) {
         myPluginModel.changeEnableDisable(descriptors, myEnable);
       }
     }

@@ -795,9 +795,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     return false;
   }
 
-  public boolean isEnabled(@NotNull IdeaPluginDescriptor plugin) {
-    Boolean enabled = getEnabledMap().get(plugin.getPluginId());
-    return enabled == null || enabled;
+  public boolean isEnabled(@NotNull IdeaPluginDescriptor descriptor) {
+    return isEnabled(descriptor, getEnabledMap());
   }
 
   public @NotNull PluginEnabledState getState(@NotNull IdeaPluginDescriptor descriptor) {
@@ -811,24 +810,20 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     );
   }
 
-  void changeEnableDisable(@NotNull IdeaPluginDescriptor plugin) {
-    changeEnableDisable(new IdeaPluginDescriptor[]{plugin}, !isEnabled(plugin));
-  }
-
-  public void changeEnableDisable(IdeaPluginDescriptor @NotNull [] plugins, boolean state) {
+  public void changeEnableDisable(@NotNull Set<? extends IdeaPluginDescriptor> plugins, boolean state) {
     enableRows(plugins, state);
     updateAfterEnableDisable();
     runInvalidFixCallback();
   }
 
   @Override
-  public void enablePlugins(Set<? extends IdeaPluginDescriptor> disabled) {
-    changeEnableDisable(disabled.toArray(new IdeaPluginDescriptor[0]), true);
+  public void enablePlugins(@NotNull Set<? extends IdeaPluginDescriptor> plugins) {
+    changeEnableDisable(plugins, true);
   }
 
   @Override
-  public void disablePlugins(Set<? extends IdeaPluginDescriptor> disabled) {
-    changeEnableDisable(disabled.toArray(new IdeaPluginDescriptor[0]), false);
+  public void disablePlugins(@NotNull Set<? extends IdeaPluginDescriptor> plugins) {
+    changeEnableDisable(plugins, false);
   }
 
   void enableRequiredPlugins(@NotNull IdeaPluginDescriptor descriptor) {
