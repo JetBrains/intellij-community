@@ -927,7 +927,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   }
 
   private void addMatchHighlights() {
-    if (myEditConfigOnly) {
+    if (myEditConfigOnly || DumbService.isDumb(getProject())) {
       return;
     }
     final Project project = getProject();
