@@ -138,41 +138,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
 
   private void showPopup(T value, int row) {
     List<T> filtered = ContainerUtil.findAll(myValues, t -> isApplicable(t, row));
-    ListPopup popup = JBPopupFactory.getInstance().createListPopup(new ListStep<>(filtered, value) {
-      @Override
-      @NotNull
-      public String getTextFor(T value) {
-        return ComboBoxTableRenderer.this.getTextFor(value);
-      }
-
-      @Override
-      public Icon getIconFor(T value) {
-        return ComboBoxTableRenderer.this.getIconFor(value);
-      }
-
-      @Nullable
-      @Override
-      public ListSeparator getSeparatorAbove(T value) {
-        return ComboBoxTableRenderer.this.getSeparatorAbove(value);
-      }
-
-      @Override
-      public PopupStep<?> onChosen(T selectedValue, boolean finalChoice) {
-        myFinalRunnable = ComboBoxTableRenderer.this.onChosen(selectedValue);
-        return FINAL_CHOICE;
-      }
-
-      @Override
-      public void canceled() {
-        ComboBoxTableRenderer.this.cancelCellEditing();
-      }
-
-      @Override
-      public Runnable getFinalRunnable() {
-        return myFinalRunnable;
-      }
-    });
-
+    ListPopup popup = JBPopupFactory.getInstance().createListPopup(new ListStep<>(this, filtered, value));
     popup.addListener(this);
     popup.setRequestFocus(false);
 
@@ -227,33 +193,29 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
   }
 
   protected void fireEditingStopped() {
-    // Guaranteed to return a non-null array
-    Object[] listeners = myListenerList.getListenerList();
-    // Process the listeners last to first, notifying
-    // those that are interested in this event
-    for (int i = listeners.length - 2; i >= 0; i -= 2) {
-      if (listeners[i] == CellEditorListener.class) {
-        // Lazily create the event:
-        if (myChangeEvent == null) {
-          myChangeEvent = new ChangeEvent(this);
-        }
-        ((CellEditorListener)listeners[i + 1]).editingStopped(myChangeEvent);
-      }
-    }
+    fireEditingEvent(false);
   }
 
   protected void fireEditingCanceled() {
-    // Guaranteed to return a non-null array
+    fireEditingEvent(true);
+  }
+
+  protected void fireEditingEvent(boolean cancelled) {
     Object[] listeners = myListenerList.getListenerList();
-    // Process the listeners last to first, notifying
-    // those that are interested in this event
+    // process the listeners last to first, notifying those that are interested in this event
     for (int i = listeners.length - 2; i >= 0; i -= 2) {
       if (listeners[i] == CellEditorListener.class) {
         // Lazily create the event:
         if (myChangeEvent == null) {
           myChangeEvent = new ChangeEvent(this);
         }
-        ((CellEditorListener)listeners[i + 1]).editingCanceled(myChangeEvent);
+        CellEditorListener listener = (CellEditorListener)listeners[i + 1];
+        if (cancelled) {
+          listener.editingCanceled(myChangeEvent);
+        }
+        else {
+          listener.editingStopped(myChangeEvent);
+        }
       }
     }
   }
@@ -279,11 +241,13 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     myListenerList.remove(CellEditorListener.class, l);
   }
 
-  private abstract static class ListStep<T> implements ListPopupStep<T>, SpeedSearchFilter<T> {
+  private static final class ListStep<T> implements ListPopupStep<T>, SpeedSearchFilter<T> {
+    private final ComboBoxTableRenderer<T> myHost;
     private final List<T> myValues;
     private final T mySelected;
 
-    protected ListStep(List<T> values, T selected) {
+    ListStep(ComboBoxTableRenderer<T> host, List<T> values, T selected) {
+      myHost = host;
       myValues = values;
       mySelected = selected;
     }
@@ -294,8 +258,19 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     }
 
     @Override
+    public @Nullable PopupStep<?> onChosen(T selectedValue, boolean finalChoice) {
+      myHost.myFinalRunnable = myHost.onChosen(selectedValue);
+      return FINAL_CHOICE;
+    }
+
+    @Override
     public boolean hasSubstep(T selectedValue) {
       return false;
+    }
+
+    @Override
+    public void canceled() {
+      myHost.cancelCellEditing();
     }
 
     @Override
@@ -314,8 +289,12 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     }
 
     @Override
-    @NotNull
-    public List<T> getValues() {
+    public @Nullable Runnable getFinalRunnable() {
+      return myHost.myFinalRunnable;
+    }
+
+    @Override
+    public @NotNull List<T> getValues() {
       return myValues;
     }
 
@@ -325,8 +304,18 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     }
 
     @Override
-    public Icon getIconFor(T aValue) {
-      return null;
+    public Icon getIconFor(T value) {
+      return myHost.getIconFor(value);
+    }
+
+    @Override
+    public @NlsContexts.ListItem @NotNull String getTextFor(T value) {
+      return myHost.getTextFor(value);
+    }
+
+    @Override
+    public @Nullable ListSeparator getSeparatorAbove(T value) {
+      return myHost.getSeparatorAbove(value);
     }
 
     @Override
