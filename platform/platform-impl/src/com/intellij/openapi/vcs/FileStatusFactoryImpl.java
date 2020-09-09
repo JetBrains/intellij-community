@@ -16,7 +16,7 @@ import java.awt.*;
 import java.util.function.Supplier;
 
 public final class FileStatusFactoryImpl extends FileStatusFactory {
-  private final MultiMap<PluginId, FileStatus> myStatuses = new MultiMap<>();
+  private final MultiMap<@Nullable PluginId, FileStatus> myStatuses = new MultiMap<>();
 
   @Override
   public synchronized FileStatus createFileStatus(@NonNls @NotNull String id,
