@@ -43,6 +43,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -656,7 +657,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
     PsiParameter[] parms = method.getParameterList().getParameters();
     int numParams = parms.length;
-    StringBuilder buffer = new StringBuilder(numParams * 8); // crude heuristics
+    @Nls StringBuilder buffer = new StringBuilder(numParams * 8); // crude heuristics
 
     if (settings.SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO && !context.isSingleParameterInfo()) {
       if (!method.isConstructor()) {
