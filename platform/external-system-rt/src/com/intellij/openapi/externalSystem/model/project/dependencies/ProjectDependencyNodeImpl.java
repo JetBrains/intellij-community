@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.project.dependencies;
 
 import com.intellij.serialization.PropertyMapping;
@@ -29,11 +29,9 @@ public class ProjectDependencyNodeImpl extends AbstractDependencyNode implements
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    if (!super.equals(o)) return false;
-    ProjectDependencyNodeImpl node = (ProjectDependencyNodeImpl)o;
+  public boolean match(AbstractDependencyNode dependencyNode) {
+    if (dependencyNode == null || getClass() != dependencyNode.getClass()) return false;
+    ProjectDependencyNodeImpl node = (ProjectDependencyNodeImpl)dependencyNode;
     if (!projectName.equals(node.projectName)) return false;
     return true;
   }
