@@ -15,7 +15,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.*;
-import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.startup.StartupActivity;
@@ -23,9 +22,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
@@ -116,20 +113,6 @@ public final class FileBasedIndexProjectHandler implements IndexableFileSet {
       return !FileTypeManager.getInstance().isFileIgnored(file);
     }
     return false;
-  }
-
-  @Override
-  public void iterateIndexableFilesIn(@NotNull final VirtualFile file, @NotNull final ContentIterator iterator) {
-    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
-      @Override
-      public boolean visitFile(@NotNull VirtualFile file) {
-
-        if (!isInSet(file)) return false;
-        iterator.processFile(file);
-
-        return true;
-      }
-    });
   }
 
   @ApiStatus.Internal

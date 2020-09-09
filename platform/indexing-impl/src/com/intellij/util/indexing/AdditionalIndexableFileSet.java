@@ -2,11 +2,9 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.CachedValueImpl;
@@ -74,24 +72,6 @@ public class AdditionalIndexableFileSet implements IndexableFileSet {
   public boolean isInSet(@NotNull VirtualFile file) {
     AdditionalIndexableRoots additionalIndexableRoots = myAdditionalIndexableRoots.getValue();
     return VfsUtilCore.isUnder(file, additionalIndexableRoots.directories) || additionalIndexableRoots.files.contains(file);
-  }
-
-  @Override
-  public void iterateIndexableFilesIn(@NotNull VirtualFile file, @NotNull final ContentIterator iterator) {
-    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
-      @Override
-      public boolean visitFile(@NotNull VirtualFile file) {
-        if (!isInSet(file)) {
-          return false;
-        }
-
-        if (!file.isDirectory()) {
-          iterator.processFile(file);
-        }
-
-        return true;
-      }
-    });
   }
 
   private static final class AdditionalIndexableRoots {

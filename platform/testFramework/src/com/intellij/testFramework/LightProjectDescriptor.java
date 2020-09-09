@@ -11,15 +11,12 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl;
 import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.IndexableFileSet;
@@ -132,17 +129,6 @@ public class LightProjectDescriptor {
       @Override
       public boolean isInSet(@NotNull VirtualFile file) {
         return file.getFileSystem() == srcRoot.getFileSystem() && project.isOpen();
-      }
-
-      @Override
-      public void iterateIndexableFilesIn(@NotNull VirtualFile file, @NotNull ContentIterator iterator) {
-        VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
-          @Override
-          public boolean visitFile(@NotNull VirtualFile file) {
-            iterator.processFile(file);
-            return true;
-          }
-        });
       }
     };
     FileBasedIndex.getInstance().registerIndexableSet(indexableFileSet, null);
