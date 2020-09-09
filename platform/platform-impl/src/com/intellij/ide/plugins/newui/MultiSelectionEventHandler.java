@@ -44,7 +44,10 @@ public class MultiSelectionEventHandler extends EventHandler {
     myMouseHandler = new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent event) {
-        if (SwingUtilities.isLeftMouseButton(event)) {
+        boolean isLeftMouseButton = SwingUtilities.isLeftMouseButton(event);
+        boolean isControlDown = event.isControlDown();
+
+        if (!isControlDown && isLeftMouseButton) {
           ListPluginComponent component = get(event);
           int index = getIndex(component);
 
@@ -68,7 +71,8 @@ public class MultiSelectionEventHandler extends EventHandler {
             singleSelection(component, index);
           }
         }
-        else if (SwingUtilities.isRightMouseButton(event)) {
+        else if (SwingUtilities.isRightMouseButton(event) ||
+                 isControlDown && isLeftMouseButton) {
           ListPluginComponent component = get(event);
 
           if (myAllSelected || myMixSelection) {
