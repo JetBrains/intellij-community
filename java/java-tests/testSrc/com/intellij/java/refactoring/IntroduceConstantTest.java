@@ -180,6 +180,10 @@ public class IntroduceConstantTest extends LightJavaCodeInsightTestCase {
     doTestExpr();
   }
 
+  public void testConstantFromAnnotationOnFieldWithoutInitializer() {
+    doTestExpr();
+  }
+
   public void testEscalateVisibility() {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     final PsiClass[] classes = ((PsiJavaFile)getFile()).getClasses();
