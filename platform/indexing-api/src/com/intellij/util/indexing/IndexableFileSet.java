@@ -30,7 +30,7 @@ public interface IndexableFileSet {
   boolean isInSet(@NotNull VirtualFile file);
 
   /**
-   * @deprecated method us not used anymore.
+   * @deprecated method is not used anymore.
    * We directly traverse file with {@link VfsUtilCore#visitChildrenRecursively(VirtualFile, VirtualFileVisitor)} now.
    */
   @SuppressWarnings("unused")
