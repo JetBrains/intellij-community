@@ -1,9 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util.ui.scroll;
+package com.intellij.ui.scroll;
 
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,12 +17,8 @@ import java.util.List;
 /**
  * The utility class that helps to avoid accidental scroll in perpendicular direction.
  */
+@ApiStatus.Internal
 public final class LatchingScroll {
-
-  /**
-   * When set to {@link Boolean#TRUE} for component then latching will be ignored.
-   */
-  public static final Key<Boolean> IGNORE_SCROLL_LATCHING = Key.create("IGNORE_SCROLL_LATCHING");
 
   private final List<MyScrollEvent> myScrollEvents = new LinkedList<>();
 
@@ -34,7 +31,8 @@ public final class LatchingScroll {
    */
   public boolean shouldBeIgnored(MouseWheelEvent event) {
     var source = (JScrollPane)event.getSource();
-    if (UIUtil.isClientPropertyTrue(getViewportView(source), IGNORE_SCROLL_LATCHING)) {
+    // do not process any event from JBScrollPane with this option
+    if (UIUtil.isClientPropertyTrue(getViewportView(source), JBScrollPane.IGNORE_SCROLL_LATCHING)) {
       return false;
     }
 

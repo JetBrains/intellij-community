@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util.ui.scroll;
+package com.intellij.ui.scroll;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.MouseWheelEvent;
 
-public final class SmoothScrollUtil {
+final class SmoothScrollUtil {
   public static @Nullable
   JScrollBar getEventScrollBar(@NotNull MouseWheelEvent e) {
     return isHorizontalScroll(e) ? getEventHorizontalScrollBar(e) : getEventVerticalScrollBar(e);

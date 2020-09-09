@@ -10,10 +10,10 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.*;
-import com.intellij.util.ui.scroll.LatchingScroll;
-import com.intellij.util.ui.scroll.MouseWheelSmoothScroll;
-import com.intellij.util.ui.scroll.TouchScroll;
-import com.intellij.util.ui.scroll.TouchScrollUtil;
+import com.intellij.ui.scroll.LatchingScroll;
+import com.intellij.ui.scroll.MouseWheelSmoothScroll;
+import com.intellij.ui.scroll.TouchScroll;
+import com.intellij.ui.scroll.TouchScrollUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,6 +62,14 @@ public class JBScrollPane extends JScrollPane {
    * @see UIUtil#putClientProperty(JComponent, Key, Object)
    */
   public static final Key<Boolean> IGNORE_SCROLLBAR_IN_INSETS = Key.create("IGNORE_SCROLLBAR_IN_INSETS");
+
+  /**
+   * When set to {@link Boolean#TRUE} for component then latching will be ignored.
+   *
+   * @see LatchingScroll
+   * @see UIUtil#putClientProperty(JComponent, Key, Object)
+   */
+  public static final Key<Boolean> IGNORE_SCROLL_LATCHING = Key.create("IGNORE_SCROLL_LATCHING");
 
   private static final Logger LOG = Logger.getInstance(JBScrollPane.class);
 
