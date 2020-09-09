@@ -130,8 +130,11 @@ public class MultiSelectionEventHandler extends EventHandler {
       @Override
       public void keyPressed(KeyEvent event) {
         int code = event.getKeyCode();
-        int modifiers = event.getModifiers();
-        KeyboardShortcut shortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(code, modifiers), null);
+        int modifiers = event.getModifiersEx();
+        KeyboardShortcut shortcut = new KeyboardShortcut(
+          KeyStroke.getKeyStroke(code, modifiers),
+          null
+        );
 
         if (check(shortcut, mySelectAllKeys)) {
           event.consume();
@@ -180,7 +183,7 @@ public class MultiSelectionEventHandler extends EventHandler {
           if (component.getSelection() != SelectionType.SELECTION) {
             component.setSelection(SelectionType.SELECTION);
           }
-          component.handleKeyAction(code, getSelection());
+          component.handleKeyAction(event, getSelection());
         }
       }
     };

@@ -919,11 +919,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     }
   }
 
-  static boolean showUninstallDialog(@NotNull Component uiParent, @NotNull List<? extends ListPluginComponent> selection) {
-    int size = selection.size();
-    return showUninstallDialog(uiParent, size == 1 ? selection.get(0).myPlugin.getName() : null, size);
-  }
-
   static boolean showUninstallDialog(@NotNull Component uiParent, @Nullable String singleName, int count) {
     String message;
     if (singleName == null) {

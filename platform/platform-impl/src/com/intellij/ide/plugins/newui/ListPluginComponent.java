@@ -31,9 +31,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.plaf.ButtonUI;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.*;
+import java.util.ListIterator;
+import java.util.Set;
 
 /**
  * @author Alexander Lobas
@@ -577,7 +580,7 @@ public class ListPluginComponent extends JPanel {
     }
   }
 
-  protected boolean isEnabledState() {
+  private boolean isEnabledState() {
     return myPluginModel.isEnabled(myPlugin);
   }
 
@@ -605,7 +608,8 @@ public class ListPluginComponent extends JPanel {
     myPluginModel.removeComponent(this);
   }
 
-  public void createPopupMenu(@NotNull DefaultActionGroup group, @NotNull List<? extends ListPluginComponent> selection) {
+  public void createPopupMenu(@NotNull DefaultActionGroup group,
+                              @NotNull List<ListPluginComponent> selection) {
     for (ListPluginComponent component : selection) {
       if (MyPluginModel.isInstallingOrUpdate(component.myPlugin)) {
         return;
@@ -663,43 +667,17 @@ public class ListPluginComponent extends JPanel {
       return;
     }
 
-    boolean state = getSelectionNewState(selection);
-    Set<? extends IdeaPluginDescriptor> plugins = getSelectedDescriptors(selection);
-
-    group.add(new MyAnAction(
-      state ? IdeBundle.message("plugins.configurable.enable.button") : IdeBundle.message("plugins.configurable.disable.button"),
-      null, KeyEvent.VK_SPACE) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        myPluginModel.changeEnableDisable(plugins, state);
-      }
-    });
-
-    for (ListPluginComponent component : selection) {
-      if (component.myUninstalled || component.myPlugin.isBundled()) {
-        return;
-      }
-    }
+    group.add(createAction(selection, KeyEvent.VK_SPACE));
+    group.add(createAction(selection, KeyEvent.VK_SPACE, InputEvent.SHIFT_DOWN_MASK));
 
     if (group.getChildrenCount() > 0) {
       group.addSeparator();
     }
-
-    group.add(new MyAnAction(IdeBundle.message("plugins.configurable.uninstall.button"), IdeActions.ACTION_EDITOR_DELETE,
-                             EventHandler.DELETE_CODE) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        if (!MyPluginModel.showUninstallDialog(ListPluginComponent.this, selection)) {
-          return;
-        }
-        for (ListPluginComponent component : selection) {
-          myPluginModel.uninstallAndUpdateUi(component, component.myPlugin);
-        }
-      }
-    });
+    group.add(createAction(selection, EventHandler.DELETE_CODE));
   }
 
-  public void handleKeyAction(int keyCode, @NotNull List<? extends ListPluginComponent> selection) {
+  public void handleKeyAction(@NotNull KeyEvent event,
+                              @NotNull List<ListPluginComponent> selection) {
     for (ListPluginComponent component : selection) {
       if (MyPluginModel.isInstallingOrUpdate(component.myPlugin)) {
         return;
@@ -714,6 +692,7 @@ public class ListPluginComponent extends JPanel {
       }
     }
 
+    int keyCode = event.getKeyCode();
     if (myMarketplace) {
       if (keyCode == KeyEvent.VK_ENTER) {
         if (restart) {
@@ -752,29 +731,18 @@ public class ListPluginComponent extends JPanel {
         }
       }
     }
-    else if (!restart && !update) {
-      if (myOnlyUpdateMode) {
-        return;
-      }
-      if (keyCode == KeyEvent.VK_SPACE) {
-        myPluginModel.changeEnableDisable(
-          getSelectedDescriptors(selection),
-          getSelectionNewState(selection)
-        );
-      }
-      else if (keyCode == EventHandler.DELETE_CODE) {
-        for (ListPluginComponent component : selection) {
-          if (component.myUninstalled || component.myPlugin.isBundled()) {
-            return;
-          }
-        }
-        if (!MyPluginModel.showUninstallDialog(this, selection)) {
-          return;
-        }
-        for (ListPluginComponent component : selection) {
-          myPluginModel.uninstallAndUpdateUi(this, component.myPlugin);
-        }
-      }
+    else if (!restart && !update && !myOnlyUpdateMode) {
+      DumbAwareAction action = createAction(
+        selection,
+        KeyStroke.getKeyStrokeForEvent(event)
+      );
+      ActionManager.getInstance().tryToExecute(
+        action,
+        event,
+        this,
+        ActionPlaces.UNKNOWN,
+        true
+      );
     }
   }
 
@@ -790,26 +758,94 @@ public class ListPluginComponent extends JPanel {
     return myPlugin;
   }
 
-  private static boolean getSelectionNewState(@NotNull List<? extends ListPluginComponent> selection) {
-    boolean state = selection.get(0).isEnabledState();
-    boolean setTrue = false;
-
-    for (ListIterator<? extends ListPluginComponent> I = selection.listIterator(1); I.hasNext(); ) {
-      if (state != I.next().isEnabledState()) {
-        setTrue = true;
-        break;
-      }
-    }
-
-    return setTrue || !state;
+  private @NotNull SelectionBasedPluginModelAction<ListPluginComponent> createAction(@NotNull List<ListPluginComponent> selection,
+                                                                                     int keyCode) {
+    return createAction(selection, keyCode, 0);
   }
 
-  private static @NotNull Set<? extends IdeaPluginDescriptor> getSelectedDescriptors(@NotNull List<? extends ListPluginComponent> selection) {
-    Set<IdeaPluginDescriptor> plugins = new HashSet<>();
-    for (ListPluginComponent component : selection) {
-      plugins.add(component.myPlugin);
+  private @NotNull SelectionBasedPluginModelAction<ListPluginComponent> createAction(@NotNull List<ListPluginComponent> selection,
+                                                                                     int keyCode,
+                                                                                     int modifiers) {
+    return createAction(selection, KeyStroke.getKeyStroke(keyCode, modifiers));
+  }
+
+  private @NotNull SelectionBasedPluginModelAction<ListPluginComponent> createAction(@NotNull List<ListPluginComponent> selection,
+                                                                                     @NotNull KeyStroke keyStroke) {
+    int keyCode = keyStroke.getKeyCode();
+    if (keyCode == KeyEvent.VK_SPACE) {
+      boolean firstEnabled = selection.get(0).isEnabledState();
+      boolean setTrue = false;
+
+      for (ListIterator<ListPluginComponent> iterator = selection.listIterator(1); iterator.hasNext(); ) {
+        if (firstEnabled != iterator.next().isEnabledState()) {
+          setTrue = true;
+          break;
+        }
+      }
+
+      PluginEnabledState newState = PluginEnabledState.getState(
+        setTrue || !firstEnabled,
+        (keyStroke.getModifiers() & InputEvent.SHIFT_DOWN_MASK) == InputEvent.SHIFT_DOWN_MASK
+      );
+
+      return new EnableDisableAction(
+        myPluginModel,
+        selection,
+        keyStroke,
+        newState
+      );
     }
-    return plugins;
+    else if (keyCode == EventHandler.DELETE_CODE) {
+      return new UninstallAction(selection, keyStroke);
+    }
+    else {
+      throw new IllegalArgumentException();
+    }
+  }
+
+  private static final class EnableDisableAction extends SelectionBasedPluginModelAction.EnableDisableAction<ListPluginComponent> {
+
+    private EnableDisableAction(@NotNull MyPluginModel pluginModel,
+                                @NotNull List<ListPluginComponent> selection,
+                                @NotNull KeyStroke keyStroke,
+                                @NotNull PluginEnabledState newState) {
+      super(pluginModel, selection, newState);
+      setShortcutSet(new CustomShortcutSet(keyStroke));
+    }
+
+    @Override
+    protected @Nullable IdeaPluginDescriptor getPluginDescriptor(@NotNull ListPluginComponent component) {
+      return component.myPlugin;
+    }
+  }
+
+  private class UninstallAction extends SelectionBasedPluginModelAction.UninstallAction<ListPluginComponent> {
+
+    UninstallAction(@NotNull List<ListPluginComponent> selection,
+                    @NotNull KeyStroke keyStroke) {
+      super(
+        ListPluginComponent.this.myPluginModel,
+        ListPluginComponent.this,
+        selection
+      );
+
+      ShortcutSet deleteShortcutSet = EventHandler.getShortcuts(IdeActions.ACTION_EDITOR_DELETE);
+      ShortcutSet shortcutSet = deleteShortcutSet != null ?
+                                deleteShortcutSet :
+                                new CustomShortcutSet(keyStroke);
+      setShortcutSet(shortcutSet);
+    }
+
+    @Override
+    protected @Nullable IdeaPluginDescriptor getPluginDescriptor(@NotNull ListPluginComponent component) {
+      return component.myPlugin;
+    }
+
+    @Override
+    protected boolean isBundled(@NotNull ListPluginComponent component) {
+      return component.myUninstalled ||
+             super.isBundled(component);
+    }
   }
 
   @NotNull
@@ -848,20 +884,6 @@ public class ListPluginComponent extends JPanel {
       for (JButton button : myButtons) {
         button.doClick();
       }
-    }
-  }
-
-  public abstract static class MyAnAction extends DumbAwareAction {
-    MyAnAction(@Nls @Nullable String text, @Nullable String actionId, int keyCode) {
-      super(text);
-      ShortcutSet shortcutSet = null;
-      if (actionId != null) {
-        shortcutSet = EventHandler.getShortcuts(actionId);
-      }
-      if (shortcutSet == null) {
-        shortcutSet = new CustomShortcutSet(KeyStroke.getKeyStroke(keyCode, 0));
-      }
-      setShortcutSet(shortcutSet);
     }
   }
 
