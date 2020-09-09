@@ -44,6 +44,8 @@ class GitStashTracker(private val project: Project) : Disposable {
   }
 
   fun scheduleRefresh() {
+    if (!isStashToolWindowAvailable()) return
+
     updateQueue.queue(DisposableUpdate.createDisposable(this, "update", Runnable {
       val newStashes = mutableMapOf<VirtualFile, List<StashInfo>>()
       for (repo in GitRepositoryManager.getInstance(project).repositories) {
@@ -70,3 +72,6 @@ class GitStashTracker(private val project: Project) : Disposable {
 interface GitStashTrackerListener : EventListener {
   fun stashesUpdated()
 }
+
+fun stashToolWindowRegistryOption() = Registry.get("git.enable.stash.toolwindow")
+fun isStashToolWindowAvailable(): Boolean = stashToolWindowRegistryOption().asBoolean()
