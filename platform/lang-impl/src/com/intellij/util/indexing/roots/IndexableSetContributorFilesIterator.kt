@@ -9,7 +9,8 @@ import com.intellij.util.containers.ConcurrentBitSet
 import com.intellij.util.indexing.IndexableSetContributor
 import com.intellij.util.indexing.IndexingBundle
 
-internal class IndexableSetContributorFilesIterator(private val indexableSetContributor: IndexableSetContributor) : IndexableFilesIterator {
+internal class IndexableSetContributorFilesIterator(private val indexableSetContributor: IndexableSetContributor,
+                                                    private val projectAware: Boolean) : IndexableFilesIterator {
   override fun getDebugName() = getName().takeUnless { it.isNullOrEmpty() }?.let { "IndexableSetContributor '$it'" }
                                 ?: indexableSetContributor.toString()
 
@@ -37,7 +38,8 @@ internal class IndexableSetContributorFilesIterator(private val indexableSetCont
     visitedFileSet: ConcurrentBitSet
   ): Boolean {
     val allRoots = runReadAction {
-      indexableSetContributor.getAdditionalProjectRootsToIndex(project) + indexableSetContributor.additionalRootsToIndex
+      if (projectAware) indexableSetContributor.getAdditionalProjectRootsToIndex(project)
+      else indexableSetContributor.additionalRootsToIndex
     }
     return IndexableFilesIterationMethods.iterateNonExcludedRoots(project, allRoots, fileIterator, visitedFileSet)
   }

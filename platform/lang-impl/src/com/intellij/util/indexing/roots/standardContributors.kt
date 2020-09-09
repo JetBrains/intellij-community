@@ -46,7 +46,10 @@ internal class DefaultProjectIndexableFilesContributor : IndexableFilesContribut
 
 internal class AdditionalFilesContributor : IndexableFilesContributor {
   override fun getIndexableFiles(project: Project): List<IndexableFilesIterator> {
-    return IndexableSetContributor.EP_NAME.extensionList.map { IndexableSetContributorFilesIterator(it) }
+    return IndexableSetContributor.EP_NAME.extensionList.flatMap {
+      listOf(IndexableSetContributorFilesIterator(it, true),
+             IndexableSetContributorFilesIterator(it, false))
+    }
   }
 }
 
