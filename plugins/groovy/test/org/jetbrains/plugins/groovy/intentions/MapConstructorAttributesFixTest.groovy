@@ -46,7 +46,7 @@ static void main(String[] args) {
     def x = new Rr(actio<caret>nType: "")
 }
 """, """
-@groovy.transform.MapConstructor(includeFields = true, includeStatic = true)
+@groovy.transform.MapConstructor(includeStatic = true, includeFields = true)
 class Rr {
     private static String actionType
 }
@@ -97,7 +97,7 @@ class Rr {
 static void main(String[] args) {
     def x = new Rr(\$ac<caret>tionType: "", b: 2)
 }""", """
-@groovy.transform.MapConstructor(includeStatic = true, includeFields = true, allNames = true)
+@groovy.transform.MapConstructor(allNames = true, includeFields = true, includeStatic = true)
 class Rr {
     private String \$actionType
     static int b
