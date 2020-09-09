@@ -5,6 +5,7 @@ import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil;
+import com.intellij.ide.lightEdit.LightEditService;
 import com.intellij.ide.lightEdit.LightEditUtil;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.idea.CommandLineArgs;
@@ -116,7 +117,7 @@ public final class CommandLineProcessor {
       }
     }
 
-    if (LightEditUtil.isLightEditEnabled() && !LightEditUtil.isOpenInExistingProject()) {
+    if (LightEditService.getInstance().canOpen(file) && !LightEditUtil.isOpenInExistingProject()) {
       return LightEditUtil.getProject();
     }
 

@@ -125,7 +125,7 @@ public final class LightEditServiceImpl implements LightEditService,
 
   @Override
   public boolean openFile(@NotNull VirtualFile file, boolean force) {
-    if (force || LightEditUtil.isLightEditEnabled() && myFilePatterns.match(file)) {
+    if (force || canOpen(file)) {
       doWhenActionManagerInitialized(() -> {
         doOpenFile(file);
       });
@@ -145,6 +145,11 @@ public final class LightEditServiceImpl implements LightEditService,
     else {
       invokeOnEdt(callback);
     }
+  }
+
+  @Override
+  public boolean canOpen(@NotNull VirtualFile file) {
+    return LightEditUtil.isLightEditEnabled() && myFilePatterns.match(file);
   }
 
   private static void invokeOnEdt(@NotNull Runnable callback) {
