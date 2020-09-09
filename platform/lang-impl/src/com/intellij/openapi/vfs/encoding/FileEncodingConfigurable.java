@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vfs.encoding;
 
@@ -167,18 +153,14 @@ class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
     }.createActionGroup(file, null, document, bytes, getClearValueText(target));
   }
 
-  @Nullable
   @Override
-  protected String getClearValueText(@Nullable Object target) {
-    if (target == null) return LangBundle.message("action.set.system.default.encoding.text");
-    return super.getClearValueText(target);
+  protected @NlsActions.ActionText @Nullable String getClearValueText(@Nullable Object target) {
+    return target != null ? super.getClearValueText(target) : LangBundle.message("action.set.system.default.encoding.text");
   }
 
-  @Nullable
   @Override
-  protected String getNullValueText(@Nullable Object target) {
-    if (target == null) return IdeBundle.message("encoding.name.system.default", CharsetToolkit.getDefaultSystemCharset().displayName());
-    return super.getNullValueText(target);
+  protected @NlsActions.ActionText @Nullable String getNullValueText(@Nullable Object target) {
+    return target != null ? super.getNullValueText(target) : IdeBundle.message("encoding.name.system.default", CharsetToolkit.getDefaultSystemCharset().displayName());
   }
 
   @NotNull

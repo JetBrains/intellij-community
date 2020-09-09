@@ -68,12 +68,12 @@ import static com.intellij.ui.IdeBorderFactory.*;
 public abstract class PerFileConfigurableBase<T> implements SearchableConfigurable, Configurable.NoScroll {
 
   protected static final Key<@NlsContexts.Label String> DESCRIPTION = KeyWithDefaultValue.create("DESCRIPTION", "");
-  protected static final Key<@NlsContexts.ColumnName String> TARGET_TITLE = KeyWithDefaultValue.create("TARGET_TITLE", LangBundle.message("PerFileConfigurableBase.target.title"));
-  protected static final Key<@NlsContexts.ColumnName String> MAPPING_TITLE = KeyWithDefaultValue.create("MAPPING_TITLE", LangBundle.message("PerFileConfigurableBase.mapping.title"));
-  protected static final Key<@NlsContexts.Label String> EMPTY_TEXT = KeyWithDefaultValue.create("EMPTY_TEXT", LangBundle.message("PerFileConfigurableBase.empty.text"));
+  protected static final Key<@NlsContexts.ColumnName String> TARGET_TITLE = KeyWithDefaultValue.create("TARGET_TITLE", () -> LangBundle.message("PerFileConfigurableBase.target.title"));
+  protected static final Key<@NlsContexts.ColumnName String> MAPPING_TITLE = KeyWithDefaultValue.create("MAPPING_TITLE", () -> LangBundle.message("PerFileConfigurableBase.mapping.title"));
+  protected static final Key<@NlsContexts.Label String> EMPTY_TEXT = KeyWithDefaultValue.create("EMPTY_TEXT", () -> LangBundle.message("PerFileConfigurableBase.empty.text"));
   protected static final Key<@Nls String> OVERRIDE_QUESTION = Key.create("OVERRIDE_QUESTION");
   protected static final Key<@NlsContexts.DialogTitle String> OVERRIDE_TITLE = Key.create("OVERRIDE_TITLE");
-  protected static final Key<@NlsContexts.Label String> NULL_TEXT = KeyWithDefaultValue.create("NULL_TEXT", LangBundle.message("PerFileConfigurableBase.null.text"));
+  protected static final Key<@NlsActions.ActionText String> NULL_TEXT = KeyWithDefaultValue.create("NULL_TEXT", () -> LangBundle.message("PerFileConfigurableBase.null.text"));
   protected static final Key<Boolean> ADD_PROJECT_MAPPING = KeyWithDefaultValue.create("ADD_PROJECT_MAPPING", Boolean.TRUE);
   protected static final Key<Boolean> ONLY_DIRECTORIES = KeyWithDefaultValue.create("ONLY_DIRECTORIES", Boolean.FALSE);
   protected static final Key<Boolean> SORT_VALUES = KeyWithDefaultValue.create("SORT_VALUES", Boolean.TRUE);
@@ -670,8 +670,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       CommonBundle.getCancelButtonText(), Messages.getWarningIcon());
   }
 
-  @NlsContexts.Label
-  private String renderValue(@Nullable Object value, @NlsContexts.Label @NotNull String nullValue) {
+  private @NlsActions.ActionText String renderValue(@Nullable Object value, @NlsActions.ActionText @NotNull String nullValue) {
     if (value == null) {
       return nullValue;
     }
@@ -776,14 +775,11 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     return null;
   }
 
-  @Nullable
-  protected @NlsActions.ActionText String getClearValueText(@Nullable Object target) {
+  protected @NlsActions.ActionText @Nullable String getClearValueText(@Nullable Object target) {
     return target == null ? getNullValueText(null) : null;
   }
 
-  @NlsContexts.Label
-  @Nullable
-  protected String getNullValueText(@Nullable Object target) {
+  protected @NlsActions.ActionText @Nullable String getNullValueText(@Nullable Object target) {
     return param(NULL_TEXT);
   }
 
