@@ -61,6 +61,8 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
 
     private static final String ICON_DESCRIPTION_BUNDLE_EP = IconDescriptionBundleEP.class.getName();
     private static final String TYPE_NAME_EP = TypeNameEP.class.getName();
+
+    private static final String SPRING_TOOL_WINDOW_CONTENT = "com.intellij.spring.toolWindow.SpringToolWindowContent";
   }
 
   @Override
@@ -108,6 +110,10 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
                                                                   Holder.TYPE_NAME_EP),
                                         new PropertyKeyReferenceProvider(false, "resourceKey", "resourceBundle"));
 
+    registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"displayName"},
+                                                                  Holder.SPRING_TOOL_WINDOW_CONTENT),
+                                        new PropertyKeyReferenceProvider(false, "displayName", "bundle"));
+
     final XmlAttributeValuePattern separatorSynonymPattern =
       xmlAttributeValue("key")
         .withSuperParent(2,
@@ -145,7 +151,8 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
     registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"bundle", "groupBundle"},
                                                                   Holder.CONFIGURABLE_EP, Holder.INSPECTION_EP,
                                                                   Holder.GROUP_CONFIGURABLE_EP,
-                                                                  Holder.NOTIFICATION_GROUP_EP),
+                                                                  Holder.NOTIFICATION_GROUP_EP,
+                                                                  Holder.SPRING_TOOL_WINDOW_CONTENT),
                                         bundleReferenceProvider);
     registrar.registerReferenceProvider(nestedExtensionAttributePattern(new String[]{"bundle", "groupBundle"},
                                                                         Holder.CONFIGURABLE_EP),
