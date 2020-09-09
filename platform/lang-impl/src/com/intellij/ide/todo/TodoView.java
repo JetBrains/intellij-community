@@ -19,6 +19,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -237,6 +238,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
   }
 
   @NotNull
+  @NlsContexts.TabTitle
   static String getTabNameForChangeList(@NotNull String changelistName) {
     changelistName = changelistName.trim();
     String suffix = "Changelist";

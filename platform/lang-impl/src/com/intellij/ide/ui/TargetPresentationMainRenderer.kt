@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui
 
+import com.intellij.lang.LangBundle
 import com.intellij.navigation.LocationPresentation.DEFAULT_LOCATION_PREFIX
 import com.intellij.navigation.LocationPresentation.DEFAULT_LOCATION_SUFFIX
 import com.intellij.navigation.TargetPopupPresentation
@@ -24,7 +25,7 @@ abstract class TargetPresentationMainRenderer<T> : ColoredListCellRenderer<T>(),
 
   final override fun customizeCellRenderer(list: JList<out T>, value: T, index: Int, selected: Boolean, hasFocus: Boolean) {
     val presentation = getPresentation(value) ?: run {
-      append("Invalid", ERROR_ATTRIBUTES)
+      append(LangBundle.message("target.presentation.invalid.target"), ERROR_ATTRIBUTES)
       return
     }
     val attributes = presentation.presentableAttributes
@@ -43,7 +44,7 @@ abstract class TargetPresentationMainRenderer<T> : ColoredListCellRenderer<T>(),
         merge(defaultLocationAttributes, fromTextAttributes(it))
       } ?: defaultLocationAttributes
       append(DEFAULT_LOCATION_PREFIX, defaultLocationAttributes)
-      append("in ", defaultLocationAttributes)
+      append(LangBundle.message("target.presentation.in.preposition") + " ", defaultLocationAttributes)
       append(locationText, locationAttributes)
       append(DEFAULT_LOCATION_SUFFIX, defaultLocationAttributes)
     }

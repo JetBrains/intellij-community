@@ -226,7 +226,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
   private static final class NonBlockingPopupBuilderImpl implements Builder {
     @NotNull private final Project myProject;
 
-    private @NlsContexts.PopupTitle String myTitle = "Title";
+    private @NlsContexts.PopupTitle String myTitle = LangBundle.message("popup.title.default.title");
     private final List<Trinity<String, Icon, String>> myTemplatesList = new ArrayList<>();
     private InputValidator myInputValidator;
     private final Map<String, InputValidator> myExtraValidators = new HashMap<>();
@@ -234,7 +234,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
     private NonBlockingPopupBuilderImpl(@NotNull Project project) {myProject = project;}
 
     @Override
-    public Builder setTitle(String title) {
+    public Builder setTitle(@NlsContexts.PopupTitle String title) {
       myTitle = title;
       return this;
     }
