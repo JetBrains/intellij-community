@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.FileStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,10 +34,10 @@ public class FileStatusColorsTableModel extends AbstractTableModel {
 
   private static class ColumnInfo {
     public Class columnClass;
-    public String columnName;
+    @NlsContexts.ColumnName public String columnName;
     public Function<FileStatusColorDescriptor,Object> dataFunction;
 
-    ColumnInfo(Class columnClass, String columnName, Function<FileStatusColorDescriptor,Object> dataFunction) {
+    ColumnInfo(Class columnClass, @NlsContexts.ColumnName String columnName, Function<FileStatusColorDescriptor,Object> dataFunction) {
       this.columnClass = columnClass;
       this.columnName = columnName;
       this.dataFunction = dataFunction;

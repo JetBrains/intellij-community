@@ -37,6 +37,7 @@ import com.intellij.profile.codeInspection.ui.ErrorOptionsProvider
 import com.intellij.profile.codeInspection.ui.ErrorOptionsProviderEP
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.layout.*
+import org.jetbrains.annotations.Contract
 import javax.swing.DefaultComboBoxModel
 
 // @formatter:off
@@ -47,7 +48,7 @@ private val uiSettings get() = UISettings.instance
 private val richCopySettings get() = RichCopySettings.getInstance()
 private val codeAnalyzerSettings get() = DaemonCodeAnalyzerSettings.getInstance()
 
-private fun String.capitalizeWords(): String = StringUtil.capitalizeWords(this, true)
+@Contract(pure = true) private fun String.capitalizeWords(): String = StringUtil.capitalizeWords(this, true)
 
 private val enableWheelFontChange                                      get() = CheckboxDescriptor(if (SystemInfo.isMac) message("checkbox.enable.ctrl.mousewheel.changes.font.size.macos") else message("checkbox.enable.ctrl.mousewheel.changes.font.size"), PropertyBinding(editorSettings::isWheelFontChangeEnabled, editorSettings::setWheelFontChangeEnabled))
 

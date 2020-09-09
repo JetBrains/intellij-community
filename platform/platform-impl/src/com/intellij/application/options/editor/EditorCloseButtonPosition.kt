@@ -1,28 +1,28 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.editor
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.search.BooleanOptionDescription
 import com.intellij.openapi.application.ApplicationBundle.message
+import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.layout.*
-import javax.swing.DefaultComboBoxModel
 
-private const val LEFT = "Left"
-private const val RIGHT = "Right"
-private const val NONE = "None"
+private const val LEFT = "combobox.tab.placement.left"
+private const val RIGHT = "combobox.tab.placement.right"
+private const val NONE = "combobox.tab.placement.none"
 
 private val items = arrayOf(LEFT, RIGHT, NONE)
 
 internal val CLOSE_BUTTON_POSITION = message("tabs.close.button.placement")
 
 internal fun Cell.closeButtonPositionComboBox() {
-  comboBox(DefaultComboBoxModel<String>(items),
+  comboBox(CollectionComboBoxModel<String>(items.map { message(it) }),
            { getCloseButtonPlacement() },
            { set(it) }
   )
 }
 
-internal val closeButtonPlacementOptionDescription: Collection<BooleanOptionDescription> = items.map { asOptionDescriptor(it) }
+internal fun closeButtonPlacementOptionDescription(): Collection<BooleanOptionDescription> = items.map { asOptionDescriptor(it) }
 
 private fun set(s: String?) {
   ui.showCloseButton = s !== NONE
@@ -31,7 +31,7 @@ private fun set(s: String?) {
   }
 }
 
-private fun asOptionDescriptor(s: String) = object : BooleanOptionDescription(CLOSE_BUTTON_POSITION + " | " + s, ID) {
+private fun asOptionDescriptor(s: String) = object : BooleanOptionDescription(CLOSE_BUTTON_POSITION + " | " + message(s), ID) {
   override fun isOptionEnabled() = getCloseButtonPlacement() === s
 
   override fun setOptionState(enabled: Boolean) {

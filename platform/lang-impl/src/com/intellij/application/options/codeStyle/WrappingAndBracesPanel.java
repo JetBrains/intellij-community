@@ -32,7 +32,8 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
   private final MultiMap<String, String> myGroupToFields = new MultiMap<>();
   private Map<String, SettingsGroup> myFieldNameToGroup;
   private final CommaSeparatedIntegersField mySoftMarginsEditor =
-    new CommaSeparatedIntegersField(null, 0, CodeStyleConstraints.MAX_RIGHT_MARGIN, "Optional");
+    new CommaSeparatedIntegersField(null, 0, CodeStyleConstraints.MAX_RIGHT_MARGIN,
+                                    ApplicationBundle.message("settings.code.style.visual.guides.optional"));
   private final JComboBox<String> myWrapOnTypingCombo = new ComboBox<>(getInstance().WRAP_ON_TYPING_OPTIONS);
 
   public WrappingAndBracesPanel(CodeStyleSettings settings) {

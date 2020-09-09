@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.ColorPanel;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
@@ -64,10 +65,12 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
     String rainbowOptionsID = ApplicationBundle.message("rainbow.option.panel.display.name");
 
     // copied from ColorAndFontDescriptionPanel:
-    String style = "<div style=\"text-align:right\" vertical-align=\"top\">";
+    HtmlChunk.Element div = HtmlChunk.div("text-align:right").attr("vertical-align", "top");
+
     String inheritanceTooltip = IdeBundle.message("tooltip.inherited.editor.color.scheme", languageDefaultPageID, rainbowOptionsID);
-    String inheritanceText = style + "<a href=\"" + languageDefaultPageID + "\">" + rainbowOptionsID + "</a><br>" +
-                             "(" + languageDefaultPageID + ")";
+    String inheritanceText = div.children(HtmlChunk.link(languageDefaultPageID, rainbowOptionsID),
+                                          HtmlChunk.br(),
+                                          HtmlChunk.text("(" + languageDefaultPageID + ")")).toString();
 
     //noinspection HardCodedStringLiteral
     Messages.configureMessagePaneUi(myInheritanceLabel, "<html>", null);

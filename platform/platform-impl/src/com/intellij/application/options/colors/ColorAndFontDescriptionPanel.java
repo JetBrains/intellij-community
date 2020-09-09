@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.colors.AbstractKeyDescriptor;
 import com.intellij.openapi.options.colors.ColorAndFontDescriptorsProvider;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.CollectionComboBoxModel;
@@ -197,7 +198,7 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
       updateColorChooser(myCbEffects, myEffectsColorChooser, description.isEffectsColorEnabled(),
                          description.isEffectsColorChecked(), description.getEffectColor(), description.isTransparencyEnabled());
 
-      String name = ContainerUtil.reverseMap(myEffectsMap).get(effectType);
+      @NlsSafe String name = ContainerUtil.reverseMap(myEffectsMap).get(effectType);
       myEffectsCombo.getModel().setSelectedItem(name);
       myEffectsCombo
         .setEnabled((description.isEffectsColorEnabled() && description.isEffectsColorChecked()) && description.isEditable());

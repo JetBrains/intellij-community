@@ -36,7 +36,6 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public final class EditorColorSchemeDropHandler extends CustomFileDropHandler {
-  public static final String ADDED = "Color scheme added";
 
   @Override
   public boolean canHandle(@NotNull Transferable t, @Nullable Editor editor) {
@@ -83,7 +82,7 @@ public final class EditorColorSchemeDropHandler extends CustomFileDropHandler {
           }
 
           colorsManager.setGlobalScheme(imported);
-          Notification notification = new Notification("", ADDED, message, NotificationType.INFORMATION);
+          Notification notification = new Notification("", LangBundle.message("notification.title.color.scheme.added"), message, NotificationType.INFORMATION);
           QuickChangeColorSchemeAction.changeLafIfNecessary(imported, () -> {
             new Alarm().addRequest(
               () -> Notifications.Bus.notify(notification, project), 300);
@@ -91,7 +90,8 @@ public final class EditorColorSchemeDropHandler extends CustomFileDropHandler {
         }
       }
       catch (SchemeImportException e) {
-        String title = e.isWarning() ? ADDED : LangBundle.message("notification.title.color.scheme.import.failed");
+        String title = e.isWarning() ? LangBundle.message("notification.title.color.scheme.added")
+                                     : LangBundle.message("notification.title.color.scheme.import.failed");
         NotificationType type = e.isWarning() ? NotificationType.WARNING : NotificationType.ERROR;
         Notification notification = new Notification("", title, e.getMessage(), type);
         notification.notify(project);
