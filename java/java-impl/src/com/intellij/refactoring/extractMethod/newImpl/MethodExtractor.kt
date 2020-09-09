@@ -23,6 +23,7 @@ import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.extractMethod.ExtractMethodDialog
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.addSiblingAfter
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.guessMethodName
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.wrapWithCodeBlock
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.selectTargetClass
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.withFilteredAnnotations
@@ -80,7 +81,11 @@ class MethodExtractor {
         staticPassFields = makeStaticAndPassFields
       )
 
-      InplaceMethodExtractor(editor, options, defaultPanel).performInplaceRefactoring(linkedSetOf())
+      val guessedMethodNames = guessMethodName(options).ifEmpty { listOf("extracted") }
+      val methodName = guessedMethodNames.first()
+      val suggestions = guessedMethodNames.drop(1)
+      InplaceMethodExtractor(editor, options.copy(methodName = methodName), defaultPanel)
+        .performInplaceRefactoring(LinkedHashSet(suggestions))
     }
   }
 

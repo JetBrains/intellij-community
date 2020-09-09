@@ -60,7 +60,7 @@ object MapFromDialog {
     val typeParameterList = PsiElementFactory.getInstance(extractOptions.project).createTypeParameterList()
     typeParameters.forEach { typeParameterList.add(it) }
 
-    val methodNames = suggestInitialMethodName(extractOptions)
+    val methodNames = ExtractMethodHelper.guessMethodName(extractOptions)
 
     return object: ExtractMethodDialog(project, targetClass, inputVariables, returnType, typeParameterList,
                                        thrownExceptions, isStatic, canBeStatic, canBeChainedConstructor,
@@ -68,7 +68,7 @@ object MapFromDialog {
       override fun areTypesDirected() = true
 
       override fun suggestMethodNames(): Array<String> {
-        return methodNames
+        return methodNames.toTypedArray()
       }
 
       override fun isVoidReturn(): Boolean = false
@@ -110,42 +110,6 @@ object MapFromDialog {
 
       override fun hasPreviewButton() = false
     }
-  }
-
-  private fun suggestInitialMethodName(options: ExtractOptions): Array<String> {
-    val project = options.project
-    val initialMethodNames: MutableSet<String> = LinkedHashSet()
-    val codeStyleManager = JavaCodeStyleManager.getInstance(project) as JavaCodeStyleManagerImpl
-    val returnType = options.dataOutput.type
-
-    val expression = options.elements.singleOrNull() as? PsiExpression
-    if (expression != null || returnType !is PsiPrimitiveType) {
-        codeStyleManager.suggestVariableName(VariableKind.FIELD, null, expression, returnType).names
-          .forEach { name ->
-            initialMethodNames += codeStyleManager.variableNameToPropertyName(name, VariableKind.FIELD)
-          }
-    }
-
-    val outVariable = (options.dataOutput as? DataOutput.VariableOutput)?.variable
-    if (outVariable != null) {
-      val outKind = codeStyleManager.getVariableKind(outVariable)
-      val propertyName = codeStyleManager.variableNameToPropertyName(outVariable.name!!, outKind)
-      val names = codeStyleManager.suggestVariableName(VariableKind.FIELD, propertyName, null, outVariable.type).names
-      names.forEach { name ->
-        initialMethodNames += codeStyleManager.variableNameToPropertyName(name, VariableKind.FIELD)
-      }
-    }
-
-    val normalizedType = (returnType as? PsiEllipsisType)?.toArrayType() ?: returnType
-    val field = JavaPsiFacade.getElementFactory(project).createField("fieldNameToReplace", normalizedType)
-    fun suggestGetterName(name: String): String? {
-      field.name = name
-      return GenerateMembersUtil.suggestGetterName(field)
-    }
-
-    val getters: List<String> = initialMethodNames.filter { PsiNameHelper.getInstance(project).isIdentifier(it) }
-      .mapNotNull { propertyName -> suggestGetterName(propertyName) }
-    return getters.toTypedArray()
   }
 
 }
