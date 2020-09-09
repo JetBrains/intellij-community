@@ -27,7 +27,7 @@ object GotoClassPresentationUpdater {
   @Nls
   fun getActionTitlePluralized(): List<String> =
     (getGotoClassContributor()?.elementKindsPluralized ?:
-     listOf(IdeBundle.message("go.to.class.kind.text.pluralized"))).map { StringUtil.capitalize(it) }
+     listOf(IdeBundle.message("go.to.class.kind.text.pluralized")))
 
   @JvmStatic
   fun getElementKinds(): Set<String> {
