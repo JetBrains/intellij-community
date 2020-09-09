@@ -337,7 +337,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   @ApiStatus.Internal
   public final void loadComponents(@Nullable ProgressIndicator indicator) {
-    AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");
+    AccessToken token = HeavyProcessLatch.INSTANCE.processStarted("Loading application components");  // NON-NLS (not observable)
     try {
       if (indicator == null) {
         // no splash, no need to to use progress manager
@@ -635,7 +635,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         }
         catch (Throwable t) {
           LOG.error("Restart failed", t);
-          Main.showMessage("Restart failed", t);
+          Main.showMessage(BootstrapBundle.message("restart.failed.title"), t);
           exitCode = Main.RESTART_FAILED;
         }
       }

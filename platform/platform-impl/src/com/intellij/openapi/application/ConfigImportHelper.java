@@ -2,6 +2,7 @@
 package com.intellij.openapi.application;
 
 import com.intellij.diagnostic.VMOptions;
+import com.intellij.ide.BootstrapBundle;
 import com.intellij.ide.actions.ImportSettingsFilenameFilter;
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -238,14 +239,14 @@ public final class ConfigImportHelper {
         Restarter.scheduleRestart(false);
       }
       catch (IOException e) {
-        Main.showMessage("Restart failed", e);
+        Main.showMessage(BootstrapBundle.message("restart.failed.title"), e);
       }
       System.exit(0);
     }
     else {
-      String title = ApplicationBundle.message("title.import.settings", ApplicationNamesInfo.getInstance().getFullProductName());
-      String message = ApplicationBundle.message("restart.import.settings");
-      String yes = ApplicationBundle.message("restart.import.now"), no = ApplicationBundle.message("restart.import.later");
+      String title = BootstrapBundle.message("import.settings.title", ApplicationNamesInfo.getInstance().getFullProductName());
+      String message = BootstrapBundle.message("import.settings.restart");
+      String yes = BootstrapBundle.message("import.settings.restart.now"), no = BootstrapBundle.message("import.settings.restart.later");
       if (Messages.showYesNoDialog(message, title, yes, no, Messages.getQuestionIcon()) == Messages.YES) {
         System.exit(0);
       }
@@ -684,8 +685,8 @@ public final class ConfigImportHelper {
     }
     catch (Exception e) {
       log.warn(e);
-      String message = ApplicationBundle.message("error.unable.to.import.settings", e.getMessage());
-      Main.showMessage(ApplicationBundle.message("title.settings.import.failed"), message, false);
+      String message = BootstrapBundle.message("import.settings.failed", e.getMessage());
+      Main.showMessage(BootstrapBundle.message("import.settings.failed.title"), message, false);
     }
   }
 
