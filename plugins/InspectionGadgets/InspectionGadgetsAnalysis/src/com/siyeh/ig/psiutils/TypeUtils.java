@@ -83,11 +83,6 @@ public final class TypeUtils {
   }
 
   @Contract("null -> false")
-  public static boolean isJavaIoFile(@Nullable PsiType targetType) {
-    return typeEquals(CommonClassNames.JAVA_IO_FILE, targetType);
-  }
-
-  @Contract("null -> false")
   public static boolean isJavaLangObject(@Nullable PsiType targetType) {
     return typeEquals(CommonClassNames.JAVA_LANG_OBJECT, targetType);
   }

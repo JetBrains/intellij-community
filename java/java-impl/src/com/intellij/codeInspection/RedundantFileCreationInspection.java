@@ -43,7 +43,7 @@ public class RedundantFileCreationInspection extends AbstractBaseJavaLocalInspec
         if (constructor == null) return;
         final PsiParameter[] params = constructor.getParameterList().getParameters();
 
-        if (params.length == 0 || !TypeUtils.isJavaIoFile(params[0].getType())) return;
+        if (params.length == 0 || !TypeUtils.typeEquals(CommonClassNames.JAVA_IO_FILE, params[0].getType())) return;
 
         final PsiExpressionList argList = newExpression.getArgumentList();
         if (argList == null) return;
