@@ -9,5 +9,15 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="TestNG" level="project" />
     <orderEntry type="module" module-name="intellij.java.rt" />
+    <orderEntry type="module-library" scope="PROVIDED">
+      <library name="com.beust:jcommander:1.78" type="repository">
+        <properties maven-id="com.beust:jcommander:1.78" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/beust/jcommander/1.78/jcommander-1.78.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>
