@@ -396,9 +396,14 @@ public abstract class NlsInfo {
       PsiClass aClass = method.getContainingClass();
       return aClass != null && "kotlin.collections.CollectionsKt___CollectionsKt".equals(aClass.getQualifiedName());
     }
-    if (method.getName().equals("orEmpty")) {
-      PsiClass aClass = method.getContainingClass();
-      return aClass != null && "kotlin.text.StringsKt__StringsKt".equals(aClass.getQualifiedName());
+    if (method.hasModifierProperty(PsiModifier.STATIC)) {
+      PsiParameter parameter = method.getParameterList().getParameter(0);
+      if (parameter != null && parameter.getName().equals("$receiver")) {
+        PsiClass aClass = method.getContainingClass();
+        return aClass != null &&
+               aClass.getQualifiedName() != null &&
+               aClass.getQualifiedName().startsWith("kotlin.text.StringsKt__Strings");
+      }
     }
     return false;
   }
