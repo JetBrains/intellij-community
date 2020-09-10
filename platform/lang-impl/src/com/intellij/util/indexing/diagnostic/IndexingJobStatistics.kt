@@ -2,7 +2,6 @@
 package com.intellij.util.indexing.diagnostic
 
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 
 /**
  * Accumulates indexing statistics for a set of indexable files.
@@ -66,7 +65,7 @@ class IndexingJobStatistics(val fileSetName: String) {
     stats.totalBytes += fileSize
     stats.numberOfFiles++
     if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
-      indexedFiles += getFilePath(file)
+      indexedFiles += file.presentableUrl
     }
   }
 
@@ -78,18 +77,8 @@ class IndexingJobStatistics(val fileSetName: String) {
     numberOfTooLargeForIndexingFiles++
     tooLargeForIndexingFiles.addElement(tooLargeForIndexingFile)
     if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
-      indexedFiles += getFilePath(file)
+      indexedFiles += file.presentableUrl
     }
   }
 
-  private fun getFilePath(file: VirtualFile): String {
-    val fileSystem = file.fileSystem
-    if (fileSystem is ArchiveFileSystem) {
-      val localArchiveFile = fileSystem.getLocalByEntry(file)
-      if (localArchiveFile != null) {
-        return localArchiveFile.name + ":" + file.name
-      }
-    }
-    return file.name
-  }
 }
