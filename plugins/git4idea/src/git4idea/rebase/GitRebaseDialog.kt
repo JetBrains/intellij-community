@@ -515,6 +515,7 @@ internal class GitRebaseDialog(private val project: Project,
       selectedOptions -= option
     }
     if (option in REBASE_FLAGS) {
+      updateUpstreamField()
       updateOptionsPanel()
       rerender()
     }
@@ -523,7 +524,12 @@ internal class GitRebaseDialog(private val project: Project,
     }
   }
 
+  private fun updateUpstreamField() {
+    upstreamField.isEnabled = GitRebaseOption.ROOT !in selectedOptions
+  }
+
   private fun updateUi() {
+    updateUpstreamField()
     updateTopPanel()
     updateBottomPanel()
     updateOptionsPanel()
