@@ -4,13 +4,10 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FilePointerProvider
 import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FilePointerProviderImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
 import org.jetbrains.annotations.ApiStatus
 
 object LegacyBridgeTestFrameworkUtils {

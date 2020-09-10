@@ -13,7 +13,6 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar.APPLICATION_LEVEL
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.util.containers.MultiMap

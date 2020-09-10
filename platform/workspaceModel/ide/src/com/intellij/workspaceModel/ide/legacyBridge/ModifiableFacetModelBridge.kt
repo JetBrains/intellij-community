@@ -2,7 +2,6 @@
 package com.intellij.workspaceModel.ide.legacyBridge
 
 import com.intellij.facet.ModifiableFacetModel
-import com.intellij.workspaceModel.storage.WorkspaceEntity
 
 interface ModifiableFacetModelBridge: ModifiableFacetModel {
   fun prepareForCommit()

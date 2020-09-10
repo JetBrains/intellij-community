@@ -14,10 +14,8 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtil
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.moduleMap

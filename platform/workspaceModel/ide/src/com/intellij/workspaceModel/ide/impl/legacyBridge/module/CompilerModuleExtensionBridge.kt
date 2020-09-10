@@ -7,7 +7,6 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.util.ArrayUtilRt
-import com.intellij.workspaceModel.storage.bridgeEntities.JavaModuleSettingsEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableJavaModuleSettingsEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addJavaModuleSettingsEntity
 import com.intellij.workspaceModel.ide.getInstance
