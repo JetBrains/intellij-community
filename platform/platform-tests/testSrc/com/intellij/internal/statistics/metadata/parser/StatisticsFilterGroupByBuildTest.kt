@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.internal.statistics.whitelist.parser
+package com.intellij.internal.statistics.metadata.parser
 
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataUtils
 import org.junit.Assert
