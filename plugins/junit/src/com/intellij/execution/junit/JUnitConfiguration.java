@@ -25,10 +25,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.DifferenceFilter;
-import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
@@ -39,6 +36,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.RepeatCount;
 import com.intellij.util.ArrayUtilRt;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -157,7 +155,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     TestObject testObject = TestObject.fromString(myData.TEST_OBJECT, this, env);
     DumbService dumbService = DumbService.getInstance(getProject());
     if (dumbService.isDumb() && !DumbService.isDumbAware(testObject)) {
-      throw new ExecutionException("Running tests is disabled during index update");
+      throw new ExecutionException(JUnitBundle.message("running.tests.disabled.during.index.update.error.message"));
     }
     return testObject;
   }
@@ -545,11 +543,11 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     myInputRedirectOptions.writeExternal(element);
   }
 
-  public String getForkMode() {
+  public @NonNls String getForkMode() {
     return myData.FORK_MODE;
   }
 
-  public void setForkMode(@NotNull String forkMode) {
+  public void setForkMode(@NotNull @NonNls String forkMode) {
     myData.FORK_MODE = forkMode;
   }
 
@@ -592,11 +590,11 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     myData.REPEAT_COUNT = repeatCount;
   }
 
-  public String getRepeatMode() {
+  public @NonNls String getRepeatMode() {
     return myData.REPEAT_MODE;
   }
 
-  public void setRepeatMode(String repeatMode) {
+  public void setRepeatMode(@NonNls String repeatMode) {
     myData.REPEAT_MODE = repeatMode;
   }
 
@@ -613,7 +611,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
 
   public static class Data implements Cloneable {
     public String PACKAGE_NAME;
-    public String MAIN_CLASS_NAME;
+    public @NlsSafe String MAIN_CLASS_NAME;
     public String METHOD_NAME;
     private String[] UNIQUE_ID = ArrayUtilRt.EMPTY_STRING_ARRAY;
     private String TAGS;
@@ -627,10 +625,10 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     private String CATEGORY_NAME;
     private String FORK_MODE = FORK_NONE;
     private int REPEAT_COUNT = 1;
-    private String REPEAT_MODE = RepeatCount.ONCE;
+    private @NonNls String REPEAT_MODE = RepeatCount.ONCE;
     private LinkedHashSet<String> myPattern = new LinkedHashSet<>();
     private Map<String, String> myEnvs = new LinkedHashMap<>();
-    private String myChangeList = "All";
+    private @NlsSafe String myChangeList = JUnitBundle.message("combobox.changelists.all");
 
     @Override
     public boolean equals(final Object object) {
@@ -694,35 +692,35 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
       }
     }
 
-    public String getVMParameters() {
+    public @NlsSafe String getVMParameters() {
       return VM_PARAMETERS;
     }
 
-    public void setVMParameters(String value) {
+    public void setVMParameters(@NlsSafe String value) {
       VM_PARAMETERS = value;
     }
 
-    public String getProgramParameters() {
+    public @NlsSafe String getProgramParameters() {
       return PARAMETERS;
     }
 
-    public void setProgramParameters(String value) {
+    public void setProgramParameters(@NlsSafe String value) {
       PARAMETERS = value;
     }
 
-    public String getWorkingDirectory() {
+    public @NlsSafe String getWorkingDirectory() {
       return ExternalizablePath.localPathValue(WORKING_DIRECTORY);
     }
 
-    public void setWorkingDirectory(String value) {
+    public void setWorkingDirectory(@NlsSafe String value) {
       WORKING_DIRECTORY = StringUtil.isEmptyOrSpaces(value) ? "" : FileUtilRt.toSystemIndependentName(value.trim());
     }
 
-    public void setUniqueIds(String... uniqueId) {
+    public void setUniqueIds(@NlsSafe String... uniqueId) {
       UNIQUE_ID = uniqueId;
     }
 
-    public String[] getUniqueIds() {
+    public @NlsSafe String[] getUniqueIds() {
       return UNIQUE_ID;
     }
 
@@ -733,15 +731,15 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
       return setMainClass(methodLocation instanceof MethodLocation ? ((MethodLocation)methodLocation).getContainingClass() : method.getContainingClass());
     }
 
-    public String getTags() {
+    public @NlsSafe String getTags() {
       return TAGS;
     }
 
-    public void setTags(String tags) {
+    public void setTags(@NlsSafe String tags) {
       TAGS = tags;
     }
 
-    public static String getMethodPresentation(PsiMethod method) {
+    public static @NlsSafe String getMethodPresentation(PsiMethod method) {
       if (!method.getParameterList().isEmpty() && MetaAnnotationUtil.isMetaAnnotated(method, JUnitUtil.TEST5_ANNOTATIONS)) {
         return method.getName() + "(" + ClassUtil.getVMParametersMethodSignature(method) + ")";
       }
@@ -750,13 +748,15 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
       }
     }
 
-    public String getGeneratedName(final JavaRunConfigurationModule configurationModule) {
+    public @Nls String getGeneratedName(final JavaRunConfigurationModule configurationModule) {
       if (TEST_PACKAGE.equals(TEST_OBJECT) || TEST_DIRECTORY.equals(TEST_OBJECT)) {
         if (TEST_SEARCH_SCOPE.getScope() == TestSearchScope.WHOLE_PROJECT) {
           return JUnitBundle.message("default.junit.config.name.whole.project");
         }
         final String moduleName = TEST_SEARCH_SCOPE.getScope() == TestSearchScope.WHOLE_PROJECT ? "" : configurationModule.getModuleName();
-        final String packageName = TEST_PACKAGE.equals(TEST_OBJECT) ? getPackageName() : StringUtil.getShortName(FileUtil.toSystemIndependentName(getDirName()), '/');
+        final String packageName = TEST_PACKAGE.equals(TEST_OBJECT)
+                                   ? getPackageName()
+                                   : StringUtil.getShortName(FileUtil.toSystemIndependentName(getDirName()), '/');
         if (packageName.length() == 0) {
           if (moduleName.length() > 0) {
             return JUnitBundle.message("default.junit.config.name.all.in.module", moduleName);
@@ -770,21 +770,33 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
       }
       if (TEST_PATTERN.equals(TEST_OBJECT)) {
         final int size = myPattern.size();
-        if (size == 0) return "Temp suite";
+        if (size == 0) return JUnitBundle.message("default.junit.config.name.temp.suite");
         String fqName = myPattern.iterator().next();
         String firstName =
           fqName.contains("*") ? fqName
                                : StringUtil.getShortName(fqName.contains("(") ? StringUtil.getPackageName(fqName, '(') : fqName);
-        return firstName + (size > 1 ? " and " + (size - 1) + " more" : "");
+        if (size == 1) {
+          return firstName;
+        }
+        else {
+          return JUnitBundle.message("default.junit.config.name.multiple.patterns", firstName, size - 1);
+        }
       }
       if (TEST_CATEGORY.equals(TEST_OBJECT)) {
-        return "@Category(" + (StringUtil.isEmpty(CATEGORY_NAME) ? "Invalid" : CATEGORY_NAME) + ")";
+        String categoryName = StringUtil.isEmpty(CATEGORY_NAME)
+                              ? JUnitBundle.message("default.junit.config.empty.category")
+                              : CATEGORY_NAME;
+        return JUnitBundle.message("default.junit.config.name.category", categoryName);
       }
       if (TEST_UNIQUE_ID.equals(TEST_OBJECT)) {
-        return UNIQUE_ID != null && UNIQUE_ID.length > 0 ? StringUtil.join(UNIQUE_ID, " ") : "Temp suite";
+        return UNIQUE_ID != null && UNIQUE_ID.length > 0
+               ? StringUtil.join(UNIQUE_ID, " ")
+               : JUnitBundle.message("default.junit.config.name.temp.suite");
       }
       if (TEST_TAGS.equals(TEST_OBJECT)) {
-        return TAGS != null && TAGS.length() > 0 ? "Tags (" + StringUtil.join(TAGS, " ") + ")" : "Temp suite";
+        return TAGS != null && TAGS.length() > 0
+               ? JUnitBundle.message("default.junit.config.name.tags", StringUtil.join(TAGS, " "))
+               : JUnitBundle.message("default.junit.config.name.temp.suite");
       }
       final String className = JavaExecutionUtil.getPresentableClassName(getMainClassName());
       if (TEST_METHOD.equals(TEST_OBJECT)) {
@@ -794,41 +806,41 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
       return className;
     }
 
-    public String getMainClassName() {
+    public @NlsSafe String getMainClassName() {
       return MAIN_CLASS_NAME != null ? MAIN_CLASS_NAME : "";
     }
 
-    public String getPackageName() {
+    public @NlsSafe String getPackageName() {
       return PACKAGE_NAME != null ? PACKAGE_NAME : "";
     }
 
-    public String getMethodName() {
+    public @NlsSafe String getMethodName() {
       String signature = getMethodNameWithSignature();
       int paramsIdx = signature.lastIndexOf("(");
       return paramsIdx > -1 ? signature.substring(0, paramsIdx) : signature;
     }
 
-    public String getMethodNameWithSignature() {
+    public @NlsSafe String getMethodNameWithSignature() {
       return METHOD_NAME != null ? METHOD_NAME : "";
     }
 
-    public String getDirName() {
+    public @NlsSafe String getDirName() {
       return DIR_NAME != null ? DIR_NAME : "";
     }
 
-    public void setDirName(String dirName) {
+    public void setDirName(@NlsSafe String dirName) {
       DIR_NAME = dirName;
     }
 
-    public Set<String> getPatterns() {
+    public Set<@NlsSafe String> getPatterns() {
       return myPattern;
     }
 
-    public void setPatterns(LinkedHashSet<String> pattern) {
+    public void setPatterns(LinkedHashSet<@NlsSafe String> pattern) {
       myPattern = pattern;
     }
 
-    public String getPatternPresentation() {
+    public @NlsSafe String getPatternPresentation() {
       return StringUtil.join(myPattern, "||");
     }
 
@@ -852,24 +864,24 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
       myEnvs = envs;
     }
 
-    public String getCategory() {
+    public @NlsSafe String getCategory() {
       return CATEGORY_NAME != null ? CATEGORY_NAME : "";
     }
 
-    public void setCategoryName(String categoryName) {
+    public void setCategoryName(@NlsSafe String categoryName) {
       CATEGORY_NAME = categoryName;
     }
 
-    public String getChangeList() {
+    public @NlsSafe String getChangeList() {
       return myChangeList;
     }
 
-    public void setChangeList(String changeList) {
+    public void setChangeList(@NlsSafe String changeList) {
       myChangeList = changeList;
     }
   }
 
-  public static String getDefaultPackageName() {
+  public static @Nls String getDefaultPackageName() {
     return JUnitBundle.message("default.package.presentable.name");
   }
 }

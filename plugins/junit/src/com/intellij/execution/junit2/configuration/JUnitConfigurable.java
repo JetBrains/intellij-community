@@ -137,6 +137,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myTestLocations[JUnitConfigurationModel.CATEGORY] = myCategory;
 
     myRepeatCb.setModel(new DefaultComboBoxModel<>(RepeatCount.REPEAT_TYPES));
+
+    //noinspection HardCodedStringLiteral
     myRepeatCb.setSelectedItem(RepeatCount.ONCE);
     myRepeatCb.addActionListener(new ActionListener() {
       @Override
@@ -144,6 +146,9 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
         myRepeatCountField.setEnabled(RepeatCount.N.equals(myRepeatCb.getSelectedItem()));
       }
     });
+
+    myRepeatCb.setRenderer(SimpleListCellRenderer.create("", value -> JUnitConfigurationModel.getRepeatModeName(value)));
+    myForkCb.setRenderer(SimpleListCellRenderer.create("", value -> JUnitConfigurationModel.getForkModeName(value)));
 
     final JPanel panel = myPattern.getComponent();
     panel.setLayout(new BorderLayout());
@@ -323,6 +328,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     final int count = configuration.getRepeatCount();
     myRepeatCountField.setText(String.valueOf(count));
     myRepeatCountField.setEnabled(count > 1);
+
+    //noinspection HardCodedStringLiteral
     myRepeatCb.setSelectedItem(configuration.getRepeatMode());
 
     myModel.reset(configuration);
@@ -346,6 +353,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     }
     myJrePathEditor
       .setPathOrName(configuration.getAlternativeJrePath(), configuration.isAlternativeJrePathEnabled());
+    //noinspection HardCodedStringLiteral
     myForkCb.setSelectedItem(configuration.getForkMode());
     myShortenClasspathModeCombo.getComponent().setSelectedItem(configuration.getShortenCommandLine());
     myUseModulePath.getComponent().setSelected(configuration.isUseModulePath());
@@ -637,7 +645,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
         final String moduleName = myModuleSelector.getModuleName();
         throw new NoFilterException(new MessagesEx.MessageInfo(
           project,
-          moduleName.isEmpty() ? "No module selected" : JUnitBundle.message("module.does.not.exists", moduleName, project.getName()),
+          moduleName.isEmpty() ? JUnitBundle.message("no.module.selected.error.message")
+                               : JUnitBundle.message("module.does.not.exists", moduleName, project.getName()),
           JUnitBundle.message("cannot.browse.test.inheritors.dialog.title")));
       }
       final ClassFilter.ClassFilterWithScope classFilter;
@@ -676,7 +685,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     private final EditorTextFieldWithBrowseButton myCategoryField;
 
     CategoryBrowser(Project project, ConfigurationModuleSelector moduleSelector, EditorTextFieldWithBrowseButton categoryField) {
-      super(project, "Category Interface");
+      super(project, JUnitBundle.message("category.interface.dialog.title"));
       myModuleSelector = moduleSelector;
       myCategoryField = categoryField;
     }

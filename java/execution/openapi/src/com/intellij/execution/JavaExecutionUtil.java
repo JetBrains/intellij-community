@@ -11,6 +11,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -69,7 +70,7 @@ public final class JavaExecutionUtil {
   }
 
   @Nullable
-  public static String getPresentableClassName(@Nullable String rtClassName) {
+  public static @NlsSafe String getPresentableClassName(@Nullable String rtClassName) {
     return getPresentableClassName(rtClassName, null);
   }
 

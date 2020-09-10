@@ -28,6 +28,8 @@ import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -54,6 +56,7 @@ import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.siyeh.ig.junit.JUnitCommonClassNames;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -72,10 +75,10 @@ import java.util.stream.Stream;
 public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitConfiguration> implements PossiblyDumbAware {
   protected static final Logger LOG = Logger.getInstance(TestObject.class);
 
-  private static final String DEBUG_RT_PATH = "idea.junit_rt.path";
-  private static final String JUNIT_TEST_FRAMEWORK_NAME = "JUnit";
+  private static final @NonNls String DEBUG_RT_PATH = "idea.junit_rt.path";
+  private static final @NlsSafe String JUNIT_TEST_FRAMEWORK_NAME = "JUnit";
 
-  private static final String DEFAULT_RUNNER = "default";
+  private static final @NonNls String DEFAULT_RUNNER = "default";
 
   private final JUnitConfiguration myConfiguration;
   protected File myListenersFile;
@@ -99,7 +102,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
                                                     String packageName,
                                                     boolean createTempFile,
                                                     JavaParameters javaParameters,
-                                                    String filters) {
+                                                    @NlsSafe String filters) {
     try {
       if (createTempFile) {
         createTempFiles(javaParameters);
@@ -181,7 +184,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     return sourceScope != null ? sourceScope.getModulesToCompile() : Module.EMPTY_ARRAY;
   }
 
-  public abstract String suggestActionName();
+  public abstract @NlsActions.ActionText String suggestActionName();
 
   public abstract RefactoringElementListener getListener(PsiElement element, JUnitConfiguration configuration);
 

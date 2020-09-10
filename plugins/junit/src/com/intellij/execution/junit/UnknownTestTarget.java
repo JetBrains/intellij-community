@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.junit;
 
+import com.intellij.execution.JUnitBundle;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.psi.*;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -26,7 +27,7 @@ public class UnknownTestTarget extends TestObject {
 
   @Override
   public String suggestActionName() {
-    return "Unknown";
+    return JUnitBundle.message("action.text.test.unknown.target");
   }
 
   @Override

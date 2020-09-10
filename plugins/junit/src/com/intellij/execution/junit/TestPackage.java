@@ -16,6 +16,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -116,7 +117,7 @@ public class TestPackage extends TestObject {
       return null;
     }
     catch (IndexNotReadyException e) {
-      throw new ExecutionException("Running tests is disabled during index update");
+      throw new ExecutionException(JUnitBundle.message("running.tests.disabled.during.index.update.error.message"));
     }
   }
 
@@ -128,7 +129,7 @@ public class TestPackage extends TestObject {
     return getConfiguration().getTestSearchScope() == TestSearchScope.SINGLE_MODULE;
   }
 
-  protected String getFilters(Set<Location<?>> foundClasses, String packageName) {
+  protected @NlsSafe String getFilters(Set<Location<?>> foundClasses, @NlsSafe String packageName) {
     return foundClasses.isEmpty() ? packageName.isEmpty() ? ".*" : packageName + "\\..*" : "";
   }
 
@@ -151,7 +152,7 @@ public class TestPackage extends TestObject {
   }
 
   @NotNull
-  protected String getPackageName(JUnitConfiguration.Data data) throws CantRunException {
+  protected @NlsSafe String getPackageName(JUnitConfiguration.Data data) throws CantRunException {
     PsiPackage aPackage = getPackage(data);
     return aPackage != null ? aPackage.getQualifiedName() : "";
   }

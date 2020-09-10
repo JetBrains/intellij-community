@@ -66,7 +66,7 @@ class TestCategory extends TestPackage {
 
   @Override
   public String suggestActionName() {
-    return "Tests of " + getConfiguration().getPersistentData().getCategory();
+    return JUnitBundle.message("action.text.test.category", getConfiguration().getPersistentData().getCategory());
   }
 
   @Override

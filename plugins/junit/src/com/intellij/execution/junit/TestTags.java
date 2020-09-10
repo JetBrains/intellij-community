@@ -77,7 +77,7 @@ class TestTags extends TestObject {
 
   @Override
   public String suggestActionName() {
-    return "Tests of " + getConfiguration().getPersistentData().getTags();
+    return JUnitBundle.message("action.text.test.tags", getConfiguration().getPersistentData().getTags());
   }
 
   @Override
