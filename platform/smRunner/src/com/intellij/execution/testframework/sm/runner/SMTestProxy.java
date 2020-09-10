@@ -28,7 +28,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1011,7 +1010,6 @@ public class SMTestProxy extends AbstractTestProxy {
       myComment = comment;
     }
 
-    @RequiresEdt
     public long getExecutionId() {
       long result = myExecutionId;
       if (result == -1) {
