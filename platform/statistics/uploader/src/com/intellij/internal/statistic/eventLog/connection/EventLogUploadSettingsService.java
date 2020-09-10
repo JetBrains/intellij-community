@@ -34,6 +34,9 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
 
   @NotNull
   private static String getConfigUrl(@NotNull String recorderId, @NotNull String productCode, @NotNull String templateUrl, boolean isTest) {
+    if (isTest) {
+      return String.format(templateUrl, "test/" + recorderId, productCode);
+    }
     return String.format(templateUrl, recorderId, productCode);
   }
 
