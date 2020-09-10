@@ -13,7 +13,6 @@ import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.auth.*;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager;
-import org.jetbrains.idea.svn.config.ServersFileKeys;
 import org.jetbrains.idea.svn.config.SvnIniFile;
 import org.jetbrains.idea.svn.diff.DiffOptions;
 import org.jetbrains.idea.svn.update.MergeRootInfo;
@@ -25,6 +24,8 @@ import java.nio.file.Paths;
 import java.util.*;
 
 import static org.jetbrains.idea.svn.SvnUtil.USER_CONFIGURATION_PATH;
+import static org.jetbrains.idea.svn.config.ServersFileKeys.GLOBAL_SERVER_GROUP;
+import static org.jetbrains.idea.svn.config.ServersFileKeys.TIMEOUT;
 import static org.jetbrains.idea.svn.config.SvnIniFile.CONFIG_FILE_NAME;
 import static org.jetbrains.idea.svn.config.SvnIniFile.SERVERS_FILE_NAME;
 
@@ -110,7 +111,7 @@ public class SvnConfiguration implements PersistentStateComponent<SvnConfigurati
   // uses configuration directory property - it should be saved first
   public void setHttpTimeout(final long value) {
     long cut = value / 1000;
-    getServersFile().setValue("global", ServersFileKeys.TIMEOUT, String.valueOf(cut));
+    getServersFile().setValue(GLOBAL_SERVER_GROUP, TIMEOUT, String.valueOf(cut));
     getServersFile().save();
   }
 

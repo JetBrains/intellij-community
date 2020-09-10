@@ -17,6 +17,8 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.svn.SvnUtil.createUrl
 import org.jetbrains.idea.svn.api.Url
 import org.jetbrains.idea.svn.commandLine.SvnBindException
+import org.jetbrains.idea.svn.config.ServersFileKeys.GLOBAL_SERVER_GROUP
+import org.jetbrains.idea.svn.config.ServersFileKeys.SERVER_GROUPS_SECTION
 import java.io.IOException
 import java.io.PrintWriter
 import java.io.Writer
@@ -68,30 +70,30 @@ class SvnIniFile(private val myPath: Path) {
       myLatestUpdate = lastModified
 
       myPatternsMap.clear()
-      myPatternsMap.putAll(getValues(GROUPS_GROUP_NAME))
+      myPatternsMap.putAll(getValues(SERVER_GROUPS_SECTION))
 
       myDefaultProperties.clear()
-      myDefaultProperties.putAll(getValues(DEFAULT_GROUP_NAME))
+      myDefaultProperties.putAll(getValues(GLOBAL_SERVER_GROUP))
     }
   }
 
-  fun getValue(groupName: String, propertyName: String): String? = configFile[groupName, propertyName]
-  fun getValues(groupName: String): Map<String, String?> = configFile[groupName] ?: emptyMap()
-  fun setValue(groupName: String, propertyName: String, value: String?) {
+  fun getValue(@NonNls groupName: String, propertyName: String): String? = configFile[groupName, propertyName]
+  fun getValues(@NonNls groupName: String): Map<String, String?> = configFile[groupName] ?: emptyMap()
+  fun setValue(@NonNls groupName: String, propertyName: String, value: String?) {
     configFile.put(groupName, propertyName, value)
   }
 
   fun deleteGroup(name: String) {
-    if (DEFAULT_GROUP_NAME == name) {
+    if (GLOBAL_SERVER_GROUP == name) {
       myDefaultProperties.clear()
     }
     // remove group from groups
-    setValue(GROUPS_GROUP_NAME, name, null)
+    setValue(SERVER_GROUPS_SECTION, name, null)
     configFile.remove(name)
   }
 
   fun addGroup(name: String, patterns: String?, properties: Map<String, String?>) {
-    setValue(GROUPS_GROUP_NAME, name, patterns)
+    setValue(SERVER_GROUPS_SECTION, name, patterns)
     addProperties(name, properties)
   }
 
@@ -103,7 +105,7 @@ class SvnIniFile(private val myPath: Path) {
 
   fun modifyGroup(name: String, patterns: String?, delete: Collection<String>, addOrModify: Map<String, String?>, isDefault: Boolean) {
     if (!isDefault) {
-      setValue(GROUPS_GROUP_NAME, name, patterns)
+      setValue(SERVER_GROUPS_SECTION, name, patterns)
     }
     val deletedPrepared = HashMap<String, String?>(delete.size)
     for (property in delete) {
@@ -122,11 +124,8 @@ class SvnIniFile(private val myPath: Path) {
   }
 
   companion object {
-    const val SERVERS_FILE_NAME: String = "servers"
-    const val CONFIG_FILE_NAME: String = "config"
-
-    const val DEFAULT_GROUP_NAME: String = "global"
-    const val GROUPS_GROUP_NAME: String = "groups"
+    @NonNls const val SERVERS_FILE_NAME: String = "servers"
+    @NonNls const val CONFIG_FILE_NAME: String = "config"
 
     @JvmStatic
     fun getNewGroupName(host: String, configFile: SvnIniFile): String {
@@ -140,7 +139,7 @@ class SvnIniFile(private val myPath: Path) {
 
     @JvmStatic
     fun getPropertyIdea(host: String, serversFile: Couple<SvnIniFile>, name: String): String? {
-      val groupName = getGroupName(getValues(serversFile, GROUPS_GROUP_NAME), host)
+      val groupName = getGroupName(getValues(serversFile, SERVER_GROUPS_SECTION), host)
       if (groupName != null) {
         val hostProps = getValues(serversFile, groupName)
         val value = hostProps[name]
@@ -148,7 +147,7 @@ class SvnIniFile(private val myPath: Path) {
           return value
         }
       }
-      return getValues(serversFile, DEFAULT_GROUP_NAME)[name]
+      return getValues(serversFile, GLOBAL_SERVER_GROUP)[name]
     }
 
     @JvmStatic
@@ -195,7 +194,7 @@ class SvnIniFile(private val myPath: Path) {
       if (value == null) nullValue else TRUE_VALUES.any { it.equals(value, true) }
 
     @JvmStatic
-    fun getValue(files: Couple<SvnIniFile>, groupName: String, propertyName: String): String? =
+    fun getValue(files: Couple<SvnIniFile>, @NonNls groupName: String, propertyName: String): String? =
       files.second.getValue(groupName, propertyName) ?: files.first.getValue(groupName, propertyName)
 
     @JvmStatic
@@ -249,7 +248,7 @@ private class MyIniBuilder(ini: Ini) : IniBuilder() {
 
   private fun handleAfterComment() {
     if (isAfterComment && lastComment != null) {
-      (profile as Ini).putMeta("after-comment", currentSection.name, lastComment)
+      (profile as Ini).putMeta(AFTER_COMMENT_CATEGORY, currentSection.name, lastComment)
       lastComment = null
       isAfterComment = false
     }
@@ -264,6 +263,8 @@ private class MyIniFormatter(private val ini: Ini, config: Config, output: Write
 
   override fun startSection(sectionName: String) {
     super.startSection(sectionName)
-    handleComment(ini.getMeta("after-comment", sectionName) as String?)
+    handleComment(ini.getMeta(AFTER_COMMENT_CATEGORY, sectionName) as String?)
   }
 }
+
+@NonNls private const val AFTER_COMMENT_CATEGORY: String = "after-comment"

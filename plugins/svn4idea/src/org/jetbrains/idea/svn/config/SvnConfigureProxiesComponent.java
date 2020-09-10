@@ -21,6 +21,8 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
 
+import static org.jetbrains.idea.svn.SvnBundle.message;
+
 public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
   private final ServersFileManager myManager;
 
@@ -51,7 +53,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
 
   @Override
   public String getDisplayName() {
-    return SvnBundle.message("configurable.SvnConfigureProxiesComponent.display.name");
+    return message("configurable.SvnConfigureProxiesComponent.display.name");
   }
 
   @Override
@@ -59,16 +61,12 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
     return null;
   }
 
-  private static String getNewName() {
-    return "Unnamed";
-  }
-
   private void addGroup(final ProxyGroup template) {
     final ProxyGroup group;
     if (template == null) {
-      group = new ProxyGroup(getNewName(), "", new HashMap<>());
+      group = new ProxyGroup(message("value.new.server.group.name"), "", new HashMap<>());
     } else {
-      group = new ProxyGroup(getNewName(), template.getPatterns(), template.getProperties());
+      group = new ProxyGroup(message("value.new.server.group.name"), template.getPatterns(), template.getProperties());
     }
 
     addNode(createNodeForObject(group), myRoot);
@@ -100,7 +98,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
       final String groupName = groupConfigurable.getEditableObject().getName();
 
       if (checkSet.contains(groupName)) {
-        listener.onError(SvnBundle.message("dialog.edit.http.proxies.settings.error.same.group.names.text", groupName), myComponent, true);
+        listener.onError(message("dialog.edit.http.proxies.settings.error.same.group.names.text", groupName), myComponent, true);
         return false;
       }
       checkSet.add(groupName);

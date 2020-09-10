@@ -1,22 +1,22 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.config;
 
+import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.NonNls;
+
 public interface ServersFileKeys {
-  String EXCEPTIONS = "http-proxy-exceptions";
-  String SERVER = "http-proxy-host";
-  String PORT = "http-proxy-port";
-  String USER = "http-proxy-username";
-  String PASSWORD = "http-proxy-password";
-  String TIMEOUT = "http-timeout";
+  @NlsSafe String GLOBAL_SERVER_GROUP = "global";
+  @NonNls String SERVER_GROUPS_SECTION = "groups";
 
-  // not used by svnkit jet
-  String COMPRESSION = "http-compression";
-  String LIBRARY = "http-library";
-  String AUTH_TYPES = "http-auth-types";
-  String NEON_DEBUG_MASK = "neon-debug-mask";
+  @NonNls String EXCEPTIONS = "http-proxy-exceptions";
+  @NonNls String SERVER = "http-proxy-host";
+  @NonNls String PORT = "http-proxy-port";
+  @NonNls String USER = "http-proxy-username";
+  @NonNls String PASSWORD = "http-proxy-password";
+  @NonNls String TIMEOUT = "http-timeout";
 
-  String SSL_AUTHORITY_FILES = "ssl-authority-files";
-  String SSL_TRUST_DEFAULT_CA = "ssl-trust-default-ca";
-  String SSL_CLIENT_CERT_FILE = "ssl-client-cert-file";
-  String SSL_CLIENT_CERT_PASSWORD = "ssl-client-cert-password";
+  @NonNls String SSL_AUTHORITY_FILES = "ssl-authority-files";
+  @NonNls String SSL_TRUST_DEFAULT_CA = "ssl-trust-default-ca";
+  @NonNls String SSL_CLIENT_CERT_FILE = "ssl-client-cert-file";
+  @NonNls String SSL_CLIENT_CERT_PASSWORD = "ssl-client-cert-password";
 }

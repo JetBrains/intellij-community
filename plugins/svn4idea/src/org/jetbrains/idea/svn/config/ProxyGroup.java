@@ -14,7 +14,7 @@ public class ProxyGroup {
   // svnkit has its internal named referencies
   private final Map<String, String> myProperties;
 
-  public ProxyGroup(final String groupName, final String patterns, final Map<String, String> properties) {
+  public ProxyGroup(@NlsSafe String groupName, final String patterns, final Map<String, String> properties) {
     myGroupName = groupName;
     myPattern = patterns;
     myProperties = properties;
@@ -28,7 +28,7 @@ public class ProxyGroup {
     return false;
   }
 
-  public void setName(final String value) {
+  public void setName(@NlsSafe String value) {
     myGroupName = value;
   }
 

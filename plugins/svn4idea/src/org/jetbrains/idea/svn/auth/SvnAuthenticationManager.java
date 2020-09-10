@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.api.Url;
+import org.jetbrains.idea.svn.config.ServersFileKeys;
 import org.jetbrains.idea.svn.config.SvnIniFile;
 
 import java.nio.file.Path;
@@ -91,7 +92,7 @@ public class SvnAuthenticationManager {
     String protocol = url.getProtocol();
     if (HTTP.equals(protocol) || HTTPS.equals(protocol)) {
       String host = url.getHost();
-      String timeout = getPropertyIdea(host, myServersFile.getValue(), "http-timeout");
+      String timeout = getPropertyIdea(host, myServersFile.getValue(), ServersFileKeys.TIMEOUT);
       if (timeout != null) {
         try {
           return Integer.parseInt(timeout) * 1000;

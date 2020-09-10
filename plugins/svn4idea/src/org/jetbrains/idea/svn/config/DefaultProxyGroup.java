@@ -3,10 +3,12 @@ package org.jetbrains.idea.svn.config;
 
 import java.util.Map;
 
+import static org.jetbrains.idea.svn.config.ServersFileKeys.GLOBAL_SERVER_GROUP;
+
 public class DefaultProxyGroup extends ProxyGroup {
 
   public DefaultProxyGroup(final Map<String, String> properties) {
-    super(SvnIniFile.DEFAULT_GROUP_NAME, "", properties);
+    super(GLOBAL_SERVER_GROUP, "", properties);
   }
 
   @Override
