@@ -746,7 +746,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
   @ApiStatus.Internal
   public void setIncompleteIndexUsed() {
-    myStatusLine.setSuffix("  " + SmRunnerBundle.message("suffix.incomplete.index.was.used"));
+    myStatusLine.setWarning(SmRunnerBundle.message("suffix.incomplete.index.was.used"));
   }
 
   private static class MySaveHistoryTask extends Task.Backgroundable {
