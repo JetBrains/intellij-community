@@ -15,6 +15,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.ui.DocumentAdapter;
@@ -184,7 +185,10 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
       return false;
     }
     else if (!validationWarnings.isEmpty()) {
-      setWarningText(StringUtil.join(validationWarnings, "<br/>"));
+      setWarningText(StreamEx.of(validationWarnings)
+                       .map(HtmlChunk::raw)
+                       .collect(HtmlChunk.toFragment(HtmlChunk.br()))
+                       .toString());
     }
 
     final PythonProjectGenerator generator = ObjectUtils.tryCast(myProjectGenerator, PythonProjectGenerator.class);
@@ -229,7 +233,10 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     }
 
     if (!warnings.isEmpty()) {
-      setWarningText(StringUtil.join(warnings, "<br/>"));
+      setWarningText(StreamEx.of(warnings)
+                       .map(HtmlChunk::raw)
+                       .collect(HtmlChunk.toFragment(HtmlChunk.br()))
+                       .toString());
     }
     return true;
   }
@@ -247,15 +254,15 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     boolean installFramework = false;
     if (!generator.isFrameworkInstalled(sdk)) {
       final String frameworkName = generator.getFrameworkTitle();
-      String messageId = "python.package.installation.notification.message";
+      String message = PyBundle.message("python.package.installation.notification.message", frameworkName);
       if (PyPackageUtil.packageManagementEnabled(sdk)) {
         installFramework = true;
         final List<PyPackage> packages = PyPackageUtil.refreshAndGetPackagesModally(sdk);
         if (!PyPackageUtil.hasManagement(packages)) {
-          messageId = "python.package.and.packaging.tools.installation.notification.message";
+          message = PyBundle.message("python.package.and.packaging.tools.installation.notification.message", frameworkName);
         }
       }
-      warnings.add(PyBundle.message(messageId, frameworkName));
+      warnings.add(message);
     }
     return Pair.create(installFramework, warnings);
   }

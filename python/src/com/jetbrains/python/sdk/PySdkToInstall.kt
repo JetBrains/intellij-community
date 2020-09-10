@@ -132,7 +132,7 @@ private class PySdkToInstallOnWindows(name: String,
 
   override fun renderInList(renderer: PySdkListCellRenderer) {
     renderer.append(name)
-    renderer.append(" $url", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
+    renderer.append(" $url", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)  // NON-NLS
     renderer.icon = AllIcons.Actions.Download
   }
 
