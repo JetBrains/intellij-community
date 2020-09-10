@@ -15,7 +15,6 @@
  */
 package com.intellij.appengine.facet;
 
-import com.intellij.appengine.AppEngineBundle;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetType;
 import com.intellij.openapi.module.JavaModuleType;
@@ -31,7 +30,7 @@ public class AppEngineFacetType extends FacetType<AppEngineFacet,  AppEngineFace
   public static final String STRING_ID = "google-app-engine";
 
   public AppEngineFacetType() {
-    super(AppEngineFacet.ID, STRING_ID, AppEngineBundle.message("plugin.name"));
+    super(AppEngineFacet.ID, STRING_ID, "Google App Engine");
   }
 
   @Override

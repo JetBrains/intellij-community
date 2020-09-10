@@ -10,7 +10,6 @@ import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.roots.ModuleRootModel;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
@@ -135,8 +134,8 @@ public class AppEngineFacetEditor extends FacetEditorTab {
     myPersistenceApiComboBox.setSelectedItem(myFacetConfiguration.getPersistenceApi().getDisplayName());
   }
 
-  private void fillFilesList(final List<@NlsSafe String> paths) {
-    for (@NlsSafe String path : paths) {
+  private void fillFilesList(final List<String> paths) {
+    for (String path : paths) {
       myFilesListModel.addElement(path);
     }
   }

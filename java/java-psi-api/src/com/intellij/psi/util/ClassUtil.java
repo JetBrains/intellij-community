@@ -220,7 +220,6 @@ public final class ClassUtil {
   }
 
   @Nullable
-  @NlsSafe
   public static String getJVMClassName(@NotNull PsiClass aClass) {
     final PsiClass containingClass = aClass.getContainingClass();
     if (containingClass != null) {

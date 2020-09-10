@@ -1,7 +1,6 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.appengine.inspections;
 
-import com.intellij.appengine.AppEngineBundle;
 import com.intellij.appengine.facet.AppEngineFacet;
 import com.intellij.appengine.sdk.AppEngineSdk;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -51,8 +50,7 @@ public class AppEngineForbiddenCodeInspection extends AbstractBaseJavaLocalInspe
         final PsiModifierList modifierList = method.getModifierList();
         if (modifierList.hasModifierProperty(PsiModifier.NATIVE)) {
           if (!isNativeMethodAllowed(method)) {
-            problems.add(manager.createProblemDescriptor(modifierList, AppEngineBundle.message(
-              "inspection.message.native.methods.not.allowed"), isOnTheFly,
+            problems.add(manager.createProblemDescriptor(modifierList, "Native methods aren't allowed in App Engine application", isOnTheFly,
                                                          LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
           }
         }
@@ -67,7 +65,7 @@ public class AppEngineForbiddenCodeInspection extends AbstractBaseJavaLocalInspe
           if (resolved instanceof PsiClass) {
             final String qualifiedName = ((PsiClass)resolved).getQualifiedName();
             if (qualifiedName != null && appEngineSdk.isMethodInBlacklist(qualifiedName, "new")) {
-              final String message = AppEngineBundle.message("inspection.message.application.should.not.create.new.instances.0", qualifiedName);
+              final String message = "App Engine application should not create new instances of '" + qualifiedName + "' class";
               problems.add(manager.createProblemDescriptor(classReference, message, isOnTheFly, LocalQuickFix.EMPTY_ARRAY,
                                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
             }
@@ -87,8 +85,8 @@ public class AppEngineForbiddenCodeInspection extends AbstractBaseJavaLocalInspe
             final String qualifiedName = psiClass.getQualifiedName();
             final String methodName = method.getName();
             if (qualifiedName != null && appEngineSdk.isMethodInBlacklist(qualifiedName, methodName)) {
-              final String message = AppEngineBundle.message("inspection.message.application.should.not.call.method",
-                                                             StringUtil.getShortName(qualifiedName),methodName);
+              final String message =
+                  "AppEngine application should not call '" + StringUtil.getShortName(qualifiedName) + "." + methodName + "' method";
               problems.add(manager.createProblemDescriptor(methodExpression, message, isOnTheFly, LocalQuickFix.EMPTY_ARRAY,
                                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
             }
@@ -110,8 +108,7 @@ public class AppEngineForbiddenCodeInspection extends AbstractBaseJavaLocalInspe
                 if (entry instanceof JdkOrderEntry) {
                   final String className = ClassUtil.getJVMClassName((PsiClass)resolved);
                   if (className != null && !appEngineSdk.isClassInWhiteList(className)) {
-                    problems.add(manager.createProblemDescriptor(reference,
-                                                                 AppEngineBundle.message("inspection.message.class.not.included.in.white.list", className),
+                    problems.add(manager.createProblemDescriptor(reference, "Class '" + className + "' is not included in App Engine JRE White List",
                                                                  isOnTheFly, LocalQuickFix.EMPTY_ARRAY,
                                                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
                   }
@@ -150,7 +147,7 @@ public class AppEngineForbiddenCodeInspection extends AbstractBaseJavaLocalInspe
   @Nls
   @NotNull
   public String getGroupDisplayName() {
-    return AppEngineBundle.message("plugin.name");
+    return "Google App Engine";
   }
 
   @Override

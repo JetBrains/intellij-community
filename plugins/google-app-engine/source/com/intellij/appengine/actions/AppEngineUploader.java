@@ -2,7 +2,6 @@
 package com.intellij.appengine.actions;
 
 import com.intellij.CommonBundle;
-import com.intellij.appengine.AppEngineBundle;
 import com.intellij.appengine.cloud.AppEngineAuthData;
 import com.intellij.appengine.cloud.AppEngineServerConfiguration;
 import com.intellij.appengine.descriptor.dom.AppEngineWebApp;
@@ -82,19 +81,19 @@ public final class AppEngineUploader {
                                                  @NotNull ServerRuntimeInstance.DeploymentOperationCallback callback, @NotNull LoggingHandler loggingHandler) {
     final String explodedPath = artifact.getOutputPath();
     if (explodedPath == null) {
-      callback.errorOccurred(AppEngineBundle.message("output.path.isn.t.specified.for.0.artifact", artifact.getName()));
+      callback.errorOccurred("Output path isn't specified for '" + artifact.getName() + "' artifact");
       return null;
     }
 
     final AppEngineFacet appEngineFacet = AppEngineUtil.findAppEngineFacet(project, artifact);
     if (appEngineFacet == null) {
-      callback.errorOccurred(AppEngineBundle.message("facet.not.found.in.0.artifact", artifact.getName()));
+      callback.errorOccurred("App Engine facet not found in '" + artifact.getName() + "' artifact");
       return null;
     }
 
     final AppEngineSdk sdk = appEngineFacet.getSdk();
     if (!sdk.getAppCfgFile().exists()) {
-      callback.errorOccurred(AppEngineBundle.message("path.to.app.engine.not.specified.correctly.message"));
+      callback.errorOccurred("Path to App Engine SDK isn't specified correctly in App Engine Facet settings");
       return null;
     }
 
@@ -104,8 +103,8 @@ public final class AppEngineUploader {
     if (root != null) {
       final GenericDomValue<String> application = root.getApplication();
       if (StringUtil.isEmptyOrSpaces(application.getValue())) {
-        final String name = Messages.showInputDialog(project,
-                                                     AppEngineBundle.message("application.name.not.specified.message"),
+        final String name = Messages.showInputDialog(project, "<html>Application name is not specified in appengine-web.xml.<br>" +
+                                                              "Enter application name (see your <a href=\"https://appengine.google.com\">AppEngine account</a>):</html>",
                                                      CommonBundle.getErrorTitle(), null, "", null);
         if (name == null) return null;
 
@@ -126,7 +125,7 @@ public final class AppEngineUploader {
 
   public void startUploading() {
     FileDocumentManager.getInstance().saveAllDocuments();
-    ProgressManager.getInstance().run(new Task.Backgroundable(myProject, AppEngineBundle.message("progress.title.uploading.application"), true, null) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Uploading application", true, null) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         compileAndUpload();
@@ -177,7 +176,7 @@ public final class AppEngineUploader {
       processHandler = new OSProcessHandler(commandLine);
     }
     catch (ExecutionException e) {
-      myCallback.errorOccurred(AppEngineBundle.message("message.cannot.start.uploading.0", e.getMessage()));
+      myCallback.errorOccurred("Cannot start uploading: " + e.getMessage());
       return;
     }
 
@@ -235,7 +234,7 @@ public final class AppEngineUploader {
         });
       }
       else {
-        myCallback.errorOccurred(AppEngineBundle.message("error.process.terminated.with.exit.code.0", exitCode));
+        myCallback.errorOccurred("Process terminated with exit code " + exitCode);
       }
     }
   }
