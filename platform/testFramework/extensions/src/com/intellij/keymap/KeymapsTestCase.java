@@ -454,6 +454,10 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
   );
 
   @NonNls protected static final Set<String> DEFAULT_BOUND_ACTIONS = ContainerUtil.set(
-    "EditorDelete"
+    "EditorDelete",
+    "List-selectLastRowExtendSelection",
+    "List-selectLastRow",
+    "List-selectFirstRowExtendSelection",
+    "List-selectFirstRow"
   );
 }
