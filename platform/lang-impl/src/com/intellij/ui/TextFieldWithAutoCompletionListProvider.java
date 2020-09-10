@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.concurrency.SensitiveProgressWrapper;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -153,7 +154,7 @@ public abstract class TextFieldWithAutoCompletionListProvider<T> extends Default
     if (advertisementTail == null) {
       return null;
     }
-    return "Pressing " + shortcut + " would show " + advertisementTail;
+    return LangBundle.message("textfield.autocompletion.advertisement", shortcut, advertisementTail);
   }
 
   @Nullable

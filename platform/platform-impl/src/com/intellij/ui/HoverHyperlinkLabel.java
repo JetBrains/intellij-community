@@ -2,11 +2,12 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.PlatformColors;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -75,8 +76,9 @@ public class HoverHyperlinkLabel extends JLabel {
   }
 
   @Contract(pure = true)
-  @NonNls private static String underlineTextInHtml(final String text) {
-    return "<html><u>" + StringUtil.escapeXmlEntities(text) + "</u></html>";
+  @Nls
+  private static String underlineTextInHtml(@NlsContexts.LinkLabel String text) {
+    return HtmlChunk.text(StringUtil.escapeXmlEntities(text)).wrapWith("u").wrapWith(HtmlChunk.html()).toString();
   }
 
   public String getOriginalText() {

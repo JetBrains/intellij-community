@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.colorpicker
 
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
@@ -159,7 +160,7 @@ class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha
     c.weightx = 0.51
     c.gridx = if(showAlpha) 5 else  4
     c.gridy = 0
-    add(ColorLabel("Hex"), c)
+    add(ColorLabel(IdeBundle.message("colorpicker.colorvaluepanel.hexlabel")), c)
     c.gridy = 1
     add(hexField, c)
     hexField.document = HexColorDocument(hexField)

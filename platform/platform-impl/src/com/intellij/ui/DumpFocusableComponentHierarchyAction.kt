@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui
 
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAware
@@ -69,7 +70,7 @@ class DumpFocusableComponentHierarchyAction : AnAction(), DumbAware {
     val popup = PopupFactory.getSharedInstance().
                   getPopup(visibleFrame, scrollPane, visibleFrame.x, visibleFrame.y)
 
-    val closeButton = JButton(object : AbstractAction("Close and copy into the clipboard") {
+    val closeButton = JButton(object : AbstractAction(IdeBundle.message("dump.focusable.component.hierarchy.close.button")) {
       override fun actionPerformed(e: ActionEvent) {
         val dumpAsString = StringBuilder()
         for (i in dump.indices.reversed()) {

@@ -1099,6 +1099,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   @NotNull
+  @NlsSafe
   public CharSequence getCharSequence(boolean mainOnly) {
     synchronized (myFragments) {
       int count = myFragments.size();

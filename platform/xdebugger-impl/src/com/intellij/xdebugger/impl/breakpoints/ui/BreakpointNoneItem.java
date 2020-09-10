@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.popup.util.DetailView;
 import com.intellij.xdebugger.XDebuggerBundle;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 
@@ -84,6 +85,7 @@ public class BreakpointNoneItem extends BreakpointItem {
   }
 
   @Override
+  @Nls
   public String footerText() {
     return "";
   }
