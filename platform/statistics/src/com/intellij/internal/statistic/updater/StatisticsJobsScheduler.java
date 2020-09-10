@@ -59,12 +59,12 @@ final class StatisticsJobsScheduler implements ApplicationInitializedListener {
     checkPreviousExternalUploadResult();
     runEventLogStatisticsService();
     runStatesLogging();
-    runWhitelistStorageUpdater();
+    runValidationRulesUpdate();
 
     StatisticsEventLogMigration.performMigration();
   }
 
-  private static void runWhitelistStorageUpdater() {
+  private static void runValidationRulesUpdate() {
     JobScheduler.getScheduler().scheduleWithFixedDelay(
       () -> {
         final List<StatisticsEventLoggerProvider> providers = StatisticsEventLoggerKt.getEventLogProviders();

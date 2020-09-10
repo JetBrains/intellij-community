@@ -200,7 +200,7 @@ public class TestParseEventsSchemeDialog extends DialogWrapper {
     catch (EventLogMetadataParseException e) {
       Messages.showErrorDialog(myProject, e.getMessage(), "Failed Parsing Events Scheme");
     }
-    catch (IOException | ParseEventLogWhitelistException e) {
+    catch (IOException | ParseEventLogMetadataException e) {
       Messages.showErrorDialog(myProject, e.getMessage(), "Failed Applying Events Scheme to Event Log");
     }
   }
@@ -215,7 +215,7 @@ public class TestParseEventsSchemeDialog extends DialogWrapper {
 
   @NotNull
   private static String parseLogAndFilter(@NotNull LogEventFilter filter, @NotNull String text)
-    throws IOException, ParseEventLogWhitelistException {
+    throws IOException, ParseEventLogMetadataException {
     final File log = FileUtil.createTempFile("feature-event-log", ".log");
     try {
       FileUtil.writeToFile(log, text);
@@ -227,7 +227,7 @@ public class TestParseEventsSchemeDialog extends DialogWrapper {
       );
 
       if (request == null) {
-        throw new ParseEventLogWhitelistException("Failed parsing event log");
+        throw new ParseEventLogMetadataException("Failed parsing event log");
       }
       return LogEventSerializer.INSTANCE.toString(request);
     }
@@ -270,8 +270,8 @@ public class TestParseEventsSchemeDialog extends DialogWrapper {
     super.dispose();
   }
 
-  public static class ParseEventLogWhitelistException extends Exception {
-    public ParseEventLogWhitelistException(String s) {
+  public static class ParseEventLogMetadataException extends Exception {
+    public ParseEventLogMetadataException(String s) {
       super(s);
     }
   }
