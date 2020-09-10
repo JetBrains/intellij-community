@@ -30,6 +30,9 @@ class MLCompletionSettingsCollector : CounterUsagesCollector() {
                                                                               languageCheckboxUsedField)
 
     private val DECORATION_SETTINGS_CHANGED = COUNTER_GROUP.registerEvent("decorating.settings.changed", EventFields.Boolean("enabled"))
+    private val DECORATION_OPINION_PROVIDED = COUNTER_GROUP.registerEvent(
+      "decorating.opinion.provided", EventFields.String("opinion", DecorationOpinion.values().map { it.name })
+    )
 
     @JvmStatic
     fun rankingSettingsChanged(rankerId: String,
@@ -48,6 +51,11 @@ class MLCompletionSettingsCollector : CounterUsagesCollector() {
     fun decorationSettingChanged(enabled: Boolean) {
       DECORATION_SETTINGS_CHANGED.log(enabled)
     }
+
+    @JvmStatic
+    fun decorationOpinionProvided(opinion: DecorationOpinion) {
+      DECORATION_OPINION_PROVIDED.log(opinion.name)
+    }
   }
 
   class MLRankingSettingsValidationRule : CustomValidationRule() {
@@ -60,5 +68,11 @@ class MLCompletionSettingsCollector : CounterUsagesCollector() {
 
       return ValidationResultType.REJECTED
     }
+  }
+
+  enum class DecorationOpinion {
+    LIKE,
+    DISLIKE,
+    DONT_KNOWN
   }
 }

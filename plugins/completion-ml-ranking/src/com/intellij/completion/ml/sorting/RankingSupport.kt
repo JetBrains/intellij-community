@@ -7,6 +7,7 @@ import com.intellij.completion.ml.experiment.ExperimentStatus
 import com.intellij.completion.ml.ranker.ExperimentModelProvider
 import com.intellij.completion.ml.ranker.ExperimentModelProvider.Companion.match
 import com.intellij.completion.ml.settings.CompletionMLRankingSettings
+import com.intellij.completion.ml.settings.MLCompletionSettingsCollector
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.ml.completion.RankingModelProvider
 import com.intellij.lang.Language
@@ -112,21 +113,24 @@ object RankingSupport {
   private fun showNotificationAboutArrows() {
     Notification(
       MLCompletionBundle.message("ml.completion.notification.groupId"),
-      MLCompletionBundle.message("ml.completion.show.diff.notification.title"),
-      MLCompletionBundle.message("ml.completion.show.diff.notification.content"),
+      MLCompletionBundle.message("ml.completion.notification.decorating.title"),
+      MLCompletionBundle.message("ml.completion.notification.decorating.content"),
       NotificationType.INFORMATION
-    ).addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.show.diff.notification.like")) {
+    ).addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.decorating.like")) {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+          MLCompletionSettingsCollector.decorationOpinionProvided(MLCompletionSettingsCollector.DecorationOpinion.LIKE)
           notification.expire()
         }
       })
-      .addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.show.diff.notification.dislike")) {
+      .addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.decorating.dislike")) {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+          MLCompletionSettingsCollector.decorationOpinionProvided(MLCompletionSettingsCollector.DecorationOpinion.DISLIKE)
           notification.expire()
         }
       })
-      .addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.show.diff.notification.dunno")) {
+      .addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.decorating.dunno")) {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+          MLCompletionSettingsCollector.decorationOpinionProvided(MLCompletionSettingsCollector.DecorationOpinion.DONT_KNOWN)
           notification.expire()
         }
       }).notify(null)
