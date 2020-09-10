@@ -58,6 +58,8 @@ interface GitHistoryTraverser {
     fullDetailsHandler: (GitCommit) -> Unit
   )
 
+  fun getCurrentUser(root: VirtualFile): VcsUser?
+
   /**
    * Allows to request commit details loading. They will be loaded synchronously after [traverse] execution.
    */

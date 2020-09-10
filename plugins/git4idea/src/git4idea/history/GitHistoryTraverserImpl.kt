@@ -8,10 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Consumer
-import com.intellij.vcs.log.Hash
-import com.intellij.vcs.log.TimedVcsCommit
-import com.intellij.vcs.log.VcsCommitMetadata
-import com.intellij.vcs.log.VcsLogObjectsFactory
+import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.index.IndexDataGetter
 import com.intellij.vcs.log.data.index.IndexedDetails.Companion.createMetadata
@@ -116,6 +113,8 @@ class GitHistoryTraverserImpl(private val project: Project, private val logData:
       fullDetailsHandler(it)
     })
   }
+
+  override fun getCurrentUser(root: VirtualFile): VcsUser? = logData.currentUser[root]
 
   private class IndexedRootImpl(
     private val traverser: GitHistoryTraverser,

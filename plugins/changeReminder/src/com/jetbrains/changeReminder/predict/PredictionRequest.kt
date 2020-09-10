@@ -4,21 +4,21 @@ package com.jetbrains.changeReminder.predict
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.vcs.log.data.VcsLogData
 import com.jetbrains.changeReminder.repository.Commit
 import com.jetbrains.changeReminder.repository.FilesHistoryProvider
 import git4idea.history.GitHistoryTraverser
 
-internal class PredictionRequest(private val dataManager: VcsLogData,
-                                 private val filesHistoryProvider: FilesHistoryProvider,
-                                 private val changeListFilesFromRoots: Map<GitHistoryTraverser.IndexedRoot, Collection<FilePath>>) {
+internal class PredictionRequest(
+  private val filesHistoryProvider: FilesHistoryProvider,
+  private val changeListFilesFromRoots: Map<GitHistoryTraverser.IndexedRoot, Collection<FilePath>>
+) {
   private val changeListFiles = changeListFilesFromRoots.values.flatten().toSet()
 
   private fun getPredictedFiles(files: Collection<FilePath>, indexedRoot: GitHistoryTraverser.IndexedRoot): Collection<VirtualFile> =
     PredictionProvider(minProb = Registry.doubleValue("vcs.changeReminder.prediction.threshold"))
       .predictForgottenFiles(Commit(-1,
                                     System.currentTimeMillis(),
-                                    dataManager.currentUser[indexedRoot.root]?.name ?: "",
+                                    filesHistoryProvider.traverser.getCurrentUser(indexedRoot.root)?.name ?: "",
                                     changeListFiles),
                              filesHistoryProvider.getFilesHistory(indexedRoot, files))
 
