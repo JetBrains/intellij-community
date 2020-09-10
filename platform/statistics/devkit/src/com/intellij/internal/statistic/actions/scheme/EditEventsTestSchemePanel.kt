@@ -3,7 +3,7 @@ package com.intellij.internal.statistic.actions.scheme
 
 import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule
-import com.intellij.internal.statistic.eventLog.events.WhitelistBuilder
+import com.intellij.internal.statistic.eventLog.events.EventsSchemeBuilder
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionToolbarPosition
@@ -26,7 +26,7 @@ import javax.swing.SwingConstants
 class EditEventsTestSchemePanel(private val project: Project,
                                 testSchemeGroups: List<GroupValidationTestRule>,
                                 productionGroups: FUStatisticsWhiteListGroupsService.WLGroups,
-                                generatedScheme: List<WhitelistBuilder.WhitelistGroup>) : JPanel(), Disposable {
+                                generatedScheme: List<EventsSchemeBuilder.GroupDescriptor>) : JPanel(), Disposable {
   private val groupsModel = CollectionListModel(testSchemeGroups)
   private val groupsList: JBList<GroupValidationTestRule> = JBList(groupsModel)
   private var groupConfiguration: EventsTestSchemeGroupConfiguration

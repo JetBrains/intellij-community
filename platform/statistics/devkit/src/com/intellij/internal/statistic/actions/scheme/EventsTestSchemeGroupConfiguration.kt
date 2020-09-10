@@ -15,7 +15,7 @@ import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.actions.TestParseEventsSchemeDialog
 import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule
 import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule.Companion.EMPTY_RULES
-import com.intellij.internal.statistic.eventLog.events.WhitelistBuilder
+import com.intellij.internal.statistic.eventLog.events.EventsSchemeBuilder
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService
 import com.intellij.json.JsonLanguage
 import com.intellij.openapi.Disposable
@@ -52,7 +52,7 @@ import javax.swing.JPanel
 class EventsTestSchemeGroupConfiguration(private val project: Project,
                                          productionGroups: FUStatisticsWhiteListGroupsService.WLGroups,
                                          initialGroup: GroupValidationTestRule,
-                                         generatedScheme: List<WhitelistBuilder.WhitelistGroup>,
+                                         generatedScheme: List<EventsSchemeBuilder.GroupDescriptor>,
                                          groupIdChangeListener: ((GroupValidationTestRule) -> Unit)? = null) : Disposable {
 
   val panel: JPanel
@@ -243,7 +243,7 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
     return validateTestSchemeGroup(project, currentGroup, groupIdTextField, tempFile)
   }
 
-  private fun createEventsScheme(generatedScheme: List<WhitelistBuilder.WhitelistGroup>): HashMap<String, String> {
+  private fun createEventsScheme(generatedScheme: List<EventsSchemeBuilder.GroupDescriptor>): HashMap<String, String> {
     val eventsScheme = HashMap<String, String>()
     val gson = GsonBuilder().setPrettyPrinting().create()
     for (group in generatedScheme) {
@@ -255,7 +255,7 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
     return eventsScheme
   }
 
-  private fun createValidationRules(group: WhitelistBuilder.WhitelistGroup): FUStatisticsWhiteListGroupsService.WLRule? {
+  private fun createValidationRules(group: EventsSchemeBuilder.GroupDescriptor): FUStatisticsWhiteListGroupsService.WLRule? {
     val eventIds = hashSetOf<String>()
     val eventData = hashMapOf<String, MutableSet<String>>()
     val events = group.schema

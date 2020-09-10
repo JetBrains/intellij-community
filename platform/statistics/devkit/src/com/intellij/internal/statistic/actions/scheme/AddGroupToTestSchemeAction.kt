@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.StatisticsDevKitUtil
 import com.intellij.internal.statistic.StatisticsDevKitUtil.showNotification
 import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule
-import com.intellij.internal.statistic.eventLog.events.WhitelistBuilder
+import com.intellij.internal.statistic.eventLog.events.EventsSchemeBuilder
 import com.intellij.internal.statistic.eventLog.validator.storage.ValidationTestRulesPersistedStorage
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -79,7 +79,7 @@ class AddGroupToTestSchemeAction constructor(private val recorderId: String = St
         override fun compute(indicator: ProgressIndicator): EditEventsTestSchemeAction.EventsTestScheme? {
           val productionGroups = testRulesStorage.loadProductionGroups()
           if (indicator.isCanceled) return null
-          val eventsScheme = WhitelistBuilder.buildWhitelist()
+          val eventsScheme = EventsSchemeBuilder.buildEventsScheme()
           return EditEventsTestSchemeAction.EventsTestScheme(emptyList(), productionGroups, eventsScheme)
         }
       })

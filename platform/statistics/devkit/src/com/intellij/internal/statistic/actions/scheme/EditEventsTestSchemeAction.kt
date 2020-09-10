@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.StatisticsDevKitUtil
 import com.intellij.internal.statistic.StatisticsDevKitUtil.showNotification
 import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule
-import com.intellij.internal.statistic.eventLog.events.WhitelistBuilder
+import com.intellij.internal.statistic.eventLog.events.EventsSchemeBuilder
 import com.intellij.internal.statistic.eventLog.validator.storage.ValidationTestRulesPersistedStorage
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService
 import com.intellij.notification.NotificationType
@@ -79,7 +79,7 @@ class EditEventsTestSchemeAction(private val recorderId: String = StatisticsDevK
         if (indicator.isCanceled) return null
         val productionGroups = testSchemeStorage.loadProductionGroups()
         if (indicator.isCanceled) return null
-        val eventsScheme = WhitelistBuilder.buildWhitelist()
+        val eventsScheme = EventsSchemeBuilder.buildEventsScheme()
         return EventsTestScheme(localGroups, productionGroups, eventsScheme)
       }
     })
@@ -106,6 +106,6 @@ class EditEventsTestSchemeAction(private val recorderId: String = StatisticsDevK
   class EventsTestScheme(
     val testScheme: List<GroupValidationTestRule>,
     val productionGroups: FUStatisticsWhiteListGroupsService.WLGroups,
-    val generatedScheme: List<WhitelistBuilder.WhitelistGroup>
+    val generatedScheme: List<EventsSchemeBuilder.GroupDescriptor>
   )
 }

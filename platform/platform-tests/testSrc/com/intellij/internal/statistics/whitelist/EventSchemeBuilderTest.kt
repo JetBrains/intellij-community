@@ -4,7 +4,7 @@ package com.intellij.internal.statistics.whitelist
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.eventLog.events.WhitelistBuilder
+import com.intellij.internal.statistic.eventLog.events.EventsSchemeBuilder
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
@@ -49,7 +49,7 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
   private fun doFieldTest(eventField: EventField<*>, expectedValues: Set<String>) {
     val eventLogGroup = EventLogGroup("test.group.id", 1)
     eventLogGroup.registerEvent("test_event", eventField)
-    val groups = WhitelistBuilder.collectWhitelistFromExtensions("count", listOf(TestCounterCollector(eventLogGroup)))
+    val groups = EventsSchemeBuilder.collectGroupsFromExtensions("count", listOf(TestCounterCollector(eventLogGroup)))
     assertSize(1, groups)
     val group = groups.first()
     assertNotNull(group)
