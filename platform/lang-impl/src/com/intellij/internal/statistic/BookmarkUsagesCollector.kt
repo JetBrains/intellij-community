@@ -85,7 +85,7 @@ class BookmarkCounterCollector : CounterUsagesCollector() {
   enum class MnemonicType { Number, Letter, None }
 
   companion object {
-    private val group: EventLogGroup = EventLogGroup("bookmarks.counters", 1)
+    private val group: EventLogGroup = EventLogGroup("bookmarks.counters", 2)
 
     @JvmField
     val favoritesNavigate = group.registerEvent("favorites.navigate", EventFields.Class("navigatable"))
