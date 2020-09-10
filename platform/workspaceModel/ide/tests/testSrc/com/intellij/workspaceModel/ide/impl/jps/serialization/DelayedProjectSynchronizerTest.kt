@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
@@ -46,6 +47,7 @@ class DelayedProjectSynchronizerTest {
 
   @Test
   fun `test just loading with existing cache`() {
+    assertTrue(ProjectModelRule.isWorkspaceModelEnabled)
     val projectFile = projectFile("moduleAdded/after")
     val projectData = copyAndLoadProject(projectFile, virtualFileManager)
     val storage = projectData.storage
@@ -65,6 +67,7 @@ class DelayedProjectSynchronizerTest {
 
   @Test
   fun `test module added`() {
+    assertTrue(ProjectModelRule.isWorkspaceModelEnabled)
     val projectFile = projectFile("moduleAdded/before")
     val projectFileAfter = projectFile("moduleAdded/after")
     val projectData = copyAndLoadProject(projectFile, virtualFileManager)
