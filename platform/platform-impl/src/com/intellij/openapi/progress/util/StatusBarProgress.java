@@ -1,10 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.StatusBarText;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
@@ -18,7 +18,7 @@ import static com.intellij.util.ObjectUtils.notNull;
 
 public class StatusBarProgress extends ProgressIndicatorBase {
   // statusBar -> [textToRestore, MyPreviousText]
-  private final Map<StatusBar, Pair<String, @NlsContexts.StatusBarText String>> myStatusBar2SavedText = new HashMap<>();
+  private final Map<StatusBar, Pair<@StatusBarText String, @StatusBarText String>> myStatusBar2SavedText = new HashMap<>();
   private boolean myScheduledStatusBarTextSave;
 
   public StatusBarProgress() {
@@ -106,15 +106,15 @@ public class StatusBarProgress extends ProgressIndicatorBase {
     );
   }
 
-  private void setStatusBarText(StatusBar statusBar, @NlsContexts.StatusBarText String text) {
+  private void setStatusBarText(StatusBar statusBar, @StatusBarText String text) {
     updateRestoreText(statusBar);
-    Pair<String, String> textsPair = myStatusBar2SavedText.get(statusBar);
+    Pair<@StatusBarText String, @StatusBarText String> textsPair = myStatusBar2SavedText.get(statusBar);
     myStatusBar2SavedText.put(statusBar, pair(textsPair.first, text));
     statusBar.setInfo(text);
   }
 
-  private @NlsContexts.StatusBarText String updateRestoreText(StatusBar statusBar) {
-    Pair<String, @NlsContexts.StatusBarText String> textsPair = myStatusBar2SavedText.get(statusBar);
+  private @StatusBarText String updateRestoreText(StatusBar statusBar) {
+    Pair<@StatusBarText String, @StatusBarText String> textsPair = myStatusBar2SavedText.get(statusBar);
     // if current status bar info doesn't match the value, that we set, use this value as a restore value
     String info = notNull(statusBar.getInfo(), "");
     if (!textsPair.getSecond().equals(info)) {
