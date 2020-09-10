@@ -131,7 +131,7 @@ public class LightProjectDescriptor {
         return file.getFileSystem() == srcRoot.getFileSystem() && project.isOpen();
       }
     };
-    FileBasedIndex.getInstance().registerIndexableSet(indexableFileSet, null);
+    FileBasedIndex.getInstance().registerIndexableSet(indexableFileSet, project);
     Disposer.register(project, () -> FileBasedIndex.getInstance().removeIndexableSet(indexableFileSet));
   }
 

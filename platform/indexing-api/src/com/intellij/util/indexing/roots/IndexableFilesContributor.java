@@ -3,10 +3,12 @@ package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * A base interface to provide a files which should be indexed for a given project.
@@ -26,4 +28,11 @@ public interface IndexableFilesContributor {
    */
   @NotNull
   List<IndexableFilesIterator> getIndexableFiles(@NotNull Project project);
+
+  /**
+   * Quickly should answer does file belongs to files contributor.
+   * Used to filter out file events which is required to update indexes.
+   */
+  @NotNull
+  Predicate<VirtualFile> getOwnFilePredicate(@NotNull Project project);
 }

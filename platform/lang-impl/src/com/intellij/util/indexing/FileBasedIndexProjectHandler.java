@@ -6,16 +6,12 @@
 package com.intellij.util.indexing;
 
 import com.intellij.diagnostic.PerformanceWatcher;
-import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.*;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
@@ -36,16 +32,8 @@ import org.jetbrains.annotations.Nullable;
 import java.time.Instant;
 import java.util.Collection;
 
-@Service
-public final class FileBasedIndexProjectHandler implements IndexableFileSet {
+public final class FileBasedIndexProjectHandler {
   private static final Logger LOG = Logger.getInstance(FileBasedIndexProjectHandler.class);
-  private final Project myProject;
-  private final @NotNull ProjectFileIndex myProjectFileIndex;
-
-  private FileBasedIndexProjectHandler(@NotNull Project project) {
-    myProject = project;
-    myProjectFileIndex = ProjectFileIndex.getInstance(myProject);
-  }
 
   static final class FileBasedIndexProjectHandlerStartupActivity implements StartupActivity.RequiredForSmartMode {
     FileBasedIndexProjectHandlerStartupActivity() {
@@ -75,11 +63,7 @@ public final class FileBasedIndexProjectHandler implements IndexableFileSet {
       if (fileBasedIndex instanceof FileBasedIndexImpl) {
         DumbService.getInstance(project).queueTask(new UnindexedFilesUpdater(project, IndexInfrastructure.isIndexesInitializationSuspended(), true));
       }
-
-      for (Class<? extends IndexableFileSet> indexableSetClass : getProjectIndexableSetClasses()) {
-        IndexableFileSet set = project.getService(indexableSetClass);
-        fileBasedIndex.registerIndexableSet(set, project);
-      }
+      fileBasedIndex.registerProjectFileSets(project);
 
       // done mostly for tests. In real life this is no-op, because the set was removed on project closing
       Disposer.register(project, () -> removeProjectIndexableSet(project));
@@ -87,32 +71,9 @@ public final class FileBasedIndexProjectHandler implements IndexableFileSet {
 
     private static void removeProjectIndexableSet(@NotNull Project project) {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-        ReadAction.run(() -> {
-          for (Class<? extends IndexableFileSet> indexableSetClass : getProjectIndexableSetClasses()) {
-            IndexableFileSet set = project.getServiceIfCreated(indexableSetClass);
-            if (set != null) {
-              FileBasedIndex.getInstance().removeIndexableSet(set);
-            }
-          }
-        });
+        ReadAction.run(() -> FileBasedIndex.getInstance().removeProjectFileSets(project));
       }, IndexingBundle.message("removing.indexable.set.project.handler"), false, project);
     }
-
-    @SuppressWarnings("unchecked")
-    private static Class<? extends IndexableFileSet> @NotNull [] getProjectIndexableSetClasses() {
-      return new Class[]{FileBasedIndexProjectHandler.class, ProjectAdditionalIndexableFileSet.class};
-    }
-  }
-
-  @Override
-  public boolean isInSet(@NotNull final VirtualFile file) {
-    if (LightEdit.owns(myProject)) {
-      return false;
-    }
-    if (myProjectFileIndex.isInContent(file) || myProjectFileIndex.isInLibrary(file)) {
-      return !FileTypeManager.getInstance().isFileIgnored(file);
-    }
-    return false;
   }
 
   @ApiStatus.Internal
@@ -131,7 +92,7 @@ public final class FileBasedIndexProjectHandler implements IndexableFileSet {
       return null;
     }
 
-    return new DumbModeTask(project.getService(FileBasedIndexProjectHandler.class)) {
+    return new DumbModeTask(project) {
       @Override
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(false);
@@ -204,7 +165,7 @@ public final class FileBasedIndexProjectHandler implements IndexableFileSet {
 
   private static boolean mightHaveManyChangedFilesInProject(Project project, FileBasedIndexImpl index) {
     long start = System.currentTimeMillis();
-    return !index.processChangedFiles(project, new Processor<VirtualFile>() {
+    return !index.processChangedFiles(project, new Processor<>() {
       int filesInProjectToBeIndexed;
       long sizeOfFilesToBeIndexed;
 
@@ -217,14 +178,5 @@ public final class FileBasedIndexProjectHandler implements IndexableFileSet {
                System.currentTimeMillis() < start + 100;
       }
     });
-  }
-
-  // TODO automated project indexable file set management
-  @ApiStatus.Internal
-  @Service
-  public static final class ProjectAdditionalIndexableFileSet extends AdditionalIndexableFileSet {
-    public ProjectAdditionalIndexableFileSet(@NotNull Project project) {
-      super(project);
-    }
   }
 }
