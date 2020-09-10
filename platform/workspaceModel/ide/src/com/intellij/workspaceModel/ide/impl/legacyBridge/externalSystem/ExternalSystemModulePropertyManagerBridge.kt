@@ -50,7 +50,8 @@ class ExternalSystemModulePropertyManagerBridge(private val module: Module) : Ex
       val externalSystemId = moduleEntity.externalSystemOptions?.externalSystem
       val entitySource = moduleEntity.entitySource
       if (externalSystemId == null && entitySource is JpsFileEntitySource ||
-          externalSystemId != null && (entitySource as? JpsImportedEntitySource)?.externalSystemId == externalSystemId) {
+          externalSystemId != null && (entitySource as? JpsImportedEntitySource)?.externalSystemId == externalSystemId ||
+          entitySource !is JpsFileEntitySource && entitySource !is JpsImportedEntitySource) {
         return@runAndWait
       }
       val newSource = if (externalSystemId == null) {
