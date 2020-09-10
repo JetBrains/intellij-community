@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery.actions;
 
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.actions.VcsFacadeImpl;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
@@ -42,7 +41,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -305,7 +303,7 @@ public class ShowAffectedTestsAction extends AnAction {
     Runnable pinActionListener = () -> {
       UsageView view = FindUtil.showInUsageView(null, tree.getTestMethods(), param -> param, initTitle, p -> {
         p.setCodeUsages(false); // don't show r/w, imports filtering actions
-        p.setUsagesWord("test");
+        p.setUsagesWord(JavaCompilerBundle.message("affected.tests.test.usage.word"));
         p.setMergeDupLinesAvailable(false);
         p.setUsageTypeFilteringAvailable(false);
         p.setExcludeAvailable(false);
@@ -353,11 +351,7 @@ public class ShowAffectedTestsAction extends AnAction {
       protected void process(@NotNull TreeModelEvent event, @NotNull EventType type) {
         int testsCount = tree.getTestCount();
         int classesCount = tree.getTestClassesCount();
-        popup.setCaption("Found " + testsCount + " " +
-                         StringUtil.pluralize("Test", testsCount) +
-                         " in " + classesCount + " " +
-                         StringUtil.pluralize("Class", classesCount) +
-                         " for " + title);
+        popup.setCaption(JavaCompilerBundle.message("popup.title.affected.tests.counts", testsCount, testsCount == 1 ? 0 : 1, classesCount, classesCount == 1 ? 0 : 1, title));
       }
     });
 

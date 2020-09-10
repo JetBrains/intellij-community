@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -10,8 +11,6 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public abstract class TooltipLinkHandler {
-
-  public static final String INSPECTION_INFO = "Inspection info";
 
   /**
    * Override to handle mouse clicks on a link.
@@ -46,7 +45,8 @@ public abstract class TooltipLinkHandler {
    * @return title above detailed description in the expanded tooltip
    */
   @NotNull
+  @InspectionMessage
   public String getDescriptionTitle(@NotNull String refSuffix, @NotNull Editor editor) {
-    return INSPECTION_INFO;
+    return IdeBundle.message("inspection.message.inspection.info");
   }
 }

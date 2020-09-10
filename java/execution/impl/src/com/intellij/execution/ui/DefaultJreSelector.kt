@@ -6,6 +6,7 @@ import com.intellij.application.options.ModuleDescriptionsComboBox
 import com.intellij.application.options.ModulesComboBox
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.util.JavaParametersUtil
+import com.intellij.java.JavaBundle
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.module.Module
@@ -58,7 +59,7 @@ abstract class DefaultJreSelector {
   @Nls
   fun getDescriptionString(): String {
     val (name, description) = getNameAndDescription()
-    return " (${name ?: "<no JRE>"} - $description)"
+    return " (${name ?: JavaBundle.message("no.jre.description")} - $description)"
   }
 
 

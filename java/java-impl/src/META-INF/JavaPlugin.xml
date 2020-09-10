@@ -482,11 +482,14 @@
                          childrenEPName="com.intellij.compilerSettingsFactory">
       <configurable instance="com.intellij.openapi.compiler.options.ExcludedEntriesConfigurable"
                     id="reference.projectsettings.compiler.excludes"
-                    displayName="Excludes"/>
+                    key="reference.projectsettings.compiler.excludes"
+                    bundle="messages.JavaCompilerBundle"/>
       <configurable instance="com.intellij.compiler.options.JavaCompilersTab" id="reference.projectsettings.compiler.javacompiler"
                     key="java.compiler.description" bundle="messages.JavaCompilerBundle"/>
       <configurable instance="com.intellij.compiler.options.AnnotationProcessorsConfigurable"
-                    id="reference.projectsettings.compiler.annotationProcessors" displayName="Annotation Processors"/>
+                    id="reference.projectsettings.compiler.annotationProcessors" 
+                    key="reference.projectsettings.compiler.annotationProcessors"
+                    bundle="messages.JavaCompilerBundle"/>
       <configurable instance="com.intellij.compiler.options.ValidationConfigurable" id="project.validation" key="validation.display.name"
                     bundle="messages.JavaCompilerBundle"/>
       <configurable instance="com.intellij.compiler.options.RmicConfigurable" id="reference.projectsettings.compiler.rmicompiler"

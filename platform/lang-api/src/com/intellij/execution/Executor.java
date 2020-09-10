@@ -110,6 +110,7 @@ public abstract class Executor {
    * in {@linkplain TextWithMnemonic#parse(String) text-with-mnemonic} format.
    */
   @NotNull
+  @NlsSafe
   public String getStartActionText(@NlsSafe @NotNull String configurationName) {
     String configName = StringUtil.isEmpty(configurationName) ? "" : " '" + shortenNameIfNeeded(configurationName) + "'";
     return TextWithMnemonic.parse(getStartActionText()).append(configName).toString();

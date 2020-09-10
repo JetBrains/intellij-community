@@ -11,6 +11,7 @@ import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -44,16 +45,16 @@ class BlockingAnnotationsPanel {
   private final JBTable myTable;
   private final JPanel myComponent;
   protected final ListWrappingTableModel myTableModel;
-  private final String myCustomEmptyText;
-  private final String myCustomAddLinkText;
+  private final @NlsContexts.StatusText String myCustomEmptyText;
+  private final @NlsContexts.StatusText String myCustomAddLinkText;
 
   BlockingAnnotationsPanel(Project project,
-                           String name,
+                           @NlsContexts.ColumnName String name,
                            String defaultAnnotation,
                            List<String> annotations,
                            List<String> defaultAnnotations,
-                           String customEmptyText,
-                           String customAddLinkText) {
+                           @NlsContexts.StatusText String customEmptyText,
+                           @NlsContexts.StatusText String customAddLinkText) {
     myProject = project;
     myDefaultAnnotation = defaultAnnotation;
     myDefaultAnnotations = new HashSet<>(defaultAnnotations);

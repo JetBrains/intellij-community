@@ -16,6 +16,7 @@
 package com.intellij.testIntegration
 
 import com.intellij.icons.AllIcons
+import com.intellij.java.JavaBundle
 import com.intellij.openapi.compiler.JavaCompilerBundle
 import com.intellij.openapi.keymap.MacKeymapUtil
 import com.intellij.openapi.project.Project
@@ -122,11 +123,11 @@ class SelectConfigurationStep(items: List<RecentTestsPopupEntry>,
     var presentation = value.presentation
     value.accept(object : TestEntryVisitor() {
       override fun visitSuite(suite: SuiteEntry) {
-        presentation = "[suite] " + presentation
+        presentation = JavaBundle.message("list.item.suite", presentation)
       }
 
       override fun visitRunConfiguration(configuration: RunConfigurationEntry) {
-        presentation = "[configuration] " + presentation
+        presentation = JavaBundle.message("list.item.configuration", presentation)
       }
     })
     return presentation

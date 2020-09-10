@@ -38,6 +38,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -684,13 +685,13 @@ public class JavaDocInfoGenerator {
     enumConstantOrdinal(buffer, field, field.getContainingClass(), "\n");
   }
 
-  public static void enumConstantOrdinal(StringBuilder buffer, PsiField field, PsiClass parentClass, String newLine) {
+  public static void enumConstantOrdinal(@Nls StringBuilder buffer, PsiField field, PsiClass parentClass, String newLine) {
     if (parentClass != null && field instanceof PsiEnumConstant) {
       PsiField[] fields = parentClass.getFields();
       int idx = ArrayUtilRt.find(fields, field);
       if (idx >= 0) {
         buffer.append(newLine);
-        buffer.append("Enum constant ordinal: ").append(idx);
+        buffer.append(JavaBundle.message("enum.constant.ordinal")).append(idx);
       }
     }
   }
