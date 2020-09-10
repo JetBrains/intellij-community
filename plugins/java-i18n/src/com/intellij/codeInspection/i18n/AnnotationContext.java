@@ -49,6 +49,12 @@ final class AnnotationContext {
   public @NotNull Stream<PsiModifierListOwner> secondaryItems() {
     return myNext == null ? Stream.empty() : myNext.get();
   }
+  
+  public @NotNull Stream<PsiAnnotationOwner> allItems() {
+    return StreamEx.<PsiAnnotationOwner>ofNullable(myType)
+      .append(StreamEx.ofNullable(myOwner == null ? null : myOwner.getModifierList()))
+      .append(secondaryItems().map(PsiModifierListOwner::getModifierList));
+  }
 
   @Override
   public boolean equals(Object o) {
@@ -164,6 +170,8 @@ final class AnnotationContext {
 
   private static @Nullable PsiModifierListOwner getKotlinProperty(@NotNull PsiModifierListOwner owner) {
     if (!(owner instanceof PsiMethod)) return null;
+    // Looks ugly but without this check, owner.getNavigationElement() may load PSI or even call decompiler
+    if (!owner.getClass().getSimpleName().equals("KtUltraLightMethodForSourceDeclaration")) return null;
     // If assignment target is Kotlin property, it resolves to the getter but annotation will be applied to the field
     // (unless @get:Nls is used), so we have to navigate to the corresponding field.
     UElement element = UastContextKt.toUElement(owner.getNavigationElement());

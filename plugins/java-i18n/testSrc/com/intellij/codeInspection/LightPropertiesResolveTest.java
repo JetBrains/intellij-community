@@ -3,9 +3,15 @@ package com.intellij.codeInspection;
 
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.psi.PsiReference;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
 public class LightPropertiesResolveTest extends LightJavaCodeInsightFixtureTestCase {
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
+  }
 
   @Override
   protected String getBasePath() {
@@ -16,6 +22,13 @@ public class LightPropertiesResolveTest extends LightJavaCodeInsightFixtureTestC
     myFixture.addFileToProject("Bundle1.properties", "same.name=b1");
     myFixture.addFileToProject("Bundle2.properties", "same.name=b2");
     PsiReference reference = myFixture.getReferenceAtCaretPosition("SameNameProperty.java");
+    assertNotNull(reference.resolve());
+  }
+
+  public void testTypeUse() {
+    myFixture.addFileToProject("Bundle1.properties", "same.name=b1");
+    myFixture.addFileToProject("Bundle2.properties", "same.name=b2");
+    PsiReference reference = myFixture.getReferenceAtCaretPosition("TypeUse.java");
     assertNotNull(reference.resolve());
   }
 }

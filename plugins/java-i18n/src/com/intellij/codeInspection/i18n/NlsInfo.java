@@ -267,7 +267,7 @@ public abstract class NlsInfo {
     return result.get();
   }
 
-  static @NotNull UExpression goUp(@NotNull UExpression expression, boolean allowStringTransformation) {
+  public static @NotNull UExpression goUp(@NotNull UExpression expression, boolean allowStringTransformation) {
     UExpression parent = expression;
     while (true) {
       UElement parentElement = parent.getUastParent();
