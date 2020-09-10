@@ -12,10 +12,11 @@ import com.intellij.util.ui.ImageUtil
 import java.awt.Image
 import java.io.File
 import javax.imageio.ImageIO
-import kotlin.math.round
 
 class SplashSlideLoader {
-  private val logger = logger<SplashSlideLoader>()
+  companion object {
+    private val logger = logger<SplashSlideLoader>()
+  }
 
   private val executor by lazy { AppExecutorUtil.createBoundedApplicationPoolExecutor("SplashSlideWriter", 1) }
 
@@ -26,7 +27,7 @@ class SplashSlideLoader {
     val scale = JBUIScale.sysScale()
     val name = FileUtilRt.getNameWithoutExtension(resourceUrl.path)
     val extension = FileUtilRt.getExtension(resourceUrl.path)
-    val file = File("$name@${scaleToString(scale)}x.$extension")
+    val file = File("$name${scaleToString(scale)}.$extension")
 
     // fast
     val image = readImageSafe(file, scale.toDouble())
@@ -51,8 +52,12 @@ class SplashSlideLoader {
   }
 
   private fun saveImage(file: File, image: Image) {
-    if (file.createNewFile())
-      ImageIO.write(ImageUtil.toBufferedImage(image), file.extension, file)
+    try {
+      if (file.createNewFile())
+        ImageIO.write(ImageUtil.toBufferedImage(image), file.extension, file)
+    } catch (e: Throwable) {
+      logger.warn("Cannot save scaled slide. Message: ${e.message}")
+    }
   }
 
   private fun readImageSafe(file: File, scale: Double): Image? {
@@ -67,10 +72,9 @@ class SplashSlideLoader {
 
   private fun scaleToString(scale: Float): String {
     return when (scale) {
-        2f -> "2"
-        1f -> ""
-      else -> (round(scale * 100) / 100).toString()
+      2f -> "@2x"
+      1f -> ""
+      else -> "@${String.format("%.2f", scale)}x"
     }
   }
-
 }
