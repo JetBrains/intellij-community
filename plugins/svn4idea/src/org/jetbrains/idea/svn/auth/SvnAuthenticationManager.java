@@ -131,7 +131,9 @@ public class SvnAuthenticationManager {
     public boolean isAuthStorageEnabled() {
       String perHostValue = getPropertyIdea(myUrl.getHost(), myServersFile.getValue(), "store-auth-creds");
       boolean storageEnabled =
-        perHostValue != null ? isTurned(perHostValue) : isTurned(getValue(myConfigFile.getValue(), "auth", "store-auth-creds"));
+        perHostValue != null
+        ? isTurned(perHostValue, false)
+        : isTurned(getValue(myConfigFile.getValue(), "auth", "store-auth-creds"), true);
 
       if (!storageEnabled) {
         warnOnAuthStorageDisabled();

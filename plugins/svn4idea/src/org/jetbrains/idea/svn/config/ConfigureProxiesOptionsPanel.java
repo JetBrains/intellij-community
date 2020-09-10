@@ -5,7 +5,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.InsertPathAction;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -20,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.jetbrains.idea.svn.SvnBundle.message;
+import static org.jetbrains.idea.svn.config.SvnIniFile.isTurned;
 
 public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
   private JPanel myMainPanel;
@@ -195,7 +195,7 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
       }
     }
 
-    myTrustDefaultCAsCheckBox.setSelected(booleanPropertySelected(properties.get(myComponent2Key.get(myTrustDefaultCAsCheckBox))));
+    myTrustDefaultCAsCheckBox.setSelected(isTurned(properties.get(myComponent2Key.get(myTrustDefaultCAsCheckBox)), false));
     repositoryUrlsRecalculation();
   }
 
@@ -231,10 +231,6 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
         map.put(entry.getKey(), value);
       }
     }
-  }
-
-  private static boolean booleanPropertySelected(final String value) {
-    return value != null && ServersFileKeys.YES_OPTIONS.contains(StringUtil.toLowerCase(value));
   }
 
   public boolean isDefault() {

@@ -13,6 +13,7 @@ import org.ini4j.Config
 import org.ini4j.Ini
 import org.ini4j.spi.IniBuilder
 import org.ini4j.spi.IniFormatter
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.svn.SvnUtil.createUrl
 import org.jetbrains.idea.svn.api.Url
 import org.jetbrains.idea.svn.commandLine.SvnBindException
@@ -23,6 +24,8 @@ import java.nio.file.Path
 import java.util.*
 
 private val LOG = logger<SvnIniFile>()
+
+@NonNls private val TRUE_VALUES: Set<String> = setOf("true", "yes", "on", "1")
 
 class SvnIniFile(private val myPath: Path) {
 
@@ -188,7 +191,8 @@ class SvnIniFile(private val myPath: Path) {
     }
 
     @JvmStatic
-    fun isTurned(value: String?): Boolean = value == null || "yes".equals(value, true) || "on".equals(value, true) || "true".equals(value, true)
+    fun isTurned(value: String?, nullValue: Boolean): Boolean =
+      if (value == null) nullValue else TRUE_VALUES.any { it.equals(value, true) }
 
     @JvmStatic
     fun getValue(files: Couple<SvnIniFile>, groupName: String, propertyName: String): String? =
