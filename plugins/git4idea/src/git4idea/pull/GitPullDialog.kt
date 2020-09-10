@@ -21,11 +21,9 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.HtmlChunk.Element.html
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.CollectionComboBoxModel
-import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.DropDownLink
-import com.intellij.ui.components.JBTextField
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
@@ -40,12 +38,10 @@ import git4idea.config.GitVersionSpecialty.NO_VERIFY_SUPPORTED
 import git4idea.fetch.GitFetchSupport
 import git4idea.i18n.GitBundle
 import git4idea.merge.dialog.*
-import git4idea.rebase.ComboBoxPrototypeRenderer
-import git4idea.rebase.ComboBoxPrototypeRenderer.Companion.COMBOBOX_VALUE_PROTOTYPE
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
-import git4idea.util.GitUIUtil
+import git4idea.ui.ComboBoxWithAutoCompletion
 import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -59,8 +55,6 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.KeyStroke
 import javax.swing.SwingConstants
-import javax.swing.event.DocumentEvent
-import javax.swing.plaf.basic.BasicComboBoxEditor
 
 class GitPullDialog(private val project: Project,
                     private val roots: List<VirtualFile>,
@@ -160,7 +154,7 @@ class GitPullDialog(private val project: Project,
 
   private fun validateBranchField(): ValidationInfo? {
     val item = branchField.item ?: ""
-    val text = GitUIUtil.getTextField(branchField).text
+    val text = branchField.getText()
     val value = if (item == text) item else text
 
     if (value.isNullOrEmpty()) {
@@ -203,7 +197,7 @@ class GitPullDialog(private val project: Project,
       startTrackingValidation()
     }
 
-    model.selectedItem = branchToSelect
+    branchField.selectedItem = branchToSelect
   }
 
   private fun getRemoteBranches(repository: GitRepository, remote: GitRemote): List<String> {
@@ -444,20 +438,8 @@ class GitPullDialog(private val project: Project,
     }
   }
 
-  private fun createBranchField() = ComboBox<String>(MutableCollectionComboBoxModel()).apply {
-    isSwingPopup = false
-    isEditable = true
-    editor = object : BasicComboBoxEditor() {
-      override fun createEditorComponent() = JBTextField().apply {
-        emptyText.text = GitBundle.message("pull.branch.field.placeholder")
-
-        document.addDocumentListener(object : DocumentAdapter() {
-          override fun textChanged(e: DocumentEvent) {
-            startTrackingValidation()
-          }
-        })
-      }
-    }
+  private fun createBranchField() = ComboBoxWithAutoCompletion<String>(MutableCollectionComboBoxModel(), project).apply {
+    setPlaceholder(GitBundle.message("pull.branch.field.placeholder"))
 
     object : RefreshAction() {
       override fun actionPerformed(e: AnActionEvent) {
@@ -470,8 +452,6 @@ class GitPullDialog(private val project: Project,
       }
     }.registerCustomShortcutSet(getFetchActionShortcut(), this)
 
-    prototypeDisplayValue = COMBOBOX_VALUE_PROTOTYPE
-    renderer = ComboBoxPrototypeRenderer.create(this) { it }
     @Suppress("UsePropertyAccessSyntax")
     setUI(FlatComboBoxUI(
       Insets(1, 0, 1, 1),

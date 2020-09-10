@@ -16,13 +16,11 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.CollectionComboBoxModel
-import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.components.JBTextArea
-import com.intellij.ui.components.JBTextField
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.JBDimension
@@ -38,11 +36,9 @@ import git4idea.config.GitMergeSettings
 import git4idea.config.GitVersionSpecialty.NO_VERIFY_SUPPORTED
 import git4idea.i18n.GitBundle
 import git4idea.merge.dialog.*
-import git4idea.rebase.ComboBoxPrototypeRenderer
-import git4idea.rebase.ComboBoxPrototypeRenderer.Companion.COMBOBOX_VALUE_PROTOTYPE
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
-import git4idea.util.GitUIUtil
+import git4idea.ui.ComboBoxWithAutoCompletion
 import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -59,8 +55,6 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
 import javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
-import javax.swing.event.DocumentEvent
-import javax.swing.plaf.basic.BasicComboBoxEditor
 
 class GitMergeDialog(private val project: Project,
                      private val defaultRoot: VirtualFile,
@@ -95,8 +89,8 @@ class GitMergeDialog(private val project: Project,
     loadUnmergedBranchesInBackground()
     updateTitle()
     setOKButtonText(GitBundle.message("merge.action.name"))
-    updateBranchesField()
     loadSettings()
+    updateBranchesField()
     updateUi()
     init()
   }
@@ -216,7 +210,7 @@ class GitMergeDialog(private val project: Project,
 
   private fun validateBranchField(): ValidationInfo? {
     val item = branchField.item ?: ""
-    val text = GitUIUtil.getTextField(branchField).text
+    val text = branchField.getText()
     val value = if (item == text) item else text
 
     if (value.isNullOrEmpty()) {
@@ -250,7 +244,7 @@ class GitMergeDialog(private val project: Project,
       startTrackingValidation()
     }
 
-    model.selectedItem = branchToSelect
+    branchField.selectedItem = branchToSelect
   }
 
   private fun splitAndSortBranches(branches: List<@NlsSafe String>): List<@NlsSafe String> {
@@ -357,24 +351,10 @@ class GitMergeDialog(private val project: Project,
                                           Insets(1, if (showRootField()) 0 else 1, 1, 0),
                                           JBDimension(JBUI.scale(100), branchField.preferredSize.height, true))
 
-  private fun createBranchField(): ComboBox<String> {
+  private fun createBranchField(): ComboBoxWithAutoCompletion<String> {
     val model = MutableCollectionComboBoxModel(mutableListOf<String>())
-    return ComboBox(model).apply<ComboBox<String>> {
-      isSwingPopup = false
-      isEditable = true
-      editor = object : BasicComboBoxEditor() {
-        override fun createEditorComponent() = JBTextField().apply {
-          emptyText.text = GitBundle.message("merge.branch.field.placeholder")
-
-          document.addDocumentListener(object : DocumentAdapter() {
-            override fun textChanged(e: DocumentEvent) {
-              startTrackingValidation()
-            }
-          })
-        }
-      }
-      prototypeDisplayValue = COMBOBOX_VALUE_PROTOTYPE
-      renderer = ComboBoxPrototypeRenderer.create(this) { it }
+    return ComboBoxWithAutoCompletion(model, project).apply {
+      setPlaceholder(GitBundle.message("merge.branch.field.placeholder"))
       @Suppress("UsePropertyAccessSyntax")
       setUI(FlatComboBoxUI(
         outerInsets = Insets(BW.get(), 0, BW.get(), BW.get()),
