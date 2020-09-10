@@ -58,35 +58,35 @@ public class ANSIColoredConsoleColorsPage implements ColorSettingsPage, DisplayP
     "<stdsys>Process finished with exit code 1</stdsys>\n";
 
   private static final AttributesDescriptor[] ATTRS = {
-    new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.console.stdout"), ConsoleViewContentType.NORMAL_OUTPUT_KEY),
-    new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.console.stderr"), ConsoleViewContentType.ERROR_OUTPUT_KEY),
-    new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.console.stdin"), ConsoleViewContentType.USER_INPUT_KEY),
-    new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.console.system.output"), ConsoleViewContentType.SYSTEM_OUTPUT_KEY),
+    new AttributesDescriptor(OptionsBundle.messagePointer("options.general.color.descriptor.console.stdout"), ConsoleViewContentType.NORMAL_OUTPUT_KEY),
+    new AttributesDescriptor(OptionsBundle.messagePointer("options.general.color.descriptor.console.stderr"), ConsoleViewContentType.ERROR_OUTPUT_KEY),
+    new AttributesDescriptor(OptionsBundle.messagePointer("options.general.color.descriptor.console.stdin"), ConsoleViewContentType.USER_INPUT_KEY),
+    new AttributesDescriptor(OptionsBundle.messagePointer("options.general.color.descriptor.console.system.output"), ConsoleViewContentType.SYSTEM_OUTPUT_KEY),
 
-    new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.console.logError"), ConsoleViewContentType.LOG_ERROR_OUTPUT_KEY),
-    new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.console.warning"), ConsoleViewContentType.LOG_WARNING_OUTPUT_KEY),
-    new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.console.info"), ConsoleViewContentType.LOG_INFO_OUTPUT_KEY),
-    new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.console.verbose"), ConsoleViewContentType.LOG_VERBOSE_OUTPUT_KEY),
-    new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.console.debug"), ConsoleViewContentType.LOG_DEBUG_OUTPUT_KEY),
-    new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.console.expired"), ConsoleViewContentType.LOG_EXPIRED_ENTRY),
+    new AttributesDescriptor(OptionsBundle.messagePointer("options.general.color.descriptor.console.logError"), ConsoleViewContentType.LOG_ERROR_OUTPUT_KEY),
+    new AttributesDescriptor(OptionsBundle.messagePointer("options.general.color.descriptor.console.warning"), ConsoleViewContentType.LOG_WARNING_OUTPUT_KEY),
+    new AttributesDescriptor(OptionsBundle.messagePointer("options.general.color.descriptor.console.info"), ConsoleViewContentType.LOG_INFO_OUTPUT_KEY),
+    new AttributesDescriptor(OptionsBundle.messagePointer("options.general.color.descriptor.console.verbose"), ConsoleViewContentType.LOG_VERBOSE_OUTPUT_KEY),
+    new AttributesDescriptor(OptionsBundle.messagePointer("options.general.color.descriptor.console.debug"), ConsoleViewContentType.LOG_DEBUG_OUTPUT_KEY),
+    new AttributesDescriptor(OptionsBundle.messagePointer("options.general.color.descriptor.console.expired"), ConsoleViewContentType.LOG_EXPIRED_ENTRY),
 
-    new AttributesDescriptor(OptionsBundle.message("color.settings.console.black"), ConsoleHighlighter.BLACK),
-    new AttributesDescriptor(OptionsBundle.message("color.settings.console.red"), ConsoleHighlighter.RED),
-    new AttributesDescriptor(OptionsBundle.message("color.settings.console.green"), ConsoleHighlighter.GREEN),
-    new AttributesDescriptor(OptionsBundle.message("color.settings.console.yellow"), ConsoleHighlighter.YELLOW),
-    new AttributesDescriptor(OptionsBundle.message("color.settings.console.blue"), ConsoleHighlighter.BLUE),
-    new AttributesDescriptor(OptionsBundle.message("color.settings.console.magenta"), ConsoleHighlighter.MAGENTA),
-    new AttributesDescriptor(OptionsBundle.message("color.settings.console.cyan"), ConsoleHighlighter.CYAN),
-    new AttributesDescriptor(OptionsBundle.message("color.settings.console.gray"), ConsoleHighlighter.GRAY),
+    new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.console.black"), ConsoleHighlighter.BLACK),
+    new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.console.red"), ConsoleHighlighter.RED),
+    new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.console.green"), ConsoleHighlighter.GREEN),
+    new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.console.yellow"), ConsoleHighlighter.YELLOW),
+    new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.console.blue"), ConsoleHighlighter.BLUE),
+    new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.console.magenta"), ConsoleHighlighter.MAGENTA),
+    new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.console.cyan"), ConsoleHighlighter.CYAN),
+    new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.console.gray"), ConsoleHighlighter.GRAY),
 
-    new AttributesDescriptor(OptionsBundle.message("color.settings.console.darkGray"), ConsoleHighlighter.DARKGRAY),
-    new AttributesDescriptor(OptionsBundle.message("color.settings.console.redBright"), ConsoleHighlighter.RED_BRIGHT),
-    new AttributesDescriptor(OptionsBundle.message("color.settings.console.greenBright"), ConsoleHighlighter.GREEN_BRIGHT),
-    new AttributesDescriptor(OptionsBundle.message("color.settings.console.yellowBright"), ConsoleHighlighter.YELLOW_BRIGHT),
-    new AttributesDescriptor(OptionsBundle.message("color.settings.console.blueBright"), ConsoleHighlighter.BLUE_BRIGHT),
-    new AttributesDescriptor(OptionsBundle.message("color.settings.console.magentaBright"), ConsoleHighlighter.MAGENTA_BRIGHT),
-    new AttributesDescriptor(OptionsBundle.message("color.settings.console.cyanBright"), ConsoleHighlighter.CYAN_BRIGHT),
-    new AttributesDescriptor(OptionsBundle.message("color.settings.console.white"), ConsoleHighlighter.WHITE),
+    new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.console.darkGray"), ConsoleHighlighter.DARKGRAY),
+    new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.console.redBright"), ConsoleHighlighter.RED_BRIGHT),
+    new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.console.greenBright"), ConsoleHighlighter.GREEN_BRIGHT),
+    new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.console.yellowBright"), ConsoleHighlighter.YELLOW_BRIGHT),
+    new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.console.blueBright"), ConsoleHighlighter.BLUE_BRIGHT),
+    new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.console.magentaBright"), ConsoleHighlighter.MAGENTA_BRIGHT),
+    new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.console.cyanBright"), ConsoleHighlighter.CYAN_BRIGHT),
+    new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.console.white"), ConsoleHighlighter.WHITE),
   };
 
   private static final Map<String, TextAttributesKey> ADDITIONAL_HIGHLIGHT_DESCRIPTORS = new HashMap<>();
@@ -122,7 +122,7 @@ public class ANSIColoredConsoleColorsPage implements ColorSettingsPage, DisplayP
   }
 
   private static final ColorDescriptor[] COLORS = {
-    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.console.background"), ConsoleViewContentType.CONSOLE_BACKGROUND_KEY, ColorDescriptor.Kind.BACKGROUND),
+    new ColorDescriptor(OptionsBundle.messagePointer("options.general.color.descriptor.console.background"), ConsoleViewContentType.CONSOLE_BACKGROUND_KEY, ColorDescriptor.Kind.BACKGROUND),
   };
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.profile.codeInspection.ui.table;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -18,19 +18,19 @@ import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.EventObject;
-import java.util.stream.Stream;
 
 public class SeverityRenderer extends ComboBoxTableRenderer<HighlightSeverity> {
   private static final Icon DEFAULT_DISABLED_ICON = HighlightDisplayLevel.createIconByMask(UIUtil.getLabelDisabledForeground());
 
-  static final HighlightSeverity EDIT_SEVERITIES = new HighlightSeverity(InspectionsBundle.message("inspection.edit.severities.text"), -1);
+  static final HighlightSeverity EDIT_SEVERITIES = new HighlightSeverity("-", -1);
 
   @NotNull
   private final Runnable myOnClose;
@@ -48,10 +48,10 @@ public class SeverityRenderer extends ComboBoxTableRenderer<HighlightSeverity> {
     myProject = project;
   }
 
-  public static HighlightSeverity @NotNull [] getSeverities(InspectionProfileImpl inspectionProfile) {
-    Stream<HighlightSeverity>
-      severities = LevelChooserAction.getSeverities(inspectionProfile.getProfileManager().getSeverityRegistrar()).stream();
-    return StreamEx.of(severities).append(EDIT_SEVERITIES).toArray(HighlightSeverity.class);
+  private static HighlightSeverity[] getSeverities(InspectionProfileImpl profile) {
+    List<HighlightSeverity> list = new ArrayList<>(LevelChooserAction.getSeverities(profile.getProfileManager().getSeverityRegistrar()));
+    list.add(EDIT_SEVERITIES);
+    return list.toArray(new HighlightSeverity[0]);
   }
 
   public static Icon getIcon(@NotNull HighlightDisplayLevel level) {
@@ -76,8 +76,10 @@ public class SeverityRenderer extends ComboBoxTableRenderer<HighlightSeverity> {
   }
 
   @Override
-  protected String getTextFor(@NotNull final HighlightSeverity value) {
-    return SingleInspectionProfilePanel.renderSeverity(value);
+  protected String getTextFor(@NotNull HighlightSeverity value) {
+    return value == EDIT_SEVERITIES
+           ? InspectionsBundle.message("inspection.edit.severities.item")
+           : SingleInspectionProfilePanel.renderSeverity(value);
   }
 
   @Override

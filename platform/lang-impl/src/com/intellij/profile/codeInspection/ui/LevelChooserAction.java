@@ -50,7 +50,7 @@ public abstract class LevelChooserAction extends ComboBoxAction implements DumbA
       group.add(action);
     }
     group.addSeparator();
-    group.add(new DumbAwareAction(InspectionsBundle.message("inspection.edit.severities.text")) {
+    group.add(new DumbAwareAction(InspectionsBundle.message("inspection.edit.severities.action")) {
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
         Project project = e.getProject();

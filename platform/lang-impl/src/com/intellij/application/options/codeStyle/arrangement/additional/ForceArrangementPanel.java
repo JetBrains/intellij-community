@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle.arrangement.additional;
 
 import com.intellij.openapi.application.ApplicationBundle;
@@ -22,6 +8,7 @@ import com.intellij.ui.OptionGroup;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
 
@@ -47,7 +34,7 @@ public class ForceArrangementPanel {
 
   public void setSelectedMode(int mode) {
     SelectedMode toSetUp = SelectedMode.getByMode(mode);
-    assert(toSetUp != null);
+    assert toSetUp != null;
     setSelectedMode(toSetUp);
   }
 
@@ -74,15 +61,15 @@ public class ForceArrangementPanel {
   }
 
   private enum SelectedMode {
-    FROM_DIALOG(ApplicationBundle.message("arrangement.settings.additional.force.rearrange.according.to.dialog"), CommonCodeStyleSettings.REARRANGE_ACCORDIND_TO_DIALOG),
-    ALWAYS(ApplicationBundle.message("arrangement.settings.additional.force.rearrange.always"), CommonCodeStyleSettings.REARRANGE_ALWAYS),
-    NEVER(ApplicationBundle.message("arrangement.settings.additional.force.rearrange.never"), CommonCodeStyleSettings.REARRANGE_NEVER);
+    FROM_DIALOG("arrangement.settings.additional.force.rearrange.according.to.dialog", CommonCodeStyleSettings.REARRANGE_ACCORDIND_TO_DIALOG),
+    ALWAYS("arrangement.settings.additional.force.rearrange.always", CommonCodeStyleSettings.REARRANGE_ALWAYS),
+    NEVER("arrangement.settings.additional.force.rearrange.never", CommonCodeStyleSettings.REARRANGE_NEVER);
 
     public final int rearrangeMode;
-    @NotNull private final String myName;
+    private final String myKey;
 
-    SelectedMode(@NotNull String name, int mode) {
-      myName = name;
+    SelectedMode(@PropertyKey(resourceBundle = ApplicationBundle.BUNDLE) String key, int mode) {
+      myKey = key;
       rearrangeMode = mode;
     }
 
@@ -97,7 +84,7 @@ public class ForceArrangementPanel {
     @Override
     @NotNull
     public String toString() {
-      return myName;
+      return ApplicationBundle.message(myKey);
     }
   }
 }

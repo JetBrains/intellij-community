@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.eclipse.importer;
 
 
@@ -7,6 +7,7 @@ import com.intellij.openapi.options.SchemeFactory;
 import com.intellij.openapi.options.SchemeImportException;
 import com.intellij.openapi.options.SchemeImporter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
@@ -44,16 +45,9 @@ public class EclipseCodeStyleSchemeImporter implements SchemeImporter<CodeStyleS
     return null;
   }
 
-  /**
-   * Attempts to read scheme names from the given stream. The stream may contain several schemes in which case all the available
-   * names are returned.
-   *
-   * @return Either scheme name or null if the scheme doesn't have a name.
-   * @throws SchemeImportException
-   */
-  private static String @NotNull [] readSchemeNames(@NotNull VirtualFile selectedFile) throws SchemeImportException {
-    final Set<String> names = new HashSet<>();
-    final EclipseXmlProfileReader reader = new EclipseXmlProfileReader(new EclipseXmlProfileReader.OptionHandler() {
+  private static @NlsSafe String [] readSchemeNames(VirtualFile selectedFile) throws SchemeImportException {
+    Set<String> names = new HashSet<>();
+    EclipseXmlProfileReader reader = new EclipseXmlProfileReader(new EclipseXmlProfileReader.OptionHandler() {
       @Override
       public void handleOption(@NotNull String eclipseKey, @NotNull String value) throws SchemeImportException {
         // Ignore

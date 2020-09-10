@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.FileStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,21 +24,16 @@ public class FileStatusColorsTableModel extends AbstractTableModel {
   private final List<FileStatusColorDescriptor> myDescriptors;
 
   private final static ColumnInfo[] COLUMNS_INFO = {
-    new ColumnInfo(
-      Boolean.class, "", descriptor -> descriptor.isDefault()
-    ),
-    new ColumnInfo(
-      String.class, ApplicationBundle.message("file.status.colors.header.status"), descriptor -> descriptor.getStatus().getText())
+    new ColumnInfo(Boolean.class, descriptor -> descriptor.isDefault()),
+    new ColumnInfo(String.class, descriptor -> descriptor.getStatus().getText())
   };
 
   private static class ColumnInfo {
-    public Class columnClass;
-    @NlsContexts.ColumnName public String columnName;
-    public Function<FileStatusColorDescriptor,Object> dataFunction;
+    Class<?> columnClass;
+    Function<FileStatusColorDescriptor,Object> dataFunction;
 
-    ColumnInfo(Class columnClass, @NlsContexts.ColumnName String columnName, Function<FileStatusColorDescriptor,Object> dataFunction) {
+    ColumnInfo(Class<?> columnClass, Function<FileStatusColorDescriptor, Object> dataFunction) {
       this.columnClass = columnClass;
-      this.columnName = columnName;
       this.dataFunction = dataFunction;
     }
   }
@@ -73,7 +67,7 @@ public class FileStatusColorsTableModel extends AbstractTableModel {
 
   @Override
   public String getColumnName(int columnIndex) {
-    return COLUMNS_INFO[columnIndex].columnName;
+    return columnIndex == 0 ? "" : ApplicationBundle.message("file.status.colors.header.status");
   }
 
   @Override
