@@ -660,46 +660,57 @@ public final class ActionsTreeUtil {
     return KeyMapBundle.message("main.menu.action.title");
   }
 
+  @Nls
   public static String getMainToolbar() {
     return KeyMapBundle.message("main.toolbar.title");
   }
 
+  @Nls
   public static String getEditorPopup() {
     return KeyMapBundle.message("editor.popup.menu.title");
   }
 
+  @Nls
   public static String getEditorGutterPopupMenu() {
     return KeyMapBundle.message("editor.gutter.popup.menu");
   }
 
+  @Nls
   public static String getScopeViewPopupMenu() {
     return KeyMapBundle.message("scope.view.popup.menu");
   }
 
+  @Nls
   public static String getNavigationBarPopupMenu() {
     return KeyMapBundle.message("navigation.bar.popup.menu");
   }
 
+  @Nls
   public static String getNavigationBarToolbar() {
     return KeyMapBundle.message("navigation.bar.toolbar");
   }
 
+  @Nls
   public static String getEditorTabPopup() {
     return KeyMapBundle.message("editor.tab.popup.menu.title");
   }
 
+  @Nls
   public static String getFavoritesPopup() {
     return KeyMapBundle.message("favorites.popup.title");
   }
 
+  @Nls
   public static String getProjectViewPopup() {
     return KeyMapBundle.message("project.view.popup.menu.title");
   }
 
+  @Nls
   public static String getCommanderPopup() {
     return KeyMapBundle.message("commender.view.popup.menu.title");
   }
 
+  @Nls
   public static String getJ2EEPopup() {
     return KeyMapBundle.message("j2ee.view.popup.menu.title");
   }

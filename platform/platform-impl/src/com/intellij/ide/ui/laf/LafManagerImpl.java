@@ -1386,7 +1386,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       List<AnAction> result = new ArrayList<>();
       if (!lafs.isEmpty()) {
         result.add(Separator.create(separatorText));
-        lafs.stream().map(l -> new LafToggleAction(l, isDark)).forEach(a -> result.add(a));
+        lafs.stream().map(l -> {
+          @NlsSafe String name = l.getName();
+          return new LafToggleAction(name, l, isDark);
+        }).forEach(a -> result.add(a));
       }
       return result;
     }
@@ -1396,8 +1399,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     private final UIManager.LookAndFeelInfo lafInfo;
     private final boolean isDark;
 
-    private LafToggleAction(UIManager.LookAndFeelInfo lafInfo, boolean isDark) {
-      super(lafInfo.getName());
+    private LafToggleAction(@Nls String name, UIManager.LookAndFeelInfo lafInfo, boolean isDark) {
+      super(name);
       this.lafInfo = lafInfo;
       this.isDark = isDark;
     }

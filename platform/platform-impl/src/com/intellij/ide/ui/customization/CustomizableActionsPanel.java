@@ -18,6 +18,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -259,7 +260,8 @@ public class CustomizableActionsPanel {
         if (userObject instanceof Group) {
           Group group = (Group)userObject;
           String name = group.getName();
-          append(name != null ? name : ObjectUtils.notNull(group.getId(), "<unnamed group>"));
+          @NlsSafe String id = group.getId();
+          append(name != null ? name : ObjectUtils.notNull(id, IdeBundle.message("action.group.name.unnamed.group")));
           icon = ObjectUtils.notNull(group.getIcon(), AllIcons.Nodes.Folder);
         }
         else if (userObject instanceof String) {
