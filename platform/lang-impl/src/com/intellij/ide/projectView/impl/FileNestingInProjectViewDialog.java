@@ -15,7 +15,6 @@ import com.intellij.ui.table.TableView;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -96,8 +95,8 @@ public class FileNestingInProjectViewDialog extends DialogWrapper {
   }
 
   private static TableView<CombinedNestingRule> createTable() {
-    @Nls String childColumn = LangBundle.message("child.file.suffix.column.name");
-    @Nls String parentColumn = LangBundle.message("parent.file.suffix.column.name");
+    String childColumn = LangBundle.message("child.file.suffix.column.name");
+    String parentColumn = LangBundle.message("parent.file.suffix.column.name");
     final ListTableModel<CombinedNestingRule> model = new ListTableModel<>(
       new ColumnInfo<CombinedNestingRule, String>(parentColumn) {
         @Override
