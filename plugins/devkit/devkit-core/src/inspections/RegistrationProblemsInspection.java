@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
+import com.intellij.codeInsight.daemon.impl.quickfix.ImplementOrExtendFix;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -21,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.quickfix.CreateConstructorFix;
-import org.jetbrains.idea.devkit.inspections.quickfix.ImplementOrExtendFix;
 import org.jetbrains.idea.devkit.util.ActionType;
 import org.jetbrains.idea.devkit.util.ComponentType;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
@@ -128,7 +128,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
                                                                               DevKitBundle.message("keyword.implement") :
                                                                               DevKitBundle.message("keyword.extend"),
                                                                               compClass.getQualifiedName()), isOnTheFly,
-                                                         ImplementOrExtendFix.createFix(compClass, checkedClass, isOnTheFly),
+                                                         ImplementOrExtendFix.createFixes(nameIdentifier, compClass, checkedClass, isOnTheFly),
                                                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
           }
         }
@@ -327,7 +327,7 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
                 addProblem(token,
                            DevKitBundle.message("inspections.registration.problems.action.incompatible.class", type.myClassName),
                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly,
-                           ImplementOrExtendFix.createFix(psiClass, actionClass, myOnTheFly));
+                           ImplementOrExtendFix.createFixes(token, psiClass, actionClass, myOnTheFly));
               }
             }
             final ConstructorType noArgCtor = ConstructorType.getNoArgCtor(actionClass);

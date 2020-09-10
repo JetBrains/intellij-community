@@ -15,6 +15,7 @@ interface DefaultIntentionActionWithChoice : IntentionActionWithChoice<ChoiceTit
    * Use this function to add intention-action with choice to
    * problem descriptor
    */
+  @JvmDefault
   fun getAllAsFixes(): List<LocalQuickFix> {
     val result = ArrayList<LocalQuickFix>()
     result.add(title)
