@@ -28,6 +28,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.openapi.util.text.StringUtil.ELLIPSIS;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
 import static org.jetbrains.idea.svn.branchConfig.DefaultBranchConfig.TRUNK_NAME;
@@ -124,7 +125,7 @@ public final class SelectBranchPopup {
     public String getTextFor(@NotNull Object value) {
       if (value instanceof Url) {
         Url url = (Url)value;
-        String suffix = url.equals(myConfiguration.getTrunk()) ? " (" + TRUNK_NAME + ")" : "...";
+        String suffix = url.equals(myConfiguration.getTrunk()) ? " (" + TRUNK_NAME + ")" : ELLIPSIS;
 
         return url.getTail() + suffix;
       }

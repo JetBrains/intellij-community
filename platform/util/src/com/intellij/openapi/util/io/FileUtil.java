@@ -538,7 +538,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   @NotNull
-  public static File findSequentNonexistentFile(@NotNull File parentFolder, @NotNull  String filePrefix, @NotNull String extension) {
+  public static File findSequentNonexistentFile(@NotNull File parentFolder, @NotNull @NonNls String filePrefix, @NotNull String extension) {
     return findSequentFile(parentFolder, filePrefix, extension, file -> !file.exists());
   }
 
