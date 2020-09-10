@@ -77,7 +77,7 @@ class TestTags extends TestObject {
 
   @Override
   public String suggestActionName() {
-    return "Tests of " + getConfiguration().getPersistentData().getCategory();
+    return "Tests of " + getConfiguration().getPersistentData().getTags();
   }
 
   @Override
