@@ -31,6 +31,7 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Future
 
 class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectoryEntitiesSerializerFactory<*>>,
                                 moduleListSerializers: List<JpsModuleListSerializer>,
@@ -168,8 +169,6 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     return Pair(changedSources, builder)
   }
 
-  private val lock = Any()
-
   override fun loadAll(reader: JpsFileContentReader, builder: WorkspaceEntityStorageBuilder) {
     val service = AppExecutorUtil.createBoundedApplicationPoolExecutor("ModuleManager Loader", 1)
     try {
@@ -177,17 +176,40 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
         Callable {
           val myBuilder = WorkspaceEntityStorageBuilder.create()
           serializer.loadEntities(myBuilder, reader, virtualFileManager)
-          synchronized(lock) {
-            builder.addDiff(myBuilder)
-          }
+          myBuilder
         }
       }
 
-      ConcurrencyUtil.invokeAll(tasks, service)
+      val res = ConcurrencyUtil.invokeAll(tasks, service)
+      val squashedBuilder = squash(res)
+      builder.addDiff(squashedBuilder)
     }
     finally {
       service.shutdown()
     }
+  }
+
+  // This fancy logic allows to reduce the time spared by addDiff. This can be removed if addDiff won't do toStorage at the start of the method
+  private fun squash(builders: List<Future<WorkspaceEntityStorageBuilder>>): WorkspaceEntityStorageBuilder {
+    val builder = byPairs(builders.map { it.get() })
+    return builder.singleOrNull() ?: WorkspaceEntityStorageBuilder.create()
+  }
+
+  private tailrec fun byPairs(builders: List<WorkspaceEntityStorageBuilder>): List<WorkspaceEntityStorageBuilder> {
+    if (builders.isEmpty() || builders.size == 1) return builders
+    val resBuilder = ArrayList<WorkspaceEntityStorageBuilder>()
+    var i = 0
+    while (i < builders.size - 1) {
+      val left = builders[i]
+      left.addDiff(builders[i+1])
+      resBuilder += left
+      i += 2
+    }
+    if (i == builders.lastIndex) {
+      resBuilder += builders.last()
+    }
+
+    return byPairs(resBuilder)
   }
 
   @TestOnly

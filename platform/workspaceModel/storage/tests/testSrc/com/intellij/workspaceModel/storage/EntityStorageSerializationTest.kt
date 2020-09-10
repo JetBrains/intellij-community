@@ -26,7 +26,7 @@ class EntityStorageSerializationTest {
 
     val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), VirtualFileUrlManagerImpl())
     val deserializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), VirtualFileUrlManagerImpl())
-      .also { it.serializerDataFormatVersion = "v2" }
+      .also { it.serializerDataFormatVersion = "XYZ" }
 
     val stream = ByteArrayOutputStream()
     serializer.serializeCache(stream, builder.toStorage())

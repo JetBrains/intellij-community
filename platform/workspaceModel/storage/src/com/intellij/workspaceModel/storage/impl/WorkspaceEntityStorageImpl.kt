@@ -9,10 +9,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.ObjectUtils
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
-import com.intellij.workspaceModel.storage.impl.exceptions.ReplaceBySourceException
-import com.intellij.workspaceModel.storage.impl.exceptions.adFailed
-import com.intellij.workspaceModel.storage.impl.exceptions.rbsFailed
+import com.intellij.workspaceModel.storage.impl.exceptions.*
 import com.intellij.workspaceModel.storage.impl.external.EmptyExternalEntityMapping
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
 import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMappingImpl
@@ -55,7 +52,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
   override val indexes: MutableStorageIndexes
 ) : WorkspaceEntityStorageBuilder, AbstractEntityStorage() {
 
-  private val changeLogImpl: MutableList<ChangeEntry> = mutableListOf()
+  internal val changeLogImpl: MutableList<ChangeEntry> = mutableListOf()
 
   private val changeLog: List<ChangeEntry>
     get() = changeLogImpl
@@ -554,6 +551,14 @@ internal class WorkspaceEntityStorageBuilderImpl(
     rbsFailed(message)
   }
 
+  private fun addDiffAndReport(message: String,
+                               left: WorkspaceEntityStorage,
+                               right: WorkspaceEntityStorage,
+                               resulting: WorkspaceEntityStorage): Nothing {
+    reportConsistencyIssue(message, AddDiffException(message), null, left, right, resulting)
+    adFailed(message)
+  }
+
   sealed class EntityDataChange<T : WorkspaceEntityData<out WorkspaceEntity>> {
     data class Added<T : WorkspaceEntityData<out WorkspaceEntity>>(val entity: T) : EntityDataChange<T>()
     data class Removed<T : WorkspaceEntityData<out WorkspaceEntity>>(val entity: T) : EntityDataChange<T>()
@@ -626,9 +631,10 @@ internal class WorkspaceEntityStorageBuilderImpl(
   override fun isEmpty(): Boolean = changeLogImpl.isEmpty()
 
   override fun addDiff(diff: WorkspaceEntityStorageDiffBuilder) {
+    diff as WorkspaceEntityStorageBuilderImpl
+    val initialStorage = this.toStorage()
     val replaceMap = HashBiMap.create<EntityId, EntityId>()
-    val builder = diff as WorkspaceEntityStorageBuilderImpl
-    val diffLog = builder.changeLog
+    val diffLog = diff.changeLog
     for (change in diffLog) {
       when (change) {
         is ChangeEntry.AddEntity<out WorkspaceEntity> -> {
@@ -637,7 +643,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
           val newPersistentId = change.entityData.persistentId(this)
           if (newPersistentId != null) {
             val existingIds = this.indexes.persistentIdIndex.getIdsByEntry(newPersistentId)
-            if (existingIds != null && existingIds.isNotEmpty()) adFailed("PersistentId already exists: $newPersistentId")
+            if (existingIds != null && existingIds.isNotEmpty()) addDiffAndReport("PersistentId already exists: $newPersistentId", initialStorage, diff, this)
           }
 
           val updatedChildren = change.children.mapValues { it.value.map { v -> replaceMap.getOrDefault(v, v) }.toSet() }
@@ -645,7 +651,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
           val entity2id = cloneEntity(change.entityData, change.clazz, replaceMap)
           updateEntityRefs(entity2id.second, updatedChildren, updatedParents)
-          indexes.updateIndices(change.entityData.createPid(), entity2id.second, builder)
+          indexes.updateIndices(change.entityData.createPid(), entity2id.second, diff)
           updateChangeLog {
             it.add(ChangeEntry.AddEntity(entity2id.first, change.clazz, updatedChildren, updatedParents))
           }
@@ -676,13 +682,13 @@ internal class WorkspaceEntityStorageBuilderImpl(
           if (newPersistentId != null) {
             val existingIds = this.indexes.persistentIdIndex.getIdsByEntry(newPersistentId)
             if (existingIds != null && existingIds.isNotEmpty() && existingIds.single() != newData.createPid()) {
-              adFailed("PersistentId already exists: $newPersistentId")
+              addDiffAndReport("PersistentId already exists: $newPersistentId", initialStorage, diff, this)
             }
           }
 
           // We don't modify entity that isn't exist in this version of storage
           if (this.entityDataById(usedPid) != null) {
-            indexes.updateIndices(outdatedId, newData.createPid(), builder)
+            indexes.updateIndices(outdatedId, newData.createPid(), diff)
             updateChangeLog { it.add(ChangeEntry.ReplaceEntity(newData, updatedNewChildren, updatedRemovedChildren, updatedModifiedParents)) }
             replaceEntityWithRefs(newData, outdatedId.clazz, updatedNewChildren, updatedRemovedChildren, updatedModifiedParents)
           }
@@ -693,6 +699,8 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
     // Assert consistency
     this.assertConsistencyInStrictMode()
+    //this.assertConsistencyInStrictModeForAddDiff("Check after add Diff", initialStorage, diff, this)
+    this.assertConsistencyInStrictModeForRbs("Check after add Diff", { true }, initialStorage, diff, this)
   }
 
   @Suppress("UNCHECKED_CAST")
@@ -972,6 +980,18 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     return indexes.virtualFileIndex
   }
 
+  private fun quickAssertConsistency() {
+    entitiesByType.entityFamilies.forEach { family ->
+      if (family == null) return@forEach
+      val firstEntity = family.entities.singleOrNull { it != null }
+      if (firstEntity !is WithAssertableConsistency) return@forEach
+      family.entities.forEach entityLoop@ { entity ->
+        if (entity == null) return@entityLoop
+        (entity as WithAssertableConsistency).assertConsistency(this)
+      }
+    }
+  }
+
   internal fun assertConsistency() {
     entitiesByType.assertConsistency(this)
     // Rules:
@@ -1106,12 +1126,31 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     }
   }
 
-  internal fun reportConsistencyIssue(message: String, e: Throwable, sourceFilter: (EntitySource) -> Boolean, left: WorkspaceEntityStorage, right: WorkspaceEntityStorage, resulting: WorkspaceEntityStorage) {
+  internal fun assertConsistencyInStrictModeForAddDiff(message: String, left: WorkspaceEntityStorage, right: WorkspaceEntityStorage, resulting: WorkspaceEntityStorage) {
+    if (StrictMode.enabled || StrictMode.rbsEnabled) {
+      try {
+        this.quickAssertConsistency()
+      }
+      catch (e: Throwable) {
+        reportConsistencyIssue(message, e, null, left, right, resulting)
+      }
+    }
+  }
+
+  internal fun reportConsistencyIssue(message: String, e: Throwable, sourceFilter: ((EntitySource) -> Boolean)?, left: WorkspaceEntityStorage, right: WorkspaceEntityStorage, resulting: WorkspaceEntityStorage) {
     val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl())
 
-    val allEntitySources = (left as AbstractEntityStorage).indexes.entitySourceIndex.entries().toHashSet()
-    allEntitySources.addAll((right as AbstractEntityStorage).indexes.entitySourceIndex.entries())
-    val entitySourceFilter = allEntitySources.sortedBy { it.toString() }.fold("") { acc, source -> acc + if (sourceFilter(source)) "1" else "0" }
+    val entitySourceFilter = if (sourceFilter != null) {
+      val allEntitySources = (left as AbstractEntityStorage).indexes.entitySourceIndex.entries().toHashSet()
+      allEntitySources.addAll((right as AbstractEntityStorage).indexes.entitySourceIndex.entries())
+      allEntitySources.sortedBy { it.toString() }.fold("") { acc, source -> acc + if (sourceFilter(source)) "1" else "0" }
+    } else null
+
+    val rightLogBytes = if (right is WorkspaceEntityStorageBuilder) {
+      val stream = ByteArrayOutputStream()
+      serializer.serializeDiffLog(stream, right)
+      stream.toByteArray()
+    } else null
 
     var stream = ByteArrayOutputStream()
     serializer.serializeCache(stream, left.makeSureItsStore())
@@ -1133,7 +1172,13 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     val rightAttachment = createAttachment("Right_Store", rightBytes, displayText)
     val resAttachment = createAttachment("Res_Store", resBytes, displayText)
 
-    LOG.error(_message, e, leftAttachment, rightAttachment, resAttachment)
+    if (rightLogBytes == null) {
+      LOG.error(_message, e, leftAttachment, rightAttachment, resAttachment)
+    }
+    else {
+      val rightLogAttachment = createAttachment("Right_Diff_Log", rightLogBytes, "Log of right builder")
+      LOG.error(_message, e, leftAttachment, rightAttachment, resAttachment, rightLogAttachment)
+    }
   }
 
   private fun createAttachment(path: String, leftBytes: ByteArray, displayText: String): Attachment {

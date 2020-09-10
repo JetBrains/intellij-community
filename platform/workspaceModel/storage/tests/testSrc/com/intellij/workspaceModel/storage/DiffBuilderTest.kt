@@ -6,9 +6,13 @@ import com.intellij.workspaceModel.storage.entities.*
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.exceptions.AddDiffException
+import com.intellij.workspaceModel.storage.impl.exceptions.ReplaceBySourceException
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
+import org.hamcrest.CoreMatchers
 import org.junit.Assert.*
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.ExpectedException
 
 private fun WorkspaceEntityStorageBuilder.applyDiff(anotherBuilder: WorkspaceEntityStorageBuilder): WorkspaceEntityStorage {
   val builder = WorkspaceEntityStorageBuilderImpl.from(this)
@@ -19,6 +23,10 @@ private fun WorkspaceEntityStorageBuilder.applyDiff(anotherBuilder: WorkspaceEnt
 }
 
 class DiffBuilderTest {
+  @JvmField
+  @Rule
+  val expectedException = ExpectedException.none()
+
   @Test
   fun `add entity`() {
     val source = WorkspaceEntityStorageBuilderImpl.create()
@@ -236,8 +244,10 @@ class DiffBuilderTest {
     source.applyDiff(target)
   }
 
-  @Test(expected = AddDiffException::class)
+  @Test
   fun `adding duplicated persistent ids`() {
+    expectedException.expectCause(CoreMatchers.isA(AddDiffException::class.java))
+
     val source = WorkspaceEntityStorageBuilderImpl.create()
     val target = WorkspaceEntityStorageBuilderImpl.from(source)
 
@@ -247,8 +257,10 @@ class DiffBuilderTest {
     source.applyDiff(target)
   }
 
-  @Test(expected = AddDiffException::class)
+  @Test
   fun `modifying duplicated persistent ids`() {
+    expectedException.expectCause(CoreMatchers.isA(AddDiffException::class.java))
+
     val source = WorkspaceEntityStorageBuilderImpl.create()
     val namedEntity = source.addNamedEntity("Hello")
     val target = WorkspaceEntityStorageBuilderImpl.from(source)
