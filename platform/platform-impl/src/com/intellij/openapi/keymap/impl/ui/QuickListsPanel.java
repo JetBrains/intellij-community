@@ -14,9 +14,8 @@ public class QuickListsPanel extends ConfigurableBase<QuickListsUi, List<QuickLi
     super("reference.idesettings.quicklists", IdeBundle.message("quick.lists.presentable.name"), "reference.idesettings.quicklists");
   }
 
-  @NotNull
   @Override
-  protected List<QuickList> getSettings() {
+  protected @NotNull List<QuickList> getSettings() {
     return QuickListsManager.getInstance().getSchemeManager().getAllSchemes();
   }
 

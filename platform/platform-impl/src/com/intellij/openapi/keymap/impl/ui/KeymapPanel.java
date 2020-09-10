@@ -205,7 +205,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     };
     jbLabel.setCopyable(true);
     jbLabel.setAllowAutoWrapping(true);
-    jbLabel.setIconWithAlignment(AllIcons.General.Warning, JLabel.LEFT, JLabel.TOP);
+    jbLabel.setIconWithAlignment(AllIcons.General.Warning, SwingConstants.LEFT, SwingConstants.TOP);
     mySystemShortcutConflictsPanel.add(jbLabel);
 
     validate();
@@ -357,6 +357,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       public boolean isSelected(AnActionEvent e) {
         return myShowOnlyConflicts;
       }
+
       @Override
       public void setSelected(AnActionEvent e, boolean state) {
         myShowOnlyConflicts = state;
@@ -365,7 +366,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
         final JTree tree = myActionsTree.getTree();
         if (myShowOnlyConflicts) {
           TreeUtil.expandAll(tree);
-        } else {
+        }
+        else {
           TreeUtil.collapseAll(tree, 0);
         }
       }
@@ -761,7 +763,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
     JCheckBox getCheckbox() { return myCheckbox; }
 
-    boolean isModified() { return myCheckbox == null ? false : myShowFnInitial != myCheckbox.isSelected(); }
+    boolean isModified() { return myCheckbox != null && myShowFnInitial != myCheckbox.isSelected(); }
 
     void applyChanges() {
       if (!TouchBarsManager.isTouchBarAvailable() || myCheckbox == null || !isModified())
@@ -855,9 +857,10 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       if (manager != null) manager.apply();
     }
   }
+
   private static @Nullable KeyboardShortcut findKeyboardShortcut(@NotNull Keymap keymap, @NotNull KeyStroke ks, @NotNull String actionId) {
-    final Shortcut[] actionShortcuts = keymap.getShortcuts(actionId);
-    if (actionShortcuts == null || actionShortcuts.length == 0)
+    Shortcut[] actionShortcuts = keymap.getShortcuts(actionId);
+    if (actionShortcuts.length == 0)
       return null;
 
     for (Shortcut sc: actionShortcuts) {
