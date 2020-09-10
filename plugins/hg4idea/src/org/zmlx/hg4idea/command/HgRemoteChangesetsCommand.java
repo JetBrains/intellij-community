@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgBundle;
+import org.zmlx.hg4idea.HgProjectConfigurable;
 import org.zmlx.hg4idea.HgProjectSettings;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
@@ -86,7 +87,7 @@ public abstract class HgRemoteChangesetsCommand extends HgChangesetsCommand {
                                                          public void hyperlinkUpdate(@NotNull Notification notification,
                                                                                      @NotNull HyperlinkEvent event) {
                                                            ShowSettingsUtil.getInstance()
-                                                             .showSettingsDialog(project, vcs.getConfigurable().getDisplayName());
+                                                             .showSettingsDialog(project, HgProjectConfigurable.getDISPLAY_NAME());
                                                          }
                                                        });
       final HgProjectSettings projectSettings = vcs.getProjectSettings();
