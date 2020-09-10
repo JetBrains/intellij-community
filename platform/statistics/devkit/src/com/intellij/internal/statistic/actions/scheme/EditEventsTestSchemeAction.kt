@@ -6,9 +6,9 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.StatisticsDevKitUtil
 import com.intellij.internal.statistic.StatisticsDevKitUtil.showNotification
-import com.intellij.internal.statistic.eventLog.whitelist.LocalWhitelistGroup
+import com.intellij.internal.statistic.eventLog.whitelist.GroupValidationTestRule
 import com.intellij.internal.statistic.eventLog.whitelist.WhitelistBuilder
-import com.intellij.internal.statistic.eventLog.whitelist.WhitelistTestGroupStorage
+import com.intellij.internal.statistic.eventLog.whitelist.ValidationTestRulesPersistedStorage
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -40,7 +40,7 @@ class EditEventsTestSchemeAction(private val recorderId: String = StatisticsDevK
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val testSchemeStorage = WhitelistTestGroupStorage.getTestStorage(recorderId)
+    val testSchemeStorage = ValidationTestRulesPersistedStorage.getTestStorage(recorderId)
     if (testSchemeStorage == null) {
       showNotification(project, NotificationType.ERROR, StatisticsBundle.message("stats.cannot.find.test.scheme.storage"))
       return
@@ -71,11 +71,11 @@ class EditEventsTestSchemeAction(private val recorderId: String = StatisticsDevK
     }
   }
 
-  private fun loadEventsScheme(project: Project, testSchemeStorage: WhitelistTestGroupStorage): EventsTestScheme? {
+  private fun loadEventsScheme(project: Project, testSchemeStorage: ValidationTestRulesPersistedStorage): EventsTestScheme? {
     return ProgressManager.getInstance().run(object : Task.WithResult<EventsTestScheme?, IOException>(
       project, StatisticsBundle.message("stats.loading.test.scheme"), true) {
       override fun compute(indicator: ProgressIndicator): EventsTestScheme? {
-        val localGroups = testSchemeStorage.loadLocalWhitelistGroups()
+        val localGroups = testSchemeStorage.loadValidationTestRules()
         if (indicator.isCanceled) return null
         val productionGroups = testSchemeStorage.loadProductionGroups()
         if (indicator.isCanceled) return null
@@ -86,7 +86,7 @@ class EditEventsTestSchemeAction(private val recorderId: String = StatisticsDevK
   }
 
   override fun update(e: AnActionEvent) {
-    val testSchemeSize = WhitelistTestGroupStorage.getTestStorage(recorderId)?.size() ?: 0
+    val testSchemeSize = ValidationTestRulesPersistedStorage.getTestStorage(recorderId)?.size() ?: 0
     val text = if (testSchemeSize < 100) testSchemeSize.toString() else "99+"
     val sizeCountIcon = TextIcon(text, JBColor.DARK_GRAY, UIUtil.getLabelBackground(), 1)
     sizeCountIcon.setFont(Font(UIUtil.getLabelFont().name, Font.BOLD, JBUIScale.scale(9)))
@@ -104,7 +104,7 @@ class EditEventsTestSchemeAction(private val recorderId: String = StatisticsDevK
   }
 
   class EventsTestScheme(
-    val testScheme: List<LocalWhitelistGroup>,
+    val testScheme: List<GroupValidationTestRule>,
     val productionGroups: FUStatisticsWhiteListGroupsService.WLGroups,
     val generatedScheme: List<WhitelistBuilder.WhitelistGroup>
   )

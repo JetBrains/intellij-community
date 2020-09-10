@@ -3,22 +3,22 @@ package com.intellij.internal.statistics.whitelist.storage
 
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules
-import com.intellij.internal.statistic.eventLog.whitelist.InMemoryWhitelistStorage
-import com.intellij.internal.statistic.eventLog.whitelist.LocalWhitelistGroup
-import com.intellij.internal.statistic.eventLog.whitelist.WhitelistTestGroupStorage
+import com.intellij.internal.statistic.eventLog.whitelist.ValidationRulesInMemoryStorage
+import com.intellij.internal.statistic.eventLog.whitelist.GroupValidationTestRule
+import com.intellij.internal.statistic.eventLog.whitelist.ValidationTestRulesPersistedStorage
 import org.assertj.core.api.Assertions.assertThat
 
-internal class CompositeWhitelistStorageTest : WhitelistBaseStorageTest() {
+internal class CompositeValidationRulesStorageTest : ValidationRulesBaseStorageTest() {
 
   override fun tearDown() {
     super.tearDown()
-    InMemoryWhitelistStorage.eventsValidators.clear()
+    ValidationRulesInMemoryStorage.eventsValidators.clear()
   }
 
   fun testGetGroupRulesFromTest() {
-    val storage = SensitiveDataValidator.getInstance(recorderId).whiteListStorage
-    WhitelistTestGroupStorage.getTestStorage(recorderId)!!
-      .addTestGroup(LocalWhitelistGroup(
+    val storage = SensitiveDataValidator.getInstance(recorderId).validationRulesStorage
+    ValidationTestRulesPersistedStorage.getTestStorage(recorderId)!!
+      .addTestGroup(GroupValidationTestRule(
         groupId,
         true,
         "{\n" +
@@ -28,7 +28,7 @@ internal class CompositeWhitelistStorageTest : WhitelistBaseStorageTest() {
         "      }\n" +
         "    }"
       ))
-    InMemoryWhitelistStorage.eventsValidators[groupId] = EventGroupRules.EMPTY
+    ValidationRulesInMemoryStorage.eventsValidators[groupId] = EventGroupRules.EMPTY
 
     val groupRules = storage.getGroupRules(groupId)
     assertThat(groupRules).isNotNull
@@ -36,8 +36,8 @@ internal class CompositeWhitelistStorageTest : WhitelistBaseStorageTest() {
   }
 
   fun testGetGroupRules() {
-    val mergedStorage = SensitiveDataValidator.getInstance(recorderId).whiteListStorage
-    InMemoryWhitelistStorage.eventsValidators[groupId] = EventGroupRules.EMPTY
+    val mergedStorage = SensitiveDataValidator.getInstance(recorderId).validationRulesStorage
+    ValidationRulesInMemoryStorage.eventsValidators[groupId] = EventGroupRules.EMPTY
 
     val groupRules = mergedStorage.getGroupRules(groupId)
     assertThat(groupRules).isNotNull

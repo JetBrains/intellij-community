@@ -3,34 +3,34 @@ package com.intellij.internal.statistic.eventLog.whitelist
 
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules
 
-interface WhitelistGroupRulesStorage {
+interface ValidationRulesStorage {
   fun getGroupRules(groupId: String): EventGroupRules?
 
-  fun isUnreachableWhitelist(): Boolean
+  fun isUnreachable(): Boolean
 
   /**
-   * Loads and updates whitelist from the server if necessary
+   * Loads and updates events scheme from the server if necessary
    */
   fun update()
 
   /**
-   * Re-loads whitelist from local caches
+   * Re-loads events scheme from local caches
    */
   fun reload()
 }
 
-interface WhitelistTestRulesStorageHolder {
-  fun getTestGroupStorage() : WhitelistTestGroupStorage
+interface ValidationTestRulesStorageHolder {
+  fun getTestGroupStorage() : ValidationTestRulesPersistedStorage
 }
 
 /**
  * Thread unsafe
  */
-object InMemoryWhitelistStorage : WhitelistGroupRulesStorage {
+object ValidationRulesInMemoryStorage : ValidationRulesStorage {
   val eventsValidators = HashMap<String, EventGroupRules>()
 
   override fun getGroupRules(groupId: String): EventGroupRules? = eventsValidators[groupId]
-  override fun isUnreachableWhitelist(): Boolean = false
+  override fun isUnreachable(): Boolean = false
   override fun update() = Unit
   override fun reload() = Unit
 }

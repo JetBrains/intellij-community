@@ -3,7 +3,7 @@ package com.intellij.internal.statistic.eventLog.validator.persistence;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.intellij.internal.statistic.eventLog.whitelist.LocalWhitelistGroup;
+import com.intellij.internal.statistic.eventLog.whitelist.GroupValidationTestRule;
 import com.intellij.internal.statistic.service.fus.EventLogMetadataParseException;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService.WLGroup;
@@ -69,7 +69,7 @@ public class EventLogTestMetadataPersistence extends BaseEventLogMetadataPersist
     return new GsonBuilder().create().fromJson(content, WLGroup.class);
   }
 
-  public static void addTestGroup(@NotNull String recorderId, @NotNull LocalWhitelistGroup group) throws IOException {
+  public static void addTestGroup(@NotNull String recorderId, @NotNull GroupValidationTestRule group) throws IOException {
     String groupId = group.getGroupId();
     WLGroup whitelistGroup = group.getUseCustomRules()
                              ? createGroupWithCustomRules(groupId, group.getCustomRules())
@@ -135,9 +135,9 @@ public class EventLogTestMetadataPersistence extends BaseEventLogMetadataPersist
     return getDefaultMetadataFile(myRecorderId, TEST_EVENTS_SCHEME_FILE, DEPRECATED_TEST_EVENTS_SCHEME_FILE);
   }
 
-  public void updateTestGroups(@NotNull List<LocalWhitelistGroup> groups) throws IOException {
+  public void updateTestGroups(@NotNull List<GroupValidationTestRule> groups) throws IOException {
     WLGroups whitelist = new WLGroups();
-    for (LocalWhitelistGroup group : groups) {
+    for (GroupValidationTestRule group : groups) {
       String groupId = group.getGroupId();
       if (group.getUseCustomRules()) {
         whitelist.groups.add(createGroupWithCustomRules(groupId, group.getCustomRules()));

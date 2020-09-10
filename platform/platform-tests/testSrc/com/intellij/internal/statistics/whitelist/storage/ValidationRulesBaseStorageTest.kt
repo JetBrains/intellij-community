@@ -3,13 +3,13 @@ package com.intellij.internal.statistics.whitelist.storage
 
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
 import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogTestMetadataPersistence
-import com.intellij.internal.statistic.eventLog.whitelist.WhitelistTestGroupStorage
+import com.intellij.internal.statistic.eventLog.whitelist.ValidationTestRulesPersistedStorage
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import java.io.File
 import java.io.IOException
 
-internal abstract class WhitelistBaseStorageTest : BasePlatformTestCase() {
+internal abstract class ValidationRulesBaseStorageTest : BasePlatformTestCase() {
   protected val groupId = "test.group"
   protected val recorderId = "TEST"
   protected val secondRecorderId = "SECOND_TEST"
@@ -19,7 +19,7 @@ internal abstract class WhitelistBaseStorageTest : BasePlatformTestCase() {
   override fun setUp() {
     super.setUp()
 
-    // initialize whitelist storage
+    // initialize validation rules storage
     for (recorder in recordersToCleanUp) {
       SensitiveDataValidator.getInstance(recorder)
     }
@@ -28,7 +28,7 @@ internal abstract class WhitelistBaseStorageTest : BasePlatformTestCase() {
   override fun tearDown() {
     super.tearDown()
 
-    WhitelistTestGroupStorage.cleanupAll()
+    ValidationTestRulesPersistedStorage.cleanupAll()
     for (recorder in recordersToCleanUp) {
       val file = EventLogTestMetadataPersistence(recorder).eventsTestSchemeFile
       try {

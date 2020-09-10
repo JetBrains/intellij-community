@@ -10,11 +10,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.TimeUnit;
 
-public class EventLogServerWhitelistLoader implements EventLogMetadataLoader {
+public class EventLogServerMetadataLoader implements EventLogMetadataLoader {
   @NotNull
   private final EventLogUploadSettingsService mySettingsService;
 
-  public EventLogServerWhitelistLoader(@NotNull String recorderId) {
+  public EventLogServerMetadataLoader(@NotNull String recorderId) {
     mySettingsService = StatisticsUploadAssistant.createExternalSettings(recorderId, false, TimeUnit.HOURS.toMillis(1));
   }
 

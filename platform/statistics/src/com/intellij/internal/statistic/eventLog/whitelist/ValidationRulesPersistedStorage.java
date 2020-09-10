@@ -20,32 +20,32 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public class WhitelistStorage extends BaseWhitelistStorage {
-  private static final Logger LOG = Logger.getInstance(WhitelistStorage.class);
+public class ValidationRulesPersistedStorage extends BaseValidationRulesPersistedStorage {
+  private static final Logger LOG = Logger.getInstance(ValidationRulesPersistedStorage.class);
 
   protected final ConcurrentMap<String, EventGroupRules> eventsValidators = new ConcurrentHashMap<>();
   private final @NotNull Semaphore mySemaphore;
   private final @NotNull String myRecorderId;
   private @Nullable String myVersion;
   private final @NotNull EventLogMetadataPersistence myMetadataPersistence;
-  private final @NotNull EventLogMetadataLoader myWhitelistLoader;
+  private final @NotNull EventLogMetadataLoader myMetadataLoader;
 
-  WhitelistStorage(@NotNull String recorderId) {
+  ValidationRulesPersistedStorage(@NotNull String recorderId) {
     myRecorderId = recorderId;
     mySemaphore = new Semaphore();
     myMetadataPersistence = new EventLogMetadataPersistence(recorderId);
-    myWhitelistLoader = new EventLogServerWhitelistLoader(recorderId);
+    myMetadataLoader = new EventLogServerMetadataLoader(recorderId);
     myVersion = loadValidatorsFromLocalCache(recorderId);
   }
 
   @TestOnly
-  protected WhitelistStorage(@NotNull String recorderId,
-                             @NotNull EventLogMetadataPersistence persistence,
-                             @NotNull EventLogMetadataLoader loader) {
+  protected ValidationRulesPersistedStorage(@NotNull String recorderId,
+                                            @NotNull EventLogMetadataPersistence persistence,
+                                            @NotNull EventLogMetadataLoader loader) {
     myRecorderId = recorderId;
     mySemaphore = new Semaphore();
     myMetadataPersistence = persistence;
-    myWhitelistLoader = loader;
+    myMetadataLoader = loader;
     myVersion = loadValidatorsFromLocalCache(recorderId);
   }
 
@@ -55,10 +55,10 @@ public class WhitelistStorage extends BaseWhitelistStorage {
   }
 
   private @Nullable String loadValidatorsFromLocalCache(@NotNull String recorderId) {
-    String whiteListContent = myMetadataPersistence.getCachedEventsScheme();
-    if (whiteListContent != null) {
+    String rawEventsScheme = myMetadataPersistence.getCachedEventsScheme();
+    if (rawEventsScheme != null) {
       try {
-        String newVersion = updateValidators(whiteListContent);
+        String newVersion = updateValidators(rawEventsScheme);
         EventLogSystemLogger.logMetadataLoad(recorderId, newVersion);
         return newVersion;
       }
@@ -69,17 +69,17 @@ public class WhitelistStorage extends BaseWhitelistStorage {
     return null;
   }
 
-  private @Nullable String updateValidators(@NotNull String whiteListContent) throws EventLogMetadataParseException {
+  private @Nullable String updateValidators(@NotNull String rawEventsScheme) throws EventLogMetadataParseException {
     mySemaphore.down();
     try {
-      FUStatisticsWhiteListGroupsService.WLGroups groups = FUStatisticsWhiteListGroupsService.parseWhiteListContent(whiteListContent);
+      FUStatisticsWhiteListGroupsService.WLGroups groups = FUStatisticsWhiteListGroupsService.parseWhiteListContent(rawEventsScheme);
       EventLogBuild build = EventLogBuild.fromString(EventLogConfiguration.INSTANCE.getBuild());
       Map<String, EventGroupRules> result = createValidators(build, groups);
-      isWhiteListInitialized.set(false);
+      isInitialized.set(false);
       eventsValidators.clear();
       eventsValidators.putAll(result);
 
-      isWhiteListInitialized.set(true);
+      isInitialized.set(true);
       return groups.version;
     }
     finally {
@@ -90,21 +90,21 @@ public class WhitelistStorage extends BaseWhitelistStorage {
   @Override
   public void update() {
     long lastModifiedLocally = myMetadataPersistence.getLastModified();
-    long lastModifiedOnServer = myWhitelistLoader.getLastModifiedOnServer();
+    long lastModifiedOnServer = myMetadataLoader.getLastModifiedOnServer();
     if (LOG.isTraceEnabled()) {
       LOG.trace(
-        "Loading whitelist, last modified cached=" + lastModifiedLocally +
+        "Loading events scheme, last modified cached=" + lastModifiedLocally +
         ", last modified on the server=" + lastModifiedOnServer
       );
     }
 
     try {
-      if (lastModifiedOnServer <= 0 || lastModifiedOnServer > lastModifiedLocally || isUnreachableWhitelist()) {
-        String whitelistFromServer = myWhitelistLoader.loadMetadataFromServer();
-        String version = updateValidators(whitelistFromServer);
-        myMetadataPersistence.cacheEventsScheme(whitelistFromServer, lastModifiedOnServer);
+      if (lastModifiedOnServer <= 0 || lastModifiedOnServer > lastModifiedLocally || isUnreachable()) {
+        String rawEventsSchemeFromServer = myMetadataLoader.loadMetadataFromServer();
+        String version = updateValidators(rawEventsSchemeFromServer);
+        myMetadataPersistence.cacheEventsScheme(rawEventsSchemeFromServer, lastModifiedOnServer);
         if (LOG.isTraceEnabled()) {
-          LOG.trace("Update local whitelist, last modified cached=" + myMetadataPersistence.getLastModified());
+          LOG.trace("Update local events scheme, last modified cached=" + myMetadataPersistence.getLastModified());
         }
 
         if (version != null && !StringUtil.equals(version, myVersion)) {

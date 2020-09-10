@@ -3,7 +3,7 @@ package com.intellij.internal.statistics.whitelist.storage
 
 import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogMetadataPersistence
 import com.intellij.internal.statistic.eventLog.whitelist.EventLogMetadataLoader
-import com.intellij.internal.statistic.eventLog.whitelist.WhitelistStorage
+import com.intellij.internal.statistic.eventLog.whitelist.ValidationRulesPersistedStorage
 
 class TestWhitelistStorageBuilder(private val recorderId: String = "TEST") {
   private var cachedContent: String? = ""
@@ -36,16 +36,16 @@ class TestWhitelistStorageBuilder(private val recorderId: String = "TEST") {
     return this
   }
 
-  fun build(): TestWhitelistStorage {
+  fun build(): TestValidationRulesStorage {
     val persistence = TestEventLogMetadataPersistence(recorderId, cachedContent, cachedLastModified)
     val loader = TestEventLogWhitelistLoader(serverContentProvider, serverLastModified)
-    return TestWhitelistStorage(recorderId, persistence, loader)
+    return TestValidationRulesStorage(recorderId, persistence, loader)
   }
 }
 
-class TestWhitelistStorage(
+class TestValidationRulesStorage(
   recorderId: String, persistence: EventLogMetadataPersistence, loader: EventLogMetadataLoader
-) : WhitelistStorage(recorderId, persistence, loader) {
+) : ValidationRulesPersistedStorage(recorderId, persistence, loader) {
   fun getGroups(): Set<String> {
     return HashSet<String>(eventsValidators.keys)
   }

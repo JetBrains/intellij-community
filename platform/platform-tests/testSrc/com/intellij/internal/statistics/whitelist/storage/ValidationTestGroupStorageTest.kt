@@ -2,17 +2,17 @@
 package com.intellij.internal.statistics.whitelist.storage
 
 
-import com.intellij.internal.statistic.eventLog.whitelist.LocalWhitelistGroup
-import com.intellij.internal.statistic.eventLog.whitelist.WhitelistTestGroupStorage
+import com.intellij.internal.statistic.eventLog.whitelist.GroupValidationTestRule
+import com.intellij.internal.statistic.eventLog.whitelist.ValidationTestRulesPersistedStorage
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
-internal class WhitelistTestGroupStorageTest : WhitelistBaseStorageTest() {
+internal class ValidationTestGroupStorageTest : ValidationRulesBaseStorageTest() {
 
   @Test
-  fun testAddWhitelistGroup() {
-    val storageForTest = WhitelistTestGroupStorage.getTestStorage(recorderId)!!
-    storageForTest.addTestGroup(LocalWhitelistGroup(groupId, false))
+  fun testAddGroupValidationRules() {
+    val storageForTest = ValidationTestRulesPersistedStorage.getTestStorage(recorderId)!!
+    storageForTest.addTestGroup(GroupValidationTestRule(groupId, false))
 
     val groupRules = storageForTest.getGroupRules(groupId)
     assertThat(groupRules).isNotNull
@@ -21,8 +21,8 @@ internal class WhitelistTestGroupStorageTest : WhitelistBaseStorageTest() {
 
   @Test
   fun testAddGroupWithCustomRules() {
-    val storageForTest = WhitelistTestGroupStorage.getTestStorage(recorderId)!!
-    storageForTest.addTestGroup(LocalWhitelistGroup(
+    val storageForTest = ValidationTestRulesPersistedStorage.getTestStorage(recorderId)!!
+    storageForTest.addTestGroup(GroupValidationTestRule(
       groupId,
       true,
       "{\n" +
@@ -38,12 +38,12 @@ internal class WhitelistTestGroupStorageTest : WhitelistBaseStorageTest() {
   }
 
   fun testCleanup() {
-    val storageForTest1 = WhitelistTestGroupStorage.getTestStorage(recorderId)!!
-    storageForTest1.addTestGroup(LocalWhitelistGroup(groupId, false))
-    val storageForTest2 = WhitelistTestGroupStorage.getTestStorage(secondRecorderId)!!
-    storageForTest2.addTestGroup(LocalWhitelistGroup(groupId, false))
+    val storageForTest1 = ValidationTestRulesPersistedStorage.getTestStorage(recorderId)!!
+    storageForTest1.addTestGroup(GroupValidationTestRule(groupId, false))
+    val storageForTest2 = ValidationTestRulesPersistedStorage.getTestStorage(secondRecorderId)!!
+    storageForTest2.addTestGroup(GroupValidationTestRule(groupId, false))
 
-    WhitelistTestGroupStorage.cleanupAll(listOf(recorderId, secondRecorderId))
+    ValidationTestRulesPersistedStorage.cleanupAll(listOf(recorderId, secondRecorderId))
     assertThat(storageForTest1.getGroupRules(groupId)).isNull()
     assertThat(storageForTest2.getGroupRules(groupId)).isNull()
   }

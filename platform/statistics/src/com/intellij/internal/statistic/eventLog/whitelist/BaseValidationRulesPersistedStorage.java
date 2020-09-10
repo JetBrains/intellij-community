@@ -3,6 +3,8 @@ package com.intellij.internal.statistic.eventLog.whitelist;
 
 import com.intellij.internal.statistic.eventLog.EventLogBuild;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
+import com.intellij.internal.statistic.eventLog.whitelist.GlobalRulesHolder;
+import com.intellij.internal.statistic.eventLog.whitelist.ValidationRulesStorage;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
 import com.intellij.internal.statistic.service.fus.StatisticsWhitelistGroupConditions;
 import org.jetbrains.annotations.NotNull;
@@ -12,17 +14,17 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-public abstract class BaseWhitelistStorage implements WhitelistGroupRulesStorage {
+public abstract class BaseValidationRulesPersistedStorage implements ValidationRulesStorage {
   @NotNull
-  protected final AtomicBoolean isWhiteListInitialized;
+  protected final AtomicBoolean isInitialized;
 
-  protected BaseWhitelistStorage() {
-    isWhiteListInitialized = new AtomicBoolean(false);
+  protected BaseValidationRulesPersistedStorage() {
+    isInitialized = new AtomicBoolean(false);
   }
 
   @Override
-  public boolean isUnreachableWhitelist() {
-    return !isWhiteListInitialized.get();
+  public boolean isUnreachable() {
+    return !isInitialized.get();
   }
 
   @NotNull

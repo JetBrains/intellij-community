@@ -13,8 +13,8 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.actions.TestParseEventsSchemeDialog
-import com.intellij.internal.statistic.eventLog.whitelist.LocalWhitelistGroup
-import com.intellij.internal.statistic.eventLog.whitelist.LocalWhitelistGroup.Companion.EMPTY_RULES
+import com.intellij.internal.statistic.eventLog.whitelist.GroupValidationTestRule
+import com.intellij.internal.statistic.eventLog.whitelist.GroupValidationTestRule.Companion.EMPTY_RULES
 import com.intellij.internal.statistic.eventLog.whitelist.WhitelistBuilder
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService
 import com.intellij.json.JsonLanguage
@@ -51,14 +51,14 @@ import javax.swing.JPanel
 
 class EventsTestSchemeGroupConfiguration(private val project: Project,
                                          productionGroups: FUStatisticsWhiteListGroupsService.WLGroups,
-                                         initialGroup: LocalWhitelistGroup,
+                                         initialGroup: GroupValidationTestRule,
                                          generatedScheme: List<WhitelistBuilder.WhitelistGroup>,
-                                         groupIdChangeListener: ((LocalWhitelistGroup) -> Unit)? = null) : Disposable {
+                                         groupIdChangeListener: ((GroupValidationTestRule) -> Unit)? = null) : Disposable {
 
   val panel: JPanel
   val groupIdTextField: TextFieldWithCompletion
   private val log = logger<EventsTestSchemeGroupConfiguration>()
-  private var currentGroup: LocalWhitelistGroup = initialGroup
+  private var currentGroup: GroupValidationTestRule = initialGroup
   private lateinit var allowAllEventsRadioButton: JBRadioButton
   private lateinit var customRulesRadioButton: JBRadioButton
   private lateinit var generateSchemeButton: JComponent
@@ -198,7 +198,7 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
     return editor
   }
 
-  fun updatePanel(newGroup: LocalWhitelistGroup?) {
+  fun updatePanel(newGroup: GroupValidationTestRule?) {
     if (newGroup == null) return
     currentGroup = newGroup
     groupIdTextField.text = newGroup.groupId
@@ -285,13 +285,13 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
     internal val FUS_TEST_SCHEME_COMMON_RULES_KEY = Key.create<ProductionRules>("statistics.test.scheme.validation.rules.file")
 
     fun validateTestSchemeGroup(project: Project,
-                                testSchemeGroup: LocalWhitelistGroup,
+                                testSchemeGroup: GroupValidationTestRule,
                                 groupIdTextField: JComponent): List<ValidationInfo> {
       return validateTestSchemeGroup(project, testSchemeGroup, groupIdTextField, null)
     }
 
     private fun validateTestSchemeGroup(project: Project,
-                                        testSchemeGroup: LocalWhitelistGroup,
+                                        testSchemeGroup: GroupValidationTestRule,
                                         groupIdTextField: JComponent,
                                         customRulesFile: PsiFile?): List<ValidationInfo> {
       val groupId: String = testSchemeGroup.groupId

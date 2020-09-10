@@ -63,7 +63,7 @@ class WhitelistStorageUpdateTest : UsefulTestCase() {
     return builder
   }
 
-  fun doTest(storage: TestWhitelistStorage, vararg expectedGroups: String) {
+  fun doTest(storage: TestValidationRulesStorage, vararg expectedGroups: String) {
     storage.update()
     assertEquals(hashSetOf(*expectedGroups), storage.getGroups())
   }

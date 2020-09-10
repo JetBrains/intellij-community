@@ -8,7 +8,7 @@ import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogMe
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules
 import com.intellij.internal.statistic.eventLog.whitelist.EventLogMetadataLoader
-import com.intellij.internal.statistic.eventLog.whitelist.WhitelistStorage
+import com.intellij.internal.statistic.eventLog.whitelist.ValidationRulesPersistedStorage
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.PlatformTestUtil
@@ -43,7 +43,7 @@ abstract class BaseSensitiveDataValidatorTest  : UsefulTestCase() {
   }
 
   internal fun newValidator(content: String, customBuild: String? = null): TestSensitiveDataValidator {
-    val storage = object : WhitelistStorage("TEST", TestEventLogMetadataPersistence(content), TestEventLogWhitelistLoader(content)) {
+    val storage = object : ValidationRulesPersistedStorage("TEST", TestEventLogMetadataPersistence(content), TestEventLogMetadataLoader(content)) {
       override fun createValidators(build: EventLogBuild?,
                                     groups: FUStatisticsWhiteListGroupsService.WLGroups): MutableMap<String, EventGroupRules> {
         if (customBuild != null) {
@@ -66,17 +66,17 @@ abstract class BaseSensitiveDataValidatorTest  : UsefulTestCase() {
   }
 }
 
-internal class TestSensitiveDataValidator(storage: WhitelistStorage) : SensitiveDataValidator(storage) {
+internal class TestSensitiveDataValidator(storage: ValidationRulesPersistedStorage) : SensitiveDataValidator(storage) {
   fun getEventRules(group: EventLogGroup): Array<FUSRule> {
-    val whiteListRule = myWhiteListStorage.getGroupRules(group.id)
+    val rules = myRulesStorage.getGroupRules(group.id)
 
-    return if (whiteListRule == null) FUSRule.EMPTY_ARRAY else whiteListRule.eventIdRules
+    return if (rules == null) FUSRule.EMPTY_ARRAY else rules.eventIdRules
   }
 
   fun getEventDataRules(group: EventLogGroup): Map<String, Array<FUSRule>> {
-    val whiteListRule = myWhiteListStorage.getGroupRules(group.id)
+    val rules = myRulesStorage.getGroupRules(group.id)
 
-    return if (whiteListRule == null) emptyMap() else whiteListRule.eventDataRules
+    return if (rules == null) emptyMap() else rules.eventDataRules
   }
 }
 
@@ -86,7 +86,7 @@ class TestEventLogMetadataPersistence(private val myContent: String) : EventLogM
   }
 }
 
-class TestEventLogWhitelistLoader(private val myContent: String) : EventLogMetadataLoader {
+class TestEventLogMetadataLoader(private val myContent: String) : EventLogMetadataLoader {
   override fun getLastModifiedOnServer(): Long = 0
 
   override fun loadMetadataFromServer(): String = myContent

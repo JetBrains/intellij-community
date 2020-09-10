@@ -23,14 +23,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
-public class WhitelistTestGroupStorage extends BaseWhitelistStorage {
+public class ValidationTestRulesPersistedStorage extends BaseValidationRulesPersistedStorage {
   protected final ConcurrentMap<String, EventGroupRules> eventsValidators = new ConcurrentHashMap<>();
   private final Object myLock = new Object();
   private final @NotNull EventLogTestMetadataPersistence myTestMetadataPersistence;
   private final @NotNull EventLogMetadataPersistence myMetadataPersistence;
   private final @NotNull String myRecorderId;
 
-  WhitelistTestGroupStorage(@NotNull String recorderId) {
+  ValidationTestRulesPersistedStorage(@NotNull String recorderId) {
     myTestMetadataPersistence = new EventLogTestMetadataPersistence(recorderId);
     myMetadataPersistence = new EventLogMetadataPersistence(recorderId);
     updateValidators();
@@ -55,13 +55,13 @@ public class WhitelistTestGroupStorage extends BaseWhitelistStorage {
   private void updateValidators() {
     synchronized (myLock) {
       eventsValidators.clear();
-      isWhiteListInitialized.set(false);
+      isInitialized.set(false);
       WLGroups productionGroups = EventLogTestMetadataPersistence.loadCachedEventGroupsSchemes(myMetadataPersistence);
       WLGroups testGroups = EventLogTestMetadataPersistence.loadCachedEventGroupsSchemes(myTestMetadataPersistence);
       final Map<String, EventGroupRules> result = createValidators(testGroups, productionGroups.rules);
 
       eventsValidators.putAll(result);
-      isWhiteListInitialized.set(true);
+      isInitialized.set(true);
     }
   }
 
@@ -78,7 +78,7 @@ public class WhitelistTestGroupStorage extends BaseWhitelistStorage {
       collect(Collectors.toMap(group -> group.id, group -> EventGroupRules.create(group, new GlobalRulesHolder(rules))));
   }
 
-  public void addTestGroup(@NotNull LocalWhitelistGroup group) throws IOException {
+  public void addTestGroup(@NotNull GroupValidationTestRule group) throws IOException {
     EventLogTestMetadataPersistence.addTestGroup(myRecorderId, group);
     updateValidators();
   }
@@ -90,25 +90,25 @@ public class WhitelistTestGroupStorage extends BaseWhitelistStorage {
     }
   }
 
-  public @NotNull List<LocalWhitelistGroup> loadLocalWhitelistGroups() {
+  public @NotNull List<GroupValidationTestRule> loadValidationTestRules() {
     ArrayList<FUStatisticsWhiteListGroupsService.WLGroup> testGroupsSchemes =
       EventLogTestMetadataPersistence.loadCachedEventGroupsSchemes(myTestMetadataPersistence).groups;
-    ArrayList<LocalWhitelistGroup> groups = new ArrayList<>();
+    ArrayList<GroupValidationTestRule> groups = new ArrayList<>();
     Gson gson = new GsonBuilder().setPrettyPrinting().create();
     for (FUStatisticsWhiteListGroupsService.WLGroup group : testGroupsSchemes) {
       if (group.id == null || group.rules == null || group.rules.event_id == null) continue;
       Set<String> eventIds = group.rules.event_id;
       if (eventIds.contains(EventLogTestMetadataPersistence.TEST_RULE)) {
-        groups.add(new LocalWhitelistGroup(group.id, false));
+        groups.add(new GroupValidationTestRule(group.id, false));
       }
       else {
-        groups.add(new LocalWhitelistGroup(group.id, true, gson.toJson(group.rules)));
+        groups.add(new GroupValidationTestRule(group.id, true, gson.toJson(group.rules)));
       }
     }
     return groups;
   }
 
-  public void updateTestGroups(@NotNull List<LocalWhitelistGroup> groups) throws IOException {
+  public void updateTestGroups(@NotNull List<GroupValidationTestRule> groups) throws IOException {
     myTestMetadataPersistence.updateTestGroups(groups);
     updateValidators();
   }
@@ -149,17 +149,17 @@ public class WhitelistTestGroupStorage extends BaseWhitelistStorage {
 
   public static void cleanupAll(List<String> recorders) {
     for (String recorderId : recorders) {
-      WhitelistTestGroupStorage testWhitelist = getTestStorage(recorderId);
-      if (testWhitelist != null) {
-        testWhitelist.cleanup();
+      ValidationTestRulesPersistedStorage testStorage = getTestStorage(recorderId);
+      if (testStorage != null) {
+        testStorage.cleanup();
       }
     }
   }
 
-  public static @Nullable WhitelistTestGroupStorage getTestStorage(String recorderId) {
+  public static @Nullable ValidationTestRulesPersistedStorage getTestStorage(String recorderId) {
     SensitiveDataValidator validator = SensitiveDataValidator.getIfInitialized(recorderId);
-    WhitelistGroupRulesStorage storage = validator != null ? validator.getWhiteListStorage() : null;
-    return storage instanceof WhitelistTestRulesStorageHolder ? ((WhitelistTestRulesStorageHolder)storage).getTestGroupStorage() : null;
+    ValidationRulesStorage storage = validator != null ? validator.getValidationRulesStorage() : null;
+    return storage instanceof ValidationTestRulesStorageHolder ? ((ValidationTestRulesStorageHolder)storage).getTestGroupStorage() : null;
   }
 
   public int size() {
