@@ -236,7 +236,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     addComponent(titleComponent, cc)
   }
 
-  override fun titledRow(title: String, init: Row.() -> Unit): Row {
+  override fun titledRow(@NlsContexts.Separator title: String, init: Row.() -> Unit): Row {
     return createBlockRow(title, true, init)
   }
 
@@ -244,7 +244,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     return createBlockRow(null, false, init)
   }
 
-  private fun createBlockRow(title: String?, isSeparated: Boolean, init: Row.() -> Unit): Row {
+  private fun createBlockRow(@NlsContexts.Separator title: String?, isSeparated: Boolean, init: Row.() -> Unit): Row {
     val parentRow = createChildRow(indent = indent, title = title, isSeparated = isSeparated, incrementsIndent = isSeparated)
     parentRow.init()
     val result = parentRow.createChildRow()

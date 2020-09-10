@@ -4,12 +4,12 @@ package com.intellij.openapi.ui;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -95,7 +95,8 @@ public class BrowseFolderRunnable<T extends JComponent> implements Runnable {
   }
 
   @NotNull
-  protected String expandPath(@NotNull String path) {
+  @NonNls
+  protected String expandPath(@NotNull @NonNls String path) {
     return path;
   }
 

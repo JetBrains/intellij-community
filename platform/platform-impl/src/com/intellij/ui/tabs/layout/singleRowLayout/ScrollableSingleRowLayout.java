@@ -2,6 +2,7 @@
 package com.intellij.ui.tabs.layout.singleRowLayout;
 
 import com.intellij.application.options.editor.EditorTabPlacementKt;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.tabs.JBTabsPosition;
@@ -267,7 +268,6 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
   public static class ScrollableSingleRowTabsLayoutInfo extends TabsLayoutInfo {
 
     @NonNls private final static String ID = "ScrollableSingleRowTabsLayoutInfo";
-    private final static String NAME = "Scrollable Single Row";
 
     private JPanel myPanel;
     public JCheckBox myCheckBox;
@@ -281,7 +281,7 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
     @NotNull
     @Override
     public String getName() {
-      return NAME;
+      return IdeBundle.message("tabs.layout.scrollable.single.row.name");
     }
 
     @NotNull

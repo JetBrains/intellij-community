@@ -27,12 +27,13 @@ import javax.swing.*;
  * @author zajac
  */
 public class SplitterItem extends ItemWrapper {
-  private final String myText;
+  private final @Nls String myText;
 
-  public SplitterItem(String text) {
+  public SplitterItem(@Nls String text) {
     myText = text;
   }
 
+  @Nls
   public String getText() {
     return myText;
   }

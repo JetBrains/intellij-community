@@ -6,6 +6,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextBrowseFolderListener;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,8 +17,9 @@ public class MacroAwareTextBrowseFolderListener extends TextBrowseFolderListener
   }
 
   @NotNull
+  @NonNls
   @Override
-  protected String expandPath(@NotNull String path) {
+  protected String expandPath(@NotNull @NonNls String path) {
     Project project = getProject();
     if (project != null) {
       path = PathMacroManager.getInstance(project).expandPath(path);

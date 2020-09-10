@@ -110,7 +110,7 @@ interface MessagesService {
                                @NlsContexts.DialogTitle title: String?,
                                icon: Icon?,
                                values: Array<String?>?,
-                               initialValue: String?,
+                               @NlsSafe initialValue: String?,
                                validator: InputValidator?): String?
 
   fun showChooseDialog(project: Project?,

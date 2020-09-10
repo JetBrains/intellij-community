@@ -29,7 +29,7 @@ public final class LegalNoticeDialog extends DialogWrapper {
     private Project project;
     private Component parent;
     private @NlsContexts.Button String cancelText;
-    private Pair<String, Integer> customAction;
+    private Pair<@Nls String, Integer> customAction;
 
     private Builder(@NlsContexts.DialogTitle String title, @NlsContexts.DialogMessage String message) {
       this.title = title;
