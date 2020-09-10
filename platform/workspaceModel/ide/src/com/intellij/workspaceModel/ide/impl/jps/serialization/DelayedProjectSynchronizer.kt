@@ -9,6 +9,12 @@ import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeProjectLifecycleListener
 import kotlin.system.measureTimeMillis
 
+/**
+ * Loading the real state of the project after loading from cache.
+ *
+ * Initially IJ loads the state of workspace model from the cache. In this startup activity it synchronize the state
+ *   of workspace model with project model files (iml/xml).
+ */
 class DelayedProjectSynchronizer : StartupActivity {
   override fun runActivity(project: Project) {
     if (LegacyBridgeProjectLifecycleListener.enabled(project)

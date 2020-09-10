@@ -22,7 +22,10 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
 
   private val cacheEnabled = (!ApplicationManager.getApplication().isUnitTestMode && LegacyBridgeProjectLifecycleListener.cacheEnabled) || forceEnableCaching
   private val cache = if (cacheEnabled) WorkspaceModelCacheImpl(project, this) else null
+
+  @Volatile
   internal var loadedFromCache = false
+    private set
 
   override val entityStorage: VersionedEntityStorageImpl
 
