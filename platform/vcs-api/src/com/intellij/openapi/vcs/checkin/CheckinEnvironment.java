@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.checkin;
 
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
@@ -14,6 +13,7 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,7 +59,7 @@ public interface CheckinEnvironment {
   @NonNls
   String getHelpId();
 
-  @NlsContexts.Button
+  @Nls(capitalization = Nls.Capitalization.Title)
   String getCheckinOperationName();
 
   @Nullable
@@ -71,7 +71,7 @@ public interface CheckinEnvironment {
   default List<VcsException> commit(@NotNull List<? extends Change> changes,
                                     @NotNull @NlsSafe String commitMessage,
                                     @NotNull CommitContext commitContext,
-                                    @NotNull Set<? super @NonNls String> feedback) {
+                                    @NotNull Set<? super @Nls String> feedback) {
     //noinspection deprecation
     return commit(changes, commitMessage, commitContext.getAdditionalData(), feedback);
   }
@@ -85,7 +85,7 @@ public interface CheckinEnvironment {
   default List<VcsException> commit(@NotNull List<? extends Change> changes,
                                     @NotNull String preparedComment,
                                     @NotNull NullableFunction<Object, Object> parametersHolder,
-                                    @NotNull Set<? super @NonNls String> feedback) {
+                                    @NotNull Set<? super @Nls String> feedback) {
     return null;
   }
 
