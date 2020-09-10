@@ -173,7 +173,7 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
   }
 
   private static List<Integer> castToIntList(@Nullable Object value) {
-    if (value instanceof List && ((List)value).size() > 0 && ((List)value).get(0) instanceof Integer) {
+    if (value instanceof List && ((List<?>)value).size() > 0 && ((List<?>)value).get(0) instanceof Integer) {
       //noinspection unchecked
       return (List<Integer>)value;
     }
@@ -218,7 +218,7 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
       Object value = node.getValue();
       if (value instanceof String) {
         for (int i = 0; i < getInstance().WRAP_ON_TYPING_OPTIONS.length; i++) {
-          if (getInstance().WRAP_ON_TYPING_OPTIONS.equals(value)) {
+          if (getInstance().WRAP_ON_TYPING_OPTIONS[i].equals(value)) {
             myWrapOnTypingCombo.setSelectedIndex(i);
             break;
           }
