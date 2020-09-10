@@ -9,7 +9,7 @@ import org.jetbrains.annotations.TestOnly
 abstract class JarCompletionModelProvider(@Nls(capitalization = Nls.Capitalization.Title) private val displayName: String,
                                           @NonNls private val resourceDirectory: String) : RankingModelProvider {
   private val lazyModel: DecisionFunction by lazy {
-    val metadata = FeaturesInfo.buildInfo(ResourcesModelMetadataReader(this::class.java, resourceDirectory))
+    val metadata = FeaturesInfo.buildInfo(ResourcesMetadataReader(this::class.java, resourceDirectory))
     createModel(metadata)
   }
 

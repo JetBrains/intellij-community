@@ -10,7 +10,7 @@ import com.intellij.filePrediction.predictor.model.getFilePredictionModel
 import com.intellij.filePrediction.predictor.model.setCustomTestFilePredictionModel
 import com.intellij.internal.ml.DecisionFunction
 import com.intellij.internal.ml.FeaturesInfo
-import com.intellij.internal.ml.ResourcesModelMetadataReader
+import com.intellij.internal.ml.ResourcesMetadataReader
 import com.intellij.testFramework.builders.ModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.ModuleFixture
@@ -155,7 +155,7 @@ private class TestFilePredictionModelProvider(val featuresDir: String) : FilePre
   var encoded: DoubleArray? = null
 
   override fun getModel(): DecisionFunction {
-    val reader = ResourcesModelMetadataReader(FilePredictionFeatureEncodingTest::class.java, "$baseDir/$featuresDir")
+    val reader = ResourcesMetadataReader(FilePredictionFeatureEncodingTest::class.java, "$baseDir/$featuresDir")
     val metadata = FeaturesInfo.buildInfo(reader)
     return object : FilePredictionDecisionFunction(metadata) {
       override fun predict(features: DoubleArray?): Double {

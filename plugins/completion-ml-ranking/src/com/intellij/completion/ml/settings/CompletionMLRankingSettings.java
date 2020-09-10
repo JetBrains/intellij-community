@@ -38,7 +38,6 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
     triggerSettingsChanged(value);
   }
 
-  // sssa
   public boolean isLanguageEnabled(@NotNull String rankerId) {
     return myState.language2state.getOrDefault(rankerId, isEnabledByDefault(rankerId));
   }
