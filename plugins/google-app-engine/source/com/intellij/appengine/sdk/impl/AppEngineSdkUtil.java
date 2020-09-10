@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.appengine.sdk.impl;
 
+import com.intellij.appengine.AppEngineBundle;
 import com.intellij.facet.ui.FacetConfigurationQuickFix;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.ide.BrowserUtil;
@@ -19,12 +20,13 @@ import java.util.*;
 public final class AppEngineSdkUtil {
   private static final Logger LOG = Logger.getInstance(AppEngineSdkUtil.class);
   @NonNls public static final String APP_ENGINE_DOWNLOAD_URL = "https://code.google.com/appengine/downloads.html#Google_App_Engine_SDK_for_Java";
-  private static final FacetConfigurationQuickFix DOWNLOAD_SDK_QUICK_FIX = new FacetConfigurationQuickFix("Download...") {
-    @Override
-    public void run(JComponent place) {
-      BrowserUtil.browse(APP_ENGINE_DOWNLOAD_URL);
-    }
-  };
+  private static final FacetConfigurationQuickFix DOWNLOAD_SDK_QUICK_FIX =
+    new FacetConfigurationQuickFix(AppEngineBundle.message("button.sdk.download.text")) {
+      @Override
+      public void run(JComponent place) {
+        BrowserUtil.browse(APP_ENGINE_DOWNLOAD_URL);
+      }
+    };
 
   private AppEngineSdkUtil() {
   }
@@ -121,7 +123,6 @@ public final class AppEngineSdkUtil {
   }
 
   private static ValidationResult createNotFoundMessage(@NotNull String path, @NotNull File file) {
-    return new ValidationResult("'" + path + "' is not valid App Engine SDK installation: " + "'" + file + "' file not found",
-                                DOWNLOAD_SDK_QUICK_FIX);
+    return new ValidationResult(AppEngineBundle.message("sdk.file.not.found.message", path, file), DOWNLOAD_SDK_QUICK_FIX);
   }
 }
