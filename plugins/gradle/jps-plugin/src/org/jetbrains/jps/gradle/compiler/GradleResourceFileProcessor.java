@@ -3,6 +3,7 @@ package org.jetbrains.jps.gradle.compiler;
 
 import com.intellij.openapi.util.Ref;
 import org.apache.tools.ant.util.ReaderInputStream;
+import org.jetbrains.jps.gradle.GradleJpsBundle;
 import org.jetbrains.jps.gradle.model.impl.GradleModuleResourceConfiguration;
 import org.jetbrains.jps.gradle.model.impl.GradleProjectConfiguration;
 import org.jetbrains.jps.gradle.model.impl.ResourceRootConfiguration;
@@ -43,8 +44,8 @@ public class GradleResourceFileProcessor {
     boolean shouldFilter = rootConfiguration.isFiltered && !rootConfiguration.filters.isEmpty() && filteringFilter.accept(file);
     if (shouldFilter && file.length() > FILTERING_SIZE_LIMIT) {
       context.processMessage(new CompilerMessage(
-        GradleResourcesBuilder.BUILDER_NAME, BuildMessage.Kind.WARNING,
-        "File is too big to be filtered. Most likely it is a binary file and should be excluded from filtering", file.getPath())
+        GradleJpsBundle.message("gradle.resources.compiler"), BuildMessage.Kind.WARNING,
+        GradleJpsBundle.message("file.is.too.big.to.be.filtered"), file.getPath())
       );
       shouldFilter = false;
     }
