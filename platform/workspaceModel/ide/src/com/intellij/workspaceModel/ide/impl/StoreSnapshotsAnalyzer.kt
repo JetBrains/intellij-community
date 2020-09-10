@@ -13,7 +13,7 @@ import java.io.File
  */
 fun main() {
   // Path to the file
-  val path = "/Users/alexei.plate/Storages"
+  val path = "/Users/alex.plate/Storages"
   val dir = File(path)
   val leftFile = dir.resolve("Left_Store")
   val rightFile = dir.resolve("Right_Store")
