@@ -5,8 +5,8 @@ import com.intellij.internal.statistic.eventLog.*
 import com.intellij.internal.statistic.eventLog.filters.LogEventCompositeFilter
 import com.intellij.internal.statistic.eventLog.filters.LogEventFilter
 import com.intellij.internal.statistic.eventLog.filters.LogEventSnapshotBuildFilter
-import com.intellij.internal.statistic.eventLog.filters.LogEventWhitelistFilter
-import com.intellij.internal.statistic.service.fus.StatisticsWhitelistConditions
+import com.intellij.internal.statistic.eventLog.filters.LogEventMetadataFilter
+import com.intellij.internal.statistic.service.fus.EventGroupsFilterRules
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newEvent
 import com.intellij.internal.statistics.logger.TestDataCollectorDebugLogger
 import com.intellij.internal.statistics.whitelist.TestWhitelistBuilder
@@ -23,7 +23,7 @@ class FeatureEventLogWhitelistFilterTest {
     all.add(newEvent("group-id-1", "second"))
     all.add(newEvent("group-id-2", "third"))
 
-    testWhitelistFilter(StatisticsWhitelistConditions.empty(), all, ArrayList())
+    testWhitelistFilter(EventGroupsFilterRules.empty(), all, ArrayList())
   }
 
   @Test
@@ -865,12 +865,12 @@ class FeatureEventLogWhitelistFilterTest {
     testWhitelistFilter(whitelist.build(), all, filtered)
   }
 
-  private fun testWhitelistFilter(whitelist: StatisticsWhitelistConditions, all: List<LogEvent>, filtered: List<LogEvent>) {
-    testEventLogFilter(all, filtered, LogEventWhitelistFilter(whitelist))
+  private fun testWhitelistFilter(whitelist: EventGroupsFilterRules, all: List<LogEvent>, filtered: List<LogEvent>) {
+    testEventLogFilter(all, filtered, LogEventMetadataFilter(whitelist))
   }
 
-  private fun testWhitelistAndSnapshotBuildFilter(whitelist: StatisticsWhitelistConditions, all: List<LogEvent>, filtered: List<LogEvent>) {
-    testEventLogFilter(all, filtered, LogEventCompositeFilter(LogEventWhitelistFilter(whitelist), LogEventSnapshotBuildFilter))
+  private fun testWhitelistAndSnapshotBuildFilter(whitelist: EventGroupsFilterRules, all: List<LogEvent>, filtered: List<LogEvent>) {
+    testEventLogFilter(all, filtered, LogEventCompositeFilter(LogEventMetadataFilter(whitelist), LogEventSnapshotBuildFilter))
   }
 
   private fun testSnapshotBuilderFilter(all: List<LogEvent>, filtered: List<LogEvent>) {

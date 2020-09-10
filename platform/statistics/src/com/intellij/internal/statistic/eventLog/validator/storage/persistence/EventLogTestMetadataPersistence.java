@@ -4,12 +4,11 @@ package com.intellij.internal.statistic.eventLog.validator.storage.persistence;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule;
+import com.intellij.internal.statistic.service.fus.EventGroupRemoteDescriptors;
+import com.intellij.internal.statistic.service.fus.EventGroupRemoteDescriptors.EventGroupRemoteDescriptor;
+import com.intellij.internal.statistic.service.fus.EventGroupRemoteDescriptors.GroupRemoteRule;
 import com.intellij.internal.statistic.service.fus.EventLogMetadataParseException;
-import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
-import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService.WLGroup;
-import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService.WLGroups;
-import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService.WLRule;
-import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService.WLVersion;
+import com.intellij.internal.statistic.service.fus.EventLogMetadataUtils;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -61,64 +60,64 @@ public class EventLogTestMetadataPersistence extends BaseEventLogMetadataPersist
   }
 
   @NotNull
-  public static WLGroup createGroupWithCustomRules(@NotNull String groupId, @NotNull String rules) {
+  public static EventGroupRemoteDescriptor createGroupWithCustomRules(@NotNull String groupId, @NotNull String rules) {
     final String content =
       "{\"id\":\"" + groupId + "\"," +
       "\"versions\":[ {\"from\" : \"1\"}]," +
       "\"rules\":" + rules + "}";
-    return new GsonBuilder().create().fromJson(content, WLGroup.class);
+    return new GsonBuilder().create().fromJson(content, EventGroupRemoteDescriptor.class);
   }
 
   public static void addTestGroup(@NotNull String recorderId, @NotNull GroupValidationTestRule group) throws IOException {
     String groupId = group.getGroupId();
-    WLGroup whitelistGroup = group.getUseCustomRules()
+    EventGroupRemoteDescriptor groupWithRules = group.getUseCustomRules()
                              ? createGroupWithCustomRules(groupId, group.getCustomRules())
                              : createTestGroup(groupId, Collections.emptySet());
-    addNewGroup(recorderId, whitelistGroup);
+    addNewGroup(recorderId, groupWithRules);
   }
 
   private static void addNewGroup(@NotNull String recorderId,
-                                  @NotNull WLGroup group) throws IOException {
+                                  @NotNull EventGroupRemoteDescriptor group) throws IOException {
     final EventLogTestMetadataPersistence persistence = new EventLogTestMetadataPersistence(recorderId);
-    final WLGroups whitelist = loadCachedEventGroupsSchemes(persistence);
+    final EventGroupRemoteDescriptors approvedGroups = loadCachedEventGroupsSchemes(persistence);
 
-    saveNewGroup(group, whitelist, persistence.getEventsTestSchemeFile());
+    saveNewGroup(group, approvedGroups, persistence.getEventsTestSchemeFile());
   }
 
-  public static void saveNewGroup(@NotNull WLGroup group,
-                                   @NotNull WLGroups whitelist,
+  public static void saveNewGroup(@NotNull EventGroupRemoteDescriptor group,
+                                   @NotNull EventGroupRemoteDescriptors approvedGroups,
                                    @NotNull File file) throws IOException {
-    whitelist.groups.stream().
+    approvedGroups.groups.stream().
       filter(g -> StringUtil.equals(g.id, group.id)).findFirst().
-      ifPresent(whitelist.groups::remove);
-    whitelist.groups.add(group);
+      ifPresent(approvedGroups.groups::remove);
+    approvedGroups.groups.add(group);
     Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    FileUtil.writeToFile(file, gson.toJson(whitelist));
+    FileUtil.writeToFile(file, gson.toJson(approvedGroups));
   }
 
   @NotNull
-  public static WLGroups loadCachedEventGroupsSchemes(@NotNull BaseEventLogMetadataPersistence persistence) {
+  public static EventGroupRemoteDescriptors loadCachedEventGroupsSchemes(@NotNull BaseEventLogMetadataPersistence persistence) {
     final String existing = persistence.getCachedEventsScheme();
     if (StringUtil.isNotEmpty(existing)) {
       try {
-        return FUStatisticsWhiteListGroupsService.parseWhiteListContent(existing);
+        return EventLogMetadataUtils.parseGroupRemoteDescriptors(existing);
       }
       catch (EventLogMetadataParseException e) {
-        LOG.warn("Failed parsing test whitelist", e);
+        LOG.warn("Failed parsing test cached events scheme", e);
       }
     }
-    return new WLGroups();
+    return new EventGroupRemoteDescriptors();
   }
 
   @NotNull
-  public static WLGroup createTestGroup(@NotNull String groupId, @NotNull Set<String> eventData) {
-    final WLGroup group = new WLGroup();
+  public static EventGroupRemoteDescriptor createTestGroup(@NotNull String groupId, @NotNull Set<String> eventData) {
+    final EventGroupRemoteDescriptor group = new EventGroupRemoteDescriptor();
     group.id = groupId;
     if (group.versions != null) {
-      group.versions.add(new WLVersion("1", null));
+      group.versions.add(new EventGroupRemoteDescriptors.GroupVersionRange("1", null));
     }
 
-    final WLRule rule = new WLRule();
+    final GroupRemoteRule rule = new GroupRemoteRule();
     rule.event_id = ContainerUtil.newHashSet(TEST_RULE);
 
     final Map<String, Set<String>> dataRules = new HashMap<>();
@@ -136,17 +135,17 @@ public class EventLogTestMetadataPersistence extends BaseEventLogMetadataPersist
   }
 
   public void updateTestGroups(@NotNull List<GroupValidationTestRule> groups) throws IOException {
-    WLGroups whitelist = new WLGroups();
+    EventGroupRemoteDescriptors approvedGroups = new EventGroupRemoteDescriptors();
     for (GroupValidationTestRule group : groups) {
       String groupId = group.getGroupId();
       if (group.getUseCustomRules()) {
-        whitelist.groups.add(createGroupWithCustomRules(groupId, group.getCustomRules()));
+        approvedGroups.groups.add(createGroupWithCustomRules(groupId, group.getCustomRules()));
       }
       else {
-        whitelist.groups.add(createTestGroup(groupId, Collections.emptySet()));
+        approvedGroups.groups.add(createTestGroup(groupId, Collections.emptySet()));
       }
     }
     Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    FileUtil.writeToFile(getEventsTestSchemeFile(), gson.toJson(whitelist));
+    FileUtil.writeToFile(getEventsTestSchemeFile(), gson.toJson(approvedGroups));
   }
 }

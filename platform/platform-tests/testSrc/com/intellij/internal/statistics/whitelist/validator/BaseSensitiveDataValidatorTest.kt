@@ -9,7 +9,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules
 import com.intellij.internal.statistic.eventLog.validator.storage.EventLogMetadataLoader
 import com.intellij.internal.statistic.eventLog.validator.storage.ValidationRulesPersistedStorage
-import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService
+import com.intellij.internal.statistic.service.fus.EventGroupRemoteDescriptors
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
@@ -45,7 +45,7 @@ abstract class BaseSensitiveDataValidatorTest  : UsefulTestCase() {
   internal fun newValidator(content: String, customBuild: String? = null): TestSensitiveDataValidator {
     val storage = object : ValidationRulesPersistedStorage("TEST", TestEventLogMetadataPersistence(content), TestEventLogMetadataLoader(content)) {
       override fun createValidators(build: EventLogBuild?,
-                                    groups: FUStatisticsWhiteListGroupsService.WLGroups): MutableMap<String, EventGroupRules> {
+                                    groups: EventGroupRemoteDescriptors): MutableMap<String, EventGroupRules> {
         if (customBuild != null) {
           return super.createValidators(EventLogBuild.fromString(customBuild), groups)
         }

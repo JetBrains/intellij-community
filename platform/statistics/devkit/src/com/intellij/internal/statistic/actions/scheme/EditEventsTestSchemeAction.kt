@@ -9,7 +9,7 @@ import com.intellij.internal.statistic.StatisticsDevKitUtil.showNotification
 import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule
 import com.intellij.internal.statistic.eventLog.events.EventsSchemeBuilder
 import com.intellij.internal.statistic.eventLog.validator.storage.ValidationTestRulesPersistedStorage
-import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService
+import com.intellij.internal.statistic.service.fus.EventGroupRemoteDescriptors
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
@@ -105,7 +105,7 @@ class EditEventsTestSchemeAction(private val recorderId: String = StatisticsDevK
 
   class EventsTestScheme(
     val testScheme: List<GroupValidationTestRule>,
-    val productionGroups: FUStatisticsWhiteListGroupsService.WLGroups,
+    val productionGroups: EventGroupRemoteDescriptors,
     val generatedScheme: List<EventsSchemeBuilder.GroupDescriptor>
   )
 }

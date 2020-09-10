@@ -2,16 +2,16 @@
 package com.intellij.internal.statistics.whitelist.parser
 
 import com.intellij.internal.statistic.eventLog.EventLogBuild
-import com.intellij.internal.statistic.service.fus.StatisticsWhitelistConditions
-import com.intellij.internal.statistic.service.fus.StatisticsWhitelistLoader
+import com.intellij.internal.statistic.service.fus.EventGroupsFilterRules
+import com.intellij.internal.statistic.service.fus.EventLogMetadataUtils
 import com.intellij.internal.statistics.whitelist.TestWhitelistBuilder
 import org.junit.Test
 import kotlin.test.assertEquals
 
 class StatisticsParseWhitelistWithBuildTest {
 
-  private fun doTest(content: String, expected: StatisticsWhitelistConditions) {
-    val actual = StatisticsWhitelistLoader.parseApprovedGroups(content)
+  private fun doTest(content: String, expected: EventGroupsFilterRules) {
+    val actual = EventLogMetadataUtils.parseGroupFilterRules(content)
     assertEquals(expected.size, actual.size)
     assertEquals(expected, actual)
   }

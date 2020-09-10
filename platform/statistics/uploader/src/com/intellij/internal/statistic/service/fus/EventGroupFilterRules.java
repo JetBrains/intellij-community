@@ -2,9 +2,6 @@
 package com.intellij.internal.statistic.service.fus;
 
 import com.intellij.internal.statistic.eventLog.EventLogBuild;
-import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService.WLBuild;
-import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService.WLGroup;
-import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService.WLVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,41 +12,41 @@ import java.util.Objects;
 import static com.intellij.internal.statistic.StatisticsStringUtil.isNotEmpty;
 import static java.util.Collections.emptyList;
 
-public class StatisticsWhitelistGroupConditions {
+public class EventGroupFilterRules {
   private final List<BuildRange> builds;
   private final List<VersionRange> versions;
 
-  public StatisticsWhitelistGroupConditions(@NotNull List<BuildRange> builds, @NotNull List<VersionRange> versions) {
+  public EventGroupFilterRules(@NotNull List<BuildRange> builds, @NotNull List<VersionRange> versions) {
     this.builds = builds;
     this.versions = versions;
   }
 
   @NotNull
-  public static StatisticsWhitelistGroupConditions create(@NotNull WLGroup group) {
+  public static EventGroupFilterRules create(@NotNull EventGroupRemoteDescriptors.EventGroupRemoteDescriptor group) {
     return create(group.builds, group.versions);
   }
 
   @NotNull
-  private static StatisticsWhitelistGroupConditions create(@Nullable List<WLBuild> builds, @Nullable List<WLVersion> versions) {
+  private static EventGroupFilterRules create(@Nullable List<EventGroupRemoteDescriptors.GroupBuildRange> builds, @Nullable List<EventGroupRemoteDescriptors.GroupVersionRange> versions) {
     final List<BuildRange> buildRanges = builds != null && !builds.isEmpty() ? toBuildRanges(builds) : emptyList();
-    final List<StatisticsWhitelistGroupConditions.VersionRange> versionRanges = versions != null && !versions.isEmpty() ? toVersionRanges(versions) : emptyList();
-    return new StatisticsWhitelistGroupConditions(buildRanges, versionRanges);
+    final List<EventGroupFilterRules.VersionRange> versionRanges = versions != null && !versions.isEmpty() ? toVersionRanges(versions) : emptyList();
+    return new EventGroupFilterRules(buildRanges, versionRanges);
   }
 
   @NotNull
-  private static List<BuildRange> toBuildRanges(@NotNull List<WLBuild> builds) {
+  private static List<BuildRange> toBuildRanges(@NotNull List<EventGroupRemoteDescriptors.GroupBuildRange> builds) {
     List<BuildRange> result = new ArrayList<>();
-    for (WLBuild build : builds) {
-      result.add(StatisticsWhitelistGroupConditions.BuildRange.create(build.from, build.to));
+    for (EventGroupRemoteDescriptors.GroupBuildRange build : builds) {
+      result.add(EventGroupFilterRules.BuildRange.create(build.from, build.to));
     }
     return result;
   }
 
   @NotNull
-  private static List<VersionRange> toVersionRanges(@NotNull List<WLVersion> versions) {
-    List<StatisticsWhitelistGroupConditions.VersionRange> result = new ArrayList<>();
-    for (WLVersion version : versions) {
-      result.add(StatisticsWhitelistGroupConditions.VersionRange.create(version.from, version.to));
+  private static List<VersionRange> toVersionRanges(@NotNull List<EventGroupRemoteDescriptors.GroupVersionRange> versions) {
+    List<EventGroupFilterRules.VersionRange> result = new ArrayList<>();
+    for (EventGroupRemoteDescriptors.GroupVersionRange version : versions) {
+      result.add(EventGroupFilterRules.VersionRange.create(version.from, version.to));
     }
     return result;
   }
@@ -85,7 +82,7 @@ public class StatisticsWhitelistGroupConditions {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    StatisticsWhitelistGroupConditions condition = (StatisticsWhitelistGroupConditions)o;
+    EventGroupFilterRules condition = (EventGroupFilterRules)o;
     return Objects.equals(builds, condition.builds) &&
            Objects.equals(versions, condition.versions);
   }

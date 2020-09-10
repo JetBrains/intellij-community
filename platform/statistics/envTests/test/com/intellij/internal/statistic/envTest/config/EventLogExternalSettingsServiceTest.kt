@@ -12,21 +12,21 @@ internal class EventLogExternalSettingsServiceTest : StatisticsServiceBaseTest()
   fun `test load and cache external settings`() {
     val settings = configureDynamicConfig(TimeUnit.HOURS.toMillis(1))
 
-    val metadata = loadMetadata(settings.whiteListProductUrl)
+    val metadata = loadMetadata(settings.metadataProductUrl)
     Thread.sleep(1000)
-    assertMetadata(settings.whiteListProductUrl, metadata)
+    assertMetadata(settings.metadataProductUrl, metadata)
     Thread.sleep(1000)
-    assertMetadata(settings.whiteListProductUrl, metadata)
+    assertMetadata(settings.metadataProductUrl, metadata)
   }
 
   fun `test cached external settings are invalidated`() {
     val settings = configureDynamicConfig(10)
 
-    var metadata = loadMetadata(settings.whiteListProductUrl)
+    var metadata = loadMetadata(settings.metadataProductUrl)
     Thread.sleep(1000)
-    metadata = assertNewMetadata(settings.whiteListProductUrl, metadata)
+    metadata = assertNewMetadata(settings.metadataProductUrl, metadata)
     Thread.sleep(1000)
-    assertNewMetadata(settings.whiteListProductUrl, metadata)
+    assertNewMetadata(settings.metadataProductUrl, metadata)
   }
 
   private fun configureDynamicConfig(configCacheTimeoutMs: Long): EventLogUploadSettingsService {

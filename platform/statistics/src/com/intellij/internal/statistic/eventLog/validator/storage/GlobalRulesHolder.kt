@@ -3,11 +3,11 @@ package com.intellij.internal.statistic.eventLog.validator.storage
 
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.EnumValidationRule
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.RegexpValidationRule
-import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService
+import com.intellij.internal.statistic.service.fus.EventGroupRemoteDescriptors
 import java.util.*
 
 class GlobalRulesHolder(private val myGlobalEnums: Map<String, Set<String>>?, private val myGlobalRegexps: Map<String, String>?) {
-  constructor(globalRules: FUStatisticsWhiteListGroupsService.WLRule?) : this(globalRules?.enums, globalRules?.regexps)
+  constructor(globalRules: EventGroupRemoteDescriptors.GroupRemoteRule?) : this(globalRules?.enums, globalRules?.regexps)
 
   private val myGlobalRegexpsCache: MutableMap<String, RegexpValidationRule> = HashMap()
   private val myGlobalEnumsCache: MutableMap<String, EnumValidationRule> = HashMap()

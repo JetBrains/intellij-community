@@ -1,14 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.whitelist.parser
 
-import com.intellij.internal.statistic.service.fus.StatisticsWhitelistLoader
+import com.intellij.internal.statistic.service.fus.EventLogMetadataUtils
 import org.junit.Assert
 import org.junit.Test
 
 class StatisticsFilterGroupByBuildTest {
 
   private fun doTestAccepted(content: String, build: String, vararg expected: String) {
-    val actual = StatisticsWhitelistLoader.parseApprovedGroups(content)
+    val actual = EventLogMetadataUtils.parseGroupFilterRules(content)
     for (e in expected) {
       Assert.assertTrue(actual.accepts(e, "4", build))
     }
@@ -19,7 +19,7 @@ class StatisticsFilterGroupByBuildTest {
   }
 
   private fun doTestRejectedWithVersion(content: String, build: String, version: String?, vararg expected: String) {
-    val actual = StatisticsWhitelistLoader.parseApprovedGroups(content)
+    val actual = EventLogMetadataUtils.parseGroupFilterRules(content)
     for (e in expected) {
       Assert.assertFalse(actual.accepts(e, version, build))
     }

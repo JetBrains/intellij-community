@@ -4,7 +4,7 @@ package com.intellij.internal.statistic.eventLog.validator.storage;
 import com.intellij.internal.statistic.eventLog.EventLogConnectionSettings;
 import com.intellij.internal.statistic.eventLog.EventLogUploadSettingsService;
 import com.intellij.internal.statistic.service.fus.EventLogMetadataLoadException;
-import com.intellij.internal.statistic.service.fus.StatisticsWhitelistLoader;
+import com.intellij.internal.statistic.service.fus.EventLogMetadataUtils;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,13 +21,13 @@ public class EventLogServerMetadataLoader implements EventLogMetadataLoader {
   @Override
   public long getLastModifiedOnServer() {
     EventLogConnectionSettings settings = mySettingsService.getApplicationInfo().getConnectionSettings();
-    return StatisticsWhitelistLoader.lastModifiedWhitelist(mySettingsService.getWhiteListProductUrl(), settings);
+    return EventLogMetadataUtils.lastModifiedMetadata(mySettingsService.getMetadataProductUrl(), settings);
   }
 
   @Override
   @NotNull
   public String loadMetadataFromServer() throws EventLogMetadataLoadException {
     EventLogConnectionSettings settings = mySettingsService.getApplicationInfo().getConnectionSettings();
-    return StatisticsWhitelistLoader.loadWhiteListFromServer(mySettingsService.getWhiteListProductUrl(), settings);
+    return EventLogMetadataUtils.loadMetadataFromServer(mySettingsService.getMetadataProductUrl(), settings);
   }
 }

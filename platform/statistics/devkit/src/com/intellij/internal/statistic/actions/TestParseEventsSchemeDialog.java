@@ -3,12 +3,15 @@ package com.intellij.internal.statistic.actions;
 
 import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
-import com.intellij.internal.statistic.eventLog.*;
+import com.intellij.internal.statistic.eventLog.DataCollectorDebugLogger;
+import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
+import com.intellij.internal.statistic.eventLog.LogEventRecordRequest;
+import com.intellij.internal.statistic.eventLog.LogEventSerializer;
 import com.intellij.internal.statistic.eventLog.filters.LogEventFilter;
-import com.intellij.internal.statistic.eventLog.filters.LogEventWhitelistFilter;
+import com.intellij.internal.statistic.eventLog.filters.LogEventMetadataFilter;
+import com.intellij.internal.statistic.service.fus.EventGroupsFilterRules;
 import com.intellij.internal.statistic.service.fus.EventLogMetadataParseException;
-import com.intellij.internal.statistic.service.fus.StatisticsWhitelistConditions;
-import com.intellij.internal.statistic.service.fus.StatisticsWhitelistLoader;
+import com.intellij.internal.statistic.service.fus.EventLogMetadataUtils;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -190,8 +193,8 @@ public class TestParseEventsSchemeDialog extends DialogWrapper {
     updateResultRequest("{}");
 
     try {
-      StatisticsWhitelistConditions scheme = StatisticsWhitelistLoader.parseApprovedGroups(myEventsSchemeEditor.getDocument().getText());
-      String parsed = parseLogAndFilter(new LogEventWhitelistFilter(scheme), myEventLogPanel.getText());
+      EventGroupsFilterRules scheme = EventLogMetadataUtils.parseGroupFilterRules(myEventsSchemeEditor.getDocument().getText());
+      String parsed = parseLogAndFilter(new LogEventMetadataFilter(scheme), myEventLogPanel.getText());
       updateResultRequest(parsed.trim());
     }
     catch (EventLogMetadataParseException e) {

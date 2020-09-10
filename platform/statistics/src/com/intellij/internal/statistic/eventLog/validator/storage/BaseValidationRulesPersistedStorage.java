@@ -3,8 +3,8 @@ package com.intellij.internal.statistic.eventLog.validator.storage;
 
 import com.intellij.internal.statistic.eventLog.EventLogBuild;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
-import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
-import com.intellij.internal.statistic.service.fus.StatisticsWhitelistGroupConditions;
+import com.intellij.internal.statistic.service.fus.EventGroupFilterRules;
+import com.intellij.internal.statistic.service.fus.EventGroupRemoteDescriptors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,10 +26,10 @@ public abstract class BaseValidationRulesPersistedStorage implements ValidationR
   }
 
   @NotNull
-  protected Map<String, EventGroupRules> createValidators(@Nullable EventLogBuild build, @NotNull FUStatisticsWhiteListGroupsService.WLGroups groups) {
+  protected Map<String, EventGroupRules> createValidators(@Nullable EventLogBuild build, @NotNull EventGroupRemoteDescriptors groups) {
     GlobalRulesHolder globalRulesHolder = new GlobalRulesHolder(groups.rules);
     return groups.groups.stream().
-      filter(group -> StatisticsWhitelistGroupConditions.create(group).accepts(build)).
+      filter(group -> EventGroupFilterRules.create(group).accepts(build)).
       collect(Collectors.toMap(group -> group.id, group -> {
         return EventGroupRules.create(group, globalRulesHolder);
       }));

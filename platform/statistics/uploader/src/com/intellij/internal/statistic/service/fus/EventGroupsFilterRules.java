@@ -9,21 +9,21 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 
-public final class StatisticsWhitelistConditions {
-  private final Map<String, StatisticsWhitelistGroupConditions> myGroups;
+public final class EventGroupsFilterRules {
+  private final Map<String, EventGroupFilterRules> myGroups;
 
-  private StatisticsWhitelistConditions(@NotNull Map<String, StatisticsWhitelistGroupConditions> groups) {
+  private EventGroupsFilterRules(@NotNull Map<String, EventGroupFilterRules> groups) {
     myGroups = groups;
   }
 
   @NotNull
-  public static StatisticsWhitelistConditions create(@NotNull Map<String, StatisticsWhitelistGroupConditions> groups) {
-    return new StatisticsWhitelistConditions(groups);
+  public static EventGroupsFilterRules create(@NotNull Map<String, EventGroupFilterRules> groups) {
+    return new EventGroupsFilterRules(groups);
   }
 
   @NotNull
-  public static StatisticsWhitelistConditions empty() {
-    return new StatisticsWhitelistConditions(Collections.emptyMap());
+  public static EventGroupsFilterRules empty() {
+    return new EventGroupsFilterRules(Collections.emptyMap());
   }
 
   public boolean accepts(@NotNull String groupId, @Nullable String version, @NotNull String build) {
@@ -35,7 +35,7 @@ public final class StatisticsWhitelistConditions {
     if (parsedVersion < 0) {
       return false;
     }
-    StatisticsWhitelistGroupConditions condition = myGroups.get(groupId);
+    EventGroupFilterRules condition = myGroups.get(groupId);
     return condition.accepts(EventLogBuild.fromString(build), parsedVersion);
   }
 
@@ -63,8 +63,8 @@ public final class StatisticsWhitelistConditions {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    StatisticsWhitelistConditions whitelist = (StatisticsWhitelistConditions)o;
-    return Objects.equals(myGroups, whitelist.myGroups);
+    EventGroupsFilterRules rules = (EventGroupsFilterRules)o;
+    return Objects.equals(myGroups, rules.myGroups);
   }
 
   @Override

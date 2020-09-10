@@ -5,8 +5,7 @@ import com.intellij.internal.statistic.config.EventLogExternalSendSettings;
 import com.intellij.internal.statistic.config.bean.EventLogSendConfiguration;
 import com.intellij.internal.statistic.connect.SettingsConnectionService;
 import com.intellij.internal.statistic.eventLog.filters.*;
-import com.intellij.internal.statistic.service.fus.StatisticsWhitelistConditions;
-import com.intellij.internal.statistic.service.fus.StatisticsWhitelistLoader;
+import com.intellij.internal.statistic.service.fus.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -63,7 +62,7 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
   @Override
   @NotNull
   public LogEventFilter getBaseEventFilter() {
-    return new LogEventWhitelistFilter(notNull(getWhitelistedGroups(), StatisticsWhitelistConditions.empty()));
+    return new LogEventMetadataFilter(notNull(loadApprovedGroupsRules(), EventGroupsFilterRules.empty()));
   }
 
   @Override
@@ -84,8 +83,8 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
     );
   }
 
-  private static StatisticsWhitelistConditions notNull(@Nullable StatisticsWhitelistConditions whitelist, @NotNull StatisticsWhitelistConditions defaultValue) {
-    return whitelist != null ? whitelist : defaultValue;
+  private static EventGroupsFilterRules notNull(@Nullable EventGroupsFilterRules groupFilterConditions, @NotNull EventGroupsFilterRules defaultValue) {
+    return groupFilterConditions != null ? groupFilterConditions : defaultValue;
   }
 
   @Override
@@ -94,18 +93,18 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
   }
 
   @Nullable
-  protected StatisticsWhitelistConditions getWhitelistedGroups() {
-    final String productUrl = getWhiteListProductUrl();
+  protected EventGroupsFilterRules loadApprovedGroupsRules() {
+    final String productUrl = getMetadataProductUrl();
     if (productUrl == null) return null;
     EventLogConnectionSettings settings = myApplicationInfo.getConnectionSettings();
-    return StatisticsWhitelistLoader.getApprovedGroups(productUrl, settings);
+    return EventLogMetadataUtils.loadAndParseGroupsFilterRules(productUrl, settings);
   }
 
   @NonNls
   @Nullable
-  public String getWhiteListProductUrl() {
-    String baseWhitelistUrl = getEndpointValue(METADATA);
-    if (baseWhitelistUrl == null) return null;
-    return baseWhitelistUrl + myApplicationInfo.getProductCode() + ".json";
+  public String getMetadataProductUrl() {
+    String baseMetadataUrl = getEndpointValue(METADATA);
+    if (baseMetadataUrl == null) return null;
+    return baseMetadataUrl + myApplicationInfo.getProductCode() + ".json";
   }
 }

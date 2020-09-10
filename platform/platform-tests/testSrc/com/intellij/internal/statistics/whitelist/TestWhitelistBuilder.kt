@@ -2,10 +2,10 @@
 package com.intellij.internal.statistics.whitelist
 
 import com.intellij.internal.statistic.eventLog.EventLogBuild
-import com.intellij.internal.statistic.service.fus.StatisticsWhitelistConditions
-import com.intellij.internal.statistic.service.fus.StatisticsWhitelistGroupConditions
-import com.intellij.internal.statistic.service.fus.StatisticsWhitelistGroupConditions.BuildRange
-import com.intellij.internal.statistic.service.fus.StatisticsWhitelistGroupConditions.VersionRange
+import com.intellij.internal.statistic.service.fus.EventGroupsFilterRules
+import com.intellij.internal.statistic.service.fus.EventGroupFilterRules
+import com.intellij.internal.statistic.service.fus.EventGroupFilterRules.BuildRange
+import com.intellij.internal.statistic.service.fus.EventGroupFilterRules.VersionRange
 
 class TestWhitelistBuilder {
   private val groupIds: MutableSet<String> = HashSet()
@@ -53,13 +53,13 @@ class TestWhitelistBuilder {
     return this
   }
 
-  fun build(): StatisticsWhitelistConditions {
-    val result = HashMap<String, StatisticsWhitelistGroupConditions>()
+  fun build(): EventGroupsFilterRules {
+    val result = HashMap<String, EventGroupFilterRules>()
     for (groupId in groupIds) {
       val builds: List<BuildRange> = groupBuilds.getOrDefault(groupId, emptyList())
       val versions: List<VersionRange> = groupVersions.getOrDefault(groupId, emptyList())
-      result[groupId] = StatisticsWhitelistGroupConditions(builds, versions)
+      result[groupId] = EventGroupFilterRules(builds, versions)
     }
-    return StatisticsWhitelistConditions.create(result)
+    return EventGroupsFilterRules.create(result)
   }
 }

@@ -2,10 +2,10 @@
 package com.intellij.internal.statistic.eventLog.filters
 
 import com.intellij.internal.statistic.eventLog.LogEvent
-import com.intellij.internal.statistic.service.fus.StatisticsWhitelistConditions
+import com.intellij.internal.statistic.service.fus.EventGroupsFilterRules
 
-class LogEventWhitelistFilter(val whitelist: StatisticsWhitelistConditions) : LogEventFilter {
+class LogEventMetadataFilter(val filterRules: EventGroupsFilterRules) : LogEventFilter {
   override fun accepts(event: LogEvent): Boolean {
-    return whitelist.accepts(event.group.id, event.group.version, event.build)
+    return filterRules.accepts(event.group.id, event.group.version, event.build)
   }
 }

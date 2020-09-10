@@ -7,13 +7,13 @@ import com.intellij.internal.statistic.eventLog.EventLogBuild;
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerKt;
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
+import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataPersistence;
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogTestMetadataPersistence;
-import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
-import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
-import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService.WLGroups;
-import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService.WLRule;
-import com.intellij.internal.statistic.service.fus.StatisticsWhitelistGroupConditions;
+import com.intellij.internal.statistic.service.fus.EventGroupFilterRules;
+import com.intellij.internal.statistic.service.fus.EventGroupRemoteDescriptors;
+import com.intellij.internal.statistic.service.fus.EventGroupRemoteDescriptors.EventGroupRemoteDescriptor;
+import com.intellij.internal.statistic.service.fus.EventGroupRemoteDescriptors.GroupRemoteRule;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,8 +56,8 @@ public class ValidationTestRulesPersistedStorage extends BaseValidationRulesPers
     synchronized (myLock) {
       eventsValidators.clear();
       isInitialized.set(false);
-      WLGroups productionGroups = EventLogTestMetadataPersistence.loadCachedEventGroupsSchemes(myMetadataPersistence);
-      WLGroups testGroups = EventLogTestMetadataPersistence.loadCachedEventGroupsSchemes(myTestMetadataPersistence);
+      EventGroupRemoteDescriptors productionGroups = EventLogTestMetadataPersistence.loadCachedEventGroupsSchemes(myMetadataPersistence);
+      EventGroupRemoteDescriptors testGroups = EventLogTestMetadataPersistence.loadCachedEventGroupsSchemes(myTestMetadataPersistence);
       final Map<String, EventGroupRules> result = createValidators(testGroups, productionGroups.rules);
 
       eventsValidators.putAll(result);
@@ -65,16 +65,16 @@ public class ValidationTestRulesPersistedStorage extends BaseValidationRulesPers
     }
   }
 
-  public @NotNull WLGroups loadProductionGroups() {
+  public @NotNull EventGroupRemoteDescriptors loadProductionGroups() {
     return EventLogTestMetadataPersistence.loadCachedEventGroupsSchemes(myMetadataPersistence);
   }
 
-  protected @NotNull Map<String, EventGroupRules> createValidators(@NotNull WLGroups groups,
-                                                                   @Nullable WLRule productionRules) {
-    final WLRule rules = merge(groups.rules, productionRules);
+  protected @NotNull Map<String, EventGroupRules> createValidators(@NotNull EventGroupRemoteDescriptors groups,
+                                                                   @Nullable GroupRemoteRule productionRules) {
+    final GroupRemoteRule rules = merge(groups.rules, productionRules);
     final EventLogBuild build = EventLogBuild.fromString(EventLogConfiguration.INSTANCE.getBuild());
     return groups.groups.stream().
-      filter(group -> StatisticsWhitelistGroupConditions.create(group).accepts(build)).
+      filter(group -> EventGroupFilterRules.create(group).accepts(build)).
       collect(Collectors.toMap(group -> group.id, group -> EventGroupRules.create(group, new GlobalRulesHolder(rules))));
   }
 
@@ -91,11 +91,11 @@ public class ValidationTestRulesPersistedStorage extends BaseValidationRulesPers
   }
 
   public @NotNull List<GroupValidationTestRule> loadValidationTestRules() {
-    ArrayList<FUStatisticsWhiteListGroupsService.WLGroup> testGroupsSchemes =
+    ArrayList<EventGroupRemoteDescriptor> testGroupsSchemes =
       EventLogTestMetadataPersistence.loadCachedEventGroupsSchemes(myTestMetadataPersistence).groups;
     ArrayList<GroupValidationTestRule> groups = new ArrayList<>();
     Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    for (FUStatisticsWhiteListGroupsService.WLGroup group : testGroupsSchemes) {
+    for (EventGroupRemoteDescriptor group : testGroupsSchemes) {
       if (group.id == null || group.rules == null || group.rules.event_id == null) continue;
       Set<String> eventIds = group.rules.event_id;
       if (eventIds.contains(EventLogTestMetadataPersistence.TEST_RULE)) {
@@ -113,17 +113,17 @@ public class ValidationTestRulesPersistedStorage extends BaseValidationRulesPers
     updateValidators();
   }
 
-  private static @Nullable WLRule merge(@Nullable WLRule testRules, @Nullable WLRule productionTestRules) {
+  private static @Nullable GroupRemoteRule merge(@Nullable GroupRemoteRule testRules, @Nullable GroupRemoteRule productionTestRules) {
     if (testRules == null) return productionTestRules;
     if (productionTestRules == null) return testRules;
 
-    final WLRule rule = new WLRule();
+    final GroupRemoteRule rule = new GroupRemoteRule();
     copyRules(rule, productionTestRules);
     copyRules(rule, testRules);
     return rule;
   }
 
-  private static void copyRules(@NotNull WLRule to, @NotNull WLRule from) {
+  private static void copyRules(@NotNull GroupRemoteRule to, @NotNull GroupRemoteRule from) {
     if (to.enums == null) {
       to.enums = new HashMap<>();
     }
