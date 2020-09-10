@@ -89,29 +89,25 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     List<PushActionBase> additionalActions = ContainerUtil.findAll(group.getChildren(null), PushActionBase.class);
 
     PushActionBase simplePushAction = new SimplePushAction();
-    PushActionBase defaultPushAction = findDefaultPushAction(additionalActions);
+    PushActionBase.DefaultPushAction defaultPushAction = findDefaultPushAction(additionalActions);
     List<PushActionBase> pushActions = new ArrayList<>();
-    if (defaultPushAction == null) {
-      pushActions.add(simplePushAction);
-      pushActions.addAll(additionalActions);
-    }
-    else {
-      pushActions.addAll(additionalActions);
+    pushActions.add(simplePushAction);
+    pushActions.addAll(additionalActions);
+    if (defaultPushAction != null) {
       pushActions.remove(defaultPushAction);
-      pushActions.add(0, simplePushAction);
-      pushActions.add(0, defaultPushAction);
+      defaultPushAction.customize(pushActions);
     }
 
     return ContainerUtil.map(pushActions, action -> new ActionWrapper(myProject, this, action));
   }
 
-  private static @Nullable PushActionBase findDefaultPushAction(@NotNull List<PushActionBase> additionalActions) {
+  private static @Nullable PushActionBase.DefaultPushAction findDefaultPushAction(@NotNull List<PushActionBase> additionalActions) {
     List<PushActionBase> defaultPushActions = ContainerUtil.findAll(additionalActions, action -> action instanceof PushActionBase.DefaultPushAction);
     if (defaultPushActions.isEmpty()) {
       return null;
     }
     if (defaultPushActions.size() == 1) {
-      return defaultPushActions.get(0);
+      return (PushActionBase.DefaultPushAction) defaultPushActions.get(0);
     }
     LOG.warn("There can be only one default push action, found: " + defaultPushActions);
     return null;
@@ -379,8 +375,9 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     }
   }
 
-  private class SimplePushAction extends PushActionBase {
-    SimplePushAction() {
+  @ApiStatus.Internal
+  public final class SimplePushAction extends PushActionBase {
+    private SimplePushAction() {
       super(DvcsBundle.getString("action.complex.push"));
     }
 
