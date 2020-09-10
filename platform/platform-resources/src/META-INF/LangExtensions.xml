@@ -1344,6 +1344,7 @@
     <indexableFilesContributor implementation="com.intellij.util.indexing.roots.DefaultProjectIndexableFilesContributor" order="first"/>
     <indexableFilesContributor implementation="com.intellij.util.indexing.roots.AdditionalFilesContributor" order="last" id="aditionalFiles"/>
     <indexableFilesContributor implementation="com.intellij.util.indexing.roots.AdditionalLibraryRootsContributor" order="last, after aditionalFiles"/>
+    <psi.treeChangePreprocessor implementation="com.intellij.util.indexing.FileBasedIndexTreeChangePreprocessor"/>
   </extensions>
   <projectListeners>
     <listener class="com.intellij.openapi.fileEditor.impl.FileEditorVirtualFileAppearanceListener"

@@ -39,8 +39,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
-import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.cache.impl.id.PlatformIdTableBuilding;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -1711,20 +1709,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   public void registerIndexableSet(@NotNull IndexableFileSet set, @NotNull Project project) {
     myIndexableSets.add(set);
     myIndexableSetToProjectMap.put(set, project);
-    // TODO do not create a lot of change listeners
-    ((PsiManagerImpl)PsiManager.getInstance(project)).addTreeChangePreprocessor(event -> {
-      if (event.isGenericChange() &&
-          event.getCode() == PsiTreeChangeEventImpl.PsiEventType.CHILDREN_CHANGED) {
-        PsiFile file = event.getFile();
-
-        if (file != null) {
-          VirtualFile virtualFile = file.getVirtualFile();
-          if (virtualFile instanceof VirtualFileWithId && !isMock(virtualFile)) {
-            getChangedFilesCollector().getEventMerger().recordTransientStateChangeEvent(virtualFile);
-          }
-        }
-      }
-    });
   }
 
   private void clearUpToDateStateForPsiIndicesOfVirtualFile(VirtualFile virtualFile) {
