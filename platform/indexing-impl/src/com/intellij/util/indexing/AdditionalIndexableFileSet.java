@@ -18,34 +18,23 @@ import java.util.function.Supplier;
 public class AdditionalIndexableFileSet implements IndexableFileSet {
   @Nullable
   private final Project myProject;
-  private final boolean myOnlyProjectPart;
   private final Supplier<IndexableSetContributor[]> myExtensions;
 
   private final CachedValue<AdditionalIndexableRoots> myAdditionalIndexableRoots;
 
   public AdditionalIndexableFileSet(@Nullable Project project, IndexableSetContributor @NotNull ... extensions) {
     myProject = project;
-    myOnlyProjectPart = false;
     myExtensions = () -> extensions;
     myAdditionalIndexableRoots = new CachedValueImpl<>(() -> new CachedValueProvider.Result<>(collectFilesAndDirectories(),
                                                                                               VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS));
   }
 
-  public AdditionalIndexableFileSet(@Nullable Project project, boolean onlyProjectPart) {
+  public AdditionalIndexableFileSet(@Nullable Project project) {
     myProject = project;
     myExtensions = () -> IndexableSetContributor.EP_NAME.getExtensions();
     myAdditionalIndexableRoots = new CachedValueImpl<>(() -> new CachedValueProvider.Result<>(collectFilesAndDirectories(),
                                                                                               VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS,
                                                                                               IndexableSetContributorModificationTracker.getInstance()));
-    myOnlyProjectPart = onlyProjectPart;
-  }
-
-  public AdditionalIndexableFileSet(@Nullable Project project) {
-    this(project, false);
-  }
-
-  public AdditionalIndexableFileSet() {
-    this(null);
   }
 
   @NotNull
@@ -53,10 +42,8 @@ public class AdditionalIndexableFileSet implements IndexableFileSet {
     Set<VirtualFile> files = new THashSet<>();
     Set<VirtualFile> directories = new THashSet<>();
     for (IndexableSetContributor contributor : myExtensions.get()) {
-      if (myProject == null || !myOnlyProjectPart) {
-        for (VirtualFile root : IndexableSetContributor.getRootsToIndex(contributor)) {
-          (root.isDirectory() ? directories : files).add(root);
-        }
+      for (VirtualFile root : IndexableSetContributor.getRootsToIndex(contributor)) {
+        (root.isDirectory() ? directories : files).add(root);
       }
       if (myProject != null) {
         Set<VirtualFile> projectRoots = IndexableSetContributor.getProjectRootsToIndex(contributor, myProject);

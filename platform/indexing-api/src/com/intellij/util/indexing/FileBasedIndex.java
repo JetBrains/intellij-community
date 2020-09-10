@@ -57,7 +57,7 @@ public abstract class FileBasedIndex {
    * @deprecated please use {@link IndexableSetContributor} which will be managed registered/unregistered automatically.
    */
   @Deprecated
-  public abstract void registerIndexableSet(@NotNull IndexableFileSet set, @Nullable Project project);
+  public abstract void registerIndexableSet(@NotNull IndexableFileSet set, @NotNull Project project);
 
   /**
    * @deprecated please use {@link IndexableSetContributor} which will be managed registered/unregistered automatically.

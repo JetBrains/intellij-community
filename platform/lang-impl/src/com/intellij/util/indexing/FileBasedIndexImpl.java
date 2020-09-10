@@ -1708,24 +1708,23 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   @Override
-  public void registerIndexableSet(@NotNull IndexableFileSet set, @Nullable Project project) {
+  public void registerIndexableSet(@NotNull IndexableFileSet set, @NotNull Project project) {
     myIndexableSets.add(set);
     myIndexableSetToProjectMap.put(set, project);
-    if (project != null) {
-      ((PsiManagerImpl)PsiManager.getInstance(project)).addTreeChangePreprocessor(event -> {
-        if (event.isGenericChange() &&
-            event.getCode() == PsiTreeChangeEventImpl.PsiEventType.CHILDREN_CHANGED) {
-          PsiFile file = event.getFile();
+    // TODO do not create a lot of change listeners
+    ((PsiManagerImpl)PsiManager.getInstance(project)).addTreeChangePreprocessor(event -> {
+      if (event.isGenericChange() &&
+          event.getCode() == PsiTreeChangeEventImpl.PsiEventType.CHILDREN_CHANGED) {
+        PsiFile file = event.getFile();
 
-          if (file != null) {
-            VirtualFile virtualFile = file.getVirtualFile();
-            if (virtualFile instanceof VirtualFileWithId && !isMock(virtualFile)) {
-              getChangedFilesCollector().getEventMerger().recordTransientStateChangeEvent(virtualFile);
-            }
+        if (file != null) {
+          VirtualFile virtualFile = file.getVirtualFile();
+          if (virtualFile instanceof VirtualFileWithId && !isMock(virtualFile)) {
+            getChangedFilesCollector().getEventMerger().recordTransientStateChangeEvent(virtualFile);
           }
         }
-      });
-    }
+      }
+    });
   }
 
   private void clearUpToDateStateForPsiIndicesOfVirtualFile(VirtualFile virtualFile) {

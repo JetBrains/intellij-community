@@ -224,7 +224,7 @@ public final class FileBasedIndexProjectHandler implements IndexableFileSet {
   @Service
   public static final class ProjectAdditionalIndexableFileSet extends AdditionalIndexableFileSet {
     public ProjectAdditionalIndexableFileSet(@NotNull Project project) {
-      super(project, true);
+      super(project);
     }
   }
 }
