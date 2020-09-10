@@ -2,6 +2,7 @@ package com.intellij.jps.cache.loader;
 
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
+import com.intellij.jps.cache.JpsCacheBundle;
 import com.intellij.jps.cache.client.JpsServerClient;
 import com.intellij.jps.cache.model.AffectedModule;
 import com.intellij.jps.cache.model.BuildTargetState;
@@ -59,7 +60,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
     myTmpFolderToModuleName = null;
 
     SegmentedProgressIndicatorManager downloadProgressManager = context.getDownloadIndicatorManager();
-    downloadProgressManager.setText(this, "Calculating affected modules");
+    downloadProgressManager.setText(this, JpsCacheBundle.message("progress.text.calculating.affected.modules"));
     List<AffectedModule> affectedModules = calculateAffectedModules(context.getCurrentSourcesState(),
                                                                     context.getCommitSourcesState(), true);
     downloadProgressManager.finished(this);
@@ -84,7 +85,7 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
     try {
       // Extracting results
       long start = System.currentTimeMillis();
-      extractIndicatorManager.setText(this, "Extracting downloaded results...");
+      extractIndicatorManager.setText(this, JpsCacheBundle.message("progress.text.extracting.downloaded.results"));
       List<Future<?>> futureList = ContainerUtil.map(outputLoadResults, loadResult ->
         EXECUTOR_SERVICE.submit(new UnzipOutputTask(result, loadResult, extractIndicatorManager)));
       for (Future<?> future : futureList) {
@@ -126,14 +127,14 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
       return;
     }
 
-    indicatorManager.setText(this, "Applying JPS Caches...");
+    indicatorManager.setText(this, JpsCacheBundle.message("progress.text.applying.jps.caches"));
     ContainerUtil.map(myTmpFolderToModuleName.entrySet(),
                       entry -> EXECUTOR_SERVICE.submit(() -> {
                         String moduleName = entry.getValue();
                         File tmpModuleFolder = entry.getKey();
                         SegmentedProgressIndicatorManager.SubTaskProgressIndicator subTaskIndicator =
                           indicatorManager.createSubTaskIndicator();
-                        subTaskIndicator.setText2("Applying changes for " + moduleName + " module");
+                        subTaskIndicator.setText2(JpsCacheBundle.message("progress.details.applying.changes.for.module", moduleName));
                         File currentModuleBuildDir = new File(tmpModuleFolder.getParentFile(), moduleName);
                         FileUtil.delete(currentModuleBuildDir);
                         try {
@@ -338,7 +339,8 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
       try {
         SegmentedProgressIndicatorManager.SubTaskProgressIndicator subTaskIndicator = extractIndicatorManager.createSubTaskIndicator();
         extractIndicatorManager.getProgressIndicator().checkCanceled();
-        subTaskIndicator.setText2("Extracting compilation outputs for " + affectedModule.getName() + " module");
+        subTaskIndicator.setText2(
+          JpsCacheBundle.message("progress.details.extracting.compilation.outputs.for.module", affectedModule.getName()));
         LOG.debug("Downloaded JPS compiled module from: " + loadResult.getDownloadUrl());
         File tmpFolder = new File(outPath.getParent(), outPath.getName() + "_tmp");
         File zipFile = loadResult.getZipFile();
