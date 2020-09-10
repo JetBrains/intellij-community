@@ -2,9 +2,9 @@
 package com.intellij.internal.statistic.actions
 
 import com.intellij.internal.statistic.eventLog.getEventLogProviders
-import com.intellij.internal.statistic.eventLog.validator.persistence.BaseEventLogMetadataPersistence.getDefaultMetadataFile
-import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogMetadataPersistence.EVENTS_SCHEME_FILE
-import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogMetadataSettingsPersistence
+import com.intellij.internal.statistic.eventLog.validator.storage.persistence.BaseEventLogMetadataPersistence.getDefaultMetadataFile
+import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataPersistence.EVENTS_SCHEME_FILE
+import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataSettingsPersistence
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel

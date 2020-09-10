@@ -3,9 +3,9 @@ package com.intellij.internal.statistics.whitelist.storage
 
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules
-import com.intellij.internal.statistic.eventLog.whitelist.ValidationRulesInMemoryStorage
-import com.intellij.internal.statistic.eventLog.whitelist.GroupValidationTestRule
-import com.intellij.internal.statistic.eventLog.whitelist.ValidationTestRulesPersistedStorage
+import com.intellij.internal.statistic.eventLog.validator.storage.ValidationRulesInMemoryStorage
+import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule
+import com.intellij.internal.statistic.eventLog.validator.storage.ValidationTestRulesPersistedStorage
 import org.assertj.core.api.Assertions.assertThat
 
 internal class CompositeValidationRulesStorageTest : ValidationRulesBaseStorageTest() {

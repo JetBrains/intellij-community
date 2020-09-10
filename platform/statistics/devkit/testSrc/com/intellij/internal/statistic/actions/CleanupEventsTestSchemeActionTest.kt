@@ -2,8 +2,8 @@
 package com.intellij.internal.statistic.actions
 
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
-import com.intellij.internal.statistic.eventLog.whitelist.GroupValidationTestRule
-import com.intellij.internal.statistic.eventLog.whitelist.ValidationTestRulesPersistedStorage
+import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule
+import com.intellij.internal.statistic.eventLog.validator.storage.ValidationTestRulesPersistedStorage
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation

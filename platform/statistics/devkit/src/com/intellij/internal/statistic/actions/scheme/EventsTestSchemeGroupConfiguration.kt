@@ -13,9 +13,9 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.actions.TestParseEventsSchemeDialog
-import com.intellij.internal.statistic.eventLog.whitelist.GroupValidationTestRule
-import com.intellij.internal.statistic.eventLog.whitelist.GroupValidationTestRule.Companion.EMPTY_RULES
-import com.intellij.internal.statistic.eventLog.whitelist.WhitelistBuilder
+import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule
+import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule.Companion.EMPTY_RULES
+import com.intellij.internal.statistic.eventLog.events.WhitelistBuilder
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService
 import com.intellij.json.JsonLanguage
 import com.intellij.openapi.Disposable

@@ -6,7 +6,7 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.StatisticsDevKitUtil
 import com.intellij.internal.statistic.actions.OpenEventsSchemeFileAction.Companion.openFileInEditor
-import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogTestMetadataPersistence
+import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogTestMetadataPersistence
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 

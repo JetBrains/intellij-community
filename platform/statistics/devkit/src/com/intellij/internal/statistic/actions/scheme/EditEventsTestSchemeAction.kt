@@ -6,9 +6,9 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.StatisticsDevKitUtil
 import com.intellij.internal.statistic.StatisticsDevKitUtil.showNotification
-import com.intellij.internal.statistic.eventLog.whitelist.GroupValidationTestRule
-import com.intellij.internal.statistic.eventLog.whitelist.WhitelistBuilder
-import com.intellij.internal.statistic.eventLog.whitelist.ValidationTestRulesPersistedStorage
+import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule
+import com.intellij.internal.statistic.eventLog.events.WhitelistBuilder
+import com.intellij.internal.statistic.eventLog.validator.storage.ValidationTestRulesPersistedStorage
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent

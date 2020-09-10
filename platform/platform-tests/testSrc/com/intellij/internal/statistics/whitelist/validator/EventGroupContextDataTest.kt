@@ -2,7 +2,7 @@
 package com.intellij.internal.statistics.whitelist.validator
 
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupContextData
-import com.intellij.internal.statistic.eventLog.whitelist.GlobalRulesHolder
+import com.intellij.internal.statistic.eventLog.validator.storage.GlobalRulesHolder
 import org.junit.Test
 import kotlin.test.assertNotSame
 import kotlin.test.assertSame

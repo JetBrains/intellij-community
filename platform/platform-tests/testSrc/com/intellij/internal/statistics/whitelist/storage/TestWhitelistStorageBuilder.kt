@@ -1,9 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.whitelist.storage
 
-import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogMetadataPersistence
-import com.intellij.internal.statistic.eventLog.whitelist.EventLogMetadataLoader
-import com.intellij.internal.statistic.eventLog.whitelist.ValidationRulesPersistedStorage
+import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataPersistence
+import com.intellij.internal.statistic.eventLog.validator.storage.EventLogMetadataLoader
+import com.intellij.internal.statistic.eventLog.validator.storage.ValidationRulesPersistedStorage
 
 class TestWhitelistStorageBuilder(private val recorderId: String = "TEST") {
   private var cachedContent: String? = ""

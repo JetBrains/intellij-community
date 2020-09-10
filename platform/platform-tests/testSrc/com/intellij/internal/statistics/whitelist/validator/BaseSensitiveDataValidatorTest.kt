@@ -4,11 +4,11 @@ package com.intellij.internal.statistics.whitelist.validator
 import com.intellij.internal.statistic.eventLog.EventLogBuild
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
-import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogMetadataPersistence
+import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataPersistence
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules
-import com.intellij.internal.statistic.eventLog.whitelist.EventLogMetadataLoader
-import com.intellij.internal.statistic.eventLog.whitelist.ValidationRulesPersistedStorage
+import com.intellij.internal.statistic.eventLog.validator.storage.EventLogMetadataLoader
+import com.intellij.internal.statistic.eventLog.validator.storage.ValidationRulesPersistedStorage
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.PlatformTestUtil

@@ -4,7 +4,7 @@ package com.intellij.internal.statistics.whitelist
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.eventLog.whitelist.WhitelistBuilder
+import com.intellij.internal.statistic.eventLog.events.WhitelistBuilder
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 

@@ -2,8 +2,8 @@
 package com.intellij.internal.statistics.whitelist.storage
 
 
-import com.intellij.internal.statistic.eventLog.whitelist.GroupValidationTestRule
-import com.intellij.internal.statistic.eventLog.whitelist.ValidationTestRulesPersistedStorage
+import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule
+import com.intellij.internal.statistic.eventLog.validator.storage.ValidationTestRulesPersistedStorage
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 

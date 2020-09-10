@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.EnumValidationRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.utils.ValidationSimpleRuleFactory;
-import com.intellij.internal.statistic.eventLog.whitelist.GlobalRulesHolder;
+import com.intellij.internal.statistic.eventLog.validator.storage.GlobalRulesHolder;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SortedList;
