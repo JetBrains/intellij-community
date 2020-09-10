@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.LoggingRule;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -93,7 +94,7 @@ public class PyEnvTaskRunner {
         final Sdk sdk = getSdk(executable, testTask);
         if (skipOnFlavors != null) {
           final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk);
-          if (Arrays.stream(skipOnFlavors).anyMatch((o) -> o.isInstance(flavor))) {
+          if (ContainerUtil.exists(skipOnFlavors, o -> o.isInstance(flavor))) {
             LOG.warn("Skipping flavor " + flavor.toString());
             continue;
           }
