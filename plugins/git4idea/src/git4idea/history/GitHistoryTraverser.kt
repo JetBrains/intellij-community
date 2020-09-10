@@ -13,6 +13,9 @@ import git4idea.GitCommit
 /**
  * Commit index which is used by [GitHistoryTraverser]
  * Can be obtained by [GitHistoryTraverser.traverse] and [GitHistoryTraverser.IndexedRoot.filterCommits] methods
+ *
+ * @see subscribeForGitHistoryTraverserCreation
+ * @see getTraverser
  */
 typealias TraverseCommitId = Int
 
@@ -26,7 +29,7 @@ interface GitHistoryTraverser {
     root: VirtualFile,
     start: StartNode = StartNode.Head,
     type: TraverseType = TraverseType.DFS,
-    commitHandler: Traverse.(id: TraverseCommitId) -> Boolean
+    commitHandler: Traverse.(id: TraverseCommitInfo) -> Boolean
   )
 
   /**
@@ -119,4 +122,9 @@ interface GitHistoryTraverser {
   enum class TraverseType {
     DFS, BFS
   }
+
+  data class TraverseCommitInfo(
+    val id: TraverseCommitId,
+    val parents: List<TraverseCommitId>
+  )
 }

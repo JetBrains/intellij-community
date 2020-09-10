@@ -27,7 +27,7 @@ internal class FilesHistoryProvider(val traverser: GitHistoryTraverser) {
       diffInMergeCommits = GitCommitRequirements.DiffInMergeCommits.NO_DIFF
     )
     var commitsWithFilesCount = 0
-    traverser.traverse(root, GitHistoryTraverser.StartNode.Head, GitHistoryTraverser.TraverseType.BFS) { commitId ->
+    traverser.traverse(root, GitHistoryTraverser.StartNode.Head, GitHistoryTraverser.TraverseType.BFS) { (commitId, _) ->
       if (commitId in commitsWithFiles) {
         loadFullDetailsLater(commitId, requirements) { commit ->
           val affectedPaths = commit.affectedPaths

@@ -13,11 +13,12 @@ import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.index.IndexDataGetter
 import com.intellij.vcs.log.data.index.IndexedDetails.Companion.createMetadata
 import com.intellij.vcs.log.data.index.VcsLogIndex
-import com.intellij.vcs.log.graph.api.LinearGraph
+import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.graph.utils.BfsWalk
 import com.intellij.vcs.log.graph.utils.DfsWalk
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
+import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
 import com.intellij.vcs.log.impl.TimedVcsCommitImpl
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
@@ -25,15 +26,16 @@ import git4idea.GitCommit
 import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.history.GitHistoryTraverser.Traverse
+import git4idea.history.GitHistoryTraverser.TraverseCommitInfo
 import java.util.concurrent.atomic.AtomicBoolean
 
-class GitHistoryTraverserImpl(private val project: Project, private val logData: VcsLogData) : GitHistoryTraverser {
+internal class GitHistoryTraverserImpl(private val project: Project, private val logData: VcsLogData) : GitHistoryTraverser {
   override fun toHash(id: TraverseCommitId) = logData.getCommitId(id)!!.hash
   private fun startSearch(
     start: Hash,
     root: VirtualFile,
-    walker: (startId: TraverseCommitId, graph: LinearGraph, handler: (id: TraverseCommitId) -> Boolean) -> Unit,
-    commitHandler: Traverse.(id: TraverseCommitId) -> Boolean
+    walker: (startId: TraverseCommitId, graph: LiteLinearGraph, visited: BitSetFlags, handler: (id: TraverseCommitId) -> Boolean) -> Unit,
+    commitHandler: Traverse.(id: TraverseCommitInfo) -> Boolean
   ) {
     val dataPack = logData.dataPack
     val hashIndex = logData.getCommitIndex(start, root)
@@ -41,11 +43,14 @@ class GitHistoryTraverserImpl(private val project: Project, private val logData:
     val permanentGraph = dataPack.permanentGraph as PermanentGraphImpl<Int>
 
     val hashNodeId = permanentGraph.permanentCommitsInfo.getNodeId(hashIndex)
+    val graph = LinearGraphUtils.asLiteLinearGraph(permanentGraph.linearGraph)
+    val visited = BitSetFlags(graph.nodesCount())
     val traverse = TraverseImpl(this, root)
-    walker(hashNodeId, permanentGraph.linearGraph) {
+    walker(hashNodeId, graph, visited) {
       ProgressManager.checkCanceled()
       val commitId = permanentGraph.permanentCommitsInfo.getCommitId(it)
-      traverse.commitHandler(commitId)
+      val parents = graph.getNodes(it, LiteLinearGraph.NodeFilter.DOWN)
+      traverse.commitHandler(TraverseCommitInfo(commitId, parents))
     }
     traverse.loadDetails()
   }
@@ -54,7 +59,7 @@ class GitHistoryTraverserImpl(private val project: Project, private val logData:
     root: VirtualFile,
     start: GitHistoryTraverser.StartNode,
     type: GitHistoryTraverser.TraverseType,
-    commitHandler: Traverse.(id: TraverseCommitId) -> Boolean
+    commitHandler: Traverse.(id: TraverseCommitInfo) -> Boolean
   ) {
     val hash = when (start) {
       is GitHistoryTraverser.StartNode.SpecificHash -> start.hash
@@ -63,10 +68,10 @@ class GitHistoryTraverserImpl(private val project: Project, private val logData:
     startSearch(
       hash,
       root,
-      walker = { hashNodeId, graph, handler ->
+      walker = { hashNodeId, graph, visited, handler ->
         when (type) {
-          GitHistoryTraverser.TraverseType.DFS -> DfsWalk(listOf(hashNodeId), graph).walk(true, handler)
-          GitHistoryTraverser.TraverseType.BFS -> BfsWalk(hashNodeId, LinearGraphUtils.asLiteLinearGraph(graph)).walk(handler)
+          GitHistoryTraverser.TraverseType.DFS -> DfsWalk(listOf(hashNodeId), graph, visited).walk(true, handler)
+          GitHistoryTraverser.TraverseType.BFS -> BfsWalk(hashNodeId, graph, visited).walk(handler)
         }
       },
       commitHandler = commitHandler

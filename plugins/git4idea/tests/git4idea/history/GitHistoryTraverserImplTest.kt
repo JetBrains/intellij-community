@@ -46,7 +46,7 @@ class GitHistoryTraverserImplTest : GitSingleRepoTest() {
     traverser.withIndex(listOf(repo.root), testRootDisposable) { indexedRoots ->
       val indexedRoot = indexedRoots.single()
       val authorCommitIds = indexedRoot.filterCommits(GitHistoryTraverser.IndexedRoot.TraverseCommitsFilter.Author(author))
-      traverse(indexedRoot.root) { commitId ->
+      traverse(indexedRoot.root) { (commitId, _) ->
         if (commitId in authorCommitIds) {
           loadFullDetailsLater(commitId) { details ->
             assertTrue(details.id in authorCommits)
@@ -79,7 +79,7 @@ class GitHistoryTraverserImplTest : GitSingleRepoTest() {
     val maxCommitsHistoryCount = 5
     var fileInCommitCount = 0
     var commitsCounter = 0
-    traverser.traverse(repo.root) { commitId ->
+    traverser.traverse(repo.root) { (commitId, _) ->
       loadFullDetailsLater(commitId) { details ->
         if (ChangesUtil.getFiles(details.changes.stream()).getIfSingle()!!.name.startsWith("file")) {
           fileInCommitCount++
