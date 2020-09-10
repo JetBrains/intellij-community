@@ -51,6 +51,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
+import kotlin.Unit;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -461,7 +462,10 @@ public final class TerminalView {
   public void detachWidgetAndRemoveContent(@NotNull Content content) {
     ContentManager contentManager = myToolWindow.getContentManager();
     LOG.assertTrue(contentManager.getIndexOfContent(content) >= 0, "Not a terminal content");
-    contentManager.removeContent(content, true);
+    TerminalTabCloseListener.Companion.executeContentOperationSilently(content, () -> {
+      contentManager.removeContent(content, true);
+      return Unit.INSTANCE;
+    });
     Collection<TerminalContainer> containers = ContainerUtil.filter(myContainerByWidgetMap.values(),
                                                                     (container -> container.getContent().equals(content)));
     for (TerminalContainer container : containers) {
