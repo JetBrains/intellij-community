@@ -541,8 +541,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
         pair = pair(module.getName(), moduleLevel); // first value
       }
       else if (!Comparing.equal(pair.getSecond(), moduleLevel)) {
-        return "Modules " + pair.getFirst() + " and " + module.getName() +
-               " must have the same language level because of cyclic dependencies between them";
+        return JpsBuildBundle.message("build.message.modules.0.and.1.must.have.the.same.language.level", pair.getFirst(), module.getName());
       }
     }
 
@@ -560,7 +559,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
           }
           else {
             if (!overridden.second.equals(parsed)) {
-              return "Modules " + overridden.first + " and " + module.getName() + " must have the same 'additional command line parameters' specified because of cyclic dependencies between them";
+              return JpsBuildBundle.message("build.message.modules.0.and.1.must.have.the.same.additional.command.line.parameters", overridden.first, module.getName());
             }
           }
         }
@@ -578,9 +577,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     for (JpsModule module : modules) {
       final ProcessorConfigProfile prof = compilerConfig.getAnnotationProcessingProfile(module);
       if (prof.isEnabled()) {
-        return "Annotation processing is not supported for module cycles. Please ensure that all modules from cycle [" +
-               chunk.getName() +
-               "] are excluded from annotation processing";
+        return JpsBuildBundle.message("build.message.annotation.processing.is.not.supported.for.module.cycles", chunk.getName());
       }
     }
     return null;

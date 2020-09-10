@@ -59,6 +59,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * @author Eugene Zhuravlev
@@ -331,34 +332,11 @@ public final class IncProjectBuilder {
     if (modules == null || modules.isEmpty()) {
       return;
     }
-    final StringBuilder message = new StringBuilder();
-    if (modules.size() > 1) {
-      message.append("Modules ");
-      final int namesLimit = 5;
-      int idx = 0;
-      for (Iterator<JpsModule> iterator = modules.iterator(); iterator.hasNext(); ) {
-        final JpsModule module = iterator.next();
-        if (idx == namesLimit && iterator.hasNext()) {
-          message.append(" and ").append(modules.size() - namesLimit).append(" others");
-          break;
-        }
-        if (idx > 0) {
-          message.append(", ");
-        }
-        message.append("\"").append(module.getName()).append("\"");
-        idx += 1;
-      }
-      message.append(" were");
-    }
-    else {
-      message.append("Module \"").append(modules.iterator().next().getName()).append("\" was");
-    }
-    message.append(" fully rebuilt due to project configuration");
-    if (ModuleBuildTarget.REBUILD_ON_DEPENDENCY_CHANGE) {
-      message.append("/dependencies");
-    }
-    message.append(" changes");
-    context.processMessage(new CompilerMessage("", BuildMessage.Kind.INFO, message.toString()));
+    int shown = modules.size() == 6 ? 6 : Math.min(5, modules.size());
+    String modulesText = modules.stream().limit(shown).map(m -> "'" + m.getName() + "'").collect(Collectors.joining(", "));
+    String text = JpsBuildBundle.message("build.messages.modules.were.fully.rebuilt", modulesText, modules.size(),
+                                         modules.size() - shown, ModuleBuildTarget.REBUILD_ON_DEPENDENCY_CHANGE ? 1 : 0);
+    context.processMessage(new CompilerMessage("", BuildMessage.Kind.INFO, text));
   }
 
   private static void reportUnprocessedChanges(CompileContextImpl context) {
