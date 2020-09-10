@@ -33,8 +33,6 @@ public abstract class AbstractKeyDescriptor<T> {
 
   /**
    * Returns the name of the attribute shown in the colors settings page.
-   *
-   * @return the name of the attribute.
    */
   public @NotNull String getDisplayName() {
     return myDisplayName.get();
@@ -42,11 +40,8 @@ public abstract class AbstractKeyDescriptor<T> {
 
   /**
    * Returns the text attributes or color key for which the colors are specified.
-   *
-   * @return the attributes key.
    */
-  @NotNull
-  public T getKey() {
+  public @NotNull T getKey() {
     return myKey;
   }
 }

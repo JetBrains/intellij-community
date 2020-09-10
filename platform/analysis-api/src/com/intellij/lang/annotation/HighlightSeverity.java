@@ -29,11 +29,7 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
    */
   public static final HighlightSeverity GENERIC_SERVER_ERROR_OR_WARNING = new HighlightSeverity("SERVER PROBLEM", 100);
 
-  /**
-   * The standard severity level for 'weak' :) warning annotations.
-   *
-   * @deprecated use {@link #WEAK_WARNING}
-   */
+  /** @deprecated use {@link #WEAK_WARNING} */
   @Deprecated
   public static final HighlightSeverity INFO = new HighlightSeverity("INFO", 200);
 

@@ -5,7 +5,10 @@ import com.intellij.application.options.colors.highlighting.RendererWrapper;
 import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.codeInsight.documentation.render.DocRenderItem;
 import com.intellij.lang.Language;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.HighlighterColors;
+import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
@@ -19,7 +22,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,11 +36,10 @@ import java.util.Map;
  * @author Rustam Vishnyakov
  */
 public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, DisplayPrioritySortable, ColorSettingsPage.PreviewCustomizer {
-  @NonNls private static final Map<String, TextAttributesKey> TAG_HIGHLIGHTING_MAP = RainbowHighlighter.createRainbowHLM();
-
   private final static TextAttributesKey FAKE_BAD_CHAR =
     TextAttributesKey.createTextAttributesKey("FAKE_BAD_CHAR", HighlighterColors.BAD_CHARACTER);
 
+  private static final Map<String, TextAttributesKey> TAG_HIGHLIGHTING_MAP = RainbowHighlighter.createRainbowHLM();
   static {
     TAG_HIGHLIGHTING_MAP.put("bad_char", FAKE_BAD_CHAR);
     TAG_HIGHLIGHTING_MAP.put("template_language", DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR);
@@ -85,8 +86,7 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
     TAG_HIGHLIGHTING_MAP.put("highlighted_reference", DefaultLanguageHighlighterColors.HIGHLIGHTED_REFERENCE);
   }
 
-  @NonNls private static final Map<String, TextAttributesKey> INLINE_ELEMENTS = new HashMap<>();
-
+  private static final Map<String, TextAttributesKey> INLINE_ELEMENTS = new HashMap<>();
   static {
     INLINE_ELEMENTS.put("parameter_hint", DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT);
     INLINE_ELEMENTS.put("parameter_hint_highlighted", DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_HIGHLIGHTED);
@@ -207,21 +207,18 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
                         DefaultLanguageHighlighterColors.INLINE_REFACTORING_SETTINGS_HOVERED, ColorDescriptor.Kind.BACKGROUND_WITH_TRANSPARENCY),
   };
 
-  @Nullable
   @Override
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return FileTypes.PLAIN_TEXT.getIcon();
   }
 
-  @NotNull
   @Override
-  public SyntaxHighlighter getHighlighter() {
+  public @NotNull SyntaxHighlighter getHighlighter() {
     return new PlainSyntaxHighlighter();
   }
 
-  @NotNull
   @Override
-  public String getDemoText() {
+  public @NotNull String getDemoText() {
     return
       "Bad characters: <bad_char>????</bad_char>\n" +
       "<keyword>Keyword</keyword>\n" +
@@ -271,15 +268,13 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
       "    <template_language>{% Template language %}</template_language>";
   }
 
-  @Nullable
   @Override
-  public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
+  public @Nullable Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
     return TAG_HIGHLIGHTING_MAP;
   }
 
-  @Nullable
   @Override
-  public Map<String, TextAttributesKey> getAdditionalInlineElementToDescriptorMap() {
+  public @Nullable Map<String, TextAttributesKey> getAdditionalInlineElementToDescriptorMap() {
     return INLINE_ELEMENTS;
   }
 
@@ -293,9 +288,8 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
     return COLOR_DESCRIPTORS;
   }
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return OptionsBundle.message("options.language.defaults.display.name");
   }
 
@@ -311,9 +305,8 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
            || DefaultLanguageHighlighterColors.DOC_COMMENT_TAG_VALUE.equals(type);
   }
 
-  @Nullable
   @Override
-  public Language getLanguage() {
+  public @Nullable Language getLanguage() {
     return null;
   }
 

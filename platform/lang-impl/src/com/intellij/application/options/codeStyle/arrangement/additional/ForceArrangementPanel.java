@@ -2,6 +2,7 @@
 package com.intellij.application.options.codeStyle.arrangement.additional;
 
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.OptionGroup;
@@ -13,19 +14,20 @@ import org.jetbrains.annotations.PropertyKey;
 import javax.swing.*;
 
 public class ForceArrangementPanel {
-
-  @NotNull private final JComboBox myForceRearrangeComboBox;
-  @NotNull private final JPanel myPanel;
+  private final @NotNull JComboBox<SelectedMode> myForceRearrangeComboBox;
+  private final @NotNull JPanel myPanel;
 
   public ForceArrangementPanel() {
-    myForceRearrangeComboBox = new JComboBox();
+    myForceRearrangeComboBox = new ComboBox<>();
     myForceRearrangeComboBox.setModel(new EnumComboBoxModel<>(SelectedMode.class));
     myForceRearrangeComboBox.setMaximumSize(myForceRearrangeComboBox.getPreferredSize());
     myPanel = createPanel();
   }
 
   public int getRearrangeMode() {
-    return getSelectedMode().rearrangeMode;
+    Object item = myForceRearrangeComboBox.getSelectedItem();
+    assert item != null : myForceRearrangeComboBox.getSelectedIndex();
+    return ((SelectedMode)item).rearrangeMode;
   }
 
   public void setSelectedMode(@NotNull SelectedMode mode) {
@@ -38,12 +40,10 @@ public class ForceArrangementPanel {
     setSelectedMode(toSetUp);
   }
 
-  @NotNull
-  public JPanel getPanel() {
+  public @NotNull JPanel getPanel() {
     return myPanel;
   }
 
-  @NotNull
   private JPanel createPanel() {
     OptionGroup group = new OptionGroup(ApplicationBundle.message("arrangement.settings.additional.title"));
     JPanel textWithComboPanel = new JPanel();
@@ -53,11 +53,6 @@ public class ForceArrangementPanel {
     textWithComboPanel.add(myForceRearrangeComboBox);
     group.add(textWithComboPanel);
     return group.createPanel();
-  }
-
-  @NotNull
-  private SelectedMode getSelectedMode() {
-    return (SelectedMode)myForceRearrangeComboBox.getSelectedItem();
   }
 
   private enum SelectedMode {
@@ -73,8 +68,7 @@ public class ForceArrangementPanel {
       rearrangeMode = mode;
     }
 
-    @Nullable
-    private static SelectedMode getByMode(int mode) {
+    static @Nullable SelectedMode getByMode(int mode) {
       for (SelectedMode currentMode: values()) {
         if (currentMode.rearrangeMode == mode) return currentMode;
       }
@@ -82,7 +76,6 @@ public class ForceArrangementPanel {
     }
 
     @Override
-    @NotNull
     public String toString() {
       return ApplicationBundle.message(myKey);
     }

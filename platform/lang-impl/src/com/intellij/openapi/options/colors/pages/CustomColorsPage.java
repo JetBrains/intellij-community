@@ -13,7 +13,6 @@ import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import com.intellij.util.PlatformIcons;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -33,7 +32,7 @@ public class CustomColorsPage implements ColorSettingsPage, DisplayPrioritySorta
     new AttributesDescriptor(OptionsBundle.messagePointer("options.custom.attribute.descriptor.invalid.string.escape"), CustomHighlighterColors.CUSTOM_INVALID_STRING_ESCAPE),
   };
 
-  @NonNls private static final SyntaxTable SYNTAX_TABLE = new SyntaxTable();
+  private static final SyntaxTable SYNTAX_TABLE = new SyntaxTable();
   static {
     SYNTAX_TABLE.setLineComment("#");
     SYNTAX_TABLE.setStartComment("/*");
@@ -52,8 +51,7 @@ public class CustomColorsPage implements ColorSettingsPage, DisplayPrioritySorta
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return OptionsBundle.message("options.custom.display.name");
   }
 
@@ -73,14 +71,12 @@ public class CustomColorsPage implements ColorSettingsPage, DisplayPrioritySorta
   }
 
   @Override
-  @NotNull
-  public SyntaxHighlighter getHighlighter() {
+  public @NotNull SyntaxHighlighter getHighlighter() {
     return new CustomFileHighlighter(SYNTAX_TABLE);
   }
 
   @Override
-  @NotNull
-  public String getDemoText() {
+  public @NotNull String getDemoText() {
     return "# Line comment\n"
            + "aKeyword1 variable = 123;\n"
            + "anotherKeyword1 someString = \"SomeString\";\n"

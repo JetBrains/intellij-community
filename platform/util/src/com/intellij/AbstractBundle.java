@@ -34,7 +34,7 @@ public abstract class AbstractBundle {
   private static final Logger LOG = Logger.getInstance(AbstractBundle.class);
   private Reference<ResourceBundle> myBundle;
   private Reference<ResourceBundle> myDefaultBundle;
-  @NonNls private final String myPathToBundle;
+  private final @NonNls String myPathToBundle;
 
   protected AbstractBundle(@NonNls @NotNull String pathToBundle) {
     myPathToBundle = pathToBundle;

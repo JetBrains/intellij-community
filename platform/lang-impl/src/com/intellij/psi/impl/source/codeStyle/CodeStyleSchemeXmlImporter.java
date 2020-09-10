@@ -21,6 +21,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.openapi.util.Pair.pair;
+
 /**
  * Imports Intellij IDEA code style scheme in XML format.
  * 
@@ -32,22 +34,18 @@ public class CodeStyleSchemeXmlImporter extends CodeStyleSettingsLoader implemen
     return new String[]{"xml"};
   }
 
-  @Nullable
   @Override
-  public CodeStyleScheme importScheme(@NotNull Project project,
-                                      @NotNull VirtualFile selectedFile,
-                                      @NotNull CodeStyleScheme currentScheme,
-                                      @NotNull SchemeFactory<CodeStyleScheme> schemeFactory) throws SchemeImportException {
+  public @Nullable CodeStyleScheme importScheme(@NotNull Project project,
+                                                @NotNull VirtualFile selectedFile,
+                                                @NotNull CodeStyleScheme currentScheme,
+                                                @NotNull SchemeFactory<CodeStyleScheme> schemeFactory) throws SchemeImportException {
     Element rootElement = SchemeImportUtil.loadSchemeDom(selectedFile);
     Element schemeRoot = findSchemeRoot(rootElement);
-    final Pair<String, CodeStyleScheme> importPair =
-      !ApplicationManager.getApplication().isUnitTestMode() ?
-      ImportSchemeChooserDialog.selectOrCreateTargetScheme(project, currentScheme, schemeFactory, getSchemeName(schemeRoot)) :
-      Pair.create(currentScheme.getName(), currentScheme);
-    if (importPair != null) {
-      return readSchemeFromDom(schemeRoot, importPair.second);
-    }
-    return null;
+    Pair<String, CodeStyleScheme> importPair =
+      ApplicationManager.getApplication().isUnitTestMode()
+      ? pair(currentScheme.getName(), currentScheme)
+      : ImportSchemeChooserDialog.selectOrCreateTargetScheme(project, currentScheme, schemeFactory, getSchemeName(schemeRoot));
+    return importPair != null ? readSchemeFromDom(schemeRoot, importPair.second) : null;
   }
 
   private static @NlsSafe String getSchemeName(@NotNull Element rootElement) throws SchemeImportException {
@@ -65,9 +63,7 @@ public class CodeStyleSchemeXmlImporter extends CodeStyleSettingsLoader implemen
     return schemeNameAttr.getValue();
   }
 
-
-  private static CodeStyleScheme readSchemeFromDom(@NotNull Element rootElement, @NotNull CodeStyleScheme scheme)
-    throws SchemeImportException {
+  private static CodeStyleScheme readSchemeFromDom(@NotNull Element rootElement, @NotNull CodeStyleScheme scheme) throws SchemeImportException {
     CodeStyleSettings newSettings = CodeStyleSettingsManager.getInstance().createSettings();
     loadSettings(rootElement, newSettings);
     newSettings.resetDeprecatedFields(); // Clean up if imported from legacy settings

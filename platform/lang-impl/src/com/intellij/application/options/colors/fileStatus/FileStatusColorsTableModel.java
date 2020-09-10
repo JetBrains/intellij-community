@@ -92,8 +92,7 @@ public class FileStatusColorsTableModel extends AbstractTableModel {
     fireTableCellUpdated(rowIndex, 1);
   }
 
-  @Nullable
-  FileStatusColorDescriptor getDescriptorByName(String statusName) {
+  @Nullable FileStatusColorDescriptor getDescriptorByName(String statusName) {
     for (FileStatusColorDescriptor descriptor : myDescriptors) {
       if (statusName.equals(descriptor.getStatus().getText())) {
         return descriptor;
@@ -131,8 +130,7 @@ public class FileStatusColorsTableModel extends AbstractTableModel {
     }
   }
 
-  @Nullable
-  public FileStatusColorDescriptor getDescriptorAt(int index) {
+  public @Nullable FileStatusColorDescriptor getDescriptorAt(int index) {
     if (index >= 0 && index < myDescriptors.size()) {
       return myDescriptors.get(index);
     }

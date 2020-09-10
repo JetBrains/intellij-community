@@ -1,10 +1,11 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.colors.pages;
 
 import com.intellij.execution.process.ConsoleHighlighter;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
@@ -13,7 +14,6 @@ import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.HashMap;
@@ -23,7 +23,7 @@ import java.util.Map;
  * @author oleg, Roman.Chernyatchik
  */
 public class ANSIColoredConsoleColorsPage implements ColorSettingsPage, DisplayPrioritySortable {
-
+  @SuppressWarnings("SpellCheckingInspection")
   private static final String DEMO_TEXT =
     "<stdsys>C:\\command.com</stdsys>\n" +
     "-<stdout> C:></stdout>\n" +
@@ -90,7 +90,7 @@ public class ANSIColoredConsoleColorsPage implements ColorSettingsPage, DisplayP
   };
 
   private static final Map<String, TextAttributesKey> ADDITIONAL_HIGHLIGHT_DESCRIPTORS = new HashMap<>();
-  static{
+  static {
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("stdsys", ConsoleViewContentType.SYSTEM_OUTPUT_KEY);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("stdout", ConsoleViewContentType.NORMAL_OUTPUT_KEY);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("stdin", ConsoleViewContentType.USER_INPUT_KEY);
@@ -126,21 +126,18 @@ public class ANSIColoredConsoleColorsPage implements ColorSettingsPage, DisplayP
   };
 
   @Override
-  @Nullable
-  public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
+  public @NotNull Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
     return ADDITIONAL_HIGHLIGHT_DESCRIPTORS;
   }
 
   @Override
-  @NotNull
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return OptionsBundle.message("color.settings.console.name");
   }
 
   @Override
-  @NotNull
-  public Icon getIcon() {
-    return FileTypes.PLAIN_TEXT.getIcon();
+  public @NotNull Icon getIcon() {
+    return PlainTextFileType.INSTANCE.getIcon();
   }
 
   @Override
@@ -154,14 +151,12 @@ public class ANSIColoredConsoleColorsPage implements ColorSettingsPage, DisplayP
   }
 
   @Override
-  @NotNull
-  public SyntaxHighlighter getHighlighter() {
+  public @NotNull SyntaxHighlighter getHighlighter() {
      return new PlainSyntaxHighlighter();
   }
 
   @Override
-  @NotNull
-  public String getDemoText() {
+  public @NotNull String getDemoText() {
     return DEMO_TEXT;
   }
 

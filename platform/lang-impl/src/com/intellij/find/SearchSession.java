@@ -15,8 +15,9 @@ public interface SearchSession {
   @Deprecated
   @Nls String INCORRECT_REGEX_MESSAGE = FindBundle.message(INCORRECT_REGEXP_MESSAGE_KEY);
 
-  @NotNull
-  SearchReplaceComponent getComponent();
+  @NotNull FindModel getFindModel();
+
+  @NotNull SearchReplaceComponent getComponent();
 
   boolean hasMatches();
 

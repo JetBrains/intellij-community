@@ -92,9 +92,8 @@ public class ImportSchemeChooserDialog extends DialogWrapper {
     return mySelectedName;
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return contentPane;
   }
 
@@ -102,8 +101,7 @@ public class ImportSchemeChooserDialog extends DialogWrapper {
     return myUseCurrentScheme.isSelected();
   }
 
-  @Nullable
-  public String getTargetName() {
+  public @Nullable String getTargetName() {
     String name = myTargetNameField.getText();
     return name != null && !name.trim().isEmpty() ? name : null;
   }

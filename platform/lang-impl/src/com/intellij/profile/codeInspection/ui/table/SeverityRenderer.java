@@ -32,11 +32,9 @@ public class SeverityRenderer extends ComboBoxTableRenderer<HighlightSeverity> {
 
   static final HighlightSeverity EDIT_SEVERITIES = new HighlightSeverity("-", -1);
 
-  @NotNull
-  private final Runnable myOnClose;
+  private final @NotNull Runnable myOnClose;
   private final ScopesAndSeveritiesTable myTable;
-  @NotNull
-  private final Project myProject;
+  private final @NotNull Project myProject;
 
   public SeverityRenderer(@NotNull InspectionProfileImpl inspectionProfile,
                           @NotNull Project project,
@@ -83,14 +81,14 @@ public class SeverityRenderer extends ComboBoxTableRenderer<HighlightSeverity> {
   }
 
   @Override
-  protected Icon getIconFor(@NotNull final HighlightSeverity value) {
+  protected Icon getIconFor(@NotNull HighlightSeverity value) {
     return value == EDIT_SEVERITIES
            ? EmptyIcon.create(HighlightDisplayLevel.getEmptyIconDim())
            : HighlightDisplayLevel.find(value).getIcon();
   }
 
   @Override
-  public boolean isCellEditable(final EventObject event) {
+  public boolean isCellEditable(EventObject event) {
     return !(event instanceof MouseEvent) || ((MouseEvent)event).getClickCount() >= 1;
   }
 
@@ -104,9 +102,8 @@ public class SeverityRenderer extends ComboBoxTableRenderer<HighlightSeverity> {
     super.onClosed(event);
     myOnClose.run();
     if (getCellEditorValue() == EDIT_SEVERITIES) {
-      ApplicationManager.getApplication().invokeLater(() ->
-                                                        SeverityEditorDialog.show(myProject, null, SeverityRegistrar.getSeverityRegistrar(myProject), true, severity ->
-                                                          myTable.setSelectedSeverity(severity)));
+      ApplicationManager.getApplication().invokeLater( () -> SeverityEditorDialog.show(
+        myProject, null, SeverityRegistrar.getSeverityRegistrar(myProject), true, severity -> myTable.setSelectedSeverity(severity)));
     }
   }
 }

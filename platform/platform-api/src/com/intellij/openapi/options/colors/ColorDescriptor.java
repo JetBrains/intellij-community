@@ -59,18 +59,14 @@ public final class ColorDescriptor extends AbstractKeyDescriptor<ColorKey> {
 
   /**
    * Returns the type of color corresponding to the color key (foreground or background).
-   *
-   * @return the type of color.
    */
-  @NotNull
-  public Kind getKind() {
+  public @NotNull Kind getKind() {
     return myKind;
   }
 
   @SuppressWarnings("RedundantMethodOverride") // binary compatibility
-  @NotNull
   @Override
-  public ColorKey getKey() {
+  public @NotNull ColorKey getKey() {
     return super.getKey();
   }
 }

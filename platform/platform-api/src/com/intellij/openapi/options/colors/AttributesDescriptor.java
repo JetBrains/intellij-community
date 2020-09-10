@@ -30,9 +30,8 @@ public final class AttributesDescriptor extends AbstractKeyDescriptor<TextAttrib
   }
 
   @SuppressWarnings("RedundantMethodOverride") // binary compatibility
-  @NotNull
   @Override
-  public TextAttributesKey getKey() {
+  public @NotNull TextAttributesKey getKey() {
     return super.getKey();
   }
 }
