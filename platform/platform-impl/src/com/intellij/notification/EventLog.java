@@ -4,6 +4,7 @@ package com.intellij.notification;
 
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.notification.impl.NotificationCollector;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
@@ -185,7 +186,7 @@ public final class EventLog {
     }
 
     if (showMore.get()) {
-      String sb = "show balloon";
+      String sb = IdeBundle.message("tooltip.event.log.show.balloon");
       if (!logDoc.getText().endsWith(" ")) {
         appendText(logDoc, " ");
       }
