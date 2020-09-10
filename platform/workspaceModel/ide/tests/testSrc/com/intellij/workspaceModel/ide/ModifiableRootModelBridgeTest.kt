@@ -26,7 +26,7 @@ class ModifiableRootModelBridgeTest {
   @JvmField
   val projectModel = ProjectModelRule(true)
 
-  @Test
+  @Test(expected = Test.None::class)
   fun `removing module with modifiable model`() {
     runWriteActionAndWait {
       val module = projectModel.createModule()
