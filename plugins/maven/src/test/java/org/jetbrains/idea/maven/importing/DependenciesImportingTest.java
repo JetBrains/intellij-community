@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
@@ -17,10 +18,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -823,13 +824,8 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                        "jar://" + javaHome + "/lib/tools.jar!/");
   }
 
+  @Bombed(user= "Nikita.Skvortsov", month = Calendar.OCTOBER, day = 15)
   public void testDependencyWithEnvironmentENVProperty() {
-    if (ignore()) {
-      return;
-    }
-    if (MavenUtil.newModelEnabled(myProject)) {
-      throw new IllegalStateException("This test brokes all subsequent!");
-    }
     String envDir = FileUtil.toSystemIndependentName(System.getenv(getEnvVar()));
     envDir = StringUtil.trimEnd(envDir, "/");
 
