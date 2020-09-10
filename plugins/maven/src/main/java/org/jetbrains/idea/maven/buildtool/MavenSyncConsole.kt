@@ -2,14 +2,13 @@
 package org.jetbrains.idea.maven.buildtool
 
 import com.intellij.build.*
-import com.intellij.build.events.BuildEventsNls
 import com.intellij.build.events.EventResult
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.MessageEventResult
 import com.intellij.build.events.impl.*
 import com.intellij.build.issue.BuildIssue
 import com.intellij.build.issue.BuildIssueQuickFix
-import com.intellij.build.process.BuildProcessHandler
+import com.intellij.execution.ExecutionException
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -33,12 +32,12 @@ import org.jetbrains.idea.maven.buildtool.quickfix.UseBundledMavenQuickFix
 import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
+import org.jetbrains.idea.maven.server.CannotStartServerException
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.server.MavenServerProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
-import java.io.OutputStream
 import javax.swing.JComponent
 
 class MavenSyncConsole(private val myProject: Project) {
@@ -192,14 +191,25 @@ class MavenSyncConsole(private val myProject: Project) {
       hasErrors = true
       @Suppress("HardCodedStringLiteral")
       mySyncView.onEvent(mySyncId,
-                         MessageEventImpl(mySyncId, MessageEvent.Kind.ERROR, SyncBundle.message("build.event.title.error"),
-                                          e.localizedMessage, ExceptionUtil.getThrowableText(
-                           e)))
-    } else {
+                         createMessageEvent(e))
+    }
+    else {
       this.startImport(progressListener)
       this.addException(e, progressListener)
       this.finishImport()
     }
+  }
+
+  private fun createMessageEvent(e: Throwable): MessageEventImpl {
+    if (e is CannotStartServerException) {
+      val cause = ExceptionUtil.findCause(e, ExecutionException::class.java)
+      if (cause != null) {
+        return MessageEventImpl(mySyncId, MessageEvent.Kind.ERROR, SyncBundle.message("build.event.title.internal.server.error"),
+                                cause.localizedMessage, ExceptionUtil.getThrowableText(cause))
+      }
+    }
+    return MessageEventImpl(mySyncId, MessageEvent.Kind.ERROR, SyncBundle.message("build.event.title.error"),
+                            e.localizedMessage, ExceptionUtil.getThrowableText(e))
   }
 
   fun getListener(type: MavenServerProgressIndicator.ResolveType): ArtifactSyncListener {

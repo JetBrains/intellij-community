@@ -16,6 +16,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -32,6 +33,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.execution.RunnerBundle;
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.utils.MavenLog;
@@ -47,8 +49,12 @@ import java.util.Map;
 
 public class MavenServerCMDState extends CommandLineState {
 
+  private static boolean setupThrowMainClass = false;
+
   @NonNls private static final String MAIN_CLASS = "org.jetbrains.idea.maven.server.RemoteMavenServer";
   @NonNls private static final String MAIN_CLASS36 = "org.jetbrains.idea.maven.server.RemoteMavenServer36";
+  @NonNls private static final String MAIN_CLASS_WITH_EXCEPTION_FOR_TESTS =
+    "org.jetbrains.idea.maven.server.RemoteMavenServerThrowsExceptionForTests";
 
 
   private final Sdk myJdk;
@@ -136,12 +142,7 @@ public class MavenServerCMDState extends CommandLineState {
     MavenLog.LOG.debug("", distribution, " chosen as maven home");
     assert mavenVersion != null;
 
-    if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") >= 0) {
-      params.setMainClass(MAIN_CLASS36);
-    }
-    else {
-      params.setMainClass(MAIN_CLASS);
-    }
+    setupMainClass(params, mavenVersion);
 
     params.getVMParametersList().addProperty(MavenServerEmbedder.MAVEN_EMBEDDER_VERSION, mavenVersion);
 
@@ -185,6 +186,19 @@ public class MavenServerCMDState extends CommandLineState {
 
     MavenUtil.addEventListener(mavenVersion, params);
     return params;
+  }
+
+  private static void setupMainClass(SimpleJavaParameters params, String mavenVersion) {
+    if (setupThrowMainClass && ApplicationManager.getApplication().isUnitTestMode()) {
+      setupThrowMainClass = false;
+      params.setMainClass(MAIN_CLASS_WITH_EXCEPTION_FOR_TESTS);
+    }
+    else if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") >= 0) {
+      params.setMainClass(MAIN_CLASS36);
+    }
+    else {
+      params.setMainClass(MAIN_CLASS);
+    }
   }
 
   @NotNull
@@ -239,5 +253,10 @@ public class MavenServerCMDState extends CommandLineState {
         return RunnerBundle.message("external.maven.home.invalid.substitution.warning.with.fix", wrongDir, substitutedVersion);
       }
     }
+  }
+
+  @TestOnly
+  public static void setThrowExceptionOnNextServerStart() {
+    setupThrowMainClass = true;
   }
 }
