@@ -2210,7 +2210,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                      "  </dependency>" +
 
                      "</dependencies>");
-    importProject();
+    importProjectWithErrors();
 
     WriteAction.runAndWait(() -> {
       ModifiableRootModel rootModel = ModuleRootManager.getInstance(getModule("m1")).getModifiableModel();
