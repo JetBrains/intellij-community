@@ -53,8 +53,16 @@ public abstract class FileBasedIndex {
     return processor;
   }
 
+  /**
+   * @deprecated please use {@link IndexableSetContributor} which will be managed registered/unregistered automatically.
+   */
+  @Deprecated
   public abstract void registerIndexableSet(@NotNull IndexableFileSet set, @Nullable Project project);
 
+  /**
+   * @deprecated please use {@link IndexableSetContributor} which will be managed registered/unregistered automatically.
+   */
+  @Deprecated
   public abstract void removeIndexableSet(@NotNull IndexableFileSet set);
 
   public static FileBasedIndex getInstance() {
