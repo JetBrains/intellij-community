@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.validator.storage;
 
-import com.intellij.internal.statistic.eventLog.EventLogConnectionSettings;
-import com.intellij.internal.statistic.eventLog.EventLogUploadSettingsService;
-import com.intellij.internal.statistic.service.fus.EventLogMetadataLoadException;
-import com.intellij.internal.statistic.service.fus.EventLogMetadataUtils;
+import com.intellij.internal.statistic.eventLog.connection.EventLogConnectionSettings;
+import com.intellij.internal.statistic.eventLog.connection.EventLogUploadSettingsService;
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataLoadException;
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataUtils;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import org.jetbrains.annotations.NotNull;
 

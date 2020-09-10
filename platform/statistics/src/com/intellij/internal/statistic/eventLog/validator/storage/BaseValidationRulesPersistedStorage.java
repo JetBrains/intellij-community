@@ -3,8 +3,8 @@ package com.intellij.internal.statistic.eventLog.validator.storage;
 
 import com.intellij.internal.statistic.eventLog.EventLogBuild;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
-import com.intellij.internal.statistic.service.fus.EventGroupFilterRules;
-import com.intellij.internal.statistic.service.fus.EventGroupRemoteDescriptors;
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupFilterRules;
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

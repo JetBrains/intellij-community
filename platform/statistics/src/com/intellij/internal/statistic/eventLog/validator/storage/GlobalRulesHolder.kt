@@ -3,7 +3,7 @@ package com.intellij.internal.statistic.eventLog.validator.storage
 
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.EnumValidationRule
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.RegexpValidationRule
-import com.intellij.internal.statistic.service.fus.EventGroupRemoteDescriptors
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors
 import java.util.*
 
 class GlobalRulesHolder(private val myGlobalEnums: Map<String, Set<String>>?, private val myGlobalRegexps: Map<String, String>?) {

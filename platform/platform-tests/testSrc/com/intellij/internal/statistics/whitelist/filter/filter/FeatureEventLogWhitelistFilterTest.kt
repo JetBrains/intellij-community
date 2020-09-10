@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.eventLog.filters.LogEventCompositeFilter
 import com.intellij.internal.statistic.eventLog.filters.LogEventFilter
 import com.intellij.internal.statistic.eventLog.filters.LogEventSnapshotBuildFilter
 import com.intellij.internal.statistic.eventLog.filters.LogEventMetadataFilter
-import com.intellij.internal.statistic.service.fus.EventGroupsFilterRules
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupsFilterRules
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newEvent
 import com.intellij.internal.statistics.logger.TestDataCollectorDebugLogger
 import com.intellij.internal.statistics.whitelist.TestWhitelistBuilder

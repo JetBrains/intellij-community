@@ -10,10 +10,10 @@ import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataPersistence;
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogTestMetadataPersistence;
-import com.intellij.internal.statistic.service.fus.EventGroupFilterRules;
-import com.intellij.internal.statistic.service.fus.EventGroupRemoteDescriptors;
-import com.intellij.internal.statistic.service.fus.EventGroupRemoteDescriptors.EventGroupRemoteDescriptor;
-import com.intellij.internal.statistic.service.fus.EventGroupRemoteDescriptors.GroupRemoteRule;
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupFilterRules;
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors;
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors.EventGroupRemoteDescriptor;
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors.GroupRemoteRule;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

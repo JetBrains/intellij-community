@@ -2,10 +2,13 @@
 package com.intellij.internal.statistic.envTest.scheme
 
 import com.intellij.internal.statistic.envTest.StatisticsServiceBaseTest
-import com.intellij.internal.statistic.eventLog.EventLogBasicConnectionSettings
-import com.intellij.internal.statistic.service.fus.*
-import com.intellij.internal.statistic.service.fus.EventGroupFilterRules.BuildRange
-import com.intellij.internal.statistic.service.fus.EventGroupFilterRules.VersionRange
+import com.intellij.internal.statistic.eventLog.connection.EventLogBasicConnectionSettings
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupFilterRules
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupFilterRules.BuildRange
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupFilterRules.VersionRange
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupsFilterRules
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataLoadException
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataUtils
 import junit.framework.TestCase
 
 private val SETTINGS = EventLogBasicConnectionSettings("Test IntelliJ")

@@ -3,6 +3,9 @@ package com.intellij.internal.statistic.envTest.upload
 
 import com.intellij.internal.statistic.envTest.ApacheContainer
 import com.intellij.internal.statistic.eventLog.*
+import com.intellij.internal.statistic.eventLog.connection.EventLogSendListener
+import com.intellij.internal.statistic.eventLog.connection.EventLogStatisticsService
+import com.intellij.internal.statistic.eventLog.connection.EventLogUploadSettingsService
 import java.io.File
 import java.nio.file.Path
 

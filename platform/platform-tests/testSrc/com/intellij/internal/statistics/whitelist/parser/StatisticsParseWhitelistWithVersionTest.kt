@@ -2,8 +2,8 @@
 package com.intellij.internal.statistics.whitelist.parser
 
 import com.intellij.internal.statistic.eventLog.EventLogBuild
-import com.intellij.internal.statistic.service.fus.EventGroupsFilterRules
-import com.intellij.internal.statistic.service.fus.EventLogMetadataUtils
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupsFilterRules
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataUtils
 import com.intellij.internal.statistics.whitelist.TestWhitelistBuilder
 import org.junit.Test
 import kotlin.test.assertEquals

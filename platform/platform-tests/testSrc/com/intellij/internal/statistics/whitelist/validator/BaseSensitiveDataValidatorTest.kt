@@ -9,7 +9,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules
 import com.intellij.internal.statistic.eventLog.validator.storage.EventLogMetadataLoader
 import com.intellij.internal.statistic.eventLog.validator.storage.ValidationRulesPersistedStorage
-import com.intellij.internal.statistic.service.fus.EventGroupRemoteDescriptors
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase

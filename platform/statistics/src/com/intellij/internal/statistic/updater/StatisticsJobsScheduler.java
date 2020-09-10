@@ -4,7 +4,7 @@ package com.intellij.internal.statistic.updater;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.ide.StatisticsNotificationManager;
-import com.intellij.internal.statistic.connect.StatisticsService;
+import com.intellij.internal.statistic.eventLog.connection.StatisticsService;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogMigration;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerKt;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider;

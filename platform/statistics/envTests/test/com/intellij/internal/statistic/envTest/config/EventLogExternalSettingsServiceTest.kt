@@ -4,7 +4,7 @@ package com.intellij.internal.statistic.envTest.config
 import com.intellij.internal.statistic.envTest.StatisticsServiceBaseTest
 import com.intellij.internal.statistic.envTest.upload.RECORDER_ID
 import com.intellij.internal.statistic.envTest.upload.TestEventLogApplicationInfo
-import com.intellij.internal.statistic.eventLog.EventLogUploadSettingsService
+import com.intellij.internal.statistic.eventLog.connection.EventLogUploadSettingsService
 import junit.framework.TestCase
 import java.util.concurrent.TimeUnit
 

@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.whitelist.storage
 
-import com.intellij.internal.statistic.service.fus.EventLogMetadataLoadException
-import com.intellij.internal.statistic.service.fus.EventLogMetadataLoadException.EventLogMetadataLoadErrorType
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataLoadException
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataLoadException.EventLogMetadataLoadErrorType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase

@@ -4,7 +4,7 @@ package com.intellij.internal.statistic.actions.scheme
 import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule
 import com.intellij.internal.statistic.eventLog.events.EventsSchemeBuilder
-import com.intellij.internal.statistic.service.fus.EventGroupRemoteDescriptors
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionToolbarPosition
 import com.intellij.openapi.project.Project

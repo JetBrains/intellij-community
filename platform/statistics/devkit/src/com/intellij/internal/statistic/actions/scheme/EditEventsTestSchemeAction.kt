@@ -9,7 +9,7 @@ import com.intellij.internal.statistic.StatisticsDevKitUtil.showNotification
 import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule
 import com.intellij.internal.statistic.eventLog.events.EventsSchemeBuilder
 import com.intellij.internal.statistic.eventLog.validator.storage.ValidationTestRulesPersistedStorage
-import com.intellij.internal.statistic.service.fus.EventGroupRemoteDescriptors
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator

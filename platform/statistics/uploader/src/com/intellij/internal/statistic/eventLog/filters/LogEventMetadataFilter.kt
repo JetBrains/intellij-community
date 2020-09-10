@@ -2,7 +2,7 @@
 package com.intellij.internal.statistic.eventLog.filters
 
 import com.intellij.internal.statistic.eventLog.LogEvent
-import com.intellij.internal.statistic.service.fus.EventGroupsFilterRules
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupsFilterRules
 
 class LogEventMetadataFilter(val filterRules: EventGroupsFilterRules) : LogEventFilter {
   override fun accepts(event: LogEvent): Boolean {

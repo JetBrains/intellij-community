@@ -2,10 +2,10 @@
 package com.intellij.internal.statistics.whitelist
 
 import com.intellij.internal.statistic.eventLog.EventLogBuild
-import com.intellij.internal.statistic.service.fus.EventGroupsFilterRules
-import com.intellij.internal.statistic.service.fus.EventGroupFilterRules
-import com.intellij.internal.statistic.service.fus.EventGroupFilterRules.BuildRange
-import com.intellij.internal.statistic.service.fus.EventGroupFilterRules.VersionRange
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupsFilterRules
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupFilterRules
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupFilterRules.BuildRange
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupFilterRules.VersionRange
 
 class TestWhitelistBuilder {
   private val groupIds: MutableSet<String> = HashSet()

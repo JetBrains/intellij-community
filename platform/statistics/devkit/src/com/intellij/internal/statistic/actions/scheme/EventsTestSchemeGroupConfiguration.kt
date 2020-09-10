@@ -16,7 +16,7 @@ import com.intellij.internal.statistic.actions.TestParseEventsSchemeDialog
 import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule
 import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule.Companion.EMPTY_RULES
 import com.intellij.internal.statistic.eventLog.events.EventsSchemeBuilder
-import com.intellij.internal.statistic.service.fus.EventGroupRemoteDescriptors
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors
 import com.intellij.json.JsonLanguage
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteAction
