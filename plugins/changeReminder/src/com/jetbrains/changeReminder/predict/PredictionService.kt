@@ -17,11 +17,13 @@ import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.index.VcsLogIndex
 import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsProjectLog
+import com.jetbrains.changeReminder.getGitRootFiles
 import com.jetbrains.changeReminder.plugin.UserSettings
 import com.jetbrains.changeReminder.repository.FilesHistoryProvider
 import com.jetbrains.changeReminder.stats.ChangeReminderChangeListChangedEvent
 import com.jetbrains.changeReminder.stats.ChangeReminderNodeExpandedEvent
 import com.jetbrains.changeReminder.stats.logEvent
+import git4idea.history.GitHistoryTraverserImpl
 import javax.swing.event.TreeExpansionEvent
 import javax.swing.event.TreeExpansionListener
 
@@ -147,7 +149,8 @@ internal class PredictionService(val project: Project) : Disposable {
     dataManager.addDataPackChangeListener(dataPackChangeListener)
     dataManager.index.addListener(indexingFinishedListener)
 
-    val filesHistoryProvider = dataManager.index.dataGetter?.let { FilesHistoryProvider(project, dataManager, it) } ?: return
+    val filesHistoryProvider = dataManager.index.dataGetter?.let { FilesHistoryProvider(GitHistoryTraverserImpl(project, dataManager)) }
+                               ?: return
     predictionRequirements = PredictionRequirements(dataManager, filesHistoryProvider)
     calculatePrediction()
   }
@@ -181,7 +184,13 @@ internal class PredictionService(val project: Project) : Disposable {
       return
     }
     if (dataManager.dataPack.isFull) {
-      taskController.request(PredictionRequest(project, dataManager, filesHistoryProvider, changeListFiles))
+      val rootFiles = getGitRootFiles(project, changeListFiles)
+      val roots = rootFiles.keys
+      filesHistoryProvider.traverser.withIndex(roots, this@PredictionService) { indexedRoots ->
+        taskController.request(
+          PredictionRequest(dataManager, filesHistoryProvider, indexedRoots.map { it to rootFiles.getValue(it.root) }.toMap())
+        )
+      }
     }
     else {
       setEmptyPrediction(PredictionData.EmptyPredictionReason.DATA_PACK_IS_NOT_FULL)
