@@ -77,7 +77,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     boolean inferred = false;
     boolean ellipsis = false;
     List<PsiAnnotation> annotations = new SmartList<>();
-    List<TypeAnnotationProvider> providers = new SmartList<>();
+    List<TypeAnnotationProvider> arrayComponentAnnotations = new SmartList<>();
 
     PsiElement parent = getParent();
     for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
@@ -112,12 +112,12 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       }
       else if (PsiUtil.isJavaToken(child, JavaTokenType.LBRACKET)) {
         assert type != null : this;
-        providers.add(createProvider(annotations));
+        arrayComponentAnnotations.add(createProvider(annotations));
         annotations = new SmartList<>();
       }
       else if (PsiUtil.isJavaToken(child, JavaTokenType.ELLIPSIS)) {
         assert type != null : this;
-        providers.add(createProvider(annotations));
+        arrayComponentAnnotations.add(createProvider(annotations));
         annotations = new SmartList<>();
         ellipsis = true;
       }
@@ -157,7 +157,9 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
 
     if (type == null) return new TypeInfo(PsiType.NULL, inferred);
 
-    type = createArray(type, providers, ellipsis);
+    if (!arrayComponentAnnotations.isEmpty()) {
+      type = createArray(type, arrayComponentAnnotations, ellipsis);
+    }
 
     if (parent instanceof PsiModifierListOwner) {
       type = JavaSharedImplUtil.applyAnnotations(type, ((PsiModifierListOwner)parent).getModifierList());
