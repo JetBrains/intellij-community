@@ -56,8 +56,6 @@ public class PyEnvTaskRunner {
 
     final Set<String> requiredTags = Sets.union(testTask.getTags(), Sets.newHashSet(tagsRequiredByTest));
 
-    final Set<String> tagsToCover = null;
-
     for (String root : myRoots) {
 
       List<String> envTags = PyEnvTestCase.loadEnvTags(root);
@@ -66,15 +64,6 @@ public class PyEnvTaskRunner {
       if (!suitableForTask || !shouldRun) {
         LOG.warn(String.format("Skipping %s (compatible with tags: %s, should run:%s)", root, suitableForTask, shouldRun));
         continue;
-      }
-
-      if (tagsToCover != null && envTags.size() > 0 && !isNeededToRun(tagsToCover, envTags)) {
-        LOG.warn(String.format("Skipping %s (test already was executed on a similar environment)", root));
-        continue;
-      }
-
-      if (tagsToCover != null) {
-        tagsToCover.removeAll(envTags);
       }
 
       LOG.warn(String.format("Running on root %s", root));
