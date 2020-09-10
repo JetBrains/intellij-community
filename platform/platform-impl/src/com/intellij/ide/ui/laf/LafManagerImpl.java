@@ -675,12 +675,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       map.put("#c75450", "#a95768");
       map.put("#6e6e6e", "#afb1b3");
       map.put("#f26522", "#b76554");
-      map.put("#f2652299", "#ac818b");
+      map.put("#f26522b3", "#d38369");
     } else {
       map.put("#6e6e6e", "#afb1b3");
       map.put("#db5860", "#b75e73");
       map.put("#f26522", "#b56a51");
-      map.put("#f2652299", "#a88786");
+      map.put("#f26522b3", "#d38369");
     }
     HashMap<String, Integer> alpha = new HashMap<>();
     map.forEach((key, value) -> alpha.put(value, 255));
