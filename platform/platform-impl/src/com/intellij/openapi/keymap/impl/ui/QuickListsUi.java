@@ -44,10 +44,9 @@ final class QuickListsUi implements ConfigurableUi<List<QuickList>> {
       return item.getName().isEmpty() && item.getDescription() == null && item.getActionIds().length == 0;
     }
 
-    @NotNull
     @Override
-    public String getName(@NotNull QuickList item) {
-      return item.getName();
+    public @NotNull String getName(@NotNull QuickList item) {
+      return item.getDisplayName();
     }
 
     @Override

@@ -75,8 +75,8 @@ final class KeyboardShortcutDialog extends ShortcutDialog<KeyboardShortcut> {
   @Override
   protected void addSystemActionsIfPresented(Group group) {
     if (mySystemShortcuts != null) {
-      Group macOsSysGroup = new Group(IdeBundle.message("action.group.macos.shortcuts.text"), AllIcons.Nodes.KeymapOther);
-      mySystemShortcuts.forEach((ks, actid) -> macOsSysGroup.addActionId(actid));
+      @SuppressWarnings("DialogTitleCapitalization") Group macOsSysGroup = new Group(IdeBundle.message("action.group.macos.shortcuts.text"), AllIcons.Nodes.KeymapOther);
+      mySystemShortcuts.forEach((ks, id) -> macOsSysGroup.addActionId(id));
       group.addGroup(macOsSysGroup);
     }
   }

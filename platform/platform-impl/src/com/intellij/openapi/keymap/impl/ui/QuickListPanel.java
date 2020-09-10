@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons;
@@ -9,10 +9,7 @@ import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.ui.AnActionButton;
-import com.intellij.ui.AnActionButtonRunnable;
-import com.intellij.ui.CollectionListModel;
-import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.UIUtil;
@@ -66,14 +63,18 @@ class QuickListPanel {
                           }
                         }
                       })
-                      .addExtraAction(new AnActionButton(KeyMapBundle.messagePointer("action.AnActionButton.text.add.separator"),
-                                                         AllIcons.General.SeparatorH) {
+                      .addExtraAction(new AnActionButton(KeyMapBundle.message("keymap.action.add.separator"), AllIcons.General.SeparatorH) {
                         @Override
                         public void actionPerformed(@NotNull AnActionEvent e) {
                           actionsModel.add(QuickList.SEPARATOR_ID);
                         }
                       })
-                      .setButtonComparator("Add", "Add Separator", "Remove", "Up", "Down")
+                      .setButtonComparator(
+                        CommonActionsPanel.Buttons.ADD.getText(),
+                        KeyMapBundle.message("keymap.action.add.separator"),
+                        CommonActionsPanel.Buttons.REMOVE.getText(),
+                        CommonActionsPanel.Buttons.UP.getText(),
+                        CommonActionsPanel.Buttons.DOWN.getText())
                       .createPanel(), BorderLayout.CENTER);
   }
 
