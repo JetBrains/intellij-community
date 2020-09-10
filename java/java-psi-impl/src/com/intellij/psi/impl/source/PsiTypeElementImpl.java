@@ -50,10 +50,10 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
 
   @Override
   public @NotNull PsiType getType() {
-    return CachedValuesManager.getProjectPsiDependentCache(this, __ -> calculateTypeInfo());
+    return CachedValuesManager.getProjectPsiDependentCache(this, __ -> calculateType());
   }
 
-  private @NotNull PsiType calculateTypeInfo() {
+  private @NotNull PsiType calculateType() {
     PsiType inferredType = PsiAugmentProvider.getInferredType(this);
     if (inferredType != null) {
       return inferredType;
