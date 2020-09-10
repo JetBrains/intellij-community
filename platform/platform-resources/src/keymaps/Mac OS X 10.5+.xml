@@ -48,6 +48,7 @@
   </action>
   <action id="EditorPreviousWord">
     <keyboard-shortcut first-keystroke="alt LEFT"/>
+    <keyboard-shortcut first-keystroke="control alt B"/>
   </action>
   <action id="QuickJavaDoc">
     <keyboard-shortcut first-keystroke="F1"/>
@@ -84,6 +85,7 @@
   </action>
   <action id="EditorPreviousWordWithSelection">
     <keyboard-shortcut first-keystroke="alt shift LEFT"/>
+    <keyboard-shortcut first-keystroke="control alt shift B"/>
   </action>
   <action id="RunClass"/>
 
@@ -160,9 +162,11 @@
   <action id="TogglePopupHints"/>
   <action id="EditorNextWordWithSelection">
     <keyboard-shortcut first-keystroke="alt shift RIGHT"/>
+    <keyboard-shortcut first-keystroke="control alt shift F"/>
   </action>
   <action id="EditorNextWord">
     <keyboard-shortcut first-keystroke="alt RIGHT"/>
+    <keyboard-shortcut first-keystroke="control alt F"/>
   </action>
   <action id="EditorLineStart">
     <keyboard-shortcut first-keystroke="HOME"/>
@@ -742,5 +746,8 @@
   </action>
   <action id="List-selectLastRowExtendSelection">
     <keyboard-shortcut first-keystroke="alt shift down"/>
+  </action>
+  <action id="EditorScrollToCenter">
+    <keyboard-shortcut first-keystroke="control L"/>
   </action>
 </keymap>
