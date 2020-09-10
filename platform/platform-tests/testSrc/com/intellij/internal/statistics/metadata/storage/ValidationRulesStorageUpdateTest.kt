@@ -10,14 +10,14 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import java.io.File
 
-class WhitelistStorageUpdateTest : UsefulTestCase() {
+class ValidationRulesStorageUpdateTest : UsefulTestCase() {
   private var myFixture: CodeInsightTestFixture? = null
 
   override fun setUp() {
     super.setUp()
 
     val factory = IdeaTestFixtureFactory.getFixtureFactory()
-    val fixtureBuilder = factory.createFixtureBuilder("WhitelistStorageUpdateTest")
+    val fixtureBuilder = factory.createFixtureBuilder("ValidationRulesStorageUpdateTest")
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixtureBuilder.fixture)
     myFixture?.setUp()
   }
@@ -34,7 +34,7 @@ class WhitelistStorageUpdateTest : UsefulTestCase() {
     }
   }
 
-  private fun getTestDataRoot() = PlatformTestUtil.getPlatformTestDataPath() + "fus/whitelist/storage"
+  private fun getTestDataRoot() = PlatformTestUtil.getPlatformTestDataPath() + "fus/metadata/storage"
 
   private fun getTestDataFileOrDefault(withDefaultFiles: Boolean, extension: String): File {
     return if (withDefaultFiles) getDefaultTestDataFile(extension) else getTestDataFile(extension)
@@ -46,11 +46,11 @@ class WhitelistStorageUpdateTest : UsefulTestCase() {
   }
 
   private fun getDefaultTestDataFile(extension: String): File {
-    return File(getTestDataRoot() + "/default_whitelist_storage_test." + extension)
+    return File(getTestDataRoot() + "/default_rules_storage_test." + extension)
   }
 
-  private fun newBuilder(withDefaultFiles: Boolean = true): TestWhitelistStorageBuilder {
-    val builder = TestWhitelistStorageBuilder()
+  private fun newBuilder(withDefaultFiles: Boolean = true): TestValidationRulesStorageBuilder {
+    val builder = TestValidationRulesStorageBuilder()
     val cached = getTestDataFileOrDefault(withDefaultFiles, "cached.json")
     if (cached.exists()) {
       builder.withCachedContent(FileUtil.loadFile(cached))
@@ -68,41 +68,41 @@ class WhitelistStorageUpdateTest : UsefulTestCase() {
     assertEquals(hashSetOf(*expectedGroups), storage.getGroups())
   }
 
-  fun test_latest_cached_whitelist() {
+  fun test_latest_cached_rules() {
     val storage = newBuilder().
       withCachedLastModified(1583852308336).
       withServerLastModified(1583852308336).build()
     doTest(storage, "cached.test.group")
   }
 
-  fun test_cached_whitelist_older_than_server() {
+  fun test_cached_rules_older_than_server() {
     val storage = newBuilder().
       withCachedLastModified(1583852318336).
       withServerLastModified(1583852308336).build()
     doTest(storage, "cached.test.group")
   }
 
-  fun test_server_whitelist_older_than_cached() {
+  fun test_server_rules_older_than_cached() {
     val storage = newBuilder().
       withCachedLastModified(1583852318336).
       withServerLastModified(1583852328336).build()
     doTest(storage, "server.test.group")
   }
 
-  fun test_no_cached_whitelist() {
+  fun test_no_cached_rules() {
     val storage = newBuilder(false).
       withServerLastModified(1583852308336).build()
     doTest(storage, "server.test.group")
   }
 
-  fun test_invalid_cached_whitelist() {
+  fun test_invalid_cached_rules() {
     val storage = newBuilder(false).
       withCachedLastModified(1583852308336).
       withServerLastModified(1583852318336).build()
     doTest(storage, "server.test.group")
   }
 
-  fun test_latest_but_invalid_cached_whitelist() {
+  fun test_latest_but_invalid_cached_rules() {
     val storage = newBuilder(false).
       withCachedLastModified(1583852328336).
       withServerLastModified(1583852308336).build()
@@ -120,7 +120,7 @@ class WhitelistStorageUpdateTest : UsefulTestCase() {
     doTest(storage, "server.test.group")
   }
 
-  fun test_failed_loading_server_whitelist() {
+  fun test_failed_loading_server_rules() {
     val storage = newBuilder().
       withCachedLastModified(1583852308336).
       withServerLastModified(1583852318336).
@@ -131,7 +131,7 @@ class WhitelistStorageUpdateTest : UsefulTestCase() {
     doTest(storage, "cached.test.group")
   }
 
-  fun test_failed_parsing_server_whitelist() {
+  fun test_failed_parsing_server_rules() {
     val storage = newBuilder(false).
       withCachedLastModified(1583852308336).
       withServerLastModified(1583852318336).

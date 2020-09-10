@@ -7,12 +7,12 @@ import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupFi
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupFilterRules.BuildRange
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupFilterRules.VersionRange
 
-class TestWhitelistBuilder {
+class TestGroupFilterRulesBuilder {
   private val groupIds: MutableSet<String> = HashSet()
   private val groupVersions: MutableMap<String, MutableList<VersionRange>> = HashMap()
   private val groupBuilds: MutableMap<String, MutableList<BuildRange>> = HashMap()
 
-  fun addVersion(id: String, from: Int, to: Int): TestWhitelistBuilder {
+  fun addVersion(id: String, from: Int, to: Int): TestGroupFilterRulesBuilder {
     if (!groupVersions.containsKey(id)) {
       groupIds.add(id)
       groupVersions[id] = mutableListOf()
@@ -21,7 +21,7 @@ class TestWhitelistBuilder {
     return this
   }
 
-  fun addVersion(id: String, from: String?, to: String?): TestWhitelistBuilder {
+  fun addVersion(id: String, from: String?, to: String?): TestGroupFilterRulesBuilder {
     if (!groupVersions.containsKey(id)) {
       groupIds.add(id)
       groupVersions[id] = mutableListOf()
@@ -30,7 +30,7 @@ class TestWhitelistBuilder {
     return this
   }
 
-  fun addBuild(id: String, from: EventLogBuild?, to: EventLogBuild?): TestWhitelistBuilder {
+  fun addBuild(id: String, from: EventLogBuild?, to: EventLogBuild?): TestGroupFilterRulesBuilder {
     if (!groupBuilds.containsKey(id)) {
       groupIds.add(id)
       groupBuilds[id] = mutableListOf()
@@ -39,7 +39,7 @@ class TestWhitelistBuilder {
     return this
   }
 
-  fun addBuild(id: String, from: String?, to: String?): TestWhitelistBuilder {
+  fun addBuild(id: String, from: String?, to: String?): TestGroupFilterRulesBuilder {
     if (!groupBuilds.containsKey(id)) {
       groupIds.add(id)
       groupBuilds[id] = mutableListOf()
@@ -48,7 +48,7 @@ class TestWhitelistBuilder {
     return this
   }
 
-  fun addGroup(id: String): TestWhitelistBuilder {
+  fun addGroup(id: String): TestGroupFilterRulesBuilder {
     groupIds.add(id)
     return this
   }

@@ -5,40 +5,40 @@ import com.intellij.internal.statistic.eventLog.validator.storage.persistence.Ev
 import com.intellij.internal.statistic.eventLog.validator.storage.EventLogMetadataLoader
 import com.intellij.internal.statistic.eventLog.validator.storage.ValidationRulesPersistedStorage
 
-class TestWhitelistStorageBuilder(private val recorderId: String = "TEST") {
+class TestValidationRulesStorageBuilder(private val recorderId: String = "TEST") {
   private var cachedContent: String? = ""
   private var serverContentProvider: () -> String = {""}
   private var cachedLastModified: Long = 0
   private var serverLastModified: Long = 0
 
-  fun withCachedContent(content: String): TestWhitelistStorageBuilder {
+  fun withCachedContent(content: String): TestValidationRulesStorageBuilder {
     cachedContent = content
     return this
   }
 
-  fun withServerContent(content: String): TestWhitelistStorageBuilder {
+  fun withServerContent(content: String): TestValidationRulesStorageBuilder {
     serverContentProvider = {content}
     return this
   }
 
-  fun withServerContentProvider(provider: () -> String): TestWhitelistStorageBuilder {
+  fun withServerContentProvider(provider: () -> String): TestValidationRulesStorageBuilder {
     serverContentProvider = provider
     return this
   }
 
-  fun withCachedLastModified(lastModified: Long): TestWhitelistStorageBuilder {
+  fun withCachedLastModified(lastModified: Long): TestValidationRulesStorageBuilder {
     cachedLastModified = lastModified
     return this
   }
 
-  fun withServerLastModified(lastModified: Long): TestWhitelistStorageBuilder {
+  fun withServerLastModified(lastModified: Long): TestValidationRulesStorageBuilder {
     serverLastModified = lastModified
     return this
   }
 
   fun build(): TestValidationRulesStorage {
     val persistence = TestEventLogMetadataPersistence(recorderId, cachedContent, cachedLastModified)
-    val loader = TestEventLogWhitelistLoader(serverContentProvider, serverLastModified)
+    val loader = TestEventLogMetadaLoader(serverContentProvider, serverLastModified)
     return TestValidationRulesStorage(recorderId, persistence, loader)
   }
 }
@@ -62,7 +62,7 @@ private class TestEventLogMetadataPersistence(recorderId: String, private var co
   override fun getLastModified(): Long = modified
 }
 
-private class TestEventLogWhitelistLoader(private val provider: () -> String, private val lastModified: Long) : EventLogMetadataLoader {
+private class TestEventLogMetadaLoader(private val provider: () -> String, private val lastModified: Long) : EventLogMetadataLoader {
   override fun loadMetadataFromServer(): String = provider.invoke()
 
   override fun getLastModifiedOnServer(): Long = lastModified

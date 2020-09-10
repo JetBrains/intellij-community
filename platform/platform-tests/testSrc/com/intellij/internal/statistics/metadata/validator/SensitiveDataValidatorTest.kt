@@ -274,7 +274,7 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
 
   @Test
   fun test_validate_custom_rule_with_local_enum() {
-    val rule = TestLocalEnumCustomWhitelistRule()
+    val rule = TestLocalEnumCustomValidationRule()
 
     Assert.assertEquals(ValidationResultType.ACCEPTED, rule.validate("FIRST", EventContext.create("FIRST", emptyMap())))
     Assert.assertEquals(ValidationResultType.ACCEPTED, rule.validate("SECOND", EventContext.create("FIRST", emptyMap())))
@@ -536,8 +536,8 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
     val disposable = Disposer.newDisposable()
     try {
       val ep = Extensions.getRootArea().getExtensionPoint(CustomValidationRule.EP_NAME)
-      ep.registerExtension(TestExistingWhitelistRule(), disposable)
-      ep.registerExtension(TestThirdPartyWhitelistRule(), disposable)
+      ep.registerExtension(TestExistingValidationRule(), disposable)
+      ep.registerExtension(TestThirdPartyValidationRule(), disposable)
 
       val validator = newValidatorByFile(fileName)
       func(validator)
@@ -589,11 +589,11 @@ class SensitiveDataValidatorTest : BaseSensitiveDataValidatorTest() {
   @Suppress("unused")
   internal enum class TestCustomActionId {FIRST, SECOND, THIRD}
 
-  internal inner class TestLocalEnumCustomWhitelistRule : LocalEnumCustomValidationRule("custom_action_id", TestCustomActionId::class.java)
+  internal inner class TestLocalEnumCustomValidationRule : LocalEnumCustomValidationRule("custom_action_id", TestCustomActionId::class.java)
 
-  internal inner class TestExistingWhitelistRule : LocalEnumCustomValidationRule("existing_rule", TestCustomActionId::class.java)
+  internal inner class TestExistingValidationRule : LocalEnumCustomValidationRule("existing_rule", TestCustomActionId::class.java)
 
-  internal inner class TestThirdPartyWhitelistRule : CustomValidationRule() {
+  internal inner class TestThirdPartyValidationRule : CustomValidationRule() {
     override fun acceptRuleId(ruleId: String?): Boolean = "third_party_rule" == ruleId
 
     override fun doValidate(data: String, context: EventContext): ValidationResultType {

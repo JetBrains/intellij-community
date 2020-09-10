@@ -31,7 +31,7 @@ class EventLogConfigFilterTest {
       "releaseFilters": [""" + filters + """],
       "endpoints": {
         "send": "https://send/endpoint",
-        "whitelist": "https://whitelist/endpoint/",
+        "metadata": "https://metadata/endpoint/",
         "dictionary": "https://dictionary/endpoint/"
       }
     }

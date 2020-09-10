@@ -10,7 +10,7 @@ import com.intellij.testFramework.LightPlatformTestCase
 import junit.framework.TestCase
 import org.junit.Test
 
-class LocalFileWhitelistValidatorTest : LightPlatformTestCase() {
+class LocalFileValidationRuleTest : LightPlatformTestCase() {
 
   private fun doValidateEventId(validator: CustomValidationRule, eventId: String, eventData: FeatureUsageData) {
     val context = EventContext.create(eventId, eventData.build())
@@ -52,9 +52,9 @@ class LocalFileWhitelistValidatorTest : LightPlatformTestCase() {
 }
 
 private class TestLocalFileValidationRule : LocalFileCustomValidationRule(
-  "local_file", LocalFileWhitelistValidatorTest::class.java, "file-with-allowed-values.txt"
+  "local_file", LocalFileValidationRuleTest::class.java, "file-with-allowed-values.txt"
 )
 
 private class EmptyLocalFileValidationRule : LocalFileCustomValidationRule(
-  "local_file", LocalFileWhitelistValidatorTest::class.java, "not-existing-file.txt"
+  "local_file", LocalFileValidationRuleTest::class.java, "not-existing-file.txt"
 )
