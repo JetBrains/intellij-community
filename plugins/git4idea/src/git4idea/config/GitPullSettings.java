@@ -16,10 +16,12 @@ import java.util.Set;
 @State(name = "Git.Pull.Settings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class GitPullSettings implements PersistentStateComponent<GitPullSettings.State> {
 
+  private static final EnumSet<GitPullOption> NO_OPTIONS = EnumSet.noneOf(GitPullOption.class);
+
   private State myState = new State();
 
   public static class State {
-    public Set<GitPullOption> OPTIONS = EnumSet.noneOf(GitPullOption.class);
+    public Set<GitPullOption> OPTIONS = NO_OPTIONS;
     public String BRANCH = null;
   }
 
@@ -38,7 +40,9 @@ public class GitPullSettings implements PersistentStateComponent<GitPullSettings
   }
 
   public void setOptions(@NotNull Set<GitPullOption> options) {
-    myState.OPTIONS = EnumSet.copyOf(options);
+    myState.OPTIONS = !options.isEmpty()
+                      ? EnumSet.copyOf(options)
+                      : NO_OPTIONS;
   }
 
   public @Nullable String getBranch() {
