@@ -3,7 +3,6 @@ package com.intellij.openapi.options.colors;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.NlsContexts;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Supplier;
@@ -26,8 +25,7 @@ public final class AttributesDescriptor extends AbstractKeyDescriptor<TextAttrib
    * @param displayName the name of the attribute shown in the colors list.
    * @param key         the attributes key for which the colors are specified.
    */
-  public AttributesDescriptor(@NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Sentence) String> displayName,
-                              @NotNull TextAttributesKey key) {
+  public AttributesDescriptor(@NotNull Supplier<@NlsContexts.AttributeDescriptor String> displayName, @NotNull TextAttributesKey key) {
     super(displayName, key);
   }
 
