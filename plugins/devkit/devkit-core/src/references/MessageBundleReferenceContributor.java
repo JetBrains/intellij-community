@@ -58,8 +58,6 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
   @NonNls private static final String EXPORTABLE_PREFIX = "exportable.";
   @NonNls private static final String EXPORTABLE_SUFFIX = ".presentable.name";
 
-  public static final PsiElementResolveResult[] EMPTY_RESOLVE_RESULT = new PsiElementResolveResult[0];
-
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(
@@ -70,30 +68,30 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
         public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element,
                                                                @NotNull ProcessingContext context) {
           if (!(element instanceof PropertyKeyImpl)) return PsiReference.EMPTY_ARRAY;
-          if (!PsiUtil.isPluginProject(element.getProject())) return PsiReference.EMPTY_ARRAY;
+          if (!isPluginProject(element)) return PsiReference.EMPTY_ARRAY;
 
           String text = ((PropertyKeyImpl)element).getText();
           return JBIterable.of(
-            createActionReference(element, text, ACTION, TEXT),
-            createActionReference(element, text, ACTION, DESCRIPTION),
-            createActionReference(element, text, GROUP, TEXT),
-            createActionReference(element, text, GROUP, DESCRIPTION),
+            createActionOrGroupIdReference(element, text),
             createToolwindowIdReference(element, text),
             createExportableIdReference(element, text)
           ).filter(Objects::nonNull).toArray(PsiReference.EMPTY_ARRAY);
         }
 
         @Nullable
-        private PsiReference createActionReference(@NotNull PsiElement element, String text, String prefix, String suffix) {
-          if (!text.startsWith(prefix) || !text.endsWith(suffix)) return null;
+        private PsiReference createActionOrGroupIdReference(@NotNull PsiElement element, String text) {
+          if (!isActionOrGroupKey(text)) return null;
 
-          String id = text.replace(prefix, "").replace(suffix, "");
+          final int prefixEndIdx = text.indexOf('.') + 1;
+          String id = text.substring(prefixEndIdx, text.lastIndexOf('.'));
+          String prefix = text.substring(0, prefixEndIdx);
+
           return new ActionOrGroupIdReference(element, id, prefix);
         }
 
         @Nullable
         private PsiReference createToolwindowIdReference(@NotNull PsiElement element, String text) {
-          if (!text.startsWith(TOOLWINDOW_STRIPE_PREFIX)) return null;
+          if (!isToolwindowKey(text)) return null;
 
           String id = StringUtil.notNullize(StringUtil.substringAfter(text, TOOLWINDOW_STRIPE_PREFIX)).replace('_', ' ');
           return new ToolwindowIdReference(element, id);
@@ -101,7 +99,7 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
 
         @Nullable
         private PsiReference createExportableIdReference(@NotNull PsiElement element, String text) {
-          if (!text.startsWith(EXPORTABLE_PREFIX) || !text.endsWith(EXPORTABLE_SUFFIX)) return null;
+          if (!isExportableKey(text)) return null;
 
           String id = text.replace(EXPORTABLE_PREFIX, "").replace(EXPORTABLE_SUFFIX, "");
           return new ExportableIdReference(element, id);
@@ -111,6 +109,23 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
 
   private static VirtualFilePattern bundleFile() {
     return virtualFile().ofType(PropertiesFileType.INSTANCE).withName(StandardPatterns.string().endsWith(BUNDLE_PROPERTIES));
+  }
+
+  private static boolean isPluginProject(PsiElement property) {
+    return PsiUtil.isPluginProject(property.getProject());
+  }
+
+  private static boolean isActionOrGroupKey(String name) {
+    return (name.startsWith(ACTION) || name.startsWith(GROUP)) &&
+           (name.endsWith(TEXT) || name.endsWith(DESCRIPTION));
+  }
+
+  private static boolean isExportableKey(String name) {
+    return name.startsWith(EXPORTABLE_PREFIX) && name.endsWith(EXPORTABLE_SUFFIX);
+  }
+
+  private static boolean isToolwindowKey(String name) {
+    return name.startsWith(TOOLWINDOW_STRIPE_PREFIX);
   }
 
 
@@ -140,7 +155,7 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
         if (processor.getResults().isEmpty()) {
           String place = StringUtil.substringAfterLast(myId, ".");
           if (StringUtil.isEmpty(place)) return ResolveResult.EMPTY_ARRAY;
-          
+
           String idWithoutPlaceSuffix = StringUtil.substringBeforeLast(myId, ".");
 
           IdeaPluginRegistrationIndex.processAction(project, idWithoutPlaceSuffix, scope, processor);
@@ -155,7 +170,7 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
               }
             }
           }
-          
+
           if (!foundOverrideText) {
             return ResolveResult.EMPTY_ARRAY;
           }
@@ -165,12 +180,13 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
         IdeaPluginRegistrationIndex.processGroup(project, myId, scope, processor);
       }
 
-      return JBIterable
-        .from(processor.getResults())
-        .map(actionOrGroup -> {
-          final DomTarget target = DomTarget.getTarget(actionOrGroup);
-          return target == null ? null : new PsiElementResolveResult(PomService.convertToPsi(project, target));
-        }).filter(Objects::nonNull).toArray(EMPTY_RESOLVE_RESULT);
+      final List<PsiElement> psiElements =
+        JBIterable.from(processor.getResults())
+          .map(actionOrGroup -> {
+            final DomTarget target = DomTarget.getTarget(actionOrGroup);
+            return target == null ? null : PomService.convertToPsi(project, target);
+          }).filter(Objects::nonNull).toList();
+      return PsiElementResolveResult.createResults(psiElements);
     }
   }
 
@@ -310,25 +326,8 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
       return isIconTooltipKey(name) && isPluginProject(property);
     }
 
-    private static boolean isActionOrGroupKey(String name) {
-      return (name.startsWith(ACTION) || name.startsWith(GROUP)) &&
-             (name.endsWith(TEXT) || name.endsWith(DESCRIPTION));
-    }
-
-    private static boolean isExportableKey(String name) {
-      return name.startsWith(EXPORTABLE_PREFIX) && name.endsWith(EXPORTABLE_SUFFIX);
-    }
-
-    private static boolean isToolwindowKey(String name) {
-      return name.startsWith(TOOLWINDOW_STRIPE_PREFIX);
-    }
-
     private static boolean isIconTooltipKey(String name) {
       return name.startsWith(ICON_TOOLTIP_PREFIX) && name.endsWith(ICON_TOOLTIP_SUFFIX);
-    }
-
-    private static boolean isPluginProject(Property property) {
-      return PsiUtil.isPluginProject(property.getProject());
     }
   }
 }
