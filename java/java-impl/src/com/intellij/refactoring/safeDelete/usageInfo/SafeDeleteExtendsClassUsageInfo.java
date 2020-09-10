@@ -107,19 +107,19 @@ public class SafeDeleteExtendsClassUsageInfo extends SafeDeleteReferenceUsageInf
   public boolean isSafeDelete() {
     if (getElement() == null) return false;
     final PsiClass classToRemove = getReferencedElement();
-    PsiClass extendingClass = myExtendingClass;
     if (classToRemove.getExtendsListTypes().length > 0) {
-      final PsiReferenceList listToAddExtends = classToRemove.isInterface() == extendingClass.isInterface() ? extendingClass.getExtendsList() :
-                                                extendingClass.getImplementsList();
+      final PsiReferenceList listToAddExtends = classToRemove.isInterface() == myExtendingClass.isInterface() ?
+                                                myExtendingClass.getExtendsList() :
+                                                myExtendingClass.getImplementsList();
       if (listToAddExtends == null) return false;
     }
 
     if (classToRemove.getImplementsListTypes().length > 0) {
-      if (extendingClass.getImplementsList() == null) return false;
+      if (myExtendingClass.getImplementsList() == null) return false;
     }
 
     PsiResolveHelper resolveHelper = PsiResolveHelper.SERVICE.getInstance(getProject());
     return StreamEx.of(classToRemove.getInterfaces()).prepend(classToRemove.getSuperClass()).nonNull()
-      .allMatch(grandParent -> resolveHelper.isAccessible(grandParent, extendingClass, null));
+      .allMatch(grandParent -> resolveHelper.isAccessible(grandParent, myExtendingClass, null));
   }
 }
