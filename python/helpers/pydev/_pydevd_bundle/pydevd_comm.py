@@ -1330,7 +1330,7 @@ class InternalDataViewerAction(InternalThreadCommand):
         tp_name = tp.__name__
         tp_qualifier = getattr(tp, "__module__", "")
 
-        return (tp_qualifier, tp_name)
+        return tp_qualifier, tp_name
 
     @staticmethod
     def export_action(var, args):
@@ -1338,16 +1338,16 @@ class InternalDataViewerAction(InternalThreadCommand):
         filepath = args[0]
         extension = filepath.rsplit('.', 1)[1].lower()
 
-        type_info = InternalDataViewerAction.get_type_info(var)
+        tp_qualifier, tp_name = InternalDataViewerAction.get_type_info(var)
 
-        if is_pandas_container(*type_info, var):
+        if is_pandas_container(tp_qualifier, tp_name, var):
             if extension in ('csv', 'tsv'):
                 delim = ',' if extension == 'csv' else '\t'
                 var.to_csv(filepath, sep=delim)
             else:
                 raise AttributeError("Format '{}' is not supported".format(extension))
 
-        elif is_numpy_container(*type_info, var):
+        elif is_numpy_container(tp_qualifier, tp_name, var):
             try:
                 import numpy as np
 
