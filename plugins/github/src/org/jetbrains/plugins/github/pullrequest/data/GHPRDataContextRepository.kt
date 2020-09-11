@@ -88,7 +88,7 @@ internal class GHPRDataContextRepository(private val project: Project) {
       requestExecutor.execute(indicator, GHGQLRequests.Repo.findPermission(
         GHRepositoryCoordinates(account.server, parsedRepositoryCoordinates.repositoryPath)))
       ?: throw IllegalArgumentException(
-        "Repository $parsedRepositoryCoordinates.repositoryPath does not exist at ${account.server} or you don't have access.")
+        "Repository ${parsedRepositoryCoordinates.repositoryPath} does not exist at ${account.server} or you don't have access.")
 
     val currentUser = GHUser(accountDetails.nodeId, accountDetails.login, accountDetails.htmlUrl, accountDetails.avatarUrl!!,
                              accountDetails.name)
