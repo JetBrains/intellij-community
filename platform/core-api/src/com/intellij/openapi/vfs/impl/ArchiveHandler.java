@@ -66,7 +66,7 @@ public abstract class ArchiveHandler {
     }
     else {
       EntryInfo entry = getEntryInfo(relativePath);
-      return entry != null ? new FileAttributes(entry.isDirectory, false, false, false, entry.length, entry.timestamp, false, entry.isDirectory ? FileAttributes.CaseSensitivity.SENSITIVE: FileAttributes.CaseSensitivity.UNSPECIFIED) : null;
+      return entry != null ? new FileAttributes(entry.isDirectory, false, false, false, entry.length, entry.timestamp, false, entry.isDirectory ? FileAttributes.CaseSensitivity.SENSITIVE: FileAttributes.CaseSensitivity.UNKNOWN) : null;
     }
   }
 

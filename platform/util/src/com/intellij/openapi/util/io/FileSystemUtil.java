@@ -475,7 +475,7 @@ public final class FileSystemUtil {
     //todo CaseSensitiveDir should actually load dir case sensitivity with some clever native call
     // in the meantime, just use the current file system case
     return !isDirectory
-           ? FileAttributes.CaseSensitivity.UNSPECIFIED
+           ? FileAttributes.CaseSensitivity.UNKNOWN
            : SystemInfo.isFileSystemCaseSensitive
              ? FileAttributes.CaseSensitivity.SENSITIVE
              : FileAttributes.CaseSensitivity.INSENSITIVE;

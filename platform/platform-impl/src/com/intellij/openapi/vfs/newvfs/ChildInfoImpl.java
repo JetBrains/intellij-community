@@ -89,7 +89,7 @@ public final class ChildInfoImpl extends FileAttributes implements ChildInfo {
     boolean isSpecial = type == FileAttributes.Type.SPECIAL;
     boolean isHidden = BitUtil.isSet(flags, FileAttributes.HIDDEN);
     CaseSensitivity sensitivity = isCaseSensitive();
-    assert isDirectory == (sensitivity != FileAttributes.CaseSensitivity.UNSPECIFIED) : this;
+    assert isDirectory == (sensitivity != FileAttributes.CaseSensitivity.UNKNOWN) : this;
     boolean isCaseSensitive = sensitivity == CaseSensitivity.SENSITIVE;
     return PersistentFSImpl.fileAttributesToFlags(isDirectory, isWritable, isSymLink, isSpecial, isHidden, isCaseSensitive);
   }

@@ -59,12 +59,12 @@ public class FileAttributes {
    */
   @Deprecated
   public FileAttributes(boolean isDirectory, boolean isSpecial, boolean isSymlink, boolean isHidden, long length, long lastModified, boolean isWritable) {
-    this(flags(isDirectory, isSpecial, isSymlink, isHidden, isWritable, CaseSensitivity.UNSPECIFIED), length, lastModified);
+    this(flags(isDirectory, isSpecial, isSymlink, isHidden, isWritable, CaseSensitivity.UNKNOWN), length, lastModified);
   }
   public enum CaseSensitivity {
     SENSITIVE,   // files in this directory are case-sensitive
     INSENSITIVE, // files in this directory are case-insensitive
-    UNSPECIFIED  // case sensitivity is not specified, either because the file is not a directory or because sensitivity is unknown
+    UNKNOWN  // case sensitivity is not specified, either because the file is not a directory or because sensitivity is unknown
   }
 
   /**
@@ -74,7 +74,7 @@ public class FileAttributes {
    *    Directory is considered "case-sensitive" if it's able to contain both files "readme.txt" and "README.TXT" and consider them different.
    *    Examples of case-sensitive directories are regular directories on Linux, directories in case-sensitive volumes on Mac
    *    or NTFS directories configured with "fsutil.exe file setCaseSensitiveInfo" on Windows 10+.
-   *    In case of {@code isDirectory==false} the caseSensitivity argument must be {@link CaseSensitivity#UNSPECIFIED} because case sensitivity configured on a directory level,
+   *    In case of {@code isDirectory==false} the caseSensitivity argument must be {@link CaseSensitivity#UNKNOWN} because case sensitivity configured on a directory level,
    */
   public FileAttributes(boolean isDirectory,
                         boolean isSpecial,
@@ -85,7 +85,7 @@ public class FileAttributes {
                         boolean isWritable,
                         @NotNull CaseSensitivity caseSensitivity) {
     this(flags(isDirectory, isSpecial, isSymlink, isHidden, isWritable, caseSensitivity), length, lastModified);
-    if (isDirectory == (caseSensitivity == CaseSensitivity.UNSPECIFIED)) {
+    if (isDirectory == (caseSensitivity == CaseSensitivity.UNKNOWN)) {
       throw new IllegalArgumentException("For a directory case-sensitivity must be defined, for a file it must be UNSPECIFIED, but got: "+this);
     }
   }
@@ -116,7 +116,7 @@ public class FileAttributes {
     if (!isWritable) flags |= READ_ONLY;
     int type_flags = isSpecial ? 0b11 : isDirectory ? 0b10 : 0b01;
     flags |= type_flags << TYPE_SHIFT;
-    int sensitivity_flags = sensitivity == CaseSensitivity.UNSPECIFIED ? 0 : sensitivity == CaseSensitivity.SENSITIVE ? 1 : 2;
+    int sensitivity_flags = sensitivity == CaseSensitivity.UNKNOWN ? 0 : sensitivity == CaseSensitivity.SENSITIVE ? 1 : 2;
     flags |= sensitivity_flags << CASE_SENSITIVITY_SHIFT;
     return flags;
   }
@@ -148,11 +148,11 @@ public class FileAttributes {
   @NotNull
   public CaseSensitivity isCaseSensitive() {
     if (!isDirectory()) {
-      return CaseSensitivity.UNSPECIFIED;
+      return CaseSensitivity.UNKNOWN;
     }
     int sensitivity_flags = (flags >> CASE_SENSITIVITY_SHIFT) & 0b11;
     switch (sensitivity_flags) {
-      case 0: return CaseSensitivity.UNSPECIFIED;
+      case 0: return CaseSensitivity.UNKNOWN;
       case 1: return CaseSensitivity.SENSITIVE;
       case 2: return CaseSensitivity.INSENSITIVE;
     }
@@ -220,6 +220,6 @@ public class FileAttributes {
   }
 
   public boolean hasCaseSensitivityInformation() {
-    return !isDirectory() || isCaseSensitive() != CaseSensitivity.UNSPECIFIED;
+    return !isDirectory() || isCaseSensitive() != CaseSensitivity.UNKNOWN;
   }
 }
