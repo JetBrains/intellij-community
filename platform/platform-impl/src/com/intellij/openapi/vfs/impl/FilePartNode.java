@@ -338,6 +338,9 @@ class FilePartNode {
       FilePartNode child = children[i];
       if (changed) {
         child.update(thisNode, root, debugSource, debugInvalidationReason);
+        if (i >= thisNode.children.length) {
+          break;
+        }
         child = thisNode.children[i];
       }
       if (file == null) {
