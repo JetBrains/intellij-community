@@ -88,6 +88,7 @@ public final class CommonJavaFragments {
         jLabel.setText(added ? buildAndRun : run);
       }
     });
+    fragment.setActionHint(ExecutionBundle.message("run.the.application.without.launching.the.build.process"));
     return fragment;
   }
 
@@ -123,6 +124,8 @@ public final class CommonJavaFragments {
                                    s -> s.getDefaultModule() != s.getConfigurationModule().getModule() &&
                                         s.getConfigurationModule().getModule() != null);
     fragment.setHint(ExecutionBundle.message("application.configuration.use.classpath.and.jdk.of.module.hint"));
+    fragment.setActionHint(
+      ExecutionBundle.message("the.module.whose.classpath.will.be.used.the.classpath.specified.in.the.vm.options.takes.precedence.over.this.one"));
     return fragment;
   }
 
