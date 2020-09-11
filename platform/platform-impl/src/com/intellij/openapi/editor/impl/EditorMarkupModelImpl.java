@@ -1411,7 +1411,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
                                              boolean alignToRight,
                                              @NotNull TooltipGroup group,
                                              @NotNull HintHint hintHint) {
-          JLabel label = new JLabel("WTF");
+          JLabel label = new JLabel("WTF");  // NON-NLS (non-observable)
           return new LightweightHint(label) {
             @Override
             public void hide() {

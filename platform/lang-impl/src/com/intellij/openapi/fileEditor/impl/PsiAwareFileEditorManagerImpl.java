@@ -11,6 +11,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.ProblemListener;
@@ -57,10 +58,9 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
     return myProblemSolver.isProblemFile(file);
   }
 
-  @NotNull
   @Override
-  public String getFileTooltipText(@NotNull final VirtualFile file) {
-    final StringBuilder tooltipText = new StringBuilder();
+  public @NotNull String getFileTooltipText(@NotNull VirtualFile file) {
+    @NlsSafe StringBuilder tooltipText = new StringBuilder();
     if (Registry.is("ide.tab.tooltip.module")) {
       final Module module = ModuleUtilCore.findModuleForFile(file, getProject());
       if (module != null && ModuleManager.getInstance(getProject()).getModules().length > 1) {

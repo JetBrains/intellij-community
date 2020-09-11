@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -61,11 +61,9 @@ public final class LargeFileEditorProvider extends TextEditorProvider {
       myFile = file;
     }
 
-    @NotNull
     @Override
-    public JComponent getComponent() {
-      JLabel label = new JLabel(
-        IdeBundle.message("label.binary.file.0.is.too.large.1", myFile.getPath(), StringUtil.formatFileSize(myFile.getLength())));
+    public @NotNull JComponent getComponent() {
+      JLabel label = new JLabel(IdeBundle.message("binary.file.too.large", myFile.getPath(), StringUtil.formatFileSize(myFile.getLength())));
       label.setHorizontalAlignment(SwingConstants.CENTER);
       return label;
     }
@@ -75,10 +73,9 @@ public final class LargeFileEditorProvider extends TextEditorProvider {
       return null;
     }
 
-    @NotNull
     @Override
-    public String getName() {
-      return "Large file editor";
+    public @NotNull String getName() {
+      return IdeBundle.message("large.file.editor.name");
     }
 
     @NotNull

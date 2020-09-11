@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.CommonBundle;
@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
@@ -238,7 +239,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
 
   private void updateViewerForSelection() {
     if (myAllContents.isEmpty()) return;
-    String fullString = getSelectedText();
+    @NonNls String fullString = getSelectedText();
 
     if (myViewer != null) {
       EditorFactory.getInstance().releaseEditor(myViewer);
@@ -310,7 +311,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
   }
 
   @Nullable
-  protected abstract String getStringRepresentationFor(Data content);
+  protected abstract @NlsSafe String getStringRepresentationFor(Data content);
 
   @NotNull
   protected abstract List<Data> getContents();
@@ -381,7 +382,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       this.longText = longText;
     }
 
-    String getShortText(int maxChars) {
+    @NlsSafe String getShortText(int maxChars) {
       int len = shortText.length();
       if (len > 0 && !trimmed) return shortText;
       if (len >= maxChars && (len - maxChars) * 10 / len == 0) return shortText;
