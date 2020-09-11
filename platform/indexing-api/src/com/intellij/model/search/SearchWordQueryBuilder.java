@@ -17,16 +17,14 @@ public interface SearchWordQueryBuilder {
    * Orders to search word in files which contain {@code containerName} first.
    */
   @Contract(value = "_ -> new", pure = true)
-  @NotNull
-  SearchWordQueryBuilder withContainerName(@Nullable String containerName);
+  @NotNull SearchWordQueryBuilder withContainerName(@Nullable String containerName);
 
   /**
    * Sets case sensitivity.<br/>
    * The query is case sensitive by default, so this method might be used to make the query case insensitive.
    */
   @Contract(value = "_ -> new", pure = true)
-  @NotNull
-  SearchWordQueryBuilder caseSensitive(boolean caseSensitive);
+  @NotNull SearchWordQueryBuilder caseSensitive(boolean caseSensitive);
 
   /**
    * Orders to search occurrences in given contexts.
@@ -34,8 +32,7 @@ public interface SearchWordQueryBuilder {
    * @see com.intellij.psi.search.UsageSearchContext
    */
   @Contract(value = "_, _ -> new", pure = true)
-  @NotNull
-  SearchWordQueryBuilder inContexts(@NotNull SearchContext context, SearchContext @NotNull ... otherContexts);
+  @NotNull SearchWordQueryBuilder inContexts(@NotNull SearchContext context, SearchContext @NotNull ... otherContexts);
 
   /**
    * Orders to search occurrences in given contexts.
@@ -43,22 +40,19 @@ public interface SearchWordQueryBuilder {
    * @see com.intellij.psi.search.UsageSearchContext
    */
   @Contract(value = "_ -> new", pure = true)
-  @NotNull
-  SearchWordQueryBuilder inContexts(@NotNull Set<SearchContext> contexts);
+  @NotNull SearchWordQueryBuilder inContexts(@NotNull Set<SearchContext> contexts);
 
   /**
    * Orders to search occurrences in given search scope.
    */
   @Contract(value = "_ -> new", pure = true)
-  @NotNull
-  SearchWordQueryBuilder inScope(@NotNull SearchScope searchScope);
+  @NotNull SearchWordQueryBuilder inScope(@NotNull SearchScope searchScope);
 
   /**
    * Orders to search occurrences in files of given types.
    */
   @Contract(value = "_, _ -> new", pure = true)
-  @NotNull
-  SearchWordQueryBuilder restrictFileTypes(@NotNull FileType fileType, FileType @NotNull ... fileTypes);
+  @NotNull SearchWordQueryBuilder restrictFileTypes(@NotNull FileType fileType, FileType @NotNull ... fileTypes);
 
   /**
    * Orders to search occurrences in files of given language.
@@ -70,8 +64,7 @@ public interface SearchWordQueryBuilder {
    * </p>
    */
   @Contract(value = "_ -> new", pure = true)
-  @NotNull
-  SearchWordQueryBuilder inFilesWithLanguage(@NotNull Language language);
+  @NotNull SearchWordQueryBuilder inFilesWithLanguage(@NotNull Language language);
 
   /**
    * Orders to search occurrences in files of given language and its dialects.
@@ -80,49 +73,42 @@ public interface SearchWordQueryBuilder {
    * </p>
    */
   @Contract(value = "_ -> new", pure = true)
-  @NotNull
-  SearchWordQueryBuilder inFilesWithLanguageOfKind(@NotNull Language language);
+  @NotNull SearchWordQueryBuilder inFilesWithLanguageOfKind(@NotNull Language language);
 
   /**
    * Orders to include occurrences in language injections of any language as well as occurrences in host files.
    */
   @Contract(value = "-> new", pure = true)
-  @NotNull
-  SearchWordQueryBuilder includeInjections();
+  @NotNull SearchWordQueryBuilder includeInjections();
 
   /**
    * Orders to search occurrences in language injections (instead of host files).
    */
   @Contract(value = "-> new", pure = true)
-  @NotNull
-  SearchWordQueryBuilder inInjections();
+  @NotNull SearchWordQueryBuilder inInjections();
 
   /**
    * Orders to search occurrences in language injections (instead of host files) of given language.
    */
   @Contract(value = "_ -> new", pure = true)
-  @NotNull
-  SearchWordQueryBuilder inInjections(@NotNull Language language);
+  @NotNull SearchWordQueryBuilder inInjections(@NotNull Language language);
 
   /**
    * Orders to search occurrences in language injections (instead of host files) of given language and its dialects.
    */
   @Contract(value = "_ -> new", pure = true)
-  @NotNull
-  SearchWordQueryBuilder inInjectionsOfKind(@NotNull Language language);
+  @NotNull SearchWordQueryBuilder inInjectionsOfKind(@NotNull Language language);
 
   /**
    * @param mapper pure function which is run once per each occurrence
    * @return query which returns results of applying the {@code mapper} to each occurrence
    */
   @Contract(value = "_ -> new", pure = true)
-  @NotNull
-  <T> Query<? extends T> buildQuery(@NotNull LeafOccurrenceMapper<T> mapper);
+  <T> @NotNull Query<? extends T> buildQuery(@NotNull LeafOccurrenceMapper<T> mapper);
 
   /**
-   * @return query which generates occurrences by traversing the tree up starting from the offset
+   * @return query which generates occurrences by traversing the tree up starting from the bottom-most element with occurrence
    */
   @Contract(value = "-> new", pure = true)
-  @NotNull
-  Query<? extends TextOccurrence> buildOccurrenceQuery();
+  @NotNull Query<? extends TextOccurrence> buildOccurrenceQuery();
 }
