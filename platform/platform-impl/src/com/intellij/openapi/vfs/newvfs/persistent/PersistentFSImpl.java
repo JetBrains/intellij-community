@@ -187,8 +187,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         for (Map.Entry<String, FileAttributes> entry : map.entrySet()) {
           String newName = entry.getKey();
           Pair<@NotNull FileAttributes, String> childData = getChildData(fs, file, newName, entry.getValue(), null);
-          ChildInfo newChild = justCreated.computeIfAbsent(newName, name -> makeChildRecord(file, id, name, childData, fs, null));
-          toAddChildren.add(newChild);
+          if (childData != null) {
+            ChildInfo newChild = justCreated.computeIfAbsent(newName, name -> makeChildRecord(file, id, name, childData, fs, null));
+            toAddChildren.add(newChild);
+          }
         }
       }
       else {
