@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.vfs.DiskQueryRelay;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,21 +24,23 @@ import java.util.function.Function;
 import static com.intellij.util.BitUtil.isSet;
 
 public abstract class PersistentFS extends ManagingFS {
-  static final int CHILDREN_CACHED_FLAG = 0x01;
-  static final int IS_DIRECTORY_FLAG = 0x02;
-  static final int IS_READ_ONLY = 0x04;
-  static final int MUST_RELOAD_CONTENT = 0x08;
-  static final int IS_SYMLINK = 0x10;
-  static final int IS_SPECIAL = 0x20; // this file has "special" flag. Defined for files only.
-  static final int IS_CASE_SENSITIVE = IS_SPECIAL; // this directory contains case-sensitive files. Defined for directories only.
-  static final int IS_HIDDEN = 0x40;
-  static final int MUST_RELOAD_LENGTH = 0x80;
+  static class Flags {
+    static final int CHILDREN_CACHED = 0x01;
+    static final int IS_DIRECTORY = 0x02;
+    static final int IS_READ_ONLY = 0x04;
+    static final int MUST_RELOAD_CONTENT = 0x08;
+    static final int IS_SYMLINK = 0x10;
+    static final int IS_SPECIAL = 0x20; // this file has "special" flag. Defined for files only.
+    static final int IS_HIDDEN = 0x40;
+    static final int MUST_RELOAD_LENGTH = 0x80;
+    static final int CHILDREN_CASE_SENSITIVE = 0x100;// this directory contains case-sensitive files. Defined for directories only.
+    static final int ALL_VALID_FLAGS =
+      CHILDREN_CACHED | IS_DIRECTORY | IS_READ_ONLY | MUST_RELOAD_CONTENT | MUST_RELOAD_LENGTH | IS_SYMLINK | IS_SPECIAL | IS_HIDDEN |
+      CHILDREN_CASE_SENSITIVE;
+  }
 
-  @MagicConstant(flags = {CHILDREN_CACHED_FLAG, IS_DIRECTORY_FLAG, IS_READ_ONLY, MUST_RELOAD_CONTENT, MUST_RELOAD_LENGTH, IS_SYMLINK, IS_SPECIAL, IS_HIDDEN, IS_CASE_SENSITIVE})
+  @MagicConstant(flagsFromClass = Flags.class)
   public @interface Attributes { }
-
-  static final int ALL_VALID_FLAGS =
-    CHILDREN_CACHED_FLAG | IS_DIRECTORY_FLAG | IS_READ_ONLY | MUST_RELOAD_CONTENT | MUST_RELOAD_LENGTH | IS_SYMLINK | IS_SPECIAL | IS_HIDDEN | IS_CASE_SENSITIVE;
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static PersistentFS getInstance() {
@@ -69,12 +72,19 @@ public abstract class PersistentFS extends ManagingFS {
   @Attributes
   public abstract int getFileAttributes(int id);
 
-  public static boolean isDirectory(@Attributes int attributes) { return isSet(attributes, IS_DIRECTORY_FLAG); }
-  public static boolean isWritable(@Attributes int attributes) { return !isSet(attributes, IS_READ_ONLY); }
-  public static boolean isSymLink(@Attributes int attributes) { return isSet(attributes, IS_SYMLINK); }
-  public static boolean isSpecialFile(@Attributes int attributes) { return !isDirectory(attributes) && isSet(attributes, IS_SPECIAL); }
-  public static boolean isHidden(@Attributes int attributes) { return isSet(attributes, IS_HIDDEN); }
-  public static boolean isCaseSensitive(@Attributes int attributes) { return isDirectory(attributes) && isSet(attributes, IS_CASE_SENSITIVE); }
+  public static boolean isDirectory(@Attributes int attributes) { return isSet(attributes, Flags.IS_DIRECTORY); }
+  public static boolean isWritable(@Attributes int attributes) { return !isSet(attributes, Flags.IS_READ_ONLY); }
+  public static boolean isSymLink(@Attributes int attributes) { return isSet(attributes, Flags.IS_SYMLINK); }
+  public static boolean isSpecialFile(@Attributes int attributes) { return !isDirectory(attributes) && isSet(attributes, Flags.IS_SPECIAL); }
+  public static boolean isHidden(@Attributes int attributes) { return isSet(attributes, Flags.IS_HIDDEN); }
+
+  @NotNull
+  public static FileAttributes.CaseSensitivity areChildrenCaseSensitive(@Attributes int attributes) {
+    if (!isDirectory(attributes)) {
+      throw new IllegalArgumentException("CHILDREN_CASE_SENSITIVE flag defined for directories only but got file: 0b" + Integer.toBinaryString(attributes));
+    }
+    return isSet(attributes, Flags.CHILDREN_CASE_SENSITIVE) ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE;
+  }
 
   @Nullable
   public abstract NewVirtualFile findFileByIdIfCached(int id);

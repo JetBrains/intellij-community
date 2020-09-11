@@ -167,7 +167,7 @@ public final class VirtualFileImpl extends VirtualFileSystemEntry {
     if (isDirectory()) {
       throw new IllegalArgumentException("getDetectedLineSeparator() must not be called for a directory");
     }
-    if (getFlagInt(SYSTEM_LINE_SEPARATOR_DETECTED)) {
+    if (getFlagInt(VfsDataFlags.SYSTEM_LINE_SEPARATOR_DETECTED)) {
       // optimization: do not waste space in user data for system line separator
       return LineSeparator.getSystemLineSeparator().getSeparatorString();
     }
@@ -181,7 +181,7 @@ public final class VirtualFileImpl extends VirtualFileSystemEntry {
     }
     // optimization: do not waste space in user data for system line separator
     boolean hasSystemSeparator = LineSeparator.getSystemLineSeparator().getSeparatorString().equals(separator);
-    setFlagInt(SYSTEM_LINE_SEPARATOR_DETECTED, hasSystemSeparator);
+    setFlagInt(VfsDataFlags.SYSTEM_LINE_SEPARATOR_DETECTED, hasSystemSeparator);
 
     super.setDetectedLineSeparator(hasSystemSeparator ? null : separator);
   }

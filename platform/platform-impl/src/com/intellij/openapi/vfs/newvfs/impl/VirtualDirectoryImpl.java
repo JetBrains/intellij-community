@@ -245,23 +245,25 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     VfsData vfsData = getVfsData();
     VfsData.Segment segment = vfsData.getSegment(id, true);
-    VfsData.initFile(id, segment, nameId, PersistentFS.isDirectory(attributes) ? new VfsData.DirectoryData() : KeyFMap.EMPTY_MAP);
+    boolean isDirectory = PersistentFS.isDirectory(attributes);
+    VfsData.initFile(id, segment, nameId, isDirectory ? new VfsData.DirectoryData() : KeyFMap.EMPTY_MAP);
     LOG.assertTrue(!(getFileSystem() instanceof Win32LocalFileSystem));
 
     VirtualFileSystemEntry child = vfsData.getFileById(id, this, true);
     assert child != null;
-    int newFlags = (PersistentFS.isSymLink(attributes) ? IS_SYMLINK_FLAG : 0) |
-                   (PersistentFS.isSpecialFile(attributes) ? IS_SPECIAL_FLAG : 0) |
-                   (PersistentFS.isWritable(attributes) ? IS_WRITABLE_FLAG : 0) |
-                   (PersistentFS.isHidden(attributes) ? IS_HIDDEN_FLAG : 0) |
-                   (PersistentFS.isCaseSensitive(attributes) ? IS_CASE_SENSITIVE : 0);
-    segment.setFlags(id, IS_SYMLINK_FLAG | IS_SPECIAL_FLAG | IS_WRITABLE_FLAG | IS_HIDDEN_FLAG | IS_CASE_SENSITIVE, newFlags);
-    child.updateLinkStatus();
+    FileAttributes.CaseSensitivity sensitivity = isDirectory ? PersistentFS.areChildrenCaseSensitive(attributes) : FileAttributes.CaseSensitivity.UNKNOWN;
+    int newFlags = (PersistentFS.isSymLink(attributes) ? VfsDataFlags.IS_SYMLINK_FLAG : 0) |
+                   (PersistentFS.isSpecialFile(attributes) ? VfsDataFlags.IS_SPECIAL_FLAG : 0) |
+                   (PersistentFS.isWritable(attributes) ? VfsDataFlags.IS_WRITABLE_FLAG : 0) |
+                   (PersistentFS.isHidden(attributes) ? VfsDataFlags.IS_HIDDEN_FLAG : 0) |
+                   (sensitivity == FileAttributes.CaseSensitivity.SENSITIVE ? VfsDataFlags.CHILDREN_CASE_SENSITIVE : 0);
+    segment.setFlags(id, VfsDataFlags.IS_SYMLINK_FLAG | VfsDataFlags.IS_SPECIAL_FLAG | VfsDataFlags.IS_WRITABLE_FLAG | VfsDataFlags.IS_HIDDEN_FLAG | VfsDataFlags.CHILDREN_CASE_SENSITIVE, newFlags);
+    child.updateLinkStatus(PersistentFS.isSymLink(attributes), this);
 
     if (delegate.markNewFilesAsDirty()) {
       child.markDirty();
     }
-    if (PersistentFS.isDirectory(attributes) && child instanceof VirtualDirectoryImpl && isEmptyDirectory) {
+    if (isDirectory && child instanceof VirtualDirectoryImpl && isEmptyDirectory) {
       // when creating empty directory we need to make sure
       // every file created inside will fire "file created" event
       // in order to virtual file pointer manager get those events
@@ -684,11 +686,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   public boolean allChildrenLoaded() {
-    return getFlagInt(CHILDREN_CACHED);
+    return getFlagInt(VfsDataFlags.CHILDREN_CACHED);
   }
 
   private void setChildrenLoaded() {
-    setFlagInt(CHILDREN_CACHED, true);
+    setFlagInt(VfsDataFlags.CHILDREN_CACHED, true);
   }
 
   @NotNull
@@ -778,6 +780,6 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @Override
   public boolean isCaseSensitive() {
-    return getFlagInt(IS_CASE_SENSITIVE);
+    return getFlagInt(VfsDataFlags.CHILDREN_CASE_SENSITIVE);
   }
 }

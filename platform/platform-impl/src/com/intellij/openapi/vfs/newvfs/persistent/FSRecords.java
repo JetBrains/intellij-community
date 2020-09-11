@@ -57,7 +57,7 @@ public final class FSRecords {
   private static final boolean useSmallAttrTable = SystemProperties.getBooleanProperty("idea.use.small.attr.table.for.vfs", true);
   private static final boolean ourStoreRootsSeparately = SystemProperties.getBooleanProperty("idea.store.roots.separately", false);
 
-  private static final int VERSION = 54 +
+  private static final int VERSION = 55 +
                                      (WE_HAVE_CONTENT_HASHES ? 0x10 : 0) +
                                      (IOUtil.BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER ? 0x37 : 0) +
                                      (bulkAttrReadSupport ? 0x27 : 0) +
@@ -110,8 +110,11 @@ public final class FSRecords {
   private static volatile int ourLocalModificationCount;
   private static volatile boolean ourIsDisposed;
 
-  private static final int FREE_RECORD_FLAG = 0x100;
-  private static final int ALL_VALID_FLAGS = PersistentFS.ALL_VALID_FLAGS | FREE_RECORD_FLAG;
+  private static final int FREE_RECORD_FLAG = 0x200;
+  static {
+    assert (PersistentFS.Flags.ALL_VALID_FLAGS & FREE_RECORD_FLAG) == 0 : PersistentFS.Flags.ALL_VALID_FLAGS;
+  }
+  private static final int ALL_VALID_FLAGS = PersistentFS.Flags.ALL_VALID_FLAGS | FREE_RECORD_FLAG;
   private static final int MAX_INITIALIZATION_ATTEMPTS = 10;
 
   static {
@@ -952,9 +955,10 @@ public final class FSRecords {
     }
   }
 
-  // try to apply `childrenConvertor` to the children of `parentId`.
-  // First, try optimistically: outside write lock and commit inside write lock if nothing changed
-  // Failing that, pessimistically: retry converter inside write lock for fresh children and commit inside the same write lock
+  // Perform operation on children and save the list atomically:
+  // Obtain fresh children and try to apply `childrenConvertor` to the children of `parentId`.
+  // If everything is still valid (i.e. no one changed the list in the meantime), commit.
+  // Failing that, repeat pessimistically: retry converter inside write lock for fresh children and commit inside the same write lock
   @NotNull
   static ListResult update(int parentId, @NotNull Function<? super ListResult, ? extends ListResult> childrenConvertor) {
     assert parentId > 0: parentId;
@@ -1138,7 +1142,7 @@ public final class FSRecords {
         VirtualFileSystemEntry parent = foundParent;
         if (path != null) {
           for (int i = path.size() - 1; i >= 0; i--) {
-            parent = findChild(parent, path.get(i));
+            parent = findChild(parent, path.getInt(i));
           }
         }
 
@@ -1869,7 +1873,7 @@ public final class FSRecords {
     if (parentId > 0 && getParent(parentId) > 0) {
       int parentFlags = getFlags(parentId);
       assert !BitUtil.isSet(parentFlags, FREE_RECORD_FLAG) : parentId + ": " + Integer.toHexString(parentFlags);
-      assert BitUtil.isSet(parentFlags, PersistentFS.IS_DIRECTORY_FLAG) : parentId + ": " + Integer.toHexString(parentFlags);
+      assert BitUtil.isSet(parentFlags, PersistentFS.Flags.IS_DIRECTORY) : parentId + ": " + Integer.toHexString(parentFlags);
     }
 
     CharSequence name = getNameSequence(id);
