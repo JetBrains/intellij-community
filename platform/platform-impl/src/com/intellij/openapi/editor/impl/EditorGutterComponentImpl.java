@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -123,6 +124,8 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 @DirtyUI
 final class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener, DataProvider, Accessible {
+  private static final Logger LOG = Logger.getInstance(EditorGutterComponentImpl.class);
+
   private static final JBValueGroup JBVG = new JBValueGroup();
   private static final JBValue START_ICON_AREA_WIDTH = JBVG.value(17);
   private static final JBValue FREE_PAINTERS_LEFT_AREA_WIDTH = JBVG.value(8);
@@ -344,6 +347,12 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
       startVisualLine = myEditor.offsetToVisualLine(firstVisibleOffset);
       endVisualLine = myEditor.offsetToVisualLine(lastVisibleOffset);
+    }
+
+    if (firstVisibleOffset > lastVisibleOffset) {
+      LOG.error("Unexpected painting range: (" + firstVisibleOffset + ":" + lastVisibleOffset
+                + "), visual line range: (" + startVisualLine + ":" + endVisualLine
+                + "), clip: " + clip + ", focus range: " + focusModeRange);
     }
 
     // paint all backgrounds
