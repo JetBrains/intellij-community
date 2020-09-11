@@ -230,12 +230,10 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
   void postUpdateCurrent(Configurable configurable) {
   }
 
-  final boolean updateIfCurrent(Configurable configurable) {
-    if (myConfigurable != configurable) {
-      return false;
+  final void updateIfCurrent(Configurable configurable) {
+    if (myConfigurable == configurable) {
+      updateCurrent(configurable, false);
     }
-    updateCurrent(configurable, false);
-    return true;
   }
 
   @NotNull
