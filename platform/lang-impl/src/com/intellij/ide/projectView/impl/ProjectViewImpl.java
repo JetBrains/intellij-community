@@ -4,7 +4,6 @@ package com.intellij.ide.projectView.impl;
 import com.intellij.application.options.OptionsApplicabilityFilter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
-import com.intellij.ide.impl.ProjectViewSelectInGroupTarget;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.HelpID;
 import com.intellij.ide.projectView.ProjectView;
@@ -39,7 +38,6 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -148,7 +146,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       getDefaultState().setAutoscrollFromSource(selected);
       getGlobalOptions().setAutoscrollFromSource(selected);
       if (selected && !myAutoScrollFromSourceHandler.isCurrentProjectViewPaneFocused()) {
-        myAutoScrollFromSourceHandler.scrollFromSource();
+        myAutoScrollFromSourceHandler.scrollFromSource(false);
       }
     }
   };
@@ -543,7 +541,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
             SimpleSelectInContext context = myAutoScrollFromSourceHandler.findSelectInContext();
             if (context != null) {
               myCurrentSelectionObsolete = ThreeState.UNSURE;
-              context.selectInCurrentTarget();
+              context.selectInCurrentTarget(false);
             }
           }
         }
@@ -900,7 +898,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
               JComponent component = editor.getComponent();
               for (FileEditor fileEditor : manager.getAllEditors()) {
                 if (SwingUtilities.isDescendingFrom(component, fileEditor.getComponent())) {
-                  myAutoScrollFromSourceHandler.scrollFromSource();
+                  myAutoScrollFromSourceHandler.scrollFromSource(false);
                   break;
                 }
               }
@@ -996,7 +994,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       target.setSubId(subId);
     }
     if (isAutoscrollFromSource(id)) {
-      myAutoScrollFromSourceHandler.scrollFromSource();
+      myAutoScrollFromSourceHandler.scrollFromSource(false);
     }
   }
 
@@ -1022,7 +1020,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   protected void createTitleActions(@NotNull List<? super AnAction> titleActions) {
-    titleActions.add(new ScrollFromSourceAction());
+    AnAction action = ActionManager.getInstance().getAction("SelectOpenedFileInProjectView");
+    if (action != null) titleActions.add(action);
     AnAction collapseAllAction = CommonActionsManager.getInstance().createCollapseAllAction(new DefaultTreeExpander(() -> {
       AbstractProjectViewPane pane = getCurrentProjectViewPane();
       return pane == null ? null : pane.myTree;
@@ -1879,13 +1878,13 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       if (myProject.isDisposed() || !myViewContentPanel.isShowing()) return;
       if (isAutoscrollFromSource(getCurrentViewId()) && !isCurrentProjectViewPaneFocused()) {
         SimpleSelectInContext context = getSelectInContext(fileEditor);
-        if (context != null) context.selectInCurrentTarget();
+        if (context != null) context.selectInCurrentTarget(false);
       }
     }
 
-    void scrollFromSource() {
+    void scrollFromSource(boolean requestFocus) {
       SimpleSelectInContext context = findSelectInContext();
-      if (context != null) context.selectInCurrentTarget();
+      if (context != null) context.selectInCurrentTarget(requestFocus);
     }
 
     @Nullable
@@ -1950,10 +1949,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       super(psiFile, psiFile);
     }
 
-    void selectInCurrentTarget() {
+    void selectInCurrentTarget(boolean requestFocus) {
       SelectInTarget target = getCurrentSelectInTarget();
       if (target != null && getPsiFile() != null) {
-        selectIn(target, false);
+        selectIn(target, requestFocus);
       }
     }
 
@@ -1973,10 +1972,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
 
     @Override
-    void selectInCurrentTarget() {
+    void selectInCurrentTarget(boolean requestFocus) {
       if (PsiDocumentManager.getInstance(getProject()) == null) return;
 
-      runWhenPsiAtCaretIsParsed(super::selectInCurrentTarget);
+      runWhenPsiAtCaretIsParsed(() -> super.selectInCurrentTarget(requestFocus));
     }
 
     private void runWhenPsiAtCaretIsParsed(Runnable runnable) {
@@ -2033,41 +2032,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     if (mySortByType.isEnabled(paneId)) mySortByType.setSelected(sortByType);
   }
 
-  private class ScrollFromSourceAction extends AnAction implements DumbAware {
-  ScrollFromSourceAction() {
-    super(IdeBundle.messagePointer("action.AnAction.text.select.opened.file"),
-          IdeBundle.messagePointer("action.AnAction.description.select.opened.file"), AllIcons.General.Locate);
+  boolean isSelectOpenedFileEnabled() {
+    return !isAutoscrollFromSource(myCurrentViewId);
   }
 
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      myAutoScrollFromSourceHandler.scrollFromSource();
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent event) {
-      Presentation presentation = event.getPresentation();
-      presentation.setText(LangBundle.message("action.select.opened.file.text", getScrollToSourceShortcut()));
-      presentation.setEnabledAndVisible(!isAutoscrollFromSource(myCurrentViewId));
-    }
-  }
-
-  private String getScrollToSourceShortcut() {
-    String selectInProjectViewShortcut = KeymapUtil.getFirstKeyboardShortcutText("SelectInProjectView");
-    if (!selectInProjectViewShortcut.isEmpty()) {
-      return " (" + selectInProjectViewShortcut + ")";
-    }
-
-    String selectInShortcut = KeymapUtil.getFirstKeyboardShortcutText("SelectIn");
-    if (!selectInShortcut.isEmpty()) {
-      List<SelectInTarget> targets = SelectInManager.getInstance(myProject).getTargetList();
-      int index = ContainerUtil.indexOf(targets, (target) -> target instanceof ProjectViewSelectInGroupTarget);
-      if (index >= 0) {
-        return " (" + selectInShortcut + ", " + (index + 1) + ")";
-      }
-    }
-
-    return "";
+  void performSelectOpenedFile() {
+    myAutoScrollFromSourceHandler.scrollFromSource(true);
   }
 
   @NotNull
