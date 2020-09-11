@@ -1,9 +1,6 @@
 package com.intellij.space.chat
 
-import circlet.client.api.ChannelItemRecord
-import circlet.client.api.M2ChannelRecord
-import circlet.client.api.M2TextItemContent
-import circlet.client.api.Navigator
+import circlet.client.api.*
 import circlet.client.api.mc.MCMessage
 import circlet.code.api.CodeDiscussionAddedFeedEvent
 import circlet.code.api.CodeDiscussionRecord
@@ -20,9 +17,9 @@ import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.space.ui.SpaceAvatarProvider
+import com.intellij.space.ui.resizeIcon
 import com.intellij.space.vcs.review.HtmlEditorPane
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.ScrollPaneFactory
@@ -36,6 +33,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
+import icons.SpaceIcons
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.launch
 import net.miginfocom.layout.AC
@@ -90,7 +88,8 @@ internal fun createSpaceChatPanel(
     while (messages.value.hasPrev) {
       chatViewModel.loadPrev()
     }
-    val avatarProvider = SpaceAvatarProvider(lifetime, timeline, JBValue.UIInteger("space.chat.avatar.size", 30))
+    val avatarSize = JBValue.UIInteger("space.chat.avatar.size", 30)
+    val avatarProvider = SpaceAvatarProvider(lifetime, timeline, avatarSize)
     val server = channelsVm.client.server
     val items = messages.value.messages.mapNotNull { messageViewModel ->
       val message = messageViewModel.message
@@ -104,15 +103,15 @@ internal fun createSpaceChatPanel(
             codeDiscussionChat.loadNext()
           }
           val codeDiscussionMessages = codeDiscussionChat.mvms.prop.value.messages.map { it.message }
-          createDiff(project, discussion, codeDiscussionMessages.first())
+          createDiff(project, discussion, codeDiscussionMessages.first(), server)
             ?.withThread(lifetime, server, codeDiscussionMessages.drop(1))
         }
-        is M2TextItemContent -> createSimpleMessagePanel(message)
+        is M2TextItemContent -> createSimpleMessagePanel(message, server)
         is MCMessage -> null
         else -> null
       }?.let { component ->
         Item(
-          avatarProvider.getIcon(message.author.asUser!!),
+          message.author.asUser?.let { user -> avatarProvider.getIcon(user) } ?: resizeIcon(SpaceIcons.Main, avatarSize.get()),
           createMessageTitle(server, message),
           component
         )
@@ -129,16 +128,36 @@ internal fun createSpaceChatPanel(
   }
 }
 
-private fun createMessageTitle(server: String, message: ChannelItemRecord): JComponent = HtmlEditorPane().apply {
-  foreground = UIUtil.getContextHelpForeground()
-  setBody(
-    HtmlBuilder()
-      .appendLink(Navigator.m.member(message.author.asUser!!.username).absoluteHref(server), message.author.name) // NON-NLS
-      .append(HtmlChunk.nbsp())
-      .append(message.created.format(DateFormat.HOURS_AND_MINUTES)) // NON-NLS
-      .toString()
-  )
+private fun createMessageTitle(server: String, message: ChannelItemRecord): JComponent {
+  val authorPanel = HtmlEditorPane().apply {
+    setBody(createMessageAuthorChunk(message.author, server).bold().toString())
+  }
+  val timePanel = HtmlEditorPane().apply {
+    foreground = UIUtil.getContextHelpForeground()
+    setBody(HtmlChunk.text(message.created.format(DateFormat.HOURS_AND_MINUTES)).toString()) // NON-NLS
+  }
+  return JPanel(HorizontalLayout(JBUI.scale(5))).apply {
+    isOpaque = false
+    add(authorPanel)
+    add(timePanel)
+  }
 }
+
+private fun createMessageAuthorChunk(author: CPrincipal, server: String): HtmlChunk =
+  when (val details = author.details) {
+    is CUserPrincipalDetails -> {
+      val user = details.user.resolve()
+      HtmlChunk.link(Navigator.m.member(user.username).absoluteHref(server), user.name.fullName()) // NON-NLS
+    }
+    is CExternalServicePrincipalDetails -> {
+      val service = details.service.resolve()
+      val location = Navigator.manage.oauthServices.service(service)
+      HtmlChunk.link(location.href, service.name) // NON-NLS
+    }
+    else -> {
+      HtmlChunk.text(author.name) // NON-NLS
+    }
+  }
 
 private fun JComponent.withThread(lifetime: Lifetime, server: String, messages: List<ChannelItemRecord>): JComponent {
   return JPanel(VerticalLayout(JBUI.scale(10))).also { panel ->
@@ -150,7 +169,7 @@ private fun JComponent.withThread(lifetime: Lifetime, server: String, messages: 
         Item(
           threadAvatarsProvider.getIcon(message.author.asUser!!),
           createMessageTitle(server, message),
-          createSimpleMessagePanel(message)
+          createSimpleMessagePanel(message, server)
         ),
         VerticalLayout.FILL_HORIZONTAL
       )
@@ -161,7 +180,8 @@ private fun JComponent.withThread(lifetime: Lifetime, server: String, messages: 
 private fun createDiff(
   project: Project,
   discussion: CodeDiscussionRecord,
-  comment: ChannelItemRecord
+  comment: ChannelItemRecord,
+  server: String
 ): JComponent? {
   val fileNameComponent = JBUI.Panels.simplePanel(createFileNameComponent(discussion.anchor.filename!!)).apply {
     isOpaque = false
@@ -187,7 +207,7 @@ private fun createDiff(
   return JPanel(VerticalLayout(UI.scale(4))).apply {
     isOpaque = false
     add(snapshotComponent, VerticalLayout.FILL_HORIZONTAL)
-    add(createSimpleMessagePanel(comment))
+    add(createSimpleMessagePanel(comment, server))
   }
 }
 
@@ -207,8 +227,8 @@ private fun createFileNameComponent(filePath: String): JComponent {
   }
 }
 
-private fun createSimpleMessagePanel(message: ChannelItemRecord) = HtmlEditorPane().apply {
-  setBody(MentionConverter.html(message.text))
+private fun createSimpleMessagePanel(message: ChannelItemRecord, server: String) = HtmlEditorPane().apply {
+  setBody(MentionConverter.html(message.text, server))
 }
 
 
