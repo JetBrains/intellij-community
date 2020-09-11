@@ -2,10 +2,7 @@
 package com.intellij.openapi.module.impl
 
 import com.intellij.ide.SaveAndSyncHandler
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationAction
-import com.intellij.notification.NotificationGroup
-import com.intellij.notification.NotificationType
+import com.intellij.notification.*
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.*
 import com.intellij.openapi.module.ModuleDescription
@@ -123,7 +120,8 @@ class AutomaticModuleUnloader(private val project: Project) : SimplePersistentSt
     @JvmStatic
     fun getInstance(project: Project) = project.service<AutomaticModuleUnloader>()
 
-    private val NOTIFICATION_GROUP = NotificationGroup.balloonGroup("Automatic Module Unloading")
+    private val NOTIFICATION_GROUP: NotificationGroup
+      get() = NotificationGroupManager.getInstance().getNotificationGroup("Automatic Module Unloading")
   }
 }
 

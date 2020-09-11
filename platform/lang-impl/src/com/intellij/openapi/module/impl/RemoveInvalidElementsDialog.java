@@ -74,7 +74,7 @@ public final class RemoveInvalidElementsDialog extends DialogWrapper {
     if (errors.size() == 1) {
       ConfigurationErrorDescription error = errors.get(0);
       String message = error.getDescription() + "\n" + error.getIgnoreConfirmationMessage();
-      final int answer = Messages.showYesNoDialog(project, message, title, Messages.getErrorIcon());
+      int answer = Messages.showYesNoDialog(project, message, title, Messages.getErrorIcon());
       if (answer == Messages.YES) {
         error.ignoreInvalidElement();
         return true;

@@ -18,8 +18,7 @@ public class InvalidFacetConfiguration implements FacetConfiguration {
     myErrorMessage = errorMessage;
   }
 
-  @NotNull
-  public FacetState getFacetState() {
+  public @NotNull FacetState getFacetState() {
     return myFacetState;
   }
 
