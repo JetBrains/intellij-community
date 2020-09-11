@@ -213,7 +213,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
         else {
           processVariants(context, new PsiFileSystemItemProcessor() {
             @Override
-            public boolean acceptItem(String name, boolean isDirectory) {
+            public boolean acceptItem(@NotNull String name, boolean isDirectory) {
               return caseSensitive ? decoded.equals(name) : decoded.compareToIgnoreCase(name) == 0;
             }
 

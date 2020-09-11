@@ -297,7 +297,7 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
     }
 
     @Override
-    public boolean processChildren(@NotNull PsiElementProcessor<PsiFileSystemItem> processor) {
+    public boolean processChildren(@NotNull PsiElementProcessor<? super PsiFileSystemItem> processor) {
       for (PropertiesFile propertiesFile : myResourceBundle.getPropertiesFiles()) {
         if (!propertiesFile.getContainingFile().processChildren(processor)) {
           return false;

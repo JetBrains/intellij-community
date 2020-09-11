@@ -48,14 +48,14 @@ public abstract class JspSpiUtil {
 
   protected abstract int _escapeCharsInJspContext(JspFile file, int offset, String toEscape) throws IncorrectOperationException;
 
-  public static void visitAllIncludedFilesRecursively(BaseJspFile jspFile, Processor<BaseJspFile> visitor) {
+  public static void visitAllIncludedFilesRecursively(BaseJspFile jspFile, Processor<? super BaseJspFile> visitor) {
     final JspSpiUtil util = getJspSpiUtil();
     if (util != null) {
       util._visitAllIncludedFilesRecursively(jspFile, visitor);
     }
   }
 
-  protected abstract void _visitAllIncludedFilesRecursively(BaseJspFile jspFile, Processor<BaseJspFile> visitor);
+  protected abstract void _visitAllIncludedFilesRecursively(BaseJspFile jspFile, Processor<? super BaseJspFile> visitor);
 
   @Nullable
   public static PsiElement resolveMethodPropertyReference(@NotNull PsiReference reference, @Nullable PsiClass resolvedClass, boolean readable) {
