@@ -508,7 +508,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       myComposite = configurable instanceof Configurable.Composite ? (Configurable.Composite)configurable : null;
       myConfigurable = configurable;
       String name = configurable.getDisplayName();
-      myDisplayName = name != null ? name.replace("\n", " ") : "{ " + configurable.getClass().getSimpleName() + " }";
+      myDisplayName = name != null ? name.replace("\n", " ") : "{ " + configurable.getClass().getSimpleName() + " }";  // NON-NLS (safe)
       myLevel = level;
     }
 
