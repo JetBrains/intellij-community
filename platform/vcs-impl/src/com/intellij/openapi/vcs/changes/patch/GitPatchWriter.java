@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.diff.impl.patch.FilePatch;
+import com.intellij.openapi.diff.impl.patch.UnifiedDiffWriter;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
@@ -38,7 +39,9 @@ public final class GitPatchWriter {
   public static void writeGitHeader(@NotNull Writer writer, @Nullable Path basePath, @NotNull FilePatch filePatch)
     throws IOException {
     @NonNls String lineSeparator = "\n"; //use it for git headers&binary content, otherwise git won't parse&apply it properly
-    writer.write(String.format(GIT_DIFF_HEADER, filePatch.getBeforeName(), filePatch.getAfterName()));
+    writer.write(String.format(GIT_DIFF_HEADER,
+                               UnifiedDiffWriter.A_PREFIX + filePatch.getBeforeName(),
+                               UnifiedDiffWriter.B_PREFIX + filePatch.getAfterName()));
     writer.write(lineSeparator);
     if (filePatch.isDeletedFile()) {
       writer.write(getFileModeHeader(FileStatus.DELETED, REGULAR_FILE_MODE));

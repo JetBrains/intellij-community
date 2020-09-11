@@ -26,6 +26,9 @@ public final class UnifiedDiffWriter {
   @NonNls public static final String ADD_INFO_LINE_START = "<+>";
   private static final String HEADER_SEPARATOR = "===================================================================";
   @NonNls public static final String NO_NEWLINE_SIGNATURE = "\\ No newline at end of file";
+  @NonNls public static final String DEV_NULL = "/dev/null";
+  @NonNls public static final String A_PREFIX = "a/";
+  @NonNls public static final String B_PREFIX = "b/";
 
   private UnifiedDiffWriter() {
   }
@@ -35,7 +38,8 @@ public final class UnifiedDiffWriter {
                            Writer writer,
                            String lineSeparator,
                            @Nullable CommitContext commitContext) throws IOException {
-    write(project, project == null ? null : ProjectKt.getStateStore(project).getProjectBasePath(), patches, writer, lineSeparator, commitContext, null);
+    write(project, project == null ? null : ProjectKt.getStateStore(project).getProjectBasePath(), patches, writer, lineSeparator,
+          commitContext, null);
   }
 
   public static void write(@Nullable Project project,
@@ -132,8 +136,20 @@ public final class UnifiedDiffWriter {
       }
     }
     writer.write(HEADER_SEPARATOR + lineSeparator);
-    writeRevisionHeading(writer, "---", patch.getBeforeName(), patch.getBeforeVersionId(), lineSeparator);
-    writeRevisionHeading(writer, "+++", patch.getAfterName(), patch.getAfterVersionId(), lineSeparator);
+    writeRevisionHeading(writer, "---", getRevisionHeadingPath(patch, true),
+                         patch.getBeforeVersionId(), lineSeparator);
+    writeRevisionHeading(writer, "+++", getRevisionHeadingPath(patch, false),
+                         patch.getAfterVersionId(), lineSeparator);
+  }
+
+  @NonNls
+  private static String getRevisionHeadingPath(@NotNull FilePatch patch, boolean beforePath) {
+    if (beforePath) {
+      return patch.isNewFile() ? DEV_NULL : A_PREFIX + patch.getBeforeName();
+    }
+    else {
+      return patch.isDeletedFile() ? DEV_NULL : B_PREFIX + patch.getAfterName();
+    }
   }
 
   private static void writeRevisionHeading(final Writer writer, final String prefix,
