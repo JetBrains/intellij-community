@@ -12,6 +12,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.WriteExternalException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -24,8 +25,8 @@ import org.jetbrains.annotations.NotNull;
 public class PythonNoseTestRunConfiguration extends AbstractPythonLegacyTestRunConfiguration<PythonNoseTestRunConfiguration>
                                           implements PythonNoseTestRunConfigurationParams {
   private String myParams = ""; // parameters for nosetests
-  protected String myTitle = "Nosetest";
-  protected String myPluralTitle = "Nosetests";
+  protected @NlsSafe String myTitle = "Nosetest";
+  protected @NlsSafe String myPluralTitle = "Nosetests";
   private boolean useParam = false;
 
   public PythonNoseTestRunConfiguration(Project project,
