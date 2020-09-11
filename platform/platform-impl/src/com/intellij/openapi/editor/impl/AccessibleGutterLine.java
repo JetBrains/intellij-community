@@ -156,7 +156,7 @@ final class AccessibleGutterLine extends JPanel {
       addNewElement(new MySimpleAccessible() {
         @Override
         public @NotNull String getAccessibleName() {
-          return IdeBundle.message("accessible.name.line.0", myLogicalLineNum + 1);
+          return IdeBundle.message("accessible.name.line", myLogicalLineNum + 1);
         }
 
         @Override
@@ -171,7 +171,7 @@ final class AccessibleGutterLine extends JPanel {
       int x = myGutter.getAnnotationsAreaOffset();
       int width = 0;
       String tooltipText = null;
-      StringBuilder buf = new StringBuilder("annotation: ");
+      StringBuilder buf = new StringBuilder();
       for (int i = 0; i < myGutter.myTextAnnotationGutters.size(); i++) {
         TextAnnotationGutterProvider gutterProvider = myGutter.myTextAnnotationGutters.get(i);
         if (tooltipText == null) tooltipText = gutterProvider.getToolTip(myLogicalLineNum, editor); // [tav] todo: take first non-null?
@@ -184,7 +184,7 @@ final class AccessibleGutterLine extends JPanel {
         addNewElement(new MySimpleAccessible() {
           @Override
           public @NotNull String getAccessibleName() {
-            return buf.toString();
+            return IdeBundle.message("accessible.name.annotation", buf.toString());
           }
 
           @Override
@@ -213,7 +213,7 @@ final class AccessibleGutterLine extends JPanel {
             if (renderer instanceof SimpleAccessible) {
               return ((SimpleAccessible)renderer).getAccessibleName();
             }
-            return IdeBundle.message("accessible.name.icon.0", renderer.getClass().getSimpleName());
+            return IdeBundle.message("accessible.name.icon", renderer.getClass().getSimpleName());
           }
           @Override
           public String getAccessibleTooltipText() {
