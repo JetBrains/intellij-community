@@ -38,7 +38,7 @@ public final class FormsBindingManager extends FormsBuilder {
   private static final Key<Boolean> FORCE_FORMS_REBUILD_FLAG = Key.create("_forms_rebuild_flag_");
   private static final Key<Boolean> FORMS_REBUILD_FORCED = Key.create("_forms_rebuild_forced_flag_");
   public FormsBindingManager() {
-    super(BuilderCategory.SOURCE_PROCESSOR, "form-bindings");
+    super(BuilderCategory.SOURCE_PROCESSOR, FormBundle.message("form.bindings"));
   }
 
   @Override
