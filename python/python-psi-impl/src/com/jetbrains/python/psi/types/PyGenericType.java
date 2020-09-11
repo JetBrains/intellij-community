@@ -50,12 +50,12 @@ public class PyGenericType implements PyType, PyInstantiableType<PyGenericType> 
                                                           @Nullable PyExpression location,
                                                           @NotNull AccessDirection direction,
                                                           @NotNull PyResolveContext resolveContext) {
-    return null;
+    return myBound != null ? myBound.resolveMember(name, location, direction, resolveContext) : null;
   }
 
   @Override
   public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
-    return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
+    return myBound != null ? myBound.getCompletionVariants(completionPrefix, location, context) : ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }
 
   @NotNull
