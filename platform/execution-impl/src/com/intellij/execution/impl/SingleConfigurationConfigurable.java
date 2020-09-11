@@ -277,6 +277,8 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       }
       return null;
     });
+    Dimension size = result.getPreferredSize();
+    result.setPreferredSize(new Dimension(Math.min(size.width, 800), Math.min(size.height, 600)));
     return result;
   }
 
