@@ -101,7 +101,7 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
     @NotNull
     @Override
     protected Component getCenterComponent(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
-      myEditPanel = new LightEditPanel(LightEditService.getInstance().getOrCreateProject());
+      myEditPanel = new LightEditPanel(LightEditUtil.requireProject());
       return myEditPanel;
     }
 

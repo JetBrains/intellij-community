@@ -88,7 +88,7 @@ public final class LightEditUtil {
         LightEditorInfo editorInfo = LightEditService.getInstance().createNewDocument(path);
         if (creationMessage.get() != null) {
           editorInfo.getFile().putUserData(CREATION_MESSAGE, creationMessage.get());
-          EditorNotifications.getInstance(getProject()).updateNotifications(editorInfo.getFile());
+          EditorNotifications.getInstance(requireProject()).updateNotifications(editorInfo.getFile());
         }
       });
       return true;
@@ -114,7 +114,7 @@ public final class LightEditUtil {
                               @NotNull @NlsContexts.DialogTitle String title,
                               @NotNull LightEditSaveConfirmationHandler handler) {
     final String[] options = {getCloseSave(), getCloseDiscard(), getCloseCancel()};
-    int result = Messages.showDialog(getProject(), message, title, options, 0, Messages.getWarningIcon());
+    int result = Messages.showDialog(requireProject(), message, title, options, 0, Messages.getWarningIcon());
     if (result >= 0) {
       if (getCloseCancel().equals(options[result])) {
         return false;
@@ -228,8 +228,13 @@ public final class LightEditUtil {
   public static Project requireLightEditProject(@Nullable Project project) {
     if (project == null || !LightEdit.owns(project)) {
       LOG.error("LightEdit project is expected while " + (project != null ? project.getName() : "no project") + " is used instead");
-      return getProject();
+      throw new IllegalStateException("Missing LightEdit project");
     }
     return project;
+  }
+
+  @NotNull
+  static Project requireProject() {
+    return requireLightEditProject(LightEditService.getInstance().getProject());
   }
 }
