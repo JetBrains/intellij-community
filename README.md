@@ -3,7 +3,6 @@ These instructions will help you build IntelliJ IDEA Community Edition from sour
 The following conventions will be used to refer to directories on your machine:
 * `<USER_HOME>` is your home directory.
 * `<IDEA_HOME>` is the root directory for the IntelliJ source code.
-* `<JDK_18_HOME>` is the root directory for the 1.8 JDK.
 
 ## Getting IntelliJ IDEA Community Edition Source Code
 IntelliJ IDEA Community Edition source code is available from `github.com/JetBrains/intellij-community` by either cloning or
