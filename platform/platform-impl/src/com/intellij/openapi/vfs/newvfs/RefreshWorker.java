@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.vfs.newvfs.persistent;
+package com.intellij.openapi.vfs.newvfs;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -14,35 +13,32 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.impl.local.DirectoryAccessChecker;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
-import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
-import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
+import com.intellij.openapi.vfs.newvfs.persistent.BatchingFileSystem;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.function.Consumer;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.VfsEventGenerationHelper.LOG;
+import static com.intellij.openapi.vfs.newvfs.VfsEventGenerationHelper.LOG;
 
-public final class RefreshWorker {
+final class RefreshWorker {
   private final boolean myIsRecursive;
   private final Deque<NewVirtualFile> myRefreshQueue = new ArrayDeque<>(100);
   private final VfsEventGenerationHelper myHelper = new VfsEventGenerationHelper();
   private volatile boolean myCancelled;
   private final LocalFileSystemRefreshWorker myLocalFileSystemRefreshWorker;
 
-  public RefreshWorker(@NotNull NewVirtualFile refreshRoot, boolean isRecursive) {
+  RefreshWorker(@NotNull NewVirtualFile refreshRoot, boolean isRecursive) {
     boolean canUseNioRefresher = refreshRoot.isInLocalFileSystem() &&
                                  !(refreshRoot.getFileSystem() instanceof TempFileSystem) &&
                                  Registry.is("vfs.use.nio-based.local.refresh.worker");
@@ -52,17 +48,17 @@ public final class RefreshWorker {
   }
 
   @NotNull
-  public List<VFileEvent> getEvents() {
+  List<VFileEvent> getEvents() {
     if (myLocalFileSystemRefreshWorker != null) return myLocalFileSystemRefreshWorker.getEvents();
     return myHelper.getEvents();
   }
 
-  public void cancel() {
+  void cancel() {
     if (myLocalFileSystemRefreshWorker != null) myLocalFileSystemRefreshWorker.cancel();
     myCancelled = true;
   }
 
-  public void scan() {
+  void scan() {
     if (myLocalFileSystemRefreshWorker != null) {
       myLocalFileSystemRefreshWorker.scan();
       return;
@@ -111,10 +107,11 @@ public final class RefreshWorker {
   }
 
   private void processQueue(@NotNull NewVirtualFileSystem fs, @NotNull PersistentFS persistence) throws RefreshCancelledException {
-    next:
+    nextDir:
     while (!myRefreshQueue.isEmpty()) {
       VirtualDirectoryImpl dir = (VirtualDirectoryImpl)myRefreshQueue.removeFirst();
-      boolean fullSync = dir.allChildrenLoaded(), succeeded;
+      boolean fullSync = dir.allChildrenLoaded();
+      boolean succeeded;
 
       do {
         myHelper.beginTransaction();
@@ -123,7 +120,7 @@ public final class RefreshWorker {
         }
         catch (InvalidVirtualFileAccessException e) {
           myHelper.endTransaction(false);
-          continue next;
+          continue nextDir;
         }
         myHelper.endTransaction(succeeded);
         if (!succeeded && LOG.isTraceEnabled()) LOG.trace("retry: " + dir);
@@ -223,7 +220,7 @@ public final class RefreshWorker {
         checkAndScheduleFileNameChange(actualNames, child);
       }
       else {
-        if (LOG.isTraceEnabled()) LOG.warn("[x] fs=" + fs + " dir=" + dir + " name=" + child.getName());
+        if (LOG.isTraceEnabled()) LOG.trace("[x] fs=" + fs + " dir=" + dir + " name=" + child.getName());
         myHelper.scheduleDeletion(child);
       }
     }
@@ -331,8 +328,9 @@ public final class RefreshWorker {
   }
 
   private void checkCancelled(@NotNull NewVirtualFile stopAt) throws RefreshCancelledException {
-    if (ourTestListener != null) {
-      ourTestListener.accept(stopAt);
+    Consumer<? super VirtualFile> testListener = ourTestListener;
+    if (testListener != null) {
+      testListener.accept(stopAt);
     }
     if (myCancelled) {
       if (LOG.isTraceEnabled()) LOG.trace("cancelled at: " + stopAt);
@@ -418,12 +416,5 @@ public final class RefreshWorker {
     }
   }
 
-  private static Consumer<? super VirtualFile> ourTestListener;
-
-  @TestOnly
-  public static void setTestListener(@Nullable Consumer<? super VirtualFile> testListener) {
-    assert ApplicationManager.getApplication().isUnitTestMode();
-    ourTestListener = testListener;
-    LocalFileSystemRefreshWorker.setTestListener(testListener);
-  }
+  static Consumer<? super VirtualFile> ourTestListener;
 }
