@@ -51,6 +51,12 @@ public class TextWithMnemonicTest {
     assertEquals("hello(_H)", hello.toString());
     assertEquals('H', hello.getMnemonic());
     assertEquals(6, hello.getMnemonicIndex());
+
+    TextWithMnemonic hello2 = TextWithMnemonic.parse("hello (&H)");
+    assertEquals("hello", hello2.getText());
+    assertEquals("hello (_H)", hello2.toString());
+    assertEquals('H', hello2.getMnemonic());
+    assertEquals(7, hello2.getMnemonicIndex());
   }
   
   @Test
