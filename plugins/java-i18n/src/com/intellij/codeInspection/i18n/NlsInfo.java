@@ -398,7 +398,7 @@ public abstract class NlsInfo {
     }
     if (method.hasModifierProperty(PsiModifier.STATIC)) {
       PsiParameter parameter = method.getParameterList().getParameter(0);
-      if (parameter != null && parameter.getName().equals("$receiver")) {
+      if (parameter != null && isReceiver(method, parameter)) {
         PsiClass aClass = method.getContainingClass();
         return aClass != null &&
                aClass.getQualifiedName() != null &&
