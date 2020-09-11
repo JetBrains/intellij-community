@@ -15,7 +15,6 @@
  */
 package com.android.tools.adtui.webp;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
@@ -97,8 +96,11 @@ public final class WebpNativeLibHelper {
 
   public static File getLibLocation() {
     // A terrible hack for dev environment.
-    String libPath = "/lib/libwebp/" + getPlatformName();
-    return new File(PluginPathManager.getPluginHomePath("webp") + libPath);
+    String libPath = "lib/libwebp/" + getPlatformName();
+    File result = new File(PluginPathManager.getPluginHomePath("webp") + "/" + libPath);
+    if (result.exists()) return result;
+    
+    return PluginPathManager.getPluginResource(WebpNativeLibHelper.class, libPath);
   }
 
   private static String getPlatformName() {
