@@ -27,7 +27,7 @@ public final class FsRoot extends VirtualDirectoryImpl {
     if (!attributes.hasCaseSensitivityInformation()) {
       throw new IllegalArgumentException("Must supply case sensitivity information but got: "+attributes);
     }
-    getSegment().setFlag(id, IS_CASE_SENSITIVE, attributes.isCaseSensitive() == FileAttributes.CaseSensitivity.SENSITIVE);
+    getSegment().setFlag(id, IS_CASE_SENSITIVE, attributes.areChildrenCaseSensitive() == FileAttributes.CaseSensitivity.SENSITIVE);
   }
 
   @Override

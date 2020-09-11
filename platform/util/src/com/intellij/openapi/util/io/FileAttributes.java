@@ -146,7 +146,7 @@ public class FileAttributes {
   }
 
   @NotNull
-  public CaseSensitivity isCaseSensitive() {
+  public CaseSensitivity areChildrenCaseSensitive() {
     if (!isDirectory()) {
       return CaseSensitivity.UNKNOWN;
     }
@@ -194,7 +194,7 @@ public class FileAttributes {
     sb.append(" length:").append(length);
 
     sb.append(" modified:").append(lastModified);
-    sb.append(" case sensitive: ").append(isCaseSensitive());
+    sb.append(" case sensitive: ").append(areChildrenCaseSensitive());
     sb.append(']');
     return sb.toString();
   }
@@ -220,6 +220,6 @@ public class FileAttributes {
   }
 
   public boolean hasCaseSensitivityInformation() {
-    return !isDirectory() || isCaseSensitive() != CaseSensitivity.UNKNOWN;
+    return !isDirectory() || areChildrenCaseSensitive() != CaseSensitivity.UNKNOWN;
   }
 }

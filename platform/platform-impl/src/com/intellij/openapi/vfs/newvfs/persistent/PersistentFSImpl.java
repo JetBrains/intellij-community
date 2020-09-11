@@ -1650,7 +1650,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Attributes
   static int fileAttributesToFlags(@NotNull FileAttributes attributes) {
-    FileAttributes.CaseSensitivity sensitivity = attributes.isCaseSensitive();
+    FileAttributes.CaseSensitivity sensitivity = attributes.areChildrenCaseSensitive();
     assert attributes.isDirectory() == (sensitivity != FileAttributes.CaseSensitivity.UNKNOWN) : attributes;
     boolean isCaseSensitive = attributes.isDirectory() && sensitivity == FileAttributes.CaseSensitivity.SENSITIVE;
     return fileAttributesToFlags(attributes.isDirectory(), attributes.isWritable(), attributes.isSymLink(), attributes.isSpecial(), attributes.isHidden(), isCaseSensitive);
