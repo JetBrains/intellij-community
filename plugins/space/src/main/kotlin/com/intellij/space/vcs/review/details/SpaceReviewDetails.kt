@@ -39,23 +39,30 @@ internal class SpaceReviewDetails(project: Project,
 
       val uiDisposable = Disposer.newDisposable()
 
-      val details = TabInfo(DetailedInfoPanel(detailsVm).view).apply {
+      val detailsTabInfo = TabInfo(DetailedInfoPanel(detailsVm).view).apply {
         text = SpaceBundle.message("review.tab.name.details")
         sideComponent = ReturnToListComponent.createReturnToListSideComponent(SpaceBundle.message("action.reviews.back.to.list")) {
           currentReview.value = null
         }
       }
-      val commits = TabInfo(SpaceReviewCommitListPanel(detailsVm).view).apply {
+      val commitsTabInfo = TabInfo(SpaceReviewCommitListPanel(detailsVm).view).apply {
         text = SpaceBundle.message("review.tab.name.commits")
         sideComponent = ReturnToListComponent.createReturnToListSideComponent(SpaceBundle.message("action.reviews.back.to.list")) {
           currentReview.value = null
         }
       }
+
+      detailsVm.commits.forEach(lifetime) {
+        commitsTabInfo.text =
+          if (it == null) SpaceBundle.message("review.tab.name.commits")
+          else SpaceBundle.message("review.tab.name.commits.count", it.size)
+      }
+
       val tabs = object : SingleHeightTabs(project, uiDisposable) {
         override fun adjust(each: TabInfo?) {}
       }.apply {
-        addTab(details)
-        addTab(commits)
+        addTab(detailsTabInfo)
+        addTab(commitsTabInfo)
       }
 
       view.add(tabs, BorderLayout.CENTER)
