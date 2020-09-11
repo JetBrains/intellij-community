@@ -38,8 +38,8 @@ internal object SpaceReviewChangesTreeFactory {
             detailsDetailsVm.changesByRepos.forEach(detailsDetailsVm.lifetime) { map ->
               val builder = TreeModelBuilder(project, grouping)
 
-              map?.forEach { repo, changes ->
-                val repoNode = RepositoryNode(repo.name, detailsDetailsVm.reposInCurrentProject.value?.get(repo.name) != null)
+              map?.forEach { repoName, changes ->
+                val repoNode = RepositoryNode(repoName, detailsDetailsVm.reposInCurrentProject.value?.get(repoName) != null)
                 addChanges(builder, repoNode, changes)
               }
 

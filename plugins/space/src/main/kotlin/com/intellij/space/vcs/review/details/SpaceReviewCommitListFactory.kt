@@ -18,7 +18,7 @@ object SpaceReviewCommitListFactory {
     val listModel: CollectionListModel<ReviewCommitListItem> = CollectionListModel()
 
     val commitList = JBList(listModel).apply {
-      selectionMode = ListSelectionModel.SINGLE_SELECTION
+      selectionMode = ListSelectionModel.MULTIPLE_INTERVAL_SELECTION
       val renderer = SpaceCommitRenderer()
       cellRenderer = renderer
       UIUtil.putClientProperty(this,
@@ -26,7 +26,6 @@ object SpaceReviewCommitListFactory {
                                listOf(renderer.panel))
     }.also {
       ScrollingUtil.installActions(it)
-      ListUiUtil.Selection.installSelectionOnFocus(it)
       ListUiUtil.Selection.installSelectionOnRightClick(it)
 
       ListSpeedSearch(it) { commit -> commit.commitWithGraph.commit.message }
@@ -40,7 +39,7 @@ object SpaceReviewCommitListFactory {
     }
 
     commitList.addListSelectionListener {
-      reviewDetailsVm.selectedCommit.value = commitList.selectedValue?.commitWithGraph
+      reviewDetailsVm.selectedCommitIndices.value = commitList.selectedIndices.toList()
     }
 
     return ScrollPaneFactory.createScrollPane(commitList, true).apply {
