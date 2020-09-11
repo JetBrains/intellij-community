@@ -73,6 +73,6 @@ class MLCompletionSettingsCollector : CounterUsagesCollector() {
   enum class DecorationOpinion {
     LIKE,
     DISLIKE,
-    DONT_KNOWN
+    NEUTRAL
   }
 }

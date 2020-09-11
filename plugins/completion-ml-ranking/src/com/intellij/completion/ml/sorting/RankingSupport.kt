@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger
 object RankingSupport {
   private const val SHOW_ARROWS_NOTIFICATION_REGISTRY = "completion.ml.show.arrows.notification"
   private const val ARROWS_NOTIFICATION_SHOWN_KEY = "completion.ml.arrows.notification.shown"
-  private const val ARROWS_NOTIFICATION_SESSIONS_COUNT = 50
+  private const val ARROWS_NOTIFICATION_AFTER_SESSIONS = 50
   private val LOG = logger<RankingSupport>()
   private var enabledInTests: Boolean = false
   private val sessionsWithArrowsCounter = AtomicInteger()
@@ -101,7 +101,7 @@ object RankingSupport {
     val properties = PropertiesComponent.getInstance()
     if (settings.isShowDiffEnabled && shouldShowArrowsNotification() && !properties.getBoolean(ARROWS_NOTIFICATION_SHOWN_KEY)) {
       val sessionsCount = sessionsWithArrowsCounter.incrementAndGet()
-      if (sessionsCount == ARROWS_NOTIFICATION_SESSIONS_COUNT) {
+      if (sessionsCount == ARROWS_NOTIFICATION_AFTER_SESSIONS) {
         properties.setValue(ARROWS_NOTIFICATION_SHOWN_KEY, true)
         showNotificationAboutArrows()
       }
@@ -128,9 +128,9 @@ object RankingSupport {
           notification.expire()
         }
       })
-      .addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.decorating.dunno")) {
+      .addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.decorating.neutral")) {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          MLCompletionSettingsCollector.decorationOpinionProvided(MLCompletionSettingsCollector.DecorationOpinion.DONT_KNOWN)
+          MLCompletionSettingsCollector.decorationOpinionProvided(MLCompletionSettingsCollector.DecorationOpinion.NEUTRAL)
           notification.expire()
         }
       }).notify(null)
