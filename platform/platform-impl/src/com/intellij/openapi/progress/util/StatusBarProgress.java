@@ -36,7 +36,6 @@ public class StatusBarProgress extends ProgressIndicatorBase {
     super.stop();
 
     if (myScheduledStatusBarTextSave) {
-      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(
         () -> {
           for (StatusBar statusBar : myStatusBar2SavedText.keySet()) {
@@ -73,10 +72,10 @@ public class StatusBarProgress extends ProgressIndicatorBase {
         text += " " + (int)(fraction * 100 + 0.5) + "%";
       }
     }
-    final String _text = text;
+
+    String _text = text;
     if (!myScheduledStatusBarTextSave) {
       myScheduledStatusBarTextSave = true;
-      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(
         () -> {
           if (ApplicationManager.getApplication().isDisposed()) return;
@@ -96,7 +95,7 @@ public class StatusBarProgress extends ProgressIndicatorBase {
         }
       );
     }
-    //noinspection SSBasedInspection
+
     SwingUtilities.invokeLater(
       () -> {
         for (StatusBar statusBarEx : myStatusBar2SavedText.keySet()) {
@@ -117,9 +116,9 @@ public class StatusBarProgress extends ProgressIndicatorBase {
     Pair<@StatusBarText String, @StatusBarText String> textsPair = myStatusBar2SavedText.get(statusBar);
     // if current status bar info doesn't match the value, that we set, use this value as a restore value
     String info = notNull(statusBar.getInfo(), "");
-    if (!textsPair.getSecond().equals(info)) {
+    if (!textsPair.second.equals(info)) {
       myStatusBar2SavedText.put(statusBar, pair(info, textsPair.second));
     }
-    return textsPair.getFirst();
+    return textsPair.first;
   }
 }

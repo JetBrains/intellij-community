@@ -28,8 +28,7 @@ class HttpFileEditor extends BaseRemoteFileEditor {
   }
 
   @Override
-  @NotNull
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myPanel.getMainPanel();
   }
 
@@ -58,8 +57,7 @@ class HttpFileEditor extends BaseRemoteFileEditor {
   }
 
   @Override
-  @Nullable
-  protected TextEditor getTextEditor() {
+  protected @Nullable TextEditor getTextEditor() {
     return myPanel.getFileEditor();
   }
 

@@ -16,21 +16,22 @@ import com.intellij.ui.EditorNotifications;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class LargeFileNotificationProvider extends EditorNotifications.Provider {
+public final class LargeFileNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> {
   private static final Key<EditorNotificationPanel> KEY = Key.create("large.file.editor.notification");
   private static final Key<String> HIDDEN_KEY = Key.create("large.file.editor.notification.hidden");
   private static final String DISABLE_KEY = "large.file.editor.notification.disabled";
 
-  @NotNull
   @Override
-  public Key<EditorNotificationPanel> getKey() {
+  public @NotNull Key<EditorNotificationPanel> getKey() {
     return KEY;
   }
 
-  @Nullable
   @Override
-  public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
-    if (!(fileEditor instanceof LargeFileEditorProvider.LargeTextFileEditor)) return null;
+  public @Nullable EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
+    if (!(fileEditor instanceof LargeFileEditorProvider.LargeTextFileEditor)) {
+      return null;
+    }
+
     Editor editor = ((TextEditor)fileEditor).getEditor();
     if (editor.getUserData(HIDDEN_KEY) != null || PropertiesComponent.getInstance().isTrueValue(DISABLE_KEY)) {
       return null;

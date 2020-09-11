@@ -154,11 +154,11 @@ final class AccessibleGutterLine extends JPanel {
     /* line numbers */
     if (myGutter.isLineNumbersShown()) {
       addNewElement(new MySimpleAccessible() {
-        @NotNull
         @Override
-        public String getAccessibleName() {
+        public @NotNull String getAccessibleName() {
           return IdeBundle.message("accessible.name.line.0", myLogicalLineNum + 1);
         }
+
         @Override
         public String getAccessibleTooltipText() {
           return null;
@@ -182,11 +182,11 @@ final class AccessibleGutterLine extends JPanel {
       if (buf.length() > 0) {
         String tt = tooltipText;
         addNewElement(new MySimpleAccessible() {
-          @NotNull
           @Override
-          public String getAccessibleName() {
+          public @NotNull String getAccessibleName() {
             return buf.toString();
           }
+
           @Override
           public String getAccessibleTooltipText() {
             return tt;
@@ -201,16 +201,15 @@ final class AccessibleGutterLine extends JPanel {
       myGutter.processIconsRow(myVisualLineNum, row, (x, y, renderer) -> {
         Icon icon = myGutter.scaleIcon(renderer.getIcon());
         addNewElement(new MySimpleAccessible() {
-          AnAction myAction = ((GutterIconRenderer)renderer).getClickAction();
+          final AnAction myAction = ((GutterIconRenderer)renderer).getClickAction();
 
           @Override
           public void performAction(@NotNull AnActionEvent e) {
             myAction.actionPerformed(e);
           }
 
-          @NotNull
           @Override
-          public String getAccessibleName() {
+          public @NotNull String getAccessibleName() {
             if (renderer instanceof SimpleAccessible) {
               return ((SimpleAccessible)renderer).getAccessibleName();
             }
@@ -254,11 +253,11 @@ final class AccessibleGutterLine extends JPanel {
     if (mySelectedElement == null) {
       Rectangle b = getBounds(); // set above
       mySelectedElement = addNewElement(new MySimpleAccessible() {
-        @NotNull
         @Override
-        public String getAccessibleName() {
+        public @NotNull String getAccessibleName() {
           return IdeBundle.message("accessible.name.empty");
         }
+
         @Override
         public String getAccessibleTooltipText() {
           return null;
@@ -278,13 +277,13 @@ final class AccessibleGutterLine extends JPanel {
     DumbAwareAction.create(e -> action.run()).registerCustomShortcutSet(shortcut, this);
   }
 
+  @SuppressWarnings("SameParameterValue")
   private void installActionHandler(ShortcutSet shortcut, Consumer<? super AnActionEvent> action) {
     DumbAwareAction.create(e -> action.accept(e)).registerCustomShortcutSet(shortcut, this);
   }
 
   @SuppressWarnings("SameParameterValue")
-  @NotNull
-  private AccessibleGutterElement addNewElement(@NotNull MySimpleAccessible accessible, int x, int y, int width, int height) {
+  private @NotNull AccessibleGutterElement addNewElement(@NotNull MySimpleAccessible accessible, int x, int y, int width, int height) {
     AccessibleGutterElement obj = new AccessibleGutterElement(accessible, new Rectangle(x, y, width, height));
     add(obj);
     return obj;
@@ -396,18 +395,19 @@ final class AccessibleGutterLine extends JPanel {
   }
 
   /**
-   * The interface provides the ability to perform actions by clicking on the icon of the gutter
+   * The interface provides the ability to perform actions by clicking on the icon of the gutter.
+   *
    * @author ASemenov
    */
   private interface MySimpleAccessible extends SimpleAccessible {
     /**
-     * Performs the gutter icon action
+     * Performs the gutter icon action.
      */
     default void performAction(@NotNull AnActionEvent e) {}
   }
 
   /**
-   * This delegate implements wrapping over SimpleAccessible for active gutter rendorer
+   * This delegate implements wrapping over SimpleAccessible for active gutter renderer.
    */
   private static final class MySimpleAccessibleDelegat implements MySimpleAccessible {
     @NotNull private final SimpleAccessible simpleAccessible;

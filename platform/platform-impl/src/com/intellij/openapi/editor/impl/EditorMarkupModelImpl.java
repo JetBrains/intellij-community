@@ -1402,8 +1402,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     public @NotNull TrafficTooltipRenderer createTrafficTooltipRenderer(final @NotNull Runnable onHide, @NotNull Editor editor) {
       return new TrafficTooltipRenderer() {
         @Override
-        public void repaintTooltipWindow() {
-        }
+        public void repaintTooltipWindow() { }
 
         @Override
         public @NotNull LightweightHint show(@NotNull Editor editor,

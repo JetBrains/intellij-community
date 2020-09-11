@@ -9,9 +9,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Provides custom name/tooltip for editor tab instead of filename/path.
- * <p>
- * Implement {@link com.intellij.openapi.project.DumbAware} to be active during indexing.
+ * <p>Provides custom name/tooltip for editor tab instead of filename/path.</p>
+ *
+ * <p>Implement {@link com.intellij.openapi.project.DumbAware} to be active during indexing.</p>
  *
  * @author yole
  */
@@ -20,13 +20,11 @@ public interface EditorTabTitleProvider {
 
   @NlsContexts.TabTitle @Nullable String getEditorTabTitle(@NotNull Project project, @NotNull VirtualFile file);
 
-  @Nullable
-  default @NlsContexts.TabTitle String getEditorTabTitle(@NotNull Project project, @NotNull VirtualFile file, @Nullable EditorWindow editorWindow) {
+  default @NlsContexts.TabTitle @Nullable String getEditorTabTitle(@NotNull Project project, @NotNull VirtualFile file, @SuppressWarnings("unused") @Nullable EditorWindow ew) {
     return getEditorTabTitle(project, file);
   }
 
-  @Nullable
-  default @NlsContexts.Tooltip String getEditorTabTooltipText(@NotNull Project project, @NotNull VirtualFile virtualFile) {
+  default @NlsContexts.Tooltip @Nullable String getEditorTabTooltipText(@NotNull Project project, @NotNull VirtualFile virtualFile) {
     return null;
   }
 }

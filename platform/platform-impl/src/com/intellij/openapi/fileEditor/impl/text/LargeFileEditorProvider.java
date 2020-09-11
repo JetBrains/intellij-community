@@ -32,23 +32,17 @@ public final class LargeFileEditorProvider extends TextEditorProvider {
   }
 
   @Override
-  @NotNull
-  public FileEditor createEditor(@NotNull Project project, @NotNull final VirtualFile file) {
-    return file.getFileType().isBinary() ?
-           new LargeBinaryFileEditor(file) :
-           new LargeTextFileEditor(project, file, this);
+  public @NotNull FileEditor createEditor(@NotNull Project project, final @NotNull VirtualFile file) {
+    return file.getFileType().isBinary() ? new LargeBinaryFileEditor(file) : new LargeTextFileEditor(project, file, this);
   }
 
   @Override
-  @NotNull
-  public String getEditorTypeId() {
+  public @NotNull String getEditorTypeId() {
     return "LargeFileEditor";
   }
 
   public static class LargeTextFileEditor extends TextEditorImpl {
-    LargeTextFileEditor(@NotNull Project project,
-                        @NotNull VirtualFile file,
-                        @NotNull TextEditorProvider provider) {
+    LargeTextFileEditor(@NotNull Project project, @NotNull VirtualFile file, @NotNull TextEditorProvider provider) {
       super(project, file, provider);
       ObjectUtils.consumeIfCast(getEditor(), EditorEx.class, editorEx -> editorEx.setViewer(true));
     }
@@ -78,15 +72,13 @@ public final class LargeFileEditorProvider extends TextEditorProvider {
       return IdeBundle.message("large.file.editor.name");
     }
 
-    @NotNull
     @Override
-    public FileEditorState getState(@NotNull FileEditorStateLevel level) {
+    public @NotNull FileEditorState getState(@NotNull FileEditorStateLevel level) {
       return new TextEditorState();
     }
 
     @Override
-    public void setState(@NotNull FileEditorState state) {
-    }
+    public void setState(@NotNull FileEditorState state) { }
 
     @Override
     public boolean isModified() {
@@ -99,20 +91,16 @@ public final class LargeFileEditorProvider extends TextEditorProvider {
     }
 
     @Override
-    public void selectNotify() {
-    }
+    public void selectNotify() { }
 
     @Override
-    public void deselectNotify() {
-    }
+    public void deselectNotify() { }
 
     @Override
-    public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
-    }
+    public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) { }
 
     @Override
-    public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
-    }
+    public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) { }
 
     @Override
     public BackgroundEditorHighlighter getBackgroundHighlighter() {
@@ -130,7 +118,6 @@ public final class LargeFileEditorProvider extends TextEditorProvider {
     }
 
     @Override
-    public void dispose() {
-    }
+    public void dispose() { }
   }
 }

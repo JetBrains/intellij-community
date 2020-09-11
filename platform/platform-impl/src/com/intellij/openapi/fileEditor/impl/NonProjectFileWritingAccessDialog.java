@@ -77,20 +77,17 @@ public class NonProjectFileWritingAccessDialog extends DialogWrapper {
     button.addItemListener(e -> setDefaultButton.run());
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return myUnlockOneButton;
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return myPanel;
   }
 
-  @NotNull
-  public NonProjectFileWritingAccessProvider.UnlockOption getUnlockOption() {
+  public @NotNull NonProjectFileWritingAccessProvider.UnlockOption getUnlockOption() {
     if (myUnlockAllButton.isSelected()) return NonProjectFileWritingAccessProvider.UnlockOption.UNLOCK_ALL;
     if (myUnlockDirButton.isSelected()) return NonProjectFileWritingAccessProvider.UnlockOption.UNLOCK_DIR;
     return NonProjectFileWritingAccessProvider.UnlockOption.UNLOCK;
