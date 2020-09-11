@@ -77,6 +77,16 @@ public final class GitUpdateProcess {
   @NotNull private final Map<GitRepository, @Nls String> mySkippedRoots = new LinkedHashMap<>();
   @Nullable private Map<GitRepository, HashRange> myUpdatedRanges;
 
+  @SuppressWarnings("unused") //used in a 3-party plugin
+  public GitUpdateProcess(@NotNull Project project,
+                          @Nullable ProgressIndicator progressIndicator,
+                          @NotNull Collection<GitRepository> repositories,
+                          @NotNull UpdatedFiles updatedFiles,
+                          boolean checkRebaseOverMergeProblem,
+                          boolean checkForTrackedBranchExistence) {
+    this(project, progressIndicator, repositories, updatedFiles, null, checkRebaseOverMergeProblem, checkForTrackedBranchExistence);
+  }
+
   public GitUpdateProcess(@NotNull Project project,
                           @Nullable ProgressIndicator progressIndicator,
                           @NotNull Collection<GitRepository> repositories,
