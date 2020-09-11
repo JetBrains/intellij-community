@@ -16,6 +16,7 @@ import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
+import com.intellij.execution.testframework.TestRunnerBundle;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.util.JavaParametersUtil;
@@ -882,6 +883,6 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
   }
 
   public static @Nls String getDefaultPackageName() {
-    return JUnitBundle.message("default.package.presentable.name");
+    return TestRunnerBundle.message("default.package.presentable.name");
   }
 }
