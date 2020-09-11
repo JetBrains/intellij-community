@@ -100,16 +100,19 @@ private fun EditorEx.addFullLineHighlighting(line: InlineDiffLine, lineIndex: In
       DiffLineType.CONFLICT_NEW -> TextDiffType.CONFLICT
       null -> null
     }
+    val ignored = (line.deletes?.any { range -> !isFullLineRange(line, range) } ?: false) ||
+                  (line.inserts?.any { range -> !isFullLineRange(line, range) } ?: false)
     if (diffType != null) {
-      DiffDrawUtil.createHighlighter(this, lineIndex, lineIndex + 1, diffType, false)
+      DiffDrawUtil.createHighlighter(this, lineIndex, lineIndex + 1, diffType, ignored)
     }
   }
 }
 
+private fun isFullLineRange(line: InlineDiffLine, range: TextRange): Boolean = line.text.length == range.length
+
 private fun EditorEx.addInlineHighlighting(line: InlineDiffLine, prefixLength: Int, ranges: List<TextRange>, diffType: TextDiffType) {
   ranges.forEach { range ->
-    // don't highlight full lines here
-    if (line.text.length != range.length) {
+    if (!isFullLineRange(line, range)) {
       DiffDrawUtil.createInlineHighlighter(this, prefixLength + range.start, prefixLength + range.end, diffType)
     }
   }
