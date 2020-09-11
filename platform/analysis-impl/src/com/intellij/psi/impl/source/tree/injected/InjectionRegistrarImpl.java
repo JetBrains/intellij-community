@@ -14,7 +14,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase;
 import com.intellij.openapi.fileTypes.EditorHighlighterProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeEditorHighlighterProviders;
@@ -263,7 +263,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
           addFileToResults(psiFile);
         } else {
           cacheEverything(place, documentWindow, viewProvider, psiFile);
-          InjectedLanguageUtil.setHighlightTokens(psiFile, InjectedLanguageUtil.getHighlightTokens(psiFile));
+          InjectedLanguageUtilBase.setHighlightTokens(psiFile, InjectedLanguageUtilBase.getHighlightTokens(psiFile));
         }
 
         DocumentWindowImpl retrieved = (DocumentWindowImpl)myDocumentManagerBase.getDocument(psiFile);
@@ -288,12 +288,12 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
     assert place.isValid();
     assert viewProvider.isValid();
 
-    List<InjectedLanguageUtil.TokenInfo> newTokens = InjectedLanguageUtil.getHighlightTokens(psiFile);
+    List<InjectedLanguageUtilBase.TokenInfo> newTokens = InjectedLanguageUtilBase.getHighlightTokens(psiFile);
     PsiFile newFile = registerDocument(documentWindow, psiFile, place, hostPsiFile, documentManager);
     boolean mergeHappened = newFile != psiFile;
     Place mergedPlace = place;
     if (mergeHappened) {
-      InjectedLanguageUtil.clearCaches(psiFile.getProject(), documentWindow);
+      InjectedLanguageUtilBase.clearCaches(psiFile.getProject(), documentWindow);
       psiFile = newFile;
       viewProvider = (InjectedFileViewProvider)psiFile.getViewProvider();
       documentWindow = viewProvider.getDocument();
@@ -302,7 +302,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
         place.dispose();
         mergedPlace = documentWindow.getShreds();
       }
-      InjectedLanguageUtil.setHighlightTokens(psiFile, newTokens);
+      InjectedLanguageUtilBase.setHighlightTokens(psiFile, newTokens);
     }
 
     assert psiFile.isValid();
@@ -371,7 +371,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
                                          @NotNull DocumentWindowImpl documentWindow,
                                          @NotNull InjectedFileViewProvider viewProvider,
                                          @NotNull PsiFile psiFile) {
-    FileDocumentManagerImpl.registerDocument(documentWindow, viewProvider.getVirtualFile());
+    FileDocumentManagerBase.registerDocument(documentWindow, viewProvider.getVirtualFile());
 
     DebugUtil.performPsiModification("MultiHostRegistrar cacheEverything", () -> viewProvider.forceCachedPsi(psiFile));
 
@@ -466,7 +466,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
                                           @NotNull Place shreds,
                                           @NotNull PsiFile hostPsiFile,
                                           @NotNull PsiDocumentManager documentManager) {
-    List<DocumentWindow> injected = InjectedLanguageUtil.getCachedInjectedDocuments(hostPsiFile);
+    List<DocumentWindow> injected = InjectedLanguageUtilBase.getCachedInjectedDocuments(hostPsiFile);
 
     for (int i = injected.size()-1; i>=0; i--) {
       DocumentWindowImpl oldDocument = (DocumentWindowImpl)injected.get(i);
@@ -701,8 +701,8 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
       }
 
       try {
-        List<InjectedLanguageUtil.TokenInfo> tokens = obtainHighlightTokensFromLexer(decodedChars, virtualFile, project, placeInfos);
-        InjectedLanguageUtil.setHighlightTokens(psiFile, tokens);
+        List<InjectedLanguageUtilBase.TokenInfo> tokens = obtainHighlightTokensFromLexer(decodedChars, virtualFile, project, placeInfos);
+        InjectedLanguageUtilBase.setHighlightTokens(psiFile, tokens);
       }
       catch (ProcessCanceledException e) {
         throw e;
@@ -778,7 +778,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
 
   // returns lexer element types with corresponding ranges in encoded (injection host based) PSI
   @NotNull
-  private static List<InjectedLanguageUtil.TokenInfo>
+  private static List<InjectedLanguageUtilBase.TokenInfo>
           obtainHighlightTokensFromLexer(@NotNull CharSequence outChars,
                                          @NotNull VirtualFileWindow virtualFile,
                                          @NotNull Project project,
@@ -797,7 +797,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
     int suffixLength = 0;
     TextRange rangeInsideHost = null;
     int shredEndOffset = -1;
-    List<InjectedLanguageUtil.TokenInfo> tokens = new ArrayList<>(outChars.length()/5); // avg. token per 5 chars
+    List<InjectedLanguageUtilBase.TokenInfo> tokens = new ArrayList<>(outChars.length()/5); // avg. token per 5 chars
     while (!iterator.atEnd()) {
       IElementType tokenType = iterator.getTokenType();
       TextRange range = new ProperTextRange(iterator.getStart(), iterator.getEnd());
@@ -830,7 +830,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
             prevHostEndOffset = shredEndOffset;
           }
           ProperTextRange rangeInHost = new ProperTextRange(start, end);
-          tokens.add(new InjectedLanguageUtil.TokenInfo(tokenType, rangeInHost, hostNum, iterator.getTextAttributes()));
+          tokens.add(new InjectedLanguageUtilBase.TokenInfo(tokenType, rangeInHost, hostNum, iterator.getTextAttributes()));
         }
         range = spilled;
       }

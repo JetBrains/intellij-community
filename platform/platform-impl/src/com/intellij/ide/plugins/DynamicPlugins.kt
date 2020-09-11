@@ -52,7 +52,6 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.objectTree.ThrowableInterner
 import com.intellij.openapi.util.registry.Registry
@@ -66,7 +65,6 @@ import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.URLUtil
-import com.intellij.util.messages.Topic
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.xmlb.BeanBinding
 import org.jetbrains.annotations.NonNls
@@ -82,37 +80,6 @@ import java.util.function.Predicate
 import javax.swing.JComponent
 import kotlin.collections.component1
 import kotlin.collections.component2
-
-class CannotUnloadPluginException(value: String) : ProcessCanceledException(RuntimeException(value))
-
-interface DynamicPluginListener {
-  @JvmDefault
-  fun beforePluginLoaded(pluginDescriptor: IdeaPluginDescriptor) { }
-
-  @JvmDefault
-  fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) { }
-
-  /**
-   * @param isUpdate `true` if the plugin is being unloaded as part of an update installation and a new version will be loaded afterwards
-   */
-  @JvmDefault
-  fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) { }
-
-  @JvmDefault
-  fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) { }
-
-  /**
-   * Checks if the plugin can be dynamically unloaded at this moment.
-   * Method should throw [CannotUnloadPluginException] if it isn't possible for some reason.
-   */
-  @Throws(CannotUnloadPluginException::class)
-  @JvmDefault
-  fun checkUnloadPlugin(pluginDescriptor: IdeaPluginDescriptor) { }
-
-  companion object {
-    @JvmField val TOPIC = Topic(DynamicPluginListener::class.java, Topic.BroadcastDirection.TO_DIRECT_CHILDREN)
-  }
-}
 
 object DynamicPlugins {
   private val LOG = logger<DynamicPlugins>()

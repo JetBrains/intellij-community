@@ -72,14 +72,14 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
   }
 
   public static void clearInvalidInjections(@NotNull PsiFile hostFile) {
-    List<DocumentWindow> invalid = ContainerUtil.findAll(InjectedLanguageUtil.getCachedInjectedDocuments(hostFile), doc -> !doc.isValid());
+    List<DocumentWindow> invalid = ContainerUtil.findAll(InjectedLanguageUtilBase.getCachedInjectedDocuments(hostFile), doc -> !doc.isValid());
     for (DocumentWindow window : invalid) {
-      InjectedLanguageUtil.clearCaches(hostFile.getProject(), window);
+      InjectedLanguageUtilBase.clearCaches(hostFile.getProject(), window);
     }
   }
 
   public static void disposeInvalidEditors() {
-    EditorWindowImpl.disposeInvalidEditors();
+    EditorWindowTracker.getInstance().disposeInvalidEditors();
   }
 
   @Override
@@ -98,7 +98,7 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
         return (PsiLanguageInjectionHost)host;
       }
     }
-    return InjectedLanguageUtil.findInjectionHost(file);
+    return InjectedLanguageUtilBase.findInjectionHost(file);
   }
 
   @Override
@@ -177,8 +177,8 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
     for (VirtualFile file : FileEditorManager.getInstance(myProject).getOpenFiles()) {
       PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
       if (psiFile != null) {
-        for (DocumentWindow document : InjectedLanguageUtil.getCachedInjectedDocuments(psiFile)) {
-          EditorWindowImpl.disposeEditorFor(document);
+        for (DocumentWindow document : InjectedLanguageUtilBase.getCachedInjectedDocuments(psiFile)) {
+          EditorWindowTracker.getInstance().disposeEditorFor(document);
         }
         dropFileCaches(psiFile);
       }
@@ -209,7 +209,7 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
 
   @Override
   public @NotNull String getUnescapedText(final @NotNull PsiElement injectedNode) {
-    final String leafText = InjectedLanguageUtil.getUnescapedLeafText(injectedNode, false);
+    final String leafText = InjectedLanguageUtilBase.getUnescapedLeafText(injectedNode, false);
     if (leafText != null) {
       return leafText; // optimization
     }
@@ -218,7 +218,7 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
     injectedNode.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
-        String leafText = InjectedLanguageUtil.getUnescapedLeafText(element, false);
+        String leafText = InjectedLanguageUtilBase.getUnescapedLeafText(element, false);
         if (leafText != null) {
           text.append(leafText);
           return;
@@ -237,7 +237,7 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
   @SuppressWarnings("ConstantConditions")
   @Override
   public @NotNull List<TextRange> intersectWithAllEditableFragments(@NotNull PsiFile injectedPsi, @NotNull TextRange rangeToEdit) {
-    Place shreds = InjectedLanguageUtil.getShreds(injectedPsi);
+    Place shreds = InjectedLanguageUtilBase.getShreds(injectedPsi);
     if (shreds == null) return Collections.emptyList();
     Object result = null; // optimization: TextRange or ArrayList
     int count = 0;
@@ -287,27 +287,27 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
 
   @Override
   public PsiElement findInjectedElementAt(@NotNull PsiFile hostFile, int hostDocumentOffset) {
-    return InjectedLanguageUtil.findInjectedElementNoCommit(hostFile, hostDocumentOffset);
+    return InjectedLanguageUtilBase.findInjectedElementNoCommit(hostFile, hostDocumentOffset);
   }
 
   @Override
   public void dropFileCaches(@NotNull PsiFile file) {
-    InjectedLanguageUtil.clearCachedInjectedFragmentsForFile(file);
+    InjectedLanguageUtilBase.clearCachedInjectedFragmentsForFile(file);
   }
 
   @Override
   public PsiFile getTopLevelFile(@NotNull PsiElement element) {
-    return InjectedLanguageUtil.getTopLevelFile(element);
+    return InjectedLanguageUtilBase.getTopLevelFile(element);
   }
 
   @Override
   public @NotNull List<DocumentWindow> getCachedInjectedDocumentsInRange(@NotNull PsiFile hostPsiFile, @NotNull TextRange range) {
-    return InjectedLanguageUtil.getCachedInjectedDocumentsInRange(hostPsiFile, range);
+    return InjectedLanguageUtilBase.getCachedInjectedDocumentsInRange(hostPsiFile, range);
   }
 
   @Override
   public void enumerate(@NotNull PsiElement host, @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
-    InjectedLanguageUtil.enumerate(host, visitor);
+    InjectedLanguageUtilBase.enumerate(host, visitor);
   }
 
   @Override
@@ -315,7 +315,7 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
                           @NotNull PsiFile containingFile,
                           boolean probeUp,
                           @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
-    InjectedLanguageUtil.enumerate(host, containingFile, probeUp, visitor);
+    InjectedLanguageUtilBase.enumerate(host, containingFile, probeUp, visitor);
   }
 
   @Override
@@ -336,7 +336,7 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
 
   @Override
   public boolean mightHaveInjectedFragmentAtOffset(@NotNull Document hostDocument, int hostOffset) {
-    return InjectedLanguageUtil.mightHaveInjectedFragmentAtCaret(myProject, hostDocument, hostOffset);
+    return InjectedLanguageUtilBase.mightHaveInjectedFragmentAtCaret(myProject, hostDocument, hostOffset);
   }
 
   @Override
@@ -427,7 +427,7 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
     if (!(host instanceof PsiLanguageInjectionHost) || !((PsiLanguageInjectionHost) host).isValidHost()) {
       return null;
     }
-    final PsiElement inTree = InjectedLanguageUtil.loadTree(host, host.getContainingFile());
+    final PsiElement inTree = InjectedLanguageUtilBase.loadTree(host, host.getContainingFile());
     final List<Pair<PsiElement, TextRange>> result = new SmartList<>();
     enumerate(inTree, (injectedPsi, places) -> {
       for (PsiLanguageInjectionHost.Shred place : places) {
