@@ -184,7 +184,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   }
 
   private static final String[] PREFIX_CANDIDATES = {
-    "Rider", "GoLand", "CLion",
+    "Rider", "GoLand", "CLion", "MobileIDE",
     null,
     "AppCode", "SwiftTests", "CidrCommonTests",
     "DataGrip",
