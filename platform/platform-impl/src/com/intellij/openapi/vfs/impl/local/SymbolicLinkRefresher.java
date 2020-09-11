@@ -53,7 +53,7 @@ final class SymbolicLinkRefresher {
     Consumer<String> queuePath = path -> toRefresh.addAll(fileWatcher.mapToAllSymlinks(FileUtil.toSystemDependentName(path)));
     Consumer<VirtualFile> queueFile = file -> {
       if (file instanceof VirtualFileSystemEntry) {
-        if (((VirtualFileSystemEntry)file).hasSymlink() && !isUnderRecursiveOrCircularSymlink(file)) {
+        if (((VirtualFileSystemEntry)file).parentHasSymlink() && !isUnderRecursiveOrCircularSymlink(file)) {
           String obj = file.getCanonicalPath();
           file = obj == null ? null : mySystem.findFileByPathIfCached(obj);
           if (file != null && fileWatcher.belongsToWatchRoots(FileUtil.toSystemDependentName(file.getPath()), !file.isDirectory())) {
@@ -121,7 +121,7 @@ final class SymbolicLinkRefresher {
   }
 
   private static boolean isUnderRecursiveOrCircularSymlink(@NotNull VirtualFile file) {
-    if (((VirtualFileSystemEntry)file).hasSymlink()) {
+    if (((VirtualFileSystemEntry)file).parentHasSymlink()) {
       while (file != null && !file.is(VFileProperty.SYMLINK)) {
         file = file.getParent();
       }
