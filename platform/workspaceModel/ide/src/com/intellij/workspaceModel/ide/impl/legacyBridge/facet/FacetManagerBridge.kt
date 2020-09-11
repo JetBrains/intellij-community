@@ -69,7 +69,9 @@ internal open class FacetModelBridge(protected val moduleBridge: ModuleBridge) :
   }
 
   override fun getAllFacets(): Array<Facet<*>> {
-    val facetEntities = moduleBridge.entityStorage.current.resolve(moduleBridge.moduleEntityId)!!.facets
+    val moduleEntity = moduleBridge.entityStorage.current.resolve(moduleBridge.moduleEntityId)
+                       ?: error("Cannot resolve module entity ${moduleBridge.moduleEntityId}")
+    val facetEntities = moduleEntity.facets
     return facetEntities.mapNotNull { facetMapping().getDataByEntity(it) }.toList().toTypedArray()
   }
 

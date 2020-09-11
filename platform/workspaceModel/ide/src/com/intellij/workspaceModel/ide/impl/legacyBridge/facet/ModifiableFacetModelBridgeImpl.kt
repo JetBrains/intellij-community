@@ -129,7 +129,9 @@ internal class ModifiableFacetModelBridgeImpl(private val initialStorage: Worksp
 
   override fun getAllFacets(): Array<Facet<*>> {
     val facetMapping = diff.facetMapping()
-    val facetEntities = (diff as WorkspaceEntityStorageBuilder).resolve(moduleBridge.moduleEntityId)!!.facets
+    val moduleEntity = (diff as WorkspaceEntityStorageBuilder).resolve(moduleBridge.moduleEntityId)
+                       ?: error("Cannot resolve module ${moduleBridge.moduleEntityId}")
+    val facetEntities = moduleEntity.facets
     return facetEntities.mapNotNull { facetMapping.getDataByEntity(it) }.toList().toTypedArray()
   }
 
