@@ -19,18 +19,9 @@ import com.intellij.ui.AppUIUtil
 
 class AlternativeSdkRootsProvider : AdditionalLibraryRootsProvider() {
   override fun getAdditionalProjectLibraries(project: Project): Collection<SyntheticLibrary> {
-    if (Registry.`is`("index.run.configuration.jre")) {
-      return RunManager.getInstance(project).allConfigurationsList
-        .asSequence()
-        .filterIsInstance(ConfigurationWithAlternativeJre::class.java)
-        .filter { it.isAlternativeJrePathEnabled }
-        .mapNotNull { it.alternativeJrePath }
-        .mapNotNull { ProjectJdkTable.getInstance().findJdk(it) }
-        .distinct()
-        .map { createSdkLibrary(it) }
-        .toList()
-    }
-    return emptyList()
+    return getAdditionalProjectJdks(project)
+      .map { createSdkLibrary(it) }
+      .toList()
   }
 
   private fun createSdkLibrary(sdk: Sdk): JavaSyntheticLibrary {
@@ -42,6 +33,30 @@ class AlternativeSdkRootsProvider : AdditionalLibraryRootsProvider() {
 
   companion object {
     private val ALTERNATIVE_SDK_LIBS_KEY = Key.create<Collection<SyntheticLibrary>>("ALTERNATIVE_SDK_LIBS_KEY")
+
+    @JvmStatic
+    fun shouldIndexAlternativeJre() = Registry.`is`("index.run.configuration.jre")
+
+    @JvmStatic
+    fun hasEnabledAlternativeJre(settings: RunnerAndConfigurationSettings): Boolean {
+      val configuration = settings.configuration
+      return configuration is ConfigurationWithAlternativeJre && configuration.isAlternativeJrePathEnabled
+    }
+
+    @JvmStatic
+    fun getAdditionalProjectJdks(project: Project): List<Sdk> {
+      if (shouldIndexAlternativeJre()) {
+        return RunManager.getInstance(project).allConfigurationsList
+          .asSequence()
+          .filterIsInstance(ConfigurationWithAlternativeJre::class.java)
+          .filter { it.isAlternativeJrePathEnabled }
+          .mapNotNull { it.alternativeJrePath }
+          .mapNotNull { ProjectJdkTable.getInstance().findJdk(it) }
+          .distinct()
+          .toList()
+      }
+      return emptyList()
+    }
 
     @JvmStatic
     fun reindexIfNeeded(project: Project) {
