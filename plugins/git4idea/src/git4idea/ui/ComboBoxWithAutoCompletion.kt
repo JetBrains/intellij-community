@@ -35,6 +35,7 @@ class ComboBoxWithAutoCompletion<E>(model: ComboBoxModel<E>,
   }
 
   private var myEditor: EditorEx? = null
+  private var myEditableComponent: EditorTextField? = null
 
   private var selectingItem = false
 
@@ -50,6 +51,10 @@ class ComboBoxWithAutoCompletion<E>(model: ComboBoxModel<E>,
     selectingItem = false
   }
 
+  override fun requestFocus() {
+    myEditableComponent?.requestFocus()
+  }
+
   fun getText() = myEditor?.document?.text
 
   fun setPlaceholder(@Nls placeHolder: String) {
@@ -60,6 +65,8 @@ class ComboBoxWithAutoCompletion<E>(model: ComboBoxModel<E>,
 
   private fun initEditor() {
     val editableComponent = createEditableComponent()
+
+    myEditableComponent = editableComponent
 
     editableComponent.document.addDocumentListener(object : BulkAwareDocumentListener.Simple {
       override fun documentChanged(e: DocumentEvent) {
