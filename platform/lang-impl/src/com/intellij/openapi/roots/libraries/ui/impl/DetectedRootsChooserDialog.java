@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.libraries.ui.impl;
 
 import com.intellij.lang.LangBundle;
@@ -46,7 +46,7 @@ import java.util.*;
  * @author Constantine.Plotnikov
  */
 public class DetectedRootsChooserDialog extends DialogWrapper {
-  private static final ColumnInfo ROOT_COLUMN = new TreeColumnInfo("");
+  private static final ColumnInfo<?, ?> ROOT_COLUMN = new TreeColumnInfo("");
   private static final ColumnInfo<VirtualFileCheckedTreeNode, String> ROOT_TYPE_COLUMN = new ColumnInfo<>("") {
     @Override
     public String valueOf(VirtualFileCheckedTreeNode node) {
@@ -120,13 +120,7 @@ public class DetectedRootsChooserDialog extends DialogWrapper {
     final CheckedTreeNode root = createRoot(suggestedRoots);
     CheckboxTreeTable treeTable = new CheckboxTreeTable(root, new CheckboxTree.CheckboxTreeCellRenderer(true) {
       @Override
-      public void customizeRenderer(JTree tree,
-                                        Object value,
-                                        boolean selected,
-                                        boolean expanded,
-                                        boolean leaf,
-                                        int row,
-                                        boolean hasFocus) {
+      public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
         if (!(value instanceof VirtualFileCheckedTreeNode)) return;
         VirtualFileCheckedTreeNode node = (VirtualFileCheckedTreeNode)value;
         VirtualFile file = node.getFile();
@@ -154,7 +148,7 @@ public class DetectedRootsChooserDialog extends DialogWrapper {
           text = file.getPresentableUrl();
           attributes = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
         }
-        final ColoredTreeCellRenderer textRenderer = getTextRenderer();
+        ColoredTreeCellRenderer textRenderer = getTextRenderer();
         textRenderer.setIcon(PlatformIcons.FOLDER_ICON);
         if (!isValid) {
           textRenderer.append("[INVALID] ", SimpleTextAttributes.ERROR_ATTRIBUTES);

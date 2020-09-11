@@ -22,21 +22,19 @@ class UnknownSdkInspectionCommandLineConfigurator : CommandLineInspectionProject
 
   override fun getName() = "sdk"
 
-  override fun getDescription(): String {
-    return ProjectBundle.message("config.unknown.sdk.commandline.configure")
-  }
+  override fun getDescription(): String = ProjectBundle.message("config.unknown.sdk.commandline.configure")
 
-  override fun isApplicable(context: CommandLineInspectionProjectConfigurator.ConfiguratorContext): Boolean {
-    return !ApplicationManager.getApplication().isUnitTestMode
-  }
+  override fun isApplicable(context: CommandLineInspectionProjectConfigurator.ConfiguratorContext): Boolean =
+    !ApplicationManager.getApplication().isUnitTestMode
 
   override fun configureEnvironment(context: CommandLineInspectionProjectConfigurator.ConfiguratorContext) {
     Registry.get("unknown.sdk").setValue(false) // forbid UnknownSdkTracker post startup activity as we run it here
   }
 
   override fun configureProject(project: Project, context: CommandLineInspectionProjectConfigurator.ConfiguratorContext) = runBlocking {
-    require(!ApplicationManager.getApplication().isWriteThread) { "The code below uses the same GUI thread to complete operations." +
-                                                                  "Running from EDT would deadlock" }
+    require(!ApplicationManager.getApplication().isWriteThread) {
+      "The code below uses the same GUI thread to complete operations. Running from EDT would deadlock"
+    }
     resolveUnknownSdks(project, context.progressIndicator)
   }
 
@@ -58,13 +56,13 @@ class UnknownSdkInspectionCommandLineConfigurator : CommandLineInspectionProject
     indicator.isIndeterminate = false
     for ((i, problem) in problems.withIndex()) {
       LOG.info("Solving unknown sdk ${problem.sdkName}")
-
       indicator.fraction = i.toDouble() / problems.size
       indicator.text = "Configuring SDKs " + problem.sdkName + "..."
       indicator.pushState()
       try {
         resolveUnknownSdk(resolvers, problem, indicator, project)
-      } finally {
+      }
+      finally {
         indicator.popState()
       }
     }

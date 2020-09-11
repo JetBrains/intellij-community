@@ -1,9 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationType;
+import com.intellij.notification.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
@@ -20,11 +18,7 @@ import java.util.TreeSet;
 import static com.intellij.notification.NotificationAction.createSimple;
 
 public class UnknownSdkBalloonNotification {
-  private static final NotificationGroup SDK_CONFIGURED_GROUP
-    = new NotificationGroup("Missing SDKs", NotificationDisplayType.BALLOON, true);
-
-  @NotNull
-  public static UnknownSdkBalloonNotification getInstance(@NotNull Project project) {
+  public static @NotNull UnknownSdkBalloonNotification getInstance(@NotNull Project project) {
     return project.getService(UnknownSdkBalloonNotification.class);
   }
 
@@ -45,8 +39,7 @@ public class UnknownSdkBalloonNotification {
     for (Map.Entry<? extends UnknownSdk, UnknownSdkLocalSdkFix> entry : localFixes.entrySet()) {
       UnknownSdkLocalSdkFix fix = entry.getValue();
       String usageText = ProjectBundle.message("notification.text.sdk.usage.is.set.to", entry.getKey().getSdkName(), fix.getVersionString());
-      String usage = usageText + "<br/>" +
-                     SdkListPresenter.presentDetectedSdkPath(fix.getExistingSdkHome());
+      String usage = usageText + "<br/>" + SdkListPresenter.presentDetectedSdkPath(fix.getExistingSdkHome());
       usages.add(usage);
     }
     message.append(StringUtil.join(usages, "<br/><br/>"));
@@ -63,7 +56,8 @@ public class UnknownSdkBalloonNotification {
       change = ProjectBundle.message("notification.link.change.sdks");
     }
 
-    SDK_CONFIGURED_GROUP.createNotification(title, message.toString(), NotificationType.INFORMATION, null)
+    NotificationGroupManager.getInstance().getNotificationGroup("Missing SDKs")
+      .createNotification(title, message.toString(), NotificationType.INFORMATION, null)
       .setImportant(true)
       .addAction(createSimple(
         change,
