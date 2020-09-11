@@ -151,7 +151,7 @@ public class DetectedRootsChooserDialog extends DialogWrapper {
         ColoredTreeCellRenderer textRenderer = getTextRenderer();
         textRenderer.setIcon(PlatformIcons.FOLDER_ICON);
         if (!isValid) {
-          textRenderer.append("[INVALID] ", SimpleTextAttributes.ERROR_ATTRIBUTES);
+          textRenderer.append(ProjectBundle.message("invalid.root.label") + ' ', SimpleTextAttributes.ERROR_ATTRIBUTES);
         }
         textRenderer.append(text, attributes);
       }

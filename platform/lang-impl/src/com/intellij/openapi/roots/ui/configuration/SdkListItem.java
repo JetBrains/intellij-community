@@ -7,10 +7,7 @@ import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel.NewSdkAction;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.List;
@@ -27,7 +24,7 @@ public abstract class SdkListItem {
   public static final class SdkReferenceItem extends SdkListItem {
     public final @NotNull SdkType sdkType;
     public final @NotNull String name;
-    public final @Nullable String versionString;
+    public final @NlsSafe @Nullable String versionString;
     public final boolean hasValidPath;
 
     SdkReferenceItem(@NotNull SdkType sdkType, @NotNull String name, @Nullable String versionString, boolean hasValidPath) {
@@ -160,10 +157,10 @@ public abstract class SdkListItem {
 
   public static final class GroupItem extends SdkListItem {
     public final @NotNull Icon icon;
-    public final @NotNull String caption;
+    public final @Nls @NotNull String caption;
     public final @NotNull List<? extends SdkListItem> subItems;
 
-    GroupItem(@NotNull Icon icon, @NotNull String caption, @NotNull List<ActionItem> subItems) {
+    GroupItem(@NotNull Icon icon, @Nls @NotNull String caption, @NotNull List<ActionItem> subItems) {
       this.icon = icon;
       this.caption = caption;
       this.subItems = ImmutableList.copyOf(ContainerUtil.map(subItems, it -> it.withGroup(this)));

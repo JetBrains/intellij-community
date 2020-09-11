@@ -39,7 +39,7 @@ class UnknownSdkInspectionCommandLineConfigurator : CommandLineInspectionProject
   }
 
   private suspend fun resolveUnknownSdks(project: Project, indicator: ProgressIndicator) {
-    indicator.text = "Scanning for unknown SDKs..."
+    indicator.text = ProjectBundle.message("config.unknown.progress.scanning")
     val problems = suspendCancellableCoroutine<List<UnknownSdk>> { cont ->
       UnknownSdkCollector(project).collectSdksPromise(java.util.function.Consumer { (_, resolvableSdks) ->
         cont.resume(resolvableSdks)
@@ -48,7 +48,7 @@ class UnknownSdkInspectionCommandLineConfigurator : CommandLineInspectionProject
     if (problems.isEmpty()) return
 
     LOG.info("Unknown sdk's problems $problems")
-    indicator.text = "Building SDK resolvers..."
+    indicator.text = ProjectBundle.message("config.unknown.progress.building")
     val resolvers = UnknownSdkResolver.EP_NAME.extensions.mapNotNull {
       it.createResolver(project, indicator)
     }
@@ -57,7 +57,7 @@ class UnknownSdkInspectionCommandLineConfigurator : CommandLineInspectionProject
     for ((i, problem) in problems.withIndex()) {
       LOG.info("Solving unknown sdk ${problem.sdkName}")
       indicator.fraction = i.toDouble() / problems.size
-      indicator.text = "Configuring SDKs " + problem.sdkName + "..."
+      indicator.text = ProjectBundle.message("config.unknown.progress.configuring", problem.sdkName)
       indicator.pushState()
       try {
         resolveUnknownSdk(resolvers, problem, indicator, project)

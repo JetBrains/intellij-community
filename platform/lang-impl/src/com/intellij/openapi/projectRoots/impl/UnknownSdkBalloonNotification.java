@@ -8,7 +8,7 @@ import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.roots.ui.configuration.SdkListPresenter;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdk;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkLocalSdkFix;
-import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -31,19 +31,20 @@ public class UnknownSdkBalloonNotification {
   public void notifyFixedSdks(@NotNull Map<? extends UnknownSdk, UnknownSdkLocalSdkFix> localFixes) {
     if (localFixes.isEmpty()) return;
 
-    final String title;
-    final String change;
-    final StringBuilder message = new StringBuilder();
-
-    Set<String> usages = new TreeSet<>();
+    Set<@Nls String> usages = new TreeSet<>();
     for (Map.Entry<? extends UnknownSdk, UnknownSdkLocalSdkFix> entry : localFixes.entrySet()) {
       UnknownSdkLocalSdkFix fix = entry.getValue();
       String usageText = ProjectBundle.message("notification.text.sdk.usage.is.set.to", entry.getKey().getSdkName(), fix.getVersionString());
       String usage = usageText + "<br/>" + SdkListPresenter.presentDetectedSdkPath(fix.getExistingSdkHome());
       usages.add(usage);
     }
-    message.append(StringUtil.join(usages, "<br/><br/>"));
+    @Nls StringBuilder message = new StringBuilder();
+    for (String usage : usages) {
+      if (message.length() == 0) message.append("<br/><br/>");
+      message.append(usage);
+    }
 
+    String title, change;
     if (localFixes.size() == 1) {
       Map.Entry<? extends UnknownSdk, UnknownSdkLocalSdkFix> entry = localFixes.entrySet().iterator().next();
       UnknownSdk info = entry.getKey();

@@ -65,7 +65,7 @@ data class JdkItem(
   val isVisibleOnUI: Boolean,
 
   val jdkMajorVersion: Int,
-  @get:NlsSafe
+  @NlsSafe
   val jdkVersion: String,
   private val jdkVendorVersion: String?,
   val suggestedSdkName: String,

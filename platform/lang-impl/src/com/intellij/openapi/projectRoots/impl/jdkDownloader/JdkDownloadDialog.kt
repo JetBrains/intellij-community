@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.DocumentAdapter
@@ -33,6 +34,7 @@ private class JdkDownloaderModel(
 )
 
 private class JdkVersionItem(
+  @NlsSafe
   val jdkVersion: String,
   /* we should prefer the default selected item from the JDKs.json feed,
    * the list below is sorted by vendor, and default item is not necessarily first
@@ -131,6 +133,7 @@ private class JdkVersionVendorCombobox: ComboBox<JdkVersionVendorElement>() {
 private fun List<JdkVersionVendorItem>.sortedForUI() = this.sortedBy { it.item.product.packagePresentationText.toLowerCase() }
 
 private fun buildJdkDownloaderModel(allItems: List<JdkItem>): JdkDownloaderModel {
+  @NlsSafe
   fun JdkItem.versionGroupId() = this.jdkVersion
 
   val groups =  allItems

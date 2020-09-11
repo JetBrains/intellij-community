@@ -237,8 +237,7 @@ public final class SdkListPresenter extends ColoredListCellRenderer<SdkListItem>
     return presentDetectedSdkPath(home, 50, 30);
   }
 
-  @NotNull
-  public static String presentDetectedSdkPath(@NotNull String home, int maxLength, int suffixLength) {
+  public static @NlsSafe @NotNull String presentDetectedSdkPath(@NotNull String home, int maxLength, int suffixLength) {
     //for macOS, let's try removing Bundle internals
     home = StringUtil.trimEnd(home, "/Contents/Home"); //NON-NLS
     home = StringUtil.trimEnd(home, "/Contents/MacOS");  //NON-NLS
