@@ -73,7 +73,7 @@ public class TestNGTestPackage extends TestNGTestObject {
       return TestngBundle.message("action.text.tests.in.package", myConfig.getPersistantData().getPackageName());
     }
     else {
-      return TestngBundle.message("action.text.all.tests");
+      return TestRunnerBundle.message("all.tests.scope.presentable.text");
     }
   }
 

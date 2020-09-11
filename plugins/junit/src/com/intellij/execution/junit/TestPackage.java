@@ -9,6 +9,7 @@ import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.SourceScope;
+import com.intellij.execution.testframework.TestRunnerBundle;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
@@ -251,7 +252,7 @@ public class TestPackage extends TestObject {
     final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
     return data.getPackageName().trim().length() > 0
            ? ExecutionBundle.message("test.in.scope.presentable.text", data.getPackageName())
-           : JUnitBundle.message("all.tests.scope.presentable.text");
+           : TestRunnerBundle.message("all.tests.scope.presentable.text");
   }
 
   @Override
