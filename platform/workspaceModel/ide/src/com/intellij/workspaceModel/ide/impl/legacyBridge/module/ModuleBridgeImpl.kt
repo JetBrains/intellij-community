@@ -49,6 +49,7 @@ internal class ModuleBridgeImpl(
               val currentStore = entityStorage.current
               val storage = if (currentStore is WorkspaceEntityStorageBuilder) currentStore.toStorage() else currentStore
               entityStorage = VersionedEntityStorageOnStorage(storage)
+              assert(entityStorage.current.resolve(moduleEntityId) != null) { "Cannot resolve module $moduleEntityId. Current store: $currentStore" }
             }
           }
         }
