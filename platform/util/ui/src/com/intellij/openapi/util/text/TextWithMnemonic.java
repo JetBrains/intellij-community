@@ -21,11 +21,13 @@ public final class TextWithMnemonic {
    */
   private final int myMnemonicIndex;
   /**
-   * A text that should be appended to myText to display a mnemonic
+   * A text that can be appended to myText to display a mnemonic that doesn't belong to the text naturally. 
+   * Ex: "Help (P)" - " (P)" will be extracted into a suffix.
    */
   private final String myMnemonicSuffix;
 
-  private TextWithMnemonic(@NotNull @Nls String text, int mnemonicIndex, String mnemonicSuffix) {
+  private TextWithMnemonic(@NotNull @Nls String text, int mnemonicIndex, @NotNull String mnemonicSuffix) {
+    assert mnemonicIndex >= 0 || mnemonicSuffix.isEmpty();
     myText = StringUtil.internEmptyString(text);
     myMnemonicIndex = mnemonicIndex;
     myMnemonicSuffix = mnemonicSuffix;
@@ -40,13 +42,13 @@ public final class TextWithMnemonic {
   }
 
   /**
-   * @param complete if true add the mnemonic suffix (but without mnemonic)
+   * @param withMnemonicSuffix if true add the mnemonic suffix (but without mnemonic)
    * @return plain text without mnemonic
    */
   @NotNull
-  public @Nls String getText(boolean complete) {
+  public @Nls String getText(boolean withMnemonicSuffix) {
     //noinspection HardCodedStringLiteral
-    return complete ? myText + myMnemonicSuffix : myText;
+    return withMnemonicSuffix ? myText + myMnemonicSuffix : myText;
   }
 
   /**
@@ -202,7 +204,11 @@ public final class TextWithMnemonic {
       String plain = plainText.toString();
       int length = plain.length();
       if (length > 3 && mnemonicIndex == length - 2 && plain.charAt(length - 1) == ')' && plain.charAt(length - 3) == '(') {
-        return new TextWithMnemonic(plain.substring(0, length - 3), mnemonicIndex, plain.substring(length - 3));
+        int pos = length - 3;
+        while (pos > 0 && plain.charAt(pos - 1) == ' ') {
+          pos--;
+        }
+        return new TextWithMnemonic(plain.substring(0, pos), mnemonicIndex, plain.substring(pos));
       }
       return new TextWithMnemonic(plain, mnemonicIndex, "");
     }
