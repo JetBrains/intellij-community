@@ -780,7 +780,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
           return firstName;
         }
         else {
-          return JUnitBundle.message("default.junit.config.name.multiple.patterns", firstName, size - 1);
+          return TestRunnerBundle.message("test.config.first.pattern.and.few.more", firstName, size - 1);
         }
       }
       if (TEST_CATEGORY.equals(TEST_OBJECT)) {

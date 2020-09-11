@@ -20,6 +20,7 @@ import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.testframework.SourceScope;
+import com.intellij.execution.testframework.TestRunnerBundle;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -134,7 +135,7 @@ public class TestNGTestPattern extends TestNGTestObject {
     }
     else {
       //noinspection DialogTitleCapitalization
-      return TestngBundle.message("testng.default.config.name.multiple.patterns", firstPattern, size - 1);
+      return TestRunnerBundle.message("test.config.first.pattern.and.few.more", firstPattern, size - 1);
     }
   }
 
