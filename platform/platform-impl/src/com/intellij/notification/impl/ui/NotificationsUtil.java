@@ -95,7 +95,7 @@ public final class NotificationsUtil {
 
     HtmlBuilder htmlBuilder = new HtmlBuilder();
     if (StringUtil.isNotEmpty(title)) {
-      HtmlChunk.Element titleChunk = HtmlChunk.text(title).bold();
+      HtmlChunk.Element titleChunk = HtmlChunk.raw(title).bold();
       if (StringUtil.isNotEmpty(titleColor)) {
         titleChunk = titleChunk.attr("color", titleColor);
       }
@@ -106,11 +106,11 @@ public final class NotificationsUtil {
     if (StringUtil.isNotEmpty(subtitle)) {
       htmlBuilder.nbsp().append(StringUtil.isNotEmpty(titleColor) ?
                                 HtmlChunk.span().attr("color", titleColor).addText(subtitle) :
-                                HtmlChunk.text(subtitle));
+                                HtmlChunk.raw(subtitle));
     }
 
     if (StringUtil.isNotEmpty(content)) {
-      HtmlChunk.Element contentChunk = HtmlChunk.text(content).wrapWith(HtmlChunk.div());
+      HtmlChunk.Element contentChunk = HtmlChunk.raw(content).wrapWith(HtmlChunk.div());
       if (StringUtil.isNotEmpty(contentStyle)) {
         contentChunk = contentChunk.style(contentStyle);
       }
