@@ -854,4 +854,11 @@ public class Py3ResolveTest extends PyResolveTestCase {
       assertResolvesTo(PyFunction.class, "bit_length", "builtins.pyi");
     });
   }
+
+  // PY-25832
+  public void testTypeVarClassObjectBoundAttribute() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      assertNull(doResolve());
+    });
+  }
 }
