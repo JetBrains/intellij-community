@@ -72,6 +72,7 @@ internal fun createSpaceChatPanel(
     add(timeline, CC().growX().minWidth(""))
   }
   val centerPanel = JBLoadingPanel(BorderLayout(), parent).apply {
+    startLoading()
     isOpaque = false
     add(ScrollPaneFactory.createScrollPane(
       contentPanel,
