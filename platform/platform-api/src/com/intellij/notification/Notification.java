@@ -65,7 +65,7 @@ public class Notification {
   private final NotificationType myType;
 
   private @NotificationTitle String myTitle;
-  private String mySubtitle;
+  private @NotificationSubtitle String mySubtitle;
   private @NotificationContent String myContent;
   private NotificationListener myListener;
   private @LinkLabel String myDropDownText;
@@ -209,12 +209,13 @@ public class Notification {
   }
 
   @Nullable
+  @NotificationTitle
   public String getSubtitle() {
     return mySubtitle;
   }
 
   @NotNull
-  public Notification setSubtitle(@Nullable String subtitle) {
+  public Notification setSubtitle(@Nullable @NotificationTitle String subtitle) {
     mySubtitle = subtitle;
     return this;
   }

@@ -11,6 +11,7 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +29,7 @@ public final class NotificationGroupEP implements PluginAware {
 
   @Attribute("id")
   @RequiredElement
-  public String id;
+  public @NlsSafe String id;
 
   @Attribute("displayType")
   @RequiredElement

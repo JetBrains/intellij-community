@@ -36,6 +36,7 @@ import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -256,12 +257,12 @@ public final class EventLog {
     }
   }
 
-  private static String getStatusText(DocumentImpl logDoc,
+  private static @Nls String getStatusText(DocumentImpl logDoc,
                                       AtomicBoolean showMore,
                                       List<? extends RangeMarker> lineSeparators,
                                       String indent,
                                       boolean hasHtml) {
-    DocumentImpl statusDoc = new DocumentImpl(logDoc.getImmutableCharSequence(),true);
+    DocumentImpl statusDoc = new DocumentImpl(logDoc.getImmutableCharSequence(), true);
     List<RangeMarker> statusSeparators = new ArrayList<>();
     for (RangeMarker separator : lineSeparators) {
       if (separator.isValid()) {
@@ -410,7 +411,7 @@ public final class EventLog {
     public final List<Pair<TextRange, HyperlinkInfo>> links;
     public final int titleLength;
 
-    public LogEntry(@NotNull String message, @NotNull String status, @NotNull List<Pair<TextRange, HyperlinkInfo>> links, int titleLength) {
+    public LogEntry(@NotNull String message, @NotNull @Nls String status, @NotNull List<Pair<TextRange, HyperlinkInfo>> links, int titleLength) {
       this.message = message;
       this.status = status;
       this.links = links;
@@ -586,7 +587,7 @@ public final class EventLog {
       return console == null ? createNewContent(name) : console;
     }
 
-    private @NotNull EventLogConsole createNewContent(@NotNull String name) {
+    private @NotNull EventLogConsole createNewContent(@NotNull @Nls String name) {
       ApplicationManager.getApplication().assertIsDispatchThread();
       ToolWindow toolWindow = Objects.requireNonNull(ToolWindowManager.getInstance(myProject).getToolWindow(LOG_TOOL_WINDOW_ID));
       EventLogConsole newConsole = new EventLogConsole(myProjectModel, toolWindow.getDisposable());
@@ -596,7 +597,7 @@ public final class EventLog {
     }
   }
 
-  private static @NotNull String getContentName(@NotNull String groupId) {
+  private static @NotNull @Nls String getContentName(@NotNull String groupId) {
     for (EventLogCategory category : EventLogCategory.EP_NAME.getExtensionList()) {
       if (category.acceptsNotification(groupId)) {
         return category.getDisplayName();
