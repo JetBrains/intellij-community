@@ -49,9 +49,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
 final class LightEditTabs extends JBEditorTabs implements LightEditorListener, CloseAction.CloseTarget {
-  private final Project myProject;
-  private final LightEditorManagerImpl myEditorManager;
-  private final ExecutorService myTabUpdateExecutor;
+  private final @NotNull Project myProject;
+  private final @NotNull LightEditorManagerImpl myEditorManager;
+  private final @NotNull ExecutorService myTabUpdateExecutor;
 
   LightEditTabs(@NotNull Project project, @NotNull Disposable parentDisposable, @NotNull LightEditorManagerImpl editorManager) {
     super(project, null, parentDisposable);
@@ -84,7 +84,7 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
 
   private void addEditorTab(@NotNull LightEditorInfo editorInfo, int index) {
     EditorWithProviderComposite editorContainer =
-      ((LightEditFileEditorManagerImpl)FileEditorManager.getInstance(LightEditService.getInstance().getOrCreateProject()))
+      ((LightEditFileEditorManagerImpl)FileEditorManager.getInstance(myProject))
         .createEditorComposite(editorInfo);
     TabInfo tabInfo = new TabInfo(editorContainer.getComponent())
       .setText(editorInfo.getFile().getPresentableName())

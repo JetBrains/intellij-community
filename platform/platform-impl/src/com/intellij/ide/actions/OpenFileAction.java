@@ -192,7 +192,7 @@ public class OpenFileAction extends AnAction implements DumbAware, LightEditComp
   public static void openFile(VirtualFile file, @NotNull Project project) {
     NonProjectFileWritingAccessProvider.allowWriting(Collections.singletonList(file));
     if (LightEdit.owns(project)) {
-      if (LightEditService.getInstance().openFile(file, true)) {
+      if (LightEditService.getInstance().openFile(file, true) != null) {
         LightEditFeatureUsagesUtil.logFileOpen(LightEditOpenAction);
       }
     }

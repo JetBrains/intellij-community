@@ -72,8 +72,9 @@ public final class CommandLineProcessor {
 
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(ioFile.toString()));
     if (file == null) {
-      if (LightEditUtil.openFile(ioFile)) {
-        return new CommandLineProcessorResult(LightEditUtil.getProject(), OK_FUTURE);
+      Project lightEditProject = LightEditUtil.openFile(ioFile);
+      if (lightEditProject != null) {
+        return new CommandLineProcessorResult(lightEditProject, OK_FUTURE);
       }
       else {
         return CommandLineProcessorResult.createError(IdeBundle.message("dialog.message.can.not.open.file", ioFile.toString()));

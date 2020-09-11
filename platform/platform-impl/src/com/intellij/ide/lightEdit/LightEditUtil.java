@@ -57,21 +57,23 @@ public final class LightEditUtil {
   private LightEditUtil() {
   }
 
-  public static boolean openFile(@NotNull Path path) {
+  @Nullable
+  public static Project openFile(@NotNull Path path) {
     VirtualFile virtualFile = VfsUtil.findFile(path, true);
     if (virtualFile != null) {
-      if (LightEdit.openFile(virtualFile)) {
+      Project project = LightEditService.getInstance().openFile(virtualFile, false);
+      if (project != null) {
         LightEditFeatureUsagesUtil.logFileOpen(CommandLine);
-        return true;
+        return project;
       }
     }
     else {
       return handleNonExisting(path);
     }
-    return false;
+    return null;
   }
 
-  private static boolean handleNonExisting(@NotNull Path path) {
+  private static @Nullable Project handleNonExisting(@NotNull Path path) {
     if (path.getFileName() == null) {
       LOG.error("No file name is given");
     }
@@ -84,16 +86,17 @@ public final class LightEditUtil {
           creationMessage.set(ApplicationBundle.message("light.edit.file.creation.failed.message", path.toString(), fileName));
         }
       }
+      final Project project = LightEditService.getInstance().getOrCreateProject();
       ApplicationManager.getApplication().invokeLater(() -> {
         LightEditorInfo editorInfo = LightEditService.getInstance().createNewDocument(path);
         if (creationMessage.get() != null) {
           editorInfo.getFile().putUserData(CREATION_MESSAGE, creationMessage.get());
-          EditorNotifications.getInstance(requireProject()).updateNotifications(editorInfo.getFile());
+          EditorNotifications.getInstance(project).updateNotifications(editorInfo.getFile());
         }
       });
-      return true;
+      return project;
     }
-    return false;
+    return null;
   }
 
   public static boolean isOpenInExistingProject() {

@@ -124,14 +124,15 @@ public final class LightEditServiceImpl implements LightEditService,
   }
 
   @Override
-  public boolean openFile(@NotNull VirtualFile file, boolean force) {
+  @Nullable
+  public Project openFile(@NotNull VirtualFile file, boolean force) {
     if (force || canOpen(file)) {
       doWhenActionManagerInitialized(() -> {
         doOpenFile(file);
       });
-      return true;
+      return myLightEditProjectManager.getOrCreateProject();
     }
-    return false;
+    return null;
   }
 
   private static void doWhenActionManagerInitialized(@NotNull Runnable callback) {
