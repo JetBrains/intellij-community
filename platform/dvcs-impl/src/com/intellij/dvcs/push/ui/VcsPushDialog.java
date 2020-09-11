@@ -103,8 +103,10 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     return ContainerUtil.map(pushActions, action -> new ActionWrapper(myProject, this, action));
   }
 
-  private static @Nullable PushActionBase.DefaultPushAction findDefaultPushAction(@NotNull List<PushActionBase> additionalActions) {
-    List<PushActionBase> defaultPushActions = ContainerUtil.findAll(additionalActions, action -> action instanceof PushActionBase.DefaultPushAction);
+  private @Nullable PushActionBase.DefaultPushAction findDefaultPushAction(@NotNull List<PushActionBase> additionalActions) {
+    List<PushActionBase> defaultPushActions = ContainerUtil.findAll(additionalActions,
+                                                                    action -> action instanceof PushActionBase.DefaultPushAction &&
+                                                                              action.isEnabled(this));
     if (defaultPushActions.isEmpty()) {
       return null;
     }
