@@ -50,7 +50,9 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
   private static final Logger LOG = Logger.getInstance(JavaSpacePropertyProcessor.class);
 
   private static final TokenSet REF_LIST_KEYWORDS = TokenSet.create(
-    JavaTokenType.EXTENDS_KEYWORD, JavaTokenType.IMPLEMENTS_KEYWORD, JavaTokenType.THROWS_KEYWORD, JavaTokenType.WITH_KEYWORD);
+    JavaTokenType.EXTENDS_KEYWORD, JavaTokenType.IMPLEMENTS_KEYWORD,
+    JavaTokenType.THROWS_KEYWORD, JavaTokenType.PERMITS_KEYWORD, JavaTokenType.WITH_KEYWORD
+  );
 
   private static final TokenSet ESCAPED_TOKENS = TokenSet.create(
     JavaTokenType.LT, JavaTokenType.LTLT, JavaTokenType.LTLTEQ,
@@ -533,7 +535,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
       myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
     }
 
-    else if (myRole2 == ChildRole.EXTENDS_LIST || myRole2 == ChildRole.IMPLEMENTS_LIST) {
+    else if (myRole2 == ChildRole.EXTENDS_LIST || myRole2 == ChildRole.IMPLEMENTS_LIST || myRole2 == ChildRole.PERMITS_LIST) {
       createSpaceInCode(true);
     }
 
@@ -655,7 +657,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   @Override
   public void visitEnumConstantInitializer(PsiEnumConstantInitializer enumConstantInitializer) {
-    if (myRole2 == ChildRole.EXTENDS_LIST || myRole2 == ChildRole.IMPLEMENTS_LIST) {
+    if (myRole2 == ChildRole.EXTENDS_LIST || myRole2 == ChildRole.IMPLEMENTS_LIST || myRole2 == ChildRole.PERMITS_LIST) {
       createSpaceInCode(true);
     }
     else {

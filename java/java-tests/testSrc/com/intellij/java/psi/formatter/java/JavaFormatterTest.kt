@@ -23,7 +23,7 @@ import com.intellij.util.IncorrectOperationException
  */
 class JavaFormatterTest : AbstractJavaFormatterTest() {
   override fun getProjectDescriptor(): LightProjectDescriptor {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_14
+    return LightJavaCodeInsightFixtureTestCase.JAVA_15
   }
 
   fun testPaymentManager() {
@@ -1537,6 +1537,9 @@ class Test {
 
     doTextTest("/**\n" + " *\n" + " */\n" + "class Foo\n extends B\n{\n" + "}",
                "/**\n" + " *\n" + " */\n" + "class Foo\n        extends B\n" + "{\n" + "}")
+
+    doTextTest("/**\n" + " *\n" + " */\n" + "class Foo\n permits B\n{\n" + "}",
+               "/**\n" + " *\n" + " */\n" + "class Foo\n        permits B\n" + "{\n" + "}")
 
   }
 
@@ -4026,5 +4029,38 @@ public enum LevelCode {
         }
     }""".trimIndent()
     )
+  }
+
+  fun testPermitsList() {
+    settings.ALIGN_MULTILINE_EXTENDS_LIST = true
+    doTextTest("sealed class A permits B, \n" + "C {}", "sealed class A permits B,\n" + "                       C {\n}")
+  }
+
+  fun testWrapPermitsList() {
+    settings.RIGHT_MARGIN = 50
+    settings.EXTENDS_LIST_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM
+    settings.EXTENDS_KEYWORD_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED
+
+    doTextTest("sealed class ColtreDataProvider permits Provider, AgentEventListener, ParameterDataEventListener {\n}",
+               "sealed class ColtreDataProvider permits Provider,\n" +
+               "        AgentEventListener,\n" +
+               "        ParameterDataEventListener {\n}")
+  }
+
+
+  fun testPermitsListWithPrecedingGeneric() {
+    doTextTest("""
+      sealed class Simple permits B {
+      }
+
+      final class B extends Simple {
+      }
+    """.trimIndent(), """
+      sealed class Simple permits B {
+      }
+
+      final class B extends Simple {
+      }
+    """.trimIndent())
   }
 }
