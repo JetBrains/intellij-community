@@ -76,7 +76,7 @@ public class ProjectLoadingErrorsNotifierImpl extends ProjectLoadingErrorsNotifi
       }
 
       ConfigurationErrorType type = entry.getKey();
-      String invalidElements = getInvalidElementsString(type, descriptions);
+      String invalidElements = type.getErrorText(descriptions.size(), descriptions.iterator().next().getElementName());
       String errorText = ProjectBundle.message("error.message.configuration.cannot.load", invalidElements);
       new Notification(
         NotificationGroup.createIdWithTitle("Project Loading Error", ProjectBundle.message("notification.group.project.loading.error")),
@@ -91,12 +91,5 @@ public class ProjectLoadingErrorsNotifierImpl extends ProjectLoadingErrorsNotifi
           }
         }).notify(myProject);
     }
-  }
-
-  private static String getInvalidElementsString(ConfigurationErrorType type, Collection<ConfigurationErrorDescription> descriptions) {
-    if (descriptions.size() == 1) {
-      return type.getElementKind() + " " + ContainerUtil.getFirstItem(descriptions).getElementName();
-    }
-    return descriptions.size() + " " + StringUtil.pluralize(type.getElementKind());
   }
 }

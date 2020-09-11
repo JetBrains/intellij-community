@@ -21,8 +21,19 @@ import com.intellij.facet.impl.invalid.InvalidFacetManager;
 import com.intellij.openapi.module.ConfigurationErrorDescription;
 import com.intellij.openapi.module.ConfigurationErrorType;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.projectModel.ProjectModelBundle;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 public class FacetLoadingErrorDescription extends ConfigurationErrorDescription {
+  private static final ConfigurationErrorType FACET_ERROR = new ConfigurationErrorType(true) {
+    @Override
+    public @Nls @NotNull String getErrorText(int errorCount, @NlsSafe String firstElementName) {
+      return ProjectBundle.message("facet.configuration.problem.text", errorCount, firstElementName);
+    }
+  };
+
   private final InvalidFacet myFacet;
 
   public FacetLoadingErrorDescription(final InvalidFacet facet) {
@@ -32,7 +43,7 @@ public class FacetLoadingErrorDescription extends ConfigurationErrorDescription 
   }
 
   @Override
-  public String getIgnoreConfirmationMessage() {
+  public @NotNull String getIgnoreConfirmationMessage() {
     return ProjectBundle.message("confirmation.message.would.you.like.to.ignore.facet", myFacet.getName(), myFacet.getModule().getName());
   }
 

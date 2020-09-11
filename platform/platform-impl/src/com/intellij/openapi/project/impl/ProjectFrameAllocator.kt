@@ -118,7 +118,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
     return result
   }
 
-  @NlsContexts.ProgressTitle
+  @NlsContexts.DialogTitle
   private fun getProgressTitle(): String {
     val projectName = options.projectName ?: (projectStoreBaseDir.fileName ?: projectStoreBaseDir).toString()
     return IdeUICustomization.getInstance().projectMessage("progress.title.project.loading.name", projectName)
