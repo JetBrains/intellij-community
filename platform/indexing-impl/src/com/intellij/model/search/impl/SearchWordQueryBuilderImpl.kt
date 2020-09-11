@@ -94,6 +94,8 @@ internal data class SearchWordQueryBuilderImpl(
 
   override fun buildOccurrenceQuery(): Query<out TextOccurrence> = buildQuery(TextOccurrenceWalker)
 
+  override fun buildLeafOccurrenceQuery(): Query<out TextOccurrence> = buildQuery(IdLeafOccurenceMapper)
+
   internal data class Parameters(
     val project: Project,
     val word: String,

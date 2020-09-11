@@ -111,4 +111,10 @@ public interface SearchWordQueryBuilder {
    */
   @Contract(value = "-> new", pure = true)
   @NotNull Query<? extends TextOccurrence> buildOccurrenceQuery();
+
+  /**
+   * @return query which generates occurrences found in the bottom-most elements without traversing the tree up
+   */
+  @Contract(value = "-> new", pure = true)
+  @NotNull Query<? extends TextOccurrence> buildLeafOccurrenceQuery();
 }
