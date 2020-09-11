@@ -106,10 +106,10 @@ final class StaticAnalysisExcludedPlugins implements ApplicationStarter {
       List<String> toExclude = new ArrayList<>(plugins.size());
       for (IdeaPluginDescriptor plugin : plugins) {
         Path path = plugin.getPluginPath();
-        Path pathName = path.getName(path.getNameCount() - 1);
+        String pathName = path.getName(path.getNameCount() - 1).getFileName().toString();
         String id = plugin.getPluginId().getIdString();
-        pluginIds.add(id + " " + path + "\n");
-        if (!pluginsToInclude.contains(pathName.getFileName().toString())) {
+        pluginIds.add(id + "; " + pathName + "; " + path + "\n");
+        if (!pluginsToInclude.contains(pathName)) {
           toExclude.add(id + "\n");
         }
       }
