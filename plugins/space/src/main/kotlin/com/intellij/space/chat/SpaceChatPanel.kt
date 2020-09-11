@@ -1,23 +1,26 @@
 package com.intellij.space.chat
 
 import circlet.client.api.*
-import circlet.client.api.mc.MCMessage
 import circlet.code.api.CodeDiscussionAddedFeedEvent
 import circlet.code.api.CodeDiscussionRecord
 import circlet.code.api.CodeDiscussionSnippet
 import circlet.completion.mentions.MentionConverter
 import circlet.m2.ChannelsVm
 import circlet.m2.M2ChannelMode
+import circlet.m2.M2MessageVm
 import circlet.platform.api.Ref
 import circlet.platform.api.format
+import circlet.platform.api.isTemporary
 import circlet.platform.client.resolve
 import circlet.principals.asUser
+import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.space.ui.resizeIcon
 import com.intellij.space.vcs.review.HtmlEditorPane
@@ -107,8 +110,7 @@ internal fun createSpaceChatPanel(
             ?.withThread(lifetime, server, codeDiscussionMessages.drop(1))
         }
         is M2TextItemContent -> createSimpleMessagePanel(message, server)
-        is MCMessage -> null
-        else -> null
+        else -> createUnsupportedMessageTypePanel(messageViewModel.getLink(server))
       }?.let { component ->
         Item(
           message.author.asUser?.let { user -> avatarProvider.getIcon(user) } ?: resizeIcon(SpaceIcons.Main, avatarSize.get()),
@@ -126,6 +128,24 @@ internal fun createSpaceChatPanel(
     isOpaque = true
     background = EditorColorsManager.getInstance().globalScheme.defaultBackground
   }
+}
+
+fun M2MessageVm.getLink(hostUrl: String): String? =
+  if (canCopyLink && !message.isTemporary()) {
+    Navigator.im.message(channelVm.key.value, message).absoluteHref(hostUrl)
+  }
+  else {
+    null
+  }
+
+private fun createUnsupportedMessageTypePanel(messageLink: String?): JComponent {
+  val description = if (messageLink != null) {
+    SpaceBundle.message("chat.unsupported.message.type.with.link", messageLink)
+  }
+  else {
+    SpaceBundle.message("chat.unsupported.message.type")
+  }
+  return JBLabel(description, AllIcons.General.Warning, SwingConstants.LEFT).setCopyable(true)
 }
 
 private fun createMessageTitle(server: String, message: ChannelItemRecord): JComponent {
