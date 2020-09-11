@@ -19,15 +19,24 @@ public class LightPropertiesResolveTest extends LightJavaCodeInsightFixtureTestC
   }
 
   public void testSameNameProperty() {
-    myFixture.addFileToProject("Bundle1.properties", "same.name=b1");
-    myFixture.addFileToProject("Bundle2.properties", "same.name=b2");
+    createBundles();
     PsiReference reference = myFixture.getReferenceAtCaretPosition("SameNameProperty.java");
     assertNotNull(reference.resolve());
   }
 
-  public void testTypeUse() {
+  private void createBundles() {
     myFixture.addFileToProject("Bundle1.properties", "same.name=b1");
     myFixture.addFileToProject("Bundle2.properties", "same.name=b2");
+  }
+
+  public void testLocalVar() {
+    createBundles();
+    PsiReference reference = myFixture.getReferenceAtCaretPosition("LocalVar.java");
+    assertNotNull(reference.resolve());
+  }
+
+  public void testTypeUse() {
+    createBundles();
     PsiReference reference = myFixture.getReferenceAtCaretPosition("TypeUse.java");
     assertNotNull(reference.resolve());
   }

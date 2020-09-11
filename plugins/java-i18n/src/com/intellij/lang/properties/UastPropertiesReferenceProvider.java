@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UElement;
 import org.jetbrains.uast.UExpression;
 import org.jetbrains.uast.UPolyadicExpression;
+import org.jetbrains.uast.UastBinaryOperator;
 
 class UastPropertiesReferenceProvider extends UastInjectionHostReferenceProvider {
 
@@ -70,6 +71,6 @@ class UastPropertiesReferenceProvider extends UastInjectionHostReferenceProvider
 
   private static boolean canBePropertyKeyRef(@NotNull UExpression element) {
     UElement parent = element.getUastParent();
-    return !(parent instanceof UPolyadicExpression);
+    return !(parent instanceof UPolyadicExpression) || ((UPolyadicExpression)parent).getOperator() == UastBinaryOperator.ASSIGN;
   }
 }
