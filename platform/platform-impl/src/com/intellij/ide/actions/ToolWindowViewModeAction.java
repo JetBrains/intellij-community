@@ -166,9 +166,6 @@ public class ToolWindowViewModeAction extends DumbAwareToggleAction implements F
 
   public static class Group extends DefaultActionGroup {
     private boolean isInitialized = false;
-    public Group() {
-      super(ActionsBundle.groupText("ViewMode"), true);
-    }
 
     @Override
     public boolean isDumbAware() {

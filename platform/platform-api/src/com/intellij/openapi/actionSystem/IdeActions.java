@@ -250,9 +250,6 @@ public interface IdeActions {
   @NonNls String ACTION_EDIT_RUN_CONFIGURATIONS = "editRunConfigurations";
   @NonNls String ACTION_RERUN = "Rerun";
 
-  @NonNls String ACTION_VCS_EDIT_SOURCE = "Vcs.EditSourceAction";
-  @NonNls String ACTION_INCLUDE = "Vcs.IncludeAction";
-  @NonNls String ACTION_EXCLUDE = "Vcs.ExcludeAction";
   @NonNls String ACTION_STOP_PROGRAM = "Stop";
   @NonNls String ACTION_NEW_ELEMENT = "NewElement";
 

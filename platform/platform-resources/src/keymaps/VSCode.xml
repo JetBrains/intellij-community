@@ -506,7 +506,6 @@
     <keyboard-shortcut first-keystroke="f9" />
   </action>
   <action id="TypeHierarchy" />
-  <action id="TypeHierarchy.BaseOnThisType" />
   <action id="TypeHierarchyBase.BaseOnThisType" />
   <action id="UML.ActualSize">
     <keyboard-shortcut first-keystroke="ctrl divide" />
