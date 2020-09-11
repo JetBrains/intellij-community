@@ -608,8 +608,6 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://thrift.apache.org/"),
     new LibraryLicense(name: "Transport Pipeline", libraryName: "transport-proto", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
-    new LibraryLicense(name: "Trilead SSH build213", libraryName: "trilead-ssh2-build213", version: "build213",
-                       license: "BSD style (see LICENSE.txt in trilead-ssh2-build213.jar)", url: "http://www.trilead.com/SSH_Library/"),
     new LibraryLicense(name: "Trove4j (JetBrains's fork)", libraryName: "Trove4j", license: "LGPL", url: "https://github.com/JetBrains/intellij-deps-trove4j",
                        licenseUrl: "https://github.com/JetBrains/intellij-deps-trove4j/blob/master/LICENSE.txt"),
     new LibraryLicense(name: "TwelveMonkeys ImageIO", libraryName: "imageio-tiff", license: "BSD",
