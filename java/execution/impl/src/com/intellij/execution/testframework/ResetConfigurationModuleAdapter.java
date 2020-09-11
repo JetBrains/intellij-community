@@ -81,7 +81,7 @@ public class ResetConfigurationModuleAdapter extends HyperlinkAdapter {
                                           moduleNameRef.fun(modulesWithPackage.iterator().next()),
                                           StringUtil.join(modulesWithPackage, moduleNameRef, "\n"));
       UIUtil.invokeLaterIfNeeded(() ->
-                                   toolWindowManager.notifyByBalloon(testRunDebugId, MessageType.WARNING, message.toString(), null, 
+                                   toolWindowManager.notifyByBalloon(testRunDebugId, MessageType.WARNING, message, null,
                                                                      new ResetConfigurationModuleAdapter(configuration, project, isDebug, toolWindowManager, testRunDebugId)));
       return true;
     }
