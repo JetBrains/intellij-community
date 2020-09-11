@@ -52,6 +52,7 @@ import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.make.PreviewNestedFormLoader;
 import com.intellij.util.PathsList;
 import com.jgoodies.forms.layout.CellConstraints;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -338,9 +339,9 @@ public final class PreviewFormAction extends AnAction{
     private final Module myModule;
     private final JavaParameters myParams;
     private final String myTempPath;
-    private final String myStatusbarMessage;
+    private final @Nls String myStatusbarMessage;
 
-    MyRunProfile(final Module module, final JavaParameters params, final String tempPath, final String statusbarMessage) {
+    MyRunProfile(final Module module, final JavaParameters params, final String tempPath, final @Nls String statusbarMessage) {
       myModule = module;
       myParams = params;
       myTempPath = tempPath;

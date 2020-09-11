@@ -21,6 +21,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ui.TextTransferable;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -201,7 +202,7 @@ public abstract class Property<T extends PropertiesContainer> {
   }
 
   @Nullable
-  public String getJavadocText() {
+  public @Nls String getJavadocText() {
     return null;
   }
 

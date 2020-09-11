@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -479,7 +480,8 @@ public class CreateSnapShotAction extends AnAction {
           builder.append(layoutManagerClass).append("\n");
         }
         builder.append(UIDesignerBundle.message("snapshot.unknown.layout.prompt"));
-        return Messages.showYesNoDialog(myProject, builder.toString(),
+        @NlsSafe String message = builder.toString();
+        return Messages.showYesNoDialog(myProject, message,
                                         UIDesignerBundle.message("snapshot.title"), Messages.getQuestionIcon()) == Messages.YES;
       }
       return true;

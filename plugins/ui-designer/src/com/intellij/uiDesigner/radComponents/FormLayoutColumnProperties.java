@@ -7,6 +7,7 @@ import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.jgoodies.forms.layout.*;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -25,7 +26,7 @@ import java.util.Objects;
  * @author yole
  */
 public class FormLayoutColumnProperties implements CustomPropertiesPanel {
-  private static final Map<String, String> UNITS_MAP;
+  private static final Map<String, @Nls String> UNITS_MAP;
   static {
     UNITS_MAP = new LinkedHashMap<>();
     UNITS_MAP.put("px", UIDesignerBundle.message("unit.pixels"));

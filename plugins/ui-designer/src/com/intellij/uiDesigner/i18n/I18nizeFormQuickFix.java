@@ -17,6 +17,7 @@ package com.intellij.uiDesigner.i18n;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.i18n.JavaI18nizeQuickFixDialog;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.references.I18nUtil;
@@ -44,7 +45,7 @@ public class I18nizeFormQuickFix extends QuickFix {
   private static final Logger LOG = Logger.getInstance(I18nizeFormQuickFix.class);
   private final StringDescriptorAccessor myAccessor;
 
-  I18nizeFormQuickFix(final GuiEditor editor, final String name, StringDescriptorAccessor accessor) {
+  I18nizeFormQuickFix(final GuiEditor editor, final @IntentionName String name, StringDescriptorAccessor accessor) {
     super(editor, name, accessor.getComponent());
     myAccessor = accessor;
   }

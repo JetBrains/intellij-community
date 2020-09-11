@@ -16,6 +16,8 @@
 
 package com.intellij.uiDesigner.snapShooter;
 
+import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -26,10 +28,10 @@ public class SnapShotRemoteComponent {
   private boolean myTopLevel;
   private final String myClassName;
   private final String myLayoutManager;
-  private final String myText;
+  private final @Nls String myText;
   private SnapShotRemoteComponent[] myChildren = null;
 
-  public SnapShotRemoteComponent(final int id, final String className, final String layoutManager, final String text) {
+  public SnapShotRemoteComponent(final int id, final String className, final String layoutManager, final @Nls String text) {
     myId = id;
     myClassName = className;
     myLayoutManager = layoutManager;
@@ -53,15 +55,15 @@ public class SnapShotRemoteComponent {
     return myTopLevel;
   }
 
-  public String getClassName() {
+  public @NlsSafe String getClassName() {
     return myClassName;
   }
 
-  public String getText() {
+  public @Nls String getText() {
     return myText;
   }
 
-  public String getLayoutManager() {
+  public @NlsSafe String getLayoutManager() {
     return myLayoutManager;
   }
 
