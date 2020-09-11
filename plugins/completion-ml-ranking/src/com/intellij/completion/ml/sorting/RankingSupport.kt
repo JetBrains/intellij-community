@@ -1,36 +1,23 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.sorting
 
-import com.intellij.completion.ml.MLCompletionBundle
 import com.intellij.completion.ml.experiment.ExperimentInfo
 import com.intellij.completion.ml.experiment.ExperimentStatus
 import com.intellij.completion.ml.ranker.ExperimentModelProvider
 import com.intellij.completion.ml.ranker.ExperimentModelProvider.Companion.match
 import com.intellij.completion.ml.settings.CompletionMLRankingSettings
-import com.intellij.completion.ml.settings.MLCompletionSettingsCollector
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.ml.completion.RankingModelProvider
 import com.intellij.lang.Language
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationAction
-import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
 import com.jetbrains.completion.ranker.model.MLCompletionLocalModelsUtil
 import org.jetbrains.annotations.TestOnly
-import java.util.concurrent.atomic.AtomicInteger
 
 object RankingSupport {
-  private const val SHOW_ARROWS_NOTIFICATION_REGISTRY = "completion.ml.show.arrows.notification"
-  private const val ARROWS_NOTIFICATION_SHOWN_KEY = "completion.ml.arrows.notification.shown"
-  private const val ARROWS_NOTIFICATION_AFTER_SESSIONS = 50
   private val LOG = logger<RankingSupport>()
   private var enabledInTests: Boolean = false
-  private val sessionsWithArrowsCounter = AtomicInteger()
 
   fun getRankingModel(language: Language): RankingModelWrapper? {
     MLCompletionLocalModelsUtil.getModel(language.id)?.let { return LanguageRankingModel(it) }
@@ -80,11 +67,7 @@ object RankingSupport {
     }
 
     val settings = CompletionMLRankingSettings.getInstance()
-    val shouldSortByML = settings.isRankingEnabled && settings.isLanguageEnabled(provider.id)
-    if (shouldSortByML) {
-      showArrowsNotificationIfNeeded(settings)
-    }
-    return shouldSortByML
+    return settings.isRankingEnabled && settings.isLanguageEnabled(provider.id)
   }
 
   private fun configureSettingsInExperimentOnce(experimentInfo: ExperimentInfo, rankerId: String) {
@@ -92,48 +75,6 @@ object RankingSupport {
     if (experimentInfo.shouldRank) settings.isRankingEnabled = experimentInfo.shouldRank
     settings.setLanguageEnabled(rankerId, experimentInfo.shouldRank)
     settings.isShowDiffEnabled = experimentInfo.shouldShowArrows
-    if (experimentInfo.shouldShowArrows && shouldShowArrowsNotification()) {
-      showNotificationAboutArrows()
-    }
-  }
-
-  private fun showArrowsNotificationIfNeeded(settings: CompletionMLRankingSettings) {
-    val properties = PropertiesComponent.getInstance()
-    if (settings.isShowDiffEnabled && shouldShowArrowsNotification() && !properties.getBoolean(ARROWS_NOTIFICATION_SHOWN_KEY)) {
-      val sessionsCount = sessionsWithArrowsCounter.incrementAndGet()
-      if (sessionsCount == ARROWS_NOTIFICATION_AFTER_SESSIONS) {
-        properties.setValue(ARROWS_NOTIFICATION_SHOWN_KEY, true)
-        showNotificationAboutArrows()
-      }
-    }
-  }
-
-  private fun shouldShowArrowsNotification(): Boolean = Registry.`is`(SHOW_ARROWS_NOTIFICATION_REGISTRY, true)
-
-  private fun showNotificationAboutArrows() {
-    Notification(
-      MLCompletionBundle.message("ml.completion.notification.groupId"),
-      MLCompletionBundle.message("ml.completion.notification.decorating.title"),
-      MLCompletionBundle.message("ml.completion.notification.decorating.content"),
-      NotificationType.INFORMATION
-    ).addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.decorating.like")) {
-        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          MLCompletionSettingsCollector.decorationOpinionProvided(MLCompletionSettingsCollector.DecorationOpinion.LIKE)
-          notification.expire()
-        }
-      })
-      .addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.decorating.dislike")) {
-        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          MLCompletionSettingsCollector.decorationOpinionProvided(MLCompletionSettingsCollector.DecorationOpinion.DISLIKE)
-          notification.expire()
-        }
-      })
-      .addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.decorating.neutral")) {
-        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          MLCompletionSettingsCollector.decorationOpinionProvided(MLCompletionSettingsCollector.DecorationOpinion.NEUTRAL)
-          notification.expire()
-        }
-      }).notify(null)
   }
 
   @TestOnly

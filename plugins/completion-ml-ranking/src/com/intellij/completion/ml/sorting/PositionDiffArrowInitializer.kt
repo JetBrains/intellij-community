@@ -6,13 +6,21 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupCellRenderer
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.completion.ml.MLCompletionBundle
 import com.intellij.completion.ml.settings.CompletionMLRankingSettings
+import com.intellij.completion.ml.settings.MLCompletionSettingsCollector
 import com.intellij.completion.ml.storage.LookupStorage
 import com.intellij.completion.ml.storage.MutableLookupStorage
 import com.intellij.completion.ml.tracker.LookupTracker
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.IconManager
 import com.intellij.ui.icons.RowIcon
 import com.intellij.util.IconUtil
@@ -25,14 +33,19 @@ import javax.swing.Icon
 class PositionDiffArrowInitializer : ProjectManagerListener {
   companion object {
     private const val DIFF_ICON_RIGHT_MARGIN = 4
+    private const val SHOW_ARROWS_NOTIFICATION_REGISTRY = "completion.ml.show.arrows.notification"
+    private const val ARROWS_NOTIFICATION_SHOWN_KEY = "completion.ml.arrows.notification.shown"
+    private const val ARROWS_NOTIFICATION_AFTER_SESSIONS = 50
     private val POSITION_DIFF_KEY = Key.create<AtomicInteger>("PositionDiffArrowInitializer.POSITION_DIFF_KEY")
     private val POSITION_CHANGED_KEY = Key.create<Boolean>("PositionDiffArrowInitializer.POSITION_CHANGED_KEY")
     private val EMPTY_DIFF_ICON = IconManager.getInstance().createEmptyIcon(CompletionMlRankingIcons.ProposalUp)
+    private val sessionsWithArrowsCounter = AtomicInteger()
 
     fun markAsReordered(lookup: LookupImpl, value: Boolean) {
       val changed = lookup.getUserData(POSITION_CHANGED_KEY)
       if (changed == null) {
         lookup.putUserData(POSITION_CHANGED_KEY, value)
+        if (value) showArrowsNotificationIfNeeded()
       }
     }
 
@@ -41,6 +54,20 @@ class PositionDiffArrowInitializer : ProjectManagerListener {
         .apply { element.putUserData(POSITION_DIFF_KEY, this) }
 
       diff.set(diffValue)
+    }
+
+    private fun shouldShowArrowsNotification(): Boolean = Registry.`is`(SHOW_ARROWS_NOTIFICATION_REGISTRY, true)
+
+    private fun showArrowsNotificationIfNeeded() {
+      val properties = PropertiesComponent.getInstance()
+      val mlRankingSettings = CompletionMLRankingSettings.getInstance()
+      if (mlRankingSettings.isShowDiffEnabled && shouldShowArrowsNotification() && !properties.getBoolean(ARROWS_NOTIFICATION_SHOWN_KEY)) {
+        val sessionsCount = sessionsWithArrowsCounter.incrementAndGet()
+        if (sessionsCount == ARROWS_NOTIFICATION_AFTER_SESSIONS) {
+          properties.setValue(ARROWS_NOTIFICATION_SHOWN_KEY, true)
+          ArrowsOpinionNotification().notify(null)
+        }
+      }
     }
   }
 
@@ -86,6 +113,34 @@ class PositionDiffArrowInitializer : ProjectManagerListener {
 
     override fun getDelegate(): Icon? = baseIcon
     override fun withDelegate(icon: Icon?): LookupCellRenderer.IconDecorator = ArrowDecoratedIcon(arrowIcon, icon)
+  }
+
+  private class ArrowsOpinionNotification : Notification(
+    MLCompletionBundle.message("ml.completion.notification.groupId"),
+    MLCompletionBundle.message("ml.completion.notification.decorating.title"),
+    MLCompletionBundle.message("ml.completion.notification.decorating.content"),
+    NotificationType.INFORMATION
+  ) {
+    init {
+      addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.decorating.like")) {
+        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+          MLCompletionSettingsCollector.decorationOpinionProvided(MLCompletionSettingsCollector.DecorationOpinion.LIKE)
+          notification.expire()
+        }
+      })
+      addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.decorating.dislike")) {
+        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+          MLCompletionSettingsCollector.decorationOpinionProvided(MLCompletionSettingsCollector.DecorationOpinion.DISLIKE)
+          notification.expire()
+        }
+      })
+      addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.decorating.neutral")) {
+        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+          MLCompletionSettingsCollector.decorationOpinionProvided(MLCompletionSettingsCollector.DecorationOpinion.NEUTRAL)
+          notification.expire()
+        }
+      })
+    }
   }
 
   private fun iconWithRightMargin(icon: Icon, margin: Int = DIFF_ICON_RIGHT_MARGIN): IconUtil.IconSizeWrapper {
