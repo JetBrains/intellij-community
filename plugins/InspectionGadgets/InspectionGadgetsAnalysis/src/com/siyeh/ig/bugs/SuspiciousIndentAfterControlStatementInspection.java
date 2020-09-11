@@ -2,7 +2,6 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -29,8 +28,6 @@ public class SuspiciousIndentAfterControlStatementInspection extends BaseInspect
   }
 
   private static class SuspiciousIndentAfterControlStatementVisitor extends BaseInspectionVisitor {
-
-    private static final Key<Integer> TAB_SIZE = new Key<>("TAB_SIZE");
 
     @Override
     public void visitWhileStatement(PsiWhileStatement statement) {
@@ -150,9 +147,7 @@ public class SuspiciousIndentAfterControlStatementInspection extends BaseInspect
     }
 
     private int getTabSize() {
-      final PsiFile file = getCurrentFile();
-      final Integer tabSize = file.getUserData(TAB_SIZE);
-      return tabSize != null ? tabSize : CodeStyle.getIndentOptions(file).TAB_SIZE;
+      return CodeStyle.getIndentOptions(getCurrentFile()).TAB_SIZE;
     }
   }
 }
