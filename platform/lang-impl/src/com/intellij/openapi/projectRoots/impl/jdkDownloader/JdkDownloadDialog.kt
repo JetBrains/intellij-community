@@ -34,19 +34,25 @@ private class JdkDownloaderModel(
 
 private class JdkVersionItem(
   val jdkVersion: String,
+  /* we should prefer the default selected item from the JDKs.json feed,
+   * the list below is sorted by vendor, and default item is not necessarily first
+   */
+  val defaultSelectedItem: JdkVersionVendorItem,
   val includedItems: List<JdkVersionVendorItem>,
   val excludedItems: List<JdkVersionVendorItem>
 )  {
   //we reuse model to keep selected element in-memory!
   val model: ComboBoxModel<JdkVersionVendorElement> by lazy {
     require(this.includedItems.isNotEmpty()) { "No included items for $jdkVersion" }
+    require(this.defaultSelectedItem in this.includedItems) { "Dedfault selected item must be in the list of items for $jdkVersion" }
+
     val allItems = when {
       this.excludedItems.isNotEmpty() -> this.includedItems + JdkVersionVendorGroupSeparator + this.excludedItems
       else                            -> this.includedItems
     }
 
     DefaultComboBoxModel(allItems.toTypedArray()).also {
-      it.selectedItem = it.getElementAt(0)
+      it.selectedItem = defaultSelectedItem
     }
   }
 }
@@ -122,6 +128,8 @@ private class JdkVersionVendorCombobox: ComboBox<JdkVersionVendorElement>() {
   }
 }
 
+private fun List<JdkVersionVendorItem>.sortedForUI() = this.sortedBy { it.item.product.packagePresentationText.toLowerCase() }
+
 private fun buildJdkDownloaderModel(allItems: List<JdkItem>): JdkDownloaderModel {
   fun JdkItem.versionGroupId() = this.jdkVersion
 
@@ -132,7 +140,6 @@ private fun buildJdkDownloaderModel(allItems: List<JdkItem>): JdkDownloaderModel
 
       val includedItems = groupItems
         .map { JdkVersionVendorItem(item = it) }
-        .sortedBy { it.item.product.packagePresentationText.toLowerCase() }
 
       val includedProducts = groupItems.map { it.product }.toHashSet()
 
@@ -156,9 +163,11 @@ private fun buildJdkDownloaderModel(allItems: List<JdkItem>): JdkDownloaderModel
         //we assume the initial order of feed items contains vendors in the right order
         .mapNotNull { it.value }
         .map { JdkVersionVendorItem(item = it) }
-        .sortedBy { it.item.product.packagePresentationText.toLowerCase() }
 
-      JdkVersionItem(jdkVersion, includedItems, excludedItems)
+      JdkVersionItem(jdkVersion,
+                     includedItems.firstOrNull() ?: error("Empty group of includeItems for $jdkVersion"),
+                     includedItems.sortedForUI(),
+                     excludedItems.sortedForUI())
     }
 
   //assign parent relation
