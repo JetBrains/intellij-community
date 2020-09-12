@@ -24,15 +24,18 @@ import java.awt.Window
 
 internal class MacMessageManagerProviderImpl : MacMessages.MacMessageManagerProvider {
   override fun getMessageManager(): MacMessages {
-    if (SystemInfo.isMacOSBigSur && Registry.`is`("ide.mac.bigsur.alerts.enabled", true)) {
-      return service<NativeMacMessageManager>()
+    if (SystemInfo.isJetBrainsJvm) {
+      if (SystemInfo.isMacOSBigSur) {
+        if (Registry.`is`("ide.mac.bigsur.alerts.enabled", true)) {
+          return service<NativeMacMessageManager>()
+        }
+        return service<JBMacMessages>()
+      }
+      if (!Registry.`is`("ide.mac.message.sheets.java.emulation.dialogs", true)) {
+        return service<NativeMacMessageManager>()
+      }
     }
-
-    if (Registry.`is`("ide.mac.message.sheets.java.emulation.dialogs", true) || !SystemInfo.isJetBrainsJvm) {
-      return service<JBMacMessages>()
-    }
-
-    return service<NativeMacMessageManager>()
+    return service<JBMacMessages>()
   }
 }
 
