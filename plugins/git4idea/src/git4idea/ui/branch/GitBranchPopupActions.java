@@ -669,7 +669,7 @@ public class GitBranchPopupActions {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       GitBrancher.getInstance(myProject)
-        .showDiffWithLocal(myBranchName, filter(myRepositories, repository -> !myBranchName.equals(repository.getCurrentBranchName())));
+        .showDiffWithLocal(myBranchName, myRepositories);
     }
 
     @Override
