@@ -11,7 +11,8 @@ import com.intellij.util.indexing.IndexingBundle
 
 internal class IndexableSetContributorFilesIterator(private val indexableSetContributor: IndexableSetContributor,
                                                     private val projectAware: Boolean) : IndexableFilesIterator {
-  override fun getDebugName() = getName().takeUnless { it.isNullOrEmpty() }?.let { "IndexableSetContributor '$it'" }
+  override fun getDebugName() = getName().takeUnless { it.isNullOrEmpty() }
+                                  ?.let { "IndexableSetContributor ${if (projectAware) "(project)" else "(non-project)"} '$it'" }
                                 ?: indexableSetContributor.toString()
 
   override fun getIndexingProgressText(): String {
