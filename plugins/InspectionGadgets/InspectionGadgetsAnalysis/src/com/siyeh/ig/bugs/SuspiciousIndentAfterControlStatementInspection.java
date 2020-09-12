@@ -141,7 +141,7 @@ public class SuspiciousIndentAfterControlStatementInspection extends BaseInspect
         final char c = indent.charAt(i);
         if (c == ' ') result++;
         else if (c == '\t') result += getTabSize();
-        else throw new AssertionError(indent);
+        else if (c != '\f') throw new AssertionError(indent);
       }
       return result;
     }

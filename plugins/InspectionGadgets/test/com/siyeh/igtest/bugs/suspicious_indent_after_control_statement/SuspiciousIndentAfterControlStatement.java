@@ -25,7 +25,7 @@ public class SuspiciousIndentAfterControlStatement {
             System.out.println("foo");
 <warning descr="Suspicious indentation after 'if' statement">            </warning>System.out.println("bar");
         if (i == 10);
-<warning descr="Suspicious indentation after 'if' statement">            </warning>System.out.println("great");
+<warning descr="Suspicious indentation after 'if' statement">            </warning>System.out.println("great");
 
     }
 
