@@ -34,7 +34,6 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.frame.*;
-import com.intellij.xdebugger.impl.inline.XInlineWatchesViewImpl;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -185,12 +184,9 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
   private Content createVariablesContent(@NotNull XDebugSessionImpl session) {
     XVariablesView variablesView;
-    if (Registry.is("debugger.watches.inline.enabled")) {
-      variablesView = myWatchesView = new XInlineWatchesViewImpl(session, myWatchesInVariables, true);
-    } else if (myWatchesInVariables) {
+    if (myWatchesInVariables) {
       variablesView = myWatchesView = new XWatchesViewImpl(session, myWatchesInVariables);
-    }
-    else {
+    } else {
       variablesView = new XVariablesView(session);
     }
     registerView(DebuggerContentInfo.VARIABLES_CONTENT, variablesView);

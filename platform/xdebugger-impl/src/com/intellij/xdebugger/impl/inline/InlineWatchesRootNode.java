@@ -7,6 +7,7 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.frame.WatchInplaceEditor;
+import com.intellij.xdebugger.impl.frame.XWatchesViewImpl;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.*;
 import org.jetbrains.annotations.NotNull;
@@ -17,20 +18,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-class InlineWatchesRootNode extends WatchesRootNode {
-  private final XInlineWatchesViewImpl myInlineWatchesView;
+public class InlineWatchesRootNode extends WatchesRootNode {
+  private final @NotNull XWatchesViewImpl myWatchesView;
   private final XValueGroupNodeImpl myInlinesRootNode;
   private final InlinesGroup myInlinesGroup;
 
 
-  InlineWatchesRootNode(@NotNull XDebuggerTree tree,
-                        @NotNull XInlineWatchesViewImpl watchesView,
+  public InlineWatchesRootNode(@NotNull XDebuggerTree tree,
+                        @NotNull XWatchesViewImpl watchesView,
                         @NotNull List<XExpression> regularWatchesExpressions,
                         @NotNull List<InlineWatch> inlineWatchesExpressions,
                         @Nullable XStackFrame stackFrame,
                         boolean watchesInVariables) {
     super(tree, watchesView, regularWatchesExpressions, stackFrame, watchesInVariables);
-    myInlineWatchesView = watchesView;
+    myWatchesView = watchesView;
     myInlinesGroup = new InlinesGroup(XDebuggerBundle.message("debugger.inline.watches.group.name"), true);
     myInlinesRootNode = new XValueGroupNodeImpl(tree, this, myInlinesGroup) {
       @Override
@@ -55,6 +56,9 @@ class InlineWatchesRootNode extends WatchesRootNode {
     else {
       myInlinesGroup.getChildren().add(index, message);
     }
+    if (myInlinesGroup.getChildren().size() == 1) {
+      myTree.getTreeModel().reload();
+    }
     fireInlineNodeInserted(index);
     message.computePresentationIfNeeded();
     TreeUtil.selectNode(myTree, message);
@@ -75,6 +79,9 @@ class InlineWatchesRootNode extends WatchesRootNode {
 
     if (indices.length > 0) {
       inlineNodeRemoved(indices, removed);
+    }
+    if (children.size() == 0) {
+      myTree.getTreeModel().nodesWereRemoved(this, new int[]{0}, new XValueGroupNodeImpl[]{myInlinesRootNode});
     }
   }
 
@@ -119,14 +126,27 @@ class InlineWatchesRootNode extends WatchesRootNode {
   @NotNull
   @Override
   public List<? extends XValueContainerNode<?>> getLoadedChildren() {
-    return ContainerUtil.prepend(super.getLoadedChildren(), myInlinesRootNode);
+    List<? extends XValueContainerNode<?>> children = super.getLoadedChildren();
+    if(inlinesRootNodeIsShown()) {
+      return ContainerUtil.prepend(children, myInlinesRootNode);
+    } else {
+      return children;
+    }
   }
 
   @NotNull
   @Override
   public List<? extends TreeNode> getChildren() {
     List<? extends TreeNode> children = super.getChildren();
-    return ContainerUtil.prepend(children, myInlinesRootNode);
+    if(inlinesRootNodeIsShown()) {
+      return ContainerUtil.prepend(children, myInlinesRootNode);
+    } else {
+      return children;
+    }
+  }
+
+  public boolean inlinesRootNodeIsShown() {
+    return !getInlineWatchChildren().isEmpty();
   }
 
   @NotNull
@@ -173,27 +193,40 @@ class InlineWatchesRootNode extends WatchesRootNode {
   @Override
   public void editWatch(@Nullable WatchNodeImpl node) {
     if (node instanceof InlineWatchNodeImpl) {
-      new WatchInplaceEditor(this, myInlineWatchesView, node, node).show();
+      new WatchInplaceEditor(this, myWatchesView, node, node).show();
     } else {
       super.editWatch(node);
     }
   }
 
+  @Override
+  public int headerNodesCount() {
+    return inlinesRootNodeIsShown() ? 1 : 0;
+  }
+
   public void moveUp(WatchNode node) {
-    int index = getIndex(node) - 1; // -1 because of Inlines root node at the beginning
+    int index = getIndex(node);
+    if (inlinesRootNodeIsShown()) {
+      index--;
+    }
     if (index > 0) {
       ContainerUtil.swapElements(getWatchChildren(), index, index - 1);
     }
     fireNodeStructureChanged();
-    getTree().setSelectionRow(index);
+    int selectionRow = inlinesRootNodeIsShown() ? index : index - 1;
+    getTree().setSelectionRow(selectionRow);
   }
 
   public void moveDown(WatchNode node) {
-    int index = getIndex(node) - 1; // -1 because of Inlines root node at the beginning
+    int index = getIndex(node);
+    if (inlinesRootNodeIsShown()) {
+      index--;
+    }
     if (index < getWatchChildren().size() - 1) {
       ContainerUtil.swapElements(getWatchChildren(), index, index + 1);
     }
     fireNodeStructureChanged();
-    getTree().setSelectionRow(index + 2);
+    int selectionRow = inlinesRootNodeIsShown() ? index + 2 : index + 1;
+    getTree().setSelectionRow(selectionRow);
   }
 }

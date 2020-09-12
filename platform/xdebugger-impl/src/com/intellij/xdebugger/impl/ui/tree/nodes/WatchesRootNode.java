@@ -193,12 +193,16 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
       int targetIndex = selectedIndex == - 1 ? myChildren.size() : selectedIndex + 1;
       messageNode = new WatchNodeImpl(myTree, this, XExpressionImpl.EMPTY_EXPRESSION, (XStackFrame)null);
       myChildren.add(targetIndex, messageNode);
-      fireNodeInserted(targetIndex);
+      fireNodeInserted(targetIndex + headerNodesCount());
       getTree().setSelectionRows(ArrayUtilRt.EMPTY_INT_ARRAY);
     }
     else {
       messageNode = node;
     }
     new WatchInplaceEditor(this, myWatchesView, messageNode, node).show();
+  }
+
+  public int headerNodesCount() {
+    return 0;
   }
 }

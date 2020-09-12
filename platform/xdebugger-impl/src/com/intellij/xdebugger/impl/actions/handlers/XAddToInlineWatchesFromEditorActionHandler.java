@@ -4,42 +4,22 @@ package com.intellij.xdebugger.impl.actions.handlers;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.XDebuggerWatchesManager;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
+
+import static com.intellij.xdebugger.impl.actions.handlers.XAddToWatchesFromEditorActionHandler.getTextToEvaluate;
 
 public class XAddToInlineWatchesFromEditorActionHandler extends XDebuggerActionHandler {
   @Override
   protected boolean isEnabled(@NotNull XDebugSession session, DataContext dataContext) {
     return true;
-  }
-
-  @NotNull
-  protected static Promise<String> getTextToEvaluate(DataContext dataContext, XDebugSession session) {
-    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-    if (editor == null) {
-      return Promises.resolvedPromise(null);
-    }
-
-    String text = editor.getSelectionModel().getSelectedText();
-    if (text != null) {
-      return Promises.resolvedPromise(StringUtil.nullize(text, true));
-    }
-    XDebuggerEvaluator evaluator = session.getDebugProcess().getEvaluator();
-    if (evaluator != null) {
-      return XDebuggerEvaluateActionHandler.getExpressionText(evaluator, editor.getProject(), editor).then(s -> StringUtil.nullize(s, true));
-    }
-    return Promises.resolvedPromise(null);
   }
 
   @Override
