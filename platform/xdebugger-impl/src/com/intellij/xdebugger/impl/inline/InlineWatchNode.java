@@ -9,4 +9,7 @@ public interface InlineWatchNode extends WatchNode {
 
   @NotNull
   XSourcePosition getPosition();
+
+  @NotNull
+  InlineWatch getWatch();
 }

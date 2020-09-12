@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.FontPreferences;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
@@ -19,6 +20,7 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.paint.EffectPainter;
+import com.intellij.util.Producer;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
@@ -34,8 +36,9 @@ import java.util.function.Consumer;
 final class InlineDebugRenderer implements EditorCustomElementRenderer {
   private final SimpleColoredText myText;
   private final boolean myCustomNode;
-  private XValueNodeImpl myValueNode;
-  private XWatchesView myView;
+  private final XValueNodeImpl myValueNode;
+  private final XWatchesView myView;
+  private final Producer<Boolean> myIsOnExecutionLine;
   private @Nullable final Consumer<Inlay> myOnClick;
   private boolean isHovered = false;
   private int myRemoveOffset = Integer.MAX_VALUE;
@@ -43,11 +46,13 @@ final class InlineDebugRenderer implements EditorCustomElementRenderer {
   InlineDebugRenderer(SimpleColoredText text,
                       XValueNodeImpl valueNode,
                       XWatchesView view,
+                      Producer<Boolean> isOnExecutionLine,
                       @Nullable Consumer<Inlay> onClick) {
     myText = text;
     myCustomNode = valueNode instanceof InlineWatchNodeImpl;
     myValueNode = valueNode;
     myView = view;
+    myIsOnExecutionLine = isOnExecutionLine;
     myOnClick = onClick;
   }
 
@@ -195,7 +200,8 @@ final class InlineDebugRenderer implements EditorCustomElementRenderer {
   }
 
   private TextAttributes getAttributes(Editor editor) {
-    TextAttributes attributes = editor.getColorsScheme().getAttributes(DebuggerColors.INLINED_VALUES);
+    TextAttributesKey key = myIsOnExecutionLine.produce() ? DebuggerColors.INLINED_VALUES_EXECUTION_LINE : DebuggerColors.INLINED_VALUES;
+    TextAttributes attributes = editor.getColorsScheme().getAttributes(key);
 
     if (isHovered) {
       TextAttributes attr = new TextAttributes();

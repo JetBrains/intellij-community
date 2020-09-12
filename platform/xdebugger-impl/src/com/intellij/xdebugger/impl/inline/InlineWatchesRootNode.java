@@ -26,10 +26,9 @@ class InlineWatchesRootNode extends WatchesRootNode {
   InlineWatchesRootNode(@NotNull XDebuggerTree tree,
                         @NotNull XInlineWatchesViewImpl watchesView,
                         @NotNull List<XExpression> regularWatchesExpressions,
-                        @NotNull List<InlineWatch> inlineWathcesExpressions,
+                        @NotNull List<InlineWatch> inlineWatchesExpressions,
                         @Nullable XStackFrame stackFrame,
-                        boolean watchesInVariables,
-                        boolean inlinesInWathces) {
+                        boolean watchesInVariables) {
     super(tree, watchesView, regularWatchesExpressions, stackFrame, watchesInVariables);
     myInlineWatchesView = watchesView;
     myInlinesGroup = new InlinesGroup(XDebuggerBundle.message("debugger.inline.watches.group.name"), true);
@@ -39,7 +38,7 @@ class InlineWatchesRootNode extends WatchesRootNode {
         return myInlinesGroup.getChildren();
       }
     };
-    for (InlineWatch watchExpression : inlineWathcesExpressions) {
+    for (InlineWatch watchExpression : inlineWatchesExpressions) {
       myInlinesGroup.getChildren().add(new InlineWatchNodeImpl(myTree, myInlinesRootNode, watchExpression, stackFrame));
     }
   }

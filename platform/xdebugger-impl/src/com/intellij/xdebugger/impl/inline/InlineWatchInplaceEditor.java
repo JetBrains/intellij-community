@@ -3,12 +3,15 @@ package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
+import com.intellij.xdebugger.impl.XDebuggerWatchesManager;
 import com.intellij.xdebugger.impl.ui.InplaceEditor;
 import com.intellij.xdebugger.impl.ui.XDebuggerExpressionComboBox;
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -16,18 +19,16 @@ import java.awt.*;
 
 public class InlineWatchInplaceEditor extends InplaceEditor {
   private final XSourcePosition myPosition;
-  private final XDebuggerTree myTree;
+  private final XDebugSession mySession;
   private final Editor myHostEditor;
-  private final XInlineWatchesViewImpl myWatchesView;
   private XDebuggerExpressionComboBox myInplaceEditor;
 
   public InlineWatchInplaceEditor(XSourcePosition position,
-                                  @NotNull XDebuggerTree tree,
-                                  Editor editor, XInlineWatchesViewImpl view) {
+                                  @NotNull XDebugSession session,
+                                  Editor editor) {
     myPosition = position;
-    myTree = tree;
+    mySession = session;
     myHostEditor = editor;
-    myWatchesView = view;
   }
 
   @Override
@@ -35,7 +36,7 @@ public class InlineWatchInplaceEditor extends InplaceEditor {
 
   @Override
   protected JComponent createInplaceEditorComponent() {
-    myInplaceEditor = new XDebuggerExpressionComboBox(myTree.getProject(), myTree.getEditorsProvider(), "inlineWatch",
+    myInplaceEditor = new XDebuggerExpressionComboBox(mySession.getProject(), mySession.getDebugProcess().getEditorsProvider(), "inlineWatch",
                                     myPosition, true, true);
     return myInplaceEditor.getComponent();
   }
@@ -64,7 +65,8 @@ public class InlineWatchInplaceEditor extends InplaceEditor {
     XExpression expression = getExpression();
     super.doOKAction();
     if (!XDebuggerUtilImpl.isEmptyExpression(expression)) {
-      myWatchesView.addInlineWatchExpression(expression, -1, myPosition, true);
+      XDebuggerWatchesManager watchesManager = ((XDebuggerManagerImpl)XDebuggerManager.getInstance(mySession.getProject())).getWatchesManager();
+      watchesManager.addInlineWatchExpression(expression, -1, myPosition, true);
     }
   }
 
@@ -77,7 +79,7 @@ public class InlineWatchInplaceEditor extends InplaceEditor {
 
   @Override
   protected Project getProject() {
-    return myTree.getProject();
+    return mySession.getProject();
   }
 
   @Override

@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.inline;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.event.EditorEventMulticaster;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
@@ -23,8 +24,9 @@ public class DebuggerInlayListener implements EditorMouseMotionListener, EditorM
   public void startListening() {
     if (!myListening) {
       myListening = true;
-      EditorFactory.getInstance().getEventMulticaster().addEditorMouseMotionListener(this, myProject);
-      EditorFactory.getInstance().getEventMulticaster().addEditorMouseListener(this, myProject);
+      EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
+      multicaster.addEditorMouseMotionListener(this, myProject);
+      multicaster.addEditorMouseListener(this, myProject);
     }
   }
 

@@ -4,7 +4,6 @@ package com.intellij.xdebugger.impl.inline;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -14,7 +13,7 @@ public interface XInlineWatchesView {
 
   void addInlineWatchExpression(@NotNull XExpression expression, int index, XSourcePosition position, boolean navigateToWatchNode);
 
-  void removeInlineWatches(List<? extends XDebuggerTreeNode> nodes);
+  void removeInlineWatches(List<InlineWatch> nodes);
 
   void removeAllInlineWatches();
 }

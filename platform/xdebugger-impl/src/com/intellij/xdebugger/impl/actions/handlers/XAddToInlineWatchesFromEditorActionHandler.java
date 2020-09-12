@@ -7,21 +7,16 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
+import com.intellij.xdebugger.impl.XDebuggerWatchesManager;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
-import com.intellij.xdebugger.impl.inline.XInlineWatchesViewImpl;
-import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
-
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 public class XAddToInlineWatchesFromEditorActionHandler extends XDebuggerActionHandler {
   @Override
@@ -52,24 +47,15 @@ public class XAddToInlineWatchesFromEditorActionHandler extends XDebuggerActionH
     getTextToEvaluate(dataContext, session)
       .onSuccess(text -> {
         UIUtil.invokeLaterIfNeeded(() -> {
-          XDebugSessionTab tab = ((XDebugSessionImpl)session).getSessionTab();
-          if (tab != null) {
-            final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-            XInlineWatchesViewImpl watchesView = (XInlineWatchesViewImpl)tab.getWatchesView();
-            Set<Integer> processedLines = new HashSet<>();
-            for (XSourcePosition position : XDebuggerUtilImpl.getAllCaretsPositions(session.getProject(), dataContext)) {
-              if (processedLines.add(position.getLine())) {
-                if (text != null) {
-                  watchesView.addInlineWatchExpression(XExpressionImpl.fromText(text), -1, position, true);
-                } else {
-                  watchesView.showInplaceEditor(position, editor);
-                }
-              }
-            }
+          XDebuggerWatchesManager watchesManager = ((XDebuggerManagerImpl)XDebuggerManager.getInstance(session.getProject())).getWatchesManager();
+          final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+          XSourcePosition caretPosition = XDebuggerUtilImpl.getCaretPosition(session.getProject(), dataContext);
+          if (text != null) {
+            watchesManager.addInlineWatchExpression(XExpressionImpl.fromText(text), -1, caretPosition, true);
+          } else {
+            watchesManager.showInplaceEditor(caretPosition, editor, session);
           }
         });
-      }).onError(e -> {
-
-    });
+      }).onError(e -> { });
   }
 }

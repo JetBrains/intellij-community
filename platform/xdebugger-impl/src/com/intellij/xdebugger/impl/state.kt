@@ -36,12 +36,15 @@ class WatchesManagerState : BaseState() {
   @get:Property(surroundWithTag = false)
   @get:XCollection
   val expressions by list<ConfigurationState>()
+
+  @get:Property(surroundWithTag = false)
+  @get:XCollection
+  val inlineExpressionStates by list<InlineWatchState>()
 }
 
 @Tag("configuration")
 class ConfigurationState @JvmOverloads constructor(name: String? = null,
-                                                   expressions: List<XExpression>? = null,
-                                                   inlineExpressions: List<InlineWatch>? = null) : BaseState() {
+                                                   expressions: List<XExpression>? = null) : BaseState() {
   @get:Attribute
   var name by string()
 
@@ -49,12 +52,6 @@ class ConfigurationState @JvmOverloads constructor(name: String? = null,
   @get:Property(surroundWithTag = false)
   @get:XCollection
   val expressionStates by list<WatchState>()
-
-  @Suppress("MemberVisibilityCanPrivate")
-  @get:Property(surroundWithTag = false)
-  @get:XCollection
-  val inlineExpressionStates by list<InlineWatchState>()
-
 
   init {
     // passed values are not default - constructor provided only for convenience
@@ -64,10 +61,6 @@ class ConfigurationState @JvmOverloads constructor(name: String? = null,
     if (expressions != null) {
       expressionStates.clear()
       expressions.mapTo(expressionStates) { WatchState(it) }
-    }
-    if (inlineExpressions != null) {
-      inlineExpressionStates.clear()
-      inlineExpressions.mapTo(inlineExpressionStates) { InlineWatchState(it.expression, it.position.line, it.position.file.url) }
     }
   }
 }

@@ -16,16 +16,13 @@ public class XDebugSessionData extends UserDataHolderBase {
 
   @NotNull
   private List<XExpression> myWatchExpressions;
-  private List<InlineWatch> myInlineWatchExpressions;
   private final String myConfigurationName;
   private boolean myBreakpointsMuted = false;
 
   public XDebugSessionData(@NotNull List<XExpression> watchExpressions,
-                           List<InlineWatch> inlineWatchExpressions,
                            @NotNull String configurationName) {
     myWatchExpressions = watchExpressions;
     myConfigurationName = configurationName;
-    myInlineWatchExpressions = inlineWatchExpressions;
   }
 
   public void setWatchExpressions(@NotNull List<XExpression> watchExpressions) {
@@ -35,15 +32,6 @@ public class XDebugSessionData extends UserDataHolderBase {
   @NotNull
   public List<XExpression> getWatchExpressions() {
     return myWatchExpressions;
-  }
-
-  public void setInlineWatchExpressions(List<InlineWatch> expressions) {
-    myInlineWatchExpressions = expressions;
-  }
-
-  @NotNull
-  public List<InlineWatch> getInlineWatchExpressions() {
-    return myInlineWatchExpressions;
   }
 
   public boolean isBreakpointsMuted() {

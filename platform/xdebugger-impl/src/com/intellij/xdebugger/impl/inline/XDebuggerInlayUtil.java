@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.inline;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
@@ -23,6 +25,7 @@ import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.MathUtil;
+import com.intellij.util.Producer;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
@@ -98,8 +101,16 @@ public final class XDebuggerInlayUtil {
                view = tab.getWatchesView();
             }
           }
+
+          Producer<Boolean> isOnExecutionLine = () -> {
+            XSourcePosition debuggerPosition = session.getCurrentPosition();
+            if (debuggerPosition != null) {
+              return position.getFile().equals(debuggerPosition.getFile()) && position.getLine() == debuggerPosition.getLine();
+            }
+            return false;
+          };
           //e.getInlayModel().getInlineElementsInRange(insertOffset, insertOffset, InlineDebugHintRenderer.class).forEach(Disposer::dispose);
-          InlineDebugRenderer renderer = new InlineDebugRenderer(variablePresentation, valueNode, view, onClick);
+          InlineDebugRenderer renderer = new InlineDebugRenderer(variablePresentation, valueNode, view, isOnExecutionLine, onClick);
           Inlay<InlineDebugRenderer> inlay = e.getInlayModel().addAfterLineEndElement(offset, true, renderer);
           if (customNode) {
             ((InlineWatchNodeImpl)valueNode).inlayCreated(inlay);

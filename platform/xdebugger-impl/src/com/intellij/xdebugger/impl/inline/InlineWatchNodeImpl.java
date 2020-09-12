@@ -15,9 +15,7 @@ import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
-import com.intellij.xdebugger.impl.ui.tree.actions.XFetchValueActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl;
-import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackBase;
 import org.jetbrains.annotations.NotNull;
@@ -47,6 +45,11 @@ public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNod
   @Override
   public @NotNull XSourcePosition getPosition() {
     return myWatch.getPosition();
+  }
+
+  @Override
+  public @NotNull InlineWatch getWatch() {
+    return myWatch;
   }
 
   void inlayCreated(Inlay<InlineDebugRenderer> inlay) {
