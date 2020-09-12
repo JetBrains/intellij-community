@@ -39,11 +39,8 @@ class QodanaExcludePluginsCalculator : ApplicationStarter {
     }
     catch (e: Throwable) {
       LOG.error(e)
-    }
-    finally {
       System.exit(1)
     }
-
   }
 
   private fun printHelpAndExit() {
