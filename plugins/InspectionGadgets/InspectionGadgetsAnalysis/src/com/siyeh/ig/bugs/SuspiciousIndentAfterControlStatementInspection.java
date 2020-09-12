@@ -125,12 +125,7 @@ public class SuspiciousIndentAfterControlStatementInspection extends BaseInspect
       final int bodyIndent = getIndent(text.substring(bodyLineBreak + 1));
       final String nextIndentText = nextText.substring(nextLineBreak + 1);
       final int nextIndent = getIndent(nextIndentText);
-      if (lineBreakBeforeBody) {
-        if (nextIndent >= bodyIndent) {
-          registerErrorAtOffset(nextWhiteSpace, nextLineBreak + 1, nextIndentText.length(), statement);
-        }
-      }
-      else if (nextIndent > bodyIndent) {
+      if (nextIndent > bodyIndent || lineBreakBeforeBody && nextIndent == bodyIndent) {
         registerErrorAtOffset(nextWhiteSpace, nextLineBreak + 1, nextIndentText.length(), statement);
       }
     }
