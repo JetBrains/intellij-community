@@ -100,7 +100,7 @@ class CommunityRepositoryModules {
     plugin("intellij.java.guiForms.designer") {
       directoryName = "uiDesigner"
       mainJarName = "uiDesigner.jar"
-      withModule("intellij.java.guiForms.jps", "jps/java-guiForms-jps.jar")
+      withModule("intellij.java.guiForms.jps", "jps/java-guiForms-jps.jar", null)
     },
     plugin("intellij.properties") {
       withModule("intellij.properties.psi", "properties.jar")
