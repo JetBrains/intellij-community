@@ -243,6 +243,12 @@ public final class SearchUtil {
   }
 
   private static void processUILabel(String title, Set<? super OptionDescription> configurableOptions, String path) {
+    int headStart = title.indexOf("<head>");
+    int headEnd = headStart >= 0 ? title.indexOf("</head>") : -1;
+    if (headEnd > headStart) {
+      title = title.substring(0, headStart) + title.substring(headEnd + "</head>".length());
+    }
+
     title = HTML_PATTERN.matcher(title).replaceAll(" ");
     final Set<String> words = SearchableOptionsRegistrar.getInstance().getProcessedWordsWithoutStemming(title);
     title = NON_WORD_PATTERN.matcher(title).replaceAll(" ");
