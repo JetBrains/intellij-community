@@ -85,7 +85,7 @@ class UnknownSdkCollector(private val myProject: Project) {
     ReadAction.nonBlocking<UnknownSdkSnapshot> { collectSdksUnderReadAction() }
       .expireWith(myProject)
       .coalesceBy(myProject, UnknownSdkCollector::class)
-      .finishOnUiThread(ApplicationManager.getApplication().noneModalityState, onCompleted)
+      .finishOnUiThread(ApplicationManager.getApplication().defaultModalityState, onCompleted)
       .submit(AppExecutorUtil.getAppExecutorService())
   }
 
