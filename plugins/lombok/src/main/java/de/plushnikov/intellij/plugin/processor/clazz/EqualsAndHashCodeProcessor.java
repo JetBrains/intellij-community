@@ -114,17 +114,16 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     return result;
   }
 
-  private boolean validateExistingMethods(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  private void validateExistingMethods(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     if (hasOneOfMethodsDefined(psiClass)) {
       builder.addWarning("Not generating equals and hashCode: A method with one of those names already exists. (Either both or none of these methods will be generated).");
-      return false;
     }
-    return true;
   }
 
   private boolean hasOneOfMethodsDefined(@NotNull PsiClass psiClass) {
     final Collection<PsiMethod> classMethodsIntern = PsiClassUtil.collectClassMethodsIntern(psiClass);
-    return PsiMethodUtil.hasMethodByName(classMethodsIntern, EQUALS_METHOD_NAME, HASH_CODE_METHOD_NAME);
+    return PsiMethodUtil.hasMethodByName(classMethodsIntern, EQUALS_METHOD_NAME, 1) ||
+      PsiMethodUtil.hasMethodByName(classMethodsIntern, HASH_CODE_METHOD_NAME, 0);
   }
 
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
@@ -145,7 +144,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     result.add(createEqualsMethod(psiClass, psiAnnotation, shouldGenerateCanEqual, memberInfos));
 
     final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
-    if (shouldGenerateCanEqual && !PsiMethodUtil.hasMethodByName(classMethods, CAN_EQUAL_METHOD_NAME)) {
+    if (shouldGenerateCanEqual && !PsiMethodUtil.hasMethodByName(classMethods, CAN_EQUAL_METHOD_NAME, 1)) {
       result.add(createCanEqualMethod(psiClass, psiAnnotation));
     }
 

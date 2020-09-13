@@ -343,7 +343,7 @@ public class SuperBuilderHandler extends BuilderHandler {
       result.add(buildMethod);
     }
 
-    if (!existedMethodNames.contains(ToStringProcessor.METHOD_NAME)) {
+    if (!existedMethodNames.contains(ToStringProcessor.TO_STRING_METHOD_NAME)) {
       // create 'toString' method
       result.add(createToStringMethod(psiAnnotation, baseClassBuilder, forceCallSuper));
     }

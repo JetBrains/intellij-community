@@ -29,7 +29,7 @@ import java.util.List;
  */
 public class ToStringProcessor extends AbstractClassProcessor {
 
-  public static final String METHOD_NAME = "toString";
+  public static final String TO_STRING_METHOD_NAME = "toString";
 
   private static final String INCLUDE_ANNOTATION_METHOD = "name";
   private static final String INCLUDE_ANNOTATION_RANK = "rank";
@@ -75,16 +75,15 @@ public class ToStringProcessor extends AbstractClassProcessor {
     return result;
   }
 
-  private boolean validateExistingMethods(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    boolean result = true;
-
-    final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
-    if (PsiMethodUtil.hasMethodByName(classMethods, METHOD_NAME)) {
-      builder.addWarning("Not generated '%s'(): A method with same name already exists", METHOD_NAME);
-      result = false;
+  private void validateExistingMethods(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+    if (hasToStringMethodDefined(psiClass)) {
+      builder.addWarning("Not generated '%s'(): A method with same name already exists", TO_STRING_METHOD_NAME);
     }
+  }
 
-    return result;
+  private boolean hasToStringMethodDefined(@NotNull PsiClass psiClass) {
+    final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
+    return PsiMethodUtil.hasMethodByName(classMethods, TO_STRING_METHOD_NAME, 0);
   }
 
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
@@ -93,8 +92,7 @@ public class ToStringProcessor extends AbstractClassProcessor {
 
   @NotNull
   Collection<PsiMethod> createToStringMethod(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
-    final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
-    if (PsiMethodUtil.hasMethodByName(classMethods, METHOD_NAME)) {
+    if (hasToStringMethodDefined(psiClass)) {
       return Collections.emptyList();
     }
 
@@ -110,7 +108,7 @@ public class ToStringProcessor extends AbstractClassProcessor {
     final String paramString = createParamString(psiClass, memberInfos, psiAnnotation, forceCallSuper);
     final String blockText = String.format("return \"%s(%s)\";", getSimpleClassName(psiClass), paramString);
 
-    final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(psiManager, METHOD_NAME)
+    final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(psiManager, TO_STRING_METHOD_NAME)
       .withMethodReturnType(PsiType.getJavaLangString(psiManager, GlobalSearchScope.allScope(psiClass.getProject())))
       .withContainingClass(psiClass)
       .withNavigationElement(psiAnnotation)

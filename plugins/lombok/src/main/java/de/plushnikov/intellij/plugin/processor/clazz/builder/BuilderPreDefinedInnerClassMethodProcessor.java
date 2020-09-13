@@ -61,7 +61,7 @@ public class BuilderPreDefinedInnerClassMethodProcessor extends AbstractBuilderP
     }
 
     // create 'toString' method
-    if (!existedMethodNames.contains(ToStringProcessor.METHOD_NAME)) {
+    if (!existedMethodNames.contains(ToStringProcessor.TO_STRING_METHOD_NAME)) {
       result.add(builderHandler.createToStringMethod(psiAnnotation, psiBuilderClass));
     }
 

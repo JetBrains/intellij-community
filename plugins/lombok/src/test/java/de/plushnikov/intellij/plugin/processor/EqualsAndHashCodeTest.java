@@ -59,4 +59,7 @@ public class EqualsAndHashCodeTest extends AbstractLombokParsingTestCase {
     doTest(true);
   }
 
+  public void testEqualsandhashcode$EqualsAndHashCodeWithNamedExistingMethods() {
+    doTest(true);
+  }
 }

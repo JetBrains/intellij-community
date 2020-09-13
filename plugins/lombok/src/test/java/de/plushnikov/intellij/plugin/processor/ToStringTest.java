@@ -38,4 +38,8 @@ public class ToStringTest extends AbstractLombokParsingTestCase {
   public void testTostring$ToStringSimpleClassName() {
     doTest(true);
   }
+
+  public void testTostring$ToStringWithNamedExistingMethods() {
+    doTest(true);
+  }
 }
