@@ -2,6 +2,7 @@
 package com.intellij.ide.lightEdit.menuBar;
 
 import com.intellij.ide.RecentProjectListActionProvider;
+import com.intellij.ide.actions.RecentProjectsGroup;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil;
@@ -29,8 +30,11 @@ import java.util.List;
 
 import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.RecentFiles;
 
-class RecentFileActionGroup extends ActionGroup implements DumbAware, AlwaysVisibleActionGroup {
-  RecentFileActionGroup() {
+/**
+ * @see RecentProjectsGroup
+ */
+class LightEditRecentFileActionGroup extends ActionGroup implements DumbAware, AlwaysVisibleActionGroup {
+  LightEditRecentFileActionGroup() {
     super(ApplicationBundle.messagePointer("light.edit.action.recentFile.text"), true);
   }
 
@@ -76,7 +80,7 @@ class RecentFileActionGroup extends ActionGroup implements DumbAware, AlwaysVisi
         presentation.setEnabled(false);
         return;
       }
-      presentation.setText(UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(project, myFile));
+      presentation.setText(UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(project, myFile), false);
       presentation.setIcon(IconUtil.getIcon(myFile, Iconable.ICON_FLAG_READ_STATUS, project));
     }
 
