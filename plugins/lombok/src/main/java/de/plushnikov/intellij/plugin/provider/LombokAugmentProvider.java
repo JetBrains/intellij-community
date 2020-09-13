@@ -54,6 +54,17 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     return result;
   }
 
+  /**
+   * This method should be available in the next IntelliJ 202 Release
+   */
+  //  @Override
+  public boolean canInferType(@NotNull PsiTypeElement typeElement) {
+    if (!valProcessor.isEnabled(typeElement.getProject())) {
+      return false;
+    }
+    return valProcessor.canInferType(typeElement);
+  }
+
   @Nullable
   @Override
   protected PsiType inferType(@NotNull PsiTypeElement typeElement) {

@@ -1,11 +1,8 @@
 package de.plushnikov.intellij.plugin.processor;
 
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiIdentifier;
-import com.intellij.psi.PsiLocalVariable;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import de.plushnikov.intellij.plugin.AbstractLombokLightCodeInsightTestCase;
 
 public class ValTest extends AbstractLombokLightCodeInsightTestCase {
@@ -103,6 +100,38 @@ public class ValTest extends AbstractLombokLightCodeInsightTestCase {
         "    return new java.util.TreeSet<>();\n" +
         "  }");
     verifyLocalVariableType("java.util.Set<java.lang.String>");
+  }
+
+  // TODO ignore this test for current IntelliJ versions
+  public void _testIssue802GenericTypeParamShouldNotBecomeObjectAfterMappingOuterCollection() {
+    PsiFile file = myFixture.configureByText("a.java",
+      "import lombok.val;\n" +
+        "import java.util.Optional;\n" +
+        "class Test {\n" +
+        "    public void test() {\n" +
+        "        val strOpt = Optional.of(\"1\");\n" +
+        "        val intOptInferred<caret>Lambda = strOpt.map(str -> Integer.valueOf(str));\n" +
+        "    }\n" +
+        "}\n");
+
+    PsiLocalVariable var = PsiTreeUtil.getParentOfType(file.findElementAt(myFixture.getCaretOffset()), PsiLocalVariable.class);
+    assertNotNull(var);
+
+    PsiType typeBefore = var.getType();
+    assertNotNull(typeBefore);
+    assertEquals("java.util.Optional<java.lang.Integer>", typeBefore.getCanonicalText(false));
+    myFixture.testHighlighting(false, false, false, file.getVirtualFile());
+
+    myFixture.type('2');
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    // this line will fail
+    myFixture.testHighlighting(false, false, false, file.getVirtualFile());
+
+    assertTrue(var.isValid());
+
+    PsiType typeAfter = var.getType();
+    assertNotNull(typeAfter);
+    assertEquals("java.util.Optional<java.lang.Integer>", typeAfter.getCanonicalText(false));
   }
 
   private void configureClass(String valDefinition) {

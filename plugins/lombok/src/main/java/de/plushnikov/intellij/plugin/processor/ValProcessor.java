@@ -182,14 +182,18 @@ public class ValProcessor extends AbstractProcessor {
     }
   }
 
+  public boolean canInferType(@NotNull PsiTypeElement typeElement) {
+    final PsiElement parent = typeElement.getParent();
+    return (parent instanceof PsiLocalVariable && isValOrVar((PsiLocalVariable) parent)) ||
+      (parent instanceof PsiParameter && isValOrVarForEach((PsiParameter) parent));
+  }
+
   @Nullable
   public PsiType inferType(PsiTypeElement typeElement) {
     PsiType psiType = null;
 
-    final PsiElement parent = typeElement.getParent();
-    if ((parent instanceof PsiLocalVariable && isValOrVar((PsiLocalVariable) parent)) ||
-      (parent instanceof PsiParameter && isValOrVarForEach((PsiParameter) parent))) {
-
+    if (canInferType(typeElement)) {
+      final PsiElement parent = typeElement.getParent();
       if (parent instanceof PsiLocalVariable) {
         psiType = processLocalVariableInitializer(((PsiLocalVariable) parent).getInitializer());
       } else {
@@ -206,22 +210,23 @@ public class ValProcessor extends AbstractProcessor {
   private PsiType processLocalVariableInitializer(final PsiExpression psiExpression) {
     PsiType result = null;
     if (null != psiExpression && !(psiExpression instanceof PsiArrayInitializerExpression)) {
-        result = RecursionManager.doPreventingRecursion(psiExpression, true, () -> {
-          PsiType type = psiExpression.getType();
-          // This is how Lombok resolves intersection types.
-          // This way auto-completion won't show unavailable methods.
-          if (type instanceof PsiIntersectionType) {
-            PsiType[] conjuncts = ((PsiIntersectionType) type).getConjuncts();
-            if (conjuncts.length > 0) {
-              return conjuncts[0];
-            }
+      result = RecursionManager.doPreventingRecursion(psiExpression, true, () -> {
+        PsiType type = psiExpression.getType();
+        // This is how IntelliJ resolves intersection types.
+        // This way auto-completion won't show unavailable methods.
+        if (type instanceof PsiIntersectionType) {
+          PsiType[] conjuncts = ((PsiIntersectionType) type).getConjuncts();
+          if (conjuncts.length > 0) {
+            return conjuncts[0];
           }
-          if (type != null) {
-            return JavaVarTypeUtil.getUpwardProjection(type); //Get upward projection so you don't get types with missing diamonds.
-          }
-          return null;
-        });
-      }
+        }
+        if (type != null) {
+          //Get upward projection so you don't get types with missing diamonds.
+          return JavaVarTypeUtil.getUpwardProjection(type);
+        }
+        return null;
+      });
+    }
 
     return result;
   }
