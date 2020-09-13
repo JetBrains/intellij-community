@@ -36,8 +36,6 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.JBOptionButton.Companion.getDefaultShowPopupShortcut
 import com.intellij.ui.components.JBPanel
-import com.intellij.ui.components.panels.HorizontalLayout
-import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.EventDispatcher
 import com.intellij.util.IJSwingUtilities.updateComponentTreeUI
@@ -108,24 +106,15 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
 
   private val centerPanel = simplePanel()
   private val buttonPanel = simplePanel().apply { isOpaque = false }
-  private val toolbarPanel = simplePanel().apply { isOpaque = false }
-  private var verticalToolbarBorder: Border? = null
+  private val toolbarPanel = simplePanel().apply {
+    isOpaque = false
+    border = emptyLeft(1)
+  }
   private val actions = ActionManager.getInstance().getAction("ChangesView.CommitToolbar") as ActionGroup
   private val toolbar = ActionManager.getInstance().createActionToolbar(COMMIT_TOOLBAR_PLACE, actions, false).apply {
     setTargetComponent(this@ChangesViewCommitPanel)
     component.isOpaque = false
   }
-  private val commitActionToolbar =
-    ActionManager.getInstance().createActionToolbar(
-      ActionPlaces.UNKNOWN,
-      DefaultActionGroup(ActionManager.getInstance().getAction("Vcs.ToggleAmendCommitMode")),
-      true
-    ).apply {
-      setTargetComponent(this@ChangesViewCommitPanel)
-      setReservePlaceAutoPopupIcon(false)
-      component.isOpaque = false
-      component.border = emptyLeft(6)
-    }
 
   private val commitMessage = CommitMessage(project, false, false, true).apply {
     editorField.addSettingsProvider { it.setBorder(emptyLeft(6)) }
@@ -167,7 +156,8 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
       setInclusionListener { inclusionEventDispatcher.multicaster.inclusionChanged() }
       isShowCheckboxes = true
     }
-    changesViewHost.statusComponent = ChangesViewCommitStatusPanel(changesView, this)
+    changesViewHost.statusComponent =
+      ChangesViewCommitStatusPanel(changesView, this).apply { addToLeft(toolbarPanel) }
 
     setupShortcuts(rootComponent)
   }
@@ -177,10 +167,6 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
       border = getButtonPanelBorder()
 
       addToLeft(commitButton)
-      addToRight(NonOpaquePanel(HorizontalLayout(0)).apply {
-        add(commitActionToolbar.component)
-        add(toolbarPanel)
-      })
     }
     centerPanel
       .addToCenter(commitMessage)
@@ -200,8 +186,6 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
     if (isHorizontal) {
       toolbar.setOrientation(SwingConstants.HORIZONTAL)
       toolbar.setReservePlaceAutoPopupIcon(false)
-      verticalToolbarBorder = toolbar.component.border
-      toolbar.component.border = null
 
       centerPanel.border = null
       toolbarPanel.addToCenter(toolbar.component)
@@ -209,7 +193,6 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
     else {
       toolbar.setOrientation(SwingConstants.VERTICAL)
       toolbar.setReservePlaceAutoPopupIcon(true)
-      verticalToolbarBorder?.let { toolbar.component.border = it }
 
       centerPanel.border = createBorder(JBColor.border(), SideBorder.LEFT)
       addToLeft(toolbar.component)

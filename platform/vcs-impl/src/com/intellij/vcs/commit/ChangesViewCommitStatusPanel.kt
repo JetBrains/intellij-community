@@ -12,10 +12,9 @@ import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
 import com.intellij.ui.content.Content
 import com.intellij.util.ui.JBUI.Borders.empty
+import com.intellij.util.ui.JBUI.Borders.emptyRight
 import com.intellij.util.ui.JBUI.emptyInsets
-import com.intellij.util.ui.JBUI.emptySize
 import com.intellij.util.ui.components.BorderLayoutPanel
-import java.awt.Dimension
 
 private val isCompactCommitLegend get() = Registry.get("vcs.non.modal.commit.legend.compact")
 
@@ -39,7 +38,7 @@ internal class ChangesViewCommitStatusPanel(tree: ChangesTree, private val commi
     setupLegend()
 
     addToRight(commitLegend.component)
-    border = empty(6)
+    border = emptyRight(6)
     background = tree.background
 
     commitWorkflowUi.addInclusionListener(this, commitWorkflowUi)
@@ -68,8 +67,6 @@ internal class ChangesViewCommitStatusPanel(tree: ChangesTree, private val commi
     tab.displayName = if (branch?.isBlank() == true) message("tab.title.commit") else message("tab.title.commit.to.branch", branch)
     tab.description = branchComponent.toolTipText
   }
-
-  override fun getPreferredSize(): Dimension? = if (commitLegend.component.isVisible) super.getPreferredSize() else emptySize()
 
   override fun inclusionChanged() = updateLegend()
 
