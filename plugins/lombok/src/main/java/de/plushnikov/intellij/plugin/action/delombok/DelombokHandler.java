@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin.action.delombok;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -241,31 +242,21 @@ public class DelombokHandler {
       resultMethod.getThrowsList().replace(elementFactory.createReferenceList(refs));
     }
 
-    for (PsiParameter parameter : fromMethod.getParameterList().getParameters()) {
-      PsiParameter param = elementFactory.createParameter(parameter.getName(), parameter.getType());
-      final PsiModifierList parameterModifierList = parameter.getModifierList();
-      if (parameterModifierList != null) {
-        PsiModifierList modifierList = param.getModifierList();
-        for (PsiAnnotation originalAnnotation : parameterModifierList.getAnnotations()) {
-          final PsiAnnotation annotation = modifierList.addAnnotation(originalAnnotation.getQualifiedName());
-          for (PsiNameValuePair nameValuePair : originalAnnotation.getParameterList().getAttributes()) {
-            annotation.setDeclaredAttributeValue(nameValuePair.getName(), nameValuePair.getValue());
-          }
-        }
-        modifierList.setModifierProperty(PsiModifier.FINAL, parameterModifierList.hasModifierProperty(PsiModifier.FINAL));
+    for (PsiParameter fromParameter : fromMethod.getParameterList().getParameters()) {
+      PsiParameter toParameter = elementFactory.createParameter(fromParameter.getName(), fromParameter.getType());
+      final PsiModifierList fromParameterModifierList = fromParameter.getModifierList();
+      if (fromParameterModifierList != null) {
+        final PsiModifierList toParameterModifierList = toParameter.getModifierList();
+        copyAnnotations(fromParameterModifierList, toParameterModifierList);
+        toParameterModifierList.setModifierProperty(PsiModifier.FINAL, fromParameterModifierList.hasModifierProperty(PsiModifier.FINAL));
       }
-      resultMethod.getParameterList().add(param);
+      resultMethod.getParameterList().add(toParameter);
     }
 
     final PsiModifierList fromMethodModifierList = fromMethod.getModifierList();
     final PsiModifierList resultMethodModifierList = resultMethod.getModifierList();
     copyModifiers(fromMethodModifierList, resultMethodModifierList);
-    for (PsiAnnotation psiAnnotation : fromMethodModifierList.getAnnotations()) {
-      final PsiAnnotation annotation = resultMethodModifierList.addAnnotation(psiAnnotation.getQualifiedName());
-      for (PsiNameValuePair nameValuePair : psiAnnotation.getParameterList().getAttributes()) {
-        annotation.setDeclaredAttributeValue(nameValuePair.getName(), nameValuePair.getValue());
-      }
-    }
+    copyAnnotations(fromMethodModifierList, resultMethodModifierList);
 
     PsiCodeBlock body = fromMethod.getBody();
     if (null != body) {
@@ -275,6 +266,21 @@ public class DelombokHandler {
     }
 
     return (PsiMethod) CodeStyleManager.getInstance(project).reformat(resultMethod);
+  }
+
+  private void copyAnnotations(@NotNull PsiModifierList fromModifierList, @NotNull PsiModifierList toModifierList) {
+    final Set<String> existedAnnotation = Stream.of(toModifierList.getAnnotations())
+      .map(PsiAnnotation::getQualifiedName)
+      .collect(Collectors.toSet());
+    for (PsiAnnotation originalAnnotation : fromModifierList.getAnnotations()) {
+      final String qualifiedName = Strings.notNullize(originalAnnotation.getQualifiedName());
+      if (!existedAnnotation.contains(qualifiedName)) {
+        final PsiAnnotation annotation = toModifierList.addAnnotation(qualifiedName);
+        for (PsiNameValuePair nameValuePair : originalAnnotation.getParameterList().getAttributes()) {
+          annotation.setDeclaredAttributeValue(nameValuePair.getName(), nameValuePair.getValue());
+        }
+      }
+    }
   }
 
   private void rebuildTypeParameter(@NotNull PsiTypeParameterListOwner listOwner, @NotNull PsiTypeParameterListOwner resultOwner) {
