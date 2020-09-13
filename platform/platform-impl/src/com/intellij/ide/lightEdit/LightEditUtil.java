@@ -14,7 +14,6 @@ import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
@@ -28,7 +27,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.ui.EditorNotifications;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -39,8 +37,6 @@ import java.awt.*;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.CommandLine;
 
@@ -135,26 +131,13 @@ public final class LightEditUtil {
     }
   }
 
-  @Nullable
-  static VirtualFile chooseTargetFile(@NotNull Component parent, @NotNull LightEditorInfo editorInfo) {
-    FileSaverDialog saver =
-      FileChooserFactory.getInstance()
-        .createSaveFileDialog(new FileSaverDescriptor(
-          IdeBundle.message("dialog.title.save.as"),
-          IdeBundle.message("label.choose.target.file"),
-          getKnownExtensions()),parent);
+  static @Nullable VirtualFile chooseTargetFile(@NotNull Component parent, @NotNull LightEditorInfo editorInfo) {
+    FileSaverDialog saver = FileChooserFactory.getInstance().createSaveFileDialog(new FileSaverDescriptor(
+      IdeBundle.message("dialog.title.save.as"),
+      IdeBundle.message("label.choose.target.file")
+    ), parent);
     VirtualFileWrapper fileWrapper = saver.save(VfsUtil.getUserHomeDir(), editorInfo.getFile().getPresentableName());
-    if (fileWrapper != null) {
-      return fileWrapper.getVirtualFile(true);
-    }
-    return null;
-  }
-
-  private static String[] getKnownExtensions() {
-    return
-      ArrayUtil.toStringArray(
-        Stream.of(FileTypeManager.getInstance().getRegisteredFileTypes())
-          .map(fileType -> fileType.getDefaultExtension()).sorted().distinct().collect(Collectors.toList()));
+    return fileWrapper != null ? fileWrapper.getVirtualFile(true) : null;
   }
 
   private static @NlsContexts.Button String getCloseSave() {
