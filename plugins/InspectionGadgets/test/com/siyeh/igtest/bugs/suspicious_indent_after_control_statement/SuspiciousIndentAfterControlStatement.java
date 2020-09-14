@@ -80,7 +80,7 @@ public class SuspiciousIndentAfterControlStatement {
                 } else {
                     return null;
                 }
-            case 2:  // <--- inspection error on this line
+            case 2:  // <--- IDEA-148562 inspection error on this line
             default:
                 return "";
         }
