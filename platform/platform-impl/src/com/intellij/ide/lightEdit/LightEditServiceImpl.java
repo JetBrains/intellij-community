@@ -118,8 +118,7 @@ public final class LightEditServiceImpl implements LightEditService,
     return myLightEditProjectManager.getProject();
   }
 
-  @Override
-  public @NotNull Project getOrCreateProject() {
+  @NotNull Project getOrCreateProject() {
     return myLightEditProjectManager.getOrCreateProject();
   }
 

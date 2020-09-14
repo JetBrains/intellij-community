@@ -82,7 +82,7 @@ public final class LightEditUtil {
           creationMessage.set(ApplicationBundle.message("light.edit.file.creation.failed.message", path.toString(), fileName));
         }
       }
-      final Project project = LightEditService.getInstance().getOrCreateProject();
+      final Project project = ((LightEditServiceImpl)LightEditService.getInstance()).getOrCreateProject();
       ApplicationManager.getApplication().invokeLater(() -> {
         LightEditorInfo editorInfo = LightEditService.getInstance().createNewDocument(path);
         if (creationMessage.get() != null) {

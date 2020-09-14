@@ -39,8 +39,6 @@ public interface LightEditService {
 
   Project getProject();
 
-  @NotNull Project getOrCreateProject();
-
   boolean canOpen(@NotNull VirtualFile file);
 
   @Nullable
