@@ -36,8 +36,8 @@ public final class RunConfigurationUsageTriggerCollector {
       List<EventPair> eventPairs = createFeatureUsageData(configurationType, factory);
       eventPairs.add(EXECUTOR.with(executor.getId()));
       if (runConfiguration instanceof FusAwareRunConfiguration) {
-        List<EventPair> additionalData = ((FusAwareRunConfiguration)runConfiguration).getAdditionalUsageData();
-        ObjectEventData objectEventData = new ObjectEventData(additionalData.toArray(new EventPair[0]));
+        List<EventPair<?>> additionalData = ((FusAwareRunConfiguration)runConfiguration).getAdditionalUsageData();
+        ObjectEventData objectEventData = new ObjectEventData(additionalData);
         eventPairs.add(ADDITIONAL_FIELD.with(objectEventData));
       }
       eventPairs.forEach(pair -> pair.addData(data));
