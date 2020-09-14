@@ -45,7 +45,7 @@ public final class FormsInstrumenter extends FormsBuilder {
   public static final String BUILDER_NAME = "forms";
 
   public FormsInstrumenter() {
-    super(BuilderCategory.CLASS_INSTRUMENTER, FormBundle.message("forms.instrumenter.builder.name"));
+    super(BuilderCategory.CLASS_INSTRUMENTER, FormBundle.message("forms.instrumenter.name"));
   }
 
   @Override
@@ -111,7 +111,7 @@ public final class FormsInstrumenter extends FormsBuilder {
       }
     }
     finally {
-      context.processMessage(new ProgressMessage(FormBundle.message("finished.instrumenting.forms.0", chunk.getPresentableShortName())));
+      context.processMessage(new ProgressMessage(FormBundle.message("finish.progress.message", chunk.getPresentableShortName())));
     }
 
     return ExitCode.OK;
@@ -159,7 +159,7 @@ public final class FormsInstrumenter extends FormsBuilder {
         continue;
       }
       catch (Exception e) {
-        throw new ProjectBuildException(FormBundle.message("cannot.process.form.file.0", formFile.getAbsolutePath()), e);
+        throw new ProjectBuildException(FormBundle.message("cannot.process.form.file", formFile.getAbsolutePath()), e);
       }
 
       final @NlsSafe String classToBind = rootContainer.getClassToBind();
@@ -170,7 +170,7 @@ public final class FormsInstrumenter extends FormsBuilder {
       final CompiledClass compiled = findClassFile(outConsumer, classToBind);
       if (compiled == null) {
         context.processMessage(new CompilerMessage(
-          getPresentableName(), BuildMessage.Kind.WARNING, FormBundle.message("class.to.bind.does.not.exist.0", classToBind), formFile.getAbsolutePath())
+          getPresentableName(), BuildMessage.Kind.WARNING, FormBundle.message("class.to.bind.does.not.exist", classToBind), formFile.getAbsolutePath())
         );
         continue;
       }
@@ -180,7 +180,7 @@ public final class FormsInstrumenter extends FormsBuilder {
         context.processMessage(
           new CompilerMessage(
             getPresentableName(), BuildMessage.Kind.WARNING,
-            FormBundle.message("0.the.form.is.bound.to.the.class.1.another.form.2.is.also.bound.to.this.class", formFile.getAbsolutePath(),classToBind,alreadyProcessedForm.getAbsolutePath()),
+            FormBundle.message("form.is.bound.to.the.class.from.another.form", formFile.getAbsolutePath(), classToBind, alreadyProcessedForm.getAbsolutePath()),
             formFile.getAbsolutePath())
         );
         continue;
@@ -193,7 +193,7 @@ public final class FormsInstrumenter extends FormsBuilder {
 
 
       try {
-        context.processMessage(new ProgressMessage(FormBundle.message("instrumenting.forms.0", chunk.getPresentableShortName())));
+        context.processMessage(new ProgressMessage(FormBundle.message("progress.message", chunk.getPresentableShortName())));
 
         final BinaryContent originalContent = compiled.getContent();
         final ClassReader classReader =
@@ -229,7 +229,8 @@ public final class FormsInstrumenter extends FormsBuilder {
         }
       }
       catch (Exception e) {
-        context.processMessage(new CompilerMessage(getPresentableName(), BuildMessage.Kind.ERROR, FormBundle.message("forms.instrumentation.failed.0", e.getMessage()), formFile.getAbsolutePath()));
+        context.processMessage(new CompilerMessage(getPresentableName(), BuildMessage.Kind.ERROR, FormBundle.message(
+          "forms.instrumentation.failed", e.getMessage()), formFile.getAbsolutePath()));
       }
     }
     return instrumented;
