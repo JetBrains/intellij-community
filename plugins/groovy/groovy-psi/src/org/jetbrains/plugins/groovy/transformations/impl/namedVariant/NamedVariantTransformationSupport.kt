@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.transformations.impl.namedVariant
 
 import com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT
@@ -38,10 +38,13 @@ class NamedVariantTransformationSupport : AstTransformationSupport {
       }
     }
 
-    method.parameterList.parameters
+    val requiredParameters = method.parameterList.parameters
       .filter {
         getAnnotation(it, GROOVY_TRANSFORM_NAMED_PARAM) == null && getAnnotation(it, GROOVY_TRANSFORM_NAMED_DELEGATE) == null
-      }.forEach { parameters.add(GrLightParameter(it)) }
+      }
+    if (requiredParameters.size != method.parameters.size) {
+      parameters.addAll(requiredParameters)
+    }
 
     return buildMethod(parameters, method)
   }
@@ -52,6 +55,9 @@ class NamedVariantTransformationSupport : AstTransformationSupport {
     builder.containingClass = psiClass
     builder.returnType = method.returnType
     builder.navigationElement = method
+    if (method.isConstructor) {
+      builder.isConstructor = true
+    }
     parameters.forEach {
       builder.addParameter(it)
     }

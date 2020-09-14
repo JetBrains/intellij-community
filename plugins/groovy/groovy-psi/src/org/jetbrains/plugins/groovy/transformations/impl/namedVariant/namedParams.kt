@@ -69,6 +69,13 @@ fun collectAllParamsFromNamedVariantMethod(method: GrMethod): List<Pair<String, 
  */
 internal fun collectNamedParamsFromNamedVariantMethod(method: GrMethod): List<NamedParamData> {
   val result = mutableListOf<NamedParamData>()
+  val useAllParameters = method.parameterList.parameters.all {
+    PsiImplUtil.getAnnotation(it, GROOVY_TRANSFORM_NAMED_PARAM) == null &&
+    PsiImplUtil.getAnnotation(it, GROOVY_TRANSFORM_NAMED_DELEGATE) == null
+  }
+  if (useAllParameters) {
+    return method.parameters.map { NamedParamData(it.name, it.type, it, it, !it.isOptional) }
+  }
   for (parameter in method.parameterList.parameters) {
     val type = parameter.type
 

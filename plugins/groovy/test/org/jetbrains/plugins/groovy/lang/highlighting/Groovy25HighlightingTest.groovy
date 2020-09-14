@@ -148,4 +148,20 @@ static void main(String[] args) {
 }
 ''', GroovyConstructorNamedArgumentsInspection
   }
+
+  void 'test @NamedVariant'() {
+    highlightingTest """
+class Rr {
+    @groovy.transform.NamedVariant
+    Rr(String s1, Integer s2) {
+        
+    }
+}
+
+@groovy.transform.CompileStatic
+def foo() {
+    new Rr(s1: "a", s2: 10)
+}
+"""
+  }
 }
