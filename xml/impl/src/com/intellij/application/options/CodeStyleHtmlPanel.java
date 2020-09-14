@@ -17,7 +17,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.util.Function;
-import com.intellij.util.ui.PresentableEnum;
+import com.intellij.util.ui.PresentableEnumUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -67,9 +67,9 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     installPreviewPanel(myPreviewPanel);
 
     fillWrappingCombo(myWrapAttributes);
-    PresentableEnum.fill(myQuotesCombo, CodeStyleSettings.QuoteStyle.class);
-    PresentableEnum.fill(myBeforeFirstAttributeCombo, CodeStyleSettings.HtmlTagNewLineStyle.class);
-    PresentableEnum.fill(myAfterLastAttributeCombo, CodeStyleSettings.HtmlTagNewLineStyle.class);
+    PresentableEnumUtil.fill(myQuotesCombo, CodeStyleSettings.QuoteStyle.class);
+    PresentableEnumUtil.fill(myBeforeFirstAttributeCombo, CodeStyleSettings.HtmlTagNewLineStyle.class);
+    PresentableEnumUtil.fill(myAfterLastAttributeCombo, CodeStyleSettings.HtmlTagNewLineStyle.class);
 
     myInsertNewLineTagNames.setColumns(5);
     myRemoveNewLineTagNames.setColumns(5);
@@ -127,7 +127,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
   public void apply(CodeStyleSettings rootSettings) throws ConfigurationException {
     HtmlCodeStyleSettings settings = rootSettings.getCustomSettings(HtmlCodeStyleSettings.class);
     settings.HTML_KEEP_BLANK_LINES = getIntValue(myKeepBlankLines);
-    settings.HTML_ATTRIBUTE_WRAP = CodeStyleSettings.WrapStyle.getSelectedId(myWrapAttributes);
+    settings.HTML_ATTRIBUTE_WRAP = CodeStyleSettings.WrapStyle.getId((CodeStyleSettings.WrapStyle)myWrapAttributes.getSelectedItem());
     settings.HTML_TEXT_WRAP = myWrapText.isSelected() ? CommonCodeStyleSettings.WRAP_AS_NEEDED : CommonCodeStyleSettings.DO_NOT_WRAP;
     settings.HTML_SPACE_INSIDE_EMPTY_TAG = mySpaceInEmptyTag.isSelected();
     settings.HTML_ALIGN_ATTRIBUTES = myAlignAttributes.isSelected();
@@ -200,7 +200,7 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     if (settings.HTML_KEEP_BLANK_LINES != getIntValue(myKeepBlankLines)) {
       return true;
     }
-    if (settings.HTML_ATTRIBUTE_WRAP != CodeStyleSettings.WrapStyle.getSelectedId(myWrapAttributes)) {
+    if (settings.HTML_ATTRIBUTE_WRAP != CodeStyleSettings.WrapStyle.getId((CodeStyleSettings.WrapStyle)myWrapAttributes.getSelectedItem())) {
       return true;
     }
 

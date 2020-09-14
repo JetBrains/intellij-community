@@ -1103,12 +1103,8 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
       return DO_NOT_WRAP;
     }
 
-    public static int getSelectedId(@NotNull JComboBox<WrapStyle> comboBox) {
-      WrapStyle wrapStyle = (WrapStyle)comboBox.getSelectedItem();
-      if (wrapStyle != null) {
-        return wrapStyle.myId;
-      }
-      return DO_NOT_WRAP.myId;
+    public static int getId(@Nullable WrapStyle wrapStyle) {
+      return Optional.ofNullable(wrapStyle).orElse(DO_NOT_WRAP).myId;
     }
   }
 
