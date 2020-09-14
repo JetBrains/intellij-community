@@ -16,5 +16,5 @@ class EditorConfigMsLanguageOptionDescriptorProvider : EditorConfigCSharpOptionD
 }
 
 class EditorConfigMsNamingOptionDescriptorProvider : EditorConfigCSharpOptionDescriptorProviderBase() {
-  override val filePath = "schemas/editorconfig/roslyn.json"
+  override val filePath = "schemas/editorconfig/msnaming.json"
 }
