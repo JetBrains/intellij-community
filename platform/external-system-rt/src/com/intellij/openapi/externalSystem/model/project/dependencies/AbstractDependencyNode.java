@@ -50,6 +50,7 @@ public abstract class AbstractDependencyNode implements DependencyNode, Serializ
     AbstractDependencyNode node = (AbstractDependencyNode)o;
     if (id != node.id) return false;
     if (resolutionState != null ? !resolutionState.equals(node.resolutionState) : node.resolutionState != null) return false;
+    if (!match(node)) return false;
     if (!match(dependencies, node.dependencies)) return false;
     return true;
   }
