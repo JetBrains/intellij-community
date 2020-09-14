@@ -327,7 +327,8 @@ public final class SdkConfigurationUtil {
     return result;
   }
 
-  private static @Nullable Sdk findByPath(@NotNull SdkType sdkType, Sdk @NotNull [] sdks, @NotNull String sdkHome) {
+  @Nullable
+  private static Sdk findByPath(@NotNull SdkType sdkType, Sdk @NotNull [] sdks, @NotNull String sdkHome) {
     for (Sdk sdk : sdks) {
       final String path = sdk.getHomePath();
       if (sdk.getSdkType() == sdkType && path != null &&
