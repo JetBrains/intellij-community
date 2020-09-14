@@ -6,6 +6,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.execution.ParametersListUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.appengine.model.JpsAppEngineExtensionService;
@@ -31,9 +32,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.*;
+import java.util.function.Supplier;
 
 public final class AppEngineEnhancerBuilder extends ModuleLevelBuilder {
-  public static final String NAME = "Google AppEngine Enhancer";
+
+  public static Supplier<@Nls String> NAME_SUPPLIER = JavaGoogleAppEngineJpsBundle.messagePointer("google.appengine.enhancer");
 
   public AppEngineEnhancerBuilder() {
     super(BuilderCategory.CLASS_POST_PROCESSOR);
@@ -89,8 +92,10 @@ public final class AppEngineEnhancerBuilder extends ModuleLevelBuilder {
     }
 
     JpsModule module = extension.getModule();
-    JpsSdk<JpsDummyElement> sdk = JavaBuilderUtil.ensureModuleHasJdk(module, context, NAME);
-    context.processMessage(new ProgressMessage("Enhancing classes in module '" + module.getName() + "'..."));
+    JpsSdk<JpsDummyElement> sdk = JavaBuilderUtil.ensureModuleHasJdk(module, context, NAME_SUPPLIER.get());
+    context.processMessage(new ProgressMessage(
+      JavaGoogleAppEngineJpsBundle.message("enhancing.classes.in.module.0", module.getName())
+    ));
 
     List<String> vmParams = Collections.singletonList("-Xmx256m");
 
@@ -136,7 +141,7 @@ public final class AppEngineEnhancerBuilder extends ModuleLevelBuilder {
     handler.waitFor();
     ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
     if (logger.isEnabled()) {
-      logger.logCompiledPaths(pathsToProcess, NAME, "Enhancing classes:");
+      logger.logCompiledPaths(pathsToProcess, NAME_SUPPLIER.get(), "Enhancing classes:");
     }
     return true;
   }
@@ -145,7 +150,8 @@ public final class AppEngineEnhancerBuilder extends ModuleLevelBuilder {
   @NotNull
   @Override
   public String getPresentableName() {
-    return NAME;
+    //noinspection DialogTitleCapitalization
+    return NAME_SUPPLIER.get();
   }
 
   private static class ExternalEnhancerProcessHandler extends EnhancerProcessHandlerBase {
@@ -158,12 +164,14 @@ public final class AppEngineEnhancerBuilder extends ModuleLevelBuilder {
 
     @Override
     protected void reportInfo(String message) {
-      myContext.processMessage(new CompilerMessage(NAME, BuildMessage.Kind.INFO, message));
+      //noinspection DialogTitleCapitalization
+      myContext.processMessage(new CompilerMessage(NAME_SUPPLIER.get(), BuildMessage.Kind.INFO, message));
     }
 
     @Override
     protected void reportError(String message) {
-      myContext.processMessage(new CompilerMessage(NAME, BuildMessage.Kind.ERROR, message));
+      //noinspection DialogTitleCapitalization
+      myContext.processMessage(new CompilerMessage(NAME_SUPPLIER.get(), BuildMessage.Kind.ERROR, message));
     }
   }
 }

@@ -1,4 +1,5 @@
 <idea-plugin>
+  <resource-bundle>messages.JavaGoogleAppEngineBundle</resource-bundle>
   <depends optional="true" config-file="google-app-engine-maven-support.xml">org.jetbrains.idea.maven</depends>
 
   <extensionPoints>
@@ -21,9 +22,10 @@
     <xml.schemaProvider implementation="com.intellij.appengine.descriptor.AppEngineWebSchemaProvider"/>
     <dom.fileMetaData implementation="com.intellij.appengine.descriptor.dom.AppEngineWebFileDescription" rootTagName="appengine-web-app"/>
 
-    <localInspection language="JAVA" shortName="AppEngineForbiddenCode" displayName="Forbidden code in App Engine applications"
-                     groupName="Google App Engine" enabledByDefault="true" level="ERROR"
-                     implementationClass="com.intellij.appengine.inspections.AppEngineForbiddenCodeInspection"/>
+    <localInspection language="JAVA" shortName="AppEngineForbiddenCode" enabledByDefault="true" level="ERROR"
+                     implementationClass="com.intellij.appengine.inspections.AppEngineForbiddenCodeInspection"
+                     groupKey="app.engine.inspection.group.name" key="app.engine.inspection.forbidden.code.name"
+                     bundle="messages.JavaGoogleAppEngineBundle"/>
 
     <remoteServer.type implementation="com.intellij.appengine.cloud.AppEngineCloudType"/>
     <remoteServer.defaultConfigurable.includeServerType serverType="com.intellij.appengine.cloud.AppEngineCloudType"/>

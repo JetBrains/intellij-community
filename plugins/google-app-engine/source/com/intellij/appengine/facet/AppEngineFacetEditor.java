@@ -38,7 +38,7 @@ public class AppEngineFacetEditor extends FacetEditorTab {
   private JComboBox myPersistenceApiComboBox;
   private JPanel myFilesPanel;
   private final AppEngineSdkEditor mySdkEditor;
-  private final DefaultListModel myFilesListModel;
+  private final DefaultListModel<@NlsSafe String> myFilesListModel;
 
   public AppEngineFacetEditor(AppEngineFacetConfiguration facetConfiguration, FacetEditorContext context, FacetValidatorsManager validatorsManager) {
     myFacetConfiguration = facetConfiguration;
