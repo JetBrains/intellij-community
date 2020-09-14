@@ -92,8 +92,9 @@ public final class CommandLineProcessor {
     else {
       NonProjectFileWritingAccessProvider.allowWriting(Collections.singletonList(file));
       Project project = findBestProject(file, projects);
-      if (LightEdit.owns(project)) {
-        if (LightEdit.openFile(file)) {
+      if (project == null) {
+        project = LightEditService.getInstance().openFile(file, true);
+        if (project != null) {
           LightEditFeatureUsagesUtil.logFileOpen(CommandLine);
         }
       }
@@ -110,7 +111,7 @@ public final class CommandLineProcessor {
     }
   }
 
-  private static @NotNull Project findBestProject(@NotNull VirtualFile file, @NotNull Project @NotNull[] projects) {
+  private static @Nullable Project findBestProject(@NotNull VirtualFile file, @NotNull Project @NotNull[] projects) {
     for (Project project : projects) {
       ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
       if (ReadAction.compute(() -> fileIndex.isInContent(file))) {
@@ -119,13 +120,13 @@ public final class CommandLineProcessor {
     }
 
     if (LightEditService.getInstance().canOpen(file) && !LightEditUtil.isOpenInExistingProject()) {
-      return LightEditUtil.getProject();
+      return null;
     }
 
     IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
     if (frame != null) {
       Project project = frame.getProject();
-      if (project != null) {
+      if (project != null && !LightEdit.owns(project)) {
         return project;
       }
     }

@@ -100,10 +100,6 @@ public final class LightEditUtil {
            ProjectManager.getInstance().getOpenProjects().length > 0;
   }
 
-  public static @NotNull Project getProject() {
-    return LightEditService.getInstance().getOrCreateProject();
-  }
-
   @Nullable
   public static Project getProjectIfCreated() {
     return LightEditService.getInstance().getProject();
