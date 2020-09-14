@@ -1510,5 +1510,81 @@
         "type": "severity"
       }
     }
+  },
+
+
+
+
+
+
+  {
+    "type": "option",
+    "key": "dotnet_style_prefer_simplified_boolean_expressions",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "union",
+        "type_alias": "boolean",
+        "values": [
+          "true",
+          "false"
+        ]
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "dotnet_style_prefer_simplified_boolean_expressions",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "boolean"
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "csharp_style_prefer_not_pattern",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "boolean"
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "csharp_style_prefer_pattern_matching",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "boolean"
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
+  },
+  {
+    "type": "option",
+    "key": "dotnet_style_prefer_simplified_interpolation",
+    "value": {
+      "type": "pair",
+      "first": {
+        "type": "boolean"
+      },
+      "second": {
+        "type": "severity"
+      }
+    }
   }
 ]

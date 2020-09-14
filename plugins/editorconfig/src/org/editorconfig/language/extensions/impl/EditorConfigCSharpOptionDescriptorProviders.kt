@@ -18,3 +18,7 @@ class EditorConfigMsLanguageOptionDescriptorProvider : EditorConfigCSharpOptionD
 class EditorConfigMsNamingOptionDescriptorProvider : EditorConfigCSharpOptionDescriptorProviderBase() {
   override val filePath = "schemas/editorconfig/msnaming.json"
 }
+
+class EditorConfigMsMiscOptionDescriptorProvider : EditorConfigCSharpOptionDescriptorProviderBase() {
+  override val filePath = "schemas/editorconfig/msmisc.json"
+}
