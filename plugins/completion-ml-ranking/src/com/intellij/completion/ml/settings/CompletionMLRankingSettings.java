@@ -2,6 +2,7 @@
 package com.intellij.completion.ml.settings;
 
 import com.intellij.completion.ml.ranker.ExperimentModelProvider;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -17,6 +18,7 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
   public CompletionMLRankingSettings() {
     myState = new State();
     myState.rankingEnabled = !enabledByDefault.isEmpty();
+    myState.showDiff = isShowDiffEnabledByDefault();
   }
 
   @NotNull
@@ -78,6 +80,11 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
 
   private boolean isEnabledByDefault(@NotNull String languageName) {
     return enabledByDefault.contains(languageName);
+  }
+
+  private static boolean isShowDiffEnabledByDefault() {
+    String productCode = ApplicationInfo.getInstance().getBuild().getProductCode();
+    return productCode == "PY" || productCode == "PC";
   }
 
   private void setRankerEnabledImpl(@NotNull String rankerId, boolean isEnabled) {
