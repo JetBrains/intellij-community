@@ -15,23 +15,44 @@
  */
 package org.jetbrains.idea.maven.aether;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.eclipse.aether.artifact.Artifact;
+import org.eclipse.aether.repository.RemoteRepository;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ArtifactRepositoryManagerTest extends UsefulTestCase {
+  private static final RemoteRepository mavenLocal;
+
+  static {
+    File mavenLocalDir = new File(SystemProperties.getUserHome(), ".m2/repository");
+    mavenLocal = new RemoteRepository
+      .Builder("mavenLocal", "default", "file://" + mavenLocalDir.getAbsolutePath())
+      .build();
+  }
+
   private ArtifactRepositoryManager myRepositoryManager;
+  private File localRepository;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    final File localRepo = new File(SystemProperties.getUserHome(), ".m2/repository");
-    myRepositoryManager = new ArtifactRepositoryManager(localRepo);
+    localRepository = new File(FileUtil.getTempDirectory());
+    List<RemoteRepository> repositories = new ArrayList<>();
+    repositories.add(mavenLocal);
+    repositories.addAll(ArtifactRepositoryManager.createDefaultRemoteRepositories());
+    myRepositoryManager = new ArtifactRepositoryManager(localRepository, repositories, ProgressConsumer.DEAF);
   }
 
   public void testResolveTransitively() throws Exception {
