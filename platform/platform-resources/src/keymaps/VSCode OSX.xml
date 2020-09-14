@@ -35,6 +35,7 @@
     </action>
     <action id="Back">
         <keyboard-shortcut first-keystroke="ctrl minus" />
+        <mouse-shortcut keystroke="button4" />
     </action>
     <action id="BraceOrQuoteOut">
         <keyboard-shortcut first-keystroke="tab" />
@@ -70,7 +71,6 @@
     </action>
     <action id="CollapseRegion">
         <keyboard-shortcut first-keystroke="meta alt open_bracket" />
-        <keyboard-shortcut first-keystroke="meta minus" />
     </action>
     <action id="CollapseRegionRecursively">
         <keyboard-shortcut first-keystroke="meta k" second-keystroke="meta open_bracket" />
@@ -266,7 +266,6 @@
     </action>
     <action id="ExpandRegion">
         <keyboard-shortcut first-keystroke="meta alt close_bracket" />
-        <keyboard-shortcut first-keystroke="meta equals" />
     </action>
     <action id="Tab">
         <keyboard-shortcut first-keystroke="Tab" />
@@ -318,6 +317,8 @@
     <action id="GotoDeclaration">
         <keyboard-shortcut first-keystroke="f12" />
         <mouse-shortcut keystroke="meta button1" />
+        <mouse-shortcut keystroke="button2" />
+        <mouse-shortcut keystroke="Force touch" />
     </action>
     <action id="GotoFile">
         <keyboard-shortcut first-keystroke="meta p" />
@@ -636,5 +637,21 @@
     </action>
     <action id="org.intellij.plugins.markdown.ui.actions.editorLayout.PreviewOnlyLayoutChangeAction">
         <keyboard-shortcut first-keystroke="shift meta v" />
+    </action>
+    <action id="EditorDecreaseFontSize">
+        <keyboard-shortcut first-keystroke="meta minus" />
+    </action>
+    <action id="EditorIncreaseFontSize">
+        <keyboard-shortcut first-keystroke="meta equals" />
+    </action>
+    <action id="EditorToggleUseSoftWraps">
+        <keyboard-shortcut first-keystroke="alt z" />
+    </action>
+    <action id="InsertLiveTemplate" />
+    <action id="MoveStatementDown" />
+    <action id="MoveStatementUp" />
+    <action id="RecentLocations" />
+    <action id="Sql.EditParameter">
+        <keyboard-shortcut first-keystroke="f4" />
     </action>
 </keymap>

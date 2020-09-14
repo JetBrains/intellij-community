@@ -61,7 +61,6 @@
   </action>
   <action id="CollapseRegion">
     <keyboard-shortcut first-keystroke="shift ctrl open_bracket" />
-    <keyboard-shortcut first-keystroke="ctrl minus" />
   </action>
   <action id="CollapseRegionRecursively">
     <keyboard-shortcut first-keystroke="ctrl k" second-keystroke="ctrl open_bracket" />
@@ -222,7 +221,6 @@
   </action>
   <action id="ExpandRegion">
     <keyboard-shortcut first-keystroke="shift ctrl close_bracket" />
-    <keyboard-shortcut first-keystroke="ctrl equals" />
   </action>
   <action id="ExpandRegionRecursively">
     <keyboard-shortcut first-keystroke="ctrl k" second-keystroke="ctrl close_bracket" />
@@ -479,6 +477,7 @@
   <action id="ShowUsages">
     <keyboard-shortcut first-keystroke="shift f12" />
   </action>
+  <action id="RestoreDefaultLayout"/>
   <action id="SmartTypeCompletion" />
   <action id="SplitVertically">
     <keyboard-shortcut first-keystroke="ctrl back_slash" />
@@ -546,5 +545,20 @@
   </action>
   <action id="org.intellij.plugins.markdown.ui.actions.editorLayout.PreviewOnlyLayoutChangeAction">
     <keyboard-shortcut first-keystroke="shift ctrl v" />
+  </action>
+  <action id="EditorDecreaseFontSize">
+    <keyboard-shortcut first-keystroke="ctrl minus" />
+  </action>
+  <action id="EditorIncreaseFontSize">
+    <keyboard-shortcut first-keystroke="ctrl equals" />
+  </action>
+  <action id="EditorToggleUseSoftWraps">
+    <keyboard-shortcut first-keystroke="alt z" />
+  </action>
+  <action id="MoveStatementDown" />
+  <action id="MoveStatementUp" />
+  <action id="RecentLocations" />
+  <action id="Sql.EditParameter">
+    <keyboard-shortcut first-keystroke="f4" />
   </action>
 </keymap>
