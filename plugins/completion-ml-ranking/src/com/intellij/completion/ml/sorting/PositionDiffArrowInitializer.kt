@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.sorting
 
+import com.intellij.application.options.CodeCompletionOptions
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupManager
@@ -20,6 +21,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.util.Key
@@ -126,26 +128,44 @@ class PositionDiffArrowInitializer : ProjectManagerListener {
 
   private class ArrowsOpinionNotification : Notification(
     MLCompletionBundle.message("ml.completion.notification.groupId"),
-    MLCompletionBundle.message("ml.completion.notification.decorating.title"),
-    MLCompletionBundle.message("ml.completion.notification.decorating.content"),
+    MLCompletionBundle.message("ml.completion.notification.title"),
+    MLCompletionBundle.message("ml.completion.notification.decorating.opinion.content"),
     NotificationType.INFORMATION
   ) {
     init {
-      addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.decorating.like")) {
+      addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.decorating.opinion.like")) {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
           MLCompletionSettingsCollector.decorationOpinionProvided(MLCompletionSettingsCollector.DecorationOpinion.LIKE)
           notification.expire()
         }
       })
-      addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.decorating.dislike")) {
+      addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.decorating.opinion.dislike")) {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
           MLCompletionSettingsCollector.decorationOpinionProvided(MLCompletionSettingsCollector.DecorationOpinion.DISLIKE)
+          CompletionMLRankingSettings.getInstance().isShowDiffEnabled = false
+          notification.expire()
+          ArrowsDisabledNotification().notify(null)
+        }
+      })
+      addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.decorating.opinion.neutral")) {
+        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+          MLCompletionSettingsCollector.decorationOpinionProvided(MLCompletionSettingsCollector.DecorationOpinion.NEUTRAL)
           notification.expire()
         }
       })
-      addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.decorating.neutral")) {
+    }
+  }
+
+  private class ArrowsDisabledNotification : Notification(
+    MLCompletionBundle.message("ml.completion.notification.groupId"),
+    MLCompletionBundle.message("ml.completion.notification.title"),
+    MLCompletionBundle.message("ml.completion.notification.decorating.disabled.content", ShowSettingsUtil.getSettingsMenuName()),
+    NotificationType.INFORMATION
+  ) {
+    init {
+      addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.decorating.disabled.configure")) {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          MLCompletionSettingsCollector.decorationOpinionProvided(MLCompletionSettingsCollector.DecorationOpinion.NEUTRAL)
+          ShowSettingsUtil.getInstance().showSettingsDialog(null, CodeCompletionOptions::class.java)
           notification.expire()
         }
       })
