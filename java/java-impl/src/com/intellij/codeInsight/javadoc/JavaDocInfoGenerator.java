@@ -519,9 +519,10 @@ public class JavaDocInfoGenerator {
     boolean generateLink = place == SignaturePlace.Javadoc;
     generateAnnotations(buffer, aClass, place, true);
     generateModifiers(buffer, aClass, false);
-    buffer.append(JavaBundle.message(aClass.isInterface() ? "java.terms.interface"
-                                                          : aClass.isEnum() ? "java.terms.enum"
-                                                                            : aClass.isRecord() ? "java.terms.record" : "java.terms.class"));
+    buffer.append(aClass.isInterface() ? PsiKeyword.INTERFACE :
+                  aClass.isEnum() ? PsiKeyword.ENUM :
+                  aClass.isRecord() ? PsiKeyword.RECORD :
+                  PsiKeyword.CLASS);
     buffer.append(' ');
     String refText = JavaDocUtil.getReferenceText(aClass.getProject(), aClass);
     if (refText == null) {
