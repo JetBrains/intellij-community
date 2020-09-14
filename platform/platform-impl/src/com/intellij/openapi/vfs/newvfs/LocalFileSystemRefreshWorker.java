@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
-import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VFileProperty;
@@ -548,9 +547,7 @@ final class LocalFileSystemRefreshWorker {
     else {
       isHidden = false;
     }
-    // todo CaseSensitiveDir read case sensitivity too
-    FileAttributes.CaseSensitivity sensitivity = FileSystemUtil.stubCaseSensitivity(a.isDirectory());
-    return new FileAttributes(a.isDirectory(), a.isOther(), isSymlink, isHidden, a.size(), lastModified, writable, sensitivity);
+    return new FileAttributes(a.isDirectory(), a.isOther(), isSymlink, isHidden, a.size(), lastModified, writable);
   }
 
   private static final BasicFileAttributes BROKEN_SYMLINK_ATTRIBUTES = new BasicFileAttributes() {

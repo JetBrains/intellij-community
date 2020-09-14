@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem;
 import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.impl.PsiCachedValue;
@@ -188,6 +189,15 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     throw new InvalidVirtualFileAccessException(this);
   }
 
+  @ApiStatus.Internal
+  public void setCaseSensitivityFlag(@NotNull FileAttributes.CaseSensitivity sensitivity) {
+    VfsData vfsData = getVfsData();
+    VfsData.Segment segment = vfsData.getSegment(getId(), false);
+    int newFlags = (sensitivity == FileAttributes.CaseSensitivity.UNKNOWN ? 0 : VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED) |
+                   (sensitivity == FileAttributes.CaseSensitivity.SENSITIVE ? VfsDataFlags.CHILDREN_CASE_SENSITIVE : 0);
+    segment.setFlags(getId(), VfsDataFlags.CHILDREN_CASE_SENSITIVE | VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED, newFlags);
+  }
+
   // removes forward/back slashes from start/end and return trimmed name or null if there are slashes in the middle or it's empty
   private static String deSlash(@NotNull String name) {
     int startTrimmed = -1;
@@ -256,8 +266,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
                    (PersistentFS.isSpecialFile(attributes) ? VfsDataFlags.IS_SPECIAL_FLAG : 0) |
                    (PersistentFS.isWritable(attributes) ? VfsDataFlags.IS_WRITABLE_FLAG : 0) |
                    (PersistentFS.isHidden(attributes) ? VfsDataFlags.IS_HIDDEN_FLAG : 0) |
+                   (sensitivity != FileAttributes.CaseSensitivity.UNKNOWN ? VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED : 0) |
                    (sensitivity == FileAttributes.CaseSensitivity.SENSITIVE ? VfsDataFlags.CHILDREN_CASE_SENSITIVE : 0);
-    segment.setFlags(id, VfsDataFlags.IS_SYMLINK_FLAG | VfsDataFlags.IS_SPECIAL_FLAG | VfsDataFlags.IS_WRITABLE_FLAG | VfsDataFlags.IS_HIDDEN_FLAG | VfsDataFlags.CHILDREN_CASE_SENSITIVE, newFlags);
+    segment.setFlags(id, VfsDataFlags.IS_SYMLINK_FLAG | VfsDataFlags.IS_SPECIAL_FLAG | VfsDataFlags.IS_WRITABLE_FLAG | VfsDataFlags.IS_HIDDEN_FLAG | VfsDataFlags.CHILDREN_CASE_SENSITIVE | VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED, newFlags);
     child.updateLinkStatus(PersistentFS.isSymLink(attributes), this);
 
     if (delegate.markNewFilesAsDirty()) {
@@ -277,16 +288,20 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @Nullable
   private VirtualFileSystemEntry createAndFindChildWithEventFire(@NotNull String name, @NotNull NewVirtualFileSystem delegate) {
-    final VirtualFile fake = new FakeVirtualFile(this, name);
-    final FileAttributes attributes = VfsImplUtil.getAttributesWithCaseSensitivity(delegate, fake);
+    VirtualFile fake = new FakeVirtualFile(this, name);
+    FileAttributes attributes = delegate.getAttributes(fake);
     if (attributes == null) return null;
-    final String realName = delegate.getCanonicallyCasedName(fake);
+    String realName = delegate.getCanonicallyCasedName(fake);
     boolean isDirectory = attributes.isDirectory();
     boolean isEmptyDirectory = isDirectory && !delegate.hasChildren(fake);
     String symlinkTarget = attributes.isSymLink() ? delegate.resolveSymLink(fake) : null;
     ChildInfo[] children = isEmptyDirectory ? ChildInfo.EMPTY_ARRAY : null;
     VFileCreateEvent event = new VFileCreateEvent(null, this, realName, isDirectory, attributes, symlinkTarget, true, children);
     RefreshQueue.getInstance().processSingleEvent(event);
+    VFileEvent caseSensitivityEvent = VfsImplUtil.generateCaseSensitivityChangedEvent(this, realName, null);
+    if (caseSensitivityEvent != null) {
+      RefreshQueue.getInstance().processSingleEvent(caseSensitivityEvent);
+    }
     return findChild(realName);
   }
 
@@ -780,6 +795,14 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @Override
   public boolean isCaseSensitive() {
+    if (!isChildrenCaseSensitivityKnown()) {
+      return super.isCaseSensitive();
+    }
     return getFlagInt(VfsDataFlags.CHILDREN_CASE_SENSITIVE);
+  }
+
+  @ApiStatus.Internal
+  public boolean isChildrenCaseSensitivityKnown() {
+    return getFlagInt(VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED);
   }
 }

@@ -331,9 +331,7 @@ public final class FileSystemUtil {
 
         boolean writable = ownFile(buffer) ? (mode & LibC.WRITE_MASK) != 0 : LibC.access(path, LibC.W_OK) == 0;
 
-        //todo CaseSensitiveDir teach me to obtain dir case sensitivity
-        FileAttributes.CaseSensitivity sensitivity = stubCaseSensitivity(isDirectory);
-        return new FileAttributes(isDirectory, isSpecial, isSymlink, false, size, mTime, writable, sensitivity);
+        return new FileAttributes(isDirectory, isSpecial, isSymlink, false, size, mTime, writable);
       }
       finally {
         myMemoryPool.recycle(buffer);
@@ -423,8 +421,7 @@ public final class FileSystemUtil {
           isHidden = false;
           isWritable = Files.isWritable(path);
         }
-        FileAttributes.CaseSensitivity sensitivity = stubCaseSensitivity(isDirectory);
-        return new FileAttributes(isDirectory, isOther, isSymbolicLink, isHidden, size, lastModified, isWritable, sensitivity);
+        return new FileAttributes(isDirectory, isOther, isSymbolicLink, isHidden, size, lastModified, isWritable);
       }
       catch (IOException | InvalidPathException e) {
         LOG.debug(pathStr, e);
@@ -470,14 +467,76 @@ public final class FileSystemUtil {
     }
   }
 
+  /**
+   * determines case-sensitivity of the directory containing {@code anyChild} by querying its attributes via different names
+   */
   @NotNull
-  public static FileAttributes.CaseSensitivity stubCaseSensitivity(boolean isDirectory) {
-    //todo CaseSensitiveDir should actually load dir case sensitivity with some clever native call
-    // in the meantime, just use the current file system case
-    return !isDirectory
-           ? FileAttributes.CaseSensitivity.UNKNOWN
-           : SystemInfo.isFileSystemCaseSensitive
-             ? FileAttributes.CaseSensitivity.SENSITIVE
-             : FileAttributes.CaseSensitivity.INSENSITIVE;
+  public static FileAttributes.CaseSensitivity readParentCaseSensitivity(@NotNull Path anyChild) {
+    // todo call some native API here, instead of slowly querying file attributes
+    Path parent = anyChild.getParent();
+    if (parent == null) {
+      // assume root always has FS case-sensitivity
+      return SystemInfo.isFileSystemCaseSensitive
+               ? FileAttributes.CaseSensitivity.SENSITIVE
+               : FileAttributes.CaseSensitivity.INSENSITIVE;
+    }
+
+    File file = anyChild.toFile();
+    String name = file.getName();
+    String newName = toggleCase(name);
+    if (newName.equals(name)) {
+      // we have a bad case of "123" file
+      name = findCaseableSiblingName(parent);
+      if (name == null) {
+        // we can't find any file with toggleable case.
+        return FileAttributes.CaseSensitivity.UNKNOWN;
+      }
+      newName = toggleCase(name);
+    }
+    String newPath = parent + "/" + newName;
+    FileAttributes newAttributes = getAttributes(newPath);
+    if (newAttributes == null) {
+      // couldn't file this file by other-cased name, so deduce FS is sensitive
+      return FileAttributes.CaseSensitivity.SENSITIVE;
+    }
+    try {
+      // if changed-case file found, there is a slim chance that the FS is still case-sensitive but there are two files with different case
+      File newCanonicalFile = new File(newPath).getCanonicalFile();
+      String newCanonicalName = newCanonicalFile.getName();
+      if (newCanonicalName.equals(name) || newCanonicalName.equals(file.getCanonicalFile().getName())) {
+        // nah, these two are really the same file
+        return FileAttributes.CaseSensitivity.INSENSITIVE;
+      }
+    }
+    catch (IOException e) {
+      return FileAttributes.CaseSensitivity.UNKNOWN;
+    }
+    // it's the different file indeed, what a bad luck
+    return FileAttributes.CaseSensitivity.SENSITIVE;
+  }
+
+  @NotNull
+  private static String toggleCase(@NotNull String name) {
+    String newName = name.toUpperCase();
+    if (newName.equals(name)) newName = name.toLowerCase();
+    return newName;
+  }
+
+  public static boolean isCaseToggleable(@NotNull String name) {
+    return !toggleCase(name).equals(name);
+  }
+
+  private static String findCaseableSiblingName(@NotNull Path dir) {
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
+      for (Path path : stream) {
+        String name = path.getFileName().toString();
+        if (!name.toLowerCase().equals(name.toUpperCase())) {
+          return name;
+        }
+      }
+    }
+    catch (Exception ignored) {
+    }
+    return null;
   }
 }

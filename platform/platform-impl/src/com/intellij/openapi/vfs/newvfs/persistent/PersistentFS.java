@@ -33,10 +33,13 @@ public abstract class PersistentFS extends ManagingFS {
     static final int IS_SPECIAL = 0x20; // this file has "special" flag. Defined for files only.
     static final int IS_HIDDEN = 0x40;
     static final int MUST_RELOAD_LENGTH = 0x80;
-    static final int CHILDREN_CASE_SENSITIVE = 0x100;// this directory contains case-sensitive files. Defined for directories only.
+    // true if this directory can contain case-sensitive files. Defined for directories only.
+    static final int CHILDREN_CASE_SENSITIVE = 0x100;
+    // true if it's known whether this directory can contain case-sensitive files or not. Defined for directories only.
+    static final int CHILDREN_CASE_SENSITIVITY_CACHED = 0x200;
     static final int ALL_VALID_FLAGS =
       CHILDREN_CACHED | IS_DIRECTORY | IS_READ_ONLY | MUST_RELOAD_CONTENT | MUST_RELOAD_LENGTH | IS_SYMLINK | IS_SPECIAL | IS_HIDDEN |
-      CHILDREN_CASE_SENSITIVE;
+      CHILDREN_CASE_SENSITIVE | CHILDREN_CASE_SENSITIVITY_CACHED;
   }
 
   @MagicConstant(flagsFromClass = Flags.class)
@@ -82,6 +85,9 @@ public abstract class PersistentFS extends ManagingFS {
   public static FileAttributes.CaseSensitivity areChildrenCaseSensitive(@Attributes int attributes) {
     if (!isDirectory(attributes)) {
       throw new IllegalArgumentException("CHILDREN_CASE_SENSITIVE flag defined for directories only but got file: 0b" + Integer.toBinaryString(attributes));
+    }
+    if (!isSet(attributes, Flags.CHILDREN_CASE_SENSITIVITY_CACHED)) {
+      return FileAttributes.CaseSensitivity.UNKNOWN;
     }
     return isSet(attributes, Flags.CHILDREN_CASE_SENSITIVE) ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE;
   }

@@ -58,6 +58,16 @@ final class VfsEventGenerationHelper {
     }
   }
 
+  private static Path getChildPath(@NotNull String parentPath, @NotNull String childName) {
+    try {
+      return Paths.get(parentPath, childName);
+    }
+    catch (InvalidPathException e) {
+      LOG.warn("Invalid child name: '" + childName + "'", e);
+    }
+    return null;
+  }
+
   void scheduleCreation(@NotNull VirtualFile parent,
                         @NotNull String childName,
                         @NotNull FileAttributes attributes,
@@ -67,15 +77,17 @@ final class VfsEventGenerationHelper {
       LOG.trace("create parent=" + parent + " name=" + childName + " attr=" + attributes);
     }
     ChildInfo[] children = null;
+    Path childPath = null;
     if (attributes.isDirectory() && parent.getFileSystem() instanceof LocalFileSystem && !attributes.isSymLink()) {
       try {
-        Path child = Paths.get(parent.getPath(), childName);
-        if (shouldScanDirectory(parent, child, childName)) {
+        Path cp = getChildPath(parent.getPath(), childName);
+        childPath = cp;
+        if (childPath != null && shouldScanDirectory(parent, childPath, childName)) {
           List<Path> relevantExcluded = ContainerUtil.mapNotNull(ProjectManagerEx.getInstanceEx().getAllExcludedUrls(), url -> {
             Path path = Paths.get(VirtualFileManager.extractPath(url));
-            return path.startsWith(child) ? path : null;
+            return path.startsWith(cp) ? path : null;
           });
-          children = scanChildren(child, relevantExcluded, checkCanceled);
+          children = scanChildren(childPath, relevantExcluded, checkCanceled);
         }
       }
       catch (InvalidPathException e) {
@@ -83,6 +95,10 @@ final class VfsEventGenerationHelper {
       }
     }
     myEvents.add(new VFileCreateEvent(null, parent, childName, attributes.isDirectory(), attributes, symlinkTarget, true, children));
+    VFileEvent event = VfsImplUtil.generateCaseSensitivityChangedEvent(parent, childName, childPath);
+    if (event != null) {
+      myEvents.add(event);
+    }
   }
 
   private static boolean shouldScanDirectory(@NotNull VirtualFile parent, @NotNull Path child, @NotNull String childName) {
@@ -121,7 +137,7 @@ final class VfsEventGenerationHelper {
     Stack<List<ChildInfo>> stack = new Stack<>();
     ChildInfo fakeRoot = new ChildInfoImpl("", null, null, null);
     stack.push(new SmartList<>(fakeRoot));
-    FileVisitor<Path> visitor = new SimpleFileVisitor<Path>() {
+    FileVisitor<Path> visitor = new SimpleFileVisitor<>() {
       int checkCanceledCount;
       @Override
       public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {

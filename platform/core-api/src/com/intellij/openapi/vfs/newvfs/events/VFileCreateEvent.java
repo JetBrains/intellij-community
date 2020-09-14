@@ -35,9 +35,6 @@ public final class VFileCreateEvent extends VFileEvent {
     mySymlinkTarget = symlinkTarget;
     myChildren = children;
     myChildNameId = VirtualFileManager.getInstance().storeName(childName);
-    if (attributes != null && attributes.isDirectory() && !attributes.hasCaseSensitivityInformation()) {
-      throw new IllegalArgumentException("Must supply case sensitivity information but got: "+attributes);
-    }
   }
 
   @NotNull

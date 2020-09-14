@@ -111,11 +111,6 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
    *
    * @param file file to get attributes of.
    * @return attributes of a given file, or {@code null} if the file doesn't exist.
-   *
-   * <p><i>Note to implementers.<br>
-   * When returning file attributes for a directory, please supply correct case sensitivity (via {@link FileAttributes#FileAttributes(boolean, boolean, boolean, boolean, long, long, boolean, com.intellij.openapi.util.io.FileAttributes.CaseSensitivity)} constructor).
-   * When file attributes for a non-directory are returned, {@link FileAttributes.CaseSensitivity#UNKNOWN} should be used.
-   * </i>
    */
   public abstract @Nullable FileAttributes getAttributes(@NotNull VirtualFile file);
 

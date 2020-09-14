@@ -478,7 +478,12 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   @Override
   public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile parent, @NotNull String dir) throws IOException {
     getDelegate(parent).createChildDirectory(requestor, parent, dir);
+
     processEvent(new VFileCreateEvent(requestor, parent, dir, true, null, null, false, ChildInfo.EMPTY_ARRAY));
+    VFileEvent caseSensitivityEvent = VfsImplUtil.generateCaseSensitivityChangedEvent(parent, dir, null);
+    if (caseSensitivityEvent != null) {
+      processEvent(caseSensitivityEvent);
+    }
 
     final VirtualFile child = parent.findChild(dir);
     if (child == null) {
@@ -492,6 +497,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile parent, @NotNull String file) throws IOException {
     getDelegate(parent).createChildFile(requestor, parent, file);
     processEvent(new VFileCreateEvent(requestor, parent, file, false, null, null, false, null));
+    VFileEvent caseSensitivityEvent = VfsImplUtil.generateCaseSensitivityChangedEvent(parent, file, null);
+    if (caseSensitivityEvent != null) {
+      processEvent(caseSensitivityEvent);
+    }
 
     final VirtualFile child = parent.findChild(file);
     if (child == null) {
@@ -913,10 +922,15 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return false;
   }
 
-  private static boolean isContentChangeLikeHarmlessEvent(@NotNull VFileEvent event1) {
-    return event1 instanceof VFileContentChangeEvent ||
-           event1 instanceof VFilePropertyChangeEvent && (((VFilePropertyChangeEvent)event1).getPropertyName().equals(VirtualFile.PROP_WRITABLE)
-                                                          || ((VFilePropertyChangeEvent)event1).getPropertyName().equals(VirtualFile.PROP_ENCODING));
+  private static boolean isContentChangeLikeHarmlessEvent(@NotNull VFileEvent event) {
+    if (event instanceof VFileContentChangeEvent) return true;
+    if (event instanceof VFilePropertyChangeEvent) {
+      String prop = ((VFilePropertyChangeEvent)event).getPropertyName();
+      return prop.equals(VirtualFile.PROP_WRITABLE)
+             || prop.equals(VirtualFile.PROP_ENCODING)
+             || prop.equals(VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY);
+    }
+    return false;
   }
 
   // finds a group of non-conflicting events, validate them.
@@ -1229,6 +1243,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     if (attributes == null || !attributes.isDirectory()) {
       return null;
     }
+    // assume roots have the FS default case sensitivity
+    attributes = attributes.withCaseSensitivity(fs.isCaseSensitive() ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE);
     // avoid creating zillion of roots which are not actual roots
     String parentPath = fs instanceof LocalFileSystem ? PathUtil.getParentPath(rootPath) : "";
     if (!parentPath.isEmpty()) {
@@ -1289,7 +1305,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       @Override
       public VirtualFile getParent() { return null; }
     };
-    return VfsImplUtil.getAttributesWithCaseSensitivity(fs, file);
+    return fs.getAttributes(file);
   }
 
   @Override
@@ -1398,6 +1414,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
             executeSetTarget(file, (String)newValue);
             markForContentReloadRecursively(getFileId(file));
             break;
+          case VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY:
+            executeChangeCaseSensitivity(file, (FileAttributes.CaseSensitivity)newValue);
+            break;
         }
       }
     }
@@ -1405,6 +1424,13 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       // Exception applying single event should not prevent other events from applying.
       LOG.error(e);
     }
+  }
+
+  public static void executeChangeCaseSensitivity(@NotNull VirtualFile file, FileAttributes.CaseSensitivity newCaseSensitivity) {
+    VirtualDirectoryImpl directory = (VirtualDirectoryImpl)file;
+    setFlag(directory, Flags.CHILDREN_CASE_SENSITIVE, newCaseSensitivity == FileAttributes.CaseSensitivity.SENSITIVE);
+    setFlag(directory, Flags.CHILDREN_CASE_SENSITIVITY_CACHED, true);
+    directory.setCaseSensitivityFlag(newCaseSensitivity);
   }
 
   @Override
@@ -1468,7 +1494,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                                                     @Nullable String symlinkTarget) {
     if (attributes == null) {
       FakeVirtualFile virtualFile = new FakeVirtualFile(parent, name);
-      attributes = VfsImplUtil.getAttributesWithCaseSensitivity(fs, virtualFile);
+      attributes = fs.getAttributes(virtualFile);
       symlinkTarget = attributes != null && attributes.isSymLink() ? fs.resolveSymLink(virtualFile) : null;
     }
     return attributes == null ? null : pair(attributes, symlinkTarget);
@@ -1652,19 +1678,19 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   @Attributes
   static int fileAttributesToFlags(@NotNull FileAttributes attributes) {
     FileAttributes.CaseSensitivity sensitivity = attributes.areChildrenCaseSensitive();
-    assert attributes.isDirectory() == (sensitivity != FileAttributes.CaseSensitivity.UNKNOWN) : attributes;
-    boolean isCaseSensitive = attributes.isDirectory() && sensitivity == FileAttributes.CaseSensitivity.SENSITIVE;
-    return fileAttributesToFlags(attributes.isDirectory(), attributes.isWritable(), attributes.isSymLink(), attributes.isSpecial(), attributes.isHidden(), isCaseSensitive);
+    boolean isCaseSensitive = sensitivity == FileAttributes.CaseSensitivity.SENSITIVE;
+    return fileAttributesToFlags(attributes.isDirectory(), attributes.isWritable(), attributes.isSymLink(), attributes.isSpecial(), attributes.isHidden(), sensitivity != FileAttributes.CaseSensitivity.UNKNOWN, isCaseSensitive);
   }
 
   @Attributes
   public static int fileAttributesToFlags(boolean isDirectory, boolean isWritable,
-                                          boolean isSymLink, boolean isSpecial, boolean isHidden, boolean areChildrenCaseSensitive) {
+                                          boolean isSymLink, boolean isSpecial, boolean isHidden, boolean isChildrenCaseSensitivityCached, boolean areChildrenCaseSensitive) {
     return (isDirectory ? Flags.IS_DIRECTORY : 0) |
            (isWritable ? 0 : Flags.IS_READ_ONLY) |
            (isSymLink ? Flags.IS_SYMLINK : 0) |
            (isSpecial ? Flags.IS_SPECIAL : 0) |
            (isHidden ? Flags.IS_HIDDEN : 0) |
+           (isChildrenCaseSensitivityCached ? Flags.CHILDREN_CASE_SENSITIVITY_CACHED : 0) |
            (areChildrenCaseSensitive ? Flags.CHILDREN_CASE_SENSITIVE : 0);
   }
 }

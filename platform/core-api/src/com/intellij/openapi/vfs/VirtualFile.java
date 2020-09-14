@@ -91,9 +91,18 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   public static final @NonNls String PROP_SYMLINK_TARGET = "symlink";
 
   /**
+   * Used as a property name in the {@link VirtualFilePropertyEvent} fired when a case-sensitivity of a {@link VirtualFile} children has changed or became available.
+   * After this event the {@link VirtualFile#isCaseSensitive()} may return different value.
+   *
+   * @see VirtualFileListener#propertyChanged
+   * @see VirtualFilePropertyEvent#getPropertyName
+   */
+  public static final @NonNls String PROP_CHILDREN_CASE_SENSITIVITY = "CHILDREN_CASE_SENSITIVITY";
+
+  /**
    * Acceptable values for "propertyName" argument of {@link VFilePropertyChangeEvent#VFilePropertyChangeEvent VFilePropertyChangeEvent()}.
    */
-  @MagicConstant(stringValues = {PROP_NAME, PROP_ENCODING, PROP_HIDDEN, PROP_WRITABLE, PROP_SYMLINK_TARGET})
+  @MagicConstant(stringValues = {PROP_NAME, PROP_ENCODING, PROP_HIDDEN, PROP_WRITABLE, PROP_SYMLINK_TARGET, PROP_CHILDREN_CASE_SENSITIVITY})
   public @interface PropName {}
 
   private static final Logger LOG = Logger.getInstance(VirtualFile.class);

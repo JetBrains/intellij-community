@@ -54,12 +54,8 @@ public class FileAttributes {
    */
   public final long lastModified;
 
-  /**
-   * @deprecated Use {@link FileAttributes#FileAttributes(boolean, boolean, boolean, boolean, long, long, boolean, com.intellij.openapi.util.io.FileAttributes.CaseSensitivity)} instead to supply file case sensitivity information
-   */
-  @Deprecated
   public FileAttributes(boolean isDirectory, boolean isSpecial, boolean isSymlink, boolean isHidden, long length, long lastModified, boolean isWritable) {
-    this(flags(isDirectory, isSpecial, isSymlink, isHidden, isWritable, CaseSensitivity.UNKNOWN), length, lastModified);
+    this(isDirectory, isSpecial, isSymlink, isHidden, length, lastModified, isWritable, CaseSensitivity.UNKNOWN);
   }
   public enum CaseSensitivity {
     SENSITIVE,   // files in this directory are case-sensitive
@@ -85,8 +81,8 @@ public class FileAttributes {
                         boolean isWritable,
                         @NotNull CaseSensitivity caseSensitivity) {
     this(flags(isDirectory, isSpecial, isSymlink, isHidden, isWritable, caseSensitivity), length, lastModified);
-    if (isDirectory == (caseSensitivity == CaseSensitivity.UNKNOWN)) {
-      throw new IllegalArgumentException("For a directory case-sensitivity must be defined, for a file it must be UNSPECIFIED, but got: "+this);
+    if (!isDirectory && caseSensitivity != CaseSensitivity.UNKNOWN) {
+      throw new IllegalArgumentException("case-sensitivity for a file must be UNKNOWN, but got: "+this);
     }
   }
 
@@ -116,6 +112,12 @@ public class FileAttributes {
     if (!isWritable) flags |= READ_ONLY;
     int type_flags = isSpecial ? 0b11 : isDirectory ? 0b10 : 0b01;
     flags |= type_flags << TYPE_SHIFT;
+    flags = packSensitivityToFlags(sensitivity, flags);
+    return flags;
+  }
+
+  @Flags
+  private static byte packSensitivityToFlags(@NotNull CaseSensitivity sensitivity, byte flags) {
     int sensitivity_flags = sensitivity == CaseSensitivity.UNKNOWN ? 0 : sensitivity == CaseSensitivity.SENSITIVE ? 1 : 2;
     flags |= sensitivity_flags << CASE_SENSITIVITY_SHIFT;
     return flags;
@@ -214,12 +216,9 @@ public class FileAttributes {
   }
 
   @NotNull
-  public FileAttributes withCaseSensitivity(boolean isCaseSensitive) {
-    return new FileAttributes(isDirectory(), isSpecial(), isSymLink(), isHidden(),
-                              length, lastModified, isWritable(), isCaseSensitive ? CaseSensitivity.SENSITIVE : CaseSensitivity.INSENSITIVE);
-  }
-
-  public boolean hasCaseSensitivityInformation() {
-    return !isDirectory() || areChildrenCaseSensitive() != CaseSensitivity.UNKNOWN;
+  public FileAttributes withCaseSensitivity(@NotNull CaseSensitivity sensitivity) {
+    byte newFlags = (byte)(flags & ~(0b11 << CASE_SENSITIVITY_SHIFT));
+    newFlags = packSensitivityToFlags(sensitivity, newFlags);
+    return new FileAttributes(newFlags, length, lastModified);
   }
 }

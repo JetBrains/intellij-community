@@ -110,7 +110,7 @@ public final class FSRecords {
   private static volatile int ourLocalModificationCount;
   private static volatile boolean ourIsDisposed;
 
-  private static final int FREE_RECORD_FLAG = 0x200;
+  private static final int FREE_RECORD_FLAG = 0x400;
   static {
     assert (PersistentFS.Flags.ALL_VALID_FLAGS & FREE_RECORD_FLAG) == 0 : PersistentFS.Flags.ALL_VALID_FLAGS;
   }
