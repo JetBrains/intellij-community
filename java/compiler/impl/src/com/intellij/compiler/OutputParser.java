@@ -28,7 +28,9 @@ public abstract class OutputParser {
   protected final List<ParserAction> myParserActions = new ArrayList<>(10);
 
   public interface Callback {
-    String getNextLine();        
+    @NlsSafe
+    String getNextLine();
+    @NlsSafe
     String getCurrentLine();
     void pushBack(@Nls String line);
     void setProgressText(@NlsContexts.ProgressText String text);
@@ -56,7 +58,7 @@ public abstract class OutputParser {
     return false;
   }
 
-  protected static void addMessage(Callback callback, CompilerMessageCategory type, String message) {
+  protected static void addMessage(Callback callback, CompilerMessageCategory type, @Nls String message) {
     if(message == null || message.trim().length() == 0) {
       return;
     }

@@ -8,6 +8,7 @@ import com.intellij.ide.util.ChooseElementsDialog;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
@@ -84,7 +85,7 @@ public abstract class FacetBasedPackagingElementType<E extends PackagingElement<
 
   protected abstract @NlsContexts.Label String getDialogDescription();
 
-  protected abstract String getItemText(F item);
+  protected abstract @NlsSafe String getItemText(F item);
 
   private final class ChooseFacetsDialog extends ChooseElementsDialog<F> {
     private ChooseFacetsDialog(Project project, List<? extends F> items, @NlsContexts.DialogTitle String title, @NlsContexts.Label String description) {

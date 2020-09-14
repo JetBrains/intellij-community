@@ -621,7 +621,7 @@ public final class CompileDriver {
           }
           catch (Throwable t) {
             LOG.error("Error executing task", t);
-            context.addMessage(CompilerMessageCategory.INFORMATION, "Task "  + task.toString()  + " failed, please see idea.log for details", null, -1, -1);
+            context.addMessage(CompilerMessageCategory.INFORMATION, JavaCompilerBundle.message("error.task.0.execution.failed", task.toString()), null, -1, -1);
           }
 
         }
@@ -682,8 +682,7 @@ public final class CompileDriver {
         }
       }
       if (!modulesWithoutJdkAssigned.isEmpty()) {
-        showNotSpecifiedError("error.jdk.not.specified", projectSdkNotSpecified, modulesWithoutJdkAssigned, JavaCompilerBundle
-          .message("modules.classpath.title"));
+        showNotSpecifiedError("error.jdk.not.specified", projectSdkNotSpecified, modulesWithoutJdkAssigned, JavaCompilerBundle.message("modules.classpath.title"));
         return false;
       }
 

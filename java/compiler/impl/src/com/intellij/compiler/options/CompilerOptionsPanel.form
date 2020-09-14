@@ -43,7 +43,7 @@
             <properties>
               <componentStyle value="SMALL"/>
               <fontColor value="BRIGHTER"/>
-              <text value="label"/>
+              <text value=""/>
             </properties>
           </component>
         </children>
@@ -197,7 +197,7 @@
           <grid row="12" column="0" row-span="1" col-span="3" vsize-policy="3" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="Label"/>
+          <text value=""/>
         </properties>
       </component>
       <vspacer id="60b1c">
