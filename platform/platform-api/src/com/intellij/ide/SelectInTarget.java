@@ -16,6 +16,7 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 public interface SelectInTarget {
@@ -33,12 +34,14 @@ public interface SelectInTarget {
 
   /** Tool window this target is supposed to select in */
   @Nullable
+  @NonNls
   default String getToolWindowId() {
     return null;
   }
 
   /** aux view id specific for tool window, e.g. Project/Packages/J2EE tab inside project View */
   @Nullable
+  @NonNls
   default String getMinorViewId() {
     return null;
   }

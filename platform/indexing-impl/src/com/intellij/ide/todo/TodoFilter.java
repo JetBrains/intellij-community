@@ -16,12 +16,14 @@
 package com.intellij.ide.todo;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoPattern;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.SmartHashSet;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -32,11 +34,11 @@ import java.util.Set;
 public class TodoFilter implements Cloneable {
   private static final Logger LOG = Logger.getInstance(TodoFilter.class);
 
-  private static final String ATTRIBUTE_NAME = "name";
-  private static final String ELEMENT_PATTERN = "pattern";
-  private static final String ATTRIBUTE_INDEX = "index";
+  private static final @NonNls String ATTRIBUTE_NAME = "name";
+  private static final @NonNls String ELEMENT_PATTERN = "pattern";
+  private static final @NonNls String ATTRIBUTE_INDEX = "index";
 
-  private String myName;
+  private @NlsSafe String myName;
   private Set<TodoPattern> myTodoPatterns;
 
   public TodoFilter() {
@@ -67,11 +69,13 @@ public class TodoFilter implements Cloneable {
   /**
    * @return filter's name. That is not {@code null} string.
    */
+  @NotNull
+  @NlsSafe
   public String getName() {
     return myName;
   }
 
-  public void setName(@NotNull String name) {
+  public void setName(@NotNull @NlsSafe String name) {
     myName = name;
   }
 

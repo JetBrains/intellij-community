@@ -845,6 +845,7 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
     }
 
     @NotNull
+    @NlsSafe
     private String getLocation(boolean allowEmpty) {
       VirtualFile dir = ProjectFileNode.findBaseDir(getProject());
       String location = dir == null ? null : VfsUtilCore.getRelativePath(getVirtualFile(), dir);

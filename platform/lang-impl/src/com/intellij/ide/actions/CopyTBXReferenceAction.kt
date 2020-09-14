@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.util.PlatformUtils.*
 import com.intellij.util.io.encodeUrlQueryParameter
+import org.jetbrains.annotations.NonNls
 import java.util.stream.Collectors
 import java.util.stream.IntStream
 
@@ -85,9 +86,9 @@ object CopyTBXReferenceAction {
     }
 
     val selectionParameters = getSelectionParameters(editor) ?: ""
-    val projectParameter = "$PROJECT_NAME_KEY=${project.name}"
+    val projectParameter = "$PROJECT_NAME_KEY=${project.name}" // NON-NLS
 
-    return "$JETBRAINS_NAVIGATE$tool/$NAVIGATE_COMMAND/$REFERENCE_TARGET?$projectParameter$refsParameters$selectionParameters"
+    return "$JETBRAINS_NAVIGATE$tool/$NAVIGATE_COMMAND/$REFERENCE_TARGET?$projectParameter$refsParameters$selectionParameters" // NON-NLS
   }
 
   private fun getSelectionParameters(editor: Editor?): String? {
@@ -106,8 +107,12 @@ object CopyTBXReferenceAction {
     }
   }
 
+  @NonNls
   private fun getSelectionParameters(editor: Editor, caret: Caret, index: String): String? =
-    getSelectionRange(editor, caret)?.let { "&$SELECTION$index=$it" }
+    getSelectionRange(editor, caret)?.let {
+      @Suppress("HardCodedStringLiteral")
+      "&$SELECTION$index=$it"
+    }
 
   private fun getSelectionRange(editor: Editor, caret: Caret): String? {
     if (!caret.hasSelection()) {
