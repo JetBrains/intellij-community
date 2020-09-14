@@ -51,6 +51,20 @@ class ComboBoxWithAutoCompletion<E>(model: ComboBoxModel<E>,
     selectingItem = false
   }
 
+  override fun getSelectedItem(): Any? {
+    val text = getText()
+    if (text.isNullOrEmpty()) {
+      return super.getSelectedItem()
+    }
+    for (i in 0 until itemCount) {
+      val item = getItemAt(i)
+      if (item.toString() == text) {
+        return item
+      }
+    }
+    return null
+  }
+
   override fun requestFocus() {
     myEditableComponent?.requestFocus()
   }
