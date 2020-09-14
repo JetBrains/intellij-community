@@ -103,6 +103,9 @@ public class TypeConstraints {
   public static TypeConstraint instanceOf(@NotNull PsiType type) {
     if (type instanceof PsiLambdaExpressionType || type instanceof PsiMethodReferenceType) return TOP;
     type = normalizeType(type);
+    if (type instanceof PsiDisjunctionType) {
+      type = ((PsiDisjunctionType)type).getLeastUpperBound();
+    }
     if (type instanceof PsiIntersectionType) {
       PsiType[] conjuncts = ((PsiIntersectionType)type).getConjuncts();
       TypeConstraint result = TOP;

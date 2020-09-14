@@ -103,6 +103,8 @@ public class EventLogStatisticsService implements StatisticsService {
     EventLogBuildType defaultBuildType = getDefaultBuildType(info);
     LogEventFilter baseFilter = settings.getBaseEventFilter();
     try {
+      EventLogConnectionSettings connectionSettings = info.getConnectionSettings();
+
       decorator.onLogsLoaded(logs.size());
       final List<File> toRemove = new ArrayList<>(logs.size());
       int size = Math.min(MAX_FILES_TO_SEND, logs.size());
@@ -125,7 +127,7 @@ public class EventLogStatisticsService implements StatisticsService {
         }
 
         try {
-          StatsHttpRequests.post(serviceUrl, info.getUserAgent()).
+          StatsHttpRequests.post(serviceUrl, connectionSettings).
             withBody(LogEventSerializer.INSTANCE.toString(recordRequest), APPLICATION_JSON).
             succeed((r, code) -> {
               toRemove.add(file);

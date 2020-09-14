@@ -44,33 +44,9 @@ public abstract class ContractValue {
   }
   
   public DfaCondition fromCall(DfaValueFactory factory, PsiCallExpression call) {
-    PsiMethod method = call.resolveMethod();
-    if (method == null) return DfaCondition.getUnknown();
-    PsiExpressionList argumentList = call.getArgumentList();
-    if (argumentList == null) return DfaCondition.getUnknown();
-    DfaValue qualifierValue = null;
-    if (call instanceof PsiMethodCallExpression) {
-      PsiExpression qualifier = ((PsiMethodCallExpression)call).getMethodExpression().getQualifierExpression();
-      qualifierValue = factory.createValue(qualifier);
-    }
-    if (qualifierValue == null) {
-      qualifierValue = factory.getUnknown();
-    }
-    boolean varArgCall = MethodCallUtils.isVarArgCall(call);
-    PsiExpression[] args = argumentList.getExpressions();
-    PsiParameter[] parameters = method.getParameterList().getParameters();
-    DfaValue[] argValues = new DfaValue[parameters.length];
-    for (int i = 0; i < parameters.length; i++) {
-      DfaValue argValue = null;
-      if (i < args.length && (!varArgCall || i < parameters.length - 1)) {
-        argValue = factory.createValue(args[i]);
-      }
-      if (argValue == null) {
-        argValue = factory.getUnknown();
-      }
-      argValues[i] = argValue;
-    }
-    return makeCondition(factory, new DfaCallArguments(qualifierValue, argValues, MutationSignature.fromCall(call)));
+    DfaCallArguments arguments = DfaCallArguments.fromCall(factory, call);
+    if (arguments == null) return DfaCondition.getUnknown();
+    return makeCondition(factory, arguments);
   }
 
   /**
@@ -112,11 +88,11 @@ public abstract class ContractValue {
     return toString();
   }
 
-  public PsiExpression findLeftPlace(PsiCallExpression call) {
-    return null;
-  }
-
-  public PsiExpression findRightPlace(PsiCallExpression call) {
+  /**
+   * @param call call to find the place in
+   * @return the expression in the call that is the most relevant to the current value
+   */
+  public PsiExpression findPlace(PsiCallExpression call) {
     return null;
   }
 
@@ -162,6 +138,14 @@ public abstract class ContractValue {
     }
 
     @Override
+    public PsiExpression findPlace(PsiCallExpression call) {
+      if (call instanceof PsiMethodCallExpression) {
+        return ((PsiMethodCallExpression)call).getMethodExpression().getQualifierExpression();
+      }
+      return null;
+    }
+
+    @Override
     @NotNull DfaCallArguments fixArgument(@NotNull DfaCallArguments arguments, @NotNull UnaryOperator<DfType> converter) {
       if (arguments.myQualifier instanceof DfaTypeValue) {
         DfType type = arguments.myQualifier.getDfType();
@@ -192,6 +176,18 @@ public abstract class ContractValue {
         return factory.getUnknown();
       }
       return arguments.myArguments[myIndex];
+    }
+
+    @Override
+    public PsiExpression findPlace(PsiCallExpression call) {
+      PsiExpressionList list = call.getArgumentList();
+      if (list != null) {
+        PsiExpression[] args = list.getExpressions();
+        if (myIndex < args.length - 1 || (myIndex == args.length - 1 && !MethodCallUtils.isVarArgCall(call))) {
+          return args[myIndex];
+        }
+      }
+      return null;
     }
 
     @Override
@@ -302,6 +298,11 @@ public abstract class ContractValue {
     }
 
     @Override
+    public PsiExpression findPlace(PsiCallExpression call) {
+      return myQualifier.findPlace(call);
+    }
+
+    @Override
     public String getPresentationText(PsiMethod method) {
       return myQualifier.getPresentationText(method) + "." + myField + (myField == SpecialField.ARRAY_LENGTH ? "" : "()");
     }
@@ -312,7 +313,10 @@ public abstract class ContractValue {
     }
   }
 
-  private static class Condition extends ContractValue {
+  /**
+   * A contract value that represents a relation between two other values
+   */
+  public static class Condition extends ContractValue {
     private final ContractValue myLeft, myRight;
     private final RelationType myRelationType;
 
@@ -418,34 +422,25 @@ public abstract class ContractValue {
       return myLeft.getPresentationText(method) + " " + myRelationType + " " + myRight.getPresentationText(method);
     }
 
-    @Override
-    public PsiExpression findLeftPlace(PsiCallExpression call) {
-      return findPlace(call, myLeft);
+    /**
+     * @return condition relation type
+     */
+    public @NotNull RelationType getRelationType() {
+      return myRelationType;
     }
 
-    @Override
-    public PsiExpression findRightPlace(PsiCallExpression call) {
-      return findPlace(call, myRight);
+    /**
+     * @return condition left operand
+     */
+    public @NotNull ContractValue getLeft() {
+      return myLeft;
     }
 
-    private static PsiExpression findPlace(PsiCallExpression call, ContractValue value) {
-      while (value instanceof Spec) {
-        value = ((Spec)value).myQualifier;
-      }
-      if (value instanceof Argument) {
-        PsiExpressionList list = call.getArgumentList();
-        if (list != null) {
-          PsiExpression[] args = list.getExpressions();
-          int index = ((Argument)value).myIndex;
-          if (index < args.length - 1 || (index == args.length - 1 && !MethodCallUtils.isVarArgCall(call))) {
-            return args[index];
-          }
-        }
-      }
-      if (value instanceof Qualifier && call instanceof PsiMethodCallExpression) {
-        return ((PsiMethodCallExpression)call).getMethodExpression().getQualifierExpression();
-      }
-      return null;
+    /**
+     * @return condition right operand
+     */
+    public @NotNull ContractValue getRight() {
+      return myRight;
     }
 
     @Override

@@ -197,6 +197,29 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       return MyResult.castVariable;
     }
 
+    JavaChainLookupElement chain = item.as(JavaChainLookupElement.CLASS_CONDITION_KEY);
+    if (chain != null) {
+      if (myCompletionType == CompletionType.BASIC) {
+        return MyResult.basicChain;
+      }
+      Object qualifier = chain.getQualifier().getObject();
+      if (qualifier instanceof PsiVariable && PsiUtil.isJvmLocalVariable((PsiVariable)qualifier)) {
+        return MyResult.variable;
+      }
+      if (qualifier instanceof PsiField) {
+        return MyResult.qualifiedWithField;
+      }
+      if (isGetter(qualifier)) {
+        return MyResult.qualifiedWithGetter;
+      }
+      if (chain.getQualifier().getUserData(INTRODUCED_VARIABLE) == Boolean.TRUE) {
+        return MyResult.introducedVariable;
+      }
+      if (myCompletionType == CompletionType.SMART && qualifier instanceof PsiMethod && isGetter(object)) {
+        return MyResult.getterQualifiedByMethod;
+      }
+    }
+
     if (object instanceof PsiLocalVariable || object instanceof PsiParameter ||
         object instanceof PsiThisExpression ||
         object instanceof PsiField && !((PsiField)object).hasModifierProperty(PsiModifier.STATIC)) {
@@ -236,28 +259,6 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     }
     if (item instanceof TypeArgumentCompletionProvider.TypeArgsLookupElement) {
       return MyResult.expectedTypeArgument;
-    }
-    final JavaChainLookupElement chain = item.as(JavaChainLookupElement.CLASS_CONDITION_KEY);
-    if (chain != null) {
-      if (myCompletionType == CompletionType.BASIC) {
-        return MyResult.basicChain;
-      }
-      Object qualifier = chain.getQualifier().getObject();
-      if (qualifier instanceof PsiVariable && PsiUtil.isJvmLocalVariable((PsiVariable)qualifier)) {
-        return MyResult.variable;
-      }
-      if (qualifier instanceof PsiField) {
-        return MyResult.qualifiedWithField;
-      }
-      if (isGetter(qualifier)) {
-        return MyResult.qualifiedWithGetter;
-      }
-      if (chain.getQualifier().getUserData(INTRODUCED_VARIABLE) == Boolean.TRUE) {
-        return MyResult.introducedVariable;
-      }
-      if (myCompletionType == CompletionType.SMART && qualifier instanceof PsiMethod && isGetter(object)) {
-        return MyResult.getterQualifiedByMethod;
-      }
     }
 
     if (myCompletionType == CompletionType.SMART) {

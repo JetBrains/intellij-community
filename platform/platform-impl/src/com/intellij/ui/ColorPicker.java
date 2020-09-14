@@ -21,6 +21,7 @@ import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.colorpicker.ColorPickerBuilder;
@@ -406,6 +407,14 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   }
 
   public static void showColorPickerPopup(@Nullable final Project project, @Nullable Color currentColor, @NotNull final ColorListener listener, @Nullable RelativePoint location, boolean showAlpha) {
+    if(!isEnoughSpaceToShowPopup()) {
+      Color color = showDialog(IdeFocusManager.getGlobalInstance().getFocusOwner(), IdeBundle.message("dialog.title.choose.color"),
+                               currentColor, showAlpha, null, false);
+      if (color != null) {
+        listener.colorChanged(color, null);
+      }
+      return;
+    }
     Ref<LightCalloutPopup> ref = Ref.create();
 
     ColorListener colorListener = new ColorListener() {
@@ -447,6 +456,14 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     }
     popup.show(location.getScreenPoint());
     updatePointer(ref);
+  }
+
+  private static boolean isEnoughSpaceToShowPopup() {
+    DialogWrapper currentDialog = DialogWrapper.findInstanceFromFocus();
+    if (currentDialog != null && (currentDialog.getWindow().getWidth() < 500 || currentDialog.getWindow().getHeight() < 500)) {
+      return false;
+    }
+    return true;
   }
 
   private static void updatePointer(Ref<LightCalloutPopup> ref) {

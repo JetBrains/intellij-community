@@ -220,7 +220,12 @@ open class MarketplaceRequests {
     val externalUpdateId = pluginNode.externalUpdateId
     if (externalPluginId == null || externalUpdateId == null) return pluginNode
     val ideCompatibleUpdate = IdeCompatibleUpdate(externalUpdateId = externalUpdateId, externalPluginId = externalPluginId)
-    return loadPluginDescriptor(pluginNode.pluginId.idString, ideCompatibleUpdate)
+    return loadPluginDescriptor(pluginNode.pluginId.idString, ideCompatibleUpdate).apply {
+      // These three fields are not present in `IntellijUpdateMetadata`, but present in `MarketplaceSearchPluginData`
+      rating = pluginNode.rating
+      downloads = pluginNode.downloads
+      date = pluginNode.date
+    }
   }
 
   @Throws(IOException::class)

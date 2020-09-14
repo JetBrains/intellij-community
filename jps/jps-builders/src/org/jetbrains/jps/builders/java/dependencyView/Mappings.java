@@ -1699,11 +1699,12 @@ public class Mappings {
 
           if (harmful || valueChanged || becameLessAccessible) {
             if (myProcessConstantsIncrementally) {
-              debug("Potentially inlined field changed it's access or value => affecting field usages");
+              debug("Potentially inlined field changed its access or value => affecting field usages and static member import usages");
               myFuture.affectFieldUsages(field, propagated.get(), field.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
+              myFuture.affectStaticMemberImportUsages(field.name, it.name, propagated.get(), state.myAffectedUsages, state.myDependants);
             }
             else {
-              debug("Potentially inlined field changed it's access or value => a switch to non-incremental mode requested");
+              debug("Potentially inlined field changed its access or value => a switch to non-incremental mode requested");
               if (!incrementalDecision(it.name, field, myAffectedFiles, myFilesToCompile, myFilter)) {
                 debug("End of Differentiate, returning false");
                 return false;

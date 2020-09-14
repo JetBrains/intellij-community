@@ -144,7 +144,9 @@ public final class TouchBarsManager {
     project.getMessageBus().connect().subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
       @Override
       public void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler) {
-        ApplicationManager.getApplication().invokeLater(TouchBarsManager::_updateCurrentTouchbar);
+        ApplicationManager.getApplication().invokeLater(() -> {
+          _updateTouchbar(project);
+        });
       }
 
       @Override
@@ -165,7 +167,9 @@ public final class TouchBarsManager {
           // System.out.println("processTerminated, dbgSessionsCount=" + pd.getDbgSessions());
           return !_hasAnyActiveSession(project, handler);
         });
-        ApplicationManager.getApplication().invokeLater(TouchBarsManager::_updateCurrentTouchbar);
+        ApplicationManager.getApplication().invokeLater(() -> {
+          _updateTouchbar(project);
+        });
       }
     });
   }
@@ -541,7 +545,12 @@ public final class TouchBarsManager {
     }
   }
 
-  private static void _updateCurrentTouchbar() {
+  private static void _updateTouchbar(@NotNull Project project) {
+    BarContainer tobForProject = ourStack.findTopProjectContainer(project);
+    if (tobForProject != null) {
+      showContainer(tobForProject);
+    }
+
     final TouchBar top = ourStack.getTopTouchBar();
     if (top != null) {
       top.updateActionItems();

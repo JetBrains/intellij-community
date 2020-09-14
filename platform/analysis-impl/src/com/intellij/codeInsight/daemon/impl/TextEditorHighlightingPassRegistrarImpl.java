@@ -35,7 +35,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
   private final AtomicInteger nextAvailableId = new AtomicInteger();
   private boolean checkedForCycles;
   private final Project myProject;
-  private boolean runInspectionsAfterCompletionOfGeneralHighlightPass;
+  private boolean serializeCodeInsightPasses;
 
   public TextEditorHighlightingPassRegistrarImpl(@NotNull Project project) {
     myProject = project;
@@ -73,14 +73,14 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
   }
 
   @ApiStatus.Internal
-  void runInspectionsAfterCompletionOfGeneralHighlightPass(boolean flag) {
-    runInspectionsAfterCompletionOfGeneralHighlightPass = flag;
+  void serializeCodeInsightPasses(boolean flag) {
+    serializeCodeInsightPasses = flag;
     reRegisterFactories();
   }
 
   @ApiStatus.Internal
-  boolean isRunInspectionsAfterCompletionOfGeneralHighlightPass() {
-    return runInspectionsAfterCompletionOfGeneralHighlightPass;
+  boolean isSerializeCodeInsightPasses() {
+    return serializeCodeInsightPasses;
   }
 
   private static class PassConfig {

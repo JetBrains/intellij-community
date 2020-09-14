@@ -125,12 +125,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     registerServiceInstance(Application.class, this, ComponentManagerImpl.getFakeCorePluginDescriptor());
 
     boolean strictMode = isUnitTestMode || isInternal;
-
-    // Android Studio: b/168308670
-    if (isUnitTestMode && PlatformUtils.isAndroidStudio()) {
-      strictMode = false;
-    }
-
     BundleBase.assertOnMissedKeys(strictMode);
 
     // do not crash AWT on exceptions

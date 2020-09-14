@@ -79,7 +79,7 @@ public class OverrideImplementExploreUtil {
 
       Map<MethodSignature, PsiMethod> map = hisClass.isInterface() || method.hasModifierProperty(PsiModifier.ABSTRACT) ? abstracts : concretes;
       fillMap(signature, method, map);
-      if (isDefaultMethod(aClass, method)) {
+      if (shouldAppearInOverrideList(aClass, method)) {
         fillMap(signature, method, concretes);
       }
     }
@@ -144,7 +144,7 @@ public class OverrideImplementExploreUtil {
       if (concrete == null
           || PsiUtil.getAccessLevel(concrete.getModifierList()) < PsiUtil.getAccessLevel(abstractOne.getModifierList())
           || !abstractOne.getContainingClass().isInterface() && abstractOne.getContainingClass().isInheritor(concrete.getContainingClass(), true)
-          || isDefaultMethod(aClass, abstractOne)) {
+          || shouldAppearInOverrideList(aClass, abstractOne)) {
         if (finals.get(signature) == null) {
           PsiSubstitutor subst = correctSubstitutor(abstractOne, signature.getSubstitutor());
           CandidateInfo info = new CandidateInfo(abstractOne, subst);
@@ -163,6 +163,13 @@ public class OverrideImplementExploreUtil {
         }
       }
     }
+  }
+
+  private static boolean shouldAppearInOverrideList(@NotNull PsiClass aClass, PsiMethod abstractOne) {
+    return isDefaultMethod(aClass, abstractOne) ||
+           // abstract methods from java.lang.Record (equals/hashCode/toString) are implicitly implemented in subclasses
+           // so it could be reasonable to expect them in 'override' method dialog
+           CommonClassNames.JAVA_LANG_RECORD.equals(Objects.requireNonNull(abstractOne.getContainingClass()).getQualifiedName());
   }
 
   private static boolean preferLeftForImplement(@NotNull PsiMethod left, @NotNull PsiMethod right) {

@@ -434,70 +434,69 @@ public final class PatternCompiler {
       else {
         // the same variable can occur multiple times in a single template
         // no need to process it more than once
-
-        MatchVariableConstraint constraint = options.getVariableConstraint(name);
-        if (constraint == null) {
-          // we do not edited the constraints
-          constraint = options.addNewVariableConstraint(name);
-        }
-
-        final SubstitutionHandler handler = result.createSubstitutionHandler(
-          name,
-          compiledName,
-          constraint.isPartOfSearchResults(),
-          constraint.getMinCount(),
-          constraint.getMaxCount(),
-          constraint.isGreedy()
-        );
-        handler.setRepeatedVar(repeated);
-
-        if (constraint.isWithinHierarchy()) {
-          handler.setSubtype(true);
-        }
-
-        if (constraint.isStrictlyWithinHierarchy()) {
-          handler.setStrictSubtype(true);
-        }
-
-        if (!StringUtil.isEmptyOrSpaces(constraint.getRegExp())) {
-          MatchPredicate predicate = new RegExpPredicate(
-            constraint.getRegExp(),
-            options.isCaseSensitiveMatch(),
-            name,
-            constraint.isWholeWordsOnly(),
-            constraint.isPartOfSearchResults()
-          );
-          if (constraint.isInvertRegExp()) {
-            predicate = new NotPredicate(predicate);
+        try {
+          MatchVariableConstraint constraint = options.getVariableConstraint(name);
+          if (constraint == null) {
+            // we do not edited the constraints
+            constraint = options.addNewVariableConstraint(name);
           }
-          addPredicate(handler, predicate);
-        }
 
-        if (!StringUtil.isEmptyOrSpaces(constraint.getReferenceConstraint())) {
-          try {
+          final SubstitutionHandler handler = result.createSubstitutionHandler(
+            name,
+            compiledName,
+            constraint.isPartOfSearchResults(),
+            constraint.getMinCount(),
+            constraint.getMaxCount(),
+            constraint.isGreedy()
+          );
+          handler.setRepeatedVar(repeated);
+
+          if (constraint.isWithinHierarchy()) {
+            handler.setSubtype(true);
+          }
+
+          if (constraint.isStrictlyWithinHierarchy()) {
+            handler.setStrictSubtype(true);
+          }
+
+          if (!StringUtil.isEmptyOrSpaces(constraint.getRegExp())) {
+            MatchPredicate predicate = new RegExpPredicate(
+              constraint.getRegExp(),
+              options.isCaseSensitiveMatch(),
+              name,
+              constraint.isWholeWordsOnly(),
+              constraint.isPartOfSearchResults()
+            );
+            if (constraint.isInvertRegExp()) {
+              predicate = new NotPredicate(predicate);
+            }
+            addPredicate(handler, predicate);
+          }
+
+          if (!StringUtil.isEmptyOrSpaces(constraint.getReferenceConstraint())) {
             MatchPredicate predicate = new ReferencePredicate(constraint.getReferenceConstraint(), options.getFileType(), project);
             if (constraint.isInvertReference()) {
               predicate = new NotPredicate(predicate);
             }
             addPredicate(handler, predicate);
-          } catch (MalformedPatternException e) {
-            if (checkForErrors) throw e;
           }
-        }
 
-        addExtensionPredicates(options, constraint, handler);
-        addScriptConstraint(project, name, constraint, handler, variableNames, options, checkForErrors);
+          addExtensionPredicates(options, constraint, handler);
+          addScriptConstraint(project, name, constraint, handler, variableNames, options, checkForErrors);
 
-        if (!StringUtil.isEmptyOrSpaces(constraint.getContainsConstraint())) {
-          MatchPredicate predicate = new ContainsPredicate(name, constraint.getContainsConstraint());
-          if (constraint.isInvertContainsConstraint()) {
-            predicate = new NotPredicate(predicate);
+          if (!StringUtil.isEmptyOrSpaces(constraint.getContainsConstraint())) {
+            MatchPredicate predicate = new ContainsPredicate(name, constraint.getContainsConstraint());
+            if (constraint.isInvertContainsConstraint()) {
+              predicate = new NotPredicate(predicate);
+            }
+            addPredicate(handler, predicate);
           }
-          addPredicate(handler, predicate);
-        }
 
-        if (!StringUtil.isEmptyOrSpaces(constraint.getWithinConstraint())) {
-          assert false;
+          if (!StringUtil.isEmptyOrSpaces(constraint.getWithinConstraint())) {
+            assert false;
+          }
+        } catch (MalformedPatternException e) {
+          if (checkForErrors) throw e;
         }
       }
       prevOffset = offset;
@@ -514,16 +513,20 @@ public final class PatternCompiler {
         constraint.isGreedy()
       );
 
-      if (!StringUtil.isEmptyOrSpaces(constraint.getWithinConstraint())) {
-        MatchPredicate predicate = new WithinPredicate(constraint.getWithinConstraint(), options.getFileType(), project);
-        if (constraint.isInvertWithinConstraint()) {
-          predicate = new NotPredicate(predicate);
+      try {
+        if (!StringUtil.isEmptyOrSpaces(constraint.getWithinConstraint())) {
+          MatchPredicate predicate = new WithinPredicate(constraint.getWithinConstraint(), options.getFileType(), project);
+          if (constraint.isInvertWithinConstraint()) {
+            predicate = new NotPredicate(predicate);
+          }
+          addPredicate(handler, predicate);
         }
-        addPredicate(handler, predicate);
-      }
 
-      addExtensionPredicates(options, constraint, handler);
-      addScriptConstraint(project, Configuration.CONTEXT_VAR_NAME, constraint, handler, variableNames, options, checkForErrors);
+        addExtensionPredicates(options, constraint, handler);
+        addScriptConstraint(project, Configuration.CONTEXT_VAR_NAME, constraint, handler, variableNames, options, checkForErrors);
+      } catch (MalformedPatternException e) {
+        if (checkForErrors) throw e;
+      }
     }
 
     buf.append(text.substring(prevOffset));

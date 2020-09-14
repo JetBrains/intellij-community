@@ -576,26 +576,8 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       if (normalizedPath.startsWith(customRootPath)) return customRootPath;
     }
 
-    if (SystemInfo.isWindows) {
-      if (normalizedPath.length() >= 2 && normalizedPath.charAt(1) == ':') {
-        // drive letter
-        return StringUtil.toUpperCase(normalizedPath.substring(0, 2));
-      }
-      if (normalizedPath.startsWith("//")) {
-        // UNC (https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-dtyp/62e862f4-2a51-452e-8eeb-dc4ff5ee33cc)
-        int p1 = normalizedPath.indexOf('/', 2);
-        if (p1 > 2) {
-          int p2 = normalizedPath.indexOf('/', p1 + 1);
-          if (p2 > p1 + 1) return normalizedPath.substring(0, p2);
-          if (p2 < 0) return normalizedPath;
-        }
-      }
-    }
-    else if (StringUtil.startsWithChar(normalizedPath, '/')) {
-      return "/";
-    }
-
-    return "";
+    String rootPath = FileUtil.extractRootPath(normalizedPath);
+    return StringUtil.notNullize(rootPath);
   }
 
   @Override

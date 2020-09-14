@@ -390,7 +390,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
         PsiMethod method = (PsiMethod)resolve;
         ret = method.getReturnType();
         if (ret != null) {
-          PsiUtil.ensureValidType(ret);
+          PsiUtil.ensureValidType(ret, method);
         }
         owner = method;
       }

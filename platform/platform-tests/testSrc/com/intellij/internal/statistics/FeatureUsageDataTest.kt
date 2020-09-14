@@ -1,12 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics
 
+import com.intellij.internal.statistic.collectors.fus.ActionCustomPlaceAllowlist
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Version
 import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.testFramework.registerExtension
 import org.junit.Assert
 import org.junit.Test
 
@@ -463,5 +466,54 @@ class FeatureUsageDataTest : HeavyPlatformTestCase() {
     val build = copied.build()
     Assert.assertTrue(build.size == 1)
     Assert.assertTrue(build["place"] == "EditorToolbar")
+  }
+
+  @Test
+  fun `test add registered custom place`() {
+    registerCustomActionPlace("MY_REGISTERED_PLACE")
+
+    assertPlaceAllowed("MY_REGISTERED_PLACE")
+  }
+
+  @Test
+  fun `test add multiple registered custom places`() {
+    registerCustomActionPlace("FIRST;SECOND")
+
+    assertPlaceAllowed("FIRST")
+    assertPlaceAllowed("SECOND")
+    assertPlaceUnknown("THIRD")
+  }
+
+  @Test
+  fun `test add multiple extensions with registered custom places`() {
+    registerCustomActionPlace("MULTIPLE_EXTENSIONS_FIRST;MULTIPLE_EXTENSIONS_SECOND")
+
+    assertPlaceAllowed("MULTIPLE_EXTENSIONS_FIRST")
+    assertPlaceAllowed("MULTIPLE_EXTENSIONS_SECOND")
+    assertPlaceUnknown("MULTIPLE_EXTENSIONS_FORTH")
+
+    registerCustomActionPlace("MULTIPLE_EXTENSIONS_THIRD")
+    assertPlaceAllowed("MULTIPLE_EXTENSIONS_THIRD")
+    assertPlaceUnknown("MULTIPLE_EXTENSIONS_FORTH")
+  }
+
+  private fun assertPlaceAllowed(place: String) {
+    val build = FeatureUsageData().addPlace(place).build()
+    Assert.assertTrue(build.size == 1)
+    Assert.assertTrue(build.containsKey("place"))
+    Assert.assertTrue(build["place"] == place)
+  }
+
+  private fun assertPlaceUnknown(place: String) {
+    val build = FeatureUsageData().addPlace(place).build()
+    Assert.assertTrue(build.size == 1)
+    Assert.assertTrue(build.containsKey("place"))
+    Assert.assertTrue(build["place"] == ActionPlaces.UNKNOWN)
+  }
+
+  private fun registerCustomActionPlace(place: String) {
+    val extension = ActionCustomPlaceAllowlist()
+    extension.places = place
+    ApplicationManager.getApplication().registerExtension(ActionCustomPlaceAllowlist.EP_NAME, extension, testRootDisposable)
   }
 }

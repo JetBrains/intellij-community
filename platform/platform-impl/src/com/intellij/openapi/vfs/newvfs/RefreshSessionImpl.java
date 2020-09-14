@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.codeInsight.daemon.impl.FileStatusMap;
+import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -14,6 +15,7 @@ import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -24,9 +26,13 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 class RefreshSessionImpl extends RefreshSession {
   private static final Logger LOG = Logger.getInstance(RefreshSession.class);
+
+  private static final int REFRESH_SESSION_DURATION_REPORT_THRESHOLD_SECONDS =
+    SystemProperties.getIntProperty("refresh.session.duration.report.threshold.seconds", -1);
 
   private static final AtomicLong ID_COUNTER = new AtomicLong(0);
 
@@ -119,11 +125,9 @@ class RefreshSessionImpl extends RefreshSession {
         ((LocalFileSystemImpl)fs).markSuspiciousFilesDirty(workQueue);
       }
 
-      long t = 0;
-      if (LOG.isTraceEnabled()) {
-        LOG.trace("scanning " + workQueue);
-        t = System.currentTimeMillis();
-      }
+      if (LOG.isTraceEnabled()) LOG.trace("scanning " + workQueue);
+      long t = System.currentTimeMillis();
+      PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
 
       int count = 0;
       refresh: do {
@@ -151,9 +155,18 @@ class RefreshSessionImpl extends RefreshSession {
       }
       while (!myCancelled && myIsRecursive && count < 3 && ContainerUtil.exists(workQueue, f -> ((NewVirtualFile)f).isDirty()));
 
-      if (t != 0) {
-        t = System.currentTimeMillis() - t;
-        LOG.trace((myCancelled ? "cancelled, " : "done, ") + t + " ms, events " + myEvents);
+      t = System.currentTimeMillis() - t;
+      if (LOG.isTraceEnabled()) {
+        LOG.trace((myCancelled ? "cancelled, " : "done, ") + t + " ms, tries " + count + ", events " + myEvents);
+      }
+      else if (REFRESH_SESSION_DURATION_REPORT_THRESHOLD_SECONDS > 0 && t > REFRESH_SESSION_DURATION_REPORT_THRESHOLD_SECONDS * 1000L) {
+        snapshot.logResponsivenessSinceCreation(String.format(
+          "Refresh session (queue size: %s, file types: %s, result: %s, tries: %s, events: %d)",
+          workQueue.size(),
+          workQueue.stream().collect(Collectors.groupingBy(f -> f.isDirectory() ? "dir" : String.valueOf(f.getExtension()), Collectors.counting())),
+          myCancelled ? "cancelled" : "done",
+          count,
+          myEvents.size()));
       }
     }
 

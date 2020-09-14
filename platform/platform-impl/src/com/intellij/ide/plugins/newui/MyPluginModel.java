@@ -130,6 +130,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     Map<PluginId, Boolean> enabledMap = getEnabledMap();
     List<String> dependencies = new ArrayList<>();
 
+    updatePluginDependencies();
     for (Map.Entry<PluginId, Set<PluginId>> entry : getDependentToRequiredListMap().entrySet()) {
       PluginId id = entry.getKey();
 
@@ -226,7 +227,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
         continue;
       }
       boolean shouldEnable = isEnabled(pluginId);
-      if (shouldEnable != descriptor.isEnabled()) {
+      boolean isEnabled = !PluginManagerCore.isDisabled(pluginId);
+      if (shouldEnable != isEnabled) {
         if (shouldEnable) {
           pluginDescriptorsToEnable.add(descriptor);
         }

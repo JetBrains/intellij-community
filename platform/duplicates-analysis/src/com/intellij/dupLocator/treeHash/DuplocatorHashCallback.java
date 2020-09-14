@@ -23,6 +23,7 @@ import gnu.trove.TIntObjectProcedure;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +33,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
-public final class DuplocatorHashCallback implements FragmentsCollector {
+// used by TeamCity plugin
+@ApiStatus.NonExtendable
+public class DuplocatorHashCallback implements FragmentsCollector {
   private static final Logger LOG = Logger.getInstance(DuplocatorHashCallback.class);
 
   private TIntObjectHashMap<List<List<PsiFragment>>> myDuplicates;

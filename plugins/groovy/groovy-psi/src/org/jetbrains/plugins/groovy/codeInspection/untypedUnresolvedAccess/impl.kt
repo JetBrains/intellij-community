@@ -17,6 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
 
 fun checkUnresolvedReference(
@@ -48,6 +49,9 @@ fun checkUnresolvedReference(
   val actions = ArrayList<IntentionAction>()
   if (parent is GrMethodCall) {
     actions += GroovyQuickFixFactory.getInstance().createGroovyStaticImportMethodFix(parent)
+    if (PsiUtil.isNewified(expression)) {
+      actions += generateAddImportActions(expression)
+    }
   }
   else {
     actions += generateCreateClassActions(expression)

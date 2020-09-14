@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -634,7 +635,11 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
   }
 
   public static boolean isIndexingOn() {
-    return Registry.is("vcs.log.index.git");
+    return getIndexingRegistryOption().asBoolean();
+  }
+
+  public static @NotNull RegistryValue getIndexingRegistryOption() {
+    return Registry.get("vcs.log.index.git");
   }
 
   private static String prepareParameter(String paramName, String value) {

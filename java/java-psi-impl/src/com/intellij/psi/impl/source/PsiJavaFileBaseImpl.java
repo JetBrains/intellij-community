@@ -14,6 +14,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
+import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
@@ -349,7 +350,8 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   }
 
   private boolean processOnDemandPackages(PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement place) {
-    boolean shouldProcessClasses = shouldProcess(processor, CLASS);
+    ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
+    boolean shouldProcessClasses = classHint == null || classHint.shouldProcess(CLASS);
     if (shouldProcessClasses) {
       if (!processCurrentPackage(processor, state, place)) return false;
       if (!processOnDemandTypeImports(processor, state, place)) return false;
@@ -368,11 +370,6 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
   private PsiImportStatement[] getImportStatements() {
     return getImportList() != null ? getImportList().getImportStatements() : PsiImportStatement.EMPTY_ARRAY;
-  }
-
-  private static boolean shouldProcess(PsiScopeProcessor processor, ElementClassHint.DeclarationKind kind) {
-    ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
-    return classHint == null || classHint.shouldProcess(kind);
   }
 
   private boolean processCurrentPackage(PsiScopeProcessor processor, ResolveState state, PsiElement place) {
@@ -400,18 +397,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       final PsiClass targetElement = importStaticStatement.resolveTargetClass();
       if (targetElement != null) {
         processor.handleEvent(JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT, importStaticStatement);
-        if (shouldProcess(processor, METHOD) && !processMembers(state, processor, targetElement.getAllMethods())) return false;
-        if (shouldProcess(processor, FIELD) && !processMembers(state, processor, targetElement.getAllFields())) return false;
-        if (shouldProcess(processor, CLASS) && !processMembers(state, processor, targetElement.getAllInnerClasses())) return false;
-      }
-    }
-    return true;
-  }
-
-  private static boolean processMembers(ResolveState state, PsiScopeProcessor processor, PsiMember[] members) {
-    for (PsiMember member : members) {
-      if (!processor.execute(member, state)) {
-        return false;
+        if (!PsiClassImplUtil.processAllMembersWithoutSubstitutors(targetElement, processor, state)) return false;
       }
     }
     return true;

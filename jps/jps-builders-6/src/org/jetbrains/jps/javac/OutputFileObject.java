@@ -1,11 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac;
 
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.BinaryContent;
 
-import javax.tools.JavaFileManager;
+import javax.tools.*;
 import java.io.*;
 import java.net.URI;
 
@@ -46,7 +47,7 @@ public final class OutputFileObject extends JpsFileObject {
                           @Nullable final URI srcUri,
                           @Nullable final String encodingName,
                           @Nullable BinaryContent content, final JavaFileManager.Location location) {
-    super(file.toURI(), kind, location);
+    super(FileUtilRt.fileToUri(file), kind, location);
     myContext = context;
     mySourceUri = srcUri;
     myContent = content;

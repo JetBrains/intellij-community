@@ -7,6 +7,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaStaticMemberNameIndex;
@@ -95,18 +96,18 @@ public abstract class StaticMemberProcessor {
     }
   }
 
-  public List<PsiMember> processMembersOfRegisteredClasses(final PrefixMatcher matcher, PairConsumer<? super PsiMember, ? super PsiClass> consumer) {
+  public List<PsiMember> processMembersOfRegisteredClasses(Condition<? super String> nameCondition, PairConsumer<? super PsiMember, ? super PsiClass> consumer) {
     final ArrayList<PsiMember> result = new ArrayList<>();
     for (final PsiClass psiClass : myStaticImportedClasses) {
       for (final PsiMethod method : psiClass.getAllMethods()) {
-        if (matcher.prefixMatches(method.getName())) {
+        if (nameCondition.value(method.getName())) {
           if (isStaticallyImportable(method)) {
             consumer.consume(method, psiClass);
           }
         }
       }
       for (final PsiField field : psiClass.getAllFields()) {
-        if (matcher.prefixMatches(field. getName())) {
+        if (nameCondition.value(field. getName())) {
           if (isStaticallyImportable(field)) {
             consumer.consume(field, psiClass);
           }

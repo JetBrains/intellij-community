@@ -2,10 +2,8 @@
 package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.ApiStatus;
@@ -18,9 +16,11 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
 
   private final boolean myIsTest;
   private final DataCollectorSystemEventLogger myEventLogger;
+  private final EventLogAppConnectionSettings myConnectionSettings;
 
   public EventLogInternalApplicationInfo(@NotNull String recorderId, boolean isTest) {
     myIsTest = isTest;
+    myConnectionSettings = new EventLogAppConnectionSettings();
     myEventLogger = new DataCollectorSystemEventLogger() {
       @Override
       public void logErrorEvent(@NotNull String eventId, @NotNull Throwable exception) {
@@ -49,14 +49,8 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
 
   @NotNull
   @Override
-  public String getUserAgent() {
-    Application app = ApplicationManager.getApplication();
-    if (app != null && !app.isDisposed()) {
-      String productName = ApplicationNamesInfo.getInstance().getFullProductName();
-      String version = ApplicationInfo.getInstance().getBuild().asStringWithoutProductCode();
-      return productName + '/' + version;
-    }
-    return "IntelliJ";
+  public EventLogConnectionSettings getConnectionSettings() {
+    return myConnectionSettings;
   }
 
   @Override

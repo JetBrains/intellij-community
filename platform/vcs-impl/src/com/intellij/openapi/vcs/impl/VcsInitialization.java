@@ -72,26 +72,35 @@ public final class VcsInitialization {
 
   void add(@NotNull VcsInitObject vcsInitObject, @NotNull Runnable runnable) {
     if (myProject.isDefault()) return;
+    boolean wasScheduled = scheduleActivity(vcsInitObject, runnable);
+    if (!wasScheduled) {
+      BackgroundTaskUtil.executeOnPooledThread(myProject, runnable);
+    }
+  }
+
+  private boolean scheduleActivity(@NotNull VcsInitObject vcsInitObject, @NotNull Runnable runnable) {
     synchronized (myLock) {
       ProxyVcsStartupActivity activity = new ProxyVcsStartupActivity(vcsInitObject, runnable);
       if (isInitActivity(activity)) {
         if (myStatus == Status.PENDING) {
           myInitActivities.add(activity);
+          return true;
         }
         else {
           LOG.warn(String.format("scheduling late initialization: %s", activity));
-          BackgroundTaskUtil.executeOnPooledThread(myProject, runnable);
+          return false;
         }
       }
       else {
         if (myStatus == Status.PENDING || myStatus == Status.RUNNING_INIT) {
           myPostActivities.add(activity);
+          return true;
         }
         else {
           if (LOG.isDebugEnabled()) {
             LOG.debug(String.format("scheduling late post activity: %s", activity));
           }
-          BackgroundTaskUtil.executeOnPooledThread(myProject, runnable);
+          return false;
         }
       }
     }

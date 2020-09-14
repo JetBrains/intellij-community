@@ -51,6 +51,11 @@ internal fun JComponent.childAtMouse(): IPropertyView<Component?> = this@childAt
         }
     }
 
+fun Graphics2D.draw2DRect(rect: Rectangle, strokeWidth: Double, color: Color) {
+    this.color = color
+    RectanglePainter2D.DRAW.paint(this, rect, null, LinePainter2D.StrokeType.CENTERED, strokeWidth, RenderingHints.VALUE_ANTIALIAS_OFF)
+}
+
 fun Graphics2D.fill2DRect(rect: Rectangle, color: Color) {
     this.color = color
     RectanglePainter2D.FILL.paint(this, rect.x.toDouble(), rect.y.toDouble(), rect.width.toDouble(), rect.height.toDouble())

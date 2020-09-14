@@ -218,7 +218,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
           else {
             seen = true;
           }
-          sb.append(params[i].getText());
+          sb.append(params[i].getName());
         }
         sb.append(")");
         functionText += "    " + sb;

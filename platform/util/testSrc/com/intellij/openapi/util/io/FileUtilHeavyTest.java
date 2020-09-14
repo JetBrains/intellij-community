@@ -3,6 +3,7 @@ package com.intellij.openapi.util.io;
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.rules.TempDirectory;
 import org.junit.Rule;
 import org.junit.Test;
@@ -376,5 +377,26 @@ public class FileUtilHeavyTest {
     File existingFile = IoTestUtil.createTestFile(existingDir, "foo.file");
     assertEquals(".." + File.separatorChar + relativePath,
                  FileUtil.getRelativePath(existingFile, new File(existingFile.getParent(), relativePath)));
+  }
+
+  @Test
+  public void fileToUri() {
+    File file = tempDir.newFile("test.txt");
+    assertEquals(file.toURI(), FileUtil.fileToUri(file));
+    assertEquals(file, new File(FileUtil.fileToUri(file)));
+
+    File dir = file.getParentFile();
+    assertEquals(StringUtil.trimTrailing(dir.toURI().toString(), '/'), FileUtil.fileToUri(dir).toString());
+    assertEquals(dir, new File(FileUtil.fileToUri(dir)));
+
+    if (SystemInfo.isWindows) {
+      File uncFile = new File(IoTestUtil.toLocalUncPath(file.getPath()));
+      assertEquals(uncFile.toURI(), FileUtil.fileToUri(uncFile));
+      assertEquals(uncFile, new File(FileUtil.fileToUri(uncFile)));
+
+      File uncDir = uncFile.getParentFile();
+      assertEquals(StringUtil.trimTrailing(uncDir.toURI().toString(), '/'), FileUtil.fileToUri(uncDir).toString());
+      assertEquals(uncDir, new File(FileUtil.fileToUri(uncDir)));
+    }
   }
 }

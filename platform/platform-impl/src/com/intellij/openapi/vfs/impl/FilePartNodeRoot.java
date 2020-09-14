@@ -66,7 +66,6 @@ class FilePartNodeRoot extends FilePartNode {
                                @NotNull List<? super NodeToUpdate> toUpdateNodes,
                                boolean addSubdirectoryPointers,
                                @NotNull NewVirtualFileSystem fs) {
-    if (childNameId <= 0) throw new IllegalArgumentException("invalid argument childNameId: "+childNameId);
     NodeToUpdate toUpdate = matchById(parent, file, childNameId, toFirePointers, false, fs);
     if (toUpdate != null) {
       toUpdateNodes.add(toUpdate);

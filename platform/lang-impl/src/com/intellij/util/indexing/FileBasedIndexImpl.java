@@ -1465,7 +1465,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  boolean needsFileContentLoading(@NotNull ID<?, ?> indexId) {
+  public boolean needsFileContentLoading(@NotNull ID<?, ?> indexId) {
     return !myRegisteredIndexes.isNotRequiringContentIndex(indexId);
   }
 
@@ -1608,6 +1608,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @NotNull
   Collection<ID<?, ?>> getContentLessIndexes(boolean isDirectory) {
     return isDirectory ? myRegisteredIndexes.getIndicesForDirectories() : myRegisteredIndexes.getNotRequiringContentIndices();
+  }
+
+  @NotNull
+  public Collection<ID<?, ?>> getContentDependentIndexes() {
+    return myRegisteredIndexes.getRequiringContentIndices();
   }
 
   static FileTypeManagerImpl getFileTypeManager() {

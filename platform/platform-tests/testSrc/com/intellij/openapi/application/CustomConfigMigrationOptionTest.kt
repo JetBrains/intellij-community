@@ -1,20 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application
 
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
-import com.intellij.testFramework.rules.InMemoryFsRule
-import com.intellij.testFramework.rules.TempDirectory
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
-import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Files
 import java.nio.file.Path
 
-class CustomConfigMigrationOptionTest : BareTestFixtureTestCase() {
-  @JvmField @Rule val memoryFs = InMemoryFsRule(SystemInfo.isWindows)
-  @JvmField @Rule val localTempDir = TempDirectory()
+class CustomConfigMigrationOptionTest : ConfigImportHelperBaseTest() {
 
   @Test
   fun `empty marker file indicates clean config`() {

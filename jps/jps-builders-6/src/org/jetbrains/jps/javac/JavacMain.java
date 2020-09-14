@@ -125,7 +125,7 @@ public final class JavacMain {
             getLocation(fileManager, "ANNOTATION_PROCESSOR_MODULE_PATH") == null &&
             fileManager.getLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH) == null) {
             // default annotation processing discovery path to module path if not explicitly set
-            setLocation(fileManager, "ANNOTATION_PROCESSOR_MODULE_PATH", JpsJavacFileManager.filter(modulePath.getPath(), new BooleanFunction<File>() {
+            setLocation(fileManager, "ANNOTATION_PROCESSOR_MODULE_PATH", Iterators.filter(modulePath.getPath(), new BooleanFunction<File>() {
               @Override
               public boolean fun(File file) {
                 return !outputDirToRoots.containsKey(file);

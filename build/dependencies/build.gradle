@@ -48,6 +48,7 @@ apply from: 'setupBuildScriptsDeps.gradle'
 apply from: 'setupToolboxLiteGen.gradle'
 apply from: 'setupBundledMaven.gradle'
 apply from: 'setupCidr.gradle'
+apply from: 'setupCodeWithMe.gradle'
 apply from: 'setupDelve.gradle'
 /* Android Studio: fails with "Could not get unknown property 'rkernelVersion' for task ':setupRkernelOsx'"
 apply from: 'setupRpluginDeps.gradle'
@@ -56,7 +57,7 @@ Android Studio: fails with "Could not get unknown property 'rkernelVersion' for 
 apply from: 'setupZkm.gradle'
 Android Studio: fails with "Could not get unknown property 'zkmVersion'" */
 
-task setupDependencies(dependsOn: ['setupJdks', 'setupJbre', 'setupKotlinPlugin', 'setupThirdPartyPlugins', 
+task setupDependencies(dependsOn: ['setupJdks', 'setupJbre', 'setupKotlinPlugin', 'setupThirdPartyPlugins',
                                    'setupJetSign', 'setupBundledMaven'], group: 'dependencies')
 clean.dependsOn('cleanSetupJdks', 'cleanSetupJbre', 'cleanSetupKotlinPlugin', 'cleanSetupJetSign', 'cleanSetupBundledMaven')
 

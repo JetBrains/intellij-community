@@ -42,7 +42,7 @@ public class AddAssertStatementFix implements LocalQuickFix {
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiExpression element = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiExpression.class);
+    PsiExpression element = PsiTreeUtil.getNonStrictParentOfType(descriptor.getPsiElement(), PsiExpression.class);
     if (element == null) return;
     CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(element);
     if (surrounder == null) return;

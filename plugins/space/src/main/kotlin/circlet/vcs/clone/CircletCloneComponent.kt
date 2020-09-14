@@ -5,6 +5,7 @@ import circlet.client.api.englishFullName
 import circlet.components.CircletUserAvatarProvider
 import circlet.components.circletWorkspace
 import circlet.platform.api.oauth.OAuthTokenResponse
+import circlet.platform.client.BatchResult
 import circlet.platform.client.KCircletClient
 import circlet.settings.*
 import circlet.ui.*
@@ -242,13 +243,14 @@ private class CloneView(
             accountLabel.toolTipText = profile.englishFullName()
         }
 
-        cloneViewModel.repos.elements.forEach(lifetime) { allProjectsWithReposAndDetails ->
-            launch(lifetime, Ui) {
-                val allRepos = allProjectsWithReposAndDetails.filterNotNull()
-                val toAdd = allRepos.drop(listModel.items.count())
-                val selection = circletProjectListWithSearch.list.selectedIndex
-                listModel.addAll(listModel.items.count(), toAdd)
-                circletProjectListWithSearch.list.selectedIndex = selection
+        cloneViewModel.repos.batches.forEach(lifetime) { batchResult ->
+            when (batchResult) {
+                is BatchResult.More -> {
+                    val selection = circletProjectListWithSearch.list.selectedIndex
+                    listModel.add(batchResult.items.flatten())
+                    circletProjectListWithSearch.list.selectedIndex = selection
+                }
+                is BatchResult.Reset -> listModel.removeAll()
             }
         }
 

@@ -358,7 +358,7 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
 
   @Override
   public int getVersion() {
-    return 5;
+    return 6;
   }
 
   @NotNull
@@ -457,11 +457,6 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
         return super.acceptInput(file) && JavaFileElementType.isInSourceContent(file);
       }
     };
-  }
-
-  @Override
-  public boolean needsForwardIndexWhenSharing() {
-    return false;
   }
 
   @Override

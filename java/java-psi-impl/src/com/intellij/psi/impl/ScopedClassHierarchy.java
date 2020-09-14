@@ -141,7 +141,7 @@ class ScopedClassHierarchy {
     PsiUtilCore.ensureValid(myPlaceClass);
     List<PsiClassType.ClassResolveResult> list = new ArrayList<>();
     for (PsiClassType type : myPlaceClass.getSuperTypes()) {
-      PsiUtil.ensureValidType(type);
+      PsiUtil.ensureValidType(type, myPlaceClass);
       PsiClassType corrected = PsiClassImplUtil.correctType(type, myResolveScope);
       if (corrected == null) continue;
 

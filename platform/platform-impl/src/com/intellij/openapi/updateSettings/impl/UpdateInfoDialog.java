@@ -241,14 +241,14 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
       public void run(@NotNull ProgressIndicator indicator) {
         String[] command;
         try {
-          if (myPatches != null) {
-            List<File> files = UpdateInstaller.downloadPatchChain(myPatches.getChain(), indicator);
+          if (myTestPatch != null) {
             // Android Studio: Analytics
             AndroidStudioAnalytics.getInstance().logDownloadSuccess(myNewBuild.getNumber().asStringWithoutProductCode());
-            command = UpdateInstaller.preparePatchCommand(files, indicator);
+            command = UpdateInstaller.preparePatchCommand(myTestPatch, indicator);
           }
           else {
-            command = UpdateInstaller.preparePatchCommand(myTestPatch, indicator);
+            List<File> files = UpdateInstaller.downloadPatchChain(myPatches.getChain(), indicator);
+            command = UpdateInstaller.preparePatchCommand(files, indicator);
           }
         }
         catch (ProcessCanceledException e) { throw e; }

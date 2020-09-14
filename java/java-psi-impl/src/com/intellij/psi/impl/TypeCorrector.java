@@ -207,6 +207,12 @@ class TypeCorrector extends PsiTypeMapper {
       return new PsiCorrectedClassType(languageLevel, myDelegate, myResolveResult);
     }
 
+    @Override
+    public @NotNull PsiClassType annotate(@NotNull TypeAnnotationProvider provider) {
+      PsiClassType newDelegate = myDelegate.annotate(provider);
+      return newDelegate == myDelegate ? this : new PsiCorrectedClassType(myLanguageLevel, newDelegate, myResolveResult);
+    }
+
     @NotNull
     @Override
     public String getPresentableText(boolean annotated) {

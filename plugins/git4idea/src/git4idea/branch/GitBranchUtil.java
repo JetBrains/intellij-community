@@ -6,9 +6,11 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -359,5 +361,13 @@ public class GitBranchUtil {
       branches.add(b);
     }
     return branches;
+  }
+
+  /**
+   * Checks whether branch names passed through arguments are the same
+   * considering OS file system case sensitivity.
+   */
+  public static boolean equalBranches(@Nullable String branchA, @Nullable String branchB) {
+    return StringUtilRt.equal(branchA, branchB, SystemInfo.isFileSystemCaseSensitive);
   }
 }

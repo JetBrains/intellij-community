@@ -1,8 +1,11 @@
 package circlet.vcs.clone
 
-import circlet.client.*
 import circlet.client.api.*
 import circlet.client.api.impl.vcsPasswords
+import circlet.client.pr
+import circlet.client.repoService
+import circlet.client.ssh
+import circlet.client.star
 import circlet.platform.api.Ref
 import circlet.platform.client.resolve
 import circlet.platform.client.resolveRefsOrFetch
@@ -33,55 +36,37 @@ internal class CircletCloneComponentViewModel(
     private val projectService: Projects = workspace.client.pr
     private val repositoryService: RepositoryService = workspace.client.repoService
     private val starService: Star = workspace.client.star
-    private val td: TeamDirectory = workspace.client.td
     private val ssh: SshKeys = workspace.client.ssh
 
     val isLoading: MutableProperty<Boolean> = Property.createMutable(false)
 
     val me: MutableProperty<TD_MemberProfile> = workspace.me
 
-    val repos = xTransformedPagedListOnFlux<Ref<PR_Project>, CircletCloneListItem?>(
+    val repos = xTransformedPagedListOnFlux<Ref<PR_Project>, List<CircletCloneListItem>>(
         client = workspace.client,
         batchSize = 10,
         keyFn = { it.id },
         result = { allProjectRefs ->
             val allProjectsWithRepos = workspace.client.arena.resolveRefsOrFetch {
-                allProjectRefs.map { it to  it.extensionRef(ProjectReposRecord::class) }
+                allProjectRefs.map { it to it.extensionRef(ProjectReposRecord::class) }
             }
             val starredProjectIds = starService.starredProjects().mapToSet(Ref<PR_Project>::id)
 
-            val items = allProjectsWithRepos
-                .asSequence()
-                .map { (projectRef, reposRef) ->
-                    object {
-                        val project = projectRef.resolve()
-                        val repos = reposRef.resolve().repos
-                        val isStarred = projectRef.id in starredProjectIds
-                    }
-                }
-                .flatMap {
-                    it.repos
-                        .asSequence()
-                        .map { repo ->
-                            val detailsProperty = mutableProperty<RepoDetails?>(null)
-                            val item = CircletCloneListItem(it.project, it.isStarred, repo, detailsProperty)
-                            item.visible.forEach(lifetime) { visible ->
-                                launch(lifetime, Ui) {
-                                    if (visible) {
-                                        detailsProperty.value = repositoryService.repositoryDetails(it.project.key, repo.name)
-                                    }
-                                }
+            allProjectsWithRepos.map { (projectRef, reposRef) ->
+                val project = projectRef.resolve()
+                val repos = reposRef.resolve().repos
+                val isStarred = projectRef.id in starredProjectIds
+                repos.map { repo ->
+                    val detailsProperty = mutableProperty<RepoDetails?>(null)
+                    val item = CircletCloneListItem(project, isStarred, repo, detailsProperty)
+                    item.visible.forEach(lifetime) { visible ->
+                        launch(lifetime, Ui) {
+                            if (visible) {
+                                detailsProperty.value = repositoryService.repositoryDetails(project.key, repo.name)
                             }
-                            item
                         }
-                }
-
-            mutableListOf<CircletCloneListItem?>().apply {
-                addAll(items)
-
-                // hack to avoid a limitation of `xTransformedPagedListOnFlux`
-                while (size < allProjectRefs.size) {
-                    add(null)
+                    }
+                    item
                 }
             }
         }

@@ -164,6 +164,7 @@ class DistributionJARsBuilder {
 
       addModule("intellij.platform.builtInServer.impl")
       addModule("intellij.platform.credentialStore")
+      withoutModuleLibrary("intellij.platform.credentialStore", "dbus-java")
       addModule("intellij.json")
       addModule("intellij.spellchecker")
       addModule("intellij.platform.statistics")
@@ -1146,7 +1147,7 @@ Android Studio: This attempts to read a non-existent file. */
     if (text.contains("<product-descriptor ")) {
       def releaseDate = buildContext.applicationInfo.majorReleaseDate ?:
               ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("uuuuMMdd"))
-      def releaseVersion = "${buildContext.applicationInfo.majorVersion}${buildContext.applicationInfo.minorVersion}00"
+      def releaseVersion = "${buildContext.applicationInfo.majorVersion}${buildContext.applicationInfo.minorVersionMainPart}00"
       text = text.replaceFirst(
               "<product-descriptor code=\"([\\w]*)\"\\s+release-date=\"[^\"]*\"\\s+release-version=\"[^\"]*\"/>",
               !toPublish ? "" :

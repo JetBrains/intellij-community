@@ -1235,7 +1235,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     if (toPush == null) {
       toPush = myFactory.getObjectType(expression.getType(), Nullability.UNKNOWN);
     }
-    addInstruction(new ArrayAccessInstruction(toPush, expression));
+    DfaControlTransferValue transfer =
+      shouldHandleException() ? myFactory.controlTransfer(myExceptionCache.get("java.lang.ArrayIndexOutOfBoundsException"), myTrapStack) : null;
+    addInstruction(new ArrayAccessInstruction(toPush, expression, transfer));
     addNullCheck(expression);
     finishElement(expression);
   }
@@ -1453,10 +1455,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new UnwrapSpecialFieldInstruction(SpecialField.UNBOX));
       actualType = PsiPrimitiveType.getUnboxedType(actualType);
     }
-    if (TypeConversionUtil.isPrimitiveAndNotNull(actualType) && 
-        TypeConversionUtil.isAssignableFromPrimitiveWrapper(GenericsUtil.getVariableTypeByExpressionType(expectedType))) {
+    expectedType = GenericsUtil.getVariableTypeByExpressionType(expectedType);
+    if (TypeConversionUtil.isPrimitiveAndNotNull(actualType) &&
+        TypeConversionUtil.isAssignableFromPrimitiveWrapper(expectedType)) {
       addConditionalErrorThrow();
-      PsiType boxedType = ((PsiPrimitiveType)actualType).getBoxedType(context);
+      PsiType boxedType = TypeConversionUtil.isPrimitiveWrapper(expectedType) ? expectedType : 
+                          ((PsiPrimitiveType)actualType).getBoxedType(context);
       addInstruction(new BoxingInstruction(boxedType));
     }
     else if (actualType != expectedType &&

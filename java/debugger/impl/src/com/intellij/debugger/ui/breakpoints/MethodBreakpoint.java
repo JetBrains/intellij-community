@@ -63,6 +63,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -573,13 +574,16 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
           return;
         }
         if (type.isPrepared()) {
-          try {
-            futures.add(DebuggerUtilsAsync.supertypes(type)
-                          .thenAccept(supertypes -> supertypes.forEach(st -> inheritance.putValue(st, type)))
-                          .thenRun(() -> updateProgress(progressIndicator, processed.incrementAndGet(), allSize)));
-          }
-          catch (ObjectCollectedException ignored) {
-          }
+          futures.add(DebuggerUtilsAsync.supertypes(type)
+                        .thenAccept(supertypes -> supertypes.forEach(st -> inheritance.putValue(st, type)))
+                        .exceptionally(throwable -> {
+                          throwable = DebuggerUtilsAsync.unwrap(throwable);
+                          if (throwable instanceof ObjectCollectedException) {
+                            return null;
+                          }
+                          throw new CompletionException(throwable);
+                        })
+                        .thenRun(() -> updateProgress(progressIndicator, processed.incrementAndGet(), allSize)));
         }
       }
       CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();

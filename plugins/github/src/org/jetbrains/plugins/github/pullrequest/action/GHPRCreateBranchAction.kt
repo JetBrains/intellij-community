@@ -20,6 +20,7 @@ import git4idea.repo.GitRepository
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
+import org.jetbrains.plugins.github.util.GithubGitHelper
 import org.jetbrains.plugins.github.util.GithubSettings
 
 class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull.request.branch.checkout.create.action"),
@@ -126,7 +127,7 @@ class GHPRCreateBranchAction : DumbAwareAction(GithubBundle.messagePointer("pull
   }
 
   private fun Git.findOrCreateRemote(repository: GitRepository, remoteName: String, httpUrl: String?, sshUrl: String?): GitRemote? {
-    val existingRemote = repository.remotes.find { it.firstUrl != null && (it.firstUrl == httpUrl || it.firstUrl == sshUrl) }
+    val existingRemote = GithubGitHelper.getInstance().findRemote(repository, httpUrl, sshUrl)
     if (existingRemote != null) return existingRemote
 
     val useSshUrl = GithubSettings.getInstance().isCloneGitUsingSsh

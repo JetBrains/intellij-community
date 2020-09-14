@@ -19,6 +19,9 @@
     <applicationService serviceInterface="com.intellij.xdebugger.XDebuggerUtil"
                         serviceImplementation="com.intellij.xdebugger.impl.XDebuggerUtilImpl"/>
 
+    <projectService serviceInterface="com.intellij.ui.XDebugSessionService"
+                    serviceImplementation="com.intellij.xdebugger.impl.ui.XDebugSessionServiceImpl"/>
+
     <projectService serviceInterface="com.intellij.xdebugger.XDebuggerManager"
                     serviceImplementation="com.intellij.xdebugger.impl.XDebuggerManagerImpl"
                     preload="notLightEdit"/>

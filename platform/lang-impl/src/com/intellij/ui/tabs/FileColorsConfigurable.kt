@@ -2,17 +2,21 @@
 package com.intellij.ui.tabs
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.DataManager
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.Configurable.NoScroll
 import com.intellij.ide.IdeBundle.message
 import com.intellij.ide.util.scopeChooser.EditScopesDialog
-import com.intellij.openapi.actionSystem.ActionToolbarPosition
+import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable.PROJECT_SCOPES
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.keymap.KeymapUtil.getShortcutsText
 import com.intellij.openapi.options.CheckBoxConfigurable
 import com.intellij.openapi.options.UnnamedConfigurable
+import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder.createCommentComponent
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
@@ -21,18 +25,20 @@ import com.intellij.psi.search.scope.packageSet.NamedScope
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager
 import com.intellij.ui.ColorChooser.chooseColor
 import com.intellij.ui.ColorUtil.toHex
+import com.intellij.ui.CommonActionsPanel
 import com.intellij.ui.FileColorManager
+import com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
 import com.intellij.ui.ToolbarDecorator.createDecorator
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.EditableModel
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI.Borders
 import com.intellij.util.ui.PaintIcon
-import java.awt.BorderLayout
-import java.awt.Color
-import java.awt.Component
+import java.awt.*
+import java.lang.IllegalStateException
 import javax.swing.*
 import javax.swing.table.AbstractTableModel
 import javax.swing.table.DefaultTableCellRenderer
@@ -104,8 +110,17 @@ class FileColorsConfigurable(project: Project) : SearchableConfigurable, NoScrol
 
     val south = JPanel(VerticalLayout(5))
     south.border = Borders.emptyTop(5)
-    south.add(VerticalLayout.TOP, JLabel(message("settings.file.colors.description")))
+    south.add(VerticalLayout.TOP, createCommentComponent(message("settings.file.colors.description"), true))
     south.add(VerticalLayout.TOP, ActionLink(message("settings.file.colors.manage.scopes")) {
+      Settings.KEY.getData(DataManager.getInstance().getDataContext(south))?.let {
+        try {
+          // try to select related configurable in the current Settings dialog
+          if (!it.select(it.find(PROJECT_SCOPES)).isRejected) return@ActionLink
+        }
+        catch (ignored: IllegalStateException) {
+          // see ScopeColorsPageFactory.java:74
+        }
+      }
       EditScopesDialog.showDialog(manager.project, null, true)
     })
 
@@ -218,13 +233,6 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
     onRowInserted(0)
   }
 
-  internal fun getScopes(): List<NamedScope> {
-    val list = mutableListOf<NamedScope>()
-    list += DependencyValidationManager.getInstance(manager.project).scopes
-    list += NamedScopeManager.getInstance(manager.project).scopes
-    return list.filter { it.value != null }
-  }
-
   internal fun getColors(): List<String> {
     val list = mutableListOf<String>()
     list += manager.colorNames
@@ -325,6 +333,13 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
     val table = JBTable(this)
     table.emptyText.text = message("settings.file.colors.no.colors.specified")
 
+    table.emptyText.appendSecondaryText(message("settings.file.colors.add.colors.link"), LINK_PLAIN_ATTRIBUTES) {
+      val popup = JBPopupFactory.getInstance().createListPopup(ScopeListPopupStep(this))
+      popup.showInCenterOf(table)
+    }
+    val shortcut = getShortcutsText(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD).shortcuts)
+    if (shortcut.isNotEmpty()) table.emptyText.appendText(" ($shortcut)")
+
     this.table = table
 
     table.setDefaultRenderer(String::class.java, TableScopeRenderer(manager))
@@ -350,7 +365,6 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
       }
       .setMoveUpActionUpdater { table.selectedRows.all { canExchangeRows(it, it - 1) } }
       .setMoveDownActionUpdater { table.selectedRows.all { canExchangeRows(it, it + 1) } }
-      .setToolbarPosition(ActionToolbarPosition.TOP)
       .createPanel()
   }
 
@@ -395,23 +409,44 @@ private class TableColorRenderer(val manager: FileColorManagerImpl) : DefaultTab
     super.getTableCellRendererComponent(table, configuration?.colorPresentableName, selected, focused, row, column)
     return updateColorRenderer(this, selected, configuration?.colorName?.let { manager.getColor(it) })
   }
+
+  override fun paintComponent(g: Graphics?) {
+    super.paintComponent(g)
+    val bounds = Rectangle(width, height)
+    JBInsets.removeFrom(bounds, insets)
+    val icon = AllIcons.General.ArrowDown
+    icon.paintIcon(this, g,
+                   bounds.x + bounds.width - icon.iconWidth,
+                   bounds.y + (bounds.height - icon.iconHeight) / 2)
+  }
 }
 
 private class TableScopeRenderer(val manager: FileColorManagerImpl) : DefaultTableCellRenderer() {
   override fun getTableCellRendererComponent(table: JTable?, value: Any?,
                                              selected: Boolean, focused: Boolean, row: Int, column: Int): Component {
     val component = super.getTableCellRendererComponent(table, value, selected, focused, row, column)
-    val unknown = null == value?.toString()?.let { manager.model.getScopeColor(it, manager.project) }
+    val unknown = null == value?.toString()?.let { findScope(it, manager.project) }
     toolTipText = if (unknown) message("settings.file.colors.scope.unknown") else null
     icon = if (unknown) AllIcons.General.Error else null
     return component
   }
 }
 
+private fun getScopes(project: Project): List<NamedScope> {
+  val list = mutableListOf<NamedScope>()
+  list += DependencyValidationManager.getInstance(project).scopes
+  list += NamedScopeManager.getInstance(project).scopes
+  return list.filter { it.value != null }
+}
+
+private fun findScope(scopeName: String, project: Project) =
+  DependencyValidationManager.getInstance(project).scopes.find { it.name == scopeName }
+  ?: NamedScopeManager.getInstance(project).scopes.find { it.name == scopeName }
+
 // popup steps
 
 private class ScopeListPopupStep(val model: FileColorsTableModel)
-  : BaseListPopupStep<NamedScope>(null, model.getScopes()) {
+  : BaseListPopupStep<NamedScope>(null, getScopes(model.manager.project)) {
   override fun getTextFor(scope: NamedScope?) = scope?.name ?: ""
   override fun getIconFor(scope: NamedScope?) = scope?.icon
   override fun hasSubstep(selectedValue: NamedScope?) = true

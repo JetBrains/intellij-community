@@ -37,9 +37,7 @@ public final class StatusBarUtil {
     FileEditor fileEditor = getCurrentFileEditor(statusBar);
     if (fileEditor instanceof TextEditor) {
       Editor editor = ((TextEditor)fileEditor).getEditor();
-      if (ensureValidEditorFile(editor)) {
-        return editor;
-      }
+      return ensureValidEditorFile(editor, fileEditor) ? editor : null;
     }
 
     Project project = statusBar.getProject();
@@ -48,7 +46,7 @@ public final class StatusBarUtil {
     FileEditorManager manager = FileEditorManager.getInstance(project);
     Editor editor = manager.getSelectedTextEditor();
     if (editor != null &&
-        ensureValidEditorFile(editor) &&
+        ensureValidEditorFile(editor, null) &&
         WindowManager.getInstance().getStatusBar(editor.getComponent(), project) == statusBar) {
       return editor;
     }
@@ -91,7 +89,7 @@ public final class StatusBarUtil {
     }
   }
 
-  private static boolean ensureValidEditorFile(@NotNull Editor editor) {
+  private static boolean ensureValidEditorFile(@NotNull Editor editor, @Nullable FileEditor fileEditor) {
     Document document = editor.getDocument();
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file != null && !file.isValid()) {
@@ -100,6 +98,7 @@ public final class StatusBarUtil {
       Boolean fileIsOpen = project == null ? null : ArrayUtil.contains(file, FileEditorManager.getInstance(project).getOpenFiles());
       LOG.error("Returned editor for invalid file: " + editor +
                 "; disposed=" + editor.isDisposed() +
+                (fileEditor == null ? "" : "; fileEditor=" + fileEditor + "; fileEditor.valid=" + fileEditor.isValid()) +
                 "; file " + file.getClass() +
                 "; cached document exists: " + (cachedDocument != null) +
                 "; same as document: " + (cachedDocument == document) +

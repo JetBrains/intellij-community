@@ -124,7 +124,6 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     }
 
     Component meComponent = event.getComponent();
-    JMenuBar menuBar = myRootPane.getJMenuBar();
     if (!dispatched && meComponent != null) {
       if (eventWindow != SwingUtilities.getWindowAncestor(myRootPane)) {
         return false;
@@ -133,12 +132,9 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
       int button1 = InputEvent.BUTTON1_MASK | InputEvent.BUTTON1_DOWN_MASK;
       boolean pureMouse1Event = (event.getModifiersEx() | button1) == button1;
       if (pureMouse1Event && event.getClickCount() <= 1 && !event.isPopupTrigger()) {
-        Point point = SwingUtilities.convertPoint(meComponent, event.getPoint(), myRootPane.getContentPane());
-        if (menuBar != null && menuBar.isVisible()) {
-          point.y += menuBar.getHeight();
-        }
-
-        Component target = SwingUtilities.getDeepestComponentAt(myRootPane.getContentPane().getParent(), point.x, point.y);
+        Container parent = myRootPane.getContentPane().getParent();
+        Point point = SwingUtilities.convertPoint(meComponent, event.getPoint(), parent);
+        Component target = SwingUtilities.getDeepestComponentAt(parent, point.x, point.y);
         dispatched = target instanceof DnDAware && dispatchForDnDAware(event, point, target);
       }
     }
@@ -146,13 +142,9 @@ public class IdeGlassPaneImpl extends JPanel implements IdeGlassPaneEx, IdeEvent
     if (isVisible() && getComponentCount() == 0) {
       boolean cursorSet = false;
       if (meComponent != null) {
-        Point point = SwingUtilities.convertPoint(meComponent, event.getPoint(), myRootPane.getContentPane());
-        if (menuBar != null && menuBar.isVisible()) {
-          point.y += menuBar.getHeight();
-        }
-
-        final Component target =
-          SwingUtilities.getDeepestComponentAt(myRootPane.getContentPane().getParent(), point.x, point.y);
+        Container parent = myRootPane.getContentPane().getParent();
+        Point point = SwingUtilities.convertPoint(meComponent, event.getPoint(), parent);
+        Component target = SwingUtilities.getDeepestComponentAt(parent, point.x, point.y);
         if (target != null) {
           UIUtil.setCursor(this, target.getCursor());
           cursorSet = true;

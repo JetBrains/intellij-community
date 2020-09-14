@@ -16,7 +16,11 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.psi.*;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -67,5 +71,36 @@ import java.util.Set;
       }
     }
     state.flushFieldsQualifiedBy(qualifiers);
+  }
+
+  static @Nullable DfaCallArguments fromCall(DfaValueFactory factory, PsiCallExpression call) {
+    PsiMethod method = call.resolveMethod();
+    if (method == null) return null;
+    PsiExpressionList argumentList = call.getArgumentList();
+    if (argumentList == null) return null;
+    DfaValue qualifierValue = null;
+    if (call instanceof PsiMethodCallExpression) {
+      PsiExpression qualifier = ((PsiMethodCallExpression)call).getMethodExpression().getQualifierExpression();
+      qualifierValue = factory.createValue(qualifier);
+    }
+    if (qualifierValue == null) {
+      qualifierValue = factory.getUnknown();
+    }
+    boolean varArgCall = MethodCallUtils.isVarArgCall(call);
+    PsiExpression[] args = argumentList.getExpressions();
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    DfaValue[] argValues = new DfaValue[parameters.length];
+    for (int i = 0; i < parameters.length; i++) {
+      DfaValue argValue = null;
+      if (i < args.length && (!varArgCall || i < parameters.length - 1)) {
+        argValue = factory.createValue(args[i]);
+      }
+      if (argValue == null) {
+        argValue = factory.getUnknown();
+      }
+      argValues[i] = argValue;
+    }
+    DfaCallArguments arguments = new DfaCallArguments(qualifierValue, argValues, MutationSignature.fromCall(call));
+    return arguments;
   }
 }

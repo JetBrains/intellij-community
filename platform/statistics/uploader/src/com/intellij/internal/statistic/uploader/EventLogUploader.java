@@ -64,7 +64,9 @@ public final class EventLogUploader {
     }
 
     logger.info("Start uploading...");
-    logger.info("{url:" + appInfo.getTemplateUrl() + ", product:" + appInfo.getProductCode() + ", userAgent:" + appInfo.getUserAgent() +
+    EventLogConnectionSettings connectionSettings = appInfo.getConnectionSettings();
+    logger.info("{url:" + appInfo.getTemplateUrl() + ", product:" + appInfo.getProductCode() +
+                ", userAgent:" + connectionSettings.getUserAgent() +
                 ", internal:" + appInfo.isInternal() + ", isTest:" + appInfo.isTest() + "}");
     String logs = recorder.getLogFilesProvider().getLogFiles().stream().
       map(file -> file.getFile().getAbsolutePath()).collect(Collectors.joining(File.pathSeparator));

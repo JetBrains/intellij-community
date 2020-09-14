@@ -64,26 +64,29 @@ public class PyListCreationInspection extends PyInspection {
 
         final PyCallExpression callExpression = (PyCallExpression)statement;
         final PyExpression callee = callExpression.getCallee();
-        if (callee instanceof PyQualifiedExpression) {
-          final PyExpression qualifier = ((PyQualifiedExpression)callee).getQualifier();
-          final String funcName = ((PyQualifiedExpression)callee).getReferencedName();
-          if (qualifier != null && name.equals(qualifier.getText()) && "append".equals(funcName)) {
-            final PyArgumentList argList = callExpression.getArgumentList();
-            if (argList != null) {
-              for (PyExpression argument : argList.getArguments()) {
-                if (argument.getText().equals(name)) {
-                  if (quickFix != null)
-                    registerProblem(node, message, quickFix);
-                  return;
-                }
-              }
-              if (quickFix == null) {
-                quickFix = new ListCreationQuickFix(node);
-              }
-              quickFix.addStatement((PyExpressionStatement)expressionStatement);
+        if (!(callee instanceof PyQualifiedExpression)) break;
+
+        final PyExpression qualifier = ((PyQualifiedExpression)callee).getQualifier();
+        if (qualifier == null || !name.equals(qualifier.getText())) break;
+
+        final String funcName = ((PyQualifiedExpression)callee).getReferencedName();
+        if (!"append".equals(funcName)) break;
+
+        final PyArgumentList argList = callExpression.getArgumentList();
+        if (argList != null) {
+          for (PyExpression argument : argList.getArguments()) {
+            if (argument.getText().equals(name)) {
+              if (quickFix != null)
+                registerProblem(node, message, quickFix);
+              return;
             }
           }
+          if (quickFix == null) {
+            quickFix = new ListCreationQuickFix(node);
+          }
+          quickFix.addStatement((PyExpressionStatement)expressionStatement);
         }
+
         if (quickFix == null) {
           return;
         }

@@ -123,7 +123,7 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
       for (IdeaPluginDescriptor loadedPlugin : compatibleUpdates) {
         IdeaPluginDescriptor existingPlugin = PluginManagerCore.getPlugin(loadedPlugin.getPluginId());
         if (existingPlugin != null &&
-            PluginDownloader.compareVersionsSkipBrokenAndIncompatible(loadedPlugin.getVersion(), existingPlugin) < 0) {
+            PluginDownloader.compareVersionsSkipBrokenAndIncompatible(loadedPlugin.getVersion(), existingPlugin) <= 0) {
           continue;
         }
         PluginId pluginId = loadedPlugin.getPluginId();

@@ -22,7 +22,7 @@ import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeDialog;
-import git4idea.merge.MergeOption;
+import git4idea.merge.GitMergeOption;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,15 +56,15 @@ public class GitMerge extends GitMergeAction {
   @NotNull
   protected Supplier<GitLineHandler> getHandlerProvider(Project project, GitMergeDialog dialog) {
     VirtualFile root = dialog.getSelectedRoot();
-    Set<MergeOption> selectedOptions = dialog.getSelectedOptions();
+    Set<GitMergeOption> selectedOptions = dialog.getSelectedOptions();
     String commitMsg = dialog.getCommitMessage().trim();
     List<String> selectedBranches = dialog.getSelectedBranches();
 
     return () -> {
       GitLineHandler h = new GitLineHandler(project, root, GitCommand.MERGE);
 
-      for (MergeOption option : selectedOptions) {
-        if (option == MergeOption.COMMIT_MESSAGE) {
+      for (GitMergeOption option : selectedOptions) {
+        if (option == GitMergeOption.COMMIT_MESSAGE) {
           if (commitMsg.length() > 0) {
             h.addParameters(option.getOption(), commitMsg);
           }

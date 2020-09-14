@@ -108,7 +108,7 @@ object EventLogExternalUploader {
     addArgument(args, URL_OPTION, applicationInfo.templateUrl)
     addArgument(args, PRODUCT_OPTION, applicationInfo.productCode)
     addArgument(args, PRODUCT_VERSION_OPTION, applicationInfo.productVersion)
-    addArgument(args, USER_AGENT_OPTION, applicationInfo.userAgent)
+    addArgument(args, USER_AGENT_OPTION, applicationInfo.connectionSettings.getUserAgent())
 
     if (applicationInfo.isInternal) {
       args += INTERNAL_OPTION

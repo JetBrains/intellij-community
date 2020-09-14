@@ -408,7 +408,8 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   }
 
   private boolean isUnderMouseCursor() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return false;
+    if (ApplicationManager.getApplication().isUnitTestMode() || 
+        ApplicationManager.getApplication().isHeadlessEnvironment()) return false;
     try {
       return getMousePosition() != null;
     }

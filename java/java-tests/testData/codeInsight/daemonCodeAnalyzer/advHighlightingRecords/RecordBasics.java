@@ -66,3 +66,6 @@ record ProhibitedMembers() {
   }</error>
   <error descr="Modifier 'native' not allowed here">native</error> void test();
 }
+record StaticFieldCollides(int i) {
+  static int <error descr="Variable 'i' is already defined in the scope">i</error>;
+}

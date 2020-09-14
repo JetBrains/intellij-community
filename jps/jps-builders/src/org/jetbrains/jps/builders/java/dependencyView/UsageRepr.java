@@ -832,11 +832,10 @@ final class UsageRepr {
 
           case IMPORT_STATIC_ON_DEMAND_USAGE:
             return context.getUsage(new ImportStaticOnDemandUsage(in));
+
+          default:
+            throw new IOException("Unknown usage with tag " + tag);
         }
-
-        assert (false);
-
-        return null;
       }
     };
   }

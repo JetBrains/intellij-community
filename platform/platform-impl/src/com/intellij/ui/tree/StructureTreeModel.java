@@ -405,10 +405,12 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     }
     HashMap<Object, Node> map = new HashMap<>();
     node.getChildren().forEach(child -> {
+      ProgressManager.checkCanceled();
       Object element = child.getElement();
       if (element != null) map.put(element, child);
     });
     for (int i = 0; i < list.size(); i++) {
+      ProgressManager.checkCanceled();
       Node newNode = list.get(i);
       Node oldNode = map.get(newNode.getElement());
       if (oldNode != null && oldNode.canReuse(newNode, null)) {

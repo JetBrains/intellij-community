@@ -26,5 +26,5 @@
           - t
           - k
   -   &an3
-        longKey: v1
-        k: v2
+        longKey:            v1
+        k:            v2

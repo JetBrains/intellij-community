@@ -697,7 +697,7 @@ public class StreamChainInliner implements CallInliner {
                .end();
       }
       // Actual addition of Map element is unnecessary for current analysis
-      builder.pop();
+      builder.flush(SpecialField.COLLECTION_SIZE.createValue(builder.getFactory(), myResult)).pop();
     }
   }
 

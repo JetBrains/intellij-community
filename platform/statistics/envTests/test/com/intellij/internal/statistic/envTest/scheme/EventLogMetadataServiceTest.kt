@@ -2,18 +2,19 @@
 package com.intellij.internal.statistic.envTest.scheme
 
 import com.intellij.internal.statistic.envTest.StatisticsServiceBaseTest
+import com.intellij.internal.statistic.eventLog.EventLogBasicConnectionSettings
 import com.intellij.internal.statistic.service.fus.*
 import com.intellij.internal.statistic.service.fus.StatisticsWhitelistGroupConditions.BuildRange
 import com.intellij.internal.statistic.service.fus.StatisticsWhitelistGroupConditions.VersionRange
 import junit.framework.TestCase
 
-private const val USER_AGENT = "Test IntelliJ"
+private val SETTINGS = EventLogBasicConnectionSettings("Test IntelliJ")
 
 internal class EventLogMetadataServiceTest : StatisticsServiceBaseTest() {
 
   fun `test load metadata succeed`() {
     val metadataUrl = getMetadataUrl("IC.json")
-    val content = StatisticsWhitelistLoader.loadWhiteListFromServer(metadataUrl, USER_AGENT)
+    val content = StatisticsWhitelistLoader.loadWhiteListFromServer(metadataUrl, SETTINGS)
     TestCase.assertNotNull(content)
     TestCase.assertTrue(content.isNotEmpty())
   }
@@ -22,7 +23,7 @@ internal class EventLogMetadataServiceTest : StatisticsServiceBaseTest() {
     var exception: Exception? = null
     try {
       val metadataUrl = getMetadataUrl("AB.json")
-      StatisticsWhitelistLoader.loadWhiteListFromServer(metadataUrl, USER_AGENT)
+      StatisticsWhitelistLoader.loadWhiteListFromServer(metadataUrl, SETTINGS)
     }
     catch (e: Exception) {
       exception = e
@@ -33,7 +34,7 @@ internal class EventLogMetadataServiceTest : StatisticsServiceBaseTest() {
 
   fun `test get last modified metadata`() {
     val metadataUrl = getMetadataUrl()
-    val lastModified = StatisticsWhitelistLoader.lastModifiedWhitelist(metadataUrl, USER_AGENT)
+    val lastModified = StatisticsWhitelistLoader.lastModifiedWhitelist(metadataUrl, SETTINGS)
     TestCase.assertEquals(1589968216000, lastModified)
   }
 
@@ -44,20 +45,20 @@ internal class EventLogMetadataServiceTest : StatisticsServiceBaseTest() {
     )
 
     val metadataUrl = getMetadataUrl()
-    val actual = StatisticsWhitelistLoader.getApprovedGroups(metadataUrl, USER_AGENT)
+    val actual = StatisticsWhitelistLoader.getApprovedGroups(metadataUrl, SETTINGS)
     TestCase.assertEquals(StatisticsWhitelistConditions.create(expected), actual)
   }
 
   fun `test failed loading and parsing metadata because url is unreachable`() {
     val metadataUrl = getMetadataUrl("AB.json")
-    val actual = StatisticsWhitelistLoader.getApprovedGroups(metadataUrl, USER_AGENT)
+    val actual = StatisticsWhitelistLoader.getApprovedGroups(metadataUrl, SETTINGS)
     TestCase.assertNotNull(actual)
     TestCase.assertTrue(actual.isEmpty)
   }
 
   fun `test failed loading and parsing metadata because its invalid`() {
     val metadataUrl = getMetadataUrl("invalid-metadata.json")
-    val actual = StatisticsWhitelistLoader.getApprovedGroups(metadataUrl, USER_AGENT)
+    val actual = StatisticsWhitelistLoader.getApprovedGroups(metadataUrl, SETTINGS)
     TestCase.assertNotNull(actual)
     TestCase.assertTrue(actual.isEmpty)
   }

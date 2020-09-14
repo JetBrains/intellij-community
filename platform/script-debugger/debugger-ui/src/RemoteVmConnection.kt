@@ -105,7 +105,7 @@ abstract class RemoteVmConnection<VmT : Vm> : VmConnection<VmT>() {
     }
   }
 
-  protected open fun connectedAddressToPresentation(address: InetSocketAddress, vm: Vm): String = "${address.hostName}:${address.port}"
+  protected open fun connectedAddressToPresentation(address: InetSocketAddress, vm: Vm): String = "${address.hostString}:${address.port}"
 
   override fun detachAndClose(): Promise<*> {
     try {

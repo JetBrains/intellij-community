@@ -3,14 +3,44 @@
 {
   hello: { world: {
     bugaga: pp
-  }}
+  } }
 }
 
 ---
 { t: [
-  a: b,
-  c: { f: {
-    d: d
-  }},
-  hello
+    a: b,
+    c: { f: {
+      d: d
+    } },
+    hello
 ] }
+
+---
+{
+  a: [ {
+    b: c
+  }, {
+    d: e
+  } ],
+  f: { [
+      g,
+      h
+  ] },
+  i: [ { j:jj },
+       { k:kk } ],
+  k: [
+    {
+      l: m
+    },
+    {
+      n: o
+    }
+  ],
+  p: [
+    {
+      q: r
+    }, {
+      s: t
+    }
+  ]
+}

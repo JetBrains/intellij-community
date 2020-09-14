@@ -22,10 +22,11 @@ public class YAMLCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
         final CodeStyleSettings currentSettings = getCurrentSettings();
         return new TabbedLanguageCodeStylePanel(YAMLLanguage.INSTANCE, currentSettings, settings) {
           @Override
-            protected void initTabs(final CodeStyleSettings settings) {
-              addIndentOptionsTab(settings);
-              addWrappingAndBracesTab(settings);
-            }
+          protected void initTabs(final CodeStyleSettings settings) {
+            addIndentOptionsTab(settings);
+            addSpacesTab(settings);
+            addWrappingAndBracesTab(settings);
+          }
         };
       }
 

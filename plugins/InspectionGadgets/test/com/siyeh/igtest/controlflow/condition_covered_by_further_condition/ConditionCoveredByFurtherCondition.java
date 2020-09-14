@@ -3,6 +3,25 @@ package com.siyeh.igtest.controlflow.pointless_null_check;
 import org.jetbrains.annotations.NotNull;
 
 public class ConditionCoveredByFurtherCondition {
+    static class C {
+        public static final Object C1 = new C();
+        public static final Object C2 = new C();
+        public void m() {
+            if (this == C1 || this == C2) { /* ...*/ }
+        }
+        
+        public static final Object C3 = getC();
+        public static final Object C4 = getC();
+        
+        public void m2() {
+            if (this == C3 || this == C4) {}
+        }
+        
+        private static Object getC() {
+            return new C();
+        }
+    }
+    
     public void testInstanceOf(Object arg) {
         if (<warning descr="Condition 'arg != null' covered by subsequent condition 'arg instanceof String'">arg != null</warning> && arg instanceof String) {
             System.out.println("this should trigger a warning");

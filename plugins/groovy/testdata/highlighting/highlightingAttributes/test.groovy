@@ -116,3 +116,9 @@ def <info descr="null" textAttributesKey="Groovy var">outer</info> = new <info d
 <info descr="null" textAttributesKey="Groovy var">outer</info>.<info descr="null" textAttributesKey="Instance property reference ID">this</info>
 <info descr="null" textAttributesKey="Groovy var">outer</info>.<info descr="null" textAttributesKey="Instance property reference ID">super</info>
 <info descr="null" textAttributesKey="Groovy var">outer</info>.<info descr="null" textAttributesKey="Instance property reference ID">def</info>
+
+<info descr="null" textAttributesKey="Annotation">@</info><info descr="null" textAttributesKey="Annotation">Newify</info>(<info descr="null" textAttributesKey="Class">C</info>)
+      def <info descr="null" textAttributesKey="Groovy method declaration">foo</info>() {
+  def <info descr="null" textAttributesKey="Groovy var">a</info> = <info descr="null" textAttributesKey="Groovy constructor call">C</info>()
+  def <info descr="null" textAttributesKey="Groovy var">b</info> = <info descr="null" textAttributesKey="Class">C</info>.<info descr="null" textAttributesKey="Groovy constructor call">new</info>(1, 2)
+}

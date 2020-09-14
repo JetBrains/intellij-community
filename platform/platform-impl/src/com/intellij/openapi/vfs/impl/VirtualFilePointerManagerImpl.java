@@ -25,7 +25,6 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
-import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
@@ -114,7 +113,6 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
                                    @NotNull List<? super NodeToUpdate> toUpdateNodes,
                                    boolean addSubdirectoryPointers,
                                    @NotNull NewVirtualFileSystem fs) {
-    if (childNameId <= 0) throw new IllegalArgumentException("invalid argument childNameId: "+childNameId);
     getRoot(fs).addRelevantPointersFrom(parent, file, childNameId, toFirePointers, toUpdateNodes, addSubdirectoryPointers, fs);
   }
 
@@ -469,9 +467,9 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
         if (event instanceof VFileDeleteEvent) {
           VFileDeleteEvent deleteEvent = (VFileDeleteEvent)event;
           VirtualFileSystemEntry file = (VirtualFileSystemEntry)deleteEvent.getFile();
-          VirtualFileSystemEntry parent = file.getParent();
+          VirtualFileSystemEntry parent = (VirtualFileSystemEntry)FilePartNode.getParentThroughJar(file, file.getFileSystem());
           if (parent != null) {
-            addRelevantPointers(file, parent, file.getNameId(), toFirePointers, toUpdateNodes, true, fs);
+            addRelevantPointers(file, parent, FilePartNode.getNameId(file), toFirePointers, toUpdateNodes, true, fs);
           }
         }
         else if (event instanceof VFileCreateEvent) {
@@ -499,11 +497,11 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
         else if (event instanceof VFileMoveEvent) {
           VFileMoveEvent moveEvent = (VFileMoveEvent)event;
           VirtualFileSystemEntry eventFile = (VirtualFileSystemEntry)moveEvent.getFile();
-          int newNameId = eventFile.getNameId();
+          int newNameId = FilePartNode.getNameId(eventFile);
           // files deleted from eventFile and created in moveEvent.getNewParent()
           addRelevantPointers(null, (VirtualFileSystemEntry)moveEvent.getNewParent(), newNameId, toFirePointers, toUpdateNodes, true, fs);
 
-          VirtualDirectoryImpl parent = eventFile.getParent();
+          VirtualFileSystemEntry parent = (VirtualFileSystemEntry)FilePartNode.getParentThroughJar(eventFile, eventFile.getFileSystem());
           if (parent != null) {
             addRelevantPointers(eventFile, parent, newNameId, toFirePointers, toUpdateNodes, true, fs);
           }
@@ -512,13 +510,14 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
           VFilePropertyChangeEvent change = (VFilePropertyChangeEvent)event;
           if (VirtualFile.PROP_NAME.equals(change.getPropertyName()) && !Comparing.equal(change.getOldValue(), change.getNewValue())) {
             VirtualFileSystemEntry eventFile = (VirtualFileSystemEntry)change.getFile();
-            VirtualDirectoryImpl parent = eventFile.getParent(); // e.g. for LightVirtualFiles
+            VirtualFileSystemEntry parent = (VirtualFileSystemEntry)FilePartNode.getParentThroughJar(eventFile, eventFile.getFileSystem());
+            // e.g. for LightVirtualFiles
             if (parent != null) {
               int newNameId = toNameId(change.getNewValue().toString());
               addRelevantPointers(eventFile, parent, newNameId, toFirePointers, toUpdateNodes, true, fs);
 
               // old pointers remain valid after rename, no need to fire
-              addRelevantPointers(eventFile, parent, eventFile.getNameId(), new MultiMap<>(), toUpdateNodes, true, fs);
+              addRelevantPointers(eventFile, parent, FilePartNode.getNameId(eventFile), new MultiMap<>(), toUpdateNodes, true, fs);
             }
           }
         }

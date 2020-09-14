@@ -162,8 +162,10 @@ public class TestOnlyInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @Nullable
   private static PsiAnnotation findVisibleForTestingAnnotation(@NotNull PsiMember member) {
-    PsiAnnotation anno = AnnotationUtil.findAnnotation(member, "com.google.common.annotations.VisibleForTesting");
-    return anno != null ? anno : AnnotationUtil.findAnnotation(member, "com.android.annotations.VisibleForTesting");
+    return AnnotationUtil.findAnnotation(member, 
+                                         "com.google.common.annotations.VisibleForTesting",
+                                         "com.android.annotations.VisibleForTesting",
+                                         "org.jetbrains.annotations.VisibleForTesting");
   }
 
   private static boolean isInsideTestOnlyMethod(PsiElement e) {

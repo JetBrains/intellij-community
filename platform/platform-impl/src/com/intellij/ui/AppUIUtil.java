@@ -76,9 +76,6 @@ public final class AppUIUtil {
         @SuppressWarnings("deprecation") String fallback = appInfo.getBigIconUrl();
         ContainerUtil.addIfNotNull(images, loadApplicationIconImage(svgIconUrl, ctx, 128, fallback));
       }
-      else if (SystemInfo.isWindows) {
-        ContainerUtil.addIfNotNull(images, loadApplicationIconImage(svgIconUrl, ctx, 32, null));
-      }
 
       @SuppressWarnings("deprecation") String fallback = appInfo.getIconUrl();
       ContainerUtil.addIfNotNull(images, loadApplicationIconImage(smallSvgIconUrl, ctx, 32, fallback));
@@ -99,7 +96,7 @@ public final class AppUIUtil {
       if (!SystemInfoRt.isMac) {
         window.setIconImages(images);
       }
-      else if (!ourMacDocIconSet && PluginManagerCore.isRunningFromSources()) {
+      else if (!ourMacDocIconSet && (PlatformUtils.isIntelliJClient() || PluginManagerCore.isRunningFromSources())) {
         MacAppIcon.setDockIcon(ImageUtil.toBufferedImage(images.get(0)));
         ourMacDocIconSet = true;
       }
@@ -108,7 +105,7 @@ public final class AppUIUtil {
 
   public static boolean isWindowIconAlreadyExternallySet() {
     if (SystemInfoRt.isMac) {
-      return ourMacDocIconSet || !PluginManagerCore.isRunningFromSources();
+      return ourMacDocIconSet || (!PlatformUtils.isIntelliJClient() && !PluginManagerCore.isRunningFromSources());
     }
 
     // todo[tav] 'jbre.win.app.icon.supported' is defined by JBRE, remove when OpenJDK supports it as well

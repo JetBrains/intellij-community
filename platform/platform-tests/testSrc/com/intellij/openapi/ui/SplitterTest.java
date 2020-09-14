@@ -41,8 +41,10 @@ public class SplitterTest extends TestCase{
   private static void resizeTest(Splitter splitter) {
     JPanel jPanel1 = new JPanel();
     jPanel1.setMinimumSize(new Dimension(100, 100));
+    jPanel1.setPreferredSize(new Dimension(100, 100));
     JPanel jPanel2 = new JPanel();
     jPanel2.setMinimumSize(new Dimension(100, 100));
+    jPanel2.setPreferredSize(new Dimension(100, 100));
     splitter.setFirstComponent(jPanel1);
     splitter.setSecondComponent(jPanel2);
     splitter.setHonorComponentsMinimumSize(true);
@@ -91,7 +93,7 @@ public class SplitterTest extends TestCase{
       splitter.setProportion(f);
       splitter.doLayout();
       float proportion = splitter.getProportion();
-      assertTrue (proportion==f);
+      assertEquals(f, proportion);
     }
   }
 
@@ -99,15 +101,25 @@ public class SplitterTest extends TestCase{
   private static void checkBounds(Splitter splitter) {
     Dimension firstSize = splitter.getFirstComponent().getSize();
     Dimension secondSize = splitter.getSecondComponent().getSize();
+    if (splitter.getOrientation()) {
+      assertTrue(firstSize.height >= 0 && secondSize.height >= 0);
+    }
+    else {
+      assertTrue(firstSize.width >= 0 && secondSize.width >= 0);
+    }
+    // In case there is no room for components or proportion is set to the value that is unreachable in UI
+    // one of components (1st or 2nd according to strategy) may become zero-sized and we shouldn't do any checks then
+    if (splitter.getOrientation() && (firstSize.height == 0 || secondSize.height == 0)) return;
+    if (!splitter.getOrientation() && (firstSize.width == 0 || secondSize.width == 0)) return;
 
     Dimension size = splitter.getSize();
 
     if(splitter.getOrientation()) { // Split horizontally
-      assertTrue(firstSize.height + splitter.getDividerWidth() + secondSize.height == size.height);
+      assertEquals(size.height, firstSize.height + splitter.getDividerWidth() + secondSize.height);
       assertTrue(firstSize.width == size.width && secondSize.width == size.width);
     }
     else {
-      assertTrue(firstSize.width + splitter.getDividerWidth() + secondSize.width == size.width);
+      assertEquals(size.width, firstSize.width + splitter.getDividerWidth() + secondSize.width);
       assertTrue(firstSize.height == size.height && secondSize.height == size.height);
     }
 
@@ -116,8 +128,8 @@ public class SplitterTest extends TestCase{
       Dimension secondMinimum = splitter.getSecondComponent().getMinimumSize();
       switch (splitter.getLackOfSpaceStrategy()) {
         case SIMPLE_RATIO:
-          assertTrue(firstSize.width < firstMinimum.width == secondSize.width < secondMinimum.width);
-          assertTrue(firstSize.height < firstMinimum.height == secondSize.height < secondMinimum.height);
+          assertEquals(firstSize.width < firstMinimum.width, secondSize.width < secondMinimum.width);
+          assertEquals(firstSize.height < firstMinimum.height, secondSize.height < secondMinimum.height);
           break;
         case HONOR_THE_FIRST_MIN_SIZE:
           assertTrue(splitter.getOrientation() ? firstSize.height >= firstMinimum.height : firstSize.width >= firstMinimum.width);

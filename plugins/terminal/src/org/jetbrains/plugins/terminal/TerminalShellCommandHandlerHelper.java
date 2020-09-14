@@ -2,6 +2,9 @@
 package org.jetbrains.plugins.terminal;
 
 import com.google.common.base.Ascii;
+import com.intellij.execution.Executor;
+import com.intellij.execution.ExecutorRegistry;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -16,9 +19,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.terminal.TerminalDebugSmartCommandAction;
-import com.intellij.terminal.TerminalExecutorAction;
-import com.intellij.terminal.TerminalRunSmartCommandAction;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.terminal.TerminalShellCommandHandler;
 import com.intellij.util.Alarm;
 import com.jediterm.terminal.StyledTextConsumerAdapter;
@@ -31,6 +32,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
+import org.jetbrains.plugins.terminal.shellCommandRunner.TerminalDebugSmartCommandAction;
+import org.jetbrains.plugins.terminal.shellCommandRunner.TerminalExecutorAction;
+import org.jetbrains.plugins.terminal.shellCommandRunner.TerminalRunSmartCommandAction;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -210,12 +214,6 @@ public final class TerminalShellCommandHandlerHelper {
     }
     myAlarm.cancelAllRequests();
 
-    TerminalExecutorAction matchedExecutorAction = matchedExecutorAction(keyPressed);
-    if (matchedExecutorAction == null) {
-      onShellCommandExecuted();
-      return false;
-    }
-
     Project project = myWidget.getProject();
     String workingDirectory = getWorkingDirectory();
     boolean localSession = !hasRunningCommands();
@@ -228,9 +226,17 @@ public final class TerminalShellCommandHandlerHelper {
       .filter(it -> it.matches(project, workingDirectory, localSession, command))
       .findFirst()
       .orElseThrow(() -> new RuntimeException("Cannot find matching command handler."));
-    TerminalUsageTriggerCollector.Companion.triggerSmartCommandExecuted(project, workingDirectory, localSession, command, handler);
+
+    Executor executor = matchedExecutor(keyPressed);
+    if (executor == null) {
+      onShellCommandExecuted();
+      TerminalUsageTriggerCollector.Companion.triggerSmartCommand(project, workingDirectory, localSession, command, handler, false);
+      return false;
+    }
+
+    TerminalUsageTriggerCollector.Companion.triggerSmartCommand(project, workingDirectory, localSession, command, handler, true);
     TerminalShellCommandHandler.Companion.executeShellCommandHandler(myWidget.getProject(), getWorkingDirectory(),
-                                                                     !hasRunningCommands(), command, matchedExecutorAction);
+                                                                     !hasRunningCommands(), command, executor);
     clearTypedCommand(command);
     return true;
   }
@@ -252,9 +258,15 @@ public final class TerminalShellCommandHandlerHelper {
     }
   }
 
-  static TerminalExecutorAction matchedExecutorAction(@NotNull KeyEvent e) {
-    TerminalExecutorAction action = matchedRunAction(e);
-    return action != null ? action : matchedDebugAction(e);
+  @Nullable
+  static Executor matchedExecutor(@NotNull KeyEvent e) {
+    if (matchedRunAction(e) != null) {
+      return DefaultRunExecutor.getRunExecutorInstance();
+    } else if (matchedDebugAction(e) != null) {
+      return ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
+    } else {
+      return null;
+    }
   }
 
   private static TerminalExecutorAction matchedRunAction(@NotNull KeyEvent e) {

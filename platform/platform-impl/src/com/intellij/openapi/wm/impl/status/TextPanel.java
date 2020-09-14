@@ -70,10 +70,10 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
     UISettings.setupAntialiasing(g);
 
     Rectangle bounds = new Rectangle(panelWidth, panelHeight);
-    int x = getTextX(g2);
-    int maxWidth = panelWidth - x - getInsets().right;
     FontMetrics fm = g.getFontMetrics();
     int textWidth = fm.stringWidth(s);
+    int x = textWidth > panelWidth ? getInsets().left : getTextX(g2);
+    int maxWidth = panelWidth - x - getInsets().right;
     if (textWidth > maxWidth) {
       s = truncateText(s, bounds, fm, new Rectangle(), new Rectangle(), maxWidth);
     }

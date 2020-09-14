@@ -37,4 +37,8 @@ class HgCloneDialogComponent(project: Project, dialogStateListener: VcsCloneDial
     rememberedInputs.addUrl(url)
     rememberedInputs.cloneParentDir = parent
   }
+
+  override fun onComponentSelected(dialogStateListener: VcsCloneDialogComponentStateListener) {
+    updateOkActionState(dialogStateListener)
+  }
 }

@@ -674,4 +674,6 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testMutationContractFromSource() { doTest(); }
   public void testDefaultConstructor() { doTest(); }
   public void testInstanceOfUnresolved() { doTest(); }
+  public void testAIOOBETransfer() { doTest(); }
+  public void testBoxingShortByte() { doTest(); }
 }

@@ -44,8 +44,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
         merger.add(classes);
       }
     }
-    PsiFile[] result = merger == null ? null : merger.getResult();
-    return result != null ? result : PsiFile.EMPTY_ARRAY;
+    return getMergerResult(merger, PsiFile.EMPTY_ARRAY);
   }
 
   @Override
@@ -54,8 +53,12 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
     for (PsiShortNamesCache cache : getCaches()) {
       merger.add(cache.getAllFileNames());
     }
-    String[] result = merger.getResult();
-    return result != null ? result : ArrayUtilRt.EMPTY_STRING_ARRAY;
+    return getMergerResult(merger, ArrayUtilRt.EMPTY_STRING_ARRAY);
+  }
+
+  private static <T> T @NotNull [] getMergerResult(@Nullable Merger<T> merger, T[] emptyArray) {
+    if (merger == null || merger.myAllItems == null && merger.mySingleItem == null) return emptyArray;
+    return merger.myAllItems == null ? merger.mySingleItem : merger.myAllItems.toArray(emptyArray);
   }
 
   @Override
@@ -68,8 +71,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
         merger.add(classes);
       }
     }
-    PsiClass[] result = merger == null ? null : merger.getResult();
-    return result != null ? result : PsiClass.EMPTY_ARRAY;
+    return getMergerResult(merger, PsiClass.EMPTY_ARRAY);
   }
 
   @Override
@@ -79,8 +81,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
       String[] names = cache.getAllClassNames();
       merger.add(names);
     }
-    String[] result = merger.getResult();
-    return result != null ? result : ArrayUtilRt.EMPTY_STRING_ARRAY;
+    return getMergerResult(merger, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
   @Override
@@ -134,8 +135,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
         merger.add(methods);
       }
     }
-    PsiMethod[] result = merger == null ? null : merger.getResult();
-    return result == null ? PsiMethod.EMPTY_ARRAY : result;
+    return getMergerResult(merger, PsiMethod.EMPTY_ARRAY);
   }
 
   @Override
@@ -149,8 +149,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
         merger.add(methods);
       }
     }
-    PsiMethod[] result = merger == null ? null : merger.getResult();
-    return result == null ? PsiMethod.EMPTY_ARRAY : result;
+    return getMergerResult(merger, PsiMethod.EMPTY_ARRAY);
   }
 
   @Override
@@ -164,8 +163,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
         merger.add(fields);
       }
     }
-    PsiField[] result = merger == null ? null : merger.getResult();
-    return result == null ? PsiField.EMPTY_ARRAY : result;
+    return getMergerResult(merger, PsiField.EMPTY_ARRAY);
   }
 
   @Override
@@ -192,8 +190,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
     for (PsiShortNamesCache cache : getCaches()) {
       merger.add(cache.getAllMethodNames());
     }
-    String[] result = merger.getResult();
-    return result != null ? result : ArrayUtilRt.EMPTY_STRING_ARRAY;
+    return getMergerResult(merger, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
   @Override
@@ -206,8 +203,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
         merger.add(classes);
       }
     }
-    PsiField[] result = merger == null ? null : merger.getResult();
-    return result == null ? PsiField.EMPTY_ARRAY : result;
+    return getMergerResult(merger, PsiField.EMPTY_ARRAY);
   }
 
   @Override
@@ -220,8 +216,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
         merger.add(classes);
       }
     }
-    String[] result = merger == null ? null : merger.getResult();
-    return result == null ? ArrayUtilRt.EMPTY_STRING_ARRAY : result;
+    return getMergerResult(merger, ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
   @Override
@@ -250,7 +245,7 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
     private T[] mySingleItem;
     private Set<T> myAllItems;
 
-    public void add(T @NotNull [] items) {
+    void add(T @NotNull [] items) {
       if (items.length == 0) return;
       if (mySingleItem == null) {
         mySingleItem = items;
@@ -261,11 +256,6 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
         myAllItems = ContainerUtil.addAll(new THashSet<>(elements.length), elements);
       }
       ContainerUtil.addAll(myAllItems, items);
-    }
-
-    public T[] getResult() {
-      if (myAllItems == null) return mySingleItem;
-      return myAllItems.toArray(mySingleItem);
     }
   }
 

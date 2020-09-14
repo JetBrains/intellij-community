@@ -226,6 +226,20 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-43359
+  public void testSuppressedDunderPostInitSignature() {
+    doTestByText("import dataclasses\n" +
+                 "\n" +
+                 "@dataclasses.dataclass\n" +
+                 "class A:\n" +
+                 "    a: int\n" +
+                 "    b: dataclasses.InitVar[str]\n" +
+                 "    c: dataclasses.InitVar[bytes]\n" +
+                 "\n" +
+                 "    def __post_init__(self, *args, **kwargs):\n" +
+                 "        pass");
+  }
+
   // PY-27398
   public void testFieldDefaultAndDefaultFactory() {
     doTest();

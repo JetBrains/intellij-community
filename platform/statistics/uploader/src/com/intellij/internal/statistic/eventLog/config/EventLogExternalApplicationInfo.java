@@ -1,9 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.config;
 
-import com.intellij.internal.statistic.eventLog.DataCollectorDebugLogger;
-import com.intellij.internal.statistic.eventLog.DataCollectorSystemEventLogger;
-import com.intellij.internal.statistic.eventLog.EventLogApplicationInfo;
+import com.intellij.internal.statistic.eventLog.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,7 +12,7 @@ public class EventLogExternalApplicationInfo implements EventLogApplicationInfo 
   private final String myTemplateUrl;
   private final String myProductCode;
   private final String myProductVersion;
-  private final String myUserAgent;
+  private final EventLogBasicConnectionSettings myConnectionSettings;
 
   private final boolean myIsInternal;
   private final boolean myIsTest;
@@ -28,7 +26,8 @@ public class EventLogExternalApplicationInfo implements EventLogApplicationInfo 
     myTemplateUrl = templateUrl;
     myProductCode = productCode;
     myProductVersion = productVersion;
-    myUserAgent = (userAgent == null ? "IntelliJ": userAgent) + "(External)";
+    String externalUserAgent = (userAgent == null ? "IntelliJ": userAgent) + "(External)";
+    myConnectionSettings = new EventLogBasicConnectionSettings(externalUserAgent);
     myIsInternal = isInternal;
     myIsTest = isTest;
     myIsEAP = isEAP;
@@ -55,8 +54,8 @@ public class EventLogExternalApplicationInfo implements EventLogApplicationInfo 
 
   @NotNull
   @Override
-  public String getUserAgent() {
-    return myUserAgent;
+  public EventLogConnectionSettings getConnectionSettings() {
+    return myConnectionSettings;
   }
 
   @Override

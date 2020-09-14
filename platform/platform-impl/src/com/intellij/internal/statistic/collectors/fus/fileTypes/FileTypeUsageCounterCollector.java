@@ -99,7 +99,7 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
     SELECT.log(EventFields.AnonymizedPath.with(null));
   }
 
-  private static @Nullable String findSchema(@NotNull VirtualFile file) {
+  public static @Nullable String findSchema(@NotNull VirtualFile file) {
     for (FileTypeUsageSchemaDescriptorEP<FileTypeUsageSchemaDescriptor> ext : EP.getExtensionList()) {
       FileTypeUsageSchemaDescriptor instance = ext.getInstance();
       if (ext.schema == null) {

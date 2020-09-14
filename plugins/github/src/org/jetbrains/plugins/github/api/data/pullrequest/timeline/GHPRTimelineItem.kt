@@ -93,9 +93,9 @@ CommentDeletedEvent
   JsonSubTypes.Type(name = "HeadRefForcePushedEvent", value = GHPRHeadRefForcePushedEvent::class),
   JsonSubTypes.Type(name = "HeadRefRestoredEvent", value = GHPRHeadRefRestoredEvent::class),
 
-  JsonSubTypes.Type(name = "CrossReferencedEvent", value = GHPRCrossReferencedEvent::class),
+  JsonSubTypes.Type(name = "CrossReferencedEvent", value = GHPRCrossReferencedEvent::class)/*,
   JsonSubTypes.Type(name = "ConnectedEvent", value = GHPRConnectedEvent::class),
-  JsonSubTypes.Type(name = "DisconnectedEvent", value = GHPRDisconnectedEvent::class)
+  JsonSubTypes.Type(name = "DisconnectedEvent", value = GHPRDisconnectedEvent::class)*/
 )
 interface GHPRTimelineItem {
   class Unknown(val __typename: String) : GHPRTimelineItem

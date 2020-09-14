@@ -174,24 +174,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     myNextButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
-        if (isLastStep()) {
-          // Commit data of current step and perform OK action
-          final Step currentStep = mySteps.get(myCurrentStep);
-          LOG.assertTrue(currentStep != null);
-          try {
-            currentStep._commit(true);
-            doOKAction();
-          }
-          catch (final CommitStepException exc) {
-            String message = exc.getMessage();
-            if (message != null) {
-              Messages.showErrorDialog(myContentPanel, message);
-            }
-          }
-        }
-        else {
-          doNextAction();
-        }
+        proceedToNextStep();
       }
     });
 
@@ -211,6 +194,31 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     });
 
     return panel;
+  }
+
+  /**
+   * Validates the current step. If the current step is valid commits it and moves the wizard to the next step.
+   * Usually, should be used from UI event handlers or after deferred user interaction, e.g. validation in background thread.
+   */
+  public void proceedToNextStep() {
+    if (isLastStep()) {
+      // Commit data of current step and perform OK action
+      Step currentStep = mySteps.get(myCurrentStep);
+      LOG.assertTrue(currentStep != null);
+      try {
+        currentStep._commit(true);
+        doOKAction();
+      }
+      catch (CommitStepException exc) {
+        String message = exc.getMessage();
+        if (message != null) {
+          Messages.showErrorDialog(myContentPanel, message);
+        }
+      }
+    }
+    else {
+      doNextAction();
+    }
   }
 
   public JPanel getContentComponent() {
