@@ -46,7 +46,7 @@ class FindUsagesStatisticsCollector : CounterUsagesCollector() {
         data.add(SEARCHABLE_SCOPE_EVENT_FIELD.with(options.searchScope))
       }
       if (options is FusAwareFindUsagesOptions) {
-        data.add(ADDITIONAL.with(ObjectEventData(options.additionalUsageData)))
+        data.add(ADDITIONAL.with(ObjectEventData(*options.additionalUsageData.toTypedArray())))
       }
       FIND_USAGES_OPTIONS.log(project, *data.toTypedArray())
     }

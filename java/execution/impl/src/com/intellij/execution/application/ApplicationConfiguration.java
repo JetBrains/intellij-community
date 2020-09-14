@@ -285,7 +285,7 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
   }
 
   @Override
-  public @NotNull List<EventPair<?>> getAdditionalUsageData() {
+  public @NotNull List<EventPair> getAdditionalUsageData() {
     PsiClass mainClass = getMainClass();
     if (mainClass == null) {
       return Collections.emptyList();

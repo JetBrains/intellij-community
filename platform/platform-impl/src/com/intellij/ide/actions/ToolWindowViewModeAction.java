@@ -156,7 +156,7 @@ public class ToolWindowViewModeAction extends DumbAwareToggleAction implements F
   }
 
   @Override
-  public @NotNull List<EventPair<?>> getAdditionalUsageData(@NotNull AnActionEvent event) {
+  public @NotNull List<EventPair> getAdditionalUsageData(@NotNull AnActionEvent event) {
     ToolWindow toolWindow = getToolWindow(event);
     if (toolWindow != null) {
       return Collections.singletonList(ToolwindowFusEventFields.TOOLWINDOW.with(toolWindow.getId()));

@@ -200,10 +200,7 @@ abstract class ObjectDescription {
   }
 }
 
-class ObjectEventData(private val values: List<EventPair<*>>) {
-
-  constructor(vararg values: EventPair<*>) : this(listOf(*values))
-
+class ObjectEventData(private vararg val values: EventPair<*>) {
   fun buildObjectData(allowedFields: Array<out EventField<*>>): Map<String, Any> {
     val data = FeatureUsageData()
     for (eventPair in values) {

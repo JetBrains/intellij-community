@@ -7,5 +7,5 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public interface FusAwareRunConfiguration {
-  @NotNull List<EventPair<?>> getAdditionalUsageData();
+  @NotNull List<EventPair> getAdditionalUsageData();
 }

@@ -1491,8 +1491,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     customData.add(EventFields.Language.with(getHostFileLanguage(dataContext, project)));
     if (action instanceof FusAwareAction) {
-      List<EventPair<?>> additionalUsageData = ((FusAwareAction)action).getAdditionalUsageData(event);
-      customData.add(ActionsEventLogGroup.ADDITIONAL.with(new ObjectEventData(additionalUsageData)));
+      List<EventPair> additionalUsageData = ((FusAwareAction)action).getAdditionalUsageData(event);
+      customData.add(ActionsEventLogGroup.ADDITIONAL.with(new ObjectEventData(additionalUsageData.toArray(new EventPair[0]))));
     }
     ActionsCollectorImpl.recordActionInvoked(project, action, event, customData);
     for (AnActionListener listener : myActionListeners) {

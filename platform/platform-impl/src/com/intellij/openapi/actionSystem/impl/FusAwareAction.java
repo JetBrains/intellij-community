@@ -8,5 +8,5 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public interface FusAwareAction {
-  @NotNull List<EventPair<?>> getAdditionalUsageData(@NotNull AnActionEvent event);
+  @NotNull List<EventPair> getAdditionalUsageData(@NotNull AnActionEvent event);
 }
