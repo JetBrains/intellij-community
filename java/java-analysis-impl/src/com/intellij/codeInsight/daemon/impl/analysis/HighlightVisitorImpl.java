@@ -1597,7 +1597,14 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           }
         }
         else if (description == null){
-          description = JavaErrorBundle.message("cannot.resolve.method", expression.getReferenceName());
+          if (results.length > 1) {
+            String t1 = HighlightUtil.format(Objects.requireNonNull(results[0].getElement()));
+            String t2 = HighlightUtil.format(Objects.requireNonNull(results[1].getElement()));
+            description = JavaErrorBundle.message("ambiguous.reference", expression.getReferenceName(), t1, t2);
+          }
+          else {
+            description = JavaErrorBundle.message("cannot.resolve.method", expression.getReferenceName());
+          }
         }
 
         if (description != null) {

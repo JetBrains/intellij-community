@@ -16,7 +16,7 @@ class Test {
 
 class Test1 {
     {
-        Runnable b = Test1 :: <error descr="Cannot resolve method 'length'">length</error>;
+        Runnable b = Test1 :: <error descr="Reference to 'length' is ambiguous, both 'length(String)' and 'length(Integer)' match">length</error>;
         Comparable<String> c = Test1 :: length;
         Comparable<Integer> c1 =  Test1 :: length;
     }

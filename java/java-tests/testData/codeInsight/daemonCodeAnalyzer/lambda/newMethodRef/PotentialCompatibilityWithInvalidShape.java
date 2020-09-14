@@ -34,7 +34,7 @@ class Test {
   {
     Set<String> m = replyWith(this::query);
     System.out.println(m);
-    Set<String> m1 = replyWith(this::<error descr="Cannot resolve method 'query1'">query1</error>);
+    Set<String> m1 = replyWith(this::<error descr="Reference to 'query1' is ambiguous, both 'query1()' and 'query1(String)' match">query1</error>);
     System.out.println(m1);
   }
 }
