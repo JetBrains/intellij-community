@@ -42,10 +42,10 @@ import java.util.*;
  * @author Eugene Zhuravlev
  */
 public final class FormsInstrumenter extends FormsBuilder {
-  public static final String BUILDER_NAME = "forms";
+  public static final @NlsSafe String BUILDER_NAME = "forms";
 
   public FormsInstrumenter() {
-    super(BuilderCategory.CLASS_INSTRUMENTER, FormBundle.message("forms.instrumenter.name"));
+    super(BuilderCategory.CLASS_INSTRUMENTER, BUILDER_NAME);
   }
 
   @Override
