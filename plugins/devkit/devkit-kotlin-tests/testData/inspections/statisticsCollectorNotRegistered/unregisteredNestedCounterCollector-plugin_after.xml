@@ -1,0 +1,6 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+      <statistics.counterUsagesCollector implementationClass="UnregisteredNestedCounterCollector$Foo"/>
+  </extensions>
+
+</idea-plugin>

@@ -223,7 +223,7 @@ public class ComponentNotRegisteredInspection extends DevKitJvmInspection {
     return searchCost == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES;
   }
 
-  private static boolean canFix(@NotNull PsiClass psiClass) {
+  public static boolean canFix(@NotNull PsiClass psiClass) {
     Project project = psiClass.getProject();
     PsiFile psiFile = psiClass.getContainingFile();
     LOG.assertTrue(psiFile != null);
