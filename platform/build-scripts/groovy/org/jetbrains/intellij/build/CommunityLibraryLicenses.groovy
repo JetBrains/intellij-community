@@ -302,6 +302,8 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "Hunspell", libraryName: "com.gitlab.dumonts:hunspell:1.1.1",
                        license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt",
                        url: "https://gitlab.com/dumonts/hunspell-java"),
+    new LibraryLicense(name: "ICU4J", libraryName: "icu4j", license: "Unicode",
+                       url: "http://site.icu-project.org/", licenseUrl: "http://www.unicode.org/copyright.html"),
     new LibraryLicense(name: "imgscalr", libraryName: "imgscalr", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://github.com/thebuzzmedia/imgscalr"),
     new LibraryLicense(name: "Inconsolata", attachedTo: "intellij.platform.resources", version: "001.010", license: "OFL",

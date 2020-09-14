@@ -85,10 +85,10 @@ public final class Formats {
 
   private static final String[] PADDED_FORMATS = {"%03d", "%02d", "%02d", "%02d", "%d"};
   /**
-   * Formats duration given in milliseconds as a sum of padded time units, except the most significant unit
-   * E.g. 234523598 padded as "2 d 03 h 11 min 04 sec 004 ms" accordingly with zeros except "days" here.
+   * @deprecated use com.intellij.ide.nls.NlsMessages for localized output.
    */
   @Contract(pure = true)
+  @Deprecated
   public static @NotNull String formatDurationPadded(long millis, @NotNull String unitSeparator) {
     StringBuilder result = new StringBuilder();
 
@@ -115,10 +115,10 @@ public final class Formats {
   }
 
   /**
-   * Formats duration given in milliseconds as a sum of time units with at most two units
-   * (example: {@code formatDuration(123456) = "2 m 3 s"}).
+   * @deprecated use com.intellij.ide.nls.NlsMessages for localized output.
    */
   @Contract(pure = true)
+  @Deprecated
   public static @NotNull String formatDurationApproximate(long duration) {
     return formatDuration(duration, " ", 2);
   }

@@ -1438,39 +1438,47 @@ public class StringUtil extends StringUtilRt {
     return Formats.formatFileSize(fileSize, unitSeparator);
   }
 
-  /** Formats duration given in milliseconds as a sum of time units (example: {@code formatDuration(123456) = "2 m 3 s 456 ms"}). */
+  /** 
+   * Formats duration given in milliseconds as a sum of time units (example: {@code formatDuration(123456) = "2 m 3 s 456 ms"}).
+   * This method is intended to be used in non-localized contexts (primarily in log output).
+   * See com.intellij.ide.nls.NlsMessages for localized output.
+   */
   @Contract(pure = true)
-  public static @NotNull String formatDuration(long duration) {
+  public static @NotNull @NonNls String formatDuration(long duration) {
     return Formats.formatDuration(duration);
   }
 
-  /** Formats {@link Duration} as a sum of time units (calls {@link #formatDuration(long)} with duration converted to milliseconds) */
+  /** 
+   * Formats {@link Duration} as a sum of time units (calls {@link #formatDuration(long)} with duration converted to milliseconds)
+   * This method is intended to be used in non-localized contexts (primarily in log output).
+   * See com.intellij.ide.nls.NlsMessages for localized output.
+   */
   @Contract(pure = true)
-  public static @NotNull String formatDuration(@NotNull Duration duration) {
+  public static @NotNull @NonNls String formatDuration(@NotNull Duration duration) {
     return Formats.formatDuration(duration);
   }
 
   /** Formats duration given in milliseconds as a sum of time units (example: {@code formatDuration(123456, "") = "2m 3s 456ms"}). */
   @Contract(pure = true)
-  public static @NotNull String formatDuration(long duration, @NotNull String unitSeparator) {
+  public static @NotNull @NonNls String formatDuration(long duration, @NotNull String unitSeparator) {
     return Formats.formatDuration(duration, unitSeparator);
   }
 
   /**
-   * Formats duration given in milliseconds as a sum of padded time units, except the most significant unit
-   * E.g. 234523598 padded as "2 d 03 h 11 min 04 sec 004 ms" accordingly with zeros except "days" here.
+   * @deprecated use com.intellij.ide.nls.NlsMessages for localized output.
    */
   @Contract(pure = true)
-  public static @NotNull String formatDurationPadded(long millis, @NotNull String unitSeparator) {
+  @Deprecated
+  public static @NotNull @NonNls String formatDurationPadded(long millis, @NotNull String unitSeparator) {
     return Formats.formatDurationPadded(millis, unitSeparator);
   }
 
   /**
-   * Formats duration given in milliseconds as a sum of time units with at most two units
-   * (example: {@code formatDuration(123456) = "2 m 3 s"}).
+   * @deprecated use com.intellij.ide.nls.NlsMessages for localized output.
    */
   @Contract(pure = true)
-  public static @NotNull String formatDurationApproximate(long duration) {
+  @Deprecated
+  public static @NotNull @NonNls String formatDurationApproximate(long duration) {
     return Formats.formatDurationApproximate(duration);
   }
 
