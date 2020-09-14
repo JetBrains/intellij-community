@@ -294,7 +294,7 @@
     "type": "option",
     "key": "csharp_space_between_parentheses",
     "value": {
-      "type": "union",
+      "type": "list",
       "values": [
         {
           "type": "constant",
@@ -733,6 +733,41 @@
           "type": "constant",
           "value": "inside_namespace",
           "documentation": "Leave using directives inside namespace"
+        }
+      ]
+    }
+  },
+  {
+    "type": "option",
+    "key": "csharp_new_line_before_open_brace",
+    "value": {
+      "type": "union",
+      "values": [
+        "all",
+        "none",
+        {
+          "type": "list",
+          "values": [
+            "accessors",
+            "anonymous_methods",
+            "anonymous_types",
+            "control_blocks",
+            "events",
+            "indexers",
+            "lambdas",
+            "local_functions",
+            "namespace",
+            {
+              "type": "union",
+              "values": [
+                "method",
+                "methods"
+              ]
+            },
+            "object_collection",
+            "properties",
+            "types"
+          ]
         }
       ]
     }
