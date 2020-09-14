@@ -9,6 +9,8 @@ import com.intellij.dupLocator.iterators.CountingNodeIterator;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -152,20 +154,23 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
       // not a main configuration containing meta data
       return;
     }
-    final String shortName = configuration.getUuid().toString();
-    final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
-    if (key != null) {
-      if (!isMetaDataChanged(configuration, key)) return;
-      HighlightDisplayKey.unregister(shortName);
-    }
-    final String suppressId = configuration.getSuppressId();
-    final String name = configuration.getName();
-    if (suppressId == null) {
-      HighlightDisplayKey.register(shortName, () -> name, SHORT_NAME);
-    }
-    else {
-      HighlightDisplayKey.register(shortName, () -> name, suppressId, SHORT_NAME);
-    }
+    // modify from single (AWT) thread, to prevent race conditions.
+    ApplicationManager.getApplication().invokeLater(() -> {
+      final String shortName = configuration.getUuid().toString();
+      final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
+      if (key != null) {
+        if (!isMetaDataChanged(configuration, key)) return;
+        HighlightDisplayKey.unregister(shortName);
+      }
+      final String suppressId = configuration.getSuppressId();
+      final String name = configuration.getName();
+      if (suppressId == null) {
+        HighlightDisplayKey.register(shortName, () -> name, SHORT_NAME);
+      }
+      else {
+        HighlightDisplayKey.register(shortName, () -> name, suppressId, SHORT_NAME);
+      }
+    }, ModalityState.NON_MODAL);
   }
 
   private static boolean isMetaDataChanged(@NotNull Configuration configuration, @NotNull HighlightDisplayKey key) {
