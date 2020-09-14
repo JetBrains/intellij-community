@@ -26,5 +26,6 @@ set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /MT")
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/fileWatcher3.rc ${CMAKE_CURRENT_BINARY_DIR}/fileWatcher3.rc @ONLY)
 
 add_executable(WinFsNotifier fileWatcher3.c ${CMAKE_CURRENT_BINARY_DIR}/fileWatcher3.rc)
+target_link_libraries(WinFsNotifier shlwapi.lib)
 
 set_target_properties(WinFsNotifier PROPERTIES OUTPUT_NAME ${FILE_NAME})
