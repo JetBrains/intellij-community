@@ -6,8 +6,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.VcsShelveChangesSaver;
+import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.commands.Git;
 import git4idea.config.GitSaveChangesPolicy;
 import git4idea.rollback.GitRollbackEnvironment;
@@ -16,6 +18,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
 
 public final class GitShelveChangesSaver extends GitChangesSaver {
   private final VcsShelveChangesSaver myVcsShelveChangesSaver;
@@ -48,16 +52,18 @@ public final class GitShelveChangesSaver extends GitChangesSaver {
 
   @Override
   public boolean wereChangesSaved() {
-    return myVcsShelveChangesSaver.getShelvedLists() != null && !myVcsShelveChangesSaver.getShelvedLists().isEmpty();
+    List<ShelvedChangeList> shelvedLists = myVcsShelveChangesSaver.getShelvedLists();
+    return shelvedLists != null && !shelvedLists.isEmpty();
   }
 
   @Override
   public void showSavedChanges() {
-    if (myVcsShelveChangesSaver.getShelvedLists() == null) {
-      return;
+    List<ShelvedChangeList> shelvedLists = myVcsShelveChangesSaver.getShelvedLists();
+    if (shelvedLists != null && !shelvedLists.isEmpty()) {
+      Comparator<ShelvedChangeList> nameComparator = Comparator.comparing(it -> it.getDisplayName(), String.CASE_INSENSITIVE_ORDER);
+      List<ShelvedChangeList> sorted = ContainerUtil.sorted(shelvedLists, nameComparator);
+      ShelvedChangesViewManager.getInstance(myProject).activateView(sorted.get(0));
     }
-    ShelvedChangesViewManager.getInstance(myProject)
-      .activateView(myVcsShelveChangesSaver.getShelvedLists().get(myVcsShelveChangesSaver.getShelvedLists().keySet().iterator().next()));
   }
 
   @NonNls
