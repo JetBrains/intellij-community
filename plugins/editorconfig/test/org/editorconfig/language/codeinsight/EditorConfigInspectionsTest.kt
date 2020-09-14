@@ -61,6 +61,10 @@ class EditorConfigInspectionsTest : BasePlatformTestCase() {
   // Bugfixes
 
   fun testIncompleteHeader() = doTest(EditorConfigNoMatchingFilesInspection::class)
+  fun testReSharperKeys() = doTest(EditorConfigKeyCorrectnessInspection::class)
+  fun testMsFormattingKeys() = doTest(EditorConfigKeyCorrectnessInspection::class)
+  fun testMsFormattingValues() = doTest(EditorConfigValueCorrectnessInspection::class)
+  // fun testNewRoslynKeyDeclarations() = doTest(EditorConfigMissingRequiredDeclarationInspection::class)
 
   // Utils
 
