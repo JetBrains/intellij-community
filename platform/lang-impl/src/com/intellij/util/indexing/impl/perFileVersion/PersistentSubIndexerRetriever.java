@@ -67,8 +67,17 @@ public final class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersi
   }
 
   public void setIndexedState(int fileId, @NotNull IndexedFile file) throws IOException {
+    int indexerId = ProgressManager.getInstance().computeInNonCancelableSection(() -> getFileIndexerId(file));
+    setFileIndexerId(fileId, indexerId);
+  }
+
+  public void setUnindexedState(int fileId) throws IOException {
+    setFileIndexerId(fileId, -2);
+  }
+
+  private void setFileIndexerId(int fileId, int indexerId) throws IOException {
     try (DataOutputStream stream = FSRecords.writeAttribute(fileId, myFileAttribute)) {
-      DataInputOutputUtil.writeINT(stream, ProgressManager.getInstance().computeInNonCancelableSection(() -> getFileIndexerId(file)));
+      DataInputOutputUtil.writeINT(stream, indexerId);
     }
   }
 
