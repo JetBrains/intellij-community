@@ -14,7 +14,7 @@ public final class DisposableExKt {
   private DisposableExKt() {}
 
   /**
-   * @deprecated Use version from `LifetimeDisposableEx`
+   * @deprecated Use {@link com.intellij.openapi.rd.LifetimeDisposableExKt#defineNestedLifetime(Disposable)}
    */
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   @Deprecated
@@ -23,7 +23,7 @@ public final class DisposableExKt {
   }
 
   /**
-   * @deprecated Use version from `LifetimeDisposableEx`
+   * @deprecated Use {@link com.intellij.openapi.rd.LifetimeDisposableExKt#createLifetime(Disposable)}
    */
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   @Deprecated
@@ -32,7 +32,7 @@ public final class DisposableExKt {
   }
 
   /**
-   * @deprecated Use version from `LifetimeDisposableEx`
+   * @deprecated Use {@link com.intellij.openapi.rd.LifetimeDisposableExKt#doIfAlive(Disposable, Function1)}
    */
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   @Deprecated
@@ -41,7 +41,7 @@ public final class DisposableExKt {
   }
 
   /**
-   * @deprecated Use version from `LifetimeDisposableEx`
+   * @deprecated Use {@link com.intellij.openapi.rd.LifetimeDisposableExKt#createNestedDisposable(Lifetime, String)}
    */
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   @Deprecated
@@ -50,7 +50,7 @@ public final class DisposableExKt {
   }
 
   /**
-   * @deprecated Use version from `LifetimeDisposableEx`
+   * @deprecated Use {@link com.intellij.openapi.rd.LifetimeDisposableExKt#createNestedDisposable(Lifetime, String)}
    */
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   @Deprecated
@@ -59,7 +59,7 @@ public final class DisposableExKt {
   }
 
   /**
-   * @deprecated Use version from `LifetimeDisposableEx`
+   * @deprecated Use {@link com.intellij.openapi.rd.LifetimeDisposableExKt#createNestedDisposable(Lifetime, String)}
    */
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
   @Deprecated
@@ -70,7 +70,7 @@ public final class DisposableExKt {
   }
 
   /**
-   * @deprecated Use version from `DisposableEx`
+   * @deprecated Use {@link Disposer#register(Disposable, Disposable)}
    */
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   @Deprecated
@@ -79,7 +79,7 @@ public final class DisposableExKt {
   }
 
   /**
-   * @deprecated Use version from `DisposableEx`
+   * @deprecated Use {@link DisposableEx#attach(Disposable, Function0)}
    */
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   @Deprecated
