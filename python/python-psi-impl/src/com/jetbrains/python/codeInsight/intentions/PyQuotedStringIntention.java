@@ -5,8 +5,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -26,8 +24,6 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * Intention to convert between single-quoted and double-quoted strings
  */
 public class PyQuotedStringIntention extends PyBaseIntentionAction {
-  private SmartPsiElementPointer<PyStringElement> myTargetStringElement;
-
   @Override
   @NotNull
   public String getFamilyName() {
@@ -48,8 +44,6 @@ public class PyQuotedStringIntention extends PyBaseIntentionAction {
     final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(stringLiteral, PyDocStringOwner.class);
     if (docStringOwner != null && docStringOwner.getDocStringExpression() == stringLiteral) return false;
 
-    myTargetStringElement = SmartPointerManager.createPointer(stringElement);
-
     String currentQuote = stringElement.getQuote();
     if (currentQuote.equals("'")) {
       setText(PyPsiBundle.message("INTN.quoted.string.single.to.double"));
@@ -66,7 +60,7 @@ public class PyQuotedStringIntention extends PyBaseIntentionAction {
     if (elementUnderCaret == null) return null;
     IElementType elementType = elementUnderCaret.getNode().getElementType();
     if (!(PyTokenTypes.STRING_NODES.contains(elementType) || PyTokenTypes.FSTRING_TOKENS.contains(elementType))) return null;
-    PyStringElement stringElement = PsiTreeUtil.getParentOfType(elementUnderCaret, PyStringElement.class, false);
+    PyStringElement stringElement = PsiTreeUtil.getParentOfType(elementUnderCaret, PyStringElement.class, false, PyExpression.class);
     return stringElement != null && canBeConverted(stringElement, true) ? stringElement : null;
   }
 
@@ -95,7 +89,8 @@ public class PyQuotedStringIntention extends PyBaseIntentionAction {
 
   @Override
   public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    @Nullable PyStringElement stringElement = myTargetStringElement.getElement();
+    PsiElement elementUnderCaret = file.findElementAt(editor.getCaretModel().getOffset());
+    PyStringElement stringElement = PsiTreeUtil.getParentOfType(elementUnderCaret, PyStringElement.class, false, PyExpression.class);
     if (stringElement == null) return;
     PyStringLiteralExpression stringLiteral = as(stringElement.getParent(), PyStringLiteralExpression.class);
     if (stringLiteral == null) return;
