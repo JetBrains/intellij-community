@@ -80,8 +80,8 @@ final class UnindexedFilesFinder implements VirtualFileFilter {
           if ((fileTypeIndexState = myFileTypeIndex.getIndexingStateForFile(inputId, fileContent)) == FileIndexingState.OUT_DATED) {
             myFileBasedIndex.dropNontrivialIndexedStates(inputId);
             shouldIndexFile.set(true);
-
-          } else {
+          }
+          else {
             final List<ID<?, ?>> affectedIndexCandidates = myFileBasedIndex.getAffectedIndexCandidates(file);
             //noinspection ForLoopReplaceableByForEach
             for (int i = 0, size = affectedIndexCandidates.size(); i < size; ++i) {
