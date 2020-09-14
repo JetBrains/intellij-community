@@ -31,6 +31,10 @@ public class MessageBundleReferenceTest extends JavaCodeInsightFixtureTestCase {
     doHighlightImplicitUsagesTest();
   }
 
+  public void testPluginDescriptionKeyImplicitUsage() {
+    doHighlightImplicitUsagesTest("PluginDescriptionKeyImplicitUsage.xml");
+  }
+
   public void testActionOrGroupImplicitUsage() {
     doHighlightImplicitUsagesTest("ActionOrGroupImplicitUsage.xml");
   }
@@ -69,5 +73,13 @@ public class MessageBundleReferenceTest extends JavaCodeInsightFixtureTestCase {
 
     myFixture.completeBasic();
     assertContainsElements(myFixture.getLookupElementStrings(), "MyStateName");
+  }
+
+  public void testPluginIdCompletionVariants() {
+    myFixture.copyFileToProject("PluginDescriptionKeyImplicitUsage.xml");
+    myFixture.configureByText("MyBundle.properties", "plugin.<caret>.description");
+
+    myFixture.completeBasic();
+    assertContainsElements(myFixture.getLookupElementStrings(), "my.plugin.id");
   }
 }

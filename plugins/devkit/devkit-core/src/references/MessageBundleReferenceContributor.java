@@ -28,18 +28,18 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.xml.DomTarget;
+import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.dom.Action;
-import org.jetbrains.idea.devkit.dom.ActionOrGroup;
-import org.jetbrains.idea.devkit.dom.Extension;
-import org.jetbrains.idea.devkit.dom.OverrideText;
+import org.jetbrains.idea.devkit.dom.*;
 import org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex;
+import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -58,6 +58,8 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
   @NonNls private static final String EXPORTABLE_PREFIX = "exportable.";
   @NonNls private static final String EXPORTABLE_SUFFIX = ".presentable.name";
 
+  @NonNls private static final String PLUGIN = "plugin.";
+
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(
@@ -74,7 +76,8 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
           return JBIterable.of(
             createActionOrGroupIdReference(element, text),
             createToolwindowIdReference(element, text),
-            createExportableIdReference(element, text)
+            createExportableIdReference(element, text),
+            createPluginIdReference(element, text)
           ).filter(Objects::nonNull).toArray(PsiReference.EMPTY_ARRAY);
         }
 
@@ -104,6 +107,14 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
           String id = text.replace(EXPORTABLE_PREFIX, "").replace(EXPORTABLE_SUFFIX, "");
           return new ExportableIdReference(element, id);
         }
+
+        @Nullable
+        private PsiReference createPluginIdReference(@NotNull PsiElement element, String text) {
+          if (!isPluginDescriptionKey(text)) return null;
+
+          String id = StringUtil.substringAfter(StringUtil.substringBefore(text, DESCRIPTION), PLUGIN);
+          return new PluginIdReference(element, id);
+        }
       });
   }
 
@@ -126,6 +137,48 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
 
   private static boolean isToolwindowKey(String name) {
     return name.startsWith(TOOLWINDOW_STRIPE_PREFIX);
+  }
+
+  private static boolean isPluginDescriptionKey(String name) {
+    return name.startsWith(PLUGIN) && name.endsWith(DESCRIPTION);
+  }
+
+
+  private static class PluginIdReference extends PsiPolyVariantReferenceBase<PsiElement> {
+
+    private PluginIdReference(@NotNull PsiElement element, String id) {
+      super(element, TextRange.allOf(id).shiftRight(PLUGIN.length()));
+    }
+
+    @Override
+    public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
+      List<PsiElement> psiElements = new SmartList<>();
+      final String id = getValue();
+
+      final Project project = getElement().getProject();
+      for (IdeaPlugin plugin : getRelevantPlugins()) {
+        if (id.equals(plugin.getPluginId())) {
+          final DomTarget target = DomTarget.getTarget(plugin);
+          assert target != null;
+          psiElements.add(PomService.convertToPsi(project, target));
+        }
+      }
+      return PsiElementResolveResult.createResults(psiElements);
+    }
+
+    @Override
+    public Object @NotNull [] getVariants() {
+      return ContainerUtil.map2Array(getRelevantPlugins(), LookupElement.class,
+                                     plugin -> LookupElementBuilder.create(Objects.requireNonNull(plugin.getPluginId()))
+                                       .withPsiElement(plugin.getXmlElement())
+                                       .withTailText(" " + StringUtil.notNullize(plugin.getName().getValue()))
+                                       .withIcon(ElementPresentationManager.getIcon(plugin)));
+    }
+
+    private Collection<IdeaPlugin> getRelevantPlugins() {
+      return ContainerUtil.filter(DescriptorUtil.getPlugins(getElement().getProject(), getElement().getResolveScope()),
+                                  plugin -> plugin.hasRealPluginId() && Boolean.TRUE != plugin.getImplementationDetail().getValue());
+    }
   }
 
 
@@ -310,7 +363,8 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
 
       if (isActionOrGroupKey(name) ||
           isExportableKey(name) ||
-          isToolwindowKey(name)) {
+          isToolwindowKey(name) ||
+          isPluginDescriptionKey(name)) {
         PsiElement key = property.getFirstChild();
         PsiReference[] references = key == null ? PsiReference.EMPTY_ARRAY : key.getReferences();
 
