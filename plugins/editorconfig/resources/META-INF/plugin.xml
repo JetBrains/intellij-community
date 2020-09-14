@@ -460,9 +460,10 @@ To create an EditorConfig file in a directory, right-click this directory and se
 
   <extensions defaultExtensionNs="editorconfig">
     <optionDescriptorProvider implementation="org.editorconfig.language.extensions.impl.EditorConfigBasicOptionDescriptorProvider"/>
-    <optionDescriptorProvider implementation="org.editorconfig.language.extensions.impl.EditorConfigRoslynOptionDescriptorProvider"/>
+    <optionDescriptorProvider implementation="org.editorconfig.language.extensions.impl.EditorConfigMsNamingOptionDescriptorProvider"/>
     <optionDescriptorProvider implementation="org.editorconfig.language.extensions.impl.EditorConfigReSharperOptionDescriptorProvider"/>
     <optionDescriptorProvider implementation="org.editorconfig.language.extensions.impl.EditorConfigMsFormattingOptionDescriptorProvider"/>
+    <optionDescriptorProvider implementation="org.editorconfig.language.extensions.impl.EditorConfigMsLanguageOptionDescriptorProvider"/>
     <optionDescriptorProvider implementation="org.editorconfig.configmanagement.extended.IntellijConfigOptionDescriptorProvider"/>
   </extensions>
 
