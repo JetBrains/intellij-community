@@ -7,7 +7,7 @@ import com.intellij.util.SystemProperties
 interface IntelliJProjectPathsProvider {
   val projectRootFolder: File
   val communityRootFolder: File get() = File(projectRootFolder, "community")
-  val outputRootFolder: File get() = File(projectRootFolder, "out")
+  val outputRootFolder: File get() = File(File(projectRootFolder, "out"), "classes")
 }
 
 interface PathsProvider : IntelliJProjectPathsProvider {
