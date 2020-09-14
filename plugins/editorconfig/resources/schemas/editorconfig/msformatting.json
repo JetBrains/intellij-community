@@ -720,25 +720,6 @@
   },
   {
     "type": "option",
-    "key": "csharp_using_directive_placement",
-    "value": {
-      "type": "union",
-      "values": [
-        {
-          "type": "constant",
-          "value": "outside_namespace",
-          "documentation": "Leave using directives outside namespace"
-        },
-        {
-          "type": "constant",
-          "value": "inside_namespace",
-          "documentation": "Leave using directives inside namespace"
-        }
-      ]
-    }
-  },
-  {
-    "type": "option",
     "key": "csharp_new_line_before_open_brace",
     "value": {
       "type": "union",
