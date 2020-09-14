@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.lightEdit.actions.associate.macos;
+package com.intellij.openapi.fileTypes.impl.associate.macos;
 
-import com.intellij.ide.lightEdit.actions.associate.FileAssociationException;
-import com.intellij.ide.lightEdit.actions.associate.macos.PListBuddyWrapper.CommandResult;
+import com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationException;
+import com.intellij.openapi.fileTypes.impl.associate.macos.PListBuddyWrapper.CommandResult;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +32,7 @@ final class LaunchServiceUpdater {
     myBundleId = id;
   }
 
-  void addFileTypes(@NotNull List<FileType> fileTypes) throws FileAssociationException {
+  void addFileTypes(@NotNull List<FileType> fileTypes) throws OSFileAssociationException {
     for (FileType fileType : fileTypes) {
       String[] uri = UniformIdentifierUtil.getURIs(fileType);
       if (uri.length > 0) {
@@ -44,7 +44,7 @@ final class LaunchServiceUpdater {
     }
   }
 
-  void update() throws FileAssociationException {
+  void update() throws OSFileAssociationException {
     removeExistingEntries();
     for (String uri : myUriSet) {
       createContentTypeEntry(uri);
@@ -54,7 +54,7 @@ final class LaunchServiceUpdater {
     }
   }
 
-  private void removeExistingEntries() throws FileAssociationException {
+  private void removeExistingEntries() throws OSFileAssociationException {
     PListBuddyWrapper buddy = new PListBuddyWrapper();
     Document handlers = buddy.readData("LSHandlers");
     Node arrayNode = getTopArrayNode(handlers);
@@ -74,7 +74,7 @@ final class LaunchServiceUpdater {
         CommandResult result = buddy.runCommand("Delete LSHandlers:" + index);
         if (result.retCode != 0) {
           LOG.warn("PListBuddy returned: " + result.retCode + " for index " + index);
-          throw new FileAssociationException(UPDATE_FAILURE_MSG);
+          throw new OSFileAssociationException(UPDATE_FAILURE_MSG);
         }
       }
     }
@@ -126,7 +126,7 @@ final class LaunchServiceUpdater {
     return null;
   }
 
-  private void createContentTypeEntry(@NotNull String uri) throws FileAssociationException {
+  private void createContentTypeEntry(@NotNull String uri) throws OSFileAssociationException {
     PListBuddyWrapper buddy = new PListBuddyWrapper();
     buddy.runCommand(PListBuddyWrapper.OutputType.DEFAULT,
                      "Add LSHandlers:0 dict",
@@ -134,7 +134,7 @@ final class LaunchServiceUpdater {
                      "Add LSHandlers:0:LSHandlerRoleAll string " + myBundleId);
   }
 
-  private void createExtensionEntry(@NotNull String extension) throws FileAssociationException {
+  private void createExtensionEntry(@NotNull String extension) throws OSFileAssociationException {
     PListBuddyWrapper buddy = new PListBuddyWrapper();
     buddy.runCommand(PListBuddyWrapper.OutputType.DEFAULT,
                      "Add LSHandlers:0 dict",

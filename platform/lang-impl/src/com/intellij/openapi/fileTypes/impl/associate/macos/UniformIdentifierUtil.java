@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.lightEdit.actions.associate.macos;
+package com.intellij.openapi.fileTypes.impl.associate.macos;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -7,8 +7,8 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.ide.lightEdit.actions.associate.FileAssociationException;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -52,7 +52,7 @@ class UniformIdentifierUtil {
     TYPE_MAP.put(ijType, macType);
   }
 
-  static String @NotNull [] getURIs(@NotNull FileType fileType) throws FileAssociationException {
+  static String @NotNull [] getURIs(@NotNull FileType fileType) throws OSFileAssociationException {
     String[] uris = TYPE_MAP.get(fileType.getName());
     if (uris != null) {
       return uris;
@@ -62,12 +62,12 @@ class UniformIdentifierUtil {
       return uri != null ? new String[] {uri} : ArrayUtil.EMPTY_STRING_ARRAY;
     }
     catch (IOException | ExecutionException e) {
-      throw new FileAssociationException(e.getMessage());
+      throw new OSFileAssociationException(e.getMessage());
     }
   }
 
   @Nullable
-  private static String getUriByExtension(@NotNull String extension) throws IOException, ExecutionException, FileAssociationException {
+  private static String getUriByExtension(@NotNull String extension) throws IOException, ExecutionException, OSFileAssociationException {
     File file = FileUtil.createTempFile("content_", "." + extension);
     GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.setExePath("/usr/bin/mdls");
@@ -94,11 +94,11 @@ class UniformIdentifierUtil {
     });
     handler.startNotify();
     if (!handler.waitFor(1000)) {
-      throw new FileAssociationException("Failed to run mdls within 1 sec");
+      throw new OSFileAssociationException("Failed to run mdls within 1 sec");
     }
     if (handler.getExitCode() != null && handler.getExitCode() != 0) {
-      throw new FileAssociationException("mdls failed with exit code " + handler.getExitCode()
-                                         + ", error message: " + errMessage);
+      throw new OSFileAssociationException("mdls failed with exit code " + handler.getExitCode()
+                                           + ", error message: " + errMessage);
     }
     return contentTypeValue.get();
   }

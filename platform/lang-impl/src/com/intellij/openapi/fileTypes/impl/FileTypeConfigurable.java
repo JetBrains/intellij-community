@@ -2,17 +2,22 @@
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.lightEdit.LightEditFilePatterns;
 import com.intellij.ide.lightEdit.LightEditService;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.impl.associate.OSAssociateFileTypesUtil;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
@@ -20,16 +25,20 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.templateLanguages.TemplateDataLanguagePatterns;
 import com.intellij.ui.*;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
@@ -69,7 +78,29 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetype.light.edit.group"), false, TITLE_INSETS).setShowLine(false));
     myFileTypePanel.myLightEditHintLabel.setForeground(JBColor.GRAY);
     myFileTypePanel.myLightEditHintLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
+    myFileTypePanel.myAssociatePanel.setVisible(OSAssociateFileTypesUtil.isAvailable());
+    myFileTypePanel.myAssociateButton.setText(
+      FileTypesBundle.message("filetype.associate.button", ApplicationNamesInfo.getInstance().getFullProductName()));
+    myFileTypePanel.myAssociateButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        OSAssociateFileTypesUtil.chooseAndAssociate(
+          message -> showAssociationBalloon(message, HintUtil.getInformationColor()),
+          message -> showAssociationBalloon(message, HintUtil.getErrorColor())
+        );
+      }
+    });
     return myFileTypePanel.myWholePanel;
+  }
+
+  private void showAssociationBalloon(@NotNull @Nls String message, @NotNull Color color) {
+    Balloon balloon = JBPopupFactory.getInstance().createBalloonBuilder(new JLabel(message))
+                                    .setFillColor(color)
+                                    .setHideOnKeyOutside(true)
+                                    .createBalloon();
+    JComponent component = myFileTypePanel.myAssociateButton;
+    RelativePoint relativePoint = new RelativePoint(component, new Point(component.getWidth() / 2, component.getHeight() - JBUI.scale(10)));
+    balloon.show(relativePoint, Balloon.Position.below);
   }
 
   private void updateFileTypeList() {

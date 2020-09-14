@@ -1,9 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.lightEdit.actions.associate.linux;
+package com.intellij.openapi.fileTypes.impl.associate.linux;
 
-import com.intellij.ide.lightEdit.actions.associate.FileAssociationException;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
@@ -19,7 +19,7 @@ public final class LocalDesktopEntryCreator {
   private LocalDesktopEntryCreator() {
   }
 
-  static String createDesktopEntry() throws FileAssociationException {
+  static String createDesktopEntry() throws OSFileAssociationException {
     String entryFileName = getDesktopEntryFileName();
     StringBuilder builder = new StringBuilder();
     builder.append("[Desktop Entry]\n")
@@ -36,7 +36,7 @@ public final class LocalDesktopEntryCreator {
       FileUtil.writeToFile(new File(entryPath), builder.toString());
     }
     catch (IOException e) {
-      throw new FileAssociationException("Desktop entry file " + entryFileName + " can't be created: " + e.getMessage());
+      throw new OSFileAssociationException("Desktop entry file " + entryFileName + " can't be created: " + e.getMessage());
     }
     return entryFileName;
   }

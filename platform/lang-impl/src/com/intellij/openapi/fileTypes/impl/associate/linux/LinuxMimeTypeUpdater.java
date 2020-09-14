@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.lightEdit.actions.associate.linux;
+package com.intellij.openapi.fileTypes.impl.associate.linux;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -7,7 +7,7 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessOutputTypes;
-import com.intellij.ide.lightEdit.actions.associate.FileAssociationException;
+import com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationException;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -52,7 +52,7 @@ class LinuxMimeTypeUpdater {
   private LinuxMimeTypeUpdater() {
   }
 
-  static void updateMimeTypes(@NotNull List<MimeTypeDescription> mimeTypeDescriptions) throws FileAssociationException {
+  static void updateMimeTypes(@NotNull List<MimeTypeDescription> mimeTypeDescriptions) throws OSFileAssociationException {
     try {
       createMimeFile(mimeTypeDescriptions);
       runCommand(OS_MIME_UTIL,
@@ -66,7 +66,7 @@ class LinuxMimeTypeUpdater {
       runCommand(OS_UPDATE_DESKTOP_DB_COMMAND, Collections.singletonList(System.getProperty("user.home") + File.separator + LOCAL_APP_DIR));
     }
     catch (IOException | XMLStreamException | ExecutionException e) {
-      throw new FileAssociationException(e);
+      throw new OSFileAssociationException(e);
     }
   }
 
@@ -120,7 +120,7 @@ class LinuxMimeTypeUpdater {
     writer.writeCharacters("\n");
   }
 
-  private static void runCommand(@NotNull String command, List<String> params) throws ExecutionException, FileAssociationException {
+  private static void runCommand(@NotNull String command, List<String> params) throws ExecutionException, OSFileAssociationException {
     GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.setExePath(command);
     for (String param : params) {
@@ -139,10 +139,10 @@ class LinuxMimeTypeUpdater {
     });
     mimeDatabaseUpdateHandler.startNotify();
     if (!mimeDatabaseUpdateHandler.waitFor(1000)) {
-      throw new FileAssociationException("Failed to run update-mime-database in 1 sec");
+      throw new OSFileAssociationException("Failed to run update-mime-database in 1 sec");
     }
     if (errorMessage.length() > 0) {
-      throw new FileAssociationException(OS_MIME_UTIL + " returned: " + errorMessage.toString());
+      throw new OSFileAssociationException(OS_MIME_UTIL + " returned: " + errorMessage.toString());
     }
   }
 

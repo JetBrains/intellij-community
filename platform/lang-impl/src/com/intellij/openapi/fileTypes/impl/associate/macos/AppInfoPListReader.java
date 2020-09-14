@@ -1,9 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.lightEdit.actions.associate.macos;
+package com.intellij.openapi.fileTypes.impl.associate.macos;
 
-import com.intellij.ide.lightEdit.actions.associate.FileAssociationException;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -60,16 +60,16 @@ class AppInfoPListReader {
   }
 
   @NotNull
-  private static File getInfoPListFile() throws FileAssociationException {
+  private static File getInfoPListFile() throws OSFileAssociationException {
     String homePath = ObjectUtils.notNull(DEBUG_HOME_PATH, PathManager.getHomePath());
     File infoFile = new File(homePath + File.separator + "Info.plist");
     if (!infoFile.exists()) {
-      throw new FileAssociationException("Info.plist was not found at " + homePath + ", please try to reinstall the application");
+      throw new OSFileAssociationException("Info.plist was not found at " + homePath + ", please try to reinstall the application");
     }
     return infoFile;
   }
 
-  void loadPList() throws FileAssociationException {
+  void loadPList() throws OSFileAssociationException {
     DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
     try {
       DocumentBuilder builder = factory.newDocumentBuilder();
@@ -79,7 +79,7 @@ class AppInfoPListReader {
       LOG.error(e);
     }
     catch (SAXException | IOException e) {
-      throw new FileAssociationException("Error reading Info.plist: " + e.getMessage());
+      throw new OSFileAssociationException("Error reading Info.plist: " + e.getMessage());
     }
   }
 }

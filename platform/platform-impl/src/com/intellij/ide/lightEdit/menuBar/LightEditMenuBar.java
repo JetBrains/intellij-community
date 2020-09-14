@@ -1,14 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.lightEdit.menuBar;
 
-import com.intellij.ide.lightEdit.actions.*;
+import com.intellij.ide.lightEdit.actions.LightEditExitAction;
+import com.intellij.ide.lightEdit.actions.LightEditNewFileAction;
+import com.intellij.ide.lightEdit.actions.LightEditOpenFileInProjectAction;
+import com.intellij.ide.lightEdit.actions.LightEditSaveAsAction;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
@@ -46,7 +47,6 @@ public final class LightEditMenuBar extends IdeMenuBar {
                         standardAction(IdeActions.ACTION_SELECT_ALL)
       )
     );
-    ObjectUtils.consumeIfNotNull(createToolActionGroup(), toolGroup -> topGroup.add(toolGroup));
     topGroup.add(
       createActionGroup(ActionsBundle.message("group.ViewMenu.text"),
                         standardAction("EditorToggleShowWhitespaces"),
@@ -69,14 +69,6 @@ public final class LightEditMenuBar extends IdeMenuBar {
   @NotNull
   private static ActionGroup createActionGroup(@NotNull @NlsActions.ActionText String title, AnAction... actions) {
     return new DefaultActionGroup(title, Arrays.asList(actions));
-  }
-
-  @Nullable
-  private static ActionGroup createToolActionGroup() {
-    if (LightEditAssociateFileTypesAction.isAvailable()) {
-      return createActionGroup(ActionsBundle.message("group.ToolsMenu.text"), new LightEditAssociateFileTypesAction());
-    }
-    return null;
   }
 
   private static AnAction standardAction(@NotNull String id) {

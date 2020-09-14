@@ -1,12 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.lightEdit.actions.associate.ui;
+package com.intellij.openapi.fileTypes.impl.associate.ui;
 
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.fileTypes.FileNameMatcher;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
@@ -36,7 +32,8 @@ public class FileTypeAssociationForm {
     myTopPanel.setPreferredSize(JBDimension.create(new Dimension(800, 600)));
     myTopPanel.setBorder(JBUI.Borders.empty());
     myScrollPane.setBorder(JBUI.Borders.empty());
-    myDescLabel.setText(ApplicationBundle.message("light.edit.file.types.open.with.label", ApplicationInfo.getInstance().getFullApplicationName()));
+    myDescLabel.setText(
+      FileTypesBundle.message("filetype.associate.dialog.label", ApplicationInfo.getInstance().getFullApplicationName()));
   }
 
   private void createUIComponents() {
@@ -76,7 +73,7 @@ public class FileTypeAssociationForm {
       StringBuilder nameBuilder = new StringBuilder();
       nameBuilder.append(myFileType.getDisplayName()).append(" (");
       List<FileNameMatcher> matchers = FileTypeManager.getInstance().getAssociations(myFileType);
-      Supplier<String> commaSupplier = new Supplier<String>() {
+      Supplier<String> commaSupplier = new Supplier<>() {
         private boolean isFirst = true;
         @Override
         public String get() {
