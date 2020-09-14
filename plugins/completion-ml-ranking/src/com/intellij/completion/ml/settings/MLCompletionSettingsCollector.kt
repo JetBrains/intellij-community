@@ -31,7 +31,7 @@ class MLCompletionSettingsCollector : CounterUsagesCollector() {
 
     private val DECORATION_SETTINGS_CHANGED = COUNTER_GROUP.registerEvent("decorating.settings.changed", EventFields.Boolean("enabled"))
     private val DECORATION_OPINION_PROVIDED = COUNTER_GROUP.registerEvent(
-      "decorating.opinion.provided", EventFields.String("opinion", DecorationOpinion.values().map { it.name })
+      "decorating.opinion.provided", EventFields.Enum("opinion", DecorationOpinion::class.java)
     )
 
     @JvmStatic
@@ -54,7 +54,7 @@ class MLCompletionSettingsCollector : CounterUsagesCollector() {
 
     @JvmStatic
     fun decorationOpinionProvided(opinion: DecorationOpinion) {
-      DECORATION_OPINION_PROVIDED.log(opinion.name)
+      DECORATION_OPINION_PROVIDED.log(opinion)
     }
   }
 
