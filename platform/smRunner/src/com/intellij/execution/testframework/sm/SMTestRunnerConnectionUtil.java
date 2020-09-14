@@ -199,9 +199,13 @@ public final class SMTestRunnerConnectionUtil {
       outputConsumer.setProcessor(eventsProcessor);
     });
 
-    outputConsumer.startTesting();
-
+    outputConsumer.setupProcessor();
     processHandler.addProcessListener(new ProcessAdapter() {
+      @Override
+      public void startNotified(@NotNull ProcessEvent event) {
+        outputConsumer.startTesting();
+      }
+
       @Override
       public void processTerminated(@NotNull final ProcessEvent event) {
         outputConsumer.flushBufferOnProcessTermination(event.getExitCode());
