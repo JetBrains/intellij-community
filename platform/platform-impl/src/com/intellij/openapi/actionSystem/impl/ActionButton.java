@@ -11,12 +11,14 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.util.PopupState;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
@@ -177,15 +179,36 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   protected void actionPerformed(final AnActionEvent event) {
     HelpTooltip.hide(this);
     if (isPopupMenuAction(event, myAction)) {
-      showPopupMenu(event, (ActionGroup) myAction);
+      if (Registry.is("actionSystem.toolbar.show.group.in.popup")) {
+        showGroupInPopup(event, (ActionGroup)myAction);
+      }
+      else {
+        showGroupInPopupMenu(event, (ActionGroup) myAction);
+      }
     }
     else {
       ActionUtil.performActionDumbAwareWithCallbacks(myAction, event, event.getDataContext());
     }
   }
 
+  protected void showGroupInPopup(AnActionEvent e, ActionGroup actionGroup) {
+    PresentationFactory presentationFactory = new PresentationFactory() {
+      @Override
+      protected void processPresentation(Presentation presentation) {
+        super.processPresentation(presentation);
+        presentation.setIcon(null);
+        presentation.setHoveredIcon(null);
+      }
+    };
+    ListPopup popup = new PopupFactoryImpl.ActionGroupPopup(null, actionGroup, e.getDataContext(), false, false,
+                                          true, false, null, -1,
+                                          null, null, presentationFactory, false);
+
+    popup.showUnderneathOf(e.getInputEvent().getComponent());
+  }
+
   // used in Rider, please don't change visibility
-  protected void showPopupMenu(AnActionEvent event, ActionGroup actionGroup) {
+  protected void showGroupInPopupMenu(AnActionEvent event, ActionGroup actionGroup) {
     if (myPopupState.isRecentlyHidden()) return; // do not show new popup
     final ActionManagerImpl am = (ActionManagerImpl) ActionManager.getInstance();
     String place = ActionPlaces.getActionGroupPopupPlace(event.getPlace());
