@@ -1453,9 +1453,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           }
         });
       }
-      boolean indexWasProvidedByExtension = storageUpdate instanceof IndexExtensionAwareIndexUpdateComputation &&
-                                            ((IndexExtensionAwareIndexUpdateComputation)storageUpdate).indexWasProvidedByExtension;
-      return new SingleIndexUpdateStats(mapInputTime, indexWasProvidedByExtension);
+      boolean indexWasProvided = storageUpdate instanceof IndexInfrastructureExtensionUpdateComputation &&
+                                 ((IndexInfrastructureExtensionUpdateComputation)storageUpdate).isIndexProvided();
+      return new SingleIndexUpdateStats(mapInputTime, indexWasProvided);
     }
     catch (RuntimeException exception) {
       Throwable causeToRebuildIndex = getCauseToRebuildIndex(exception);
