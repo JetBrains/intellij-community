@@ -278,6 +278,7 @@ public class AllIcons {
     /** 12x12 */ public static final @NotNull Icon LambdaBreakpoint = load("/debugger/LambdaBreakpoint.svg");
     /** 12x12 */ public static final @NotNull Icon MultipleBreakpoints = load("/debugger/MultipleBreakpoints.svg");
     /** 16x16 */ public static final @NotNull Icon MuteBreakpoints = load("/debugger/muteBreakpoints.svg");
+    /** 12x12 */ public static final @NotNull Icon NextStatement = load("/debugger/nextStatement.svg");
     /** 16x16 */ public static final @NotNull Icon Overhead = load("/debugger/overhead.svg");
     /** 16x16 */ public static final @NotNull Icon PromptInput = load("/debugger/promptInput.svg");
     /** 16x16 */ public static final @NotNull Icon PromptInputHistory = load("/debugger/promptInputHistory.svg");
