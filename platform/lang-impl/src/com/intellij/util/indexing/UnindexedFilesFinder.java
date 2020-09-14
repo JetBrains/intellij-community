@@ -106,14 +106,10 @@ final class UnindexedFilesFinder implements VirtualFileFilter {
                     if (myDoTraceForFilesToBeIndexed) {
                       LOG.trace("Scheduling indexing of " + file + " by request of index " + indexId);
                     }
-                    shouldIndexFile.set(true);
-                    for (FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor processor : myStateProcessors) {
-                      if (processor.tryIndexFileWithoutContent(fileContent, inputId, indexId)) {
-                        shouldIndexFile.set(false);
-                        break;
-                      }
+                    if (!tryIndexWithoutContentViaInfrastructureExtension(fileContent, inputId, indexId)) {
+                      shouldIndexFile.set(true);
+                      break;
                     }
-                    break;
                   }
                 }
               }
@@ -147,5 +143,15 @@ final class UnindexedFilesFinder implements VirtualFileFilter {
       });
       return shouldIndexFile.get();
     });
+  }
+
+  private boolean tryIndexWithoutContentViaInfrastructureExtension(IndexedFile fileContent, int inputId, ID<?, ?> indexId) {
+    for (FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor processor : myStateProcessors) {
+      if (processor.tryIndexFileWithoutContent(fileContent, inputId, indexId)) {
+        FileBasedIndexImpl.setIndexedState(myFileBasedIndex.getIndex(indexId), fileContent, inputId, true);
+        return true;
+      }
+    }
+    return false;
   }
 }

@@ -1449,13 +1449,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         ConcurrencyUtil.withLock(myReadLock, () -> {
           if (currentFC != null) {
             if (!isMock(currentFC.getFile())) {
-              if (index instanceof FileBasedIndexInfrastructureExtensionUpdatableIndex) {
-                ((FileBasedIndexInfrastructureExtensionUpdatableIndex<?, ?, ?>)index)
-                  .setIndexedStateForFile(inputId, currentFC, indexWasProvided);
-              }
-              else {
-                index.setIndexedStateForFile(inputId, currentFC);
-              }
+              setIndexedState(index, currentFC, inputId, indexWasProvided);
             }
           }
           else {
@@ -1476,6 +1470,19 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
     finally {
       unmarkBeingIndexed();
+    }
+  }
+
+  static void setIndexedState(UpdatableIndex<?, ?, FileContent> index,
+                              @NotNull IndexedFile currentFC,
+                              int inputId,
+                              boolean indexWasProvided) {
+    if (index instanceof FileBasedIndexInfrastructureExtensionUpdatableIndex) {
+      ((FileBasedIndexInfrastructureExtensionUpdatableIndex<?, ?, ?>)index)
+        .setIndexedStateForFile(inputId, currentFC, indexWasProvided);
+    }
+    else {
+      index.setIndexedStateForFile(inputId, currentFC);
     }
   }
 
