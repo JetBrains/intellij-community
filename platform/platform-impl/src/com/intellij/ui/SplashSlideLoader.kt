@@ -30,18 +30,18 @@ class SplashSlideLoader {
   fun loadImage(url: String, cacheAsync: Boolean = true): Image? = runSafe {
     val scale = JBUIScale.sysScale().toDouble()
     if (!JreHiDpiUtil.isJreHiDPIEnabled() || scale == 1.0) {
-      return ImageIO.read(Splash::class.java.getResourceAsStream(url)).toRetina(scale)
+      return@runSafe ImageIO.read(Splash::class.java.getResourceAsStream(url)).toRetina(scale)
     }
 
     val extension = FileUtilRt.getExtension(url)
     val url2x = "${FileUtilRt.getNameWithoutExtension(url)}@2x.$extension"
     val stream2x = Splash::class.java.getResourceAsStream(url2x) ?: return@runSafe null
 
-    if (scale == 2.0) return ImageIO.read(stream2x).toRetina(scale)
+    if (scale == 2.0) return@runSafe ImageIO.read(stream2x).toRetina(scale)
 
     val bytes = FileUtilRt.loadBytes(stream2x)
     val cachedImage = loadFromCache(bytes, scale, extension)
-    if (cachedImage != null) return cachedImage
+    if (cachedImage != null) return@runSafe cachedImage
 
     // slow
     val scaledImage = loadSlow(url) ?: return null
