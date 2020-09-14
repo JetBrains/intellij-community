@@ -15,8 +15,10 @@
  */
 package com.intellij.psi.codeStyle.arrangement.std;
 
+import com.intellij.lang.LangBundle;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -52,8 +54,8 @@ public class StdArrangementRuleAliasToken extends StdArrangementSettingsToken im
   }
 
   @NotNull
-  private static String createRepresentationValue(@NotNull String name) {
-    return "by " + name;
+  private static @Nls String createRepresentationValue(@NotNull String name) {
+    return LangBundle.message("arrange.by.x", name);
   }
 
   private static String createIdByName(@NotNull String name) {

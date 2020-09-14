@@ -58,7 +58,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   protected final InspectionProfileImpl myBaseProfile;
   private volatile String myToolShortName;
   private String[] myScopesOrder;
-  private String myDescription;
+  private @NlsContexts.DetailedDescription String myDescription;
 
   private SchemeDataHolder<? super InspectionProfileImpl> myDataHolder;
 
