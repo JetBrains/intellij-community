@@ -298,6 +298,6 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
       return false;
     }
     GroovyResolveResult result = constructorReference.advancedResolve();
-    return PsiUtil.isMapConstructorResult(result);
+    return PsiUtil.isTrustedMapConstructorResult(result);
   }
 }

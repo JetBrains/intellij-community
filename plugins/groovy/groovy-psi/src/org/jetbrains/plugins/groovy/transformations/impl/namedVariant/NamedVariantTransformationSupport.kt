@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.transformations.impl.namedVariant
 
-import com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT
 import com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
@@ -30,13 +29,7 @@ class NamedVariantTransformationSupport : AstTransformationSupport {
     mapParameter.modifierList = modifierList
     parameters.add(mapParameter)
     val namedParams = collectNamedParamsFromNamedVariantMethod(method)
-    namedParams.forEach { namedParam ->
-      modifierList.addAnnotation(GROOVY_TRANSFORM_NAMED_PARAM).let {
-        it.addAttribute("type", namedParam.type?.presentableText ?: JAVA_LANG_OBJECT)
-        it.addAttribute("value", "\"${namedParam.name}\"")
-        it.addAttribute("required", "${namedParam.required}")
-      }
-    }
+    namedParams.forEach { namedParam -> addNamedParamAnnotation(modifierList, namedParam) }
 
     val requiredParameters = method.parameterList.parameters
       .filter {
@@ -55,9 +48,7 @@ class NamedVariantTransformationSupport : AstTransformationSupport {
     builder.containingClass = psiClass
     builder.returnType = method.returnType
     builder.navigationElement = method
-    if (method.isConstructor) {
-      builder.isConstructor = true
-    }
+    builder.isConstructor = method.isConstructor
     parameters.forEach {
       builder.addParameter(it)
     }

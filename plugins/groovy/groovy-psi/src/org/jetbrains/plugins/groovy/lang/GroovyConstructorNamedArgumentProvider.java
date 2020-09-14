@@ -51,6 +51,7 @@ public abstract class GroovyConstructorNamedArgumentProvider extends GroovyNamed
     if (expressionArguments.length > 1 || (expressionArguments.length == 1 && !(expressionArguments[0] instanceof GrReferenceExpression))) {
       return;
     }
+    if (!PsiUtil.isTrustedMapConstructorResult(resolveResult)) return;
 
     for (PsiClass psiClass : getCorrespondingClasses(call, resolveResult)) {
       if (!isClassHasConstructorWithMap(psiClass)) continue;

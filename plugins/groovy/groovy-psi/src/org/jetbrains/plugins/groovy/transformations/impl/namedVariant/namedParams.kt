@@ -4,6 +4,7 @@
 package org.jetbrains.plugins.groovy.transformations.impl.namedVariant
 
 import com.intellij.codeInsight.AnnotationUtil
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.*
 import com.intellij.psi.util.PropertyUtilBase
@@ -16,6 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.getArrayValue
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightModifierList
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
 
@@ -25,6 +27,7 @@ const val GROOVY_TRANSFORM_NAMED_VARIANT = "groovy.transform.NamedVariant"
 const val GROOVY_TRANSFORM_NAMED_PARAM = "groovy.transform.NamedParam"
 const val GROOVY_TRANSFORM_NAMED_PARAMS = "groovy.transform.NamedParams"
 const val GROOVY_TRANSFORM_NAMED_DELEGATE = "groovy.transform.NamedDelegate"
+private val NAVIGABLE_ELEMENT: Key<PsiElement> = Key("GROOVY_NAMED_VARIANT_NAVIGATION_ELEMENT")
 
 
 fun collectNamedParams(mapParameter: PsiParameter): List<NamedParamData> {
@@ -49,7 +52,8 @@ private fun constructNamedParameter(annotation: PsiAnnotation, owner: PsiParamet
   val classValue = annotation.findAttributeValue("type") as? GrExpression ?: return null
   val type = ResolveUtil.getClassReferenceFromExpression(classValue) ?: return null
   val required = GrAnnotationUtil.inferBooleanAttribute(annotation, "required") ?: false
-  return NamedParamData(name, type, owner, annotation, required)
+  val navigableElement = annotation.getUserData(NAVIGABLE_ELEMENT) ?: annotation
+  return NamedParamData(name, type, owner, navigableElement, required)
 }
 
 /**
@@ -121,4 +125,13 @@ private fun getCodeProperties(typeDef: GrTypeDefinition): Map<String, PsiType?> 
     result.putAll(getProperties(it))
   }
   return result
+}
+
+internal fun addNamedParamAnnotation(modifierList: GrLightModifierList, namedParam: NamedParamData) {
+  modifierList.addAnnotation(GROOVY_TRANSFORM_NAMED_PARAM).let {
+    it.addAttribute("type", namedParam.type?.presentableText ?: CommonClassNames.JAVA_LANG_OBJECT)
+    it.addAttribute("value", "\"${namedParam.name}\"")
+    it.addAttribute("required", "${namedParam.required}")
+    it.putUserData(NAVIGABLE_ELEMENT, namedParam.navigationElement)
+  }
 }
