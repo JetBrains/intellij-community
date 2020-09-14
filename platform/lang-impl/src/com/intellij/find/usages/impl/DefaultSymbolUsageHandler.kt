@@ -9,8 +9,6 @@ import com.intellij.model.presentation.SymbolPresentationService
 import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.model.search.SearchService
 import com.intellij.openapi.project.Project
-import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.SearchScope
 import com.intellij.usageView.UsageInfo
 import com.intellij.usages.Usage
 import com.intellij.usages.UsageInfo2UsageAdapter
@@ -22,8 +20,6 @@ internal class DefaultSymbolUsageHandler(
   private val project: Project,
   private val symbol: Symbol
 ) : NonConfigurableUsageHandler() {
-
-  override fun getMaximalSearchScope(): SearchScope = GlobalSearchScope.allScope(project)
 
   override fun getSearchString(options: UsageOptions): String {
     val shortNameString = SymbolPresentationService.getInstance().getSymbolPresentation(symbol).shortNameString

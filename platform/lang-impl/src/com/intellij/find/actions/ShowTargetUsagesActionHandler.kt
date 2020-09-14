@@ -8,6 +8,7 @@ import com.intellij.find.usages.impl.AllSearchOptions
 import com.intellij.find.usages.impl.buildQuery
 import com.intellij.find.usages.impl.hasTextSearchStrings
 import com.intellij.openapi.project.Project
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.usages.UsageSearchPresentation
 import com.intellij.usages.UsageSearcher
@@ -36,7 +37,7 @@ internal data class ShowTargetUsagesActionHandler<O>(
   }
 
   override fun showDialog(): ShowUsagesActionHandler? {
-    val dialog = UsageOptionsDialog(project, target.displayString, usageHandler, allOptions, false)
+    val dialog = UsageOptionsDialog(project, target.displayString, usageHandler, allOptions, target.showScopeChooser(), false)
     if (!dialog.showAndGet()) {
       // cancelled
       return null
@@ -54,7 +55,7 @@ internal data class ShowTargetUsagesActionHandler<O>(
 
   override fun getSelectedScope(): SearchScope = allOptions.options.searchScope
 
-  override fun getMaximalScope(): SearchScope = usageHandler.maximalSearchScope
+  override fun getMaximalScope(): SearchScope = target.maximalSearchScope ?: GlobalSearchScope.allScope(project)
 
   companion object {
 

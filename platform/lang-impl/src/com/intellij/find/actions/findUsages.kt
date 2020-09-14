@@ -15,6 +15,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Factory
 import com.intellij.psi.impl.search.runSearch
+import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.usageView.UsageViewBundle
 import com.intellij.usageView.UsageViewContentManager
@@ -50,7 +51,7 @@ private fun <O> findUsages(showDialog: Boolean,
                            allOptions: AllSearchOptions<O>) {
   if (showDialog) {
     val canReuseTab = canReuseTab(project)
-    val dialog = UsageOptionsDialog(project, target.displayString, handler, allOptions, canReuseTab)
+    val dialog = UsageOptionsDialog(project, target.displayString, handler, allOptions, target.showScopeChooser(), canReuseTab)
     if (!dialog.showAndGet()) {
       // cancelled
       return
@@ -101,4 +102,8 @@ internal val SearchTarget.displayString: String? get() = presentation.presentabl
 @Nls(capitalization = Nls.Capitalization.Title)
 internal fun <O> UsageHandler<O>.getSearchString(allOptions: AllSearchOptions<O>): String {
   return getSearchString(allOptions.options, allOptions.customOptions)
+}
+
+internal fun SearchTarget.showScopeChooser(): Boolean {
+  return maximalSearchScope !is LocalSearchScope
 }

@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.usages;
 
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.usages.Usage;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.Nls;
@@ -19,16 +17,6 @@ import static org.jetbrains.annotations.Nls.Capitalization.Title;
  * @see SymbolUsageHandlerFactory
  */
 public interface UsageHandler<O> {
-
-  /**
-   * <ul>
-   *   <li>Returning {@link LocalSearchScope} will also make search scope unavailable to change in the UI.</li>
-   *   <li>Maximal scope is used to rerun Show Usages if user scope differs from maximal scope.</li>
-   * </ul>
-   *
-   * @return maximal search scope where this usage handler might yield any results
-   */
-  @NotNull SearchScope getMaximalSearchScope();
 
   enum UsageAction {
     FIND_USAGES,

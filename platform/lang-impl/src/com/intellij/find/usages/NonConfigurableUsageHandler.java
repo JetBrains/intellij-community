@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.usages;
 
-import com.intellij.psi.search.SearchScope;
 import com.intellij.usages.Usage;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.Nls;
@@ -34,9 +33,6 @@ public abstract class NonConfigurableUsageHandler implements UsageHandler<@Nulla
   public final @NotNull Query<? extends @NotNull Usage> buildSearchQuery(@NotNull UsageOptions options, @Nullable Void customOptions) {
     return buildSearchQuery(options);
   }
-
-  @Override
-  public abstract @NotNull SearchScope getMaximalSearchScope();
 
   protected abstract @Nls(capitalization = Title) @NotNull String getSearchString(@NotNull UsageOptions options);
 

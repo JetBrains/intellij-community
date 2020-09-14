@@ -3,6 +3,8 @@ package com.intellij.find.usages
 
 import com.intellij.model.Pointer
 import com.intellij.navigation.TargetPopupPresentation
+import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.search.SearchScope
 
 /**
  * Represents the search implementation (the usage handler and the text search strings)
@@ -14,6 +16,16 @@ interface SearchTarget {
    * @return smart pointer used to restore the [SearchTarget] instance in the subsequent read actions
    */
   fun createPointer(): Pointer<out SearchTarget>
+
+  /**
+   * Returning [LocalSearchScope] will also make search scope unavailable to change in the UI.
+   * Maximal scope is used to rerun Show Usages if user scope differs from maximal scope.
+   *
+   * @return maximal search scope where this usage handler might yield any results, or `null` to search everywhere
+   */
+  @JvmDefault
+  val maximalSearchScope: SearchScope?
+    get() = null
 
   /**
    * @return presentation to be displayed in the disambiguation popup

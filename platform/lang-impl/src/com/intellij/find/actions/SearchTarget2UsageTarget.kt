@@ -95,7 +95,7 @@ internal class SearchTarget2UsageTarget<O>(
   override fun showSettings() {
     val target = myPointer.dereference() ?: return
     @Suppress("UNCHECKED_CAST") val usageHandler = target.usageHandler as UsageHandler<O>
-    val dialog = UsageOptionsDialog(project, target.displayString, usageHandler, allOptions, true)
+    val dialog = UsageOptionsDialog(project, target.displayString, usageHandler, allOptions, target.showScopeChooser(), true)
     if (!dialog.showAndGet()) {
       return
     }
