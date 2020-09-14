@@ -135,7 +135,9 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
   }
 
   private fun fireRootsChanged() {
-    makeRootsChange(EmptyRunnable.INSTANCE, false, true)
+    if (myProject.isOpen) {
+      makeRootsChange(EmptyRunnable.INSTANCE, false, true)
+    }
   }
 
   // Listener for global libraries linked to module
