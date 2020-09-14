@@ -372,13 +372,13 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//prebuilts/tools/common/m2/repository/net/java/dev/jna/jna-platform/5.5.0:jar",
-        "//prebuilts/tools/common/m2/repository/net/java/dev/jna/jna/5.5.0:jar",
+        "//prebuilts/tools/common/m2/repository/net/java/dev/jna/jna-platform/5.6.0:jar",
+        "//prebuilts/tools/common/m2/repository/net/java/dev/jna/jna/5.6.0:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/net/java/dev/jna/jna-platform/5.5.0:jar",
-        "//prebuilts/tools/common/m2/repository/net/java/dev/jna/jna/5.5.0:jar",
+        "//prebuilts/tools/common/m2/repository/net/java/dev/jna/jna-platform/5.6.0:jar",
+        "//prebuilts/tools/common/m2/repository/net/java/dev/jna/jna/5.6.0:jar",
     ],
 )
 
@@ -1762,16 +1762,16 @@ java_library(
 java_library(
     name = "jb-jdi",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/jb-jdi/2.1:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/jb-jdi/2.1:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/jb-jdi/2.2.2:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/jb-jdi/2.2.2:jar"],
 )
 
 # managed by go/iml_to_build
 java_library(
     name = "jcef",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/jcef/jcef/77.1.18-g8e8d602-chromium-77.0.3865.120:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/jcef/jcef/77.1.18-g8e8d602-chromium-77.0.3865.120:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/jcef/jcef/81.2.24-gc0b313d-chromium-81.0.4044.113:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/jetbrains/intellij/deps/jcef/jcef/81.2.24-gc0b313d-chromium-81.0.4044.113:jar"],
 )
 
 # managed by go/iml_to_build
