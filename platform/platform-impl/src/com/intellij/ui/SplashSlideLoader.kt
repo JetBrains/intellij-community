@@ -72,11 +72,11 @@ class SplashSlideLoader {
       val tmp = file.resolve(file.toString() + ".tmp" + System.currentTimeMillis())
       val tmpFile = tmp.toFile()
 
-      // atomic create
       if (!tmpFile.createNewFile()) return
-      ImageIO.write(ImageUtil.toBufferedImage(image), extension, tmpFile)
-
       try {
+
+        ImageIO.write(ImageUtil.toBufferedImage(image), extension, tmpFile)
+
         try {
           Files.move(tmp, file, StandardCopyOption.ATOMIC_MOVE)
         } catch (e: AtomicMoveNotSupportedException) {
