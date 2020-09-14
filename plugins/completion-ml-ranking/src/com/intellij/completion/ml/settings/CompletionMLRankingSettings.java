@@ -17,8 +17,6 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
 
   public CompletionMLRankingSettings() {
     myState = new State();
-    myState.rankingEnabled = !enabledByDefault.isEmpty();
-    myState.showDiff = isShowDiffEnabledByDefault();
   }
 
   @NotNull
@@ -118,8 +116,9 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
   }
 
   public static final class State {
-    public boolean rankingEnabled;
-    public boolean showDiff;
+    public boolean rankingEnabled = !ExperimentModelProvider.enabledByDefault().isEmpty();
+    public boolean showDiff = isShowDiffEnabledByDefault();
+
     // this map stores only different compare to default values to have ability to enable/disable models from build to build
     public final Map<String, Boolean> language2state = new HashMap<>();
   }
