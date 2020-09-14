@@ -7,7 +7,7 @@ import com.intellij.workspaceModel.storage.VirtualFileUrl
 import com.intellij.workspaceModel.storage.VirtualFileUrlManager
 
 // TODO Drop? Use standard function? Review usages.
-internal fun executeOrQueueOnDispatchThread(block: () -> Unit) {
+fun executeOrQueueOnDispatchThread(block: () -> Unit) {
   val application = ApplicationManager.getApplication()
   if (application.isDispatchThread) {
     block()

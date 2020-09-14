@@ -4,7 +4,6 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jdom.Element
@@ -147,7 +146,7 @@ internal fun loadLibrary(name: String, libraryElement: Element, libraryTableId: 
 
 internal fun saveLibrary(library: LibraryEntity, externalSystemId: String?): Element {
   val libraryTag = Element(LIBRARY_TAG)
-  val legacyName = LibraryBridgeImpl.getLegacyLibraryName(library.persistentId())
+  val legacyName = getLegacyLibraryName(library.persistentId())
   if (legacyName != null) {
     libraryTag.setAttribute(NAME_ATTRIBUTE, legacyName)
   }
@@ -200,3 +199,42 @@ internal fun saveLibrary(library: LibraryEntity, externalSystemId: String?): Ele
 }
 
 private val ROOT_TYPES_TO_WRITE_EMPTY_TAG = listOf("CLASSES", "SOURCES", "JAVADOC").map { LibraryRootTypeId(it) }
+private const val UNNAMED_LIBRARY_NAME_PREFIX = "#"
+private const val UNIQUE_INDEX_LIBRARY_NAME_SUFFIX = "-d1a6f608-UNIQUE-INDEX-f29c-4df6-"
+
+fun getLegacyLibraryName(libraryId: LibraryId): String? {
+  if (libraryId.name.startsWith(UNNAMED_LIBRARY_NAME_PREFIX)) return null
+  if (libraryId.name.contains(UNIQUE_INDEX_LIBRARY_NAME_SUFFIX)) return libraryId.name.substringBefore(UNIQUE_INDEX_LIBRARY_NAME_SUFFIX)
+  return libraryId.name
+}
+
+fun generateLibraryEntityName(legacyLibraryName: String?, exists: (String) -> Boolean): String {
+  if (legacyLibraryName == null) {
+    // TODO Make it O(1) if required
+
+    var index = 1
+    while (true) {
+      val candidate = "$UNNAMED_LIBRARY_NAME_PREFIX$index"
+      if (!exists(candidate)) {
+        return candidate
+      }
+
+      index++
+    }
+
+    @Suppress("UNREACHABLE_CODE")
+    error("Unable to suggest unique name for unnamed module library")
+  }
+
+  if (!exists(legacyLibraryName)) return legacyLibraryName
+
+  var index = 1
+  while (true) {
+    val candidate = "$legacyLibraryName$UNIQUE_INDEX_LIBRARY_NAME_SUFFIX$index"
+    if (!exists(candidate)) {
+      return candidate
+    }
+
+    index++
+  }
+}

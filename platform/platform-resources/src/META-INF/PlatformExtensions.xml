@@ -764,6 +764,10 @@
     <backgroundPostStartupActivity implementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiserStartupActivity"/>
     <actionPromoter implementation="com.intellij.ui.ToolbarDecoratorActionPromoter"/>
 
+    <cachesInvalidator implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCachesInvalidator"/>
+    <statusBarWidgetFactory implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelIndicator"/>
+    <postStartupActivity implementation="com.intellij.workspaceModel.ide.impl.jps.serialization.DelayedProjectSynchronizer"/>
+
     <ui.suitableFontProvider implementation="com.intellij.ui.SuitableFontProviderImpl"/>
 
     <jbProtocolCommand implementation="com.intellij.openapi.project.impl.JBProtocolOpenProjectCommand"/>

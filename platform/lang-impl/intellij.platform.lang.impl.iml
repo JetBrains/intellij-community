@@ -20,6 +20,7 @@
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.indexing.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.workspaceModel.ide" />
     <orderEntry type="library" name="swingx" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="gson" level="project" />
@@ -36,7 +37,6 @@
     <orderEntry type="library" name="lz4-java" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
-    <orderEntry type="module" module-name="intellij.platform.workspaceModel.ide" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="library" name="jackson-databind" level="project" />

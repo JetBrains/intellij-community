@@ -93,6 +93,10 @@
     <applicationService serviceInterface="com.intellij.model.BranchService"
                         serviceImplementation="com.intellij.model.BranchServiceImpl"/>
 
+    <projectServiceContainerCustomizer implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeProjectLifecycleListener"/>
+    <projectServiceContainerInitializedListener
+      implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge$MyProjectServiceContainerInitializedListener"/>
+
     <actionConfigurationCustomizer implementation="com.intellij.tools.ToolManager$MyActionTuner"/>
 
     <projectService serviceInterface="com.intellij.pom.PomModel"

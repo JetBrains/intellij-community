@@ -16,7 +16,7 @@ data class FileContainerDescription(
 
 data class JarDirectoryDescription(val directoryUrl: VirtualFileUrl, val recursive: Boolean)
 
-internal interface FilePointerProvider {
+interface FilePointerProvider {
   fun getAndCacheSourceRoot(url: VirtualFileUrl): VirtualFilePointer
   fun getAndCacheContentRoot(url: VirtualFileUrl): VirtualFilePointer
   fun getAndCacheExcludedRoot(url: VirtualFileUrl): VirtualFilePointer
@@ -34,5 +34,5 @@ internal interface FilePointerProvider {
   }
 }
 
-internal fun FileContainerDescription.getAndCacheVirtualFilePointerContainer(provider: FilePointerProvider, scope: Disposable) =
+fun FileContainerDescription.getAndCacheVirtualFilePointerContainer(provider: FilePointerProvider, scope: Disposable) =
   provider.getAndCacheFileContainer(this, scope)

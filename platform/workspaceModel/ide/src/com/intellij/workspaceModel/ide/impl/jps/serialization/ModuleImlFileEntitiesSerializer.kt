@@ -11,8 +11,6 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.isEmpty
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.levelToLibraryTableId
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jdom.Attribute
@@ -229,7 +227,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
           val libraryElement = dependencyElement.getChild(LIBRARY_TAG)!!
           // TODO. Probably we want a fixed name based on hashed library roots
           val nameAttributeValue = libraryElement.getAttributeValue(NAME_ATTRIBUTE)
-          val name = LibraryBridgeImpl.generateLibraryEntityName(nameAttributeValue) { nameToCheck ->
+          val name = generateLibraryEntityName(nameAttributeValue) { nameToCheck ->
             moduleLibraryNames.contains(nameToCheck)
           }
           moduleLibraryNames.add(name)

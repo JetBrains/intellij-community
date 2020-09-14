@@ -5,6 +5,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.ModuleStore
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.impl.ModuleEx
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.ProjectStoreOwner
 import com.intellij.project.isDirectoryBased
@@ -18,14 +19,23 @@ private val MODULE_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(StoragePathMa
 @ApiStatus.Internal
 internal open class ModuleStoreImpl(module: Module) : ModuleStoreBase() {
   private val pathMacroManager = PathMacroManager.getInstance(module)
+  //todo this is a temporary solution to avoid creating iml files for Modules with non-JPS entitySource
+  private val canStoreSettings = module is ModuleEx && module.canStoreSettings()
 
   override val project = module.project
 
-  override val storageManager = ModuleStateStorageManager(TrackingPathMacroSubstitutorImpl(pathMacroManager), module)
+  override val storageManager =
+    if (canStoreSettings) ModuleStateStorageManager(TrackingPathMacroSubstitutorImpl(pathMacroManager), module)
+    else DummyModuleStateStorageManager()
 
   final override fun getPathMacroManagerForDefaults() = pathMacroManager
 
+  override val loadPolicy: StateLoadPolicy
+    get() = if (canStoreSettings) super.loadPolicy else StateLoadPolicy.NOT_LOAD
+
   override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<Storage> {
+    if (!canStoreSettings) return emptyList()
+
     val result = super.getStorageSpecs(component, stateSpec, operation)
     if (!project.isDirectoryBased) {
       return result
@@ -103,3 +113,10 @@ abstract class ModuleStoreBase : ChildlessComponentStore(), ModuleStore {
     })
   }
 }
+
+private class DummyModuleStateStorageManager : StateStorageManagerImpl(
+  rootTagName = "module",
+  componentManager = null,
+  macroSubstitutor = null,
+  virtualFileTracker = null
+)

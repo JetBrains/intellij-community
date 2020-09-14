@@ -7,6 +7,7 @@ import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.module.impl.ModulePath
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.Function
 import com.intellij.util.PathUtil
@@ -17,7 +18,6 @@ import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
-import com.intellij.workspaceModel.ide.impl.legacyBridge.project.isExternalModuleFile
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
@@ -87,6 +87,10 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
                                createFileInDirectorySource(virtualFileManager.fromUrl(factory.directoryUrl), it.name),
                                virtualFileManager)
     }
+  }
+
+  fun findModuleSerializer(modulePath: ModulePath): JpsFileEntitiesSerializer<*>? {
+    return fileSerializersByUrl.getValues(VfsUtilCore.pathToUrl(modulePath.path)).first()
   }
 
   override fun reloadFromChangedFiles(change: JpsConfigurationFilesChange,
@@ -439,7 +443,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   }
 }
 
-internal class CachingJpsFileContentReader(projectBaseDirUrl: String) : JpsFileContentReader {
+class CachingJpsFileContentReader(projectBaseDirUrl: String) : JpsFileContentReader {
   private val projectPathMacroManager = ProjectPathMacroManagerBridge(JpsPathUtil.urlToPath(projectBaseDirUrl))
   private val fileContentCache = ConcurrentHashMap<String, Map<String, Element>>()
 
@@ -501,3 +505,9 @@ internal class CachingJpsFileContentReader(projectBaseDirUrl: String) : JpsFileC
 // TODO Add more diagnostics: file path, line etc
 internal fun Element.getAttributeValueStrict(name: String): String =
   getAttributeValue(name) ?: error("Expected attribute $name under ${this.name} element")
+
+fun isExternalModuleFile(filePath: String): Boolean {
+  val parentPath = PathUtil.getParentPath(filePath)
+  return FileUtil.extensionEquals(filePath, "xml") && PathUtil.getFileName(parentPath) == "modules"
+         && PathUtil.getFileName(PathUtil.getParentPath(parentPath)) != ".idea"
+}

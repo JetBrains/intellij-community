@@ -14,6 +14,7 @@ import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 import java.nio.file.Path
 
 object JpsProjectEntitiesLoader {
@@ -167,4 +168,10 @@ internal fun loadStorageFile(xmlFile: Path, pathMacroManager: PathMacroManager):
     rootElement.addContent(optionElement)
   }
   return FileStorageCoreUtil.load(rootElement, pathMacroManager, true)
+}
+
+fun levelToLibraryTableId(level: String) = when (level) {
+  JpsLibraryTableSerializer.MODULE_LEVEL -> error("this method isn't supposed to be used for module-level libraries")
+  JpsLibraryTableSerializer.PROJECT_LEVEL -> LibraryTableId.ProjectLibraryTableId
+  else -> LibraryTableId.GlobalLibraryTableId(level)
 }
