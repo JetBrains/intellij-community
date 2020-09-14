@@ -21,6 +21,10 @@ class EventId(private val group: EventLogGroup, eventId: String) : BaseEventId(e
     FeatureUsageLogger.log(group, eventId, FeatureUsageData().addProject(project).build())
   }
 
+  fun metric(): MetricEvent {
+    return MetricEvent(eventId, null)
+  }
+
   override fun getFields(): List<EventField<*>> = emptyList()
 }
 
