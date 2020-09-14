@@ -99,6 +99,20 @@ public class ArtifactRepositoryManagerTest extends UsefulTestCase {
     assertCoordinates(first.getDependencies().get(1).getArtifact(), "commons-codec", "commons-codec", "1.10");
   }
 
+  public void testTransitiveSnapshotDependenciesExcluded() throws Exception {
+    // version of this excluded dependency is [0.8.1,)
+    String excludedArtifact = "sshj";
+    List<String> excluded = Collections.singletonList("net.schmizz:" + excludedArtifact);
+    myRepositoryManager.resolveDependency("com.jcraft", "jsch.agentproxy.sshj", "0.0.9", true, excluded);
+    try (Stream<Path> files = Files.walk(localRepository.toPath())) {
+      assertEmpty(files.filter(file -> {
+        String fileName = file.getFileName().toString();
+        return fileName.startsWith(excludedArtifact + "-") &&
+               (fileName.endsWith(".pom") || fileName.endsWith(".jar"));
+      }).collect(Collectors.toList()));
+    }
+  }
+
   private static void assertCoordinates(Artifact artifact, String groupId, String artifactId, String version) {
     assertEquals(groupId, artifact.getGroupId());
     assertEquals(artifactId, artifact.getArtifactId());
