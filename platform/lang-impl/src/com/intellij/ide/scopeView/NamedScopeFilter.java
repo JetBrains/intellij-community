@@ -48,7 +48,7 @@ public final class NamedScopeFilter implements VirtualFileFilter {
   }
 
   @Override
-  public boolean accept(VirtualFile file) {
+  public boolean accept(@NotNull VirtualFile file) {
     if (file == null) return false;
 
     PackageSet set = scope.getValue();
