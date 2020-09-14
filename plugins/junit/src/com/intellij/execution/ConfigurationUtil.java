@@ -17,6 +17,7 @@ import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.search.searches.ClassesWithAnnotatedMembersSearch;
 import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
@@ -24,9 +25,9 @@ import java.util.Set;
 
 public class ConfigurationUtil {
   // return true if there is JUnit4 test
-  public static boolean findAllTestClasses(final TestClassFilter testClassFilter,
+  public static boolean findAllTestClasses(@NotNull final TestClassFilter testClassFilter,
                                            @Nullable final Module module,
-                                           final Set<? super PsiClass> found) {
+                                           @NotNull final Set<? super PsiClass> found) {
     final PsiManager manager = testClassFilter.getPsiManager();
 
     final Project project = manager.getProject();
