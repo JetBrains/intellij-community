@@ -516,6 +516,12 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
     }
 
     @Override
+    public void setUnindexedStateForFile(int fileId) {
+      super.setUnindexedStateForFile(fileId);
+      resetBinaryBuilderConfiguration(fileId);
+    }
+
+    @Override
     protected boolean isIndexConfigurationUpToDate(int fileId, @NotNull IndexedFile file) {
       if (myCompositeBinaryBuilderMap == null) return true;
       try {
@@ -535,6 +541,17 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
       if (myCompositeBinaryBuilderMap != null) {
         try {
           myCompositeBinaryBuilderMap.persistState(fileId, file.getFile());
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }
+    }
+
+    private void resetBinaryBuilderConfiguration(int fileId) {
+      if (myCompositeBinaryBuilderMap != null) {
+        try {
+          myCompositeBinaryBuilderMap.resetPersistedState(fileId);
         }
         catch (IOException e) {
           LOG.error(e);

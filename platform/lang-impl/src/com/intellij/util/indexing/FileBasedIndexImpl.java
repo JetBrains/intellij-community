@@ -1439,13 +1439,23 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       } finally {
         mapInputTime = System.nanoTime() - mapInputTime;
       }
+
+      boolean indexWasProvided = storageUpdate instanceof IndexInfrastructureExtensionUpdateComputation &&
+                                 ((IndexInfrastructureExtensionUpdateComputation)storageUpdate).isIndexProvided();
+
       if (myStorageBufferingHandler.runUpdate(false, storageUpdate)) {
         myStorageBufferingHandler.assertOnTheDiskMode();
 
         ConcurrencyUtil.withLock(myReadLock, () -> {
           if (currentFC != null) {
             if (!isMock(currentFC.getFile())) {
-              index.setIndexedStateForFile(inputId, currentFC);
+              if (index instanceof FileBasedIndexInfrastructureExtensionUpdatableIndex) {
+                ((FileBasedIndexInfrastructureExtensionUpdatableIndex<?, ?, ?>)index)
+                  .setIndexedStateForFile(inputId, currentFC, indexWasProvided);
+              }
+              else {
+                index.setIndexedStateForFile(inputId, currentFC);
+              }
             }
           }
           else {
@@ -1453,8 +1463,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           }
         });
       }
-      boolean indexWasProvided = storageUpdate instanceof IndexInfrastructureExtensionUpdateComputation &&
-                                 ((IndexInfrastructureExtensionUpdateComputation)storageUpdate).isIndexProvided();
+
       return new SingleIndexUpdateStats(mapInputTime, indexWasProvided);
     }
     catch (RuntimeException exception) {
