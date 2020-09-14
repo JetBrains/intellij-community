@@ -7,12 +7,15 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupCellRenderer
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.ml.MLCompletionBundle
+import com.intellij.completion.ml.experiment.ExperimentStatus
 import com.intellij.completion.ml.settings.CompletionMLRankingSettings
 import com.intellij.completion.ml.settings.MLCompletionSettingsCollector
 import com.intellij.completion.ml.storage.LookupStorage
 import com.intellij.completion.ml.storage.MutableLookupStorage
 import com.intellij.completion.ml.tracker.LookupTracker
+import com.intellij.completion.ml.util.language
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.lang.Language
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
@@ -45,7 +48,10 @@ class PositionDiffArrowInitializer : ProjectManagerListener {
       val changed = lookup.getUserData(POSITION_CHANGED_KEY)
       if (changed == null) {
         lookup.putUserData(POSITION_CHANGED_KEY, value)
-        if (value) showArrowsNotificationIfNeeded()
+        val language = lookup.language()
+        if (value && language != null) {
+          showArrowsNotificationIfNeeded(language)
+        }
       }
     }
 
@@ -58,7 +64,10 @@ class PositionDiffArrowInitializer : ProjectManagerListener {
 
     private fun shouldShowArrowsNotification(): Boolean = Registry.`is`(SHOW_ARROWS_NOTIFICATION_REGISTRY, true)
 
-    private fun showArrowsNotificationIfNeeded() {
+    private fun showArrowsNotificationIfNeeded(language: Language) {
+      val experimentInfo = ExperimentStatus.getInstance().forLanguage(language)
+      if (experimentInfo.inExperiment) return
+
       val properties = PropertiesComponent.getInstance()
       val mlRankingSettings = CompletionMLRankingSettings.getInstance()
       if (mlRankingSettings.isShowDiffEnabled && shouldShowArrowsNotification() && !properties.getBoolean(ARROWS_NOTIFICATION_SHOWN_KEY)) {
