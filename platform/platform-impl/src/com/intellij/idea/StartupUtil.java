@@ -698,6 +698,11 @@ public final class StartupUtil {
   }
 
   private static void runStartupWizard(@NotNull AppStarter appStarter) {
+    // do not show Customize IDE Wizard [IDEA-249516]
+    if (!Boolean.parseBoolean(System.getProperty("idea.show.customize.ide.wizard"))) {
+      return;
+    }
+
     String stepsProviderName = ApplicationInfoImpl.getShadowInstance().getCustomizeIDEWizardStepsProvider();
     if (stepsProviderName == null) {
       return;
