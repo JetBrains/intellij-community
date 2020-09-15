@@ -214,7 +214,7 @@ public final class VMOptions {
 
   @NotNull
   public static String getCustomVMOptionsFileName() {
-    String fileName = StringUtil.toLowerCase(ApplicationNamesInfo.getInstance().getProductName());
+    String fileName = ApplicationNamesInfo.getInstance().getScriptName();
     if (SystemInfo.is64Bit && !SystemInfo.isMac) fileName += "64";
     if (SystemInfo.isWindows) fileName += ".exe";
     fileName += ".vmoptions";
