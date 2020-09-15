@@ -24,9 +24,19 @@ public abstract class AbstractCustomizeWizardStep extends JPanel {
   @Nls(capitalization = Nls.Capitalization.Title)
   public abstract String getTitle();
 
+  /**
+   * Content for title under top navigation.
+   *
+   * @return either a HTML string prefixed with <html>, or a text string not prefixed with <html>, which will be processed with StringUtil.escapeXmlEntities
+   */
   @Nls
   public abstract String getHTMLHeader();
 
+  /**
+   * Content for footer above buttons.
+   *
+   * @return either a HTML string prefixed with <html>, or a text string not prefixed with <html>, which will be processed with StringUtil.escapeXmlEntities
+   */
   @Nullable
   @Nls
   public String getHTMLFooter() {
