@@ -50,6 +50,7 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
     myFile = file;
     myChangeSupport = new PropertyChangeSupport(this);
     myComponent = createEditorComponent(project, file);
+    applyTextEditorCustomizers();
 
     TransientEditorState state = myFile.getUserData(TRANSIENT_EDITOR_STATE_KEY);
     if (state != null) {
@@ -229,6 +230,12 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
   @NonNls
   public String toString() {
     return "Editor: "+myComponent.getFile();
+  }
+
+  private void applyTextEditorCustomizers() {
+    for (TextEditorCustomizer customizer : TextEditorCustomizer.EP.getExtensionList()) {
+      customizer.customize(this);
+    }
   }
 
   private static class TransientEditorState {
