@@ -110,13 +110,6 @@ class CommunityRepositoryModules {
     plugin("intellij.vcs.git") {
       withModule("intellij.vcs.git.rt", "git4idea-rt.jar", null)
     },
-    plugin("intellij.vcs.cvs") {
-      directoryName = "cvsIntegration"
-      mainJarName = "cvsIntegration.jar"
-      withModule("intellij.vcs.cvs.javacvs")
-      withModule("intellij.vcs.cvs.smartcvs")
-      withModule("intellij.vcs.cvs.core", "cvs_util.jar")
-    },
     plugin("intellij.xpath") {
       withModule("intellij.xpath.rt", "rt/xslt-rt.jar")
     },
