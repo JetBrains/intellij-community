@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.Objects;
 
 @ApiStatus.Experimental
 public interface LightEditService {
@@ -38,6 +39,10 @@ public interface LightEditService {
   void showEditorWindow();
 
   Project getProject();
+
+  default @NotNull Project requireProject() {
+    return Objects.requireNonNull(getProject());
+  }
 
   boolean canOpen(@NotNull VirtualFile file);
 
