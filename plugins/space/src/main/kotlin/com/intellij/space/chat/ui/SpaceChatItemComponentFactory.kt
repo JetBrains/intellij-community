@@ -5,6 +5,7 @@ import circlet.code.api.CodeDiscussionAddedFeedEvent
 import circlet.code.api.CodeDiscussionRecord
 import circlet.code.api.CodeDiscussionSnippet
 import circlet.completion.mentions.MentionConverter
+import circlet.m2.channel.M2ChannelVm
 import circlet.platform.api.format
 import circlet.platform.client.resolve
 import circlet.principals.asUser
@@ -29,29 +30,33 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.codereview.timeline.TimelineComponent
 import com.intellij.util.ui.codereview.timeline.TimelineItemComponentFactory
 import icons.SpaceIcons
 import libraries.coroutines.extra.Lifetime
+import libraries.coroutines.extra.launch
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
+import runtime.Ui
 import runtime.date.DateFormat
 import javax.swing.*
 
 internal class SpaceChatItemComponentFactory(
   private val project: Project,
   private val lifetime: Lifetime,
-  private val server: String,
-  private val avatarProvider: SpaceAvatarProvider
+  private val server: String
 ) : TimelineItemComponentFactory<SpaceChatItem> {
+  // TODO: avatarProvider shouldn't require component in constructor?
+  lateinit var avatarProvider: SpaceAvatarProvider
+
   override fun createComponent(item: SpaceChatItem): JComponent {
     val component =
       when (val details = item.details) {
         is CodeDiscussionAddedFeedEvent -> {
           val discussion = details.codeDiscussion.resolve()
-          val codeDiscussionMessages = item.thread!!.mvms.prop.value.messages.map { it.message.convertToChatItem(it.getLink(server)) }
-          createDiff(project, discussion, codeDiscussionMessages.first(), server)
-            ?.withThread(lifetime, server, codeDiscussionMessages.drop(1)) ?: createUnsupportedMessageTypePanel(item.link)
+          createDiff(project, discussion, item.thread!!, server)
+            ?.withThread(lifetime, server, item.thread, withFirst = false) ?: createUnsupportedMessageTypePanel(item.link)
         }
         is M2TextItemContent -> {
           val messagePanel = createSimpleMessagePanel(item, server)
@@ -60,7 +65,7 @@ internal class SpaceChatItemComponentFactory(
             messagePanel
           }
           else {
-            messagePanel.withThread(lifetime, server, thread.mvms.value.messages.map { it.message.convertToChatItem(it.getLink(server)) })
+            messagePanel.withThread(lifetime, server, thread)
           }
         }
         else -> createUnsupportedMessageTypePanel(item.link)
@@ -113,28 +118,34 @@ internal class SpaceChatItemComponentFactory(
       }
     }
 
-  private fun JComponent.withThread(lifetime: Lifetime, server: String, messages: List<SpaceChatItem>): JComponent {
+  private fun JComponent.withThread(lifetime: Lifetime, server: String, thread: M2ChannelVm, withFirst: Boolean = true): JComponent {
     return JPanel(VerticalLayout(JBUI.scale(10))).also { panel ->
       panel.isOpaque = false
-      val threadAvatarsProvider = SpaceAvatarProvider(lifetime, panel, JBValue.UIInteger("space.chat.thread.avatar.size", 20))
-      panel.add(this, VerticalLayout.FILL_HORIZONTAL)
-      messages.forEach { message ->
-        panel.add(
-          Item(
-            threadAvatarsProvider.getIcon(message.author.asUser!!),
-            createMessageTitle(server, message),
-            createSimpleMessagePanel(message, server)
-          ),
-          VerticalLayout.FILL_HORIZONTAL
-        )
+      val itemsListModel = SpaceChatItemListModel()
+      val itemComponentFactory = SpaceChatItemComponentFactory(project, lifetime, server)
+      val threadTimeline = TimelineComponent(itemsListModel, itemComponentFactory)
+      val threadAvatarSize = JBValue.UIInteger("space.chat.thread.avatar.size", 20)
+      itemComponentFactory.avatarProvider = SpaceAvatarProvider(lifetime, threadTimeline, threadAvatarSize)
+
+      // TODO: don't subscribe on thread changes in factory
+      thread.mvms.forEach(lifetime) { messageList ->
+        launch(lifetime, Ui) {
+          itemsListModel.messageListUpdated(
+            messageList.messages
+              .drop(if (withFirst) 0 else 1)
+              .map { it.message.convertToChatItem(it.getLink(server)) }
+          )
+        }
       }
+      panel.add(this, VerticalLayout.FILL_HORIZONTAL)
+      panel.add(threadTimeline, VerticalLayout.FILL_HORIZONTAL)
     }
   }
 
   private fun createDiff(
     project: Project,
     discussion: CodeDiscussionRecord,
-    comment: SpaceChatItem,
+    thread: M2ChannelVm,
     server: String
   ): JComponent? {
     val fileNameComponent = JBUI.Panels.simplePanel(createFileNameComponent(discussion.anchor.filename!!)).apply {
@@ -157,12 +168,19 @@ internal class SpaceChatItemComponentFactory(
       add(fileNameComponent)
       add(diffEditorComponent, VerticalLayout.FILL_HORIZONTAL)
     }
-
-    return JPanel(VerticalLayout(UI.scale(4))).apply {
+    val panel = JPanel(VerticalLayout(UI.scale(4))).apply {
       isOpaque = false
       add(snapshotComponent, VerticalLayout.FILL_HORIZONTAL)
-      add(createSimpleMessagePanel(comment, server))
     }
+    // TODO: don't subscribe on comment in factory
+    thread.mvms.forEach(lifetime) {
+      val comment = it.messages.first()
+      if (panel.componentCount == 2) {
+        panel.remove(1)
+      }
+      panel.add(createSimpleMessagePanel(comment.message.convertToChatItem(comment.getLink(server)), server))
+    }
+    return panel
   }
 
   private fun createFileNameComponent(filePath: String): JComponent {

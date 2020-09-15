@@ -14,7 +14,7 @@ import com.intellij.util.ui.codereview.timeline.TimelineItem
 import libraries.coroutines.extra.Lifetime
 
 internal class SpaceChatItem private constructor(
-  record: ChannelItemRecord,
+  private val record: ChannelItemRecord,
   val link: String?,
   val thread: M2ChannelVm? = null
 ) : TimelineItem {
@@ -47,4 +47,22 @@ internal class SpaceChatItem private constructor(
 
     internal fun ChannelItemRecord.convertToChatItem(link: String?): SpaceChatItem = SpaceChatItem(this, link)
   }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) {
+      return true
+    }
+
+    if (other !is SpaceChatItem) {
+      return false
+    }
+
+    if (record != other.record) {
+      return false
+    }
+
+    return true
+  }
+
+  override fun hashCode(): Int = record.hashCode()
 }

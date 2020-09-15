@@ -7,7 +7,6 @@ import circlet.m2.M2MessageVm
 import circlet.m2.channel.M2ChannelVm
 import circlet.platform.api.Ref
 import circlet.platform.api.isTemporary
-import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
@@ -18,7 +17,7 @@ import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
-import com.intellij.util.ui.UI
+import com.intellij.util.ui.codereview.timeline.TimelineComponent
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.awaitAll
 import libraries.coroutines.extra.Lifetime
@@ -41,10 +40,14 @@ internal fun createSpaceChatPanel(
   channelsVm: ChannelsVm,
   chatRecord: Ref<M2ChannelRecord>
 ): JPanel {
-  val timeline = JPanel(VerticalLayout(UI.scale(20))).apply {
-    isOpaque = false
-    border = JBUI.Borders.emptyTop(6)
-  }
+  val itemsListModel = SpaceChatItemListModel()
+  val server = channelsVm.client.server
+  val itemComponentFactory = SpaceChatItemComponentFactory(project, lifetime, server)
+  val timeline = TimelineComponent(itemsListModel, itemComponentFactory)
+
+  val avatarSize = JBValue.UIInteger("space.chat.avatar.size", 30)
+  itemComponentFactory.avatarProvider = SpaceAvatarProvider(lifetime, timeline, avatarSize)
+
   val contentPanel = JPanel(null).apply {
     isOpaque = false
     border = JBUI.Borders.empty(24, 20)
@@ -73,20 +76,19 @@ internal fun createSpaceChatPanel(
     val chatViewModel = channelsVm.channel(lifetime, chatRecord)
     chatViewModel.awaitFullLoad(lifetime)
     val messages = chatViewModel.mvms.prop
-    val avatarSize = JBValue.UIInteger("space.chat.avatar.size", 30)
-    val avatarProvider = SpaceAvatarProvider(lifetime, timeline, avatarSize)
-    val server = channelsVm.client.server
-    val itemComponentFactory = SpaceChatItemComponentFactory(project, lifetime, server, avatarProvider)
-    val chatItems = messages.value.messages.map { messageViewModel ->
-      async(lifetime, AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()) {
-        messageViewModel.message.convertToChatItemWithThread(lifetime, channelsVm, messageViewModel.getLink(server))
+    messages.forEach(lifetime) { messagesViewModel ->
+      launch(lifetime, Ui) {
+        val chatItems = messagesViewModel.messages.map { messageViewModel ->
+          async(lifetime, AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()) {
+            messageViewModel.message.convertToChatItemWithThread(lifetime, channelsVm, messageViewModel.getLink(server))
+          }
+        }.awaitAll()
+        itemsListModel.messageListUpdated(chatItems)
+        if (centerPanel.isLoading) {
+          centerPanel.stopLoading()
+        }
       }
-    }.awaitAll()
-    val items = chatItems.map { chatItem -> itemComponentFactory.createComponent(chatItem) }
-    centerPanel.stopLoading()
-    items.forEach { timeline.add(it, VerticalLayout.FILL_HORIZONTAL) }
-    timeline.revalidate()
-    timeline.repaint()
+    }
   }
   return JBUI.Panels.simplePanel(centerPanel).apply {
     isOpaque = true
