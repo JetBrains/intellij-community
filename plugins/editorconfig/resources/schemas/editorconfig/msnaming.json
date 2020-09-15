@@ -1,60 +1,6 @@
 [
   {
     "type": "option",
-    "key": "dotnet_style_qualification_for_field",
-    "value": {
-      "type": "pair",
-      "first": {
-        "type": "union",
-        "type_alias": "boolean",
-        "values": [
-          {
-            "type": "constant",
-            "value": "true",
-            "documentation": "true"
-          },
-          {
-            "type": "constant",
-            "value": "false",
-            "documentation": "false"
-          }
-        ]
-      },
-      "second": {
-        "type": "union",
-        "type_alias": "severity",
-        "values": [
-          {
-            "type": "constant",
-            "value": "none",
-            "documentation": "When this style is not being followed, do not show anything to the user; however, auto-generated code follows this style."
-          },
-          {
-            "type": "constant",
-            "value": "silent",
-            "documentation": "When this style is not being followed, do not show anything to the user; however, auto-generated code follows this style."
-          },
-          {
-            "type": "constant",
-            "value": "suggestion",
-            "documentation": "When this style is not being followed, show it to the user as a suggestion, as underlying dots on the first two characters. It has no effect at compile time."
-          },
-          {
-            "type": "constant",
-            "value": "warning",
-            "documentation": "When this style is not being followed, show a compiler warning in the Error List."
-          },
-          {
-            "type": "constant",
-            "value": "error",
-            "documentation": "When this style is not being followed, show a compiler error in the Error List."
-          }
-        ]
-      }
-    }
-  },
-  {
-    "type": "option",
     "key": {
       "type": "qualified",
       "values": [
@@ -69,7 +15,35 @@
       ]
     },
     "value": {
-      "type": "severity"
+      "type": "union",
+      "type_alias": "severity",
+      "values": [
+        {
+          "type": "constant",
+          "value": "none",
+          "documentation": "When this style is not being followed, do not show anything to the user; however, auto-generated code follows this style."
+        },
+        {
+          "type": "constant",
+          "value": "silent",
+          "documentation": "When this style is not being followed, do not show anything to the user; however, auto-generated code follows this style."
+        },
+        {
+          "type": "constant",
+          "value": "suggestion",
+          "documentation": "When this style is not being followed, show it to the user as a suggestion, as underlying dots on the first two characters. It has no effect at compile time."
+        },
+        {
+          "type": "constant",
+          "value": "warning",
+          "documentation": "When this style is not being followed, show a compiler warning in the Error List."
+        },
+        {
+          "type": "constant",
+          "value": "error",
+          "documentation": "When this style is not being followed, show a compiler error in the Error List."
+        }
+      ]
     }
   },
   {
