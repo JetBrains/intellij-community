@@ -4,7 +4,6 @@ package com.intellij.find.usages.impl
 import com.intellij.find.usages.*
 import com.intellij.model.Pointer
 import com.intellij.model.Symbol
-import com.intellij.model.presentation.SymbolPresentationService
 import com.intellij.model.psi.impl.targetSymbols
 import com.intellij.model.search.SearchService
 import com.intellij.openapi.project.Project
@@ -49,20 +48,6 @@ fun symbolSearchTarget(project: Project, symbol: Symbol): SearchTarget {
     return symbol
   }
   return DefaultSymbolSearchTarget(project, symbol)
-}
-
-private val USAGE_HANDLER_EXTENSION = ClassExtension<SymbolUsageHandlerFactory<*>>("com.intellij.lang.symbolUsageHandler")
-
-internal fun symbolUsageHandler(project: Project, symbol: Symbol): UsageHandler<*> {
-  for (factory in USAGE_HANDLER_EXTENSION.forKey(symbol.javaClass)) {
-    @Suppress("UNCHECKED_CAST")
-    val factory_ = factory as SymbolUsageHandlerFactory<Symbol>
-    val handler = factory_.createHandler(project, symbol)
-    if (handler != null) {
-      return handler
-    }
-  }
-  return EmptyUsageHandler(SymbolPresentationService.getInstance().getSymbolPresentation(symbol).shortNameString)
 }
 
 @ApiStatus.Internal

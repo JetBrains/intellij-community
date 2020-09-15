@@ -22,7 +22,7 @@ internal class DefaultSymbolSearchTarget(
   }
 
   override val usageHandler: UsageHandler<*> by lazyPub {
-    symbolUsageHandler(project, symbol)
+    EmptyUsageHandler(SymbolPresentationService.getInstance().getSymbolPresentation(symbol).shortNameString)
   }
 
   override fun equals(other: Any?): Boolean {
