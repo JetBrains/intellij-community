@@ -360,6 +360,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   @Override
   public void noStateLoaded() {
     myCurrentLaf = getDefaultLaf();
+    myPreferredLightLaf = myDefaultLightLaf;
+    myPreferredDarkLaf = myDefaultDarkLaf;
   }
 
   @Override
