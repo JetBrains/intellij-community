@@ -8,6 +8,7 @@ import circlet.completion.mentions.MentionConverter
 import circlet.m2.ChannelsVm
 import circlet.m2.M2ChannelMode
 import circlet.m2.M2MessageVm
+import circlet.m2.channel.M2ChannelVm
 import circlet.platform.api.Ref
 import circlet.platform.api.format
 import circlet.platform.api.isTemporary
@@ -86,11 +87,8 @@ internal fun createSpaceChatPanel(
   }
   launch(lifetime, Ui) {
     val chatViewModel = channelsVm.channel(lifetime, chatRecord)
-    chatViewModel.ready.awaitTrue(lifetime)
+    chatViewModel.awaitFullLoad(lifetime)
     val messages = chatViewModel.mvms.prop
-    while (messages.value.hasPrev) {
-      chatViewModel.loadPrev()
-    }
     val avatarSize = JBValue.UIInteger("space.chat.avatar.size", 30)
     val avatarProvider = SpaceAvatarProvider(lifetime, timeline, avatarSize)
     val server = channelsVm.client.server
@@ -101,15 +99,23 @@ internal fun createSpaceChatPanel(
         is CodeDiscussionAddedFeedEvent -> {
           val discussion = details.codeDiscussion.resolve()
           val codeDiscussionChat = channelsVm.channel(lifetime, discussion.channel, mode = M2ChannelMode.CodeDiscussion())
-          codeDiscussionChat.ready.awaitTrue(lifetime)
-          while (codeDiscussionChat.mvms.prop.value.hasNext) {
-            codeDiscussionChat.loadNext()
-          }
+          codeDiscussionChat.awaitFullLoad(lifetime)
           val codeDiscussionMessages = codeDiscussionChat.mvms.prop.value.messages.map { it.message }
           createDiff(project, discussion, codeDiscussionMessages.first(), server)
             ?.withThread(lifetime, server, codeDiscussionMessages.drop(1))
         }
-        is M2TextItemContent -> createSimpleMessagePanel(message, server)
+        is M2TextItemContent -> {
+          val messagePanel = createSimpleMessagePanel(message, server)
+          val thread = message.thread
+          if (thread == null) {
+            messagePanel
+          }
+          else {
+            val threadChat = channelsVm.channel(lifetime, thread)
+            threadChat.awaitFullLoad(lifetime)
+            messagePanel.withThread(lifetime, server, threadChat.mvms.value.messages.map { it.message })
+          }
+        }
         else -> createUnsupportedMessageTypePanel(messageViewModel.getLink(server))
       }?.let { component ->
         Item(
@@ -130,7 +136,18 @@ internal fun createSpaceChatPanel(
   }
 }
 
-fun M2MessageVm.getLink(hostUrl: String): String? =
+private suspend fun M2ChannelVm.awaitFullLoad(lifetime: Lifetime) {
+  ready.awaitTrue(lifetime)
+  val messages = mvms.prop
+  while (messages.value.hasPrev) {
+    loadPrev()
+  }
+  while (messages.value.hasNext) {
+    loadNext()
+  }
+}
+
+private fun M2MessageVm.getLink(hostUrl: String): String? =
   if (canCopyLink && !message.isTemporary()) {
     Navigator.im.message(channelVm.key.value, message).absoluteHref(hostUrl)
   }
