@@ -48,7 +48,6 @@ interface SearchTarget {
    * Returning non-empty collection will enable "Search for text occurrences" checkbox in the UI.
    *
    * @return collection of strings to search for text occurrences
-   * @see SymbolTextSearcher
    */
   @JvmDefault
   val textSearchStrings: Collection<String>

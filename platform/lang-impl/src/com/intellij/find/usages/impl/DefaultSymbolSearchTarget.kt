@@ -25,10 +25,6 @@ internal class DefaultSymbolSearchTarget(
     symbolUsageHandler(project, symbol)
   }
 
-  override val textSearchStrings: Collection<String> by lazyPub {
-    symbol.getTextSearchStrings()
-  }
-
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false

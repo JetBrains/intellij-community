@@ -16,7 +16,6 @@ import static org.jetbrains.annotations.ApiStatus.OverrideOnly;
  * since the returned {@link SearchTarget} should have its {@link SearchTarget#getUsageHandler} implemented.
  *
  * @see SymbolSearchTargetFactory
- * @see SymbolTextSearcher
  */
 @OverrideOnly
 public interface SymbolUsageHandlerFactory<T extends Symbol> {
