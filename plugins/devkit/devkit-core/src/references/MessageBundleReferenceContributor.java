@@ -112,7 +112,7 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
         private PsiReference createPluginIdReference(@NotNull PsiElement element, String text) {
           if (!isPluginDescriptionKey(text)) return null;
 
-          String id = StringUtil.substringAfter(StringUtil.substringBefore(text, DESCRIPTION), PLUGIN);
+          String id = StringUtil.substringAfter(StringUtil.notNullize(StringUtil.substringBefore(text, DESCRIPTION)), PLUGIN);
           return new PluginIdReference(element, id);
         }
       });
