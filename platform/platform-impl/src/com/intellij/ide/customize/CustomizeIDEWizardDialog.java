@@ -27,7 +27,7 @@ import java.util.List;
 
 import static com.intellij.openapi.util.text.HtmlChunk.*;
 
-public class CustomizeIDEWizardDialog extends DialogWrapper implements CustomizeIDEWizardDialogInterface {
+public class CustomizeIDEWizardDialog extends DialogWrapper implements CommonCustomizeIDEWizardDialog {
   protected static final String BUTTONS = "BUTTONS";
   protected static final String NO_BUTTONS = "NO_BUTTONS";
 
@@ -259,7 +259,7 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements Customize
   }
 
   @Contract(value = "!null->!null" ,pure = true)
-  protected static String ensureHTML(@Nullable String s) {
+  private static String ensureHTML(@Nullable String s) {
     return s == null ? null : s.startsWith("<html>") ? s : "<html>" + StringUtil.escapeXmlEntities(s) + "</html>";
   }
 }

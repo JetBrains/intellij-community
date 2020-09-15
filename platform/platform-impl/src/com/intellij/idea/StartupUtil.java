@@ -9,8 +9,8 @@ import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.*;
 import com.intellij.ide.customize.AbstractCustomizeWizardStep;
+import com.intellij.ide.customize.CommonCustomizeIDEWizardDialog;
 import com.intellij.ide.customize.CustomizeIDEWizardDialog;
-import com.intellij.ide.customize.CustomizeIDEWizardDialogInterface;
 import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
 import com.intellij.ide.gdpr.Agreements;
 import com.intellij.ide.gdpr.ConsentOptions;
@@ -726,12 +726,10 @@ public final class StartupUtil {
         Class<?> dialogClass = Class.forName(stepsDialogName);
         Constructor<?> constr =
                 dialogClass.getConstructor(CustomizeIDEWizardStepsProvider.class, AppStarter.class, boolean.class, boolean.class);
-        ((CustomizeIDEWizardDialogInterface)constr.newInstance(provider, appStarter, true, false)).showIfNeeded();
+        ((CommonCustomizeIDEWizardDialog)constr.newInstance(provider, appStarter, true, false)).showIfNeeded();
       }
       catch (Throwable e) {
-        System.out.println("failed to start custom wizard: ");
-        e.getCause().printStackTrace();
-        new CustomizeIDEWizardDialog(provider, appStarter, true, false).showIfNeeded();
+        Main.showMessage("Configuration Wizard Failed", e); return;
       }
     }
     else {
