@@ -1,11 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.navigationToolbar
 
-import com.intellij.execution.actions.newToolbar.RunDebugActionsGroup
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.ui.customization.CustomisedActionGroup
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.newToolbar.ControlBarActionComponent
@@ -59,9 +59,9 @@ class NavBarModifier(onChange: () -> Unit, disposable: Disposable) {
       return group
     }
 
-    val runDebugGroup = CustomActionsSchema.getInstance().getCorrectedAction("ToolbarRunGroup")
-    val navBarVcsGroup = CustomActionsSchema.getInstance().getCorrectedAction("NavBarVcsGroup")
-    val codeWithMeGroup = CustomActionsSchema.getInstance().getCorrectedAction("CodeWithMeAction")
+    val runDebugGroup = ActionManager.getInstance().getAction("ToolbarRunGroup")
+    val navBarVcsGroup = ActionManager.getInstance().getAction("NavBarVcsGroup")
+    val codeWithMeGroup = ActionManager.getInstance().getAction("CodeWithMeAction")
 
     group.getChildren(null).forEach { child ->
       when (child) {
@@ -93,12 +93,17 @@ class NavBarModifier(onChange: () -> Unit, disposable: Disposable) {
 
   fun getNewRunDebug(baseAction: AnAction): AnAction? {
     return if(baseAction is ActionGroup) {
-      ControlBarActionComponent(RunDebugActionsGroup())
+      ActionManager.getInstance().getAction("RunDebugActionsBarGroup")?.let {
+        if(it is ActionGroup) {
+          ControlBarActionComponent(it)
+        } else null
+      }
+
     } else null
   }
 
   fun getNewVcsGroup(): AnAction? {
-    return CustomActionsSchema.getInstance().getCorrectedAction("VcsNavBarToolbarActionsLight");
+    return ActionManager.getInstance().getAction("VcsNavBarToolbarActionsLight");
   }
 
 }

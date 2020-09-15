@@ -497,6 +497,12 @@
       <reference ref="SearchEverywhere"/>
     </group>
 
+    <group id="RunDebugActionsBarGroup" popup="false">
+      <reference ref="RunConfiguration"/>
+      <group id="RunDebugConfigRunnerActions"/>
+      <reference ref="Stop"/>
+    </group>
+
     <group id="Bookmarks">
       <reference ref="ToggleBookmark"/>
       <reference ref="ShowBookmarks"/>
