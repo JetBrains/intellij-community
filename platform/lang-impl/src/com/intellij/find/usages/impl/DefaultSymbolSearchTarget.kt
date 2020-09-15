@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.usages.impl
 
-import com.intellij.find.usages.SymbolSearchTarget
-import com.intellij.find.usages.UsageHandler
+import com.intellij.find.usages.api.UsageHandler
+import com.intellij.find.usages.symbol.SymbolSearchTarget
 import com.intellij.model.Pointer
 import com.intellij.model.Symbol
 import com.intellij.model.presentation.SymbolPresentationService

@@ -2,8 +2,8 @@
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.codeInsight.navigation.PsiElementNavigationTarget
-import com.intellij.find.usages.SearchTarget
-import com.intellij.find.usages.UsageHandler
+import com.intellij.find.usages.api.SearchTarget
+import com.intellij.find.usages.api.UsageHandler
 import com.intellij.model.Pointer
 import com.intellij.model.presentation.PresentableSymbol
 import com.intellij.navigation.NavigatableSymbol

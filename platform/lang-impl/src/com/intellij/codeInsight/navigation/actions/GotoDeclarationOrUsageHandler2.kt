@@ -9,7 +9,7 @@ import com.intellij.codeInsight.navigation.impl.*
 import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.find.FindBundle
 import com.intellij.find.actions.ShowUsagesAction.showUsages
-import com.intellij.find.usages.SearchTarget
+import com.intellij.find.usages.api.SearchTarget
 import com.intellij.find.usages.impl.symbolSearchTargets
 import com.intellij.model.Symbol
 import com.intellij.navigation.chooseTargetPopup

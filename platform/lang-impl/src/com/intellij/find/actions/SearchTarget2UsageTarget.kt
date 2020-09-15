@@ -3,8 +3,8 @@
 
 package com.intellij.find.actions
 
-import com.intellij.find.usages.SearchTarget
-import com.intellij.find.usages.UsageHandler
+import com.intellij.find.usages.api.SearchTarget
+import com.intellij.find.usages.api.UsageHandler
 import com.intellij.find.usages.impl.AllSearchOptions
 import com.intellij.model.Pointer
 import com.intellij.navigation.ItemPresentation

@@ -3,7 +3,7 @@
 
 package com.intellij.find.usages.impl
 
-import com.intellij.find.usages.SearchTarget
+import com.intellij.find.usages.api.SearchTarget
 import com.intellij.model.psi.impl.hasReferencesInElement
 import com.intellij.model.search.SearchContext
 import com.intellij.model.search.SearchService

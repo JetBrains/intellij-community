@@ -5,8 +5,8 @@ import com.intellij.application.options.editor.CheckboxDescriptor
 import com.intellij.application.options.editor.checkBox
 import com.intellij.find.FindBundle.message
 import com.intellij.find.FindSettings
-import com.intellij.find.usages.UsageHandler
-import com.intellij.find.usages.UsageOptions
+import com.intellij.find.usages.api.UsageHandler
+import com.intellij.find.usages.api.UsageOptions
 import com.intellij.find.usages.impl.AllSearchOptions
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo
 import com.intellij.openapi.options.OptionEditor

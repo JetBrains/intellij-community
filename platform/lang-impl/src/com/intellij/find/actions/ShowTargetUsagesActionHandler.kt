@@ -1,9 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.actions
 
-import com.intellij.find.usages.SearchTarget
-import com.intellij.find.usages.UsageHandler
-import com.intellij.find.usages.UsageOptions.createOptions
+import com.intellij.find.usages.api.SearchTarget
+import com.intellij.find.usages.api.UsageHandler
+import com.intellij.find.usages.api.UsageOptions.createOptions
 import com.intellij.find.usages.impl.AllSearchOptions
 import com.intellij.find.usages.impl.buildQuery
 import com.intellij.find.usages.impl.hasTextSearchStrings

@@ -8,7 +8,7 @@ import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.navigation.PsiElementTargetPopupPresentation
 import com.intellij.find.FindBundle
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter
-import com.intellij.find.usages.SearchTarget
+import com.intellij.find.usages.api.SearchTarget
 import com.intellij.find.usages.impl.DefaultSymbolSearchTarget
 import com.intellij.find.usages.impl.symbolSearchTargets
 import com.intellij.model.psi.PsiSymbolService

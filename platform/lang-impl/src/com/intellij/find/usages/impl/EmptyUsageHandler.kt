@@ -2,8 +2,8 @@
 package com.intellij.find.usages.impl
 
 import com.intellij.find.FindBundle
-import com.intellij.find.usages.NonConfigurableUsageHandler
-import com.intellij.find.usages.UsageOptions
+import com.intellij.find.usages.api.NonConfigurableUsageHandler
+import com.intellij.find.usages.api.UsageOptions
 import com.intellij.usages.Usage
 import com.intellij.util.EmptyQuery
 import com.intellij.util.Query
