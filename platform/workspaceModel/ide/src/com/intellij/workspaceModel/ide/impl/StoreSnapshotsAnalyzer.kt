@@ -11,7 +11,7 @@ import java.io.File
 /**
  * This is a boilerplate code for analyzing state of entity stores that were received as attachments to exceptions
  */
-fun main() {
+fun main1() {
   // Path to the file
   val path = "/Users/alex.plate/Storages"
   val dir = File(path)
@@ -32,6 +32,29 @@ fun main() {
 
   val expectedResult = leftStore.toBuilder()
   expectedResult.replaceBySource(patternFilter(filterPattern, sortedSources), rightStore)
+
+  // Set a breakpoint and check
+
+  println()
+}
+
+fun main() {
+  // Path to the file
+  val path = "/Users/alex.plate/Storages"
+  val dir = File(path)
+  val leftFile = dir.resolve("Left_Store")
+  val rightFile = dir.resolve("Right_Store")
+  val rightDiffLogFile = dir.resolve("Right_Diff_Log")
+  val resFile = dir.resolve("Res_Store")
+
+  val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl())
+
+  val leftStore = serializer.deserializeCache(leftFile.inputStream())!!
+  val rightStore = serializer.deserializeCacheAndDiffLog(rightFile.inputStream(), rightDiffLogFile.inputStream())!!
+  //val resStore = serializer.deserializeCache(resFile.inputStream())!!
+
+  val expectedResult = leftStore.toBuilder()
+  expectedResult.addDiff(rightStore)
 
   // Set a breakpoint and check
 
