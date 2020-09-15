@@ -93,34 +93,34 @@ internal fun createSpaceChatPanel(
     val avatarProvider = SpaceAvatarProvider(lifetime, timeline, avatarSize)
     val server = channelsVm.client.server
     val items = messages.value.messages.mapNotNull { messageViewModel ->
-      val message = messageViewModel.message
-      val details = message.details ?: throw IllegalStateException()
+      val chatItem = SpaceChatItem(messageViewModel.message)
+      val details = chatItem.details ?: return@mapNotNull null
       when (details) {
         is CodeDiscussionAddedFeedEvent -> {
           val discussion = details.codeDiscussion.resolve()
           val codeDiscussionChat = channelsVm.channel(lifetime, discussion.channel, mode = M2ChannelMode.CodeDiscussion())
           codeDiscussionChat.awaitFullLoad(lifetime)
-          val codeDiscussionMessages = codeDiscussionChat.mvms.prop.value.messages.map { it.message }
+          val codeDiscussionMessages = codeDiscussionChat.mvms.prop.value.messages.map { SpaceChatItem(it.message) }
           createDiff(project, discussion, codeDiscussionMessages.first(), server)
             ?.withThread(lifetime, server, codeDiscussionMessages.drop(1))
         }
         is M2TextItemContent -> {
-          val messagePanel = createSimpleMessagePanel(message, server)
-          val thread = message.thread
+          val messagePanel = createSimpleMessagePanel(chatItem, server)
+          val thread = chatItem.thread
           if (thread == null) {
             messagePanel
           }
           else {
             val threadChat = channelsVm.channel(lifetime, thread)
             threadChat.awaitFullLoad(lifetime)
-            messagePanel.withThread(lifetime, server, threadChat.mvms.value.messages.map { it.message })
+            messagePanel.withThread(lifetime, server, threadChat.mvms.value.messages.map { SpaceChatItem(it.message) })
           }
         }
         else -> createUnsupportedMessageTypePanel(messageViewModel.getLink(server))
       }?.let { component ->
         Item(
-          message.author.asUser?.let { user -> avatarProvider.getIcon(user) } ?: resizeIcon(SpaceIcons.Main, avatarSize.get()),
-          createMessageTitle(server, message),
+          chatItem.author.asUser?.let { user -> avatarProvider.getIcon(user) } ?: resizeIcon(SpaceIcons.Main, avatarSize.get()),
+          createMessageTitle(server, chatItem),
           component
         )
       }
@@ -165,7 +165,7 @@ private fun createUnsupportedMessageTypePanel(messageLink: String?): JComponent 
   return JBLabel(description, AllIcons.General.Warning, SwingConstants.LEFT).setCopyable(true)
 }
 
-private fun createMessageTitle(server: String, message: ChannelItemRecord): JComponent {
+private fun createMessageTitle(server: String, message: SpaceChatItem): JComponent {
   val authorPanel = HtmlEditorPane().apply {
     setBody(createMessageAuthorChunk(message.author, server).bold().toString())
   }
@@ -196,7 +196,7 @@ private fun createMessageAuthorChunk(author: CPrincipal, server: String): HtmlCh
     }
   }
 
-private fun JComponent.withThread(lifetime: Lifetime, server: String, messages: List<ChannelItemRecord>): JComponent {
+private fun JComponent.withThread(lifetime: Lifetime, server: String, messages: List<SpaceChatItem>): JComponent {
   return JPanel(VerticalLayout(JBUI.scale(10))).also { panel ->
     panel.isOpaque = false
     val threadAvatarsProvider = SpaceAvatarProvider(lifetime, panel, JBValue.UIInteger("space.chat.thread.avatar.size", 20))
@@ -217,7 +217,7 @@ private fun JComponent.withThread(lifetime: Lifetime, server: String, messages: 
 private fun createDiff(
   project: Project,
   discussion: CodeDiscussionRecord,
-  comment: ChannelItemRecord,
+  comment: SpaceChatItem,
   server: String
 ): JComponent? {
   val fileNameComponent = JBUI.Panels.simplePanel(createFileNameComponent(discussion.anchor.filename!!)).apply {
@@ -264,7 +264,7 @@ private fun createFileNameComponent(filePath: String): JComponent {
   }
 }
 
-private fun createSimpleMessagePanel(message: ChannelItemRecord, server: String) = HtmlEditorPane().apply {
+private fun createSimpleMessagePanel(message: SpaceChatItem, server: String) = HtmlEditorPane().apply {
   setBody(MentionConverter.html(message.text, server))
 }
 
