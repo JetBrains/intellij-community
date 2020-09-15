@@ -39,6 +39,8 @@ class ComboBoxWithAutoCompletion<E>(model: ComboBoxModel<E>,
 
   private var selectingItem = false
 
+  private var myPlaceHolder: String? = null
+
   init {
     isEditable = true
     initEditor()
@@ -72,8 +74,9 @@ class ComboBoxWithAutoCompletion<E>(model: ComboBoxModel<E>,
   fun getText() = myEditor?.document?.text
 
   fun setPlaceholder(@Nls placeHolder: String) {
+    myPlaceHolder = placeHolder
     myEditor?.apply {
-      setPlaceholder(placeHolder)
+      setPlaceholder(myPlaceHolder)
     }
   }
 
@@ -117,6 +120,7 @@ class ComboBoxWithAutoCompletion<E>(model: ComboBoxModel<E>,
     override fun createEditor(): EditorEx {
       myEditor = super.createEditor().apply {
         setShowPlaceholderWhenFocused(true)
+        setPlaceholder(myPlaceHolder)
       }
       return myEditor!!
     }
