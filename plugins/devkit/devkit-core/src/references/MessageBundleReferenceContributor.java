@@ -52,7 +52,7 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
   @NonNls private static final String GROUP = "group.";
   @NonNls private static final String TEXT = ".text";
   @NonNls private static final String DESCRIPTION = ".description";
-  @NonNls private static final String BUNDLE_PROPERTIES = "Bundle.properties";
+  @NonNls public static final String BUNDLE_PROPERTIES = "Bundle.properties";
 
   @NonNls private static final String TOOLWINDOW_STRIPE_PREFIX = "toolwindow.stripe.";
   @NonNls private static final String EXPORTABLE_PREFIX = "exportable.";
