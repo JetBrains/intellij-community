@@ -7,7 +7,7 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.frame.WatchInplaceEditor;
-import com.intellij.xdebugger.impl.frame.XWatchesViewImpl;
+import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.*;
 import org.jetbrains.annotations.NotNull;
@@ -19,13 +19,13 @@ import java.util.Arrays;
 import java.util.List;
 
 public class InlineWatchesRootNode extends WatchesRootNode {
-  private final @NotNull XWatchesViewImpl myWatchesView;
+  private final @NotNull XWatchesView myWatchesView;
   private final XValueGroupNodeImpl myInlinesRootNode;
   private final InlinesGroup myInlinesGroup;
 
 
   public InlineWatchesRootNode(@NotNull XDebuggerTree tree,
-                        @NotNull XWatchesViewImpl watchesView,
+                        @NotNull XWatchesView watchesView,
                         @NotNull List<XExpression> regularWatchesExpressions,
                         @NotNull List<InlineWatch> inlineWatchesExpressions,
                         @Nullable XStackFrame stackFrame,

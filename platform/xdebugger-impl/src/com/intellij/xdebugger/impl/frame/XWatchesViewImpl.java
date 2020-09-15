@@ -37,6 +37,7 @@ import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.inline.InlineWatch;
 import com.intellij.xdebugger.impl.inline.InlineWatchNode;
 import com.intellij.xdebugger.impl.inline.InlineWatchesRootNode;
+import com.intellij.xdebugger.impl.inline.XInlineWatchesView;
 import com.intellij.xdebugger.impl.ui.DebuggerSessionTabBase;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebugSessionData;
@@ -63,7 +64,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget, XWatchesView {
+public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget, XWatchesView, XInlineWatchesView {
   protected WatchesRootNode myRootNode;
 
   private final CompositeDisposable myDisposables = new CompositeDisposable();
@@ -267,6 +268,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
       .getWatchesManager();
   }
 
+  @Override
   public void addInlineWatchExpression(@NotNull InlineWatch watch, int index, boolean navigateToWatchNode) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     XDebugSession session = getSession(getTree());
@@ -278,6 +280,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     }
   }
 
+  @Override
   public void removeInlineWatches(Collection<InlineWatch> watches) {
     InlineWatchesRootNode rootNode = (InlineWatchesRootNode)myRootNode;
     List<? extends XDebuggerTreeNode> nodesToRemove =

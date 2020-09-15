@@ -18,9 +18,9 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionState;
-import com.intellij.xdebugger.impl.frame.XWatchesViewImpl;
 import com.intellij.xdebugger.impl.inline.InlineWatch;
 import com.intellij.xdebugger.impl.inline.InlineWatchInplaceEditor;
+import com.intellij.xdebugger.impl.inline.XInlineWatchesView;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -113,7 +113,7 @@ public final class XDebuggerWatchesManager {
     inplaceEditor.show();
   }
 
-  public void inlineWatchesRemoved(List<InlineWatch> removed, XWatchesViewImpl watchesView) {
+  public void inlineWatchesRemoved(List<InlineWatch> removed, XInlineWatchesView watchesView) {
     inlineWatches.values().forEach(set -> set.removeAll(removed));
     getWatchesViews().filter(v -> v != watchesView).forEach(view -> view.removeInlineWatches(removed));
   }
@@ -168,11 +168,11 @@ public final class XDebuggerWatchesManager {
     getWatchesViews().forEach(view -> view.removeInlineWatches(remove));
   }
 
-  private Stream<XWatchesViewImpl> getWatchesViews() {
+  private Stream<XInlineWatchesView> getWatchesViews() {
     return Arrays.stream(XDebuggerManager.getInstance(myProject).getDebugSessions())
       .map(s -> ((XDebugSessionImpl)s).getSessionTab())
-      .filter(t -> t != null)
-      .map(t -> (XWatchesViewImpl)t.getWatchesView());
+      .filter(t -> t != null && t.getWatchesView() instanceof XInlineWatchesView)
+      .map(t -> (XInlineWatchesView)t.getWatchesView());
   }
 
   @NotNull
