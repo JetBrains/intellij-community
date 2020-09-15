@@ -502,6 +502,7 @@ public class JavaCompletionContributor extends CompletionContributor implements 
       if (!smart) {
         items.addAll(StreamConversion.addToStreamConversion((PsiReferenceExpression)parent, parameters));
       }
+      items.addAll(ArgumentSuggester.suggestArgument((PsiReferenceExpression)parent, smart ? expected : Collections.emptyList()));
     }
 
     if (IMPORT_REFERENCE.accepts(position)) {

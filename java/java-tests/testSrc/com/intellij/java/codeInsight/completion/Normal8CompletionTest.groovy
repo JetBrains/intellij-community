@@ -488,4 +488,23 @@ class Test88 {
 
   void testNoStreamSuggestionsInMethodReference() { doAntiTest() }
 
+  @NeedsIndex.ForStandardLibrary
+  void testToLowerCase() {
+    myFixture.configureByText 'a.java', 'class C { String s = "hello".toUp<caret> }'
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ['toUpperCase(Locale.ROOT)', 'toUpperCase', 'toUpperCase']
+    myFixture.type('\n')
+    myFixture.checkResult('import java.util.Locale;\n\n' +
+            'class C { String s = "hello".toUpperCase(Locale.ROOT) }')
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  void testGetBytes() {
+    myFixture.configureByText 'a.java', 'class C { byte[] s = "hello".getB<caret> }'
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ['getBytes(StandardCharsets.UTF_8)', 'getBytes', 'getBytes', 'getBytes', 'getBytes']
+    myFixture.type('\n')
+    myFixture.checkResult('class C { byte[] s = "hello".getBytes(java.nio.charset.StandardCharsets.UTF_8) }')
+  }
+
 }
