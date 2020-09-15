@@ -171,15 +171,16 @@ public class ChangesViewManager implements ChangesViewEx,
   private ChangesViewToolWindowPanel initToolWindowPanel() {
     if (myToolWindowPanel == null) {
       ChangesViewToolWindowPanel panel = new ChangesViewToolWindowPanel(myProject, this);
-      Disposer.register(myProject, panel);
+      Disposer.register(this, panel);
+
       myToolWindowPanel = panel;
+      Disposer.register(panel, () -> myToolWindowPanel = null);
     }
     return myToolWindowPanel;
   }
 
   @Override
   public void dispose() {
-    myToolWindowPanel = null;
   }
 
   @NotNull
