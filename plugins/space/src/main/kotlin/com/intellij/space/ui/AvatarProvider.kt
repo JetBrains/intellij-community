@@ -18,7 +18,7 @@ import javax.swing.Icon
 class SpaceAvatarProvider(
   private val lifetime: Lifetime,
   private val component: Component,
-  private val iconSize: JBValue
+  val iconSize: JBValue
 ) {
   private val scaleContext = ScaleContext.create(component)
 

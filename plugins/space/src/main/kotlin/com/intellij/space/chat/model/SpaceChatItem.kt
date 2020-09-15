@@ -13,7 +13,11 @@ import com.intellij.space.chat.ui.awaitFullLoad
 import com.intellij.util.ui.codereview.timeline.TimelineItem
 import libraries.coroutines.extra.Lifetime
 
-internal class SpaceChatItem private constructor(record: ChannelItemRecord, val thread: M2ChannelVm? = null) : TimelineItem {
+internal class SpaceChatItem private constructor(
+  record: ChannelItemRecord,
+  val link: String?,
+  val thread: M2ChannelVm? = null
+) : TimelineItem {
   val author: CPrincipal = record.author
   val created: circlet.platform.api.KDateTime = record.created
   val details: M2ItemContentDetails? = record.details
@@ -22,7 +26,11 @@ internal class SpaceChatItem private constructor(record: ChannelItemRecord, val 
   val text: String = record.text
 
   companion object {
-    internal suspend fun ChannelItemRecord.convertToChatItemWithThread(lifetime: Lifetime, channelsVm: ChannelsVm): SpaceChatItem {
+    internal suspend fun ChannelItemRecord.convertToChatItemWithThread(
+      lifetime: Lifetime,
+      channelsVm: ChannelsVm,
+      link: String?
+    ): SpaceChatItem {
       val thread =
         when (val itemDetails = details) {
           is CodeDiscussionAddedFeedEvent -> {
@@ -32,11 +40,11 @@ internal class SpaceChatItem private constructor(record: ChannelItemRecord, val 
           else -> {
             thread?.let { channelsVm.channel(lifetime, it) }
           }
-        } ?: return SpaceChatItem(this)
+        } ?: return SpaceChatItem(this, link)
       thread.awaitFullLoad(lifetime)
-      return SpaceChatItem(this, thread)
+      return SpaceChatItem(this, link, thread)
     }
 
-    internal fun ChannelItemRecord.convertToChatItem(): SpaceChatItem = SpaceChatItem(this)
+    internal fun ChannelItemRecord.convertToChatItem(link: String?): SpaceChatItem = SpaceChatItem(this, link)
   }
 }
