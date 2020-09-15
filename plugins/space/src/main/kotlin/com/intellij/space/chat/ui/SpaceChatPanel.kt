@@ -1,4 +1,4 @@
-package com.intellij.space.chat
+package com.intellij.space.chat.ui
 
 import circlet.client.api.*
 import circlet.code.api.CodeDiscussionAddedFeedEvent
@@ -21,6 +21,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.space.chat.model.SpaceChatItem
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.space.ui.resizeIcon

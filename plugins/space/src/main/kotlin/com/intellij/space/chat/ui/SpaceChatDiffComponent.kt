@@ -1,4 +1,4 @@
-package com.intellij.space.chat
+package com.intellij.space.chat.ui
 
 import circlet.code.api.CodeDiscussionAnchor
 import circlet.code.api.CodeDiscussionSnippet

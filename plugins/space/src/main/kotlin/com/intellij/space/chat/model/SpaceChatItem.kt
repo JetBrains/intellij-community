@@ -1,4 +1,4 @@
-package com.intellij.space.chat
+package com.intellij.space.chat.model
 
 import circlet.client.api.CPrincipal
 import circlet.client.api.ChannelItemRecord
