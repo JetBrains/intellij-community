@@ -16,8 +16,8 @@ public final class PersistenceApiComboboxUtil {
   private PersistenceApiComboboxUtil() {
   }
 
-  public static void setComboboxModel(final JComboBox comboBox, final boolean addNoneItem) {
-    final DefaultComboBoxModel model = new DefaultComboBoxModel();
+  public static void setComboboxModel(final JComboBox<String> comboBox, final boolean addNoneItem) {
+    final DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>();
     if (addNoneItem) {
       model.addElement(NONE_ITEM_SUPPLIER.get());
     }
@@ -28,7 +28,7 @@ public final class PersistenceApiComboboxUtil {
   }
 
   @Nullable
-  public static PersistenceApi getSelectedApi(final JComboBox comboBox) {
+  public static PersistenceApi getSelectedApi(final JComboBox<String> comboBox) {
     final String apiName = (String)comboBox.getSelectedItem();
     PersistenceApi api = null;
     for (PersistenceApi value : PersistenceApi.values()) {

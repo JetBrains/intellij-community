@@ -232,7 +232,7 @@ public class AppEngineSupportProvider extends FrameworkSupportInModuleProvider {
     private final FrameworkSupportModel myFrameworkSupportModel;
     private JPanel myMainPanel;
     private final AppEngineSdkEditor mySdkEditor;
-    private JComboBox myPersistenceApiComboBox;
+    private JComboBox<String> myPersistenceApiComboBox;
     private JPanel mySdkPanel;
     private final HyperlinkLabel myErrorLabel;
     private JPanel myErrorPanel;
