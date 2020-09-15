@@ -39,7 +39,7 @@ public class WelcomeScreenActionsUtil {
     }
   }
 
-  static class ToolbarTextButtonWrapper extends AnActionButton.AnActionButtonWrapper implements CustomComponentAction {
+  public static class ToolbarTextButtonWrapper extends AnActionButton.AnActionButtonWrapper implements CustomComponentAction {
     final JButton myButton;
 
     ToolbarTextButtonWrapper(@NotNull AnAction action) {
@@ -145,7 +145,7 @@ public class WelcomeScreenActionsUtil {
     }
   }
 
-  static Couple<DefaultActionGroup> splitAndWrapActions(@NotNull ActionGroup actionGroup,
+  public static Couple<DefaultActionGroup> splitAndWrapActions(@NotNull ActionGroup actionGroup,
                                                         @NotNull Function<? super AnAction, ? extends AnAction> wrapper,
                                                         int mainButtonsNum) {
     DefaultActionGroup group = new DefaultActionGroup();
