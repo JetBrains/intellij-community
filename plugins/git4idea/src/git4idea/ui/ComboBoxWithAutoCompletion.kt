@@ -55,16 +55,10 @@ class ComboBoxWithAutoCompletion<E>(model: ComboBoxModel<E>,
 
   override fun getSelectedItem(): Any? {
     val text = getText()
-    if (text.isNullOrEmpty()) {
-      return super.getSelectedItem()
-    }
-    for (i in 0 until itemCount) {
-      val item = getItemAt(i)
-      if (item.toString() == text) {
-        return item
-      }
-    }
-    return null
+    return if (selectingItem || text.isNullOrEmpty())
+      super.getSelectedItem()
+    else
+      getItems().find { item -> item.toString() == text }
   }
 
   override fun requestFocus() {
@@ -152,5 +146,13 @@ class ComboBoxWithAutoCompletion<E>(model: ComboBoxModel<E>,
     })
   }
 
-  private fun isValueReplaced(e: DocumentEvent) = e.isWholeTextReplaced || (e.oldLength == 0 && e.newLength != 0)
+  private fun isValueReplaced(e: DocumentEvent) = e.isWholeTextReplaced || isFieldCleared(e) || isItemSelected(e)
+
+  private fun isFieldCleared(e: DocumentEvent) = e.oldLength != 0 && getCurrentText(e).isEmpty()
+
+  private fun isItemSelected(e: DocumentEvent) = e.oldLength == 0 && getCurrentText(e).isNotEmpty() && getCurrentText(e) in getItems().map { it.toString() }
+
+  private fun getCurrentText(e: DocumentEvent) = getText() ?: e.newFragment
+
+  private fun getItems() = (0 until itemCount).map { getItemAt(it) }
 }
