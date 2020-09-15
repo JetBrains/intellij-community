@@ -15,8 +15,4 @@ import org.jetbrains.annotations.Nullable;
 public interface SymbolPresentationProvider {
 
   @Nullable SymbolPresentation getPresentation(@NotNull Symbol symbol);
-
-  default @Nullable TargetPopupPresentation getPopupPresentation(@NotNull Symbol symbol) {
-    return null;
-  }
 }

@@ -27,6 +27,4 @@ public interface SymbolPresentationService {
   }
 
   @NotNull SymbolPresentation getSymbolPresentation(@NotNull Symbol symbol);
-
-  @NotNull TargetPopupPresentation getPopupPresentation(@NotNull Symbol symbol);
 }
