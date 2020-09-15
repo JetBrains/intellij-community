@@ -480,13 +480,16 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
         VisualLinesIterator visLinesIterator = new VisualLinesIterator(myEditor, startVisualLine);
         while (!visLinesIterator.atEnd() && visLinesIterator.getVisualLine() <= endVisualLine) {
           int y = visLinesIterator.getY();
+          int bgLineHeight = lineHeight;
           boolean paintText = !visLinesIterator.startsWithSoftWrap() || y <= viewportStartY;
 
           if (y < viewportStartY && visLinesIterator.endsWithSoftWrap()) {  // "sticky" line annotation
             y = viewportStartY;
           }
           else if (viewportStartY < y && y < viewportStartY + lineHeight && visLinesIterator.startsWithSoftWrap()) {
-            y = viewportStartY + lineHeight;  // to avoid drawing bg over the "sticky" line above
+            // avoid drawing bg over the "sticky" line above, or over a possible gap in the gutter below (e.g. code vision)
+            bgLineHeight = y - viewportStartY;
+            y = viewportStartY + lineHeight;
           }
 
           if (paintText || logicalLine == -1) {
@@ -495,7 +498,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
           }
           if (bg != null) {
             g.setColor(bg);
-            g.fillRect(x, y, annotationSize, lineHeight + y - visLinesIterator.getY());
+            g.fillRect(x, y, annotationSize, bgLineHeight);
           }
           if (paintText) {
             paintAnnotationLine(g, gutterProvider, logicalLine, x, y);
