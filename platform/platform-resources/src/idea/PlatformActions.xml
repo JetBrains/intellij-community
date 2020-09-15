@@ -102,6 +102,8 @@
       <action id="Tree-scrollDownChangeSelection" class="com.intellij.ui.TreeActions$PageDown" use-shortcut-of="EditorPageDown"/>
       <action id="Tree-scrollDownExtendSelection" class="com.intellij.ui.TreeActions$ShiftPageDown"
               use-shortcut-of="EditorPageDownWithSelection"/>
+      <action id="Tree-selectNextSibling" class="com.intellij.ui.TreeActions$NextSibling"/>
+      <action id="Tree-selectPreviousSibling" class="com.intellij.ui.TreeActions$PreviousSibling"/>
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
