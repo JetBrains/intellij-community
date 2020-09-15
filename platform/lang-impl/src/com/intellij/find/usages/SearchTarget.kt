@@ -50,7 +50,9 @@ interface SearchTarget {
    * @return collection of strings to search for text occurrences
    * @see SymbolTextSearcher
    */
+  @JvmDefault
   val textSearchStrings: Collection<String>
+    get() = emptyList()
 
   /**
    * Several symbols might have the same usage target;
