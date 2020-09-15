@@ -12,7 +12,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -25,6 +24,7 @@ import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -42,7 +42,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     REPLACE_WITH_ARGUMENTS
   }
 
-  private static final CallMatcher BYTE_ARRAY_OUTPUT_STREAM_INTO_STRING =
+  private static final CallMatcher BYTE_ARRAY_OUTPUT_STREAM_INTO_BYTE_ARRAY =
     exactInstanceCall(JAVA_IO_BYTE_ARRAY_OUTPUT_STREAM, "toByteArray").parameterCount(0);
   private static final CallMatcher STRING_TO_STRING = exactInstanceCall(JAVA_LANG_STRING, "toString").parameterCount(0);
   private static final CallMatcher STRING_INTERN = exactInstanceCall(JAVA_LANG_STRING, "intern").parameterCount(0);
@@ -148,6 +148,26 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
                                                  InspectionGadgetsBundle.message("inspection.redundant.string.constructor.message"),
                                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly, fixes);
       }
+      final PsiExpression[] params = args.getExpressions();
+
+      if (isNewStringFromByteArrayParams(params)) {
+        PsiMethodCallExpression methodCall = tryCast(ExpressionUtils.resolveExpression(params[0]), PsiMethodCallExpression.class);
+        if (methodCall == null) return null;
+
+        if (BYTE_ARRAY_OUTPUT_STREAM_INTO_BYTE_ARRAY.test(methodCall)) {
+          final TextRange range = new TextRange(0, expression.getTextLength());
+
+          final PsiElement qualifier = methodCall.getMethodExpression().getQualifier();
+          if (qualifier == null) return null;
+
+          String newExpressionText = qualifier.getText() + ".toString(" + (params.length == 2 ? params[1].getText() : "") + ")";
+          final LocalQuickFix fix = new ByteArrayOutputStreamToStringFix(newExpressionText);
+
+          return myManager.createProblemDescriptor(expression, range,
+                                                   InspectionGadgetsBundle.message("inspection.byte.array.output.stream.to.string.message"),
+                                                   ProblemHighlightType.WARNING, myIsOnTheFly, fix);
+        }
+      }
       if (args.getExpressionCount() == 1) {
         PsiExpression arg = args.getExpressions()[0];
         if (TypeUtils.isJavaLangString(arg.getType()) &&
@@ -161,47 +181,22 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
           return myManager.createProblemDescriptor(expression, range,
                                                    InspectionGadgetsBundle.message("inspection.redundant.string.constructor.message"),
                                                    ProblemHighlightType.LIKE_UNUSED_SYMBOL, myIsOnTheFly, fixes);
-        } else if (TypeUtils.typeEquals("byte[]", arg.getType())) {
-          arg = PsiUtil.skipParenthesizedExprDown(arg);
-
-          final ProblemDescriptor descriptor = getByteArrayOutputStreamToStringProblem(expression, arg, null);
-          if (descriptor != null) return descriptor;
-
-          if (!(arg instanceof PsiReferenceExpression)) return null;
-
-          final PsiElement intermediateArrayCandidate = ((PsiReferenceExpression)arg).resolve();
-          if (intermediateArrayCandidate == null) return null;
-
-          if (ReferencesSearch.search(intermediateArrayCandidate).findAll().size() != 1) return null;
-
-          if (intermediateArrayCandidate instanceof PsiLocalVariable) {
-            final PsiExpression initializer = ((PsiLocalVariable) intermediateArrayCandidate).getInitializer();
-            return getByteArrayOutputStreamToStringProblem(expression, initializer, intermediateArrayCandidate);
-          }
         }
       }
       return null;
     }
 
-    private ProblemDescriptor getByteArrayOutputStreamToStringProblem(
-      PsiNewExpression expression,
-      PsiExpression methodCallCandidate,
-      PsiElement intermediateArray
-    ) {
-      if (methodCallCandidate instanceof PsiMethodCallExpression &&
-          BYTE_ARRAY_OUTPUT_STREAM_INTO_STRING.test((PsiMethodCallExpression)methodCallCandidate)) {
-
-        final TextRange range = new TextRange(0, expression.getTextLength());
-
-        final PsiElement qualifier = ((PsiMethodCallExpression) methodCallCandidate).getMethodExpression().getQualifier();
-        if (qualifier == null) return null;
-
-        final LocalQuickFix fix = new ByteArrayOutputStreamToStringFix(qualifier.getText(), intermediateArray);
-        return myManager.createProblemDescriptor(expression, range,
-                                                 InspectionGadgetsBundle.message("inspection.byte.array.output.stream.to.string.message"),
-                                                 ProblemHighlightType.WARNING, myIsOnTheFly, fix);
+    private static boolean isNewStringFromByteArrayParams(PsiExpression[] params) {
+      final List<String> targetTypes = Arrays.asList(JAVA_LANG_STRING, JAVA_NIO_CHARSET_CHARSET);
+      if (params.length == 0 || !TypeUtils.typeEquals("byte[]", params[0].getType())) {
+        return false;
       }
-      return null;
+      if (params.length == 1) return true;
+      if (params.length == 2) {
+        PsiType type = params[1].getType();
+        return type != null && targetTypes.contains(type.getCanonicalText());
+      }
+      return false;
     }
 
     private ProblemDescriptor getRedundantCaseEqualsProblem(PsiMethodCallExpression call) {
@@ -890,7 +885,8 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
-      final PsiNewExpression expression = (PsiNewExpression)descriptor.getPsiElement();
+      final PsiNewExpression expression = tryCast(descriptor.getPsiElement(), PsiNewExpression.class);
+      if (expression == null) return;
       final PsiExpressionList argList = expression.getArgumentList();
       if (argList == null) return;
       final PsiExpression[] args = argList.getExpressions();
@@ -902,23 +898,16 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
   }
 
   private static final class ByteArrayOutputStreamToStringFix extends InspectionGadgetsFix {
-    private final String elementToString;
-    private final SmartPsiElementPointer<PsiElement> intermediateArrayPointer;
+    private final String myText;
 
-    private ByteArrayOutputStreamToStringFix(String s, PsiElement intermediateArray) {
-      this.elementToString = s;
-      if (intermediateArray == null) {
-        intermediateArrayPointer = null;
-      } else {
-        final SmartPointerManager pointerManager = SmartPointerManager.getInstance(intermediateArray.getProject());
-        intermediateArrayPointer = pointerManager.createSmartPsiElementPointer(intermediateArray);
-      }
+    private ByteArrayOutputStreamToStringFix(String text) {
+      this.myText = text;
     }
 
     @Override
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message("inspection.byte.array.output.stream.to.string.fix.name");
+      return CommonQuickFixBundle.message("fix.replace.with.x", myText);
     }
 
     @NotNull
@@ -929,13 +918,22 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
-      if (elementToString == null) return;
-      final PsiNewExpression expression = (PsiNewExpression)descriptor.getPsiElement();
-      PsiReplacementUtil.replaceExpression(expression, elementToString + ".toString()", new CommentTracker());
-      if (intermediateArrayPointer == null) return;
-      final PsiElement intermediateArray = intermediateArrayPointer.getElement();
-      if (intermediateArray == null) return;
-      deleteElement(intermediateArray);
+      final PsiNewExpression expression = tryCast(descriptor.getPsiElement(), PsiNewExpression.class);
+      if (expression == null) return;
+
+      final PsiExpressionList args = expression.getArgumentList();
+      if (args == null) return;
+
+      final PsiExpression[] params = args.getExpressions();
+      if (!(params.length == 1 || params.length == 2)) return;
+
+      PsiMethodCallExpression resolvedExpression = tryCast(ExpressionUtils.resolveExpression(params[0]), PsiMethodCallExpression.class);
+      if (resolvedExpression == null) return;
+
+      PsiElement parent = tryCast(resolvedExpression.getParent(), PsiLocalVariable.class);
+      if (parent != null) deleteElement(parent);
+
+      PsiReplacementUtil.replaceExpression(expression, myText, new CommentTracker());
     }
   }
 }
