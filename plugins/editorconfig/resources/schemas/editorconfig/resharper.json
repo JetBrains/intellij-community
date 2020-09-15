@@ -7090,7 +7090,26 @@
       "value": "resharper_modifiers_order",
       "documentation": "Modifiers - Modifiers order"
     },
-    "value": {}
+    "value": {
+      "type": "list",
+      "values": [
+        "public",
+        "private",
+        "protected",
+        "internal",
+        "static",
+        "extern",
+        "new",
+        "virtual",
+        "abstract",
+        "sealed",
+        "override",
+        "readonly",
+        "unsafe",
+        "volatile",
+        "async"
+      ]
+    }
   },
   {
     "type": "option",
@@ -7099,7 +7118,26 @@
       "value": "resharper_csharp_modifiers_order",
       "documentation": "Modifiers - Modifiers order"
     },
-    "value": {}
+    "value": {
+      "type": "list",
+      "values": [
+        "public",
+        "private",
+        "protected",
+        "internal",
+        "static",
+        "extern",
+        "new",
+        "virtual",
+        "abstract",
+        "sealed",
+        "override",
+        "readonly",
+        "unsafe",
+        "volatile",
+        "async"
+      ]
+    }
   },
   {
     "type": "option",
@@ -7537,7 +7575,9 @@
       "value": "resharper_linebreak_before_elements",
       "documentation": "Around Tags - Place these elements on new line"
     },
-    "value": {}
+    "value": {
+      "type": "System_Boolean"
+    }
   },
   {
     "type": "option",
@@ -9119,7 +9159,9 @@
       "value": "resharper_xmldoc_linebreak_before_elements",
       "documentation": "Around Tags - Place these elements on new line regardless"
     },
-    "value": {}
+    "value": {
+      "type": "System_Boolean"
+    }
   },
   {
     "type": "option",
