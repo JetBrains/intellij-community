@@ -35,12 +35,16 @@ import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.PathUtil
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
 import icons.SpaceIcons
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.awaitAll
 import libraries.coroutines.extra.Lifetime
+import libraries.coroutines.extra.async
 import libraries.coroutines.extra.launch
 import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
@@ -94,8 +98,12 @@ internal fun createSpaceChatPanel(
     val avatarSize = JBValue.UIInteger("space.chat.avatar.size", 30)
     val avatarProvider = SpaceAvatarProvider(lifetime, timeline, avatarSize)
     val server = channelsVm.client.server
-    val items = messages.value.messages.mapNotNull { messageViewModel ->
-      val chatItem = messageViewModel.message.convertToChatItemWithThread(lifetime, channelsVm)
+    val chatItems = messages.value.messages.map { messageViewModel ->
+      async(lifetime, AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()) {
+        messageViewModel to messageViewModel.message.convertToChatItemWithThread(lifetime, channelsVm)
+      }
+    }.awaitAll()
+    val items = chatItems.mapNotNull { (messageViewModel, chatItem) ->
       val details = chatItem.details ?: return@mapNotNull null
       when (details) {
         is CodeDiscussionAddedFeedEvent -> {
