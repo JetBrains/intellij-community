@@ -35,6 +35,9 @@ interface SearchTarget {
    */
   val presentation: TargetPopupPresentation
 
+  /**
+   * @see UsageHandler.createEmptyUsageHandler
+   */
   val usageHandler: UsageHandler<*>
 
   /**
