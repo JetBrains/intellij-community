@@ -663,7 +663,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
           val updatedParents = change.parents.mapValues { replaceMap.getOrDefault(it.value, it.value) }
 
           val entity2id = cloneEntity(change.entityData, change.clazz, replaceMap)
-          updateEntityRefs(entity2id.second, updatedChildren, updatedParents)
+          updateEntityRefs(entity2id.second, updatedChildren, updatedParents, initialStorage, diff)
           indexes.updateIndices(change.entityData.createPid(), entity2id.second, diff)
           updateChangeLog {
             it.add(ChangeEntry.AddEntity(entity2id.first, change.clazz, updatedChildren, updatedParents))
@@ -703,7 +703,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
           if (this.entityDataById(usedPid) != null) {
             indexes.updateIndices(outdatedId, newData.createPid(), diff)
             updateChangeLog { it.add(ChangeEntry.ReplaceEntity(newData, updatedNewChildren, updatedRemovedChildren, updatedModifiedParents)) }
-            replaceEntityWithRefs(newData, outdatedId.clazz, updatedNewChildren, updatedRemovedChildren, updatedModifiedParents)
+            replaceEntityWithRefs(newData, outdatedId.clazz, updatedNewChildren, updatedRemovedChildren, updatedModifiedParents, initialStorage, diff)
           }
         }
       }
@@ -778,11 +778,15 @@ internal class WorkspaceEntityStorageBuilderImpl(
   }
 
   // modificationCount is not incremented
-  private fun updateEntityRefs(entityId: EntityId, updatedChildren: Map<ConnectionId, Set<EntityId>>, updatedParents: Map<ConnectionId, EntityId>) {
+  private fun updateEntityRefs(entityId: EntityId,
+                               updatedChildren: Map<ConnectionId, Set<EntityId>>,
+                               updatedParents: Map<ConnectionId, EntityId>,
+                               initialStorage: WorkspaceEntityStorageImpl,
+                               diff: WorkspaceEntityStorageBuilderImpl) {
     // Restore children references of the entity
     for ((connectionId, children) in updatedChildren) {
       val (missingChildren, existingChildren) = children.partition { this.entityDataById(it) == null }
-      if (missingChildren.isNotEmpty() && !connectionId.canRemoveChild()) adFailed("Cannot restore some dependencies; $connectionId")
+      if (missingChildren.isNotEmpty() && !connectionId.canRemoveChild()) addDiffAndReport("Cannot restore some dependencies; $connectionId", initialStorage, diff, this)
       refs.updateChildrenOfParent(connectionId, entityId, existingChildren)
     }
 
@@ -791,7 +795,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
       if (this.entityDataById(parent) != null) {
         refs.updateParentOfChild(connection, entityId, parent)
       }
-      else if (!connection.canRemoveParent()) adFailed("Cannot restore some dependencies; $connection")
+      else if (!connection.canRemoveParent()) addDiffAndReport("Cannot restore some dependencies; $connection", initialStorage, diff, this)
     }
   }
 
@@ -800,7 +804,9 @@ internal class WorkspaceEntityStorageBuilderImpl(
     clazz: Int,
     addedChildren: List<Pair<ConnectionId, EntityId>>,
     removedChildren: List<Pair<ConnectionId, EntityId>>,
-    modifiedParents: Map<ConnectionId, EntityId?>
+    modifiedParents: Map<ConnectionId, EntityId?>,
+    initialStorage: WorkspaceEntityStorageImpl,
+    diff: WorkspaceEntityStorageBuilderImpl
   ) {
 
     val id = newEntity.createPid()
@@ -831,7 +837,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
       for (addedChild in addedChildrenSet) {
         if (addedChild !in mutableChildren) {
           val addedEntityData = this.entityDataById(addedChild)
-          if (addedEntityData == null && !connectionId.canRemoveParent()) adFailed("Cannot restore some dependencies; $connectionId")
+          if (addedEntityData == null && !connectionId.canRemoveParent()) addDiffAndReport("Cannot restore some dependencies; $connectionId", initialStorage, diff, this)
           mutableChildren.add(addedChild)
         }
       }
@@ -839,7 +845,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
       // ...    Remove removed children ....
       val removedChildrenSet = removedChildrenMap[connectionId] ?: mutableSetOf()
       for (removedChild in removedChildrenSet) {
-        if (removedChild !in mutableChildren && StrictMode.enabled) adFailed("Trying to remove child that isn't present")
+        if (removedChild !in mutableChildren && StrictMode.enabled) addDiffAndReport("Trying to remove child that isn't present", initialStorage, diff, this)
         mutableChildren.remove(removedChild)
       }
 
@@ -851,7 +857,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
       removedChildrenMap.removeAll(connectionId)
     }
     // Do we have more children to remove? This should not happen
-    if (!removedChildrenMap.isEmpty && StrictMode.enabled) adFailed("Trying to remove children that aren't present")
+    if (!removedChildrenMap.isEmpty && StrictMode.enabled) addDiffAndReport("Trying to remove children that aren't present", initialStorage, diff, this)
     // Do we have more children to add? Add them
     for ((connectionId, children) in addedChildrenMap.asMap()) {
       refs.updateChildrenOfParent(connectionId, id, children)
@@ -869,7 +875,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
         }
         else if (parent == null || this.entityDataById(parent) != null) {
           // This child doesn't have a pareny anymore
-          if (!connectionId.canRemoveParent()) adFailed("Cannot restore some dependencies; $connectionId")
+          if (!connectionId.canRemoveParent()) addDiffAndReport("Cannot restore some dependencies; $connectionId", initialStorage, diff, this)
           else refs.removeParentToChildRef(connectionId, existingParent, id)
         }
         modifiedParentsMap.remove(connectionId)
@@ -881,7 +887,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
       if (this.entityDataById(parentId) != null) {
         refs.updateParentOfChild(connectionId, id, parentId)
       }
-      else if (!connectionId.canRemoveParent()) adFailed("Cannot restore some dependencies; $connectionId")
+      else if (!connectionId.canRemoveParent()) addDiffAndReport("Cannot restore some dependencies; $connectionId", initialStorage, diff, this)
     }
   }
 
