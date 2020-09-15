@@ -12,6 +12,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -41,6 +42,8 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     REPLACE_WITH_ARGUMENTS
   }
 
+  private static final CallMatcher BYTE_ARRAY_OUTPUT_STREAM_INTO_STRING =
+    exactInstanceCall(JAVA_IO_BYTE_ARRAY_OUTPUT_STREAM, "toByteArray").parameterCount(0);
   private static final CallMatcher STRING_TO_STRING = exactInstanceCall(JAVA_LANG_STRING, "toString").parameterCount(0);
   private static final CallMatcher STRING_INTERN = exactInstanceCall(JAVA_LANG_STRING, "intern").parameterCount(0);
   private static final CallMatcher STRING_LENGTH = exactInstanceCall(JAVA_LANG_STRING, "length").parameterCount(0);
@@ -158,7 +161,45 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
           return myManager.createProblemDescriptor(expression, range,
                                                    InspectionGadgetsBundle.message("inspection.redundant.string.constructor.message"),
                                                    ProblemHighlightType.LIKE_UNUSED_SYMBOL, myIsOnTheFly, fixes);
+        } else if (TypeUtils.typeEquals("byte[]", arg.getType())) {
+          arg = PsiUtil.skipParenthesizedExprDown(arg);
+
+          final ProblemDescriptor descriptor = getByteArrayOutputStreamToStringProblem(expression, arg, null);
+          if (descriptor != null) return descriptor;
+
+          if (!(arg instanceof PsiReferenceExpression)) return null;
+
+          final PsiElement intermediateArrayCandidate = ((PsiReferenceExpression)arg).resolve();
+          if (intermediateArrayCandidate == null) return null;
+
+          if (ReferencesSearch.search(intermediateArrayCandidate).findAll().size() != 1) return null;
+
+          if (intermediateArrayCandidate instanceof PsiLocalVariable) {
+            final PsiExpression initializer = ((PsiLocalVariable) intermediateArrayCandidate).getInitializer();
+            return getByteArrayOutputStreamToStringProblem(expression, initializer, intermediateArrayCandidate);
+          }
         }
+      }
+      return null;
+    }
+
+    private ProblemDescriptor getByteArrayOutputStreamToStringProblem(
+      PsiNewExpression expression,
+      PsiExpression methodCallCandidate,
+      PsiElement intermediateArray
+    ) {
+      if (methodCallCandidate instanceof PsiMethodCallExpression &&
+          BYTE_ARRAY_OUTPUT_STREAM_INTO_STRING.test((PsiMethodCallExpression)methodCallCandidate)) {
+
+        final TextRange range = new TextRange(0, expression.getTextLength());
+
+        final PsiElement qualifier = ((PsiMethodCallExpression) methodCallCandidate).getMethodExpression().getQualifier();
+        if (qualifier == null) return null;
+
+        final LocalQuickFix fix = new ByteArrayOutputStreamToStringFix(qualifier.getText(), intermediateArray);
+        return myManager.createProblemDescriptor(expression, range,
+                                                 InspectionGadgetsBundle.message("inspection.byte.array.output.stream.to.string.message"),
+                                                 ProblemHighlightType.WARNING, myIsOnTheFly, fix);
       }
       return null;
     }
@@ -857,6 +898,44 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       final String argText = (args.length == 1) ? commentTracker.text(args[0]) : "\"\"";
 
       PsiReplacementUtil.replaceExpression(expression, argText, commentTracker);
+    }
+  }
+
+  private static final class ByteArrayOutputStreamToStringFix extends InspectionGadgetsFix {
+    private final String elementToString;
+    private final SmartPsiElementPointer<PsiElement> intermediateArrayPointer;
+
+    private ByteArrayOutputStreamToStringFix(String s, PsiElement intermediateArray) {
+      this.elementToString = s;
+      if (intermediateArray == null) {
+        intermediateArrayPointer = null;
+      } else {
+        final SmartPointerManager pointerManager = SmartPointerManager.getInstance(intermediateArray.getProject());
+        intermediateArrayPointer = pointerManager.createSmartPsiElementPointer(intermediateArray);
+      }
+    }
+
+    @Override
+    @NotNull
+    public String getName() {
+      return InspectionGadgetsBundle.message("inspection.byte.array.output.stream.to.string.fix.name");
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return CommonQuickFixBundle.message("fix.simplify");
+    }
+
+    @Override
+    public void doFix(Project project, ProblemDescriptor descriptor) {
+      if (elementToString == null) return;
+      final PsiNewExpression expression = (PsiNewExpression)descriptor.getPsiElement();
+      PsiReplacementUtil.replaceExpression(expression, elementToString + ".toString()", new CommentTracker());
+      if (intermediateArrayPointer == null) return;
+      final PsiElement intermediateArray = intermediateArrayPointer.getElement();
+      if (intermediateArray == null) return;
+      deleteElement(intermediateArray);
     }
   }
 }

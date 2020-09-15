@@ -67,6 +67,7 @@ public interface CommonClassNames {
 
   String JAVA_UTIL_OPTIONAL = "java.util.Optional";
 
+  String JAVA_IO_BYTE_ARRAY_OUTPUT_STREAM = "java.io.ByteArrayOutputStream";
   String JAVA_IO_SERIALIZABLE = "java.io.Serializable";
   String JAVA_IO_EXTERNALIZABLE = "java.io.Externalizable";
   String JAVA_IO_SERIAL = "java.io.Serial";
