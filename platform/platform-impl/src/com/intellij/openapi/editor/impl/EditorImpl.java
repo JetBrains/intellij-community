@@ -3454,7 +3454,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDropHandler = dropHandler;
   }
 
-  public void setHighlightingFilter(@Nullable Predicate<? super RangeHighlighter> filter) {
+  /**
+   * @deprecated use {@link #setHighlightingPredicate(Predicate)} instead
+   */
+  @Deprecated
+  public void setHighlightingFilter(@Nullable Condition<? super RangeHighlighter> filter) {
+    setHighlightingPredicate(filter == null ? null : highlighter -> filter.value(highlighter));
+    DeprecatedMethodException.report("Use setHighlightingPredicate() instead");
+  }
+  public void setHighlightingPredicate(@Nullable Predicate<? super RangeHighlighter> filter) {
     if (myHighlightingFilter == filter) return;
     Predicate<? super RangeHighlighter> oldFilter = myHighlightingFilter;
     myHighlightingFilter = filter;
