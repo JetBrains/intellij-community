@@ -432,6 +432,8 @@ internal class WorkspaceEntityStorageBuilderImpl(
       updateChangeLog { it.add(ChangeEntry.RemoveEntity(entityId)) }
     }
 
+    val lostChildren = HashSet<EntityId>()
+
     LOG.debug { "4) Restore references between matched and unmatched entities" }
     //    At this moment the operation may fail because of inconsistency.
     //    E.g. after this operation we can't have non-null references without corresponding entity.
@@ -449,7 +451,10 @@ internal class WorkspaceEntityStorageBuilderImpl(
             if (connectionId.canRemoveParent()) {
               this.refs.removeParentToChildRef(connectionId, parentId, unmatchedId)
             }
-            else rbsFailedAndReport("Cannot remove link to parent entity. $connectionId", sourceFilter, initialStore, replaceWith, this)
+            else {
+              this.refs.removeParentToChildRef(connectionId, parentId, unmatchedId)
+              lostChildren += unmatchedId
+            }
           }
         }
         for ((connectionId, childIds) in this.refs.getChildrenRefsOfParentBy(unmatchedId)) {
@@ -509,6 +514,14 @@ internal class WorkspaceEntityStorageBuilderImpl(
           }
         }
       }
+    }
+
+    // Some children left without parents. We should delete these children as well.
+    for (entityId in lostChildren) {
+      if (this.refs.getParentRefsOfChild(entityId).any { !it.key.isChildNullable }) {
+        rbsFailedAndReport("Trying to remove lost children. Cannot perform operation because some parents have strong ref to this child", sourceFilter, initialStore, replaceWith, this)
+      }
+      removeEntity(entityId)
     }
 
     LOG.debug { "5) Restore references in matching ids" }
