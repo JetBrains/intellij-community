@@ -4,6 +4,7 @@ package com.intellij.find.usages.impl
 import com.intellij.find.usages.*
 import com.intellij.model.Pointer
 import com.intellij.model.Symbol
+import com.intellij.model.presentation.SymbolPresentationService
 import com.intellij.model.psi.impl.targetSymbols
 import com.intellij.model.search.SearchService
 import com.intellij.openapi.project.Project
@@ -54,7 +55,7 @@ internal fun symbolUsageHandler(project: Project, symbol: Symbol): UsageHandler<
       return handler
     }
   }
-  return EmptyUsageHandler(symbol)
+  return EmptyUsageHandler(SymbolPresentationService.getInstance().getSymbolPresentation(symbol).shortNameString)
 }
 
 @ApiStatus.Internal
