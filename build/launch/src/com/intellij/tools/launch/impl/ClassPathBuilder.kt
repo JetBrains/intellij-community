@@ -19,9 +19,10 @@ import java.util.*
 import java.util.jar.Manifest
 
 internal class ClassPathBuilder(private val paths: PathsProvider, private val modules: ModulesProvider) {
-  fun buildClassPath(): List<File> {
-    val model = JpsElementFactory.getInstance().createModel() ?: throw Exception("Couldn't create JpsModel")
 
+  private val model = JpsElementFactory.getInstance().createModel() ?: throw Exception("Couldn't create JpsModel")
+
+  fun build(): File {
     val pathVariablesConfiguration = JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(model.global)
 
     val m2HomePath = File(SystemProperties.getUserHome())
@@ -55,7 +56,11 @@ internal class ClassPathBuilder(private val paths: PathsProvider, private val mo
     modulesList.addAll(modules.additionalModules)
     modulesList.add("intellij.configurationScript")
 
-    val classpath = mutableListOf<File>()
+    return createClassPathFileForModules(modulesList)
+  }
+
+  private fun createClassPathFileForModules(modulesList: List<String>): File {
+    val classpath = mutableListOf<String>()
     for (moduleName in modulesList) {
       val module = model.project.modules.singleOrNull { it.name == moduleName }
                    ?: throw Exception("Module $moduleName not found")
@@ -71,12 +76,8 @@ internal class ClassPathBuilder(private val paths: PathsProvider, private val mo
     }
     println("-- END")
 */
-    return classpath.distinct()
-  }
 
-  fun build(): File {
-    val classpath = buildClassPath().map { it.path }
-    val tempClasspathJarFile = CommandLineWrapperUtil.createClasspathJarFile(Manifest(), classpath)
+    val tempClasspathJarFile = CommandLineWrapperUtil.createClasspathJarFile(Manifest(), classpath.distinct())
     val launcherFolder = paths.launcherFolder
     if (!launcherFolder.exists()) {
       launcherFolder.mkdirs()
@@ -89,13 +90,13 @@ internal class ClassPathBuilder(private val paths: PathsProvider, private val mo
     return launcherClasspathFile
   }
 
-  private fun getClasspathForModule(module: JpsModule): List<File> {
+  private fun getClasspathForModule(module: JpsModule): List<String> {
     return JpsJavaExtensionService
       .dependencies(module)
       .recursively()
       .satisfying { if (it is JpsModuleDependency) !isModuleExcluded(it.module) else true }
       .includedIn(JpsJavaClasspathKind.runtime(modules.includeTestDependencies))
-      .classes().roots.filter { it.exists() }.map { it }.toList()
+      .classes().roots.filter { it.exists() }.map { it.path }.toList()
   }
 
   private fun isModuleExcluded(module: JpsModule?): Boolean {
