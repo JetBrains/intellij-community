@@ -110,7 +110,8 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
                                                      @Nullable Runnable continuation) {
     try {
       return super.createTaskRunnable(task, indicator, continuation);
-    } finally {
+    }
+    finally {
       if (indicator instanceof ProgressWindow) {
         ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC)
           .onTaskRunnableCreated(task, indicator, continuation);
@@ -149,7 +150,8 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   protected void finishTask(@NotNull Task task, boolean canceled, @Nullable Throwable error) {
     try {
       super.finishTask(task, canceled, error);
-    } finally {
+    }
+    finally {
       ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC)
         .onTaskFinished(task, canceled, error);
     }
