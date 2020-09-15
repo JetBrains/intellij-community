@@ -101,7 +101,7 @@ public final class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter 
               .forEach(file -> {
                 final Collection<VirtualFile> schemaFiles = ((JsonSchemaServiceImpl)myService).getSchemasForFile(file, false, true);
                 if (schemaFiles.stream().anyMatch(finalScope::contains)) {
-                  ReadAction.nonBlocking(() -> Optional.ofNullable(file.isValid() ? psiManager.findFile(file) : null).ifPresent(analyzer::restart)).submit(myTaskExecutor);
+                  ReadAction.nonBlocking(() -> Optional.ofNullable(!psiManager.isDisposed() && file.isValid() ? psiManager.findFile(file) : null).ifPresent(analyzer::restart)).submit(myTaskExecutor);
                 }
               });
       };
