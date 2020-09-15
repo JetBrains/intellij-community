@@ -107,6 +107,7 @@
         {
           "type": "list",
           "values": [
+            "namespace",
             "class",
             "struct",
             "interface",
@@ -116,7 +117,10 @@
             "field",
             "event",
             "delegate",
-            "parameter"
+            "parameter",
+            "type_parameter",
+            "local",
+            "local_function"
           ]
         }
       ]
@@ -158,7 +162,9 @@
                 "protected_internal",
                 "protected_friend"
               ]
-            }
+            },
+            "private_protected",
+            "local"
           ]
         }
       ]
