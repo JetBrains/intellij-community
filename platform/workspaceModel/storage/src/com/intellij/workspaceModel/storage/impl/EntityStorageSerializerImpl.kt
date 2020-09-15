@@ -286,7 +286,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
       output.writeString(serializerDataFormatVersion)
 
       val entityDataSequence = storage.entitiesByType.entityFamilies.filterNotNull().asSequence().flatMap { family ->
-        family.entities.filterNotNull().asSequence()
+        family.entities.asSequence().filterNotNull()
       }
       collectAndRegisterClasses(kryo, output, entityDataSequence)
 
