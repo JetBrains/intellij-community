@@ -159,6 +159,9 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "Apache Commons Text", libraryName: "org.apache.commons:commons-text:1.8",
                        license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt",
                        url: "https://github.com/apache/commons-text"),
+    new LibraryLicense(name: "Apache Ivy", libraryName: "org.apache.ivy",
+                       license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt",
+                       url: "https://github.com/apache/ant-ivy"),
     new LibraryLicense(name: "Apache Lucene",
                        libraryName: "lucene-core-2.4.1.jar", version: "2.4.1", license: "Apache 2.0", url: "http://lucene.apache.org/java",
                        additionalLibraryNames: [

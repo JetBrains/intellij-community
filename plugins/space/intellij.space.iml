@@ -113,5 +113,17 @@
     <orderEntry type="library" scope="RUNTIME" name="okhttp3" level="project" />
     <orderEntry type="library" name="Slf4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.vcs.codeReview" />
+    <orderEntry type="module-library" scope="RUNTIME">
+      <library name="org.apache.ivy" type="repository">
+        <properties maven-id="org.apache.ivy:ivy:2.5.0" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/ivy/ivy/2.5.0/ivy-2.5.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/ivy/ivy/2.5.0/ivy-2.5.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
   </component>
 </module>
