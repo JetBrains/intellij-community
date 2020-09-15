@@ -24,9 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -297,32 +294,22 @@ public final class VfsImplUtil {
   }
 
   /**
-   * If the {@code parent} case-sensitivity flag is still not known, try to determine it via {@link FileSystemUtil#readParentCaseSensitivity(Path)}.
+   * If the {@code parent} case-sensitivity flag is still not known, try to determine it via {@link FileSystemUtil#readParentCaseSensitivity(File)}.
    * If this flag read successfully, prepare to fire the {@link VirtualFile#PROP_CHILDREN_CASE_SENSITIVITY} event
    * (but only if this flag is different from the FS-default case-sensitivity to avoid too many unnecessary events: see {@link VirtualFileSystem#isCaseSensitive()}).
    * Otherwise, return null.
    */
-  public static VFileEvent generateCaseSensitivityChangedEvent(@NotNull VirtualFile parent, @NotNull String childName, @Nullable Path computedChildPath) {
-    if (!((VirtualDirectoryImpl)parent).isChildrenCaseSensitivityKnown() && FileSystemUtil.isCaseToggleable(childName)) {
-      if (computedChildPath == null) {
-        try {
-          computedChildPath = Paths.get(parent.getPath(), childName);
+  public static VFileEvent generateCaseSensitivityChangedEvent(@NotNull VirtualFile parent, @NotNull String childName) {
+    if (((VirtualDirectoryImpl)parent).getChildrenCaseSensitivity() == FileAttributes.CaseSensitivity.UNKNOWN && FileSystemUtil.isCaseToggleable(childName)) {
+      FileAttributes.CaseSensitivity parentCaseSensitivity = FileSystemUtil.readParentCaseSensitivity(new File(parent.getPath(), childName));
+      if (parentCaseSensitivity != FileAttributes.CaseSensitivity.UNKNOWN) {
+        if (parent.getFileSystem().isCaseSensitive() != (parentCaseSensitivity == FileAttributes.CaseSensitivity.SENSITIVE)) {
+          // fire only when the new case sensitivity is different from the default FS sensitivity, because only in that case the file.isCaseSensitive() value could change
+          return new VFilePropertyChangeEvent(null, parent, VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY,
+                                              FileAttributes.CaseSensitivity.UNKNOWN, parentCaseSensitivity, true);
         }
-        catch (InvalidPathException e) {
-          VfsEventGenerationHelper.LOG.warn("Invalid child name: '" + childName + "'", e);
-        }
-      }
-      if (computedChildPath != null) {
-        FileAttributes.CaseSensitivity parentCaseSensitivity = FileSystemUtil.readParentCaseSensitivity(computedChildPath);
-        if (parentCaseSensitivity != FileAttributes.CaseSensitivity.UNKNOWN) {
-          if (parent.getFileSystem().isCaseSensitive() != (parentCaseSensitivity == FileAttributes.CaseSensitivity.SENSITIVE)) {
-            // fire only when the new case sensitivity is different from the default FS sensitivity, because only in that case the file.isCaseSensitive() value could change
-            return new VFilePropertyChangeEvent(null, parent, VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY,
-                                                FileAttributes.CaseSensitivity.UNKNOWN, parentCaseSensitivity, true);
-          }
-          else {
-            PersistentFSImpl.executeChangeCaseSensitivity(parent, parentCaseSensitivity);
-          }
+        else {
+          PersistentFSImpl.executeChangeCaseSensitivity(parent, parentCaseSensitivity);
         }
       }
     }
