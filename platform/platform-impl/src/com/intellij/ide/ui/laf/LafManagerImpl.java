@@ -683,18 +683,21 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       map.put("#f98b9e99", "#ba7481"); /*pink 60*/
       map.put("#f4af3d99", "#aa823f"); /*yellow 60*/
       map.put("#b99bf899", "#977fca"); /*purple 60*/
+      map.put("#9aa7b0cc", "#97acc6"); /*noun gray 80*/
+      map.put("#9aa7b099", "#97acc6"); /*noun gray 60 (same as 80)*/
     } else {
       map.put("#6e6e6e", "#afb1b3");
       map.put("#db5860", "#b75e73");
       /*map.put("#f26522", "#b56a51"); red*/
       map.put("#f26522b3", "#d38369"); /*red 70*/
-      map.put("#f2652299", "#bc6b43"); /*red 60 (same as 70)*/
+      map.put("#f2652299", "#d38369"); /*red 60 (same as 70)*/
       map.put("#40b6e099", "#5eb6d4"); /*blue 60*/
       map.put("#62b54399", "#7ebe65"); /*green 60*/
       map.put("#f98b9e99", "#f1a4b2"); /*pink 60*/
       map.put("#f4af3d99", "#ecc27d"); /*yellow 60*/
       map.put("#b99bf899", "#b49ee2"); /*purple 60*/
       map.put("#9aa7b0cc", "#aebdc6"); /*noun gray 80*/
+      map.put("#9aa7b099", "#aebdc6"); /*noun gray 60 (same as 80)*/
       map.put("#40b6e0b3", "#5eb6d4"); /*blue 70*/
       map.put("#62b543b3", "#7ebe65"); /*green 70*/
       map.put("#f98b9eb3", "#f1a4b2"); /*pink 70*/
