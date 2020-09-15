@@ -46,7 +46,7 @@ public interface UsageHandler<O> {
   @Nls(capitalization = Title) @NotNull String getSearchString(@NotNull UsageOptions options, O customOptions);
 
   /**
-   * @return query which will be executed on the background thread later
+   * @return query which will be executed on the background thread later additionally with {@link UsageSearchParameters} query
    */
   @NotNull Query<? extends @NotNull Usage> buildSearchQuery(@NotNull UsageOptions options, O customOptions);
 }
