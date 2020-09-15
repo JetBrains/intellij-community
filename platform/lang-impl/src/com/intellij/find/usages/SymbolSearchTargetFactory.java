@@ -9,14 +9,14 @@ import org.jetbrains.annotations.Nullable;
 import static org.jetbrains.annotations.ApiStatus.OverrideOnly;
 
 /**
- * Implement this interface and register as {@code com.intellij.lang.symbolSearchTarget} extension
- * to customize search implementation and presentation at once.
- * <p/>
+ * To provide a {@link SearchTarget} by a Symbol, either:
+ * <ul>
+ * <li>implement {@link SymbolSearchTargetFactory} and register as {@code com.intellij.lang.symbolSearchTarget} extension</li>
+ * <li>implement {@link SearchableSymbol} in a Symbol to provide search target for the symbol</li>
+ * <li>implement {@link SearchTarget} in a Symbol</li>
+ * </ul>
  * Several symbols might have {@link SearchTarget#equals equal} targets,
  * in this case any target will be chosen and used instead of showing the disambiguation popup.
- *
- * @see SymbolUsageHandlerFactory
- * @see SymbolTextSearcher
  */
 @OverrideOnly
 public interface SymbolSearchTargetFactory<T extends Symbol> {

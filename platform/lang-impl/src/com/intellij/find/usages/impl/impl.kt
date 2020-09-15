@@ -32,6 +32,7 @@ internal fun symbolSearchTargets(project: Project, targetSymbols: Collection<Sym
 
 private val SEARCH_TARGET_EXTENSION = ClassExtension<SymbolSearchTargetFactory<*>>("com.intellij.lang.symbolSearchTarget")
 
+@ApiStatus.Internal
 fun symbolSearchTarget(project: Project, symbol: Symbol): SearchTarget {
   for (factory in SEARCH_TARGET_EXTENSION.forKey(symbol.javaClass)) {
     @Suppress("UNCHECKED_CAST")
@@ -40,6 +41,12 @@ fun symbolSearchTarget(project: Project, symbol: Symbol): SearchTarget {
     if (target != null) {
       return target
     }
+  }
+  if (symbol is SearchableSymbol) {
+    return symbol.searchTarget
+  }
+  if (symbol is SearchTarget) {
+    return symbol
   }
   return DefaultSymbolSearchTarget(project, symbol)
 }
