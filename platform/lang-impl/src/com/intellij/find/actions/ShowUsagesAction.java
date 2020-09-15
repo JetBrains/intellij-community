@@ -89,7 +89,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static com.intellij.find.actions.ResolverKt.findShowUsages;
-import static com.intellij.find.actions.ResolverKt.handlePsiOrSymbol;
 import static com.intellij.find.actions.ShowUsagesActionHandler.getSecondInvocationTitle;
 import static com.intellij.find.findUsages.FindUsagesHandlerFactory.OperationMode.USAGES_WITH_DEFAULT_OPTIONS;
 
@@ -188,11 +187,18 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
   }
 
   private static void showSymbolUsages(@NotNull Project project, @NotNull DataContext dataContext) {
+    showUsages(project, dataContext, ResolverKt.allTargets(dataContext));
+  }
+
+  @ApiStatus.Internal
+  public static void showUsages(@NotNull Project project,
+                                @NotNull DataContext dataContext,
+                                @NotNull List<@NotNull TargetVariant> targetVariants) {
     Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
     RelativePoint popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(dataContext);
     SearchScope searchScope = FindUsagesOptions.findScopeByName(project, dataContext, FindSettings.getInstance().getDefaultScopeName());
     findShowUsages(
-      project, dataContext, FindBundle.message("show.usages.ambiguous.title"),
+      project, dataContext, targetVariants, FindBundle.message("show.usages.ambiguous.title"),
       createVariantHandler(project, editor, popupPosition, searchScope)
     );
   }
@@ -223,23 +229,16 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
    * Shows Usage popup for a single search target without disambiguation via Choose Target popup.
    */
   @ApiStatus.Internal
-  public static void showUsages(@NotNull Project project, @NotNull DataContext dataContext, @NotNull SearchTarget target) {
-    RelativePoint popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(dataContext);
-    showUsages(project, dataContext, popupPosition, target);
-  }
-
-  /**
-   * Shows Usage popup for a single search target without disambiguation via Choose Target popup.
-   */
-  @ApiStatus.Internal
   public static void showUsages(@NotNull Project project,
                                 @NotNull DataContext dataContext,
                                 @NotNull RelativePoint popupPosition,
                                 @NotNull SearchTarget target) {
     Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
     SearchScope searchScope = FindUsagesOptions.findScopeByName(project, dataContext, FindSettings.getInstance().getDefaultScopeName());
-    UsageVariantHandler variantHandler = createVariantHandler(project, editor, popupPosition, searchScope);
-    handlePsiOrSymbol(variantHandler, target);
+    ShowTargetUsagesActionHandler.showUsages(
+      project, searchScope, target,
+      ShowUsagesParameters.initial(project, editor, popupPosition)
+    );
   }
 
   private static void showPsiUsages(@NotNull Project project, @NotNull AnActionEvent e, @NotNull RelativePoint popupPosition) {

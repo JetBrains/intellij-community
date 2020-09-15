@@ -28,7 +28,7 @@ fun symbolSearchTargets(file: PsiFile, offset: Int): List<SearchTarget> {
 }
 
 internal fun symbolSearchTargets(project: Project, targetSymbols: Collection<Symbol>): List<SearchTarget> {
-  return targetSymbols.mapTo(LinkedHashSet()) {
+  return targetSymbols.mapNotNullTo(LinkedHashSet()) {
     symbolSearchTarget(project, it)
   }.toList()
 }
@@ -36,7 +36,7 @@ internal fun symbolSearchTargets(project: Project, targetSymbols: Collection<Sym
 private val SEARCH_TARGET_EXTENSION = ClassExtension<SymbolSearchTargetFactory<*>>("com.intellij.lang.symbolSearchTarget")
 
 @ApiStatus.Internal
-fun symbolSearchTarget(project: Project, symbol: Symbol): SearchTarget {
+fun symbolSearchTarget(project: Project, symbol: Symbol): SearchTarget? {
   for (factory in SEARCH_TARGET_EXTENSION.forKey(symbol.javaClass)) {
     @Suppress("UNCHECKED_CAST")
     val factory_ = factory as SymbolSearchTargetFactory<Symbol>
@@ -51,7 +51,7 @@ fun symbolSearchTarget(project: Project, symbol: Symbol): SearchTarget {
   if (symbol is SearchTarget) {
     return symbol
   }
-  return DefaultSymbolSearchTarget(project, symbol)
+  return null
 }
 
 @ApiStatus.Internal
