@@ -47,7 +47,7 @@ public class TestShellSession {
     myWatcher.awaitScreenLinesAre(expectedScreenLines, timeoutMillis);
   }
 
-  public void awaitScreenLinesFor(@NonNls BooleanSupplier condition, int timeoutMillis) {
+  public void awaitBufferCondition(@NonNls BooleanSupplier condition, int timeoutMillis) {
     myWatcher.awaitBuffer(condition, timeoutMillis);
   }
 
