@@ -397,6 +397,13 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       return Ref.create(getGenericTypeFromTypeVar(callSite, new Context(context)));
     }
 
+    if (PyNames.CLASS_GETITEM.equals(function.getName())) {
+      final var instantiableType = as(Ref.deref(getType(callSite, context)), PyInstantiableType.class);
+      if (instantiableType != null) {
+        return Ref.create(instantiableType.toClass());
+      }
+    }
+
     return null;
   }
 
