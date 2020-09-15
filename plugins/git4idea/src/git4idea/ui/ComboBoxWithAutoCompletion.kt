@@ -5,6 +5,7 @@ import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider
 import com.intellij.openapi.editor.event.BulkAwareDocumentListener
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.EditorEx
@@ -115,6 +116,7 @@ class ComboBoxWithAutoCompletion<E>(model: ComboBoxModel<E>,
       myEditor = super.createEditor().apply {
         setShowPlaceholderWhenFocused(true)
         setPlaceholder(myPlaceHolder)
+        SpellCheckingEditorCustomizationProvider.getInstance().disabledCustomization?.customize(this)
       }
       return myEditor!!
     }
