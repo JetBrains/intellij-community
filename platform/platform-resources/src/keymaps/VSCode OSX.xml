@@ -582,6 +582,7 @@
         <keyboard-shortcut first-keystroke="shift f5" />
     </action>
     <action id="TableResult.GrowSelection" />
+    <action id="TableResult.ShrinkSelection" />
     <action id="TableResult.UnselectPreviousOccurrence" />
     <action id="TagDocumentationNavigation" />
     <action id="TodoViewGroupByShowPackages" />
