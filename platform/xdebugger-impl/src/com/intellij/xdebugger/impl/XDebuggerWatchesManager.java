@@ -22,6 +22,7 @@ import com.intellij.xdebugger.impl.frame.XWatchesViewImpl;
 import com.intellij.xdebugger.impl.inline.InlineWatch;
 import com.intellij.xdebugger.impl.inline.InlineWatchInplaceEditor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -106,8 +107,9 @@ public final class XDebuggerWatchesManager {
 
   public void showInplaceEditor(XSourcePosition position,
                                 Editor mainEditor,
-                                @NotNull XDebugSession session) {
-    InlineWatchInplaceEditor inplaceEditor = new InlineWatchInplaceEditor(position, session, mainEditor);
+                                @NotNull XDebugSession session,
+                                @Nullable XExpression expression) {
+    InlineWatchInplaceEditor inplaceEditor = new InlineWatchInplaceEditor(position, session, mainEditor, expression);
     inplaceEditor.show();
   }
 

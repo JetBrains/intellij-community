@@ -138,7 +138,7 @@ public class InlineWatchesRootNode extends WatchesRootNode {
   @Override
   public List<? extends TreeNode> getChildren() {
     List<? extends TreeNode> children = super.getChildren();
-    if(inlinesRootNodeIsShown()) {
+    if(myInlinesRootNode != null && inlinesRootNodeIsShown()) {
       return ContainerUtil.prepend(children, myInlinesRootNode);
     } else {
       return children;
@@ -151,7 +151,7 @@ public class InlineWatchesRootNode extends WatchesRootNode {
 
   @NotNull
   public List<? extends InlineWatchNode> getInlineWatchChildren() {
-    return ((InlinesGroup)myInlinesRootNode.getValueContainer()).myChildren;
+    return myInlinesGroup.myChildren;
   }
 
   @Override

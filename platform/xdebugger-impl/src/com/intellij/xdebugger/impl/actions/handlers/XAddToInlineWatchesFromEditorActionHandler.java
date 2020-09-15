@@ -33,7 +33,7 @@ public class XAddToInlineWatchesFromEditorActionHandler extends XDebuggerActionH
           if (text != null) {
             watchesManager.addInlineWatchExpression(XExpressionImpl.fromText(text), -1, caretPosition, true);
           } else {
-            watchesManager.showInplaceEditor(caretPosition, editor, session);
+            watchesManager.showInplaceEditor(caretPosition, editor, session, null);
           }
         });
       }).onError(e -> { });

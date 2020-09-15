@@ -21,14 +21,23 @@ public class InlineWatchInplaceEditor extends InplaceEditor {
   private final XSourcePosition myPosition;
   private final XDebugSession mySession;
   private final Editor myHostEditor;
+  private XExpression myInitialExpression;
   private XDebuggerExpressionComboBox myInplaceEditor;
 
   public InlineWatchInplaceEditor(XSourcePosition position,
                                   @NotNull XDebugSession session,
                                   Editor editor) {
+    this(position, session, editor, null);
+  }
+
+  public InlineWatchInplaceEditor(XSourcePosition position,
+                                  @NotNull XDebugSession session,
+                                  Editor editor,
+                                  XExpression expression) {
     myPosition = position;
     mySession = session;
     myHostEditor = editor;
+    myInitialExpression = expression;
   }
 
   @Override
@@ -38,6 +47,9 @@ public class InlineWatchInplaceEditor extends InplaceEditor {
   protected JComponent createInplaceEditorComponent() {
     myInplaceEditor = new XDebuggerExpressionComboBox(mySession.getProject(), mySession.getDebugProcess().getEditorsProvider(), "inlineWatch",
                                     myPosition, true, true);
+    if (myInitialExpression != null) {
+      myInplaceEditor.setExpression(myInitialExpression);
+    }
     return myInplaceEditor.getComponent();
   }
 
@@ -67,6 +79,15 @@ public class InlineWatchInplaceEditor extends InplaceEditor {
     if (!XDebuggerUtilImpl.isEmptyExpression(expression)) {
       XDebuggerWatchesManager watchesManager = ((XDebuggerManagerImpl)XDebuggerManager.getInstance(mySession.getProject())).getWatchesManager();
       watchesManager.addInlineWatchExpression(expression, -1, myPosition, true);
+    }
+  }
+
+  @Override
+  public void cancelEditing() {
+    super.cancelEditing();
+    if (myInitialExpression != null) {
+      XDebuggerWatchesManager watchesManager = ((XDebuggerManagerImpl)XDebuggerManager.getInstance(mySession.getProject())).getWatchesManager();
+      watchesManager.addInlineWatchExpression(myInitialExpression, -1, myPosition, true);
     }
   }
 

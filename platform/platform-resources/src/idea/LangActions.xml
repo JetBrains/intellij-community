@@ -1022,6 +1022,11 @@
       <reference ref="XDebugger.SwitchWatchesInVariables"/>
     </group>
 
+    <group id="XDebugger.Watches.Inline.Popup" popup="true">
+      <reference ref="XDebugger.SetValue"/>
+    </group>
+
+
     <group id="XDebugger.Inspect.Tree.Popup">
       <reference ref="XDebugger.ValueGroup"/>
     </group>

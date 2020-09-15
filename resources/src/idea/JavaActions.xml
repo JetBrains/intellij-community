@@ -523,7 +523,10 @@
         <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="StepOut"/>
       </action>
 
-      <action id="Debugger.CreateRenderer" class="com.intellij.debugger.actions.CreateRendererAction"/>
+      <action id="Debugger.CreateRenderer" class="com.intellij.debugger.actions.CreateRendererAction">
+        <add-to-group group-id="XDebugger.Watches.Inline.Popup" anchor="first"/>
+        <override-text place="XDebuggerTreeInlayPopup" text="Create Value Renderer"/>
+      </action>
       <action id="Debugger.AutoRenderer" class="com.intellij.debugger.actions.AutoRendererAction"/>
       <action id="Debugger.MuteRenderers" class="com.intellij.debugger.actions.ForceOnDemandRenderersAction">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
