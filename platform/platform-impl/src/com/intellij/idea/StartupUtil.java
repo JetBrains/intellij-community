@@ -698,11 +698,6 @@ public final class StartupUtil {
   }
 
   private static void runStartupWizard(@NotNull AppStarter appStarter) {
-    // do not show Customize IDE Wizard [IDEA-249516]
-    if (!Boolean.parseBoolean(System.getProperty("idea.show.customize.ide.wizard"))) {
-      return;
-    }
-
     String stepsProviderName = ApplicationInfoImpl.getShadowInstance().getCustomizeIDEWizardStepsProvider();
     if (stepsProviderName == null) {
       return;
@@ -720,20 +715,22 @@ public final class StartupUtil {
 
     appStarter.beforeStartupWizard();
 
-    String stepsDialogName = ApplicationInfoImpl.getShadowInstance().getCustomizeIDEWizardDialog();
-    if (stepsDialogName != null) {
-      try {
-        Class<?> dialogClass = Class.forName(stepsDialogName);
-        Constructor<?> constr =
-                dialogClass.getConstructor(CustomizeIDEWizardStepsProvider.class, AppStarter.class, boolean.class, boolean.class);
-        ((CommonCustomizeIDEWizardDialog)constr.newInstance(provider, appStarter, true, false)).showIfNeeded();
+    // do not show Customize IDE Wizard [IDEA-249516]
+    if (Boolean.parseBoolean(System.getProperty("idea.show.customize.ide.wizard"))) {
+      String stepsDialogName = ApplicationInfoImpl.getShadowInstance().getCustomizeIDEWizardDialog();
+      if (stepsDialogName != null) {
+        try {
+          Class<?> dialogClass = Class.forName(stepsDialogName);
+          Constructor<?> constr =
+                  dialogClass.getConstructor(CustomizeIDEWizardStepsProvider.class, AppStarter.class, boolean.class, boolean.class);
+          ((CommonCustomizeIDEWizardDialog) constr.newInstance(provider, appStarter, true, false)).showIfNeeded();
+        } catch (Throwable e) {
+          Main.showMessage(BootstrapBundle.message("bootstrap.error.title.configuration.wizard.failed"), e);
+          return;
+        }
+      } else {
+        new CustomizeIDEWizardDialog(provider, appStarter, true, false).showIfNeeded();
       }
-      catch (Throwable e) {
-        Main.showMessage("Configuration Wizard Failed", e); return;
-      }
-    }
-    else {
-      new CustomizeIDEWizardDialog(provider, appStarter, true, false).showIfNeeded();
     }
 
     PluginManagerCore.invalidatePlugins();
