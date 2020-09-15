@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.List;
 
 public abstract class ChangeListManagerEx extends ChangeListManager {
+  @NotNull
   public static ChangeListManagerEx getInstanceEx(@NotNull Project project) {
     return (ChangeListManagerEx)getInstance(project);
   }
