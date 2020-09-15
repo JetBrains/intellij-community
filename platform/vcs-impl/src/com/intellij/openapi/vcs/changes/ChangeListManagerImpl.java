@@ -1526,9 +1526,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   public void replaceCommitMessage(@NotNull String oldMessage, @NotNull String newMessage) {
     VcsConfiguration.getInstance(myProject).replaceMessage(oldMessage, newMessage);
 
-    for (LocalChangeList changeList : getChangeLists()) {
-      if (oldMessage.equals(changeList.getComment())) {
-        editComment(changeList.getName(), newMessage);
+    if (areChangeListsEnabled()) {
+      for (LocalChangeList changeList : getChangeLists()) {
+        if (oldMessage.equals(changeList.getComment())) {
+          editComment(changeList.getName(), newMessage);
+        }
       }
     }
   }

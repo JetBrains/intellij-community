@@ -948,9 +948,14 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     List<Change> shelvedChanges = new ArrayList<>();
 
     try {
+      ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
+      if (!changeListManager.areChangeListsEnabled()) {
+        LOG.warn("Changelists are disabled", new Throwable());
+      }
+
       SHELVED_FILES_LOCK.writeLock().lock();
       rememberShelvingFiles(changes);
-      List<LocalChangeList> changeLists = ChangeListManager.getInstance(myProject).getChangeLists();
+      List<LocalChangeList> changeLists = changeListManager.getChangeLists();
       for (LocalChangeList list : changeLists) {
         Set<Change> changeSet = new HashSet<>(list.getChanges());
 

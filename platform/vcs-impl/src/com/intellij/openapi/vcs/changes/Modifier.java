@@ -46,7 +46,8 @@ public class Modifier {
   public LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable ChangeListData data) {
     AddList command = new AddList(name, comment, data);
     impl(command);
-    return command.getNewListCopy();
+    LocalChangeList newList = command.getNewListCopy();
+    return newList != null ? newList : myWorker.getDefaultList();
   }
 
   public void setDefault(@NotNull String name, boolean automatic) {

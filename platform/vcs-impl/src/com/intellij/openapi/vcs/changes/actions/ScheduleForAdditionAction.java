@@ -158,7 +158,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
     }
     VcsDirtyScopeManager.getInstance(project).filesDirty(allProcessedFiles, null);
 
-    boolean moveRequired = list != null && !list.isDefault() && !allProcessedFiles.isEmpty();
+    boolean moveRequired = list != null && !list.isDefault() && !allProcessedFiles.isEmpty() && changeListManager.areChangeListsEnabled();
     boolean syncUpdateRequired = changesConsumer != null;
 
     if (moveRequired || syncUpdateRequired) {
