@@ -30,7 +30,7 @@ import com.intellij.psi.text.BlockSupport;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.EdtInvocationManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -202,10 +202,10 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
     ApplicationManager.getApplication().assertIsWriteThread();
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();
 
-    UIUtil.dispatchAllInvocationEvents();
+    EdtInvocationManager.dispatchAllInvocationEvents();
     while (!((BoundedTaskExecutor)executor).isEmpty()) {
       ((BoundedTaskExecutor)executor).waitAllTasksExecuted(timeout, timeUnit);
-      UIUtil.dispatchAllInvocationEvents();
+      EdtInvocationManager.dispatchAllInvocationEvents();
     }
   }
 

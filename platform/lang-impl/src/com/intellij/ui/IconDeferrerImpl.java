@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -21,12 +21,13 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.FixedHashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
 import java.util.Map;
 
-public class IconDeferrerImpl extends IconDeferrer {
+public final class IconDeferrerImpl extends IconDeferrer {
   private final Object LOCK = new Object();
   private final Map<Object, Icon> myIconsCache = new FixedHashMap<>(Registry.intValue("ide.icons.deferrerCacheSize"));
   private long myLastClearTimestamp;
@@ -64,7 +65,7 @@ public class IconDeferrerImpl extends IconDeferrer {
   }
 
   @Override
-  public <T> Icon defer(final Icon base, final T param, @NotNull final Function<? super T, ? extends Icon> evaluator) {
+  public <T> @NotNull Icon defer(@Nullable Icon base, T param, @NotNull Function<? super T, ? extends Icon> evaluator) {
     return deferImpl(base, param, evaluator, false);
   }
 
@@ -73,7 +74,7 @@ public class IconDeferrerImpl extends IconDeferrer {
     return deferImpl(base, param, evaluator, true);
   }
 
-  private <T> Icon deferImpl(Icon base, T param, @NotNull Function<? super T, ? extends Icon> evaluator, final boolean autoUpdatable) {
+  private <T> @NotNull Icon deferImpl(Icon base, T param, @NotNull Function<? super T, ? extends Icon> evaluator, final boolean autoUpdatable) {
     if (myEvaluationIsInProgress.get().booleanValue()) {
       return evaluator.fun(param);
     }

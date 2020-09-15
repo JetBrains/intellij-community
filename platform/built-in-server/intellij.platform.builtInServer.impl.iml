@@ -30,5 +30,7 @@
     <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="library" name="netty-buffer" level="project" />
     <orderEntry type="library" name="caffeine" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.concurrency" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
   </component>
 </module>

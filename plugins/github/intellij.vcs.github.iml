@@ -43,5 +43,6 @@
     <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="module" module-name="intellij.platform.vcs.codeReview" />
     <orderEntry type="library" name="netty-buffer" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
   </component>
 </module>

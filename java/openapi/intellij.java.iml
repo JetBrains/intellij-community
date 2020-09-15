@@ -28,6 +28,7 @@
     <orderEntry type="module" module-name="intellij.java.indexing" exported="" />
     <orderEntry type="module" module-name="intellij.java.analysis" exported="" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
   </component>
   <component name="copyright">
     <option name="body" value="/*&#10; * Copyright (c) $today.year Your Corporation. All Rights Reserved.&#10; */" />

@@ -57,5 +57,6 @@
     <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
     <orderEntry type="library" name="netty-buffer" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
   </component>
 </module>

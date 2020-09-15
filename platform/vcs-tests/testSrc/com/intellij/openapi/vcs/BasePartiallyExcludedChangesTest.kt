@@ -8,7 +8,7 @@ import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
 
 abstract class BasePartiallyExcludedChangesTest : BaseLineStatusTrackerManagerTest() {
-  protected lateinit var stateHolder: MyStateHolder
+  private lateinit var stateHolder: MyStateHolder
 
   override fun setUp() {
     super.setUp()
@@ -87,10 +87,7 @@ abstract class BasePartiallyExcludedChangesTest : BaseLineStatusTrackerManagerTe
     val actual = stateHolder.getExclusionState(this.toFilePath)
     assertEquals(holderState, actual)
 
-    val tracker = this.toFilePath.virtualFile?.tracker as? PartialLocalLineStatusTracker
-    if (tracker != null) {
-      tracker.assertExcludedState(trackerState, DEFAULT)
-    }
+    (toFilePath.virtualFile?.tracker as? PartialLocalLineStatusTracker)?.assertExcludedState(trackerState, DEFAULT)
   }
 
   protected fun PartialLocalLineStatusTracker.exclude(index: Int, isExcluded: Boolean) {

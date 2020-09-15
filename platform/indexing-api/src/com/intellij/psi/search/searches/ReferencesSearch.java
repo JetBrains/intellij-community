@@ -9,7 +9,6 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -173,7 +172,7 @@ public final class ReferencesSearch extends ExtensibleQueryFactory<PsiReference,
 
   @NotNull
   private static Query<PsiReference> uniqueResults(@NotNull Query<? extends PsiReference> composite) {
-    return new UniqueResultsQuery<>(composite, ContainerUtil.canonicalStrategy(), ReferenceDescriptor.MAPPER);
+    return new UniqueResultsQuery<>(composite, ReferenceDescriptor.MAPPER);
   }
 
   public static void searchOptimized(@NotNull PsiElement element,

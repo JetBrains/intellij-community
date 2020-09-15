@@ -13,7 +13,6 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -144,8 +143,9 @@ public final class ClassInheritorsSearch extends ExtensibleQueryFactory<PsiClass
       }
       return AbstractQuery.wrapInReadAction(directQuery);
     }
-    return INSTANCE.createUniqueResultsQuery(parameters, ContainerUtil.canonicalStrategy(),
-                                             psiClass -> ReadAction.compute(() -> SmartPointerManager.getInstance(psiClass.getProject()).createSmartPsiElementPointer(psiClass)));
+    return INSTANCE.createUniqueResultsQuery(parameters, psiClass -> {
+      return ReadAction.compute(() -> SmartPointerManager.getInstance(psiClass.getProject()).createSmartPsiElementPointer(psiClass));
+    });
   }
 
   /**

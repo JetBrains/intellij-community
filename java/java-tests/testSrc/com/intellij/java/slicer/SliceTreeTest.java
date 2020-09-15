@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.slicer;
 
 import com.intellij.analysis.AnalysisScope;
@@ -9,7 +9,7 @@ import com.intellij.openapi.wm.impl.ToolWindowHeadlessManagerImpl;
 import com.intellij.psi.*;
 import com.intellij.slicer.*;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
@@ -76,7 +76,7 @@ public class SliceTreeTest extends SliceTestCase {
     List<SliceNode> nodes = new ArrayList<>();
     expandNodesTo(root, nodes);
 
-    TIntArrayList hasDups = new TIntArrayList();
+    IntArrayList hasDups = new IntArrayList();
     for (SliceNode node : nodes) {
       if (node.getDuplicate() != null) {
         PsiElement element = node.getValue().getElement();
@@ -138,7 +138,7 @@ public class SliceTreeTest extends SliceTestCase {
     Collection<PsiElement> leaves = analyzer.calcLeafExpressions(root, treeStructure, map);
     assertNotNull(leaves);
     List<PsiElement> list = new ArrayList<>(leaves);
-    String message = ContainerUtil.map(list, element -> element.getClass() + ": '" + element.getText() + "' (" + JavaSlicerAnalysisUtil.LEAF_ELEMENT_EQUALITY.computeHashCode(element) + ") ").toString();
+    String message = ContainerUtil.map(list, element -> element.getClass() + ": '" + element.getText() + "' (" + JavaSlicerAnalysisUtil.LEAF_ELEMENT_EQUALITY.hashCode(element) + ") ").toString();
     assertEquals(map.entrySet()+"\n"+message, 2, leaves.size());
     Collections.sort(list, Comparator.comparing(PsiElement::getText));
     assertTrue(list.get(0) instanceof PsiLiteralExpression);

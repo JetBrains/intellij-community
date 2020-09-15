@@ -14,7 +14,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.IconDeferrer;
+import com.intellij.ui.IconManager;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.ui.EmptyIcon;
@@ -70,7 +70,7 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
                 return ArrayUtilRt.EMPTY_BYTE_ARRAY;
               }
             });
-            defer = IconDeferrer.getInstance().defer(null, Pair.create(virtualFile, charset), pair -> {
+            defer = IconManager.getInstance().createDeferredIcon(null, new Pair<>(virtualFile, charset), pair -> {
               VirtualFile myFile = pair.getFirst();
               Charset charset = pair.getSecond();
               CharSequence text = myText.getValue();

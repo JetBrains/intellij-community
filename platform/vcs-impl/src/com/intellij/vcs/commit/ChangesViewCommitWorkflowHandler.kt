@@ -19,11 +19,11 @@ import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
 import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory
 import com.intellij.util.EventDispatcher
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecutors
-import gnu.trove.THashSet
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import java.util.*
 import kotlin.properties.Delegates.observable
 
-private fun Collection<Change>.toPartialAwareSet() = THashSet(this, ChangeListChange.HASHING_STRATEGY)
+private fun Collection<Change>.toPartialAwareSet() = ObjectOpenCustomHashSet(this, ChangeListChange.HASHING_STRATEGY)
 
 internal class ChangesViewCommitWorkflowHandler(
   override val workflow: ChangesViewCommitWorkflow,
@@ -146,7 +146,7 @@ internal class ChangesViewCommitWorkflowHandler(
 
   fun synchronizeInclusion(changeLists: List<LocalChangeList>, unversionedFiles: List<FilePath>) {
     if (!inclusionModel.isInclusionEmpty()) {
-      val possibleInclusion = changeLists.flatMapTo(THashSet(ChangeListChange.HASHING_STRATEGY)) { it.changes }
+      val possibleInclusion = changeLists.flatMapTo(ObjectOpenCustomHashSet(ChangeListChange.HASHING_STRATEGY)) { it.changes }
       possibleInclusion.addAll(unversionedFiles)
 
       inclusionModel.retainInclusion(possibleInclusion)

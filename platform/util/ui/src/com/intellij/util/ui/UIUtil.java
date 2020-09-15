@@ -66,7 +66,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -1723,8 +1722,6 @@ public final class UIUtil {
     g.setComposite(X_RENDER_ACTIVE.getValue() ? AlphaComposite.SrcOver : AlphaComposite.Src);
   }
 
-  private static final Method dispatchEventMethod =
-    Objects.requireNonNull(ReflectionUtil.getDeclaredMethod(EventQueue.class, "dispatchEvent", AWTEvent.class));
   /**
    * Dispatch all pending invocation events (if any) in the {@link com.intellij.ide.IdeEventQueue}, ignores and removes all other events from the queue.
    * In tests, consider using {@link com.intellij.testFramework.PlatformTestUtil#dispatchAllInvocationEventsInIdeEventQueue()}
@@ -1732,41 +1729,7 @@ public final class UIUtil {
    */
   @TestOnly
   public static void dispatchAllInvocationEvents() {
-    assert EdtInvocationManager.getInstance().isEventDispatchThread() : Thread.currentThread() + "; EDT: "+getEventQueueThread();
-    EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
-    for (int i = 1; ; i++) {
-      AWTEvent event = eventQueue.peekEvent();
-      if (event == null) break;
-      try {
-        event = eventQueue.getNextEvent();
-        if (event instanceof InvocationEvent) {
-          dispatchEventMethod.invoke(eventQueue, event);
-        }
-      }
-      catch (InvocationTargetException e) {
-        ExceptionUtil.rethrowAllAsUnchecked(e.getCause());
-      }
-      catch (Exception e) {
-        ExceptionUtil.rethrow(e);
-      }
-
-      if (i % 10000 == 0) {
-        //noinspection UseOfSystemOutOrSystemErr
-        System.out.println("Suspiciously many (" + i + ") AWT events, last dispatched " + event);
-      }
-    }
-  }
-
-  private static @NotNull Thread getEventQueueThread() {
-    EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
-    try {
-      Method method = ReflectionUtil.getDeclaredMethod(EventQueue.class, "getDispatchThread");
-      //noinspection ConstantConditions
-      return (Thread)method.invoke(eventQueue);
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    EdtInvocationManager.dispatchAllInvocationEvents();
   }
 
   public static void addAwtListener(final @NotNull AWTEventListener listener, long mask, @NotNull Disposable parent) {

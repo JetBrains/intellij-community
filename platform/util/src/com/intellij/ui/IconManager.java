@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
@@ -54,7 +55,7 @@ public interface IconManager {
   Icon getAnalyzeIcon();
 
   @NotNull
-  <T> Icon createDeferredIcon(@NotNull Icon base, T param, @NotNull Function<? super T, ? extends Icon> f);
+  <T> Icon createDeferredIcon(@Nullable Icon base, T param, @NotNull Function<? super T, ? extends Icon> f);
 
   @NotNull
   RowIcon createLayeredIcon(@NotNull Iconable instance, Icon icon, int flags);
@@ -71,6 +72,10 @@ public interface IconManager {
   RowIcon createRowIcon(Icon @NotNull ... icons);
 
   void registerIconLayer(int flagMask, @NotNull Icon icon);
+
+  @NotNull Icon createOverlayIcon(Icon @NotNull ... icons);
+
+  @NotNull Icon tooltipOnlyIfComposite(@NotNull Icon icon);
 }
 
 final class IconManagerHelper {
@@ -123,6 +128,16 @@ final class DummyIconManager implements IconManager {
   public void registerIconLayer(int flagMask, @NotNull Icon icon) {
   }
 
+  @Override
+  public @NotNull Icon createOverlayIcon(Icon @NotNull ... icons) {
+    return new DummyIcon();
+  }
+
+  @Override
+  public @NotNull Icon tooltipOnlyIfComposite(@NotNull Icon icon) {
+    return new DummyIcon();
+  }
+
   @NotNull
   @Override
   public <T> Icon createDeferredIcon(@NotNull Icon base, T param, @NotNull Function<? super T, ? extends Icon> f) {
@@ -149,9 +164,6 @@ final class DummyIconManager implements IconManager {
 
   private static class DummyIcon implements Icon {
     static final DummyIcon INSTANCE = new DummyIcon();
-
-    private DummyIcon() {
-    }
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {

@@ -28,8 +28,4 @@ public interface IconWithToolTip extends Icon {
       return new IconWrapperWithToolTip(icon, tooltip);
     }
   }
-
-  static IconWithToolTip tooltipOnlyIfComposite(Icon icon) {
-    return new IconWrapperWithToolTipComposite(icon);
-  }
 }
