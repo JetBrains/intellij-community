@@ -16,7 +16,9 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.execution.rmi.RemoteServer;
+import org.jetbrains.annotations.TestOnly;
 
+@TestOnly
 public class RemoteMavenServerThrowsExceptionForTests extends RemoteServer {
   public static void main(String[] args) throws Exception {
     throw new Exception("Maven server exception for tests");

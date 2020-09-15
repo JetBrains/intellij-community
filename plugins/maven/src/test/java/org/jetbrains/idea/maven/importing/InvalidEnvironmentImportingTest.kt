@@ -41,9 +41,13 @@ class InvalidEnvironmentImportingTest : MavenImportingTestCase() {
   }
 
   fun testShouldShowLogsOfMavenServerIfNotStarted() {
-    MavenServerCMDState.setThrowExceptionOnNextServerStart()
-    createAndImportProject()
-    assertEvent { it.message.contains("Maven server exception for tests") }
+    try {
+      MavenServerCMDState.setThrowExceptionOnNextServerStart()
+      createAndImportProject()
+      assertEvent { it.message.contains("Maven server exception for tests") }
+    } finally {
+      MavenServerCMDState.resetThrowExceptionOnNextServerStart()
+    }
   }
 
 
