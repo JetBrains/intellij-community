@@ -742,10 +742,6 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   private boolean breakpointReached(@NotNull final XBreakpoint<?> breakpoint, @Nullable String evaluatedLogExpression,
                                    @NotNull XSuspendContext suspendContext, boolean doProcessing) {
-    BP_NOTIFICATION_GROUP
-      .createNotification(XDebuggerBundle.message("xdebugger.breakpoint.reached"), MessageType.INFO)
-      .notify(getProject());
-
     if (doProcessing) {
       if (breakpoint.isLogMessage()) {
         XSourcePosition position = breakpoint.getSourcePosition();
@@ -768,6 +764,10 @@ public final class XDebugSessionImpl implements XDebugSession {
         return false;
       }
     }
+
+    BP_NOTIFICATION_GROUP
+      .createNotification(XDebuggerBundle.message("xdebugger.breakpoint.reached"), MessageType.INFO)
+      .notify(getProject());
 
     myActiveNonLineBreakpoint =
       (!(breakpoint instanceof XLineBreakpoint) || ((XLineBreakpoint)breakpoint).getType().canBeHitInOtherPlaces()) ? breakpoint : null;
