@@ -104,11 +104,6 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements CommonCus
   }
 
   @Override
-  protected @NotNull DialogStyle getStyle() {
-    return DialogStyle.COMPACT;
-  }
-
-  @Override
   protected void dispose() {
     System.clearProperty(StartupActionScriptManager.STARTUP_WIZARD_MODE);
     super.dispose();
