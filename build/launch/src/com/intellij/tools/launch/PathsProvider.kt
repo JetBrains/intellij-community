@@ -4,17 +4,11 @@ import java.io.File
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.SystemProperties
 
-interface IntelliJProjectPathsProvider {
-  val projectRootFolder: File
-  val communityRootFolder: File get() = File(projectRootFolder, "community")
-  val outputRootFolder: File get() = File(projectRootFolder, "out")
-}
-
-interface PathsProvider : IntelliJProjectPathsProvider {
+interface PathsProvider {
   val productId: String
-  override val projectRootFolder: File
-  override val communityRootFolder: File
-  override val outputRootFolder: File
+  val projectRootFolder: File
+  val communityRootFolder: File
+  val outputRootFolder: File
 
   val tempFolder: File
     get() = TeamCityHelper.tempDirectory ?: projectRootFolder.resolve("out").resolve("tmp")
