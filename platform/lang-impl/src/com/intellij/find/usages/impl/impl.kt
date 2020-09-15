@@ -54,7 +54,7 @@ internal fun symbolUsageHandler(project: Project, symbol: Symbol): UsageHandler<
       return handler
     }
   }
-  return DefaultSymbolUsageHandler(symbol)
+  return EmptyUsageHandler(symbol)
 }
 
 @ApiStatus.Internal

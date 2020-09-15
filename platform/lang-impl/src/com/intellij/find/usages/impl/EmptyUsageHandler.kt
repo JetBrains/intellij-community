@@ -10,7 +10,7 @@ import com.intellij.usages.Usage
 import com.intellij.util.EmptyQuery
 import com.intellij.util.Query
 
-internal class DefaultSymbolUsageHandler(private val symbol: Symbol) : NonConfigurableUsageHandler() {
+internal class EmptyUsageHandler(private val symbol: Symbol) : NonConfigurableUsageHandler() {
 
   override fun getSearchString(options: UsageOptions): String {
     val shortNameString = SymbolPresentationService.getInstance().getSymbolPresentation(symbol).shortNameString
