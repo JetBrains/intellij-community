@@ -46,11 +46,12 @@ public class VcsShelveChangesSaver {
     String oldProgressTitle = myProgressIndicator.getText();
     myProgressIndicator.setText(VcsBundle.getString("vcs.shelving.changes"));
 
+    Set<VirtualFile> rootsSet = new HashSet<>(rootsToSave);
     Map<String, ShelvedChangeList> shelvedLists = new HashMap<>();
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     if (changeListManager.areChangeListsEnabled()) {
       for (LocalChangeList list : changeListManager.getChangeLists()) {
-        Collection<Change> changes = list.getChanges();
+        Collection<Change> changes = filterChangesByRoots(list.getChanges(), rootsSet);
         if (!changes.isEmpty()) {
           String name = createSystemShelvedChangeListName(myStashMessage, list.getName());
           ShelvedChangeList shelved = VcsShelveUtils.shelveChanges(project, changes, name, false, true);
@@ -59,7 +60,7 @@ public class VcsShelveChangesSaver {
       }
     }
     else {
-      Collection<Change> changes = changeListManager.getAllChanges();
+      Collection<Change> changes = filterChangesByRoots(changeListManager.getAllChanges(), rootsSet);
       if (!changes.isEmpty()) {
         ShelvedChangeList shelved = VcsShelveUtils.shelveChanges(project, changes, myStashMessage, false, true);
         shelvedLists.put(null, shelved);
@@ -90,10 +91,15 @@ public class VcsShelveChangesSaver {
 
   protected void doRollback(@NotNull Collection<? extends VirtualFile> rootsToSave) {
     Set<VirtualFile> rootsSet = new HashSet<>(rootsToSave);
-    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-    List<Change> changes4Rollback = ContainerUtil.filter(ChangeListManager.getInstance(project).getAllChanges(), change -> {
-      return rootsSet.contains(vcsManager.getVcsRootFor(ChangesUtil.getFilePath(change)));
-    });
+    List<Change> changes4Rollback = filterChangesByRoots(ChangeListManager.getInstance(project).getAllChanges(), rootsSet);
     new RollbackWorker(project, myStashMessage, true).doRollback(changes4Rollback, true);
+  }
+
+  @NotNull
+  private List<Change> filterChangesByRoots(@NotNull Collection<Change> changes, @NotNull Set<? extends VirtualFile> rootsToSave) {
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    return ContainerUtil.filter(changes, change -> {
+      return rootsToSave.contains(vcsManager.getVcsRootFor(ChangesUtil.getFilePath(change)));
+    });
   }
 }
