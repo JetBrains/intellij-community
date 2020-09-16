@@ -189,8 +189,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   }
 
   @Override
-  public void cleanFileLevelHighlights(@NotNull Project project, final int group, PsiFile psiFile) {
-    if (psiFile == null) return;
+  public void cleanFileLevelHighlights(@NotNull Project project, final int group, @NotNull PsiFile psiFile) {
     FileViewProvider provider = psiFile.getViewProvider();
     VirtualFile vFile = provider.getVirtualFile();
     for (FileEditor fileEditor : myFileEditorManager.getEditors(vFile)) {
