@@ -86,6 +86,13 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   internal fun getComponents(): Map<String, ComponentInfo> = components
 
+  override fun clearCaches() {
+    components.values.forEach {
+      it.updateModificationCount(-1)
+    }
+    (storageManager as? StateStorageManagerImpl)?.clearStorages()
+  }
+
   override fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId?) {
     var componentName = ""
     try {
