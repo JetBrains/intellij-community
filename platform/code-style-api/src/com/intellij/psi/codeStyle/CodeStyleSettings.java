@@ -1,21 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
+import com.intellij.CodeStyleBundle;
 import com.intellij.configurationStore.Property;
 import com.intellij.configurationStore.UnknownElementCollector;
 import com.intellij.configurationStore.UnknownElementWriter;
-import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.NlsContexts.Label;
@@ -111,11 +107,11 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     initImportsByDefault();
 
     if (loadExtensions) {
-      for (final CodeStyleSettingsProvider provider : CodeStyleSettingsProvider.EXTENSION_POINT_NAME.getExtensionList()) {
-        addCustomSettings(provider.createCustomSettings(this));
+      for (final CustomCodeStyleSettingsFactory factory : CodeStyleSettingsService.getInstance().getCustomCodeStyleSettingsFactories()) {
+        addCustomSettings(factory.createCustomSettings(this));
       }
-      for (CodeStyleSettingsProvider provider : LanguageCodeStyleSettingsProvider.getSettingsPagesProviders()) {
-        addCustomSettings(provider.createCustomSettings(this));
+      for (CustomCodeStyleSettingsFactory factory : CodeStyleSettingsService.getInstance().getSettingsPagesProviders()) {
+        addCustomSettings(factory.createCustomSettings(this));
       }
     }
 
@@ -628,8 +624,8 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     for (Element additionalIndentElement : list) {
       String fileTypeId = additionalIndentElement.getAttributeValue(FILETYPE);
       if (!StringUtil.isEmpty(fileTypeId)) {
-        FileType target = FileTypeManager.getInstance().getFileTypeByExtension(fileTypeId);
-        if (FileTypes.UNKNOWN == target || FileTypes.PLAIN_TEXT == target || target.getDefaultExtension().isEmpty()) {
+        FileType target = FileTypeRegistry.getInstance().getFileTypeByExtension(fileTypeId);
+        if (UnknownFileType.INSTANCE == target || target instanceof PlainTextLikeFileType || target.getDefaultExtension().isEmpty()) {
           target = new TempFileType(fileTypeId);
         }
 
@@ -692,9 +688,9 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   }
 
   private static IndentOptions getDefaultIndentOptions(FileType fileType) {
-    for (final FileTypeIndentOptionsProvider provider : FileTypeIndentOptionsProvider.EP_NAME.getExtensionList()) {
-      if (provider.getFileType().equals(fileType)) {
-        return getFileTypeIndentOptions(provider);
+    for (final FileTypeIndentOptionsFactory factory : CodeStyleSettingsService.getInstance().getFileTypeIndentOptionsFactories()) {
+      if (factory.getFileType().equals(fileType)) {
+        return getFileTypeIndentOptions(factory);
       }
     }
     return new IndentOptions();
@@ -898,9 +894,9 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   private void loadAdditionalIndentOptions() {
     synchronized (myAdditionalIndentOptions) {
       myLoadedAdditionalIndentOptions = true;
-      for (final FileTypeIndentOptionsProvider provider : FileTypeIndentOptionsProvider.EP_NAME.getExtensionList()) {
-        if (!myAdditionalIndentOptions.containsKey(provider.getFileType())) {
-          registerAdditionalIndentOptions(provider.getFileType(), getFileTypeIndentOptions(provider));
+      for (final FileTypeIndentOptionsFactory factory : CodeStyleSettingsService.getInstance().getFileTypeIndentOptionsFactories()) {
+        if (!myAdditionalIndentOptions.containsKey(factory.getFileType())) {
+          registerAdditionalIndentOptions(factory.getFileType(), getFileTypeIndentOptions(factory));
         }
       }
     }
@@ -916,12 +912,12 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     }
   }
 
-  private static IndentOptions getFileTypeIndentOptions(FileTypeIndentOptionsProvider provider) {
+  private static IndentOptions getFileTypeIndentOptions(FileTypeIndentOptionsFactory factory) {
     try {
-      return provider.createIndentOptions();
+      return factory.createIndentOptions();
     }
     catch (AbstractMethodError error) {
-      LOG.error("Plugin uses obsolete API.", new ExtensionException(provider.getClass()));
+      LOG.error("Plugin uses obsolete API.", new ExtensionException(factory.getClass()));
       return new IndentOptions();
     }
   }
@@ -1072,10 +1068,10 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
   public enum WrapStyle implements PresentableEnum {
 
-    DO_NOT_WRAP(CommonCodeStyleSettings.DO_NOT_WRAP, ApplicationBundle.messagePointer("wrapping.do.not.wrap")),
-    WRAP_AS_NEEDED(CommonCodeStyleSettings.WRAP_AS_NEEDED, ApplicationBundle.messagePointer("wrapping.wrap.if.long")),
-    WRAP_ON_EVERY_ITEM(CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM,ApplicationBundle.messagePointer("wrapping.chop.down.if.long")),
-    WRAP_ALWAYS(CommonCodeStyleSettings.WRAP_ALWAYS, ApplicationBundle.messagePointer("wrapping.wrap.always"));
+    DO_NOT_WRAP(CommonCodeStyleSettings.DO_NOT_WRAP, CodeStyleBundle.messagePointer("wrapping.do.not.wrap")),
+    WRAP_AS_NEEDED(CommonCodeStyleSettings.WRAP_AS_NEEDED, CodeStyleBundle.messagePointer("wrapping.wrap.if.long")),
+    WRAP_ON_EVERY_ITEM(CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM, CodeStyleBundle.messagePointer("wrapping.chop.down.if.long")),
+    WRAP_ALWAYS(CommonCodeStyleSettings.WRAP_ALWAYS, CodeStyleBundle.messagePointer("wrapping.wrap.always"));
 
     private final int myId;
     private final Supplier<@Label String> myDescription;
@@ -1108,9 +1104,9 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     }
   }
 
-  public enum HtmlTagNewLineStyle implements PresentableEnum{
-    Never("Never", LangBundle.messagePointer("html.tag.new.line.never")),
-    WhenMultiline("When multiline", LangBundle.messagePointer("html.tag.new.line.when.multiline"));
+  public enum HtmlTagNewLineStyle implements PresentableEnum {
+    Never("Never", CodeStyleBundle.messagePointer("html.tag.new.line.never")),
+    WhenMultiline("When multiline", CodeStyleBundle.messagePointer("html.tag.new.line.when.multiline"));
 
     private final String myValue;
     private final Supplier<@Label String> myDescription;
@@ -1131,9 +1127,9 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   }
 
   public enum QuoteStyle implements PresentableEnum {
-    Single("'", LangBundle.messagePointer("quote.style.single")),
-    Double("\"", LangBundle.messagePointer("quote.style.double")),
-    None("", LangBundle.messagePointer("quote.style.none"));
+    Single("'", CodeStyleBundle.messagePointer("quote.style.single")),
+    Double("\"", CodeStyleBundle.messagePointer("quote.style.double")),
+    None("", CodeStyleBundle.messagePointer("quote.style.none"));
 
     public final String quote;
     private final Supplier<@Label String> myDescription;
@@ -1258,18 +1254,18 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   }
 
   @ApiStatus.Internal
-  public void removeSettings(@NotNull LanguageCodeStyleSettingsProvider provider) {
+  public void removeSettings(@NotNull LanguageCodeStyleProvider provider) {
     myCommonSettingsManager.removeLanguageSettings(provider.getLanguage());
   }
 
   @ApiStatus.Internal
-  public void registerSettings(@NotNull LanguageCodeStyleSettingsProvider provider) {
+  public void registerSettings(@NotNull LanguageCodeStyleProvider provider) {
     myCommonSettingsManager.addLanguageSettings(provider.getLanguage(), provider.getDefaultCommonSettings());
   }
 
   @ApiStatus.Internal
-  public void removeSettings(@NotNull CodeStyleSettingsProvider provider) {
-    CustomCodeStyleSettings customSettings = provider.createCustomSettings(this);
+  public void removeSettings(@NotNull CustomCodeStyleSettingsFactory factory) {
+    CustomCodeStyleSettings customSettings = factory.createCustomSettings(this);
     if (customSettings != null) {
       synchronized (myCustomSettings) {
         myCustomSettings.remove(customSettings.getClass());
@@ -1278,7 +1274,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   }
 
   @ApiStatus.Internal
-  public void registerSettings(@NotNull CodeStyleSettingsProvider provider) {
-    addCustomSettings(provider.createCustomSettings(this));
+  public void registerSettings(@NotNull CustomCodeStyleSettingsFactory factory) {
+    addCustomSettings(factory.createCustomSettings(this));
   }
 }

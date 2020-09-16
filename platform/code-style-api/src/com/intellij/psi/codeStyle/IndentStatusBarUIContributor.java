@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
+import com.intellij.CodeStyleBundle;
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -44,8 +44,8 @@ public abstract class IndentStatusBarUIContributor implements CodeStyleStatusBar
   @NotNull
   public static String getIndentInfo(@NotNull IndentOptions indentOptions) {
     return indentOptions.USE_TAB_CHARACTER
-           ? CodeInsightBundle.message("indent.status.bar.tab")
-           : CodeInsightBundle.message("indent.status.bar.spaces", indentOptions.INDENT_SIZE);
+           ? CodeStyleBundle.message("indent.status.bar.tab")
+           : CodeStyleBundle.message("indent.status.bar.spaces", indentOptions.INDENT_SIZE);
   }
 
   /**
@@ -59,7 +59,7 @@ public abstract class IndentStatusBarUIContributor implements CodeStyleStatusBar
   @NotNull
   public static @NlsContexts.Tooltip String createTooltip(@Nls String indentInfo, @NlsContexts.HintText String hint) {
     HtmlBuilder builder = new HtmlBuilder();
-    builder.append(CodeInsightBundle.message("indent.status.bar.indent.tooltip")).append(indentInfo);
+    builder.append(CodeStyleBundle.message("indent.status.bar.indent.tooltip")).append(indentInfo);
     if (hint != null) {
       builder.nbsp(2).append(HtmlChunk.span("color:"+ColorUtil.toHtmlColor(JBColor.GRAY)).addText(hint));
     }

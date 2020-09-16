@@ -1,8 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.formatter;
 
-import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.actions.ReformatCodeProcessor;
+import com.intellij.CodeStyleBundle;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
@@ -32,7 +31,7 @@ public final class FormatterUtil {
   public static final String REFORMAT_BEFORE_COMMIT_COMMAND_NAME = "Reformat Code Before Commit";
 
   public static final Collection<String> FORMATTER_ACTION_NAMES = Collections.unmodifiableCollection(ContainerUtil.newHashSet(
-    ReformatCodeProcessor.getCommandName(), getReformatBeforeCommitCommandName()
+    CodeStyleBundle.message("process.reformat.code"), getReformatBeforeCommitCommandName()
   ));
 
   private FormatterUtil() {
@@ -502,6 +501,6 @@ public final class FormatterUtil {
   }
 
   public static String getReformatBeforeCommitCommandName() {
-    return CodeInsightBundle.message("process.reformat.code.before.commit");
+    return CodeStyleBundle.message("process.reformat.code.before.commit");
   }
 }

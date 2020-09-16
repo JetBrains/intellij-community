@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.arrangement.std;
 
-import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.CodeStyleBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.Nls;
@@ -37,9 +37,9 @@ public class StdArrangementSettingsToken extends ArrangementSettingsToken {
 
   @NotNull
   public static StdArrangementSettingsToken tokenByBundle(@NotNull String id,
-                                                          @NotNull @PropertyKey(resourceBundle = ApplicationBundle.BUNDLE) String key,
+                                                          @NotNull @PropertyKey(resourceBundle = CodeStyleBundle.BUNDLE) String key,
                                                           @NotNull StdArrangementTokenType tokenType) {
-    return new StdArrangementSettingsToken(id, ApplicationBundle.message(key), tokenType);
+    return new StdArrangementSettingsToken(id, CodeStyleBundle.message(key), tokenType);
   }
 
   @NotNull public StdArrangementTokenType getTokenType() {

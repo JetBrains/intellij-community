@@ -107,45 +107,37 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
 
   protected void registerExtensionPointListeners(@Nullable Disposable disposable) {
     FileIndentOptionsProvider.EP_NAME.addChangeListener(this::notifyCodeStyleSettingsChanged, disposable);
-    FileTypeIndentOptionsProvider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
+    CodeStyleSettingsService.getInstance().addListener(new CodeStyleSettingsServiceListener() {
       @Override
-      public void extensionAdded(@NotNull FileTypeIndentOptionsProvider extension,
-                                 @NotNull PluginDescriptor pluginDescriptor) {
-        registerFileTypeIndentOptions(getAllSettings(), extension.getFileType(), extension.createIndentOptions());
+      public void fileTypeIndentOptionsFactoryAdded(@NotNull FileTypeIndentOptionsFactory factory) {
+        registerFileTypeIndentOptions(getAllSettings(), factory.getFileType(), factory.createIndentOptions());
       }
 
       @Override
-      public void extensionRemoved(@NotNull FileTypeIndentOptionsProvider extension,
-                                   @NotNull PluginDescriptor pluginDescriptor) {
-        unregisterFileTypeIndentOptions(getAllSettings(), extension.getFileType());
-      }
-    }, disposable);
-    LanguageCodeStyleSettingsProvider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
-      @Override
-      public void extensionAdded(@NotNull LanguageCodeStyleSettingsProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
-        LanguageCodeStyleSettingsProvider.registerSettingsPageProvider(extension);
-        registerLanguageSettings(getAllSettings(), extension);
-        registerCustomSettings(getAllSettings(), extension);
+      public void fileTypeIndentOptionsFactoryRemoved(@NotNull FileTypeIndentOptionsFactory factory) {
+        unregisterFileTypeIndentOptions(getAllSettings(), factory.getFileType());
       }
 
       @Override
-      public void extensionRemoved(@NotNull LanguageCodeStyleSettingsProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
-        LanguageCodeStyleSettingsProvider.unregisterSettingsPageProvider(extension);
-        unregisterLanguageSettings(getAllSettings(), extension);
-        unregisterCustomSettings(getAllSettings(), extension);
-      }
-    }, disposable);
-    CodeStyleSettingsProvider.EXTENSION_POINT_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
-      @Override
-      public void extensionAdded(@NotNull CodeStyleSettingsProvider extension,
-                                 @NotNull PluginDescriptor pluginDescriptor) {
-        registerCustomSettings(getAllSettings(), extension);
+      public void languageCodeStyleProviderAdded(@NotNull LanguageCodeStyleProvider provider) {
+        registerLanguageSettings(getAllSettings(), provider);
+        registerCustomSettings(getAllSettings(), provider);
       }
 
       @Override
-      public void extensionRemoved(@NotNull CodeStyleSettingsProvider extension,
-                                   @NotNull PluginDescriptor pluginDescriptor) {
-        unregisterCustomSettings(getAllSettings(), extension);
+      public void languageCodeStyleProviderRemoved(@NotNull LanguageCodeStyleProvider provider) {
+        unregisterLanguageSettings(getAllSettings(), provider);
+        unregisterCustomSettings(getAllSettings(), provider);
+      }
+
+      @Override
+      public void customCodeStyleSettingsFactoryAdded(@NotNull CustomCodeStyleSettingsFactory factory) {
+        registerCustomSettings(getAllSettings(), factory);
+      }
+
+      @Override
+      public void customCodeStyleSettingsFactoryRemoved(@NotNull CustomCodeStyleSettingsFactory factory) {
+        unregisterCustomSettings(getAllSettings(), factory);
       }
     }, disposable);
   }
@@ -169,28 +161,28 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
 
   @ApiStatus.Internal
   public final void registerLanguageSettings(@NotNull Collection<CodeStyleSettings> allSettings,
-                                             @NotNull LanguageCodeStyleSettingsProvider provider) {
+                                             @NotNull LanguageCodeStyleProvider provider) {
     allSettings.forEach(settings -> settings.registerSettings(provider));
     notifyCodeStyleSettingsChanged();
   }
 
   @ApiStatus.Internal
   public final void unregisterLanguageSettings(@NotNull Collection<CodeStyleSettings> allSettings,
-                                               @NotNull LanguageCodeStyleSettingsProvider provider) {
+                                               @NotNull LanguageCodeStyleProvider provider) {
     allSettings.forEach(settings -> settings.removeSettings(provider));
     notifyCodeStyleSettingsChanged();
   }
 
   @ApiStatus.Internal
   public final void registerCustomSettings(@NotNull Collection<CodeStyleSettings> allSettings,
-                                           @NotNull CodeStyleSettingsProvider provider) {
+                                           @NotNull CustomCodeStyleSettingsFactory provider) {
     allSettings.forEach(settings -> settings.registerSettings(provider));
     notifyCodeStyleSettingsChanged();
   }
 
   @ApiStatus.Internal
   public final void unregisterCustomSettings(@NotNull Collection<CodeStyleSettings> allSettings,
-                                             @NotNull CodeStyleSettingsProvider provider) {
+                                             @NotNull CustomCodeStyleSettingsFactory provider) {
     allSettings.forEach(settings -> settings.removeSettings(provider));
     notifyCodeStyleSettingsChanged();
   }

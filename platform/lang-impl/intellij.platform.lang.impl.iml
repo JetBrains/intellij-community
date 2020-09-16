@@ -50,5 +50,7 @@
     <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="library" name="pty4j" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" exported="" />
   </component>
 </module>

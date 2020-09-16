@@ -28,7 +28,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,7 +95,7 @@ public class PsiBasedFormattingModel implements FormattingModelEx {
         InjectedLanguageManager.getInstance(hostFile.getProject()).getCachedInjectedDocumentsInRange(hostFile, TextRange.from(offset, 0));
       if (!injections.isEmpty()) {
         PsiElement injectedElement = PsiDocumentManager.getInstance(myProject).getPsiFile(injections.get(0));
-        PsiLanguageInjectionHost host = InjectedLanguageUtil.findInjectionHost(injectedElement);
+        PsiLanguageInjectionHost host = InjectedLanguageUtilBase.findInjectionHost(injectedElement);
         TextRange corrected = host == null ? null : correctRangeByInjection(textRange, host);
         if (corrected != null) {
           effectiveRange = corrected;

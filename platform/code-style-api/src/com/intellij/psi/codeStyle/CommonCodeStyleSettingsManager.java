@@ -100,7 +100,7 @@ class CommonCodeStyleSettingsManager {
 
 
   private void initNonReadSettings() {
-    for (final LanguageCodeStyleSettingsProvider provider : LanguageCodeStyleSettingsProvider.EP_NAME.getExtensionList()) {
+    for (final LanguageCodeStyleProvider provider : CodeStyleSettingsService.getInstance().getLanguageCodeStyleProviders()) {
       Language target = provider.getLanguage();
       if (!myCommonSettingsMap.containsKey(target)) {
         CommonCodeStyleSettings initialSettings = safelyGetDefaults(provider);
@@ -158,7 +158,7 @@ class CommonCodeStyleSettingsManager {
           Language target = Language.findLanguageByID(languageId);
           boolean isKnownLanguage = target != null;
           if (isKnownLanguage) {
-            final LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(target);
+            final LanguageCodeStyleProvider provider = CodeStyleSettingsService.getLanguageCodeStyleProvider(target);
             if (provider != null) {
               CommonCodeStyleSettings settings = safelyGetDefaults(provider);
               if (settings != null) {
@@ -179,7 +179,7 @@ class CommonCodeStyleSettingsManager {
     }
   }
 
-  private static CommonCodeStyleSettings safelyGetDefaults(LanguageCodeStyleSettingsProvider provider) {
+  private static CommonCodeStyleSettings safelyGetDefaults(LanguageCodeStyleProvider provider) {
     @SuppressWarnings("deprecation")
     Ref<CommonCodeStyleSettings> defaultSettingsRef =
       RecursionManager.doPreventingRecursion(provider, true, () -> Ref.create(provider.getDefaultCommonSettings()));

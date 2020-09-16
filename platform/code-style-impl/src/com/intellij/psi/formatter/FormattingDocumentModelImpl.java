@@ -16,9 +16,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.PsiDocumentManagerImpl;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiToDocumentSynchronizer;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,7 +65,7 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel {
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document != null) {
       if (PsiDocumentManager.getInstance(project).isUncommited(document)) return null;
-      PsiToDocumentSynchronizer synchronizer = ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(project)).getSynchronizer();
+      PsiToDocumentSynchronizer synchronizer = ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).getSynchronizer();
       if (synchronizer.isDocumentAffectedByTransactions(document)) return null;
     }
     return document;
@@ -127,12 +127,12 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel {
     if (myWhiteSpaceStrategy.check(myDocument.getCharsSequence(), startOffset, endOffset) >= endOffset) {
       return true;
     }
-    PsiElement injectedElement = InjectedLanguageUtil.findElementAtNoCommit(myFile, startOffset);
+    PsiElement injectedElement = InjectedLanguageUtilBase.findElementAtNoCommit(myFile, startOffset);
     if (injectedElement != null) {
       Language injectedLanguage = injectedElement.getLanguage();
       if (!injectedLanguage.equals(myFile.getLanguage())) {
         WhiteSpaceFormattingStrategy localStrategy = WhiteSpaceFormattingStrategyFactory.getStrategy(injectedLanguage);
-        String unescapedText = InjectedLanguageUtil.getUnescapedLeafText(injectedElement, true);
+        String unescapedText = InjectedLanguageUtilBase.getUnescapedLeafText(injectedElement, true);
         if (unescapedText != null) {
           return localStrategy.check(unescapedText, 0, unescapedText.length()) >= unescapedText.length();
         }

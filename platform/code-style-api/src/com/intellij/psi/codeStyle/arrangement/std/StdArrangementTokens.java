@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.arrangement.std;
 
-import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.CodeStyleBundle;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -78,26 +78,26 @@ public final class StdArrangementTokens {
   }
 
   private static StdArrangementSettingsToken invertible(@NotNull String id,
-                                                        @PropertyKey(resourceBundle = ApplicationBundle.BUNDLE) @NotNull String displayNameKey,
-                                                        @PropertyKey(resourceBundle = ApplicationBundle.BUNDLE) @NotNull String invertedNameKey,
+                                                        @PropertyKey(resourceBundle = CodeStyleBundle.BUNDLE) @NotNull String displayNameKey,
+                                                        @PropertyKey(resourceBundle = CodeStyleBundle.BUNDLE) @NotNull String invertedNameKey,
                                                         @NotNull StdArrangementTokenType type) {
     StdArrangementSettingsToken result = StdInvertibleArrangementSettingsToken.invertibleToken(
-      id, ApplicationBundle.message(displayNameKey), ApplicationBundle.message(invertedNameKey), type
+      id, CodeStyleBundle.message(displayNameKey), CodeStyleBundle.message(invertedNameKey), type
     );
     TOKENS_BY_ID.put(id, result);
     return result;
   }
 
   private static StdArrangementSettingsToken compositeToken(@NonNls @NotNull String id,
-                                                            @PropertyKey(resourceBundle = ApplicationBundle.BUNDLE) @NotNull String key,
+                                                            @PropertyKey(resourceBundle = CodeStyleBundle.BUNDLE) @NotNull String key,
                                                             @NotNull StdArrangementTokenType type,
                                                             ArrangementSettingsToken @NotNull ... alternativeTokens) {
-    StdArrangementSettingsToken result = CompositeArrangementToken.create(id, ApplicationBundle.message(key), type, alternativeTokens);
+    StdArrangementSettingsToken result = CompositeArrangementToken.create(id, CodeStyleBundle.message(key), type, alternativeTokens);
     TOKENS_BY_ID.put(id, result);
     return result;
   }
 
-  private static StdArrangementSettingsToken token(@NotNull String id, @NotNull @PropertyKey(resourceBundle = ApplicationBundle.BUNDLE) String key,
+  private static StdArrangementSettingsToken token(@NotNull String id, @NotNull @PropertyKey(resourceBundle = CodeStyleBundle.BUNDLE) String key,
                                                    @NotNull StdArrangementTokenType type) {
     StdArrangementSettingsToken result = StdArrangementSettingsToken.tokenByBundle(id, key, type);
     TOKENS_BY_ID.put(id, result);

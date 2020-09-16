@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.codeStyle.arrangement.std;
 
-import com.intellij.lang.LangBundle;
+import com.intellij.CodeStyleBundle;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
@@ -55,7 +55,7 @@ public class StdArrangementRuleAliasToken extends StdArrangementSettingsToken im
 
   @NotNull
   private static @Nls String createRepresentationValue(@NotNull String name) {
-    return LangBundle.message("arrange.by.x", name);
+    return CodeStyleBundle.message("arrange.by.x", name);
   }
 
   private static String createIdByName(@NotNull String name) {
