@@ -54,12 +54,6 @@ public class EditorConfigOptionImpl extends EditorConfigOptionBase implements Ed
 
   @Override
   @Nullable
-  public EditorConfigOptionValueRawText getOptionValueRawText() {
-    return findChildByClass(EditorConfigOptionValueRawText.class);
-  }
-
-  @Override
-  @Nullable
   public EditorConfigQualifiedOptionKey getQualifiedOptionKey() {
     return findChildByClass(EditorConfigQualifiedOptionKey.class);
   }

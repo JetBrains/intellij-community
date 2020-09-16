@@ -59,10 +59,6 @@ public class EditorConfigVisitor extends PsiElementVisitor {
     visitDescribableElement(o);
   }
 
-  public void visitOptionValueRawText(@NotNull EditorConfigOptionValueRawText o) {
-    visitPsiElement(o);
-  }
-
   public void visitPattern(@NotNull EditorConfigPattern o) {
     visitHeaderElement(o);
   }

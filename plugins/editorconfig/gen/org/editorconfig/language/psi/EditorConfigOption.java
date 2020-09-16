@@ -22,9 +22,6 @@ public interface EditorConfigOption extends EditorConfigDescribableElement {
   EditorConfigOptionValuePair getOptionValuePair();
 
   @Nullable
-  EditorConfigOptionValueRawText getOptionValueRawText();
-
-  @Nullable
   EditorConfigQualifiedOptionKey getQualifiedOptionKey();
 
   @NotNull
