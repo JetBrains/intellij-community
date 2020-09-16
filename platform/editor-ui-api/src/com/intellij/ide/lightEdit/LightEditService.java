@@ -40,10 +40,6 @@ public interface LightEditService {
 
   Project getProject();
 
-  default @NotNull Project requireProject() {
-    return Objects.requireNonNull(getProject());
-  }
-
   boolean canOpen(@NotNull VirtualFile file);
 
   @Nullable
