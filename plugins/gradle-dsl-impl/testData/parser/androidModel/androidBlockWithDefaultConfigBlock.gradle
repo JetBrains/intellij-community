@@ -1,0 +1,5 @@
+android {
+  defaultConfig {
+    applicationId "com.example.myapplication"
+  }
+}

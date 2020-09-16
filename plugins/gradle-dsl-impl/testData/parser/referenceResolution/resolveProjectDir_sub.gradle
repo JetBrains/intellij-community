@@ -1,0 +1,8 @@
+ext {
+  pd = projectDir
+  pd1 = project.projectDir
+  pd2 = parent.projectDir
+  pd3 = rootProject.projectDir
+  pd4 = project(':<SUB_MODULE_NAME>').projectDir
+  pd5 = project(':').projectDir
+}

@@ -1,0 +1,5 @@
+ext {
+  prop1 = 1 + 2
+  prop2 = 1 * 2
+  prop2 = object.getValue()**object.getOtherValue()
+}

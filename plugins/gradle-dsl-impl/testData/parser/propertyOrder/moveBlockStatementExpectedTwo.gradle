@@ -1,0 +1,10 @@
+ext {
+  prop = 43
+}
+android {
+  buildTypes {
+    debug {
+      def var = sneaky
+    }
+  }
+}

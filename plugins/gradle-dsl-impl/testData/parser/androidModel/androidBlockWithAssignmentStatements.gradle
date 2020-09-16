@@ -1,0 +1,7 @@
+android {
+  buildToolsVersion = "23.0.0"
+  compileSdkVersion = "android-23"
+  defaultPublishConfig = "debug"
+  dynamicFeatures = [":f1", ":f2"]
+  generatePureSplits = true
+}

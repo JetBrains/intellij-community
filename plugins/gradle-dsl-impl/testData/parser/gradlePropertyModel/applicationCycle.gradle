@@ -1,0 +1,5 @@
+ext {
+  prop2 = "true"
+}
+
+apply from: "a.gradle"

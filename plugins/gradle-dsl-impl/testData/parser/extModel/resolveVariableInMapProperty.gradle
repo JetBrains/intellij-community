@@ -1,0 +1,4 @@
+ext.TEST_STRING = "test"
+android.defaultConfig {
+  testInstrumentationRunnerArguments size: "medium", foo: "$TEST_STRING"
+}

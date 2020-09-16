@@ -1,0 +1,4 @@
+ext.libraries = [
+  guava : "com.google.guava:guava:19.0-rc1",
+  design: "com.android.support:design:22.2.1"
+]

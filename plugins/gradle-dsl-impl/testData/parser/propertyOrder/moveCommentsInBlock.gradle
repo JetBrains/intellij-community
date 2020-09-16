@@ -1,0 +1,24 @@
+apply plugin: 'com.android.application'
+/*
+  This is a top level comment*/
+
+android {
+  /*
+    This is a really cool comment!!
+    And look, it is on multiple lines!
+  */
+  compileSdkVersion 19
+  buildToolsVersion "19.1.0"
+}
+ext {
+  /* This is another
+  block comment
+  on lots of lines*/
+  prop1 = 1
+  /**
+   // This is another comment
+   **/
+  prop2 = prop1
+  /* and a last one
+  this one start on a line, who would do this???*/ prop3 = "hello"
+}

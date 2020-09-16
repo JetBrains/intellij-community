@@ -1,0 +1,3 @@
+targetCompatibility = JavaVersion.VERSION_1_5
+sourceCompatibility = 1.5
+dependencies {}

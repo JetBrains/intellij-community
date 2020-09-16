@@ -1,0 +1,6 @@
+android {
+  packagingOptions {
+    merges = []
+    pickFirsts = []
+  }
+}

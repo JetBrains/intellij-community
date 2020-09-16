@@ -1,0 +1,3 @@
+allprojects { project ->
+  apply from: "versions.gradle"
+}

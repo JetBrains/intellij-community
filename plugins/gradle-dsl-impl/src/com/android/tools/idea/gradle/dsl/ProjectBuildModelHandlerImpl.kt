@@ -87,6 +87,5 @@ class ProjectBuildModelHandlerImpl(val project: Project) : ProjectBuildModelHand
   @NonInjectable
   constructor(project: Project, projectModel: ProjectBuildModel) : this(project) {
     projectBuildModel = projectModel
-    UpToDateChecker.EXTENSION_POINT_NAME.extensionList.forEach{it.setUpToDate(project)}
   }
 }

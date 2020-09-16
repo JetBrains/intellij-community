@@ -1,0 +1,6 @@
+configurations.badConfig
+configurations.otherBadConfig.visible = false
+configurations {
+  superBadConfig.visible = false
+}
+configurations.evenWorseConfig.transitive = true

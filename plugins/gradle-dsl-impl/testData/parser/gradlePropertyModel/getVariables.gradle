@@ -1,0 +1,8 @@
+ext {
+  def var1 = "gecko"
+  def var2 = "barbet"
+  def var3 = "crane"
+  prop1 = "sidewinder"
+  prop2 = "jackel"
+  prop3 = "tiger"
+}

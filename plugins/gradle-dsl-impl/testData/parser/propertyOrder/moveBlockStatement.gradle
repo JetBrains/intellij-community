@@ -1,0 +1,11 @@
+android {
+  buildTypes {
+    debug {
+      def var = sneaky
+    }
+  }
+}
+ext {
+  prop1 = "hello"
+  prop2 = true
+}

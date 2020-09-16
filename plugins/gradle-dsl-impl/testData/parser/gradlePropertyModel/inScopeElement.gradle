@@ -1,0 +1,5 @@
+def var1 = "aardwolf" // No
+ext {
+  def var2 = "zorro" // No
+  prop1 = "baboon" // Yes
+}

@@ -1,0 +1,7 @@
+android {
+  productFlavors {
+    demo {
+      matchingFallbacks = ['trial', 'free']
+    }
+  }
+}

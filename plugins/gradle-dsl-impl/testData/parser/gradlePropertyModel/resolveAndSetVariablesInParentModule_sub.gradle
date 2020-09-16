@@ -1,0 +1,4 @@
+ext {
+  prop1 = greeting
+  prop2 = "${greeting} world!"
+}

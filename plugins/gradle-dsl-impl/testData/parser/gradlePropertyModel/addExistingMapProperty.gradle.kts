@@ -1,0 +1,1 @@
+val prop by extra(mapOf("key" to "val"))

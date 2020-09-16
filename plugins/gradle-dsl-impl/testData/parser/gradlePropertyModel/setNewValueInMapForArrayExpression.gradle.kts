@@ -1,0 +1,1 @@
+extra["prop1"] = mapOf("key1" to "value1", "key2" to "value2")

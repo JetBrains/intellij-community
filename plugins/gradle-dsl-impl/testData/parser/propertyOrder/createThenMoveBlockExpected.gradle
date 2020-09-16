@@ -1,0 +1,7 @@
+ext {
+  prop1 = true
+}
+android {
+  compileSdkVersion 19
+  buildToolsVersion "19.1.0"
+}

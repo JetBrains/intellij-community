@@ -1,0 +1,5 @@
+ext {
+  prop1 = [1, 2, 3]
+  prop2 = ["hellO"]
+  prop3 = [54]
+}

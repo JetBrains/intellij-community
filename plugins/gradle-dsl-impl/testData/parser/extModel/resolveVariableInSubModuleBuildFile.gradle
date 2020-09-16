@@ -1,0 +1,1 @@
+ext.xyz = "value_from_main_module_build_file"

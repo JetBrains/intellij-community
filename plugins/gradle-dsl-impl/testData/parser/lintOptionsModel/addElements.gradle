@@ -1,0 +1,4 @@
+android {
+  lintOptions {
+  }
+}

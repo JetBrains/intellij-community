@@ -1,0 +1,4 @@
+android {
+  dynamicFeatures = [":f1", ":f2", ':f']
+  flavorDimensions "abi", "version", 'xyz'
+}

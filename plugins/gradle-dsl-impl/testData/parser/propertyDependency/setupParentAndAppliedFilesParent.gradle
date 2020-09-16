@@ -1,0 +1,6 @@
+ext {
+  // Some global properties.
+  numbers = [0, 1, 2, 3, 4, 5, 6]
+  letters = ['a', 'b', 'c', 'd', 'e']
+  bool = true
+}

@@ -1,0 +1,6 @@
+android {
+  defaultConfig {
+    manifestPlaceholders key1: "value1", key2: "value2"
+    testInstrumentationRunnerArguments size: "medium", foo: "bar"
+  }
+}

@@ -1,0 +1,4 @@
+ext {
+  propList = [1]
+  newVar = 1
+}

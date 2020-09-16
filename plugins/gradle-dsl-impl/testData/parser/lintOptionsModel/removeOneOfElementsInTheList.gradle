@@ -1,0 +1,11 @@
+android {
+  lintOptions {
+    check 'check-id-1', 'check-id-2'
+    disable 'disable-id-1', 'disable-id-2'
+    enable 'enable-id-1', 'enable-id-2'
+    error 'error-id-1', 'error-id-2'
+    fatal 'fatal-id-1', 'fatal-id-2'
+    ignore 'ignore-id-1', 'ignore-id-2'
+    warning 'warning-id-1', 'warning-id-2'
+  }
+}

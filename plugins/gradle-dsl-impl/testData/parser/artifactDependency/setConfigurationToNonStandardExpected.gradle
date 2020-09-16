@@ -1,0 +1,10 @@
+android {
+  buildTypes {
+    custom {
+    }
+  }
+}
+
+dependencies {
+  customImplementation 'com.example:artifact:1.0'
+}

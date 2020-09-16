@@ -1,0 +1,8 @@
+buildscript {
+  dependencies {
+    ext.hello = 'boo'
+    classpath "com.android.tools.build:gradle:$hello"
+  }
+}
+ext.goodbye = hello
+ext.goodday = buildscript.dependencies.ext.hello

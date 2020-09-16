@@ -1,0 +1,8 @@
+ext {
+  rpd = rootDir
+  rpd1 = project.rootDir
+  rpd2 = parent.rootDir
+  rpd3 = rootProject.rootDir
+  rpd4 = project(':<SUB_MODULE_NAME>').rootDir
+  rpd5 = project(':').rootDir
+}

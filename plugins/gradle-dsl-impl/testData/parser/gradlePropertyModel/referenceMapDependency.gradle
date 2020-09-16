@@ -1,0 +1,4 @@
+ext {
+  prop1 = ["key": 'value']
+  prop2 = prop1
+}

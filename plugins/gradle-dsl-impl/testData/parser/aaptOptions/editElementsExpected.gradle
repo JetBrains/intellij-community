@@ -1,0 +1,10 @@
+android {
+  aaptOptions {
+    additionalParameters 'abcd', 'xyz'
+    cruncherEnabled true
+    cruncherProcesses 3
+    failOnMissingConfigEntry false
+    ignoreAssets 'mnop'
+    noCompress 'a', 'c'
+  }
+}

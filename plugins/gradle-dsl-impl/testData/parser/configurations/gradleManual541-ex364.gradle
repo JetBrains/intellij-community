@@ -1,0 +1,18 @@
+configurations {
+    rejectConfig {
+        resolutionStrategy {
+            componentSelection {
+                // Accept the highest version matching the requested version that isn't '1.5'
+                all { ComponentSelection selection ->
+                    if (selection.candidate.group == 'org.sample' && selection.candidate.module == 'api' && selection.candidate.version == '1.5') {
+                        selection.reject("version 1.5 is broken for 'org.sample:api'")
+                    }
+                }
+            }
+        }
+    }
+}
+
+dependencies {
+    rejectConfig "org.sample:api:1.+"
+}

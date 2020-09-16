@@ -1,0 +1,9 @@
+def var1 = "Hello"
+def var2 = var1
+def var3 = true
+
+ext {
+  prop1 = var2
+  prop2 = "${prop1} world!"
+  prop3 = var3
+}

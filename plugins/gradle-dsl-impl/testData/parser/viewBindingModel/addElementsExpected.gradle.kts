@@ -1,0 +1,5 @@
+android {
+  viewBinding {
+    isEnabled = false
+  }
+}

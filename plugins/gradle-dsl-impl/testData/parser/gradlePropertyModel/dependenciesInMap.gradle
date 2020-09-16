@@ -1,0 +1,5 @@
+ext {
+  prop1 = 25
+  prop2 = false
+  prop4 = ["key1": prop1, "key2": "${prop2}"]
+}

@@ -1,0 +1,6 @@
+ext {
+  prop1 = [1, 2, 3]
+  prop2 = [prop1, prop1, prop1]
+  prop3 = ['key': prop2]
+  prop4 = "${prop3.key[0][2]}"
+}

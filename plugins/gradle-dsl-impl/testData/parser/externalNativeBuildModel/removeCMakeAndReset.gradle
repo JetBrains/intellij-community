@@ -1,0 +1,6 @@
+android {
+  externalNativeBuild {
+    cmake {
+    }
+  }
+}

@@ -1,0 +1,4 @@
+ext.TEST_MAP = [test1: "value1", test2: "value2"]
+android.defaultConfig {
+  testInstrumentationRunnerArguments TEST_MAP
+}

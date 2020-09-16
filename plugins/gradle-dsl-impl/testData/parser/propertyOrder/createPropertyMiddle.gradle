@@ -1,0 +1,4 @@
+ext {
+  prop1 = 1
+  prop3 = 3
+}

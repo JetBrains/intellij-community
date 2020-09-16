@@ -1,0 +1,6 @@
+android {
+  sourceSets {
+    set1 {
+    }
+  }
+}

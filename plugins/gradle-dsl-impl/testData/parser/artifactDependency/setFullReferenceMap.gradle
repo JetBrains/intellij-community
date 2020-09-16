@@ -1,0 +1,12 @@
+ext {
+  dependency = [group: 'group', name: 'name', version: '1.0']
+  guavaGroup = 'com.google.guava'
+  guavaName = 'guava'
+  otherDependency = [group: 'g', name: 'n', version: '2.0']
+}
+dependencies {
+  testCompile 'org.gradle.test.classifiers:service:1.0'
+  compile group: 'boo', name: 'boo', version: '4.0', {}
+  testCompile([group: 'up', name: 'down', version: '1.0']) {}
+  compile(group: 'bar', name: 'bar', version: '3.0')
+}

@@ -1,0 +1,22 @@
+apply plugin: 'com.android.application'
+
+ext {
+  prop1 = "3"
+  def var1 = 2
+  prop2 = [1, true, "1"]
+  def var3 = [key: 6, key1: "7"]
+  def var2 = var1
+}
+android {
+  compileSdkVersion 19
+  buildToolsVersion "19.1.0"
+
+  signingConfigs {
+    myConfig {
+      storeFile file("debug.keystore")
+      storePassword "android"
+      keyAlias "androiddebugkey"
+      keyPassword "android"
+    }
+  }
+}

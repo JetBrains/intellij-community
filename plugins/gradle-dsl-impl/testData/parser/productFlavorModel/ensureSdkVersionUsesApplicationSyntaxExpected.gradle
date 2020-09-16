@@ -1,0 +1,8 @@
+android {
+  defaultConfig {
+    minSdkVersion 18
+    maxSdkVersion 24
+    targetSdkVersion 24
+  }
+}
+

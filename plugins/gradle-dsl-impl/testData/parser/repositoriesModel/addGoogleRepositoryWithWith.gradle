@@ -1,0 +1,12 @@
+buildscript {
+    repositories {
+        google().with {
+            content {
+                includeGroupByRegex 'androidx?\\..*'
+                includeGroupByRegex 'com\\.android\\..*'
+            }
+        }
+        jcenter()
+    }
+}
+

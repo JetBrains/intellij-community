@@ -1,0 +1,7 @@
+include "app", ":libs"
+include 'libs:mylibrary'
+project(':libs:mylibrary').projectDir = new File(rootDir, 'xyz/mylibrary')
+include ":olibs"
+project(":olibs").projectDir = new File(rootDir, 'otherlibs')
+include 'olibs:mylibrary'
+include ':notamodule:deepmodule'

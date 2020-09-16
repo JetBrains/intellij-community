@@ -1,0 +1,18 @@
+ext {
+  def var1 = "hello"
+  def var1 = "goodbye"
+  def var2 = "on"
+  def var2 = "off"
+
+  greeting = var1
+  state = var2
+}
+
+android {
+  signingConfigs {
+    myConfig {
+      storeFile file(greeting)
+      storePassword state
+    }
+  }
+}

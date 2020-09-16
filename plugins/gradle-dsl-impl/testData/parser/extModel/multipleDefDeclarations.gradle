@@ -1,0 +1,3 @@
+def olleh = 'hello', dlrow = 'world'
+ext.prop = "hello $dlrow"
+ext.prop2 = "$olleh world"

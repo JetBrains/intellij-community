@@ -1,0 +1,3 @@
+ext.FIRST = 123
+ext.SECOND = FIRST
+ext.THIRD = SECOND

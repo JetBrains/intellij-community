@@ -1,0 +1,4 @@
+ext {
+  def map1 = [key1: 'a', "key2": 'b', key3: 'c']
+  map2 = [key4: 4]
+}

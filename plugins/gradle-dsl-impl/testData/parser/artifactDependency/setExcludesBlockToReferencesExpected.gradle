@@ -1,0 +1,8 @@
+ext.junit_version = '2.3.1'
+ext.excludes_name = 'bad'
+ext.excludes_group = 'dependency'
+dependencies {
+  implementation "junit:junit:$junit_version", {
+    exclude group: "$excludes_group", module: "$excludes_name"
+  }
+}

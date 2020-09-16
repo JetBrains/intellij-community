@@ -1,0 +1,10 @@
+ext {
+  var1 = true
+  var2 = false
+}
+configurations {
+  newConfig
+  otherNewConfig {
+    visible var1
+  }
+}

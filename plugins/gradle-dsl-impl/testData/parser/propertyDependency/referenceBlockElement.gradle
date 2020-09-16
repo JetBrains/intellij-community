@@ -1,0 +1,7 @@
+android {
+  compileSdkVersion 26
+}
+
+ext {
+  prop1 = android
+}

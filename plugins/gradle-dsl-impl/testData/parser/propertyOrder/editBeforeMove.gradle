@@ -1,0 +1,5 @@
+ext {
+  prop1 = "hello"
+  prop2 = "swap around me :)"
+  prop3 = [1, 2, 3]
+}

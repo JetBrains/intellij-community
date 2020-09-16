@@ -1,0 +1,7 @@
+android {
+  buildTypes {
+    xyz {
+      manifestPlaceholders activityLabel2: "defaultName2"
+    }
+  }
+}
