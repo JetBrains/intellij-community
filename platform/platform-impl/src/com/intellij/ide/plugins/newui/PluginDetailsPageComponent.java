@@ -154,6 +154,14 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myIconLabel.setOpaque(false);
     header.add(myIconLabel, BorderLayout.WEST);
 
+    myGearButton = TabbedPaneHeaderComponent.createToolbar(
+      IdeBundle.message("plugin.settings.link.title"),
+      createGearActions()
+    );
+    myGearButton.setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
+    myGearButton.setOpaque(false);
+    header.add(myGearButton, BorderLayout.EAST);
+
     return header;
   }
 
@@ -225,12 +233,6 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myNameAndButtons.addButtonComponent(myInstallButton = new InstallButton(true));
     myInstallButton
       .addActionListener(e -> myPluginModel.installOrUpdatePlugin(this, myPlugin, null, ModalityState.stateForComponent(myInstallButton)));
-
-    myGearButton = TabbedPaneHeaderComponent.createToolbar(
-      IdeBundle.message("plugin.settings.link.title"),
-      createGearActions()
-    );
-    myNameAndButtons.addButtonComponent(myGearButton);
 
     for (Component component : myNameAndButtons.getButtonComponents()) {
       component.setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
