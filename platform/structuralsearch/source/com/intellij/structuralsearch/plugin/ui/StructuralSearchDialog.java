@@ -904,7 +904,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   }
 
   private void removeMatchHighlights() {
-    if (myEditConfigOnly) {
+    if (myEditConfigOnly || myRangeHighlighters.isEmpty()) {
       return;
     }
     // retrieval of editor needs to be outside of invokeLater(), otherwise the editor might have already changed.
