@@ -200,9 +200,11 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
         presentation.setHoveredIcon(null);
       }
     };
-    ListPopup popup = new PopupFactoryImpl.ActionGroupPopup(null, actionGroup, e.getDataContext(), false, false,
-                                          true, false, null, -1,
-                                          null, null, presentationFactory, false);
+    ListPopup popup = new PopupFactoryImpl.ActionGroupPopup(null, actionGroup, e.getDataContext(), false,
+                                                            false, true, false,
+                                                            null, -1, null,
+                                                            ActionPlaces.getActionGroupPopupPlace(e.getPlace()), presentationFactory,
+                                                            false);
 
     popup.showUnderneathOf(e.getInputEvent().getComponent());
   }
