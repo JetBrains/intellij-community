@@ -928,6 +928,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
 
   private void addMatchHighlights() {
     if (myEditConfigOnly || DumbService.isDumb(getProject())) {
+      // Search hits in the current editor are not shown when dumb.
       return;
     }
     final Project project = getProject();
