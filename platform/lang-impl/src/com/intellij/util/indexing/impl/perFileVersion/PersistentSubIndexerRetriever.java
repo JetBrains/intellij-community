@@ -5,10 +5,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
-import com.intellij.util.indexing.CompositeDataIndexer;
-import com.intellij.util.indexing.ID;
-import com.intellij.util.indexing.IndexInfrastructure;
-import com.intellij.util.indexing.IndexedFile;
+import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataInputOutputUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,6 +19,7 @@ import java.util.Map;
 
 public final class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersion> implements Closeable {
   private static final String INDEXED_VERSIONS = "indexed_versions";
+  private static final int UNINDEXED_STATE = -2;
 
   @NotNull
   private final PersistentSubIndexerVersionEnumerator<SubIndexerVersion> myPersistentVersionEnumerator;
@@ -72,7 +70,7 @@ public final class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersi
   }
 
   public void setUnindexedState(int fileId) throws IOException {
-    setFileIndexerId(fileId, -2);
+    setFileIndexerId(fileId, UNINDEXED_STATE);
   }
 
   private void setFileIndexerId(int fileId, int indexerId) throws IOException {
@@ -81,20 +79,24 @@ public final class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersi
     }
   }
 
-  public boolean isIndexed(int fileId, @NotNull IndexedFile file) throws IOException {
-    DataInputStream stream = FSRecords.readAttributeWithLock(fileId, myFileAttribute);
-    int currentIndexedVersion;
-    if (stream != null) {
-      currentIndexedVersion = DataInputOutputUtil.readINT(stream);
-      int actualVersion = getFileIndexerId(file);
-      return actualVersion == currentIndexedVersion;
+  public FileIndexingState getSubIndexerState(int fileId, @NotNull IndexedFile file) throws IOException {
+    try (DataInputStream stream = FSRecords.readAttributeWithLock(fileId, myFileAttribute)) {
+      int currentIndexedVersion;
+      if (stream != null) {
+        currentIndexedVersion = DataInputOutputUtil.readINT(stream);
+        if (currentIndexedVersion == UNINDEXED_STATE) {
+          return FileIndexingState.NOT_INDEXED;
+        }
+        int actualVersion = getFileIndexerId(file);
+        return actualVersion == currentIndexedVersion ? FileIndexingState.UP_TO_DATE : FileIndexingState.OUT_DATED;
+      }
+      return FileIndexingState.NOT_INDEXED;
     }
-    return false;
   }
 
   public int getFileIndexerId(@NotNull IndexedFile file) throws IOException {
     SubIndexerVersion version = getVersion(file);
-    if (version == null) return -1;
+    if (version == null) return UNINDEXED_STATE;
     return myPersistentVersionEnumerator.enumerate(version);
   }
 

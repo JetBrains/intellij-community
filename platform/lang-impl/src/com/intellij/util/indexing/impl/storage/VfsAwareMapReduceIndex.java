@@ -246,17 +246,24 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
     if (mySubIndexerRetriever == null) return FileIndexingState.UP_TO_DATE;
     if (!(file instanceof FileContent)) {
       if (((CompositeDataIndexer<?, ?, ?, ?>)myIndexer).requiresContentForSubIndexerEvaluation(file)) {
-        return isIndexConfigurationUpToDate(fileId, file) ? FileIndexingState.UP_TO_DATE : FileIndexingState.OUT_DATED;
+        FileIndexingState indexConfigurationState = isIndexConfigurationUpToDate(fileId, file);
+        // baseState == UP_TO_DATE => no need to reindex this file
+        return indexConfigurationState == FileIndexingState.OUT_DATED ? FileIndexingState.OUT_DATED : FileIndexingState.UP_TO_DATE;
       }
     }
     try {
-      if (mySubIndexerRetriever.isIndexed(fileId, file)) {
+      FileIndexingState subIndexerState = mySubIndexerRetriever.getSubIndexerState(fileId, file);
+      if (subIndexerState == FileIndexingState.UP_TO_DATE) {
         if (file instanceof FileContent && ((CompositeDataIndexer<?, ?, ?, ?>)myIndexer).requiresContentForSubIndexerEvaluation(file)) {
           setIndexConfigurationUpToDate(fileId, file);
         }
         return FileIndexingState.UP_TO_DATE;
       }
-      return FileIndexingState.OUT_DATED;
+      if (subIndexerState == FileIndexingState.NOT_INDEXED) {
+        // baseState == UP_TO_DATE => no need to reindex this file
+        return FileIndexingState.UP_TO_DATE;
+      }
+      return subIndexerState;
     }
     catch (IOException e) {
       LOG.error(e);
@@ -264,8 +271,8 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
     }
   }
 
-  protected boolean isIndexConfigurationUpToDate(int fileId, @NotNull IndexedFile file) {
-    return false;
+  protected FileIndexingState isIndexConfigurationUpToDate(int fileId, @NotNull IndexedFile file) {
+    return FileIndexingState.OUT_DATED;
   }
 
   protected void setIndexConfigurationUpToDate(int fileId, @NotNull IndexedFile file) { }
