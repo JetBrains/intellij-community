@@ -10,8 +10,11 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import kotlin.collections.LinkedHashMap
 
-sealed class DirectoryContentSpecImpl : DirectoryContentSpec
+sealed class DirectoryContentSpecImpl : DirectoryContentSpec {
+  abstract override fun mergeWith(other: DirectoryContentSpec): DirectoryContentSpecImpl
+}
 
 abstract class DirectorySpecBase : DirectoryContentSpecImpl() {
   protected val children: LinkedHashMap<String, DirectoryContentSpecImpl> = LinkedHashMap()
@@ -41,6 +44,22 @@ abstract class DirectorySpecBase : DirectoryContentSpecImpl() {
   }
 
   fun getChildren() : Map<String, DirectoryContentSpecImpl> = Collections.unmodifiableMap(children)
+
+  override fun mergeWith(other: DirectoryContentSpec): DirectoryContentSpecImpl {
+    require(other.javaClass == javaClass)
+    other as DirectorySpecBase
+    val result = when (other) {
+      is DirectorySpec -> DirectorySpec()
+      is ZipSpec -> ZipSpec()
+      else -> error(other)
+    }
+    result.children.putAll(children)
+    for ((name, child) in other.children) {
+      val oldChild = children[name]
+      result.children[name] = oldChild?.mergeWith(child) ?: child
+    }
+    return result
+  }
 }
 
 class DirectorySpec : DirectorySpecBase() {
@@ -80,6 +99,10 @@ class FileSpec(val content: ByteArray?) : DirectoryContentSpecImpl() {
     val target = FileUtil.createTempFile("file-by-spec", null, true)
     generate(target)
     return target.toPath()
+  }
+
+  override fun mergeWith(other: DirectoryContentSpec): DirectoryContentSpecImpl {
+    return other as DirectoryContentSpecImpl
   }
 }
 

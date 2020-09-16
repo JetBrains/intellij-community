@@ -75,6 +75,12 @@ interface DirectoryContentSpec {
    * Generates files, directories and archives accordingly to this specification in a temp directory and return that directory.
    */
   fun generateInTempDir(): Path
+
+  /**
+   * Returns specification for a directory which contain all data from this instance and data from [other]. If the both instance have
+   * specification for the same file, data from [other] wins.
+   */
+  fun mergeWith(other: DirectoryContentSpec): DirectoryContentSpec
 }
 
 /**
