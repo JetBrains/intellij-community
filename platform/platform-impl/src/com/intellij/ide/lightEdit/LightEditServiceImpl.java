@@ -126,10 +126,11 @@ public final class LightEditServiceImpl implements LightEditService,
   @Nullable
   public Project openFile(@NotNull VirtualFile file, boolean force) {
     if (force || canOpen(file)) {
+      Project project = myLightEditProjectManager.getOrCreateProject();
       doWhenActionManagerInitialized(() -> {
         doOpenFile(file);
       });
-      return myLightEditProjectManager.getOrCreateProject();
+      return project;
     }
     return null;
   }
