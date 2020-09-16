@@ -1190,6 +1190,7 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     val displayText = "Content of the workspace model in binary format"
     var _message = "$message\n\n!Please include all attachments to the report!"
     _message += "\n\nEntity source filter: $entitySourceFilter"
+    _message += "\n\nVersion: ${serializer.serializerDataFormatVersion}"
 
     val leftAttachment = createAttachment("Left_Store", leftBytes, displayText)
     val rightAttachment = createAttachment("Right_Store", rightBytes, displayText)
