@@ -3071,16 +3071,17 @@ public class ContainerUtil {
   }
 
   /**
-   * Create an immutable copy of the {@code list}.
+   * Creates an immutable copy of the {@code list},
+   * or returns {@link Collections#emptyList} if the {@code list} is empty.
    * Modifications of the {@code list} have no effect on the returned copy.
    */
   @Contract(value = "_ -> new", pure = true)
-  public static @NotNull <T> List<T> freeze(@NotNull List<? extends T> list) {
+  public static @NotNull <T> List<T> immutableCopy(@NotNull List<? extends T> list) {
     if (list.isEmpty()) {
       return Collections.emptyList();
     }
     if (list.size() == 1) {
-      return immutableSingletonList(list.get(0));
+      return Collections.singletonList(list.get(0));
     }
     //noinspection unchecked
     return immutableList((T[])list.toArray());
