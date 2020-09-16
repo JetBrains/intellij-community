@@ -47,7 +47,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl;
 import com.intellij.packageDependencies.DependencyValidationManager;
-import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -189,28 +188,37 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   }
 
   @Override
-  public void cleanFileLevelHighlights(@NotNull Project project, final int group, @NotNull PsiFile psiFile) {
-    FileViewProvider provider = psiFile.getViewProvider();
-    VirtualFile vFile = provider.getVirtualFile();
+  public void cleanFileLevelHighlights(@NotNull Project project, int group, @NotNull PsiFile psiFile) {
+    VirtualFile vFile = psiFile.getViewProvider().getVirtualFile();
     for (FileEditor fileEditor : myFileEditorManager.getEditors(vFile)) {
-      final List<HighlightInfo> infos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
-      if (infos == null) continue;
-      List<HighlightInfo> infosToRemove = new ArrayList<>();
-      for (HighlightInfo info : infos) {
-        if (info.getGroup() == group) {
-          myFileEditorManager.removeTopComponent(fileEditor, info.fileLevelComponent);
-          infosToRemove.add(info);
-        }
-      }
-      infos.removeAll(infosToRemove);
+      cleanFileLevelHighlights(fileEditor, group);
     }
   }
 
+  void cleanAllFileLevelHighlights() {
+    for (FileEditor fileEditor : myFileEditorManager.getAllEditors()) {
+      cleanFileLevelHighlights(fileEditor, -1);
+    }
+  }
+
+  private void cleanFileLevelHighlights(FileEditor fileEditor, int group) {
+    List<HighlightInfo> infos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
+    if (infos == null) return;
+    List<HighlightInfo> infosToRemove = new ArrayList<>(infos.size());
+    for (HighlightInfo info : infos) {
+      if (info.getGroup() == group || group == -1) {
+        myFileEditorManager.removeTopComponent(fileEditor, info.fileLevelComponent);
+        infosToRemove.add(info);
+      }
+    }
+    infos.removeAll(infosToRemove);
+  }
+
   @Override
-  public void addFileLevelHighlight(@NotNull final Project project,
-                                    final int group,
-                                    @NotNull final HighlightInfo info,
-                                    @NotNull final PsiFile psiFile) {
+  public void addFileLevelHighlight(@NotNull Project project,
+                                    int group,
+                                    @NotNull HighlightInfo info,
+                                    @NotNull PsiFile psiFile) {
     VirtualFile vFile = psiFile.getViewProvider().getVirtualFile();
     for (FileEditor fileEditor : myFileEditorManager.getEditors(vFile)) {
       if (fileEditor instanceof TextEditor) {
@@ -230,23 +238,11 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     }
   }
 
-  void cleanAllFileLevelHighlights() {
-    for (FileEditor fileEditor : myFileEditorManager.getAllEditors()) {
-      final List<HighlightInfo> infos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
-      if (infos != null && !infos.isEmpty()) {
-        for (HighlightInfo info : infos) {
-          myFileEditorManager.removeTopComponent(fileEditor, info.fileLevelComponent);
-        }
-        infos.clear();
-      }
-    }
-  }
-
   @Override
   @NotNull
   public List<HighlightInfo> runMainPasses(@NotNull PsiFile psiFile,
                                            @NotNull Document document,
-                                           @NotNull final ProgressIndicator progress) {
+                                           @NotNull ProgressIndicator progress) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       throw new IllegalStateException("Must not run highlighting from under EDT");
     }
@@ -259,10 +255,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     stopProcess(false, "disable background daemon");
     myPassExecutorService.cancelAll(true);
 
-    final List<HighlightInfo> result;
+    List<HighlightInfo> result;
     try {
       result = new ArrayList<>();
-      final VirtualFile virtualFile = psiFile.getVirtualFile();
+      VirtualFile virtualFile = psiFile.getVirtualFile();
       if (virtualFile != null && !virtualFile.getFileType().isBinary()) {
         List<TextEditorHighlightingPass> passes =
           TextEditorHighlightingPassRegistrarEx.getInstanceEx(myProject).instantiateMainPasses(psiFile, document,
@@ -295,8 +291,8 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
   private volatile boolean mustWaitForSmartMode = true;
   @TestOnly
-  public void mustWaitForSmartMode(final boolean mustWait, @NotNull Disposable parent) {
-    final boolean old = mustWaitForSmartMode;
+  public void mustWaitForSmartMode(boolean mustWait, @NotNull Disposable parent) {
+    boolean old = mustWaitForSmartMode;
     mustWaitForSmartMode = mustWait;
     Disposer.register(parent, () -> mustWaitForSmartMode = old);
   }
@@ -307,7 +303,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
                         @NotNull List<? extends TextEditor> textEditors,
                         int @NotNull [] toIgnore,
                         boolean canChangeDocument,
-                        @Nullable final Runnable callbackWhileWaiting) throws ProcessCanceledException {
+                        @Nullable Runnable callbackWhileWaiting) throws ProcessCanceledException {
     assert myInitialized;
     assert !myDisposed;
     Application application = ApplicationManager.getApplication();
@@ -344,7 +340,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
         Editor editor = textEditor.getEditor();
         throw new RuntimeException("Null highlighter from " + textEditor + "; loaded: " + AsyncEditorLoader.isEditorLoaded(editor));
       }
-      final List<TextEditorHighlightingPass> passes = highlighter.getPasses(toIgnore);
+      List<TextEditorHighlightingPass> passes = highlighter.getPasses(toIgnore);
       HighlightingPass[] array = passes.toArray(HighlightingPass.EMPTY_ARRAY);
       assert array.length != 0 : "Highlighting is disabled for the file " + file;
       map.put(textEditor, array);
@@ -357,7 +353,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     // previous passes can be canceled but still in flight. wait for them to avoid interference
     myPassExecutorService.cancelAll(false);
     fileStatusMap.allowDirt(canChangeDocument);
-    final DaemonProgressIndicator progress = createUpdateProgress(map.keySet());
+    DaemonProgressIndicator progress = createUpdateProgress(map.keySet());
     myPassExecutorService.submitPasses(map, progress);
     try {
       long start = System.currentTimeMillis();
@@ -525,7 +521,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     if (myDisabledHighlightingFiles.contains(PsiUtilCore.getVirtualFile(file))) return false;
 
     if (file instanceof PsiCompiledElement) return false;
-    final FileType fileType = file.getFileType();
+    FileType fileType = file.getFileType();
 
     // To enable T.O.D.O. highlighting
     return !fileType.isBinary();
@@ -643,10 +639,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
   static boolean processHighlightsNearOffset(@NotNull Document document,
                                              @NotNull Project project,
-                                             @NotNull final HighlightSeverity minSeverity,
-                                             final int offset,
-                                             final boolean includeFixRange,
-                                             @NotNull final Processor<? super HighlightInfo> processor) {
+                                             @NotNull HighlightSeverity minSeverity,
+                                             int offset,
+                                             boolean includeFixRange,
+                                             @NotNull Processor<? super HighlightInfo> processor) {
     return processHighlights(document, project, null, 0, document.getTextLength(), info -> {
       if (!isOffsetInsideHighlightInfo(offset, info, includeFixRange)) return true;
 
@@ -656,14 +652,14 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   }
 
   @Nullable
-  public HighlightInfo findHighlightByOffset(@NotNull Document document, final int offset, final boolean includeFixRange) {
+  public HighlightInfo findHighlightByOffset(@NotNull Document document, int offset, boolean includeFixRange) {
     return findHighlightByOffset(document, offset, includeFixRange, HighlightSeverity.INFORMATION);
   }
 
   @Nullable
   HighlightInfo findHighlightByOffset(@NotNull Document document,
-                                      final int offset,
-                                      final boolean includeFixRange,
+                                      int offset,
+                                      boolean includeFixRange,
                                       @NotNull HighlightSeverity minSeverity) {
     return findHighlightsByOffset(document, offset, includeFixRange, true, minSeverity);
   }
@@ -681,9 +677,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
    */
   @Nullable
   public HighlightInfo findHighlightsByOffset(@NotNull Document document,
-                                              final int offset,
-                                              final boolean includeFixRange,
-                                              final boolean highestPriorityOnly,
+                                              int offset,
+                                              boolean includeFixRange,
+                                              boolean highestPriorityOnly,
                                               @NotNull HighlightSeverity minSeverity) {
     HighlightByOffsetProcessor processor = new HighlightByOffsetProcessor(highestPriorityOnly);
     processHighlightsNearOffset(document, myProject, minSeverity, offset, includeFixRange, processor);
