@@ -125,3 +125,16 @@ fun loadStashStack(project: Project, root: VirtualFile): List<StashInfo> {
   }
   return result
 }
+
+fun createStashHandler(project: Project, root: VirtualFile, keepIndex: Boolean = false, message: String = ""): GitLineHandler {
+  val handler = GitLineHandler(project, root, GitCommand.STASH)
+  handler.addParameters("save")
+  if (keepIndex) {
+    handler.addParameters("--keep-index")
+  }
+  val msg = message.trim()
+  if (msg.isNotEmpty()) {
+    handler.addParameters(msg)
+  }
+  return handler
+}

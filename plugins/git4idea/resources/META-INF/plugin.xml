@@ -263,9 +263,12 @@
     <action id="Git.Stage.AcceptYours" class="git4idea.index.actions.GitAcceptYoursAction"/>
     <action id="Git.Stage.Merge" class="git4idea.index.actions.GitMergeConflictAction"/>
 
+    <action id="Git.Stash.Silently" class="git4idea.index.actions.GitStashSilentlyAction" icon="AllIcons.Vcs.ShelveSilent"/>
+
     <group id="Git.Stage.Toolbar">
       <reference id="Diff.ShowDiff"/>
       <reference id="Git.Stage.Refresh"/>
+      <reference id="Git.Stash.Silently"/>
     </group>
     <group id="Git.Stage.Tree.Menu">
       <reference id="Git.Stage.Merge"/>
