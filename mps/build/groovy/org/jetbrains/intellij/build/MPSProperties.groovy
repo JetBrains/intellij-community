@@ -32,7 +32,7 @@ class MPSProperties extends JetBrainsProductProperties {
 
         productLayout.additionalPlatformJars.put("resources.jar", "intellij.java.ide.resources")
         productLayout.additionalPlatformJars.
-                putAll("javac2.jar", ["intellij.java.compiler.antTasks", "intellij.java.guiForms.compiler", "intellij.java.guiForms.rt", "intellij.java.compiler.instrumentationUtil", "intellij.java.compiler.instrumentationUtil.java8", "intellij.java.jps.javacRefScanner8"])
+                putAll("javac2.jar", ["intellij.java.compiler.antTasks", "intellij.java.guiForms.compiler", "intellij.java.guiForms.rt", "intellij.java.compiler.instrumentationUtil", "intellij.java.compiler.instrumentationUtil.java8"])
         productLayout.additionalPlatformJars.put("forms_rt.jar", "intellij.java.guiForms.compiler")
         productLayout.additionalPlatformJars.putAll("util.jar", ["intellij.platform.util", "intellij.platform.util.rt"])
 
