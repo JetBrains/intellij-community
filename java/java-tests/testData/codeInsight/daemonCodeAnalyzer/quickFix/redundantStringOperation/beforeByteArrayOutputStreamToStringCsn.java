@@ -12,11 +12,11 @@ class Main {
         String csn = "ISO-8859-1";
 
         ByteArrayOutputStream out1 = new ByteArrayOutputStream();
-        byte[] result1 = out1.toByteArray();
+        byte[] result1 = (out1.toByteArray());
         String s1 = new String(result1, csn);
 
         ByteArrayOutputStream out2 = new ByteArrayOutputStream();
-        byte[] result2 = out2.toByteArray();
+        byte[] result2 = (((out2.toByteArray())));
         String s2 = new String((result2), (csn));
 
         ByteArrayOutputStream out3 = new ByteArrayOutputStream();

@@ -151,8 +151,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       final PsiExpression[] params = args.getExpressions();
 
       if (isNewStringFromByteArrayParams(params)) {
-        PsiMethodCallExpression methodCall = tryCast(ExpressionUtils.resolveExpression(params[0]), PsiMethodCallExpression.class);
-        if (methodCall == null) return null;
+        PsiMethodCallExpression methodCall = getMethodCallExpression(params[0]);
 
         if (BYTE_ARRAY_OUTPUT_STREAM_INTO_BYTE_ARRAY.test(methodCall)) {
           final TextRange range = new TextRange(0, expression.getTextLength());
@@ -897,6 +896,12 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     }
   }
 
+  @Nullable
+  private static PsiMethodCallExpression getMethodCallExpression(PsiExpression expression) {
+    PsiExpression resolvedExpression = PsiUtil.skipParenthesizedExprDown(ExpressionUtils.resolveExpression(expression));
+    return tryCast(resolvedExpression, PsiMethodCallExpression.class);
+  }
+
   private static final class ByteArrayOutputStreamToStringFix extends InspectionGadgetsFix {
     private final String myText;
 
@@ -927,13 +932,19 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       final PsiExpression[] params = args.getExpressions();
       if (!(params.length == 1 || params.length == 2)) return;
 
-      PsiMethodCallExpression resolvedExpression = tryCast(ExpressionUtils.resolveExpression(params[0]), PsiMethodCallExpression.class);
+      PsiMethodCallExpression resolvedExpression = getMethodCallExpression(params[0]);
       if (resolvedExpression == null) return;
 
-      PsiElement parent = tryCast(resolvedExpression.getParent(), PsiLocalVariable.class);
-      if (parent != null) deleteElement(parent);
+      final PsiElement qualifier = resolvedExpression.getMethodExpression().getQualifier();
+      if (qualifier == null) return;
 
-      PsiReplacementUtil.replaceExpression(expression, myText, new CommentTracker());
+      CommentTracker ct = new CommentTracker();
+      String newText = ct.text(qualifier) + ".toString(" + (params.length == 2 ? ct.text(params[1]) : "") + ")";
+
+      PsiElement parent = tryCast(PsiUtil.skipParenthesizedExprUp(resolvedExpression.getParent()), PsiLocalVariable.class);
+      if (parent != null) ct.delete(parent);
+
+      ct.replaceAndRestoreComments(expression, newText);
     }
   }
 }
