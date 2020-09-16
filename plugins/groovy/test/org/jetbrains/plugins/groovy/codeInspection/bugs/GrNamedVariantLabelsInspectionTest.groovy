@@ -41,4 +41,25 @@ class Rr {
 new Rr("", <warning>s</warning> : "", p : 1)
 '''
     }
+
+    void 'test noinspection'() {
+        doTest '''
+class Rr {
+    @NamedVariant
+    Rr(String s, Integer p) {}
+}
+
+new Rr(s : "", p : 1)
+'''
+    }
+
+    void 'test noinspection 2'() {
+        doTest '''
+class Rr {
+    Rr(Map s) {}
+}
+
+new Rr(s : "", p : 1)
+'''
+    }
 }

@@ -1,12 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.bugs
 
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.util.InheritanceUtil
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.plugins.groovy.transformations.impl.namedVariant.collectNamedParamsFromNamedVariantMethod
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
+import org.jetbrains.plugins.groovy.transformations.impl.namedVariant.GROOVY_TRANSFORM_NAMED_PARAM
 
 class GrNamedVariantLabelsInspection : BaseInspection() {
 
@@ -18,7 +21,9 @@ class GrNamedVariantLabelsInspection : BaseInspection() {
     override fun visitCallExpression(callExpression: GrCallExpression) {
       val namedArguments = callExpression.namedArguments.takeIf { it.isNotEmpty() } ?: return
       val resolvedMethod = callExpression.resolveMethod() as? GrMethod ?: return
-      val definedNames = collectNamedParamsFromNamedVariantMethod(resolvedMethod).mapTo(HashSet(namedArguments.size)) { it.name }
+      val mapParameter = resolvedMethod.parameters.singleOrNull { InheritanceUtil.isInheritor(it.type, CommonClassNames.JAVA_UTIL_MAP) } ?: return
+      val definedNames = mapParameter.annotations.filter { it.hasQualifiedName(GROOVY_TRANSFORM_NAMED_PARAM) }
+          .mapNotNullTo(HashSet()) { GrAnnotationUtil.inferStringAttribute(it, "value") }.takeIf { it.size > 0 } ?: return
       for (namedArg in namedArguments) {
         val label = namedArg.label ?: continue
         if (namedArg?.labelName in definedNames) continue
