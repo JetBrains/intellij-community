@@ -33,8 +33,8 @@ public class GitStashDialog extends DialogWrapper {
   public GitStashDialog(final Project project, final List<VirtualFile> roots, final VirtualFile defaultRoot) {
     super(project, true);
     myProject = project;
-    setTitle(GitBundle.getString("stash.title"));
-    setOKButtonText(GitBundle.getString("stash.button"));
+    setTitle(GitBundle.message("stash.title"));
+    setOKButtonText(GitBundle.message("stash.button"));
     GitUIUtil.setupRootChooser(project, roots, defaultRoot, myGitRootComboBox, myCurrentBranch);
     init();
   }
