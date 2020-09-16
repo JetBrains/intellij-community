@@ -70,10 +70,10 @@ public class _EditorConfigLexer implements FlexLexer {
     "\3\0\1\1\1\2\1\3\1\4\1\5\1\6\1\7"+
     "\1\10\1\11\1\12\1\13\2\14\1\15\1\16\1\17"+
     "\1\20\1\21\1\22\1\14\1\23\1\24\2\0\1\12"+
-    "\1\25\1\22\1\1";
+    "\1\25\1\22";
 
   private static int [] zzUnpackAction() {
-    int [] result = new int[31];
+    int [] result = new int[30];
     int offset = 0;
     offset = zzUnpackAction(ZZ_ACTION_PACKED_0, offset, result);
     return result;
@@ -101,10 +101,10 @@ public class _EditorConfigLexer implements FlexLexer {
     "\0\0\0\22\0\44\0\66\0\110\0\132\0\154\0\154"+
     "\0\154\0\154\0\154\0\154\0\176\0\154\0\220\0\154"+
     "\0\154\0\242\0\154\0\154\0\154\0\154\0\264\0\154"+
-    "\0\154\0\306\0\220\0\330\0\154\0\352\0\306";
+    "\0\154\0\66\0\220\0\306\0\154\0\330";
 
   private static int [] zzUnpackRowMap() {
-    int [] result = new int[31];
+    int [] result = new int[30];
     int offset = 0;
     offset = zzUnpackRowMap(ZZ_ROWMAP_PACKED_0, offset, result);
     return result;
@@ -132,16 +132,15 @@ public class _EditorConfigLexer implements FlexLexer {
     "\1\6\3\5\1\16\1\17\1\15\1\20\1\11\1\12"+
     "\1\20\1\21\1\22\1\23\1\24\1\25\1\26\1\5"+
     "\1\6\3\5\1\20\1\27\1\26\1\20\1\11\1\12"+
-    "\1\30\1\31\4\20\2\32\3\0\3\32\4\0\1\32"+
-    "\1\0\2\32\1\0\1\32\1\0\1\5\1\0\3\5"+
-    "\14\0\3\6\3\0\14\6\22\0\1\15\6\0\1\33"+
-    "\1\15\11\0\4\15\1\34\15\15\16\0\1\35\3\0"+
-    "\4\26\1\36\15\26\1\37\1\32\3\0\1\32\2\37"+
-    "\4\0\1\37\1\0\2\37\1\0\1\37\1\15\2\0"+
-    "\1\15\3\0\1\33\1\15\14\0\1\26\16\0";
+    "\1\30\1\31\4\20\1\4\1\32\3\0\1\32\2\4"+
+    "\4\0\1\4\1\0\2\4\1\0\1\4\1\0\1\5"+
+    "\1\0\3\5\14\0\3\6\3\0\14\6\22\0\1\15"+
+    "\6\0\1\33\1\15\11\0\4\15\1\34\15\15\16\0"+
+    "\1\35\3\0\4\26\1\36\15\26\1\15\2\0\1\15"+
+    "\3\0\1\33\1\15\14\0\1\26\16\0";
 
   private static int [] zzUnpackTrans() {
-    int [] result = new int[252];
+    int [] result = new int[234];
     int offset = 0;
     offset = zzUnpackTrans(ZZ_TRANS_PACKED_0, offset, result);
     return result;
@@ -180,10 +179,10 @@ public class _EditorConfigLexer implements FlexLexer {
 
   private static final String ZZ_ATTRIBUTE_PACKED_0 =
     "\3\0\3\1\6\11\1\1\1\11\1\1\2\11\1\1"+
-    "\4\11\1\1\2\11\2\0\1\1\1\11\2\1";
+    "\4\11\1\1\2\11\2\0\1\1\1\11\1\1";
 
   private static int [] zzUnpackAttribute() {
-    int [] result = new int[31];
+    int [] result = new int[30];
     int offset = 0;
     offset = zzUnpackAttribute(ZZ_ATTRIBUTE_PACKED_0, offset, result);
     return result;
