@@ -1,9 +1,9 @@
 // This is a generated file. Not intended for manual editing.
 package org.editorconfig.language.psi;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.PsiElement;
+import com.intellij.lang.ASTNode;
 import org.editorconfig.language.psi.impl.*;
 
 public interface EditorConfigElementTypes {
@@ -20,6 +20,7 @@ public interface EditorConfigElementTypes {
   IElementType OPTION_VALUE_IDENTIFIER = new EditorConfigElementType("OPTION_VALUE_IDENTIFIER");
   IElementType OPTION_VALUE_LIST = new EditorConfigElementType("OPTION_VALUE_LIST");
   IElementType OPTION_VALUE_PAIR = new EditorConfigElementType("OPTION_VALUE_PAIR");
+  IElementType OPTION_VALUE_RAW_TEXT = new EditorConfigElementType("OPTION_VALUE_RAW_TEXT");
   IElementType PATTERN = new EditorConfigElementType("PATTERN");
   IElementType PATTERN_ENUMERATION = new EditorConfigElementType("PATTERN_ENUMERATION");
   IElementType QUALIFIED_KEY_PART = new EditorConfigElementType("QUALIFIED_KEY_PART");
@@ -85,6 +86,9 @@ public interface EditorConfigElementTypes {
       }
       else if (type == OPTION_VALUE_PAIR) {
         return new EditorConfigOptionValuePairImpl(node);
+      }
+      else if (type == OPTION_VALUE_RAW_TEXT) {
+        return new EditorConfigOptionValueRawTextImpl(node);
       }
       else if (type == PATTERN) {
         return new EditorConfigPatternImpl(node);

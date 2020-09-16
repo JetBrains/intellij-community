@@ -1,18 +1,18 @@
 // This is a generated file. Not intended for manual editing.
 package org.editorconfig.language.parser;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.LightPsiParser;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilder.Marker;
-import com.intellij.lang.PsiParser;
-import com.intellij.psi.tree.IElementType;
-
-import static org.editorconfig.language.parser.EditorConfigParserUtil.*;
 import static org.editorconfig.language.psi.EditorConfigElementTypes.*;
+import static org.editorconfig.language.parser.EditorConfigParserUtil.*;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.lang.ASTNode;
+import com.intellij.psi.tree.TokenSet;
+import com.intellij.lang.PsiParser;
+import com.intellij.lang.LightPsiParser;
 
 @SuppressWarnings({"SimplifiableIfStatement", "UnusedAssignment"})
-public class EditorConfigParser implements PsiParser, LightPsiParser {
+public class EditorConfigParserBase implements PsiParser, LightPsiParser {
 
   public ASTNode parse(IElementType t, PsiBuilder b) {
     parseLight(t, b);
@@ -296,14 +296,15 @@ public class EditorConfigParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // option_value_pair | option_value_list | option_value_identifier
+  // option_value_pair | option_value_standalone_list | option_value_standalone_identifier | option_value_raw_text
   static boolean option_value(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "option_value")) return false;
     if (!nextTokenIs(b, "", COMMA, IDENTIFIER)) return false;
     boolean r;
     r = option_value_pair(b, l + 1);
-    if (!r) r = option_value_list(b, l + 1);
-    if (!r) r = option_value_identifier(b, l + 1);
+    if (!r) r = option_value_standalone_list(b, l + 1);
+    if (!r) r = option_value_standalone_identifier(b, l + 1);
+    if (!r) r = option_value_raw_text(b, l + 1);
     return r;
   }
 
@@ -402,7 +403,7 @@ public class EditorConfigParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (option_value_list | option_value_identifier) COLON (option_value_list | option_value_identifier)
+  // (option_value_list | option_value_identifier) COLON (option_value_list | option_value_identifier) <<followedByNewLineOrEndOfFile>>
   public static boolean option_value_pair(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "option_value_pair")) return false;
     if (!nextTokenIs(b, "<option value pair>", COMMA, IDENTIFIER)) return false;
@@ -411,7 +412,8 @@ public class EditorConfigParser implements PsiParser, LightPsiParser {
     r = option_value_pair_0(b, l + 1);
     r = r && consumeToken(b, COLON);
     p = r; // pin = 2
-    r = r && option_value_pair_2(b, l + 1);
+    r = r && report_error_(b, option_value_pair_2(b, l + 1));
+    r = p && followedByNewLineOrEndOfFile(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
@@ -431,6 +433,60 @@ public class EditorConfigParser implements PsiParser, LightPsiParser {
     boolean r;
     r = option_value_list(b, l + 1);
     if (!r) r = option_value_identifier(b, l + 1);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // IDENTIFIER+ <<followedByNewLineOrEndOfFile>>
+  public static boolean option_value_raw_text(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "option_value_raw_text")) return false;
+    if (!nextTokenIs(b, IDENTIFIER)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = option_value_raw_text_0(b, l + 1);
+    r = r && followedByNewLineOrEndOfFile(b, l + 1);
+    exit_section_(b, m, OPTION_VALUE_RAW_TEXT, r);
+    return r;
+  }
+
+  // IDENTIFIER+
+  private static boolean option_value_raw_text_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "option_value_raw_text_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, IDENTIFIER);
+    while (r) {
+      int c = current_position_(b);
+      if (!consumeToken(b, IDENTIFIER)) break;
+      if (!empty_element_parsed_guard_(b, "option_value_raw_text_0", c)) break;
+    }
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // option_value_identifier <<followedByNewLineOrEndOfFile>>
+  static boolean option_value_standalone_identifier(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "option_value_standalone_identifier")) return false;
+    if (!nextTokenIs(b, IDENTIFIER)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = option_value_identifier(b, l + 1);
+    r = r && followedByNewLineOrEndOfFile(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // option_value_list <<followedByNewLineOrEndOfFile>>
+  static boolean option_value_standalone_list(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "option_value_standalone_list")) return false;
+    if (!nextTokenIs(b, "", COMMA, IDENTIFIER)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = option_value_list(b, l + 1);
+    r = r && followedByNewLineOrEndOfFile(b, l + 1);
+    exit_section_(b, m, null, r);
     return r;
   }
 

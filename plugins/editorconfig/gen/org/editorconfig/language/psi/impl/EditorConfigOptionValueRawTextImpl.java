@@ -8,17 +8,17 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import static org.editorconfig.language.psi.EditorConfigElementTypes.*;
-import org.editorconfig.language.psi.base.EditorConfigHeaderElementBase;
+import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import org.editorconfig.language.psi.*;
 
-public class EditorConfigFlatPatternImpl extends EditorConfigHeaderElementBase implements EditorConfigFlatPattern {
+public class EditorConfigOptionValueRawTextImpl extends ASTWrapperPsiElement implements EditorConfigOptionValueRawText {
 
-  public EditorConfigFlatPatternImpl(@NotNull ASTNode node) {
+  public EditorConfigOptionValueRawTextImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull EditorConfigVisitor visitor) {
-    visitor.visitFlatPattern(this);
+    visitor.visitOptionValueRawText(this);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
