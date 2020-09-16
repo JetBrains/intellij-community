@@ -109,7 +109,17 @@
     <!-- Apply MPS patches                                     -->
     <!-- ===================================================== -->
 
-    <target name="modules" description="Copy IDEA Community modules and update paths (add community folder)">
+    <target name="compiler" description="Copy IDEA Community compiler.xml and update paths (add the community folder)">
+        <echo message="Copy and update IDEA Community compiler.xml"/>
+        <delete file="${basedir}/../.idea/compiler.xml"/>
+        <copy file="${community.folder}/.idea/compiler.xml" todir="${basedir}/../.idea"/>
+        <replaceregexp file="${basedir}/../.idea/compiler.xml" flags="g" byline="true">
+            <regexp pattern="\$PROJECT_DIR\$"/>
+            <substitution expression="\0/community"/>
+        </replaceregexp>
+    </target>
+
+    <target name="modules" description="Copy IDEA Community modules and update paths (add the community folder)">
         <echo message="Copy and update IDEA Community modules list"/>
         <delete file="${basedir}/../.idea/modules.xml"/>
         <copy file="${community.folder}/.idea/modules.xml" todir="${basedir}/../.idea"/>
@@ -138,7 +148,7 @@
         <copy file="${community.folder}/.idea/jarRepositories.xml" todir="${basedir}/../.idea"/>
     </target>
 
-    <target name="libraries" description="Copy IDEA Community libraries and update paths (add community folder)">
+    <target name="libraries" description="Copy IDEA Community libraries and update paths (add the community folder)">
         <echo message="Copy and update IDEA Community libraries"/>
         <delete dir="${basedir}/../.idea/libraries"/>
         <mkdir dir="${basedir}/../.idea/libraries"/>
@@ -152,7 +162,7 @@
         </replaceregexp>
     </target>
 
-    <target name="artifacts" description="Copy IDEA Community artifacts and update paths (add community folder)">
+    <target name="artifacts" description="Copy IDEA Community artifacts and update paths (add the community folder)">
         <echo message="Copy and update IDEA Community libraries"/>
         <delete dir="${basedir}/../.idea/artifacts"/>
         <mkdir dir="${basedir}/../.idea/artifacts"/>
@@ -210,7 +220,7 @@
     <!-- ===================================================== -->
 
     <!-- Exists as standalone task for TeamCity build -->
-    <target name="prepare" depends="patch,modules,kotlinc,jar-repositories,libraries,artifacts"
+    <target name="prepare" depends="patch,compiler,modules,kotlinc,jar-repositories,libraries,artifacts"
             description="Make all build preparation tasks"/>
 
     <!-- Exists as standalone task for TeamCity build -->

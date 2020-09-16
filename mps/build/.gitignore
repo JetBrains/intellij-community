@@ -10,6 +10,9 @@
 # Ignore artifacts because they are copied & modified by ant script
 /.idea/artifacts
 
+# Ignore compiler.xml because it is copied & modified by ant script
+/.idea/compiler.xml
+
 # Ignore modules.xml because it is copied & modified by ant script
 /.idea/modules.xml
 
