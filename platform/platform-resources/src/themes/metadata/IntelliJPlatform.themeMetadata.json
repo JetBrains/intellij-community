@@ -936,6 +936,22 @@
       "key": "WelcomeScreen.separatorColor"
     },
     {
+      "key": "WelcomeScreen.SidePanel.background",
+      "description": "Tab list and side panel background"
+    },
+    {
+      "key": "WelcomeScreen.Details.background",
+      "description": "Associated panel for selected tab background"
+    },
+    {
+      "key": "WelcomeScreen.Projects.actions.selectionBackground",
+      "description": "Selection background for project actions buttons"
+    },
+    {
+      "key": "WelcomeScreen.Projects.actions.background",
+      "description": "Background for project actions buttons"
+    },
+    {
       "key": "Window.border",
       "description": "Dialog border. Format: \"top,left,bottom,right,hex\", e.g. \"1,1,1,1,FFFFFF\". Sizes in pixels"
     },
