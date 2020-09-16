@@ -31,6 +31,7 @@ import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.GuiUtils;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
@@ -258,7 +259,7 @@ public class StartupManagerImpl extends StartupManagerEx {
 
   @TestOnly
   public static void addActivityEpListener(@NotNull Project project) {
-    StartupActivity.POST_STARTUP_ACTIVITY.addExtensionPointListener(new ExtensionPointListener<StartupActivity>() {
+    StartupActivity.POST_STARTUP_ACTIVITY.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull StartupActivity extension, @NotNull PluginDescriptor pluginDescriptor) {
         StartupManagerImpl startupManager = ((StartupManagerImpl)getInstance(project));
@@ -405,13 +406,14 @@ public class StartupManagerImpl extends StartupManagerEx {
         return;
       }
 
-      List<StartupActivity.Background> activities = StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY.getExtensionList();
-      StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY.addExtensionPointListener(new ExtensionPointListener<StartupActivity.Background>() {
+      long startTimeNano = System.nanoTime();
+      StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY.addExtensionPointListener(new ExtensionPointListener<>() {
         @Override
         public void extensionAdded(@NotNull StartupActivity.Background extension, @NotNull PluginDescriptor pluginDescriptor) {
           extension.runActivity(myProject);
         }
       }, myProject);
+      List<StartupActivity.Background> activities = StartupActivity.BACKGROUND_POST_STARTUP_ACTIVITY.getExtensionList();
 
       BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
         for (StartupActivity activity : activities) {
@@ -424,6 +426,9 @@ public class StartupManagerImpl extends StartupManagerEx {
           activity.runActivity(myProject);
         }
       });
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Background post-startup activities done in " + TimeoutUtil.getDurationMillis(startTimeNano) + "ms");
+      }
     }, Registry.intValue("ide.background.post.startup.activity.delay"), TimeUnit.MILLISECONDS);
     Disposer.register(myProject, () -> {
       scheduledFuture.cancel(false);
