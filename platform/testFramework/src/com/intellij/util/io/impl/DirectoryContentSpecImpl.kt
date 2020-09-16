@@ -127,17 +127,18 @@ class DirectoryContentBuilderImpl(val result: DirectorySpecBase) : DirectoryCont
 fun assertDirectoryContentMatches(file: File,
                                   spec: DirectoryContentSpecImpl,
                                   relativePath: String,
-                                  fileTextMatcher: FileTextMatcher) {
+                                  fileTextMatcher: FileTextMatcher,
+                                  filePathFilter: (String) -> Boolean) {
   assertTrue("$file doesn't exist", file.exists())
   when (spec) {
     is DirectorySpec -> {
-      assertDirectoryMatches(file, spec, relativePath, fileTextMatcher)
+      assertDirectoryMatches(file, spec, relativePath, fileTextMatcher, filePathFilter)
     }
     is ZipSpec -> {
       assertTrue("$file is not a file", file.isFile)
       val dirForExtracted = FileUtil.createTempDirectory("extracted-${file.name}", null, false)
       ZipUtil.extract(file, dirForExtracted, null)
-      assertDirectoryMatches(dirForExtracted, spec, relativePath, fileTextMatcher)
+      assertDirectoryMatches(dirForExtracted, spec, relativePath, fileTextMatcher, filePathFilter)
       FileUtil.delete(dirForExtracted)
     }
     is FileSpec -> {
@@ -147,7 +148,7 @@ fun assertDirectoryContentMatches(file: File,
         if (!Arrays.equals(actualBytes, spec.content)) {
           val actualString = actualBytes.convertToText()
           val expectedString = spec.content.convertToText()
-          val place = if (relativePath != "") " at $relativePath" else ""
+          val place = if (relativePath != ".") " at $relativePath" else ""
           if (actualString != null && expectedString != null) {
             if (!fileTextMatcher.matches(actualString, expectedString)) {
               assertEquals("File content mismatch$place:", expectedString, actualString)
@@ -175,15 +176,19 @@ private fun ByteArray.convertToText(): String? {
 private fun assertDirectoryMatches(file: File,
                                    spec: DirectorySpecBase,
                                    relativePath: String,
-                                   fileTextMatcher: FileTextMatcher) {
+                                   fileTextMatcher: FileTextMatcher,
+                                   filePathFilter: (String) -> Boolean) {
   assertTrue("$file is not a directory", file.isDirectory)
-  val actualChildrenNames = file.list().sortedWith(String.CASE_INSENSITIVE_ORDER)
+  fun childNameFilter(name: String) = filePathFilter("$relativePath/$name")
+  val actualChildrenNames = file.listFiles()!!.filter { it.isDirectory || childNameFilter(it.name) }
+    .map { it.name }.sortedWith(String.CASE_INSENSITIVE_ORDER)
   val children = spec.getChildren()
-  val expectedChildrenNames = children.keys.sortedWith(String.CASE_INSENSITIVE_ORDER)
+  val expectedChildrenNames = children.entries.filter { it.value !is FileSpec || childNameFilter(it.key) }
+    .map { it.key }.sortedWith(String.CASE_INSENSITIVE_ORDER)
   assertEquals("Directory content mismatch${if (relativePath != "") " at $relativePath" else ""}:",
                expectedChildrenNames.joinToString("\n"), actualChildrenNames.joinToString("\n"))
   for (child in actualChildrenNames) {
-    assertDirectoryContentMatches(File(file, child), children.get(child)!!, "$relativePath/$child", fileTextMatcher)
+    assertDirectoryContentMatches(File(file, child), children.get(child)!!, "$relativePath/$child", fileTextMatcher, filePathFilter)
   }
 }
 

@@ -85,18 +85,22 @@ interface DirectoryContentSpec {
 
 /**
  * Checks that contents of the given directory matches [spec].
+ * @param filePathFilter determines which relative paths should be checked
  */
 @JvmOverloads
-fun File.assertMatches(spec: DirectoryContentSpec, fileTextMatcher: FileTextMatcher = FileTextMatcher.exact()) {
-  assertDirectoryContentMatches(this, spec as DirectoryContentSpecImpl, "", fileTextMatcher)
+fun File.assertMatches(spec: DirectoryContentSpec, fileTextMatcher: FileTextMatcher = FileTextMatcher.exact(),
+                       filePathFilter: (String) -> Boolean = { true }) {
+  assertDirectoryContentMatches(this, spec as DirectoryContentSpecImpl, ".", fileTextMatcher, filePathFilter)
 }
 
 /**
  * Checks that contents of the given directory matches [spec].
+ * @param filePathFilter determines which relative paths should be checked
  */
 @JvmOverloads
-fun Path.assertMatches(spec: DirectoryContentSpec, fileTextMatcher: FileTextMatcher = FileTextMatcher.exact()) {
-  assertDirectoryContentMatches(toFile(), spec as DirectoryContentSpecImpl, "", fileTextMatcher)
+fun Path.assertMatches(spec: DirectoryContentSpec, fileTextMatcher: FileTextMatcher = FileTextMatcher.exact(),
+                       filePathFilter: (String) -> Boolean = { true }) {
+  assertDirectoryContentMatches(toFile(), spec as DirectoryContentSpecImpl, ".", fileTextMatcher, filePathFilter)
 }
 
 interface FileTextMatcher {
