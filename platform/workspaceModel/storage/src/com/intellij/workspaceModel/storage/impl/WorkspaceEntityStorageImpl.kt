@@ -1183,6 +1183,10 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     serializer.serializeCache(stream, resulting.makeSureItsStore())
     val resBytes = stream.toByteArray()
 
+    stream = ByteArrayOutputStream()
+    serializer.serializeClassToIntConverter(stream)
+    val classToIntConverter = stream.toByteArray()
+
     val displayText = "Content of the workspace model in binary format"
     var _message = "$message\n\n!Please include all attachments to the report!"
     _message += "\n\nEntity source filter: $entitySourceFilter"
@@ -1190,13 +1194,14 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     val leftAttachment = createAttachment("Left_Store", leftBytes, displayText)
     val rightAttachment = createAttachment("Right_Store", rightBytes, displayText)
     val resAttachment = createAttachment("Res_Store", resBytes, displayText)
+    val classToIntConverterAttachment = createAttachment("ClassToIntConverter", classToIntConverter, "Class to int converter")
 
     if (rightLogBytes == null) {
-      LOG.error(_message, e, leftAttachment, rightAttachment, resAttachment)
+      LOG.error(_message, e, leftAttachment, rightAttachment, resAttachment, classToIntConverterAttachment)
     }
     else {
       val rightLogAttachment = createAttachment("Right_Diff_Log", rightLogBytes, "Log of right builder")
-      LOG.error(_message, e, leftAttachment, rightAttachment, resAttachment, rightLogAttachment)
+      LOG.error(_message, e, leftAttachment, rightAttachment, resAttachment, rightLogAttachment, classToIntConverterAttachment)
     }
   }
 

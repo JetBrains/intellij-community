@@ -14,6 +14,8 @@ internal object ClassToIntConverter {
 
   @Synchronized
   fun getClassOrDie(id: Int): Class<*> = class2Int.inverse().getValue(id)
+
+  fun getMap(): HashBiMap<Class<*>, Int> = class2Int
 }
 
 internal fun Class<*>.toClassId(): Int = ClassToIntConverter.getInt(this)

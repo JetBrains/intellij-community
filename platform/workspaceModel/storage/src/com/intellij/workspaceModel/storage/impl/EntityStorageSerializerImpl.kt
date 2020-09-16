@@ -345,6 +345,24 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
     }
   }
 
+  fun serializeClassToIntConverter(stream: OutputStream) {
+    val converterMap = ClassToIntConverter.getMap().toMap()
+    val output = Output(stream, KRYO_BUFFER_SIZE)
+    try {
+      val kryo = createKryo()
+
+      // Save version
+      output.writeString(serializerDataFormatVersion)
+
+      val mapData = converterMap.map { (key, value) -> TypeInfo(key.name, typesResolver.getPluginId(key)) to value }
+
+      kryo.writeClassAndObject(output, mapData)
+    }
+    finally {
+      output.flush()
+    }
+  }
+
   private fun collectAndRegisterClasses(kryo: Kryo,
                                         output: Output,
                                         entityDataSequence: Sequence<WorkspaceEntityData<*>>) {
