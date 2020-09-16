@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
@@ -23,7 +24,7 @@ public class CommitDetailsGetter extends AbstractDataGetter<VcsFullCommitDetails
                       @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
                       @NotNull VcsLogIndex index,
                       @NotNull Disposable parentDisposable) {
-    super(storage, logProviders, new VcsCommitCache<>(), index, parentDisposable);
+    super(storage, logProviders, index, parentDisposable);
     LowMemoryWatcher.register(() -> clear(), this);
   }
 

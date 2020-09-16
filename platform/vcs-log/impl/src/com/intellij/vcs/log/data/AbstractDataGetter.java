@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
@@ -34,7 +36,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * The DataGetter realizes the following pattern of getting some data (parametrized by {@code T}) from the VCS:
@@ -54,7 +56,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
 
   @NotNull protected final VcsLogStorage myStorage;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
-  @NotNull private final VcsCommitCache<Integer, T> myCache;
+  @NotNull private final Cache<Integer, T> myCache;
   @NotNull private final SequentialLimitedLifoExecutor<TaskDescriptor> myLoader;
 
   /**
@@ -67,12 +69,11 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
 
   AbstractDataGetter(@NotNull VcsLogStorage storage,
                      @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
-                     @NotNull VcsCommitCache<Integer, T> cache,
                      @NotNull VcsLogIndex index,
                      @NotNull Disposable parentDisposable) {
     myStorage = storage;
     myLogProviders = logProviders;
-    myCache = cache;
+    myCache = CacheBuilder.newBuilder().maximumSize(10_000).build();
     myIndex = index;
     Disposer.register(parentDisposable, this);
     myLoader =
@@ -106,7 +107,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
 
     runLoadCommitsData(neighbourHashes);
 
-    T result = myCache.get(hash);
+    T result = myCache.getIfPresent(hash);
     assert result != null; // now it is in the cache as "Loading Details" (runLoadCommitsData puts it there)
     return result;
   }
@@ -207,12 +208,12 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
 
   @Nullable
   private T getFromCache(@NotNull Integer commitId) {
-    T details = myCache.get(commitId);
+    T details = myCache.getIfPresent(commitId);
     if (details != null) {
       if (details instanceof LoadingDetails) {
         if (((LoadingDetails)details).getLoadingTaskIndex() <= myCurrentTaskIndex - MAX_LOADING_TASKS) {
           // don't let old "loading" requests stay in the cache forever
-          myCache.remove(commitId);
+          myCache.invalidate(commitId);
           return null;
         }
       }
@@ -244,7 +245,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   private void cacheCommit(final int commitId, long taskNumber) {
     // fill the cache with temporary "Loading" values to avoid producing queries for each commit that has not been cached yet,
     // even if it will be loaded within a previous query
-    if (!myCache.isKeyCached(commitId)) {
+    if (myCache.getIfPresent(commitId) == null) {
       IndexDataGetter dataGetter = myIndex.getDataGetter();
       if (dataGetter != null && Registry.is("vcs.log.use.indexed.details")) {
         myCache.put(commitId, (T)new IndexedDetails(dataGetter, myStorage, commitId, taskNumber));
@@ -304,7 +305,12 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   }
 
   protected void clear() {
-    UIUtil.invokeLaterIfNeeded(() -> myCache.removeByCondition(t -> !(t instanceof LoadingDetails)));
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      Iterator<Map.Entry<Integer, T>> iterator = myCache.asMap().entrySet().iterator();
+      while (iterator.hasNext()) {
+        if (!(iterator.next().getValue() instanceof LoadingDetails)) iterator.remove();
+      }
+    });
   }
 
   @NotNull
