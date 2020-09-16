@@ -34,7 +34,7 @@ public abstract class StatisticsCollectorNotRegisteredInspectionTestBase extends
   public void testUnregisteredCounterCollector() {
     setPluginXml("unregisteredCounterCollector-plugin.xml");
     myFixture.testHighlighting("UnregisteredCounterCollector." + getSourceFileExtension());
-    IntentionAction registerAction = myFixture.findSingleIntention("Register statistics collector");
+    IntentionAction registerAction = myFixture.findSingleIntention("Register extension");
     myFixture.launchAction(registerAction);
 
     myFixture.checkResultByFile("META-INF/plugin.xml", "unregisteredCounterCollector-plugin_after.xml", true);
@@ -43,7 +43,7 @@ public abstract class StatisticsCollectorNotRegisteredInspectionTestBase extends
   public void testUnregisteredProjectCollector() {
     setPluginXml("unregisteredProjectCollector-plugin.xml");
     myFixture.testHighlighting("UnregisteredProjectCollector." + getSourceFileExtension());
-    IntentionAction registerAction = myFixture.findSingleIntention("Register statistics collector");
+    IntentionAction registerAction = myFixture.findSingleIntention("Register extension");
     myFixture.launchAction(registerAction);
 
     myFixture.checkResultByFile("META-INF/plugin.xml", "unregisteredProjectCollector-plugin_after.xml", true);
@@ -52,7 +52,7 @@ public abstract class StatisticsCollectorNotRegisteredInspectionTestBase extends
   public void testUnregisteredNestedCountCollector() {
     setPluginXml("unregisteredCounterCollector-plugin.xml");
     myFixture.testHighlighting("UnregisteredNestedCounterCollector." + getSourceFileExtension());
-    IntentionAction registerAction = myFixture.findSingleIntention("Register statistics collector");
+    IntentionAction registerAction = myFixture.findSingleIntention("Register extension");
     myFixture.launchAction(registerAction);
 
     myFixture.checkResultByFile("META-INF/plugin.xml", "unregisteredNestedCounterCollector-plugin_after.xml", true);

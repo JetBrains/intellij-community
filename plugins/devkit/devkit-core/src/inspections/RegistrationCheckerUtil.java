@@ -28,21 +28,18 @@ import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.util.*;
 
-import static org.jetbrains.idea.devkit.inspections.internal.StatisticsCollectorNotRegisteredInspection.FEATURE_USAGES_COLLECTOR;
-
-public final class RegistrationCheckerUtil {
-  public enum RegistrationType {
+final class RegistrationCheckerUtil {
+  enum RegistrationType {
     ALL,
     ALL_COMPONENTS,
     APPLICATION_COMPONENT,
     PROJECT_COMPONENT,
     MODULE_COMPONENT,
-    ACTION,
-    STATISTICS_COLLECTOR
+    ACTION
   }
 
   @Nullable
-  public static Set<PsiClass> getRegistrationTypes(@NotNull PsiClass psiClass, @NotNull RegistrationType registrationType) {
+  static Set<PsiClass> getRegistrationTypes(@NotNull PsiClass psiClass, @NotNull RegistrationType registrationType) {
     final Project project = psiClass.getProject();
     final PsiFile psiFile = psiClass.getContainingFile();
 
@@ -183,13 +180,6 @@ public final class RegistrationCheckerUtil {
         if (IdeaPluginRegistrationIndex.isRegisteredAction(myPsiClass,
                                                            scope)) {
           addType(ActionType.ACTION.myClassName);
-          return false;
-        }
-      }
-
-      if (findAll || myRegistrationType == RegistrationType.STATISTICS_COLLECTOR) {
-        if (IdeaPluginRegistrationIndex.isRegisteredStatisticsCollector(myPsiClass, scope)) {
-          addType(FEATURE_USAGES_COLLECTOR);
           return false;
         }
       }

@@ -1,27 +1,31 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections.internal;
 
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.lang.jvm.DefaultJvmElementVisitor;
 import com.intellij.lang.jvm.JvmClass;
 import com.intellij.lang.jvm.JvmElementVisitor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.inspections.ComponentNotRegisteredInspection;
+import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.inspections.DevKitJvmInspection;
-import org.jetbrains.idea.devkit.inspections.RegistrationCheckerUtil;
-import org.jetbrains.idea.devkit.inspections.quickfix.RegisterStatisticsCollectorFix;
+import org.jetbrains.idea.devkit.inspections.quickfix.RegisterExtensionFix;
+import org.jetbrains.idea.devkit.util.ExtensionPointCandidate;
+import org.jetbrains.idea.devkit.util.ExtensionPointLocator;
 import org.jetbrains.idea.devkit.util.StatisticsCollectorType;
 
 import java.util.Set;
+
+import static org.jetbrains.idea.devkit.util.ExtensionLocatorKt.processExtensionDeclarations;
 
 public class StatisticsCollectorNotRegisteredInspection extends DevKitJvmInspection {
   public static final String FEATURE_USAGES_COLLECTOR = "com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector";
@@ -55,25 +59,40 @@ public class StatisticsCollectorNotRegisteredInspection extends DevKitJvmInspect
     if (featureUsageCollectorClass != null && checkedClass.isInheritor(featureUsageCollectorClass, true)) {
       for (StatisticsCollectorType collectorType : StatisticsCollectorType.values()) {
         if (InheritanceUtil.isInheritor(checkedClass, collectorType.getClassName())) {
-          checkCollectorRegistration(checkedClass, sink, collectorType);
+          checkCollectorRegistration(project, checkedClass, sink, collectorType);
           return;
         }
       }
     }
   }
 
-  private static void checkCollectorRegistration(@NotNull PsiClass checkedClass,
+  private static void checkCollectorRegistration(@NotNull Project project,
+                                                 @NotNull PsiClass checkedClass,
                                                  @NotNull HighlightSink sink,
                                                  @NotNull StatisticsCollectorType collectorType) {
-    final Set<PsiClass> types = RegistrationCheckerUtil.getRegistrationTypes(checkedClass,
-                                                                             RegistrationCheckerUtil.RegistrationType.STATISTICS_COLLECTOR);
-    if (types != null && !types.isEmpty()) {
+    String qualifiedName = ClassUtil.getJVMClassName(checkedClass);
+    if (qualifiedName == null) {
       return;
     }
-    if (!ComponentNotRegisteredInspection.canFix(checkedClass)) {
+    Ref<Boolean> isCollectorRegistered = Ref.create(false);
+    processExtensionDeclarations(qualifiedName, project, true, (extension, tag) -> {
+      ExtensionPoint point = extension.getExtensionPoint();
+      if (point != null && point.getEffectiveQualifiedName().equals(collectorType.getExtensionPoint())) {
+        isCollectorRegistered.set(true);
+        return false;
+      }
+      return true;
+    });
+
+    if (isCollectorRegistered.get()) {
       return;
     }
-    LocalQuickFix fix = new RegisterStatisticsCollectorFix(checkedClass, collectorType);
-    sink.highlight(DevKitBundle.message("inspections.statistics.collector.not.registered.message"), fix);
+
+    ExtensionPointLocator extensionPointLocator = new ExtensionPointLocator(checkedClass);
+    Set<ExtensionPointCandidate> candidateList = extensionPointLocator.findSuperCandidates();
+    if (!candidateList.isEmpty()) {
+      RegisterExtensionFix fix = new RegisterExtensionFix(checkedClass, candidateList);
+      sink.highlight(DevKitBundle.message("inspections.statistics.collector.not.registered.message"), fix);
+    }
   }
 }

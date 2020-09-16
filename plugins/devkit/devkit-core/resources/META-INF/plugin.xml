@@ -116,7 +116,8 @@
     <localInspection language="JVM" shortName="StatisticsCollectorNotRegistered"
                      groupPathKey="inspections.group.path"
                      key="inspections.statistics.collector.not.registered.name" groupKey="inspections.group.code" enabledByDefault="false"
-                     level="WARNING" implementationClass="org.jetbrains.idea.devkit.inspections.internal.StatisticsCollectorNotRegisteredInspection"/>
+                     level="WARNING" implementationClass="org.jetbrains.idea.devkit.inspections.internal.StatisticsCollectorNotRegisteredInspection"
+                     isInternal="true"/>
     <localInspection language="UAST" shortName="InspectionDescriptionNotFoundInspection"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.description.file"
                      enabledByDefault="true" level="WARNING"
