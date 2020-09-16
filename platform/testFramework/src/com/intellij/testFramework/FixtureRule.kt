@@ -399,11 +399,16 @@ suspend fun createOrLoadProject(tempDirManager: TemporaryDirectory,
   }
 }
 
-fun loadProjectAndCheckResults(projectPath: Path, tempDirectory: TemporaryDirectory, checkProject: suspend (Project) -> Unit) {
+/**
+ * Copy files from [projectPaths] directories to a temp directory, load project from it and pass it to [checkProject].
+ */
+fun loadProjectAndCheckResults(projectPaths: List<Path>, tempDirectory: TemporaryDirectory, checkProject: suspend (Project) -> Unit) {
   @Suppress("RedundantSuspendModifier")
   suspend fun copyProjectFiles(dir: VirtualFile): Path {
     val projectDir = VfsUtil.virtualToIoFile(dir)
-    FileUtil.copyDir(projectPath.toFile(), projectDir)
+    for (projectPath in projectPaths) {
+      FileUtil.copyDir(projectPath.toFile(), projectDir)
+    }
     VfsUtil.markDirtyAndRefresh(false, true, true, dir)
     return projectDir.toPath()
   }

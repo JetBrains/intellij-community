@@ -129,7 +129,7 @@ class LoadProjectTest {
   @Test
   fun `load repository libraries`() {
     val projectPath = Paths.get(PathManagerEx.getCommunityHomePath()).resolve("jps/model-serialization/testData/repositoryLibraries")
-    loadProjectAndCheckResults(projectPath, tempDirectory) { project ->
+    loadProjectAndCheckResults(listOf(projectPath), tempDirectory) { project ->
       assertThat(ModuleManager.getInstance(project).modules).isEmpty()
       val libraries = LibraryTablesRegistrar.getInstance().getLibraryTable(project).libraries.sortedBy { it.name }
       assertThat(libraries).hasSize(3)
@@ -154,6 +154,6 @@ class LoadProjectTest {
 
   private fun loadProjectAndCheckResults(testDataDirName: String, checkProject: suspend (Project) -> Unit) {
     val testDataRoot = Paths.get(PathManagerEx.getCommunityHomePath()).resolve("java/java-tests/testData/configurationStore")
-    return loadProjectAndCheckResults(testDataRoot.resolve(testDataDirName), tempDirectory, checkProject)
+    return loadProjectAndCheckResults(listOf(testDataRoot.resolve(testDataDirName)), tempDirectory, checkProject)
   }
 }

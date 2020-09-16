@@ -68,6 +68,6 @@ class ReloadProjectTest {
   }
 
   private fun loadProjectAndCheckResults(testDataDirName: String, checkProject: suspend (Project) -> Unit) {
-    return loadProjectAndCheckResults(testDataRoot.resolve(testDataDirName), tempDirectory, checkProject)
+    return loadProjectAndCheckResults(listOf(testDataRoot.resolve(testDataDirName)), tempDirectory, checkProject)
   }
 }
