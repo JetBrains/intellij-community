@@ -217,13 +217,17 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     return null; // we're not a tuple
   }
 
+  @Nullable
+  protected PyFunction getContainingFunction(@NotNull PyParameterList parameterList) {
+    return parameterList.getContainingFunction();
+  }
+
   @Override
   @Nullable
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PsiElement parent = getParentByStub();
     if (parent instanceof PyParameterList) {
-      PyParameterList parameterList = (PyParameterList)parent;
-      PyFunction func = parameterList.getContainingFunction();
+      PyFunction func = getContainingFunction((PyParameterList)parent);
       if (func != null) {
         for (PyTypeProvider provider : PyTypeProvider.EP_NAME.getExtensionList()) {
           final Ref<PyType> resultRef = provider.getParameterType(this, func, context);
