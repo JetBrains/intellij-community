@@ -1,190 +1,241 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.idea.eclipse
 
-package org.jetbrains.idea.eclipse;
+import com.intellij.openapi.application.PluginPathManager
+import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.StdModuleTypes
+import com.intellij.openapi.module.impl.ModuleManagerEx
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ModuleRootModel
+import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.assertions.Assertions
+import com.intellij.testFramework.loadProjectAndCheckResults
+import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.util.io.assertMatches
+import com.intellij.util.io.directoryContentOf
+import org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider
+import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader
+import org.jetbrains.idea.eclipse.conversion.EclipseClasspathWriter
+import org.junit.Assume
+import org.junit.ClassRule
+import org.junit.Rule
+import org.junit.Test
+import org.junit.rules.TestName
+import java.io.File
+import java.nio.file.Paths
 
-import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.StdModuleTypes;
-import com.intellij.openapi.module.impl.ModuleManagerEx;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ModuleRootModel;
-import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.JavaProjectTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
-import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider;
-import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader;
-import org.jetbrains.idea.eclipse.conversion.EclipseClasspathWriter;
+class EclipseClasspathTest {
+  @JvmField
+  @Rule
+  val tempDirectory = TemporaryDirectory()
 
-import java.io.File;
-import java.io.IOException;
+  @JvmField
+  @Rule
+  val testName = TestName()
 
-import static com.intellij.testFramework.assertions.Assertions.assertThat;
-
-public class EclipseClasspathTest extends JavaProjectTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    final File testRoot = new File(PluginPathManager.getPluginHomePath("eclipse") + "/testData", "round");
-    assertTrue(testRoot.getAbsolutePath(), testRoot.isDirectory());
-
-    final File currentTestRoot = new File(testRoot, getTestName(true));
-    assertTrue(currentTestRoot.getAbsolutePath(), currentTestRoot.isDirectory());
-
-    final VirtualFile vTestRoot = LocalFileSystem.getInstance().findFileByIoFile(currentTestRoot);
-    copyDirContentsTo(vTestRoot, getOrCreateProjectBaseDir());
+  @Test
+  fun testAbsolutePaths() {
+    doTest("parent/parent/test")
   }
 
-  private void doTest() throws Exception {
-    doTest("/test", getProject());
+  @Test
+  fun testWorkspaceOnly() {
+    doTest()
   }
 
-  protected static void doTest(final String relativePath, final Project project) throws Exception {
-    final String path = project.getBasePath() + relativePath;
-    checkModule(path, setUpModule(path, project));
+  @Test
+  fun testExportedLibs() {
+    doTest()
   }
 
-  static Module setUpModule(final String path, @NotNull final Project project) throws Exception {
-    final File classpathFile = new File(path, EclipseXml.DOT_CLASSPATH_EXT);
-    String fileText = FileUtil.loadFile(classpathFile).replaceAll("\\$ROOT\\$", PlatformTestUtil.getOrCreateProjectBaseDir(project).getPath());
-    if (!SystemInfo.isWindows) {
-      fileText = fileText.replaceAll(EclipseXml.FILE_PROTOCOL + "/", EclipseXml.FILE_PROTOCOL);
-    }
-    final Element classpathElement = JDOMUtil.load(fileText);
-
-    final Module module = WriteCommandAction.runWriteCommandAction(null, (Computable<Module>)() -> {
-      String imlPath = path + "/" + EclipseProjectFinder.findProjectName(path) + ModuleManagerEx.IML_EXTENSION;
-      return ModuleManager.getInstance(project).newModule(imlPath, StdModuleTypes.JAVA.getId());
-    });
-
-    ModuleRootModificationUtil.updateModel(module, model -> {
-      try {
-        EclipseClasspathReader classpathReader = new EclipseClasspathReader(path, project, null);
-        classpathReader.init(model);
-        classpathReader.readClasspath(model, classpathElement);
-        new EclipseClasspathStorageProvider().assertCompatible(model);
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    });
-    return module;
+  @Test
+  fun testPathVariables() {
+    doTest()
   }
 
-  static void checkModule(String path, Module module) throws IOException, JDOMException, ConversionException {
-    final File classpathFile1 = new File(path, EclipseXml.DOT_CLASSPATH_EXT);
-    if (!classpathFile1.exists()) return;
-    String fileText1 = FileUtil.loadFile(classpathFile1).replaceAll("\\$ROOT\\$", PlatformTestUtil.getOrCreateProjectBaseDir(module.getProject()).getPath());
-    if (!SystemInfo.isWindows) {
-      fileText1 = fileText1.replaceAll(EclipseXml.FILE_PROTOCOL + "/", EclipseXml.FILE_PROTOCOL);
-    }
-
-    Element classpathElement1 = JDOMUtil.load(fileText1);
-    ModuleRootModel model = ModuleRootManager.getInstance(module);
-    Element resultClasspathElement = new EclipseClasspathWriter().writeClasspath(classpathElement1, model);
-    assertThat(resultClasspathElement).isEqualTo(resultClasspathElement);
+  @Test
+  fun testJunit() {
+    doTest()
   }
 
-  public void testAbsolutePaths() throws Exception {
-    doTest("/parent/parent/test", getProject());
+  @Test
+  fun testSrcBinJRE() {
+    doTest()
   }
 
-  public void testWorkspaceOnly() throws Exception {
-    doTest();
+  @Test
+  fun testSrcBinJRESpecific() {
+    doTest()
   }
 
-  public void testExportedLibs() throws Exception {
-    doTest();
+  @Test
+  fun testNativeLibs() {
+    doTest()
   }
 
-  public void testPathVariables() throws Exception {
-    doTest();
+  @Test
+  fun testAccessrulez() {
+    doTest()
   }
 
-  public void testJunit() throws Exception {
-    doTest();
+  @Test
+  fun testSrcBinJREProject() {
+    doTest()
   }
 
-  public void testSrcBinJRE() throws Exception {
-    doTest();
+  @Test
+  fun testSourceFolderOutput() {
+    doTest()
   }
 
-  public void testSrcBinJRESpecific() throws Exception {
-    doTest();
+  @Test
+  fun testMultipleSourceFolders() {
+    doTest()
   }
 
-  public void testNativeLibs() throws Exception {
-    doTest();
+  @Test
+  fun testEmptySrc() {
+    doTest()
   }
 
-  public void testAccessrulez() throws Exception {
-    doTest();
+  @Test
+  fun testHttpJavadoc() {
+    doTest()
   }
 
-  public void testSrcBinJREProject() throws Exception {
-    doTest();
-  }
-
-  public void testSourceFolderOutput() throws Exception {
-    doTest();
-  }
-
-  public void testMultipleSourceFolders() throws Exception {
-    doTest();
-  }
-
-  public void testEmptySrc() throws Exception {
-    doTest();
-  }
-
-  public void testHttpJavadoc() throws Exception {
-    doTest();
-  }
-
-  public void testHome() throws Exception {
-    doTest();
+  @Test
+  fun testHome() {
+    doTest()
   }
 
   //public void testNoJava() throws Exception {
   //  doTest();
-  //}
 
-  public void testNoSource() throws Exception {
-    doTest();
+  @Test//}
+  fun testNoSource() {
+    doTest()
   }
 
-  public void testPlugin() throws Exception {
-    doTest();
+  @Test
+  fun testPlugin() {
+    doTest()
   }
 
-  public void testRoot() throws Exception {
-    doTest();
+  @Test
+  fun testRoot() {
+    doTest()
   }
 
-  public void testUnknownCon() throws Exception {
-    doTest();
+  @Test
+  fun testUnknownCon() {
+    doTest()
   }
 
-  public void testSourcesAfterAll() throws Exception {
-    doTest();
+  @Test
+  fun testSourcesAfterAll() {
+    doTest()
   }
 
-  public void testLinkedSrc() throws Exception {
-    doTest();
+  @Test
+  fun testLinkedSrc() {
+    doTest()
   }
 
-  public void testSrcRootsOrder() throws Exception {
-    doTest();
+  @Test
+  fun testSrcRootsOrder() {
+    doTest()
+  }
+
+  private fun doTest() {
+    doTest("test")
+  }
+
+  fun doTest(relativePath: String) {
+    //todo loading and saving in Eclipse format isn't implemented in workspace model yet (IDEA-246236)
+    Assume.assumeFalse(ProjectModelRule.isWorkspaceModelEnabled)
+    val testDataRoot = PluginPathManager.getPluginHome("eclipse").toPath().resolve("testData/round")
+    val testRoot = testDataRoot.resolve(testName.methodName.removePrefix("test").decapitalize()).resolve(relativePath)
+    val commonRoot = testDataRoot.resolve("common")
+    loadProjectAndCheckResults(listOf(testRoot, commonRoot), tempDirectory) { project ->
+      runWriteActionAndWait {
+        ModuleManager.getInstance(project).modules.forEach {
+          it.moduleFile!!.delete(this)
+          it.stateStore.clearCaches()
+        }
+      }
+      project.stateStore.save(true)
+      val baseDir = Paths.get(project.basePath!!)
+      baseDir.assertMatches(directoryContentOf(testRoot).mergeWith(directoryContentOf(commonRoot)), filePathFilter = { path ->
+        path.endsWith("/.classpath") || path.endsWith(".iml")
+      })
+    }
+  }
+
+  companion object {
+    @JvmField
+    @ClassRule
+    val appRule = ApplicationRule()
+
+    @JvmStatic
+    fun doTest(relativePath: String, project: Project) {
+      val path = project.basePath + relativePath
+      checkModule(path, setUpModule(path, project))
+    }
+
+
+    @JvmStatic
+    fun setUpModule(path: String, project: Project): Module {
+      val classpathFile = File(path, EclipseXml.DOT_CLASSPATH_EXT)
+      var fileText = FileUtil.loadFile(classpathFile).replace("\\\$ROOT\\$".toRegex(),
+                                                              PlatformTestUtil.getOrCreateProjectBaseDir(project).path)
+      if (!SystemInfo.isWindows) {
+        fileText = fileText.replace(EclipseXml.FILE_PROTOCOL + "/".toRegex(), EclipseXml.FILE_PROTOCOL)
+      }
+      val classpathElement = JDOMUtil.load(fileText)
+      val module = WriteCommandAction.runWriteCommandAction(null, (Computable {
+        val imlPath = path + "/" + EclipseProjectFinder.findProjectName(path) + ModuleManagerEx.IML_EXTENSION
+        ModuleManager.getInstance(project).newModule(imlPath, StdModuleTypes.JAVA.id)
+      } as Computable<Module>))
+      ModuleRootModificationUtil.updateModel(module) { model: ModifiableRootModel? ->
+        try {
+          val classpathReader = EclipseClasspathReader(path, project, null)
+          classpathReader.init(model!!)
+          classpathReader.readClasspath(model, classpathElement)
+          EclipseClasspathStorageProvider().assertCompatible(model)
+        }
+        catch (e: Exception) {
+          throw RuntimeException(e)
+        }
+      }
+      return module
+    }
+
+    @JvmStatic
+    fun checkModule(path: String?, module: Module) {
+      val classpathFile1 = File(path, EclipseXml.DOT_CLASSPATH_EXT)
+      if (!classpathFile1.exists()) return
+      var fileText1 = FileUtil.loadFile(classpathFile1).replace("\\\$ROOT\\$".toRegex(),
+                                                                PlatformTestUtil.getOrCreateProjectBaseDir(module.project).path)
+      if (!SystemInfo.isWindows) {
+        fileText1 = fileText1.replace(EclipseXml.FILE_PROTOCOL + "/".toRegex(), EclipseXml.FILE_PROTOCOL)
+      }
+      val classpathElement1 = JDOMUtil.load(fileText1)
+      val model: ModuleRootModel = ModuleRootManager.getInstance(module)
+      val resultClasspathElement = EclipseClasspathWriter().writeClasspath(classpathElement1, model)
+      Assertions.assertThat(resultClasspathElement).isEqualTo(resultClasspathElement)
+    }
   }
 }
