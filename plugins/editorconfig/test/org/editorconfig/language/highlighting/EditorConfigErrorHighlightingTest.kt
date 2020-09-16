@@ -11,6 +11,7 @@ class EditorConfigErrorHighlightingTest : BasePlatformTestCase() {
   fun testDanglingDot() = doTest()
   fun testInnerDots() = doTest()
   fun testSuspiciousLineBreak() = doTest()
+  fun testValueWithSpaces() = doTest()
 
   private fun doTest() {
     myFixture.testHighlighting(true, false, true, "${getTestName(true)}/.editorconfig")

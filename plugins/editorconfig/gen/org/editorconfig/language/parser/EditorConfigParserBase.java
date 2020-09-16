@@ -437,30 +437,15 @@ public class EditorConfigParserBase implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // IDENTIFIER+ <<followedByNewLineOrEndOfFile>>
+  // IDENTIFIER <<followedByNewLineOrEndOfFile>>
   public static boolean option_value_raw_text(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "option_value_raw_text")) return false;
     if (!nextTokenIs(b, IDENTIFIER)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = option_value_raw_text_0(b, l + 1);
+    r = consumeToken(b, IDENTIFIER);
     r = r && followedByNewLineOrEndOfFile(b, l + 1);
     exit_section_(b, m, OPTION_VALUE_RAW_TEXT, r);
-    return r;
-  }
-
-  // IDENTIFIER+
-  private static boolean option_value_raw_text_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "option_value_raw_text_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, IDENTIFIER);
-    while (r) {
-      int c = current_position_(b);
-      if (!consumeToken(b, IDENTIFIER)) break;
-      if (!empty_element_parsed_guard_(b, "option_value_raw_text_0", c)) break;
-    }
-    exit_section_(b, m, null, r);
     return r;
   }
 

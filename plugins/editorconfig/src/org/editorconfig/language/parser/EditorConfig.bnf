@@ -190,7 +190,7 @@ option_value_identifier ::= IDENTIFIER {
   implements="org.editorconfig.language.psi.interfaces.EditorConfigIdentifierElement"
 }
 
-option_value_raw_text ::= IDENTIFIER+ <<followedByNewLineOrEndOfFile>>
+option_value_raw_text ::= IDENTIFIER <<followedByNewLineOrEndOfFile>>
 
 
 // ---- ---- Recovery ---- ----
