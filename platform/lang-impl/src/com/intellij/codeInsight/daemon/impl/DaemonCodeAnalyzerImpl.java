@@ -40,7 +40,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -77,6 +76,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   private final Project myProject;
   private final DaemonCodeAnalyzerSettings mySettings;
   @NotNull private final PsiDocumentManager myPsiDocumentManager;
+  private final FileEditorManager myFileEditorManager;
   private DaemonProgressIndicator myUpdateProgress = new DaemonProgressIndicator(); //guarded by this
 
   private final UpdateRunnable myUpdateRunnable;
@@ -136,6 +136,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       myDisposed = true;
       myLastSettings = null;
     });
+    myFileEditorManager = FileEditorManager.getInstance(myProject);
   }
 
   @Override
@@ -180,7 +181,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   @TestOnly
   public List<HighlightInfo> getFileLevelHighlights(@NotNull Project project, @NotNull PsiFile file) {
     VirtualFile vFile = file.getViewProvider().getVirtualFile();
-    return Arrays.stream(FileEditorManager.getInstance(project).getEditors(vFile))
+    return Arrays.stream(myFileEditorManager.getEditors(vFile))
       .map(fileEditor -> fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS))
       .filter(Objects::nonNull)
       .flatMap(Collection::stream)
@@ -192,14 +193,13 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     if (psiFile == null) return;
     FileViewProvider provider = psiFile.getViewProvider();
     VirtualFile vFile = provider.getVirtualFile();
-    final FileEditorManager manager = FileEditorManager.getInstance(project);
-    for (FileEditor fileEditor : manager.getEditors(vFile)) {
+    for (FileEditor fileEditor : myFileEditorManager.getEditors(vFile)) {
       final List<HighlightInfo> infos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
       if (infos == null) continue;
       List<HighlightInfo> infosToRemove = new ArrayList<>();
       for (HighlightInfo info : infos) {
         if (info.getGroup() == group) {
-          manager.removeTopComponent(fileEditor, info.fileLevelComponent);
+          myFileEditorManager.removeTopComponent(fileEditor, info.fileLevelComponent);
           infosToRemove.add(info);
         }
       }
@@ -213,13 +213,12 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
                                     @NotNull final HighlightInfo info,
                                     @NotNull final PsiFile psiFile) {
     VirtualFile vFile = psiFile.getViewProvider().getVirtualFile();
-    final FileEditorManager manager = FileEditorManager.getInstance(project);
-    for (FileEditor fileEditor : manager.getEditors(vFile)) {
+    for (FileEditor fileEditor : myFileEditorManager.getEditors(vFile)) {
       if (fileEditor instanceof TextEditor) {
         FileLevelIntentionComponent component = new FileLevelIntentionComponent(info.getDescription(), info.getSeverity(),
                                                                                 info.getGutterIconRenderer(), info.quickFixActionRanges,
                                                                                 project, psiFile, ((TextEditor)fileEditor).getEditor(), info.getToolTip());
-        manager.addTopComponent(fileEditor, component);
+        myFileEditorManager.addTopComponent(fileEditor, component);
         List<HighlightInfo> fileLevelInfos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
         if (fileLevelInfos == null) {
           fileLevelInfos = new ArrayList<>();
@@ -233,12 +232,11 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   }
 
   void cleanAllFileLevelHighlights() {
-    final FileEditorManager manager = FileEditorManager.getInstance(myProject);
-    for (FileEditor fileEditor : manager.getAllEditors()) {
+    for (FileEditor fileEditor : myFileEditorManager.getAllEditors()) {
       final List<HighlightInfo> infos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
       if (infos != null && !infos.isEmpty()) {
         for (HighlightInfo info : infos) {
-          manager.removeTopComponent(fileEditor, info.fileLevelComponent);
+          myFileEditorManager.removeTopComponent(fileEditor, info.fileLevelComponent);
         }
         infos.clear();
       }
