@@ -9,7 +9,6 @@ class EditorConfigErrorHighlightingTest : BasePlatformTestCase() {
     "${PathManagerEx.getCommunityHomePath()}/plugins/editorconfig/testData/org/editorconfig/language/highlighting/error/"
 
   fun testDanglingDot() = doTest()
-  fun testDanglingKey() = doTest()
   fun testInnerDots() = doTest()
   fun testSuspiciousLineBreak() = doTest()
 
