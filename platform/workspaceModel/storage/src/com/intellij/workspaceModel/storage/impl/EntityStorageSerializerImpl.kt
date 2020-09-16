@@ -453,7 +453,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
   fun deserializeCacheAndDiffLog(storeStream: InputStream, diffLogStream: InputStream): WorkspaceEntityStorageBuilder? {
     val builder = this.deserializeCache(storeStream) ?: return null
 
-    var log: List<WorkspaceEntityStorageBuilderImpl.ChangeEntry> = emptyList()
+    var log: List<WorkspaceEntityStorageBuilderImpl.ChangeEntry>
     Input(diffLogStream, KRYO_BUFFER_SIZE).use { input ->
       val kryo = createKryo()
 
