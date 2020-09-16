@@ -30,4 +30,15 @@ def foo(String s, @NamedParam Integer p) {}
 foo("", <warning>s</warning> : "", p : 1)
 '''
     }
+
+    void 'test constructor'() {
+        doTest '''
+class Rr {
+    @NamedVariant
+    Rr(String s, @NamedParam Integer p) {}
+}
+
+new Rr("", <warning>s</warning> : "", p : 1)
+'''
+    }
 }
