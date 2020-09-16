@@ -296,7 +296,7 @@ public class EditorConfigParserBase implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // option_value_pair | option_value_standalone_list | option_value_standalone_identifier | option_value_raw_text
+  // option_value_pair | option_value_standalone_list | option_value_standalone_identifier
   static boolean option_value(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "option_value")) return false;
     if (!nextTokenIs(b, "", COMMA, IDENTIFIER)) return false;
@@ -304,7 +304,6 @@ public class EditorConfigParserBase implements PsiParser, LightPsiParser {
     r = option_value_pair(b, l + 1);
     if (!r) r = option_value_standalone_list(b, l + 1);
     if (!r) r = option_value_standalone_identifier(b, l + 1);
-    if (!r) r = option_value_raw_text(b, l + 1);
     return r;
   }
 
@@ -433,19 +432,6 @@ public class EditorConfigParserBase implements PsiParser, LightPsiParser {
     boolean r;
     r = option_value_list(b, l + 1);
     if (!r) r = option_value_identifier(b, l + 1);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // IDENTIFIER <<followedByNewLineOrEndOfFile>>
-  public static boolean option_value_raw_text(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "option_value_raw_text")) return false;
-    if (!nextTokenIs(b, IDENTIFIER)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, IDENTIFIER);
-    r = r && followedByNewLineOrEndOfFile(b, l + 1);
-    exit_section_(b, m, OPTION_VALUE_RAW_TEXT, r);
     return r;
   }
 

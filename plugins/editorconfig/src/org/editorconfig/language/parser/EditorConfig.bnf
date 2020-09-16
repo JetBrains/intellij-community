@@ -135,7 +135,7 @@ option ::= option_key (SEPARATOR option_value?)? {
 // and treat it as qualified key with only one part
 private option_key ::= qualified_option_key | flat_option_key
 
-private option_value ::= option_value_pair | option_value_standalone_list | option_value_standalone_identifier | option_value_raw_text
+private option_value ::= option_value_pair | option_value_standalone_list | option_value_standalone_identifier
 
 // ---- ---- Key ---- ----
 
@@ -189,9 +189,6 @@ option_value_identifier ::= IDENTIFIER {
   mixin="org.editorconfig.language.psi.base.EditorConfigOptionValueIdentifierBase"
   implements="org.editorconfig.language.psi.interfaces.EditorConfigIdentifierElement"
 }
-
-option_value_raw_text ::= IDENTIFIER <<followedByNewLineOrEndOfFile>>
-
 
 // ---- ---- Recovery ---- ----
 
