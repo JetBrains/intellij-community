@@ -1246,6 +1246,7 @@ public final class PsiUtil {
    */
   public static boolean isTrustedMapConstructorResult(@NotNull GroovyResolveResult result) {
     if (result instanceof GroovyConstructorResult && ((GroovyConstructorResult)result).isMapConstructor()) return true;
+    if (!(result instanceof GroovyConstructorResult) && result.getElement() instanceof PsiMethod && !((PsiMethod)result.getElement()).hasParameters()) return true;
     PsiElement method = result.getElement();
     if (method instanceof PsiMethod) {
       PsiParameter[] parameters = ((PsiMethod)method).getParameterList().getParameters();
