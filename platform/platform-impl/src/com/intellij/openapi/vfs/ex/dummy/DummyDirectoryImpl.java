@@ -24,11 +24,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.List;
 
-class VirtualFileDirectoryImpl extends VirtualFileImpl {
-  private final ArrayList<VirtualFileImpl> myChildren = new ArrayList<>();
+class DummyDirectoryImpl extends DummyFileBase {
+  private final List<DummyFileBase> myChildren = new ArrayList<>();
 
-  VirtualFileDirectoryImpl(DummyFileSystem fileSystem, VirtualFileDirectoryImpl parent, String name) {
+  DummyDirectoryImpl(@NotNull DummyFileSystem fileSystem, DummyDirectoryImpl parent, @NotNull String name) {
     super(fileSystem, parent, name);
   }
 
@@ -44,7 +45,7 @@ class VirtualFileDirectoryImpl extends VirtualFileImpl {
 
   @Override
   public VirtualFile[] getChildren() {
-    return myChildren.size() == 0 ? EMPTY_ARRAY : myChildren.toArray(VirtualFile.EMPTY_ARRAY);
+    return myChildren.isEmpty() ? EMPTY_ARRAY : myChildren.toArray(VirtualFile.EMPTY_ARRAY);
   }
 
   @Override
@@ -68,11 +69,11 @@ class VirtualFileDirectoryImpl extends VirtualFileImpl {
     return -1;
   }
 
-  void addChild(VirtualFileImpl child) {
+  void addChild(DummyFileBase child) {
     myChildren.add(child);
   }
 
-  void removeChild(VirtualFileImpl child) {
+  void removeChild(DummyFileBase child) {
     myChildren.remove(child);
     child.myIsValid = false;
   }

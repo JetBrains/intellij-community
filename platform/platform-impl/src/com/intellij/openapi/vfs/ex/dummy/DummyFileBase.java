@@ -19,13 +19,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NotNull;
 
-abstract class VirtualFileImpl extends VirtualFile {
+abstract class DummyFileBase extends VirtualFile {
   private final DummyFileSystem myFileSystem;
-  private final VirtualFileDirectoryImpl myParent;
+  private final DummyDirectoryImpl myParent;
   private String myName;
   protected boolean myIsValid = true;
 
-  protected VirtualFileImpl(DummyFileSystem fileSystem, VirtualFileDirectoryImpl parent, String name) {
+  DummyFileBase(@NotNull DummyFileSystem fileSystem, DummyDirectoryImpl parent, @NotNull String name) {
     myFileSystem = fileSystem;
     myParent = parent;
     myName = name;
@@ -42,9 +42,8 @@ abstract class VirtualFileImpl extends VirtualFile {
   public String getPath() {
     if (myParent == null) {
       return myName;
-    } else {
-      return myParent.getPath() + "/" + myName;
     }
+    return myParent.getPath() + "/" + myName;
   }
 
   @Override
@@ -53,7 +52,7 @@ abstract class VirtualFileImpl extends VirtualFile {
     return myName;
   }
 
-  void setName(final String name) {
+  void setName(@NotNull String name) {
     myName = name;
   }
 

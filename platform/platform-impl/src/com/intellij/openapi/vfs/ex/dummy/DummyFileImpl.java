@@ -9,11 +9,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 
-class VirtualFileDataImpl extends VirtualFileImpl {
+class DummyFileImpl extends DummyFileBase {
   private byte[] myContents = ArrayUtilRt.EMPTY_BYTE_ARRAY;
   private long myModificationStamp = LocalTimeCounter.currentTime();
 
-  VirtualFileDataImpl(DummyFileSystem fileSystem, VirtualFileDirectoryImpl parent, String name) {
+  DummyFileImpl(@NotNull DummyFileSystem fileSystem, @NotNull DummyDirectoryImpl parent, @NotNull String name) {
     super(fileSystem, parent, name);
   }
 
@@ -44,11 +44,11 @@ class VirtualFileDataImpl extends VirtualFileImpl {
       @Override
       public void close() {
         final DummyFileSystem fs = (DummyFileSystem)getFileSystem();
-        fs.fireBeforeContentsChange(requestor, VirtualFileDataImpl.this);
+        fs.fireBeforeContentsChange(requestor, DummyFileImpl.this);
         final long oldModStamp = myModificationStamp;
         myContents = toByteArray();
         myModificationStamp = newModificationStamp >= 0 ? newModificationStamp : LocalTimeCounter.currentTime();
-        fs.fireContentsChanged(requestor, VirtualFileDataImpl.this, oldModStamp);
+        fs.fireContentsChanged(requestor, DummyFileImpl.this, oldModStamp);
       }
     },this);
   }
