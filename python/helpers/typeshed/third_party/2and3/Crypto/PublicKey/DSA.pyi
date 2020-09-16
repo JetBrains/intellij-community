@@ -1,4 +1,5 @@
 from typing import Any, Optional
+
 from .pubkey import pubkey
 
 class _DSAobj(pubkey):

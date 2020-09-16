@@ -1,4 +1,5 @@
 from typing import Tuple
+
 from . import _LangModelType
 
 TIS620CharToOrderMap: Tuple[int, ...]

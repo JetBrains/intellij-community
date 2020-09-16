@@ -1,6 +1,7 @@
 # Stubs for requests.exceptions (Python 3)
 
 from typing import Any
+
 from .packages.urllib3.exceptions import HTTPError as BaseHTTPError
 
 class RequestException(IOError):

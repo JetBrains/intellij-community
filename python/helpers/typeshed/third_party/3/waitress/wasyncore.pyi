@@ -1,8 +1,9 @@
-from . import compat, utilities
 from io import BytesIO
 from logging import Logger
 from socket import SocketType
 from typing import Any, Callable, Mapping, Optional, Tuple
+
+from . import compat as compat, utilities as utilities
 
 socket_map: Mapping[int, SocketType]
 map: Mapping[int, SocketType]

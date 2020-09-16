@@ -1,5 +1,5 @@
-from typing import Any, Iterable, List, Mapping, Optional, Sequence, Set, Text
-from _typeshed.wsgi import WSGIApplication, WSGIEnvironment, StartResponse
+from _typeshed.wsgi import StartResponse, WSGIApplication, WSGIEnvironment
+from typing import Any, Iterable, List, Mapping, Optional, Set, Text
 
 from ..middleware.proxy_fix import ProxyFix as ProxyFix
 
@@ -21,7 +21,7 @@ class HeaderRewriterFix(object):
     remove_headers: Set[Text]
     add_headers: List[Text]
     def __init__(
-        self, app: WSGIApplication, remove_headers: Optional[Iterable[Text]] = ..., add_headers: Optional[Iterable[Text]] = ...,
+        self, app: WSGIApplication, remove_headers: Optional[Iterable[Text]] = ..., add_headers: Optional[Iterable[Text]] = ...
     ) -> None: ...
     def __call__(self, environ: WSGIEnvironment, start_response: StartResponse) -> Iterable[bytes]: ...
 

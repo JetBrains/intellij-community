@@ -1,6 +1,5 @@
-
-from typing import Dict, Tuple
 import sys
+from typing import Dict, Tuple
 
 IMPORT_MAPPING: Dict[str, str]
 NAME_MAPPING: Dict[Tuple[str, str], Tuple[str, str]]

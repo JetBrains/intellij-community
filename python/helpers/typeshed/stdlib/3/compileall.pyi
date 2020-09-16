@@ -26,6 +26,7 @@ if sys.version_info >= (3, 9):
         stripdir: Optional[str] = ...,  # TODO: change to Optional[AnyPath] once https://bugs.python.org/issue40447 is resolved
         prependdir: Optional[AnyPath] = ...,
         limit_sl_dest: Optional[AnyPath] = ...,
+        hardlink_dupes: bool = ...,
     ) -> _SuccessType: ...
     def compile_file(
         fullname: AnyPath,
@@ -40,7 +41,9 @@ if sys.version_info >= (3, 9):
         stripdir: Optional[str] = ...,  # TODO: change to Optional[AnyPath] once https://bugs.python.org/issue40447 is resolved
         prependdir: Optional[AnyPath] = ...,
         limit_sl_dest: Optional[AnyPath] = ...,
+        hardlink_dupes: bool = ...,
     ) -> _SuccessType: ...
+
 elif sys.version_info >= (3, 7):
     def compile_dir(
         dir: AnyPath,
@@ -98,6 +101,7 @@ if sys.version_info >= (3, 7):
         optimize: int = ...,
         invalidation_mode: Optional[PycInvalidationMode] = ...,
     ) -> _SuccessType: ...
+
 else:
     def compile_path(
         skip_curdir: bool = ...,

@@ -1,5 +1,6 @@
-from .compat import tobytes
 from typing import Pattern
+
+from .compat import tobytes as tobytes
 
 WS: str
 OWS: str

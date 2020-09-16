@@ -5,19 +5,31 @@
 
 import sys
 from typing import (
-    Any, Awaitable, Callable, Dict, Generic, Iterator, Mapping, Optional, Tuple, TypeVar,
-    Union, overload, Type, Iterable
+    Any,
+    Awaitable,
+    Callable,
+    Dict,
+    Generic,
+    Iterable,
+    Iterator,
+    Mapping,
+    Optional,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+    overload,
 )
 
 # ModuleType is exported from this module, but for circular import
 # reasons exists in its own stub file (with ModuleSpec and Loader).
 from _importlib_modulespec import ModuleType as ModuleType  # Exported
 
-_T = TypeVar('_T')
-_T_co = TypeVar('_T_co', covariant=True)
-_T_contra = TypeVar('_T_contra', contravariant=True)
-_KT = TypeVar('_KT')
-_VT = TypeVar('_VT')
+_T = TypeVar("_T")
+_T_co = TypeVar("_T_co", covariant=True)
+_T_contra = TypeVar("_T_contra", contravariant=True)
+_KT = TypeVar("_KT")
+_VT = TypeVar("_VT")
 
 class _Cell:
     cell_contents: Any
@@ -32,13 +44,22 @@ class FunctionType:
     __qualname__: str
     __annotations__: Dict[str, Any]
     __kwdefaults__: Dict[str, Any]
-    def __init__(self, code: CodeType, globals: Dict[str, Any], name: Optional[str] = ..., argdefs: Optional[Tuple[object, ...]] = ..., closure: Optional[Tuple[_Cell, ...]] = ...) -> None: ...
+    def __init__(
+        self,
+        code: CodeType,
+        globals: Dict[str, Any],
+        name: Optional[str] = ...,
+        argdefs: Optional[Tuple[object, ...]] = ...,
+        closure: Optional[Tuple[_Cell, ...]] = ...,
+    ) -> None: ...
     def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
     def __get__(self, obj: Optional[object], type: Optional[type]) -> MethodType: ...
+
 LambdaType = FunctionType
 
 class CodeType:
     """Create a code object.  Not for the faint of heart."""
+
     co_argcount: int
     if sys.version_info >= (3, 8):
         co_posonlyargcount: int
@@ -138,11 +159,13 @@ class GeneratorType:
     def __iter__(self) -> GeneratorType: ...
     def __next__(self) -> Any: ...
     def close(self) -> None: ...
-    def send(self, arg: Any) -> Any: ...
+    def send(self, __arg: Any) -> Any: ...
     @overload
-    def throw(self, val: BaseException) -> Any: ...
+    def throw(
+        self, __typ: Type[BaseException], __val: Union[BaseException, object] = ..., __tb: Optional[TracebackType] = ...
+    ) -> Any: ...
     @overload
-    def throw(self, typ: type, val: BaseException = ..., tb: TracebackType = ...) -> Any: ...
+    def throw(self, __typ: BaseException, __val: None = ..., __tb: Optional[TracebackType] = ...) -> Any: ...
 
 if sys.version_info >= (3, 6):
     class AsyncGeneratorType(Generic[_T_co, _T_contra]):
@@ -152,11 +175,13 @@ if sys.version_info >= (3, 6):
         ag_code: CodeType
         def __aiter__(self) -> Awaitable[AsyncGeneratorType[_T_co, _T_contra]]: ...
         def __anext__(self) -> Awaitable[_T_co]: ...
-        def asend(self, val: _T_contra) -> Awaitable[_T_co]: ...
+        def asend(self, __val: _T_contra) -> Awaitable[_T_co]: ...
         @overload
-        def athrow(self, val: BaseException) -> Awaitable[_T_co]: ...
+        def athrow(
+            self, __typ: Type[BaseException], __val: Union[BaseException, object] = ..., __tb: Optional[TracebackType] = ...
+        ) -> Awaitable[_T_co]: ...
         @overload
-        def athrow(self, typ: Type[BaseException], val: BaseException, tb: TracebackType = ...) -> Awaitable[_T_co]: ...
+        def athrow(self, __typ: BaseException, __val: None = ..., __tb: Optional[TracebackType] = ...) -> Awaitable[_T_co]: ...
         def aclose(self) -> Awaitable[None]: ...
 
 class CoroutineType:
@@ -165,11 +190,13 @@ class CoroutineType:
     cr_frame: FrameType
     cr_running: bool
     def close(self) -> None: ...
-    def send(self, arg: Any) -> Any: ...
+    def send(self, __arg: Any) -> Any: ...
     @overload
-    def throw(self, val: BaseException) -> Any: ...
+    def throw(
+        self, __typ: Type[BaseException], __val: Union[BaseException, object] = ..., __tb: Optional[TracebackType] = ...
+    ) -> Any: ...
     @overload
-    def throw(self, typ: type, val: BaseException = ..., tb: TracebackType = ...) -> Any: ...
+    def throw(self, __typ: BaseException, __val: None = ..., __tb: Optional[TracebackType] = ...) -> Any: ...
 
 class _StaticFunctionType:
     """Fictional type to correct the type of MethodType.__func__.
@@ -184,6 +211,7 @@ class _StaticFunctionType:
     similar to wrapping a function in staticmethod() at runtime to prevent it
     being bound as a method.
     """
+
     def __get__(self, obj: Optional[object], type: Optional[type]) -> FunctionType: ...
 
 class MethodType:
@@ -193,11 +221,13 @@ class MethodType:
     __qualname__: str
     def __init__(self, func: Callable[..., Any], obj: object) -> None: ...
     def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
+
 class BuiltinFunctionType:
     __self__: Union[object, ModuleType]
     __name__: str
     __qualname__: str
     def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
+
 BuiltinMethodType = BuiltinFunctionType
 
 if sys.version_info >= (3, 7):
@@ -207,7 +237,6 @@ if sys.version_info >= (3, 7):
         __objclass__: type
         def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
         def __get__(self, obj: Any, type: type = ...) -> Any: ...
-
     class MethodWrapperType:
         __self__: object
         __name__: str
@@ -216,21 +245,18 @@ if sys.version_info >= (3, 7):
         def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
         def __eq__(self, other: Any) -> bool: ...
         def __ne__(self, other: Any) -> bool: ...
-
     class MethodDescriptorType:
         __name__: str
         __qualname__: str
         __objclass__: type
         def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
         def __get__(self, obj: Any, type: type = ...) -> Any: ...
-
     class ClassMethodDescriptorType:
         __name__: str
         __qualname__: str
         __objclass__: type
         def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
         def __get__(self, obj: Any, type: type = ...) -> Any: ...
-
 
 class TracebackType:
     if sys.version_info >= (3, 7):
@@ -259,7 +285,6 @@ class FrameType:
     if sys.version_info >= (3, 7):
         f_trace_lines: bool
         f_trace_opcodes: bool
-
     def clear(self) -> None: ...
 
 class GetSetDescriptorType:
@@ -268,6 +293,7 @@ class GetSetDescriptorType:
     def __get__(self, obj: Any, type: type = ...) -> Any: ...
     def __set__(self, obj: Any) -> None: ...
     def __delete__(self, obj: Any) -> None: ...
+
 class MemberDescriptorType:
     __name__: str
     __objclass__: type
@@ -276,11 +302,19 @@ class MemberDescriptorType:
     def __delete__(self, obj: Any) -> None: ...
 
 if sys.version_info >= (3, 7):
-    def new_class(name: str, bases: Iterable[object] = ..., kwds: Dict[str, Any] = ..., exec_body: Callable[[Dict[str, Any]], None] = ...) -> type: ...
+    def new_class(
+        name: str, bases: Iterable[object] = ..., kwds: Dict[str, Any] = ..., exec_body: Callable[[Dict[str, Any]], None] = ...
+    ) -> type: ...
     def resolve_bases(bases: Iterable[object]) -> Tuple[Any, ...]: ...
+
 else:
-    def new_class(name: str, bases: Tuple[type, ...] = ..., kwds: Dict[str, Any] = ..., exec_body: Callable[[Dict[str, Any]], None] = ...) -> type: ...
-def prepare_class(name: str, bases: Tuple[type, ...] = ..., kwds: Dict[str, Any] = ...) -> Tuple[type, Dict[str, Any], Dict[str, Any]]: ...
+    def new_class(
+        name: str, bases: Tuple[type, ...] = ..., kwds: Dict[str, Any] = ..., exec_body: Callable[[Dict[str, Any]], None] = ...
+    ) -> type: ...
+
+def prepare_class(
+    name: str, bases: Tuple[type, ...] = ..., kwds: Dict[str, Any] = ...
+) -> Tuple[type, Dict[str, Any], Dict[str, Any]]: ...
 
 # Actually a different type, but `property` is special and we want that too.
 DynamicClassAttribute = property
@@ -292,5 +326,5 @@ if sys.version_info >= (3, 9):
         __origin__: type
         __args__: Tuple[Any, ...]
         __parameters__: Tuple[Any, ...]
-        def __init__(self, origin: type, args: Any): ...
+        def __init__(self, origin: type, args: Any) -> None: ...
         def __getattr__(self, name: str) -> Any: ...  # incomplete

@@ -1,6 +1,6 @@
 # Stubs for filecmp (Python 2/3)
 import sys
-from typing import AnyStr, Callable, Dict, Generic, Iterable, List, Optional, Sequence, Tuple, Union, Text
+from typing import AnyStr, Callable, Dict, Generic, Iterable, List, Optional, Sequence, Text, Tuple, Union
 
 if sys.version_info >= (3, 6):
     from os import PathLike
@@ -8,24 +8,35 @@ if sys.version_info >= (3, 6):
 DEFAULT_IGNORES: List[str]
 
 if sys.version_info >= (3, 6):
-    def cmp(f1: Union[bytes, Text, PathLike[AnyStr]], f2: Union[bytes, Text, PathLike[AnyStr]], shallow: Union[int, bool] = ...) -> bool: ...
-    def cmpfiles(a: Union[AnyStr, PathLike[AnyStr]], b: Union[AnyStr, PathLike[AnyStr]], common: Iterable[AnyStr],
-                 shallow: Union[int, bool] = ...) -> Tuple[List[AnyStr], List[AnyStr], List[AnyStr]]: ...
+    def cmp(
+        f1: Union[bytes, Text, PathLike[AnyStr]], f2: Union[bytes, Text, PathLike[AnyStr]], shallow: Union[int, bool] = ...
+    ) -> bool: ...
+    def cmpfiles(
+        a: Union[AnyStr, PathLike[AnyStr]],
+        b: Union[AnyStr, PathLike[AnyStr]],
+        common: Iterable[AnyStr],
+        shallow: Union[int, bool] = ...,
+    ) -> Tuple[List[AnyStr], List[AnyStr], List[AnyStr]]: ...
+
 else:
     def cmp(f1: Union[bytes, Text], f2: Union[bytes, Text], shallow: Union[int, bool] = ...) -> bool: ...
-    def cmpfiles(a: AnyStr, b: AnyStr, common: Iterable[AnyStr],
-                 shallow: Union[int, bool] = ...) -> Tuple[List[AnyStr], List[AnyStr], List[AnyStr]]: ...
+    def cmpfiles(
+        a: AnyStr, b: AnyStr, common: Iterable[AnyStr], shallow: Union[int, bool] = ...
+    ) -> Tuple[List[AnyStr], List[AnyStr], List[AnyStr]]: ...
 
 class dircmp(Generic[AnyStr]):
     if sys.version_info >= (3, 6):
-        def __init__(self, a: Union[AnyStr, PathLike[AnyStr]], b: Union[AnyStr, PathLike[AnyStr]],
-                     ignore: Optional[Sequence[AnyStr]] = ...,
-                     hide: Optional[Sequence[AnyStr]] = ...) -> None: ...
+        def __init__(
+            self,
+            a: Union[AnyStr, PathLike[AnyStr]],
+            b: Union[AnyStr, PathLike[AnyStr]],
+            ignore: Optional[Sequence[AnyStr]] = ...,
+            hide: Optional[Sequence[AnyStr]] = ...,
+        ) -> None: ...
     else:
-        def __init__(self, a: AnyStr, b: AnyStr,
-                     ignore: Optional[Sequence[AnyStr]] = ...,
-                     hide: Optional[Sequence[AnyStr]] = ...) -> None: ...
-
+        def __init__(
+            self, a: AnyStr, b: AnyStr, ignore: Optional[Sequence[AnyStr]] = ..., hide: Optional[Sequence[AnyStr]] = ...
+        ) -> None: ...
     left: AnyStr
     right: AnyStr
     hide: Sequence[AnyStr]
@@ -44,11 +55,9 @@ class dircmp(Generic[AnyStr]):
     right_only: List[AnyStr]
     left_list: List[AnyStr]
     right_list: List[AnyStr]
-
     def report(self) -> None: ...
     def report_partial_closure(self) -> None: ...
     def report_full_closure(self) -> None: ...
-
     methodmap: Dict[str, Callable[[], None]]
     def phase0(self) -> None: ...
     def phase1(self) -> None: ...

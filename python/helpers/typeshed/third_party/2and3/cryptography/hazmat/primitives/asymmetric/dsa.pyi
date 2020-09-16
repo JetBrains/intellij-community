@@ -1,5 +1,4 @@
 from abc import ABCMeta, abstractmethod
-
 from typing import Union
 
 from cryptography.hazmat.backends.interfaces import DSABackend
@@ -61,8 +60,9 @@ class DSAPublicKey(metaclass=ABCMeta):
     @abstractmethod
     def public_numbers(self) -> DSAPublicNumbers: ...
     @abstractmethod
-    def verifier(self, signature: bytes,
-                 signature_algorithm: Union[HashAlgorithm, Prehashed]) -> AsymmetricVerificationContext: ...
+    def verifier(
+        self, signature: bytes, signature_algorithm: Union[HashAlgorithm, Prehashed]
+    ) -> AsymmetricVerificationContext: ...
     @abstractmethod
     def verify(self, signature: bytes, data: bytes, algorithm: Union[HashAlgorithm, Prehashed]) -> None: ...
 

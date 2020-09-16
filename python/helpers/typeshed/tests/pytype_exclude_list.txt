@@ -1,4 +1,4 @@
-# Pytype blacklist. Files will not be tested with pytype.
+# Pytype exclude list. Files will not be tested with pytype.
 
 # pytype has its own version of these files, and thus doesn't mind if it
 # can't parse the typeshed version:
@@ -15,3 +15,5 @@ third_party/2and3/attr/converters.pyi
 third_party/2and3/attr/filters.pyi
 third_party/2and3/attr/validators.pyi
 third_party/2and3/pynamodb/models.pyi
+third_party/3/six/__init__.pyi
+third_party/3/six/moves/__init__.pyi

@@ -1,4 +1,5 @@
-from typing import Any, Union, Text
+from typing import Text, Union
+
 from .blockalgo import BlockAlgo
 
 __revision__: str

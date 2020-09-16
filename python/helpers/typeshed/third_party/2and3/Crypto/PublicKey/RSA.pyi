@@ -1,4 +1,5 @@
-from typing import Any, Optional, Union, Text
+from typing import Any, Optional, Text, Union
+
 from .pubkey import pubkey
 
 class _RSAobj(pubkey):

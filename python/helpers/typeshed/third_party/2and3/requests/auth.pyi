@@ -1,11 +1,8 @@
 # Stubs for requests.auth (Python 3)
 
 from typing import Any, Text, Union
-from . import compat
-from . import cookies
-from . import models
-from . import utils
-from . import status_codes
+
+from . import cookies, models, status_codes, utils
 
 extract_cookies_to_jar = cookies.extract_cookies_to_jar
 parse_dict_header = utils.parse_dict_header

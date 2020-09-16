@@ -38,11 +38,13 @@ class RSAPublicKey(metaclass=ABCMeta):
     @abstractmethod
     def public_numbers(self) -> RSAPublicNumbers: ...
     @abstractmethod
-    def verifier(self, signature: bytes, padding: AsymmetricPadding,
-                 algorithm: Union[HashAlgorithm, Prehashed]) -> AsymmetricVerificationContext: ...
+    def verifier(
+        self, signature: bytes, padding: AsymmetricPadding, algorithm: Union[HashAlgorithm, Prehashed]
+    ) -> AsymmetricVerificationContext: ...
     @abstractmethod
-    def verify(self, signature: bytes, data: bytes, padding: AsymmetricPadding,
-               algorithm: Union[HashAlgorithm, Prehashed]) -> None: ...
+    def verify(
+        self, signature: bytes, data: bytes, padding: AsymmetricPadding, algorithm: Union[HashAlgorithm, Prehashed]
+    ) -> None: ...
 
 RSAPublicKeyWithSerialization = RSAPublicKey
 

@@ -1,5 +1,5 @@
-from typing import Any, Optional
 import threading
+from typing import Any, Optional
 
 SUBDEBUG: Any
 SUBWARNING: Any
