@@ -1,7 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.transformations.impl.namedVariant
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP
+import com.intellij.psi.PsiManager
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.getAnnotation
@@ -42,8 +44,10 @@ class NamedVariantTransformationSupport : AstTransformationSupport {
     return buildMethod(parameters, method)
   }
 
+  internal class NamedVariantGeneratedMethod(manager: PsiManager?, name: @NlsSafe String?) : GrLightMethodBuilder(manager, name)
+
   private fun buildMethod(parameters: List<GrParameter>, method: GrMethod): GrLightMethodBuilder? {
-    val builder = GrLightMethodBuilder(method.manager, method.name + "")
+    val builder = NamedVariantGeneratedMethod(method.manager, method.name + "")
     val psiClass = method.containingClass ?: return null
     builder.containingClass = psiClass
     builder.returnType = method.returnType

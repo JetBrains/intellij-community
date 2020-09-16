@@ -62,4 +62,15 @@ class Rr {
 new Rr(s : "", p : 1)
 '''
     }
+
+
+    void 'test raw @NamedParam'() {
+        doTest '''
+class Rr {
+    Rr(@NamedParam('s') Map s) {}
+}
+
+new Rr(s : "", <warning>p</warning> : 1)
+'''
+    }
 }
