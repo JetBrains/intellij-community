@@ -44,15 +44,15 @@ public final class IndexedHashesSupport {
     return digest.digest();
   }
 
-  public static byte @NotNull [] calculateIndexedHash(@NotNull IndexedFile indexedFile, byte @NotNull [] contentHash) {
+  public static byte @NotNull [] calculateIndexedHash(@NotNull IndexedFile indexedFile, byte @NotNull [] contentHash, boolean isUtf8Forced) {
     Hasher hasher = INDEXED_FILE_CONTENT_HASHER.newHasher();
     hasher.putBytes(contentHash);
 
     if (!FileContentImpl.getFileTypeWithoutSubstitution(indexedFile).isBinary()) {
-      Charset charset =
-        indexedFile instanceof FileContentImpl
-        ? ((FileContentImpl)indexedFile).getCharset()
-        : indexedFile.getFile().getCharset();
+      Charset charset = isUtf8Forced ? StandardCharsets.UTF_8 :
+                        indexedFile instanceof FileContentImpl
+                        ? ((FileContentImpl)indexedFile).getCharset()
+                        : indexedFile.getFile().getCharset();
       hasher.putString(charset.name(), StandardCharsets.UTF_8);
     }
 
@@ -94,7 +94,7 @@ public final class IndexedHashesSupport {
       contentHash = getBinaryContentHash(content.getContent());
       // todo store content hash in FS
     }
-    return calculateIndexedHash(content, contentHash);
+    return calculateIndexedHash(content, contentHash, false);
   }
 
   private static <F> void buildFlavorHash(@NotNull IndexedFile indexedFile,
