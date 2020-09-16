@@ -652,11 +652,10 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       myFolderPathIfStoredInArbitraryFile =
         PathUtil.getParentPath(StringUtil.notNullize(settings.getPathIfStoredInArbitraryFileInProject()));
 
-      myStoreAsFileCheckBox.setVisible(!settings.isTemplate());
       myStoreAsFileCheckBox.setEnabled(isManagedRunConfiguration);
       myStoreAsFileCheckBox.setSelected(myRCStorageType == RCStorageType.DotIdeaFolder ||
                                         myRCStorageType == RCStorageType.ArbitraryFileInProject);
-      myStoreAsFileGearButton.setVisible(!settings.isTemplate() && isManagedRunConfiguration);
+      myStoreAsFileGearButton.setVisible(isManagedRunConfiguration);
       myStoreAsFileGearButton.setEnabled(myStoreAsFileCheckBox.isSelected());
 
       boolean targetAware =
