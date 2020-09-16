@@ -160,9 +160,7 @@ public final class JavaSdkImpl extends JavaSdk {
   @NotNull
   @Override
   public Comparator<String> versionStringComparator() {
-    return (sdk1, sdk2) -> {
-      return Comparing.compare(getJavaVersion(sdk1), getJavaVersion(sdk2));
-    };
+    return (sdk1, sdk2) -> Comparing.compare(getJavaVersion(sdk1), getJavaVersion(sdk2));
   }
 
   @Override
@@ -291,7 +289,7 @@ public final class JavaSdkImpl extends JavaSdk {
   // return true on success
   public static boolean attachIDEAAnnotationsToJdk(@NotNull SdkModificator modificator) {
     List<String> pathsChecked = new ArrayList<>();
-    VirtualFile root = internalJdkAnnotationsPath(pathsChecked);
+    VirtualFile root = internalJdkAnnotationsPath(pathsChecked, false);
     if (root != null && !isInternalJdkAnnotationRootCorrect(root)) {
       root = null;
     }
@@ -337,14 +335,17 @@ public final class JavaSdkImpl extends JavaSdk {
     LOG.warn("Internal jdk annotation root " + root + " seems corrupted: " + reason);
   }
 
-  static VirtualFile internalJdkAnnotationsPath(@NotNull List<? super String> pathsChecked) {
+  static VirtualFile internalJdkAnnotationsPath(@NotNull List<? super String> pathsChecked, boolean refresh) {
     String javaPluginClassesRootPath = PathManager.getJarPathForClass(JavaSdkImpl.class);
     LOG.assertTrue(javaPluginClassesRootPath != null);
     File javaPluginClassesRoot = new File(javaPluginClassesRootPath);
     VirtualFile root;
+    VirtualFileManager vfm = VirtualFileManager.getInstance();
+    LocalFileSystem lfs = LocalFileSystem.getInstance();
     if (javaPluginClassesRoot.isFile()) {
       String annotationsJarPath = FileUtil.toSystemIndependentName(new File(javaPluginClassesRoot.getParentFile(), "jdkAnnotations.jar").getAbsolutePath());
-      root = VirtualFileManager.getInstance().findFileByUrl("jar://" + annotationsJarPath + "!/");
+      String url = "jar://" + annotationsJarPath + "!/";
+      root = refresh ? vfm.refreshAndFindFileByUrl(url) : vfm.findFileByUrl(url);
       pathsChecked.add(annotationsJarPath);
     }
     else {
@@ -352,19 +353,23 @@ public final class JavaSdkImpl extends JavaSdk {
       File projectRoot = JBIterable.generate(javaPluginClassesRoot, File::getParentFile).get(4);
       File root1 = new File(projectRoot, "community/java/jdkAnnotations");
       File root2 = new File(projectRoot, "java/jdkAnnotations");
-      root = root1.exists() && root1.isDirectory() ? LocalFileSystem.getInstance().findFileByIoFile(root1) :
-      root2.exists() && root2.isDirectory() ? LocalFileSystem.getInstance().findFileByIoFile(root2) : null;
+      root = root1.exists() && root1.isDirectory() ? refresh ? lfs.refreshAndFindFileByIoFile(root1) : lfs.findFileByIoFile(root1) :
+      root2.exists() && root2.isDirectory() ? refresh ? lfs.refreshAndFindFileByIoFile(root2) : lfs.findFileByIoFile(root2) : null;
     }
     if (root == null) {
       String url = "jar://" + FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/lib/jdkAnnotations.jar!/";
-      root = VirtualFileManager.getInstance().findFileByUrl(url);
+      root = refresh ? vfm.refreshAndFindFileByUrl(url) : vfm.findFileByUrl(url);
       pathsChecked.add(url);
     }
     if (root == null) {
       // community idea under idea
       String path = FileUtil.toSystemIndependentName(PathManager.getCommunityHomePath()) + "/java/jdkAnnotations";
-      root = LocalFileSystem.getInstance().findFileByPath(path);
+      root = refresh ? lfs.refreshAndFindFileByPath(path) : lfs.findFileByPath(path);
       pathsChecked.add(path);
+    }
+    if (root == null && !refresh) {
+      pathsChecked.add("<refresh is on now>");
+      root = internalJdkAnnotationsPath(pathsChecked, true);
     }
     return root;
   }
