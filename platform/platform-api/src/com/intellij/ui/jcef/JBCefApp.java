@@ -9,6 +9,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ComponentManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfoRt;
@@ -133,7 +135,20 @@ public final class JBCefApp {
     if (ApplicationManager.getApplication().isInternal() && port > 0) {
       settings.remote_debugging_port = port;
     }
-    CefApp.addAppHandler(new MyCefAppHandler(config.getAppArgs()));
+
+    String[] argsFromProviders = JBCefAppRequiredArgumentsProvider
+      .getProviders()
+      .stream()
+      .flatMap(p -> {
+        LOG.debug("got options: [" + p.getOptions().toString() + "] from:" + p.getClass().getName());
+        return p.getOptions().stream();
+      })
+      .distinct()
+      .toArray(String[]::new);
+
+    String[] args = ArrayUtil.mergeArrays(config.getAppArgs(), argsFromProviders);
+
+    CefApp.addAppHandler(new MyCefAppHandler(args));
     myCefApp = CefApp.getInstance(settings);
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
   }
