@@ -3,7 +3,7 @@ package org.editorconfig.language.parser
 
 import com.intellij.lang.PsiBuilder
 import com.intellij.lang.parser.GeneratedParserUtilBase
-import org.editorconfig.language.psi.EditorConfigElementTypes.NEW_LINE
+import com.intellij.openapi.util.Key
 
 @Suppress("UNUSED_PARAMETER")
 object EditorConfigParserUtil : GeneratedParserUtilBase() {
@@ -17,21 +17,23 @@ object EditorConfigParserUtil : GeneratedParserUtilBase() {
     return true
   }
 
+  /**
+   * Tests whether a new line has just been skipped
+   */
   @JvmStatic
-  fun followedByNewLineOrEndOfFile(builder: PsiBuilder, level: Int) = when {
-    builder.eof() -> true
-    builder.tokenType == NEW_LINE -> true
-    else -> false
+  fun followedByNewLineOrEndOfFile(builder: PsiBuilder, level: Int): Boolean {
+    if (builder.eof()) return true
+    val currentTokenStart = builder.rawTokenTypeStart(0)
+    val data = builder.getUserData(KEY) ?: return false
+    if (currentTokenStart != data.end) {
+      // This means that no whitespaces have been skipped recently,
+      // so we now know for sure that there are no newlines between
+      return false
+    }
+    val whitespaceText = builder.originalText.subSequence(data.start, data.end)
+    return whitespaceText.contains('\n')
   }
-  //
-  //@JvmStatic
-  //fun consumeNewLineOrEndOfFile(builder: PsiBuilder, level: Int): Boolean {
-  //  if (builder.eof()) return true
-  //  if (builder.tokenType == NEW_LINE) {
-  //    builder.advanceLexer()
-  //    return true
-  //  }
-  //  return false
-  //}
+
+  val KEY = Key<EditorConfigSkippedWhitespaceData>("EditorConfigSkippedWhitespaceData")
 }
 
