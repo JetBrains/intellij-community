@@ -17,6 +17,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
@@ -52,6 +53,8 @@ import java.util.stream.Collectors;
 import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
 
 public class SSBasedInspection extends LocalInspectionTool implements DynamicGroupTool {
+  public static final Comparator<? super Configuration> CONFIGURATION_COMPARATOR =
+    Comparator.comparing(Configuration::getName, NaturalComparator.INSTANCE).thenComparingInt(Configuration::getOrder);
   private static final Object LOCK = ObjectUtils.sentinel("SSRLock"); // hack to avoid race conditions in SSR
 
   private static final Key<Map<Configuration, Matcher>> COMPILED_PATTERNS = Key.create("SSR_COMPILED_PATTERNS");
@@ -59,12 +62,30 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
 
   @NonNls public static final String SHORT_NAME = "SSBasedInspection";
   private final List<Configuration> myConfigurations = ContainerUtil.createLockFreeCopyOnWriteList();
+
+  private boolean myWriteSorted = false;
   private final Set<String> myProblemsReported = new HashSet<>(1);
   private InspectionProfileImpl mySessionProfile;
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    ConfigurationManager.writeConfigurations(node, myConfigurations);
+    if (myWriteSorted) {
+      // need copy, because lock-free copy-on-write list doesn't support sorting
+      final ArrayList<Configuration> configurations = new ArrayList<>(myConfigurations);
+
+      // ordered like in UI by name and pattern order
+      // (for easier textual diffing between inspection profiles, because the order doesn't change as long as the name doesn't change)
+      Collections.sort(configurations, CONFIGURATION_COMPARATOR);
+      ConfigurationManager.writeConfigurations(node, configurations);
+
+      // no order attribute written
+      for (Element child : node.getChildren()) {
+        child.removeAttribute("order");
+      }
+    }
+    else {
+      ConfigurationManager.writeConfigurations(node, myConfigurations);
+    }
   }
 
   @Override
@@ -72,6 +93,21 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     myProblemsReported.clear();
     myConfigurations.clear();
     ConfigurationManager.readConfigurations(node, myConfigurations);
+    Configuration previous = null;
+    boolean sorted = true;
+    for (Configuration configuration : myConfigurations) {
+      if (previous != null) {
+        if (CONFIGURATION_COMPARATOR.compare(previous, configuration) >= 0 || configuration.getOrder() != 0) {
+          sorted = false;
+          break;
+        }
+        if (previous.getUuid().equals(configuration.getUuid())) {
+          configuration.setOrder(previous.getOrder() + 1);
+        }
+      }
+      previous = configuration;
+    }
+    if (sorted) myWriteSorted = sorted; // write sorted if already sorted
   }
 
   @Override
@@ -230,7 +266,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
 
   @NotNull
   public List<Configuration> getConfigurations() {
-    return Collections.unmodifiableList(myConfigurations);
+    return new SmartList<>(myConfigurations);
   }
 
   @NotNull
@@ -245,23 +281,28 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
       return false;
     }
     myConfigurations.add(configuration);
+    myWriteSorted = true;
     return true;
   }
 
   public boolean addConfigurations(@NotNull Collection<? extends Configuration> configurations) {
-    boolean changed = false;
+    boolean modified = false;
     for (Configuration configuration : configurations) {
-      changed |= addConfiguration(configuration);
+      modified |= addConfiguration(configuration);
     }
-    return changed;
+    return modified;
   }
 
   public boolean removeConfiguration(@NotNull Configuration configuration) {
-    return myConfigurations.remove(configuration);
+    final boolean removed = myConfigurations.remove(configuration);
+    if (removed) myWriteSorted = true;
+    return removed;
   }
 
   public boolean removeConfigurationsWithUuid(@NotNull UUID uuid) {
-    return myConfigurations.removeIf(c -> c.getUuid().equals(uuid));
+    final boolean removed = myConfigurations.removeIf(c -> c.getUuid().equals(uuid));
+    if (removed) myWriteSorted = true;
+    return removed;
   }
 
   private class InspectionResultSink extends DefaultMatchResultSink {

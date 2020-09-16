@@ -1,11 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
@@ -26,6 +27,9 @@ import java.util.stream.Collectors;
 public final class StructuralSearchUtil {
   private static final String REG_EXP_META_CHARS = ".$|()[]{}^?*+\\";
   private static final Pattern ACCENTS = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+  private static final Comparator<? super Configuration> CONFIGURATION_COMPARATOR =
+    Comparator.comparing(Configuration::getCategory, NaturalComparator.INSTANCE)
+      .thenComparing(Configuration::getName, NaturalComparator.INSTANCE);
   private static LanguageFileType ourDefaultFileType;
 
   private static boolean ourUseUniversalMatchingAlgorithm;
@@ -115,7 +119,7 @@ public final class StructuralSearchUtil {
         ourDefaultFileType = profile.getDefaultFileType(ourDefaultFileType);
       }
       if (ourDefaultFileType == null) {
-        ourDefaultFileType = StdFileTypes.XML;
+        ourDefaultFileType = XmlFileType.INSTANCE;
       }
     }
     return ourDefaultFileType;
@@ -188,7 +192,7 @@ public final class StructuralSearchUtil {
       for (StructuralSearchProfile profile : getProfiles()) {
         Collections.addAll(result, profile.getPredefinedTemplates());
       }
-      Collections.sort(result);
+      Collections.sort(result, CONFIGURATION_COMPARATOR);
       ourPredefinedConfigurations = Collections.unmodifiableList(result);
     }
     return ourPredefinedConfigurations;
