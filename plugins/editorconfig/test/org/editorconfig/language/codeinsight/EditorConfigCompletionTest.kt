@@ -32,16 +32,6 @@ class EditorConfigCompletionTest : BasePlatformTestCase() {
     }
   }
 
-  private val basicValues = arrayOf(
-    "indent_size",
-    "indent_style",
-    "tab_width",
-    "end_of_line",
-    "charset",
-    "trim_trailing_whitespace",
-    "insert_final_newline"
-  )
-
   fun testComplexKeyFullTemplate() = doTest("dotnet_naming_rule, all required")
   fun testComplexKeyTemplate1() = doTest("dotnet_naming_rule", "dotnet_naming_style", "dotnet_naming_symbols")
   fun testComplexKeyTemplate2() = doInverseTest("my_rule")
@@ -57,9 +47,9 @@ class EditorConfigCompletionTest : BasePlatformTestCase() {
   fun testRootDeclaration3() = doExactTest("[")
   fun testRootDeclarationValue1() = doExactTest("true")
   fun testRootDeclarationValue2() = doInverseTest("true")
-  fun testSimpleOptionKey1() = doTest(*basicValues)
+  fun testSimpleOptionKey1() = doTest("charset")
   fun testSimpleOptionKey2() = doInverseTest("indent_size", "indent_style")
-  fun testSimpleOptionKey3() = doTest(*basicValues)
+  fun testSimpleOptionKey3() = doTest("charset")
   fun testSimpleOptionValue() = doExactTest("lf", "crlf", "cr", "unset")
 
   fun doTest(vararg required: String) = with(myFixture) {

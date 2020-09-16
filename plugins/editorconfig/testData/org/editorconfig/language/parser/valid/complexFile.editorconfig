@@ -1,8 +1,11 @@
 root=true; I just don't care what's above
 
 [*.[jg]ava]
-indent_style =tab indent_size
-=100500
+
+indent_style =tab
+
+
+indent_size=100500
 
 [{*.kt, *.kts}]
 insert_final_newline=true
