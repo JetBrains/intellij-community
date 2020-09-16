@@ -236,7 +236,7 @@ public class WelcomeScreenComponentFactory {
     return panel;
   }
 
-  static JComponent wrapActionLink(@NotNull ActionLink link) {
+  public static JComponent wrapActionLink(@NotNull ActionLink link) {
     // Don't allow focus, as the containing panel is going to be focusable.
     link.setFocusable(false);
     link.setPaintUnderline(false);
