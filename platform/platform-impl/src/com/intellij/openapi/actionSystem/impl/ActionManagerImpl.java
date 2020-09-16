@@ -1465,6 +1465,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return myBaseActions.get(overridingAction);
   }
 
+  public Collection<String> getParentGroupIds(String actionId) {
+    return myId2GroupId.get(actionId);
+  }
+
   @Override
   public void addAnActionListener(AnActionListener listener) {
     myActionListeners.add(listener);
