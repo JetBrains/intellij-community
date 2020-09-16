@@ -259,6 +259,34 @@ internal class ClassProblemsTest : ProjectProblemsViewTest() {
     }
   }
 
+  fun testAddMissingTypeParam() {
+    val targetClass = myFixture.addClass("""
+      class TargetClass {
+      }
+    """.trimIndent())
+
+    myFixture.addClass("""
+      public class RefClass extends TargetClass<T> {
+      }
+    """.trimIndent())
+
+    doTest(targetClass) {
+      changeClass(targetClass) { psiClass, _ ->
+        psiClass.modifierList?.setModifierProperty(PsiModifier.PUBLIC, true)
+      }
+
+      assertSize(1, ProjectProblemUtils.getReportedProblems(myFixture.editor).entries)
+
+      changeClass(targetClass) { psiClass, factory ->
+        val typeParameterList = factory.createTypeParameterList()
+        typeParameterList.add(factory.createTypeParameterFromText("T", psiClass))
+        psiClass.typeParameterList?.replace(typeParameterList)
+      }
+
+      assertEmpty(ProjectProblemUtils.getReportedProblems(myFixture.editor).entries)
+    }
+  }
+
   private fun doNestedClassTest(isStatic: Boolean) {
     val staticModifier = if (isStatic) "static" else ""
     val targetClass = myFixture.addClass("""
