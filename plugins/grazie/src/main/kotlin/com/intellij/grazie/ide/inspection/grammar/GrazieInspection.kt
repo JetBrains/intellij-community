@@ -69,16 +69,11 @@ class GrazieInspection : LocalInspectionTool() {
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
     val injectedLanguageManager = InjectedLanguageManager.getInstance(holder.project)
-    val strategies = LanguageGrammarChecking.getStrategies()
     return object : PsiElementVisitor() {
       override fun visitElement(element: PsiElement) {
         if (element is PsiWhiteSpace) return super.visitElement(element)
 
-        for (strategy in strategies) {
-          // check if strategy enabled by user or by default
-          if (strategy.getID() !in enabledStrategiesIDs && !(strategy.isEnabledByDefault() && strategy.getID() !in disabledStrategiesIDs)) continue
-          if (!strategy.isMyContextRoot(element)) continue
-
+        for (strategy in LanguageGrammarChecking.getStrategiesForElement(element, enabledStrategiesIDs, disabledStrategiesIDs)) {
           val domain = strategy.getContextRootTextDomain(element)
           if (!isCheckInElementTextDomainEnabled(domain)) continue
 
