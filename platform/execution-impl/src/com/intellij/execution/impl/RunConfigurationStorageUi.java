@@ -10,6 +10,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.ui.*;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,13 +34,13 @@ class RunConfigurationStorageUi {
   private final JPanel myMainPanel;
   private final ComboBox<String> myPathComboBox;
 
-  @NonNls @SystemIndependent private final String myDotIdeaStoragePath;
+  private final @NonNls @SystemIndependent String myDotIdeaStoragePath;
 
   private Runnable myClosePopupAction;
 
   RunConfigurationStorageUi(@NotNull Project project,
                             @NotNull String dotIdeaStoragePath,
-                            @NotNull Function<String, String> pathToErrorMessage,
+                            @NotNull Function<String, @NlsContexts.DialogMessage String> pathToErrorMessage,
                             @NotNull Disposable uiDisposable) {
     myDotIdeaStoragePath = dotIdeaStoragePath;
     myPathComboBox = createPathComboBox(project, uiDisposable);
@@ -89,12 +90,11 @@ class RunConfigurationStorageUi {
     }).registerCustomShortcutSet(new CompositeShortcutSet(CommonShortcuts.ENTER, CommonShortcuts.ESCAPE), myMainPanel, uiDisposable);
   }
 
-  @NotNull
-  private ComboBox<String> createPathComboBox(@NotNull Project project, @NotNull Disposable uiDisposable) {
+  private @NotNull ComboBox<String> createPathComboBox(@NotNull Project project, @NotNull Disposable uiDisposable) {
     ComboBox<String> comboBox = new ComboBox<>(JBUI.scale(500));
     comboBox.setEditable(true);
 
-    // choosefiles is set to true to be able to select project.ipr file in IPR-based projects. Other files are not visible/selectable in the chooser
+    // chooseFiles is set to true to be able to select project.ipr file in IPR-based projects. Other files are not visible/selectable in the chooser
     FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, false) {
       @Override
       public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
@@ -114,16 +114,15 @@ class RunConfigurationStorageUi {
       }
     };
 
-    Runnable selectFolderAction = new BrowseFolderRunnable<ComboBox<String>>(null, null, project, descriptor, comboBox,
-                                                                             TextComponentAccessor.STRING_COMBOBOX_WHOLE_TEXT) {
+    Runnable selectFolderAction = new BrowseFolderRunnable<>(null, null, project, descriptor, comboBox,
+                                                             TextComponentAccessor.STRING_COMBOBOX_WHOLE_TEXT) {
     };
 
     comboBox.initBrowsableEditor(selectFolderAction, uiDisposable);
     return comboBox;
   }
 
-  @NotNull
-  private static String getCompatibilityHintText(@NotNull Project project) {
+  private static @NotNull @NlsContexts.DetailedDescription String getCompatibilityHintText(@NotNull Project project) {
     String oldStorage = ProjectKt.isDirectoryBased(project)
                         ? FileUtil.toSystemDependentName(".idea/runConfigurations")
                         : PathUtil.getFileName(StringUtil.notNullize(project.getProjectFilePath()));
@@ -144,7 +143,7 @@ class RunConfigurationStorageUi {
     myClosePopupAction = closePopupAction;
   }
 
-  @NotNull String getPath() {
+  @NotNull @SystemIndependent String getPath() {
     return StringUtil.trimTrailing(FileUtil.toSystemIndependentName(myPathComboBox.getEditor().getItem().toString().trim()), '/');
   }
 }

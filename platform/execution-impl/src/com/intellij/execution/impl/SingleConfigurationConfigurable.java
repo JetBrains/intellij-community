@@ -31,6 +31,8 @@ import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -81,7 +83,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   private ValidationResult myLastValidationResult = null;
   private boolean myValidationResultValid = false;
   private MyValidatableComponent myComponent;
-  private final String myDisplayName;
+  private final @NlsContexts.ConfigurableName String myDisplayName;
   private final String myHelpTopic;
   private final boolean myBrokenConfiguration;
   private RCStorageType myRCStorageType;
@@ -120,7 +122,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       }
     });
 
-    getEditor().addSettingsEditorListener(new SettingsEditorListener<RunnerAndConfigurationSettings>() {
+    getEditor().addSettingsEditorListener(new SettingsEditorListener<>() {
       @Override
       public void stateChanged(@NotNull SettingsEditor<RunnerAndConfigurationSettings> settingsEditor) {
         myValidationResultValid = false;
@@ -726,9 +728,9 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       }
     }
 
-    @NonNls
-    private String generateWarningLabelText(final ValidationResult configurationException) {
-      return "<html><body><b>" + configurationException.getTitle() + ": </b>" + configurationException.getMessage() + "</body></html>";
+    private @NlsContexts.Label String generateWarningLabelText(final ValidationResult configurationException) {
+      return new HtmlBuilder().append(configurationException.getTitle()).append(": ")
+        .wrapWith("b").wrapWith("body").addText(configurationException.getMessage()).wrapWith("html").toString();
     }
 
     private void createUIComponents() {
