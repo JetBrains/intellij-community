@@ -60,7 +60,7 @@ import static com.intellij.codeInsight.navigation.actions.UiKt.notifyNowhereToGo
 public class GotoDeclarationAction extends BaseCodeInsightAction implements CodeInsightActionHandler, DumbAware, CtrlMouseAction {
 
   private static final Logger LOG = Logger.getInstance(GotoDeclarationAction.class);
-  private static List<EventPair<?>> ourCurrentActionData; // accessed from EDT only
+  private static List<EventPair<?>> ourCurrentActionData = null; // accessed from EDT only
 
   @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   @Override
@@ -71,12 +71,13 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       ActionsCollectorImpl.actionEventData(e),
       EventFields.CurrentFile.with(language)
     );
+    List<EventPair<?>> savedActionData = ourCurrentActionData;
+    ourCurrentActionData = currentActionData;
     try {
-      ourCurrentActionData = currentActionData;
       super.actionPerformed(e);
     }
     finally {
-      ourCurrentActionData = null;
+      ourCurrentActionData = savedActionData;
     }
   }
 
