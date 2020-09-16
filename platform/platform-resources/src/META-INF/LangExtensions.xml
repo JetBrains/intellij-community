@@ -1358,6 +1358,8 @@
   <projectListeners>
     <listener class="com.intellij.openapi.fileEditor.impl.FileEditorVirtualFileAppearanceListener"
               topic="com.intellij.ide.ui.VirtualFileAppearanceListener"/>
+    <listener class="com.intellij.psi.codeStyle.CodeStyleSettingsMigrationNotifier"
+              topic="com.intellij.psi.codeStyle.CodeStyleSettingsMigrationListener"/>
   </projectListeners>
 </idea-plugin>
 

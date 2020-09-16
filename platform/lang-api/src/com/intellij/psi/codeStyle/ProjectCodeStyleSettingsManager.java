@@ -1,22 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
-import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.IdeBundle;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.MainConfigurationStateSplitter;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
@@ -42,9 +32,6 @@ public final class ProjectCodeStyleSettingsManager extends CodeStyleSettingsMana
   private final boolean mySettingsExist;
 
   private final Object myStateLock = new Object();
-
-  private static final NotificationGroup NOTIFICATION_GROUP =
-    new NotificationGroup("Code style settings migration", NotificationDisplayType.STICKY_BALLOON, true, null, null, null, PluginId.getId("com.intellij"));
 
   public ProjectCodeStyleSettingsManager(@NotNull Project project) {
     myProject = project;
@@ -81,12 +68,10 @@ public final class ProjectCodeStyleSettingsManager extends CodeStyleSettingsMana
     }
   }
 
-  private static void saveProjectAndNotify(@NotNull Project project) {
-    ApplicationManager.getApplication().invokeLater(() -> {
-      project.save();
-      Notification notification = new CodeStyleMigrationNotification(project.getName());
-      notification.notify(project);
-    }, project.getDisposed());
+  private void saveProjectAndNotify(@NotNull Project project) {
+    getMainProjectCodeStyle().getModificationTracker().incModificationCount();
+    project.save();
+    myProject.getMessageBus().syncPublisher(CodeStyleSettingsMigrationListener.TOPIC).codeStyleSettingsMigrated(project);
   }
 
   @Override
@@ -167,27 +152,6 @@ public final class ProjectCodeStyleSettingsManager extends CodeStyleSettingsMana
   protected void checkState() {
     if (mySettingsExist && !myIsLoaded) {
       LOG.error("Invalid state: project settings exist but not loaded yet. The call may cause settings damage.");
-    }
-  }
-
-  private static class CodeStyleMigrationNotification extends Notification {
-    CodeStyleMigrationNotification(@NotNull String projectName) {
-      super(NOTIFICATION_GROUP.getDisplayId(),
-            ApplicationBundle.message("project.code.style.migration.title"),
-            ApplicationBundle.message("project.code.style.migration.message", projectName),
-            NotificationType.INFORMATION);
-      addAction(new ShowMoreInfoAction());
-    }
-  }
-
-  private static class ShowMoreInfoAction extends DumbAwareAction {
-    ShowMoreInfoAction() {
-      super(IdeBundle.messagePointer("action.ProjectCodeStyleSettingsManager.ShowMoreInfoAction.text.more.info"));
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      BrowserUtil.open("https://confluence.jetbrains.com/display/IDEADEV/New+project+code+style+settings+format+in+2017.3");
     }
   }
 
