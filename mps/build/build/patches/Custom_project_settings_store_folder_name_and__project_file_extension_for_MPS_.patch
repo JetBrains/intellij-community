@@ -14,25 +14,38 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
  
    /**
     * Returns a name ot the project. For a directory-based project it's an arbitrary string specified by user at project creation
-Index: platform/configuration-store-impl/src/ProjectStoreBase.kt
+
+Index: community/platform/configuration-store-impl/src/ProjectStoreBase.kt
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 <+>UTF-8
 ===================================================================
---- community/platform/configuration-store-impl/src/ProjectStoreBase.kt	(revision 4b908f8e43796f3a0346e9123f30b3b5c196dc1e)
-+++ community/platform/configuration-store-impl/src/ProjectStoreBase.kt	(date 1568883953772)
-@@ -111,7 +111,8 @@
-     val fs = LocalFileSystem.getInstance()
+--- community/platform/configuration-store-impl/src/ProjectStoreBase.kt	(revision 61123323d1e41021c7b63fbd2b6a76843f357fde)
++++ community/platform/configuration-store-impl/src/ProjectStoreBase.kt	(date 1600247501983)
+@@ -99,10 +99,11 @@
+     val storageManager = storageManager
      val isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode
-     val filePath = file.systemIndependentPath
--    if (filePath.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
+     val macros = ArrayList<Macro>(5)
+-    if (file.toString().endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
 +    // MPS Hack: do not hack ProjectFileType, but make *.mpr file be project file
-+    if (filePath.endsWith("mpr"/*ProjectFileType.DEFAULT_EXTENSION*/)) {
-       scheme = StorageScheme.DEFAULT
- 
-       storageManager.addMacro(PROJECT_FILE, filePath)
++    if (file.toString().endsWith(".mpr"/*ProjectFileType.DOT_DEFAULT_EXTENSION*/)) {
+       macros.add(Macro(PROJECT_FILE, file))
 
-\ No newline at end of file
+-      val workspacePath = file.parent.resolve("${file.fileName.toString().removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)}${WorkspaceFileType.DOT_DEFAULT_EXTENSION}")
++      val workspacePath = file.parent.resolve("${file.fileName.toString().removeSuffix(".mpr"/*ProjectFileType.DOT_DEFAULT_EXTENSION*/)}${WorkspaceFileType.DOT_DEFAULT_EXTENSION}")
+       macros.add(Macro(StoragePathMacros.WORKSPACE_FILE, workspacePath))
+
+       if (isUnitTestMode) {
+@@ -135,7 +136,7 @@
+     }
+
+     val presentableUrl = (if (dotIdea == null) file else projectBasePath)
+-    val cacheFileName = doGetProjectFileName(presentableUrl.systemIndependentPath, presentableUrl.fileName.toString().toLowerCase(Locale.US).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION), ".", ".xml")
++    val cacheFileName = doGetProjectFileName(presentableUrl.systemIndependentPath, presentableUrl.fileName.toString().toLowerCase(Locale.US).removeSuffix(".mpr"/*ProjectFileType.DOT_DEFAULT_EXTENSION*/), ".", ".xml")
+     macros.add(Macro(StoragePathMacros.CACHE_FILE, appSystemDir.resolve("workspace").resolve(cacheFileName)))
+
+     storageManager.setMacros(macros)
+
 Index: jps/model-serialization/src/org/jetbrains/jps/model/serialization/PathMacroUtil.java
 IDEA additional info:
 Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
