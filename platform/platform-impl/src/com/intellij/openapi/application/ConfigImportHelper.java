@@ -882,9 +882,17 @@ public final class ConfigImportHelper {
           if (line.equals("-XX:MaxJavaStackTraceDepth=-1")) {
             i.set("-XX:MaxJavaStackTraceDepth=10000"); updated = true;
           }
+          // Android Studio: b/168557697
+          else if (line.equals("-XX:+UseConcMarkSweepGC") || line.equals("-XX:UseG1GC")) {
+              i.remove(); updated = true;
+          }
           else if (line.startsWith("-agentlib:yjpagent") || "-Xverify:none".equals(line) || "-noverify".equals(line)) {
             i.remove(); updated = true;
           }
+        }
+        // Android Studio: b/168557697
+        if (lines.stream().noneMatch(line -> line.equals("-XX:+IgnoreUnrecognizedVMOptions"))) {
+            lines.add("-XX:+IgnoreUnrecognizedVMOptions");
         }
         if (updated) {
           Files.write(vmOptionsFile, lines);
