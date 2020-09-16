@@ -337,7 +337,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
     module.putUserData(PyPackageManager.RUNNING_PACKAGING_TASKS, value);
   }
 
-  private static boolean isRunningPackagingTasks(@NotNull Module module) {
+  public static boolean isRunningPackagingTasks(@NotNull Module module) {
     final Boolean value = module.getUserData(PyPackageManager.RUNNING_PACKAGING_TASKS);
     return value != null && value;
   }
