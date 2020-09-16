@@ -191,9 +191,11 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
       def file6 = myFixture.addFileToProject("SecondAppFile.txt", "")
       def wrongFile = myFixture.addFileToProject("wrong.txt", "")
 
+      def recentFilesContributor = new RecentFilesSEContributor(ChooseByNameTest.createEvent(project))
+      Disposer.register(testRootDisposable, recentFilesContributor)
       def ui = createTestUI([
         ChooseByNameTest.createFileContributor(project),
-        new RecentFilesSEContributor(ChooseByNameTest.createEvent(project))
+        recentFilesContributor
       ])
 
       def future = ui.findElementsForPattern("appfile")
