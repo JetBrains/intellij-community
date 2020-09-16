@@ -1115,8 +1115,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     Rectangle bottomRightScreen = ScreenUtil.getScreenRectangle(bottomRight);
     if (topLeft.x < topLeftScreen.x || topLeft.y < topLeftScreen.y
         || bottomRight.x > bottomRightScreen.getMaxX() || bottomRight.y > bottomRightScreen.getMaxY()) {
-      Rectangle centerScreen = ScreenUtil.getScreenRectangle(new Point((int)targetBounds.getCenterX(), (int)targetBounds.getCenterY()));
-      ScreenUtil.moveToFit(targetBounds, centerScreen, null);
+      GraphicsDevice device = ScreenUtil.getScreenDevice(targetBounds);
+      Rectangle mostAppropriateScreenRectangle = device != null ? ScreenUtil.getScreenRectangle(device.getDefaultConfiguration())
+                                                                : ScreenUtil.getMainScreenBounds();
+      ScreenUtil.moveToFit(targetBounds, mostAppropriateScreenRectangle, null);
     }
   }
 
