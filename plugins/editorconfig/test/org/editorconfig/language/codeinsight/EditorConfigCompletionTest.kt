@@ -51,11 +51,20 @@ class EditorConfigCompletionTest : BasePlatformTestCase() {
   fun testSimpleOptionKey2() = doInverseTest("indent_size", "indent_style")
   fun testSimpleOptionKey3() = doTest("charset")
   fun testSimpleOptionValue() = doExactTest("lf", "crlf", "cr", "unset")
+  fun testCSharpOptionExistence() = doTestThatCompletionIsNotEmpty()
+  fun testDotNetOptionExistence() = doTestThatCompletionIsNotEmpty()
+  fun testReSharperOptionExistence() = doTestThatCompletionIsNotEmpty()
 
   fun doTest(vararg required: String) = with(myFixture) {
     val name = getTestName(true)
     configureByFile("$name/.editorconfig")
     assertTrue(required.all(completeBasic().map(LookupElement::getLookupString)::contains))
+  }
+
+  private fun doTestThatCompletionIsNotEmpty() = with(myFixture) {
+    val name = getTestName(true)
+    configureByFile("$name/.editorconfig")
+    assertTrue(completeBasic().isNotEmpty())
   }
 
   private fun doInverseTest(vararg forbidden: String) = with(myFixture) {
