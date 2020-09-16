@@ -153,7 +153,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
 
     @Override
     public @NotNull List<String> getDescendantsOf(@NotNull String className, boolean includeSelf, @NotNull Project project) {
-      List<String> result = new SmartList<>();
+      final List<String> result = new SmartList<>();
 
       // use project and libraries scope, because super class may be outside the scope of the search
       final GlobalSearchScope projectAndLibraries = ProjectScope.getAllScope(project);
