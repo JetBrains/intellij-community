@@ -310,7 +310,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     myUpdater.initialized();
     BackgroundTaskUtil.syncPublisher(myProject, LISTS_LOADED).processLoadedLists(getChangeListsCopy());
     MessageBusConnection connection = myProject.getMessageBus().connect(this);
-    connection.subscribe(VCS_CONFIGURATION_CHANGED, () -> VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty());
+    connection.subscribe(VCS_CONFIGURATION_CHANGED, () -> {
+      VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
+      updateChangeListAvailability();
+    });
     connection.subscribe(ChangesViewContentManagerListener.TOPIC, () -> updateChangeListAvailability());
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       myConflictTracker.startTracking();
@@ -1414,8 +1417,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   }
 
   private void updateChangeListAvailability() {
-    if (shouldEnableChangeLists() == areChangeListsEnabled()) return;
-
     myScheduler.submit(() -> {
       ReadAction.run(() -> {
         boolean enabled = shouldEnableChangeLists();
