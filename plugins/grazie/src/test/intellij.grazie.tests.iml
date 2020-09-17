@@ -57,7 +57,7 @@
             <dependency maven-id="io.grpc:grpc-stub" />
             <dependency maven-id="org.apache.commons:commons-pool2" />
             <dependency maven-id="org.jetbrains.intellij.deps:trove4j" />
-            <dependency maven-id="org.languagetool.languagetool-core" />
+            <dependency maven-id="org.languagetool:languagetool-core" />
             <dependency maven-id="com.gitlab.dumonts:hunspell" />
             <dependency maven-id="com.google.android.tools:dx" />
             <dependency maven-id="com.nativelibs4java:bridj" />
