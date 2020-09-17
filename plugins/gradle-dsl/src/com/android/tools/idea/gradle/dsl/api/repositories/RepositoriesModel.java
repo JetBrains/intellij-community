@@ -15,7 +15,6 @@
  */
 package com.android.tools.idea.gradle.dsl.api.repositories;
 
-import com.android.ide.common.repository.GradleVersion;
 import com.android.tools.idea.gradle.dsl.api.util.GradleDslModel;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
