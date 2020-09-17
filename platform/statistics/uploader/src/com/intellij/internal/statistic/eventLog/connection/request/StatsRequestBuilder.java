@@ -16,6 +16,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.jetbrains.annotations.NotNull;
 
+import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
@@ -24,6 +25,7 @@ import java.net.SocketAddress;
 public class StatsRequestBuilder {
   private final String myUserAgent;
   private final StatsProxyInfo myProxyInfo;
+  private final SSLContext mySSLContext;
 
   private final String myUrl;
   private final String myMethod;
@@ -37,6 +39,7 @@ public class StatsRequestBuilder {
     myUrl = url;
     myUserAgent = settings.getUserAgent();
     myProxyInfo = settings.selectProxy(myUrl);
+    mySSLContext = settings.getSSLContext();
   }
 
   @NotNull
@@ -89,6 +92,9 @@ public class StatsRequestBuilder {
     HttpClientBuilder builder = HttpClientBuilder.create().setUserAgent(userAgent);
     if (myProxyInfo != null && !myProxyInfo.isNoProxy()) {
       configureProxy(builder, myProxyInfo);
+    }
+    if (mySSLContext != null) {
+      builder.setSSLContext(mySSLContext);
     }
     return builder.build();
   }

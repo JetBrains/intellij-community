@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.eventLog.connection
 
 import com.intellij.internal.statistic.eventLog.connection.request.StatsProxyInfo
 import java.net.Proxy
+import javax.net.ssl.SSLContext
 
 private val NO_PROXY: StatsProxyInfo = StatsProxyInfo(Proxy.NO_PROXY, null)
 
@@ -10,9 +11,12 @@ interface EventLogConnectionSettings {
   fun getUserAgent(): String
 
   fun selectProxy(url: String): StatsProxyInfo
+
+  fun getSSLContext(): SSLContext?
 }
 
 class EventLogBasicConnectionSettings(private val userAgent: String) : EventLogConnectionSettings {
   override fun getUserAgent(): String = userAgent
   override fun selectProxy(url: String): StatsProxyInfo = NO_PROXY
+  override fun getSSLContext(): SSLContext? = null
 }
