@@ -13,6 +13,8 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -22,7 +24,9 @@ import org.jetbrains.idea.devkit.inspections.quickfix.RegisterExtensionFix;
 import org.jetbrains.idea.devkit.util.ExtensionPointCandidate;
 import org.jetbrains.idea.devkit.util.ExtensionPointLocator;
 
+import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.jetbrains.idea.devkit.util.ExtensionLocatorKt.processExtensionDeclarations;
 
@@ -73,10 +77,11 @@ public class StatisticsCollectorNotRegisteredInspection extends DevKitJvmInspect
     if (qualifiedName == null) {
       return;
     }
-    Ref<Boolean> isCollectorRegistered = Ref.create(false);
-    processExtensionDeclarations(qualifiedName, project, true, (extension, tag) -> {
+    AtomicBoolean isCollectorRegistered = new AtomicBoolean(false);
+    processExtensionDeclarations(getNameToSearch(checkedClass, qualifiedName), project, false, (extension, tag) -> {
       ExtensionPoint point = extension.getExtensionPoint();
-      if (point != null && point.getEffectiveQualifiedName().equals(collectorType.getExtensionPoint())) {
+      if (point != null && point.getEffectiveQualifiedName().equals(collectorType.getExtensionPoint()) &&
+          ContainerUtil.exists(tag.getAttributes(), it -> Objects.equals(it.getValue(), qualifiedName))) {
         isCollectorRegistered.set(true);
         return false;
       }
@@ -92,6 +97,18 @@ public class StatisticsCollectorNotRegisteredInspection extends DevKitJvmInspect
     if (!candidateList.isEmpty()) {
       RegisterExtensionFix fix = new RegisterExtensionFix(checkedClass, candidateList);
       sink.highlight(DevKitBundle.message("inspections.statistics.collector.not.registered.message"), fix);
+    }
+  }
+
+  private static @NotNull String getNameToSearch(@NotNull PsiClass checkedClass, String qualifiedName) {
+    PsiClass parentClass = ObjectUtils.tryCast(checkedClass.getParent(), PsiClass.class);
+    if (parentClass == null) {
+      return qualifiedName;
+    }
+    else {
+      // package.parent$inner string cannot be found, so, search by parent FQN
+      String parentQualifiedName = parentClass.getQualifiedName();
+      return parentQualifiedName != null ? parentQualifiedName : qualifiedName;
     }
   }
 

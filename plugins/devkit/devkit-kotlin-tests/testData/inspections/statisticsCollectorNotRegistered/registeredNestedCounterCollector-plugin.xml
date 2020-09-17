@@ -5,7 +5,7 @@
     </extensionPoint>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
-    <statistics.counterUsagesCollector implementationClass="RegisteredNestedCounterCollector$Foo"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.tests.RegisteredNestedCounterCollector$Foo"/>
   </extensions>
 
 </idea-plugin>
