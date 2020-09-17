@@ -5,6 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
@@ -39,6 +40,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.ui.SimpleTextAttributes.LINK_BOLD_ATTRIBUTES;
 
 public class MavenArtifactSearchPanel extends JPanel {
 
@@ -190,7 +193,18 @@ public class MavenArtifactSearchPanel extends JPanel {
     SwingUtilities.invokeLater(() -> {
       if (!myDialog.isVisible()) return;
 
-      myResultList.getEmptyText().setText(MavenDomBundle.message("maven.search.no.results"));
+      if (myClassMode) {
+        myResultList.getEmptyText().setText(MavenDomBundle.message("maven.search.no.results.class"));
+        myResultList.getEmptyText().appendLine(MavenDomBundle.message("maven.search.no.results.indices.update"), LINK_BOLD_ATTRIBUTES,
+                                               e -> {
+                                                 ShowSettingsUtil.getInstance()
+                                                   .showSettingsDialog(myProject, MavenRepositoriesConfigurable.class);
+                                               });
+      }
+      else {
+        myResultList.getEmptyText().setText(MavenDomBundle.message("maven.search.no.results"));
+      }
+
       myResultList.setModel(model);
       myResultList.setSelectionRow(0);
       myResultList.setPaintBusy(false);
