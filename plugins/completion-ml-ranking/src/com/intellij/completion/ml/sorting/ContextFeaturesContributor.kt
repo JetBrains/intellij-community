@@ -10,6 +10,7 @@ import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.completion.ml.CompletionMLPolicy
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.UserDataHolderBase
@@ -22,7 +23,11 @@ class ContextFeaturesContributor : CompletionContributor(), DumbAware {
     if (lookup != null) {
       val storage = MutableLookupStorage.get(lookup)
       if (storage != null && storage.shouldComputeFeatures() && !storage.isContextFactorsInitialized()) {
-        calculateContextFactors(lookup, parameters, storage)
+        if (!CompletionMLPolicy.disableMLRanking(storage.language, parameters)) {
+          calculateContextFactors(lookup, parameters, storage)
+        } else {
+          storage.disableMLRanking()
+        }
       }
     }
     super.fillCompletionVariants(parameters, result)

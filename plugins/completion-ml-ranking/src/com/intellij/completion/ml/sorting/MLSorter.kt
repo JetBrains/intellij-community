@@ -166,7 +166,7 @@ class MLSorter : CompletionFinalSorter() {
                              positionsBefore: Map<LookupElement, Int>,
                              lookupStorage: MutableLookupStorage,
                              lookup: LookupImpl): Iterable<LookupElement> {
-    val mlScoresUsed = element2score.values.none { it == null }
+    val mlScoresUsed = element2score.values.none { it == null } && lookupStorage.shouldRankByML()
     if (LOG.isDebugEnabled) {
       LOG.debug("ML sorting in completion used=$mlScoresUsed for language=${lookupStorage.language.id}")
     }

@@ -15,6 +15,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Don't use this class for disabling ML ranking from external plugins. Use {@link com.intellij.completion.ml.CompletionMLPolicy} instead.
+ */
 @State(name = "CompletionMLRankingSettings", storages = @Storage(value = "completionMLRanking.xml", roamingType = RoamingType.DISABLED))
 public final class CompletionMLRankingSettings implements PersistentStateComponent<CompletionMLRankingSettings.State> {
   private static final Logger LOG = Logger.getInstance(CompletionMLRankingSettings.class);
