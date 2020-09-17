@@ -258,4 +258,9 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
     }
     return sequence;
   }
+
+  @Override
+  public boolean requiresAllDocumentsToBeCommitted(@NotNull Editor editor, @NotNull Project project) {
+    return false;
+  }
 }
