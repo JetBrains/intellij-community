@@ -4,6 +4,7 @@
 package com.intellij.ide.plugins.newui
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginEnabledState
 import javax.swing.Icon
 
@@ -12,3 +13,12 @@ fun perProjectIcon(state: PluginEnabledState): Icon? =
     AllIcons.General.ProjectConfigurable
   else
     null
+
+fun MyPluginModel.changeEnableDisable(plugins: Set<IdeaPluginDescriptor>,
+                                      enabled: Boolean) =
+  if (enabled) {
+    enablePlugins(plugins)
+  }
+  else {
+    disablePlugins(plugins)
+  }

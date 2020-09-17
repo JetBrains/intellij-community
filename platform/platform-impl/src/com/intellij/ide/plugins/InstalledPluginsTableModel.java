@@ -138,26 +138,29 @@ public class InstalledPluginsTableModel {
   }
 
   protected final void enableRows(@NotNull Set<? extends IdeaPluginDescriptor> ideaPluginDescriptors,
-                                  @NotNull Boolean value) {
+                                  @NotNull PluginEnabledState newState) {
+    boolean enabled = newState.isEnabled();
     Map<PluginId, Boolean> tempEnabled = new HashMap<>(myEnabled);
-    setNewEnabled(ideaPluginDescriptors, tempEnabled, value);
+    setNewEnabled(ideaPluginDescriptors, tempEnabled, enabled);
 
-    if (suggestToChangeDependencies(ideaPluginDescriptors, tempEnabled, value)) {
+    if (suggestToChangeDependencies(ideaPluginDescriptors, tempEnabled, enabled)) {
       for (IdeaPluginDescriptor descriptor : ideaPluginDescriptors) {
-        handleBeforeChangeEnableState(descriptor, value);
+        handleBeforeChangeEnableState(descriptor, newState);
       }
-      setNewEnabled(ideaPluginDescriptors, myEnabled, value);
+      setNewEnabled(ideaPluginDescriptors, myEnabled, enabled);
       updatePluginDependencies();
     }
   }
 
   private static void setNewEnabled(@NotNull Set<? extends IdeaPluginDescriptor> ideaPluginDescriptors,
                                     @NotNull Map<PluginId, Boolean> enabledMap,
-                                    @NotNull Boolean value) {
+                                    boolean enabled) {
     for (IdeaPluginDescriptor ideaPluginDescriptor : ideaPluginDescriptors) {
       PluginId currentPluginId = ideaPluginDescriptor.getPluginId();
-      Boolean enabled = enabledMap.get(currentPluginId) == null ? Boolean.FALSE : value;
-      enabledMap.put(currentPluginId, enabled);
+      enabledMap.put(
+        currentPluginId,
+        enabledMap.get(currentPluginId) == null ? Boolean.FALSE : enabled
+      );
     }
   }
 
@@ -260,7 +263,8 @@ public class InstalledPluginsTableModel {
     return false;
   }
 
-  protected void handleBeforeChangeEnableState(@NotNull IdeaPluginDescriptor descriptor, boolean value) {
+  protected void handleBeforeChangeEnableState(@NotNull IdeaPluginDescriptor descriptor,
+                                               @NotNull PluginEnabledState newState) {
   }
 
   protected static boolean isEnabled(@NotNull IdeaPluginDescriptor descriptor,

@@ -13,7 +13,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -858,17 +857,6 @@ public class PluginDetailsPageComponent extends MultiPanel {
       boolean invisible = myNewState == state ||
                           e.getProject() == null && myNewState.isPerProject();
       e.getPresentation().setVisible(!invisible);
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      Project project = e.getProject();
-      if (project != null) {
-        ProjectPluginTracker.getInstance(project)
-          .changeEnableDisable(myPlugin, myNewState);
-      }
-
-      super.actionPerformed(e);
     }
   }
 

@@ -23,10 +23,8 @@ public class PluginManagerConfigurableServiceImpl implements PluginManagerConfig
     }
     PluginManagerConfigurable configurable = new PluginManagerConfigurable(project);
     ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> {
-      configurable.getPluginModel().changeEnableDisable(
-        Set.of(descriptors),
-        true
-      );
+      configurable.getPluginModel()
+        .enablePlugins(Set.of(descriptors));
       configurable.select(descriptors);
     });
   }

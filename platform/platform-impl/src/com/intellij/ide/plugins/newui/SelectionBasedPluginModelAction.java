@@ -57,7 +57,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
 
       myPluginModel.changeEnableDisable(
         plugins,
-        myNewState.isEnabled()
+        myNewState
       );
     }
 

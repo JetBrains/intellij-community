@@ -81,6 +81,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   private final Set<IdeaPluginDescriptor> myDynamicPluginsToUninstall = new HashSet<>();
   private final Set<IdeaPluginDescriptor> myPluginsToRemoveOnCancel = new HashSet<>();
 
+  private final @NotNull Map<IdeaPluginDescriptor, Boolean> myPerProjectPlugins = new HashMap<>();
+
   private final Set<PluginId> myErrorPluginsToDisable = new HashSet<>();
 
   public MyPluginModel(@Nullable Project project) {
@@ -105,7 +107,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     if (needRestart ||
         !myDynamicPluginsToInstall.isEmpty() ||
         !myDynamicPluginsToUninstall.isEmpty() ||
-        !myPluginsToRemoveOnCancel.isEmpty()) {
+        !myPluginsToRemoveOnCancel.isEmpty() ||
+        !myPerProjectPlugins.isEmpty()) {
       return true;
     }
 
@@ -198,6 +201,15 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
     myDynamicPluginsToInstall.clear();
     myPluginsToRemoveOnCancel.clear();
+
+    ProjectPluginTracker pluginTracker = getPluginTracker();
+    if (pluginTracker != null) {
+      myPerProjectPlugins.forEach((descriptor, perProject) -> pluginTracker.changeEnableDisable(
+        descriptor,
+        getState(descriptor, perProject))
+      );
+    }
+    myPerProjectPlugins.clear();
 
     boolean enableDisableAppliedWithoutRestart = applyEnableDisablePlugins(parent, getEnabledMap());
     myDynamicPluginsToUninstall.clear();
@@ -801,29 +813,39 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
 
   public @NotNull PluginEnabledState getState(@NotNull IdeaPluginDescriptor descriptor) {
     ProjectPluginTracker pluginTracker = getPluginTracker();
-    boolean perProject = pluginTracker != null &&
-                         (pluginTracker.isEnabled(descriptor) || pluginTracker.isDisabled(descriptor));
+    Boolean perProject = myPerProjectPlugins.get(descriptor);
 
+    return getState(
+      descriptor,
+      perProject != null ?
+      perProject :
+      pluginTracker != null && (pluginTracker.isEnabled(descriptor) || pluginTracker.isDisabled(descriptor))
+    );
+  }
+
+  private @NotNull PluginEnabledState getState(@NotNull IdeaPluginDescriptor descriptor,
+                                               boolean perProject) {
     return PluginEnabledState.getState(
       isEnabled(descriptor),
       perProject
     );
   }
 
-  public void changeEnableDisable(@NotNull Set<? extends IdeaPluginDescriptor> plugins, boolean state) {
-    enableRows(plugins, state);
+  public void changeEnableDisable(@NotNull Set<? extends IdeaPluginDescriptor> plugins,
+                                  @NotNull PluginEnabledState newState) {
+    enableRows(plugins, newState);
     updateAfterEnableDisable();
     runInvalidFixCallback();
   }
 
   @Override
   public void enablePlugins(@NotNull Set<? extends IdeaPluginDescriptor> plugins) {
-    changeEnableDisable(plugins, true);
+    changeEnableDisable(plugins, PluginEnabledState.ENABLED);
   }
 
   @Override
   public void disablePlugins(@NotNull Set<? extends IdeaPluginDescriptor> plugins) {
-    changeEnableDisable(plugins, false);
+    changeEnableDisable(plugins, PluginEnabledState.DISABLED);
   }
 
   void enableRequiredPlugins(@NotNull IdeaPluginDescriptor descriptor) {
@@ -857,11 +879,18 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   @Override
-  protected void handleBeforeChangeEnableState(@NotNull IdeaPluginDescriptor descriptor, boolean value) {
+  protected void handleBeforeChangeEnableState(@NotNull IdeaPluginDescriptor descriptor,
+                                               @NotNull PluginEnabledState newState) {
     PluginId pluginId = descriptor.getPluginId();
     myErrorPluginsToDisable.remove(pluginId);
 
-    if (value || descriptor.isEnabled()) {
+    myPerProjectPlugins.put(
+      descriptor,
+      newState.isPerProject()
+    );
+
+    if (newState.isEnabled() ||
+        descriptor.isEnabled()) {
       return;
     }
 
