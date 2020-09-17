@@ -51,6 +51,9 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     productLayout.productImplementationModules = JAVA_IDE_IMPLEMENTATION_MODULES +
                                                   [
                                                     // Android Studio: CIDR/CLion: Must be included here to be packaged into core, not as separate plugins
+                                                    "intellij.c.clangd",
+                                                    "intellij.c.plugin",
+                                                    "intellij.cidr.base",
                                                     "intellij.cidr.common",
                                                     "intellij.cidr.debugger",
                                                     "intellij.cidr.debugger.backend",
@@ -65,8 +68,10 @@ class AndroidStudioProperties extends BaseIdeaProperties {
                                                     "intellij.cidr.lang.base",
                                                     "intellij.cidr.modulemap.language",
                                                     "intellij.cidr.projectModel",
+                                                    "intellij.cidr.resources",
                                                     "intellij.cidr.util.serializer",
                                                     "intellij.cidr.workspaceModel",
+                                                    "intellij.cidr.workspaceModel.ide",
                                                     "intellij.cidr.workspaceModelBridge",
                                                     "intellij.cmake.psi",
                                                   ] +
