@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.sorting
 
-import com.intellij.completion.ml.experiment.ExperimentInfo
 import com.intellij.completion.ml.experiment.ExperimentStatus
 import com.intellij.completion.ml.ranker.ExperimentModelProvider
 import com.intellij.completion.ml.ranker.ExperimentModelProvider.Companion.match
@@ -22,7 +21,7 @@ object RankingSupport {
   fun getRankingModel(language: Language): RankingModelWrapper? {
     MLCompletionLocalModelsUtil.getModel(language.id)?.let { return LanguageRankingModel(it) }
     val provider = findProviderSafe(language)
-    return if (provider != null && shouldSortByML(language, provider)) tryGetModel(provider) else null
+    return if (provider != null && shouldSortByML(provider)) tryGetModel(provider) else null
   }
 
   fun availableRankers(): List<RankingModelProvider> {
@@ -36,7 +35,7 @@ object RankingSupport {
       }.toList()
   }
 
-  private fun findProviderSafe(language: Language): RankingModelProvider? {
+  fun findProviderSafe(language: Language): RankingModelProvider? {
     val experimentInfo = ExperimentStatus.getInstance().forLanguage(language)
     try {
       return ExperimentModelProvider.findProvider(language, experimentInfo.version)
@@ -57,24 +56,11 @@ object RankingSupport {
     }
   }
 
-  private fun shouldSortByML(language: Language, provider: RankingModelProvider): Boolean {
-    val application = ApplicationManager.getApplication()
-    if (application.isUnitTestMode) return enabledInTests
-    val experimentStatus = ExperimentStatus.getInstance()
-    val experimentInfo = experimentStatus.forLanguage(language)
-    if (application.isEAP && experimentInfo.inExperiment && experimentStatus.experimentChanged(language)) {
-      configureSettingsInExperimentOnce(experimentInfo, provider.id)
-    }
+  private fun shouldSortByML(provider: RankingModelProvider): Boolean {
+    if (ApplicationManager.getApplication().isUnitTestMode) return enabledInTests
 
     val settings = CompletionMLRankingSettings.getInstance()
     return settings.isRankingEnabled && settings.isLanguageEnabled(provider.id)
-  }
-
-  private fun configureSettingsInExperimentOnce(experimentInfo: ExperimentInfo, rankerId: String) {
-    val settings = CompletionMLRankingSettings.getInstance()
-    if (experimentInfo.shouldRank) settings.isRankingEnabled = experimentInfo.shouldRank
-    settings.setLanguageEnabled(rankerId, experimentInfo.shouldRank)
-    settings.isShowDiffEnabled = experimentInfo.shouldShowArrows
   }
 
   @TestOnly
