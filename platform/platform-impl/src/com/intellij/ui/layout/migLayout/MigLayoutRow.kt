@@ -250,7 +250,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     val result = parentRow.createChildRow()
     result.placeholder()
     result.largeGapAfter()
-    return result
+      return result
   }
 
   override fun hideableRow(title: String, init: Row.() -> Unit): Row {
@@ -463,6 +463,24 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   override fun onGlobalIsModified(callback: () -> Boolean): Row {
     builder.isModifiedCallbacks.getOrPut(null, { SmartList() }).add(callback)
     return this
+  }
+
+  override fun row(label: String?, separated: Boolean, init: Row.() -> Unit): Row {
+    val newRow = super.row(label, separated, init)
+    if (newRow is MigLayoutRow) {
+      if (newRow.labeled && (newRow.components.size == 2)) {
+        var rowLabel = newRow.components[0]
+        if (rowLabel is JLabel) {
+rowLabel.labelFor = newRow.components[1]
+        } else {
+          rowLabel = newRow.components[1]
+          if (rowLabel is JLabel) {
+            rowLabel.labelFor = newRow.components[0]
+          }
+        }
+      }
+    }
+    return newRow
   }
 }
 
