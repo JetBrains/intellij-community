@@ -298,6 +298,15 @@ public final class PyTypeChecker {
         return Optional.of(false);
       }
 
+      // methods from the actual will be matched against method definitions from the expected below
+      // here we make substitutions from expected definition to its usage
+      StreamEx
+        .of(PyTypeProvider.EP_NAME.getExtensionList())
+        .map(provider -> provider.getGenericType(superClass, context))
+        .select(PyCollectionType.class)
+        .findFirst()
+        .ifPresent(it -> matchGenerics(it, expected, matchContext));
+
       for (kotlin.Pair<PyTypedElement, List<RatedResolveResult>> pair : PyProtocolsKt.inspectProtocolSubclass(expected, actual, context)) {
         final List<RatedResolveResult> subclassElements = pair.getSecond();
         if (ContainerUtil.isEmpty(subclassElements)) {
@@ -329,16 +338,6 @@ public final class PyTypeChecker {
           return Optional.of(false);
         }
       }
-
-      final PyType originalProtocolGenericType = StreamEx
-        .of(PyTypeProvider.EP_NAME.getExtensionList())
-        .map(provider -> provider.getGenericType(superClass, context))
-        .findFirst(Objects::nonNull)
-        .orElse(null);
-
-      // actual was matched against protocol definition above
-      // and here protocol usage is matched against its definition to update substitutions
-      match(expected, originalProtocolGenericType, matchContext);
 
       return Optional.of(true);
     }
