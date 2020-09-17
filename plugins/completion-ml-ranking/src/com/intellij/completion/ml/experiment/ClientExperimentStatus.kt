@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.experiment
 
 import com.google.gson.Gson
@@ -11,7 +11,7 @@ import com.intellij.openapi.util.registry.Registry
 
 class ClientExperimentStatus : ExperimentStatus {
   companion object {
-    private const val EXPERIMENT_GROUP_PROPERTY_KEY = "ml.completion.experiment.group"
+    private const val EXPERIMENT_DISABLED_PROPERTY_KEY = "ml.completion.experiment.disabled"
     private const val PATH_TO_EXPERIMENT_CONFIG = "/experiment.json"
     private val GSON by lazy { Gson() }
     private val LOG = logger<ClientExperimentStatus>()
@@ -46,15 +46,16 @@ class ClientExperimentStatus : ExperimentStatus {
 
   private val experimentConfig: ExperimentConfig = loadExperimentInfo()
   private val language2group: MutableMap<String, ExperimentInfo> = mutableMapOf()
-  private val language2experimentChanged: MutableMap<String, Boolean> = mutableMapOf()
 
   init {
-    val properties = PropertiesComponent.getInstance()
     for (languageSettings in experimentConfig.languages) {
       val bucket = EventLogConfiguration.bucket % languageSettings.experimentBucketsCount
       val overriddenGroupNumber = Registry.intValue("completion.ml.override.experiment.group.number")
       val groupNumber = when {
-        overriddenGroupNumber in languageSettings.includeGroups -> overriddenGroupNumber
+        overriddenGroupNumber in languageSettings.includeGroups -> {
+          setDisabled(false)
+          overriddenGroupNumber
+        }
         languageSettings.includeGroups.size > bucket -> languageSettings.includeGroups[bucket]
         else -> experimentConfig.version
       }
@@ -62,8 +63,6 @@ class ClientExperimentStatus : ExperimentStatus {
       val groupInfo = if (group == null) ExperimentInfo(false, experimentConfig.version)
       else ExperimentInfo(true, group.number, group.useMLRanking, group.showArrows, group.calculateFeatures)
       language2group[languageSettings.id] = groupInfo
-      val experimentChanged = properties.getInt(experimentChangedProperty(languageSettings.id), experimentConfig.version) != groupNumber
-      language2experimentChanged[languageSettings.id] = experimentChanged
     }
   }
 
@@ -74,18 +73,11 @@ class ClientExperimentStatus : ExperimentStatus {
     return language2group[matchingLanguage] ?: ExperimentInfo(false, experimentConfig.version)
   }
 
-  override fun experimentChanged(language: Language): Boolean {
-    val matchingLanguage = findMatchingLanguage(language) ?: return false
-    val experimentChanged = language2experimentChanged[matchingLanguage] ?: return false
-    if (experimentChanged) {
-      val groupNumber = language2group[matchingLanguage]?.version ?: experimentConfig.version
-      PropertiesComponent.getInstance().setValue(experimentChangedProperty(matchingLanguage), groupNumber, experimentConfig.version)
-      language2experimentChanged[matchingLanguage] = false
-    }
-    return experimentChanged
-  }
+  override fun disable() = setDisabled(true)
 
-  private fun experimentChangedProperty(languageId: String) = "$EXPERIMENT_GROUP_PROPERTY_KEY.$languageId"
+  override fun isDisabled(): Boolean = PropertiesComponent.getInstance().isTrueValue(EXPERIMENT_DISABLED_PROPERTY_KEY)
+
+  private fun setDisabled(value: Boolean) = PropertiesComponent.getInstance().setValue(EXPERIMENT_DISABLED_PROPERTY_KEY, value)
 
   private fun findMatchingLanguage(language: Language): String? {
     val baseLanguages = Language.getRegisteredLanguages().filter { language.isKindOf(it) }

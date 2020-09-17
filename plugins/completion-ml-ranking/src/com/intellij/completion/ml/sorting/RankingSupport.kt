@@ -21,7 +21,7 @@ object RankingSupport {
   fun getRankingModel(language: Language): RankingModelWrapper? {
     MLCompletionLocalModelsUtil.getModel(language.id)?.let { return LanguageRankingModel(it) }
     val provider = findProviderSafe(language)
-    return if (provider != null && shouldSortByML(provider)) tryGetModel(provider) else null
+    return if (provider != null && shouldSortByML(language, provider)) tryGetModel(provider) else null
   }
 
   fun availableRankers(): List<RankingModelProvider> {
@@ -56,10 +56,17 @@ object RankingSupport {
     }
   }
 
-  private fun shouldSortByML(provider: RankingModelProvider): Boolean {
-    if (ApplicationManager.getApplication().isUnitTestMode) return enabledInTests
+  private fun shouldSortByML(language: Language, provider: RankingModelProvider): Boolean {
+    val application = ApplicationManager.getApplication()
+    if (application.isUnitTestMode) return enabledInTests
 
     val settings = CompletionMLRankingSettings.getInstance()
+    val experimentStatus = ExperimentStatus.getInstance()
+    val experimentInfo = experimentStatus.forLanguage(language)
+    if (application.isEAP && experimentInfo.inExperiment && !experimentStatus.isDisabled()) {
+      settings.updateShowDiffInExperiment(experimentInfo.shouldShowArrows)
+    }
+
     return settings.isRankingEnabled && settings.isLanguageEnabled(provider.id)
   }
 
