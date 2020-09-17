@@ -180,9 +180,14 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
     }
 
     private void computeSettings() {
+      final PsiFile file = myFileRef.get();
+      if (file == null) {
+        LOG.warn("PSI file has expired, cancelling computation");
+        cancel();
+        return;
+      }
       try {
         myComputationLock.lock();
-        final PsiFile file = getReferencedPsi();
         if (LOG.isDebugEnabled()) {
           LOG.debug("Computation started for " + file.getName());
         }
