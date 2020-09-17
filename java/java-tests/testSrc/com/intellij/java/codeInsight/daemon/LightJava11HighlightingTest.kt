@@ -2,11 +2,13 @@
 package com.intellij.java.codeInsight.daemon
 
 import com.intellij.JavaTestUtil
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightClassUtil
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiClass
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.Assert
 
 class LightJava11HighlightingTest : LightJavaCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor() = JAVA_11
@@ -29,13 +31,14 @@ class LightJava11HighlightingTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   fun testJavaShebang() {
-    myFixture.configureByText("hello", 
-                              """#!/path/to/java
+    val file = myFixture.configureByText("hello",
+                                         """#!/path/to/java
                                  |class Main {{
                                  |int i = 0;
                                  |i*<error descr="';' expected"><error descr="Expression expected"><error descr="Unexpected token">*</error></error></error>;
                                  |}}""".trimMargin())
     myFixture.checkHighlighting()
+    Assert.assertTrue(HighlightClassUtil.isJavaHashBangScript(file))
   }
 
   private fun doTest() {
