@@ -195,9 +195,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     }
   }
 
+  private static final int ANY_GROUP = -409423948;
   void cleanAllFileLevelHighlights() {
     for (FileEditor fileEditor : myFileEditorManager.getAllEditors()) {
-      cleanFileLevelHighlights(fileEditor, -1);
+      cleanFileLevelHighlights(fileEditor, ANY_GROUP);
     }
   }
 
@@ -206,7 +207,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     if (infos == null) return;
     List<HighlightInfo> infosToRemove = new ArrayList<>(infos.size());
     for (HighlightInfo info : infos) {
-      if (info.getGroup() == group || group == -1) {
+      if (info.getGroup() == group || group == ANY_GROUP) {
         myFileEditorManager.removeTopComponent(fileEditor, info.fileLevelComponent);
         infosToRemove.add(info);
       }
