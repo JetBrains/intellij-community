@@ -6,7 +6,6 @@ import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -51,7 +50,6 @@ import static com.intellij.util.OpenSourceUtil.navigate;
 import static javax.swing.tree.TreeSelectionModel.SINGLE_TREE_SELECTION;
 
 class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProvider {
-  private static final Logger LOG = Logger.getInstance(ProblemsViewPanel.class);
   private final Project myProject;
   private final ProblemsViewState myState;
   private final Supplier<@NlsContexts.TabTitle String> myName;
@@ -292,21 +290,18 @@ class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProv
   }
 
   private @Nullable OpenFileDescriptor getDescriptor(@NotNull FileNode node) {
-    return getDescriptor(node.getFile(), -1);
+    return getDescriptor(node.getFile(), -1, -1);
   }
 
   private @Nullable OpenFileDescriptor getDescriptor(@NotNull ProblemNode node) {
-    return getDescriptor(node.getFile(), node.getOffset());
+    return getDescriptor(node.getFile(), node.getLine(), node.getColumn());
   }
 
-  private @Nullable OpenFileDescriptor getDescriptor(@NotNull VirtualFile file, int offset) {
+  private @Nullable OpenFileDescriptor getDescriptor(@NotNull VirtualFile file, int line, int column) {
+    if (line < 0) return new OpenFileDescriptor(getProject(), file);
     Document document = ProblemsView.getDocument(getProject(), file);
     if (document == null) return null;
-    if (offset < 0) return new OpenFileDescriptor(getProject(), file);
-    int length = document.getTextLength();
-    if (offset <= length) return new OpenFileDescriptor(getProject(), file, offset);
-    LOG.warn("offset is bigger then document length: " + file);
-    return new OpenFileDescriptor(getProject(), file, length);
+    return new OpenFileDescriptor(getProject(), file, line, Math.max(0, column));
   }
 
   private void updateAutoscroll(@Nullable OpenFileDescriptor descriptor) {

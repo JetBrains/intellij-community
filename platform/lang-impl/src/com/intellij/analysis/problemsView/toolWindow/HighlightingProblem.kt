@@ -47,10 +47,29 @@ internal class HighlightingProblem(
   val severity: Int
     get() = info?.severity?.myVal ?: -1
 
-  override val offset: Int
-    get() = info?.actualStartOffset ?: -1
-
   override fun hashCode() = highlighter.hashCode()
 
   override fun equals(other: Any?) = other is HighlightingProblem && other.highlighter == highlighter
+
+  override val line: Int
+    get() = position?.line ?: -1
+
+  override val column: Int
+    get() = position?.column ?: -1
+
+  private var position: CachedPosition? = null
+    get() = info?.actualStartOffset?.let {
+      if (it != field?.offset) field = computePosition(it)
+      field
+    }
+
+  private fun computePosition(offset: Int): CachedPosition? {
+    if (offset < 0) return null
+    val document = ProblemsView.getDocument(provider.project, file) ?: return null
+    if (offset > document.textLength) return null
+    val line = document.getLineNumber(offset)
+    return CachedPosition(offset, line, offset - document.getLineStartOffset(line))
+  }
+
+  private class CachedPosition(val offset: Int, val line: Int, val column: Int)
 }
