@@ -731,9 +731,6 @@
   <action id="UsageGrouping.DirectoryStructure">
     <keyboard-shortcut first-keystroke="control D"/>
   </action>
-  <action id="UsageGrouping.Package">
-    <keyboard-shortcut first-keystroke="control P"/>
-  </action>
 
   <action id="List-selectFirstRow">
     <keyboard-shortcut first-keystroke="alt up"/>
