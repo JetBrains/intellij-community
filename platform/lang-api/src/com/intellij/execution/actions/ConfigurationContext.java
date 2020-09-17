@@ -9,6 +9,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -85,7 +86,15 @@ public class ConfigurationContext {
   }
 
   private ConfigurationContext(final DataContext dataContext, Location<PsiElement> location, Module module, boolean multipleSelection) {
-    myRuntimeConfiguration = RunConfiguration.DATA_KEY.getData(dataContext);
+    RunConfiguration configuration = RunConfiguration.DATA_KEY.getData(dataContext);
+    if (configuration == null) {
+      ExecutionEnvironment environment = dataContext.getData(LangDataKeys.EXECUTION_ENVIRONMENT);
+      if (environment != null) {
+        myConfiguration = environment.getRunnerAndConfigurationSettings();
+        myExistingConfiguration = Ref.create(myConfiguration);
+      }
+    }
+    myRuntimeConfiguration = configuration;
     myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     myModule = module;
     myLocation = location;
@@ -304,7 +313,7 @@ public class ConfigurationContext {
   }
 
   public Project getProject() {
-    return myLocation.getProject();
+    return myConfiguration == null ? myLocation.getProject() : myConfiguration.getConfiguration().getProject();
   }
 
   public Module getModule() {
