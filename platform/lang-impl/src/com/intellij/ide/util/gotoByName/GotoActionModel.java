@@ -13,6 +13,7 @@ import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -376,7 +377,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
                               @NotNull ActionGroup group,
                               @NotNull List<ActionGroup> path,
                               boolean showNonPopupGroups) {
-    AnAction[] actions = group.getChildren(null);
+    AnAction[] actions = group.getChildren(AnActionEvent.createFromDataContext(ActionPlaces.ACTION_SEARCH, null, SimpleDataContext.getProjectContext(myProject)));
 
     boolean hasMeaningfulChildren = ContainerUtil.exists(actions, action -> myActionManager.getId(action) != null);
     if (!hasMeaningfulChildren) {
