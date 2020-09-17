@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XExpression;
@@ -121,7 +122,7 @@ public class InlineWatchInplaceEditor extends InplaceEditor {
     bounds.height = lineBounds.height;
 
     if(lineBounds.x > bounds.x) {
-      bounds.width = bounds.width - lineBounds.x + bounds.x;
+      bounds.width = bounds.width - lineBounds.x + bounds.x - UIUtil.getScrollBarWidth();
       bounds.x = lineBounds.x;
     }
     return bounds;

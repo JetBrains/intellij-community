@@ -29,6 +29,7 @@ import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.Collections;
 import java.util.function.Consumer;
@@ -103,9 +104,7 @@ final class InlineDebugRenderer implements EditorCustomElementRenderer {
   public int calcWidthInPixels(@NotNull Inlay inlay) {
     FontInfo fontInfo = getFontInfo(inlay.getEditor());
     int width = fontInfo.fontMetrics().stringWidth(myText.toString() + " ");
-    if (isHovered) {
-      width += myCustomNode ? AllIcons.Actions.Close.getIconWidth() : AllIcons.General.ArrowDown.getIconWidth();
-    }
+    width += myCustomNode ? AllIcons.Actions.Close.getIconWidth() : AllIcons.General.LinkDropTriangle.getIconWidth();
     if (myCustomNode) {
       width += AllIcons.Debugger.Watch.getIconWidth();
     }
@@ -113,6 +112,11 @@ final class InlineDebugRenderer implements EditorCustomElementRenderer {
   }
 
   private static final float BACKGROUND_ALPHA = 0.55f;
+
+
+  private static int getIconY(Icon icon, Rectangle r) {
+    return r.y + r.height / 2 - icon.getIconHeight() / 2 ;
+  }
 
   @Override
   public void paint(@NotNull Inlay inlay, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes) {
@@ -138,8 +142,9 @@ final class InlineDebugRenderer implements EditorCustomElementRenderer {
 
     int curX = r.x + (2 * margin);
     if (myCustomNode) {
-      AllIcons.Debugger.Watch.paintIcon(inlay.getEditor().getComponent(), g, curX + metrics.charWidth(' '), r.y + gap);
-      curX += AllIcons.Debugger.Watch.getIconWidth();
+      Icon watchIcon = AllIcons.Debugger.Watch;
+      watchIcon.paintIcon(inlay.getEditor().getComponent(), g, curX + metrics.charWidth(' '), getIconY(watchIcon, r));
+      curX += watchIcon.getIconWidth();
     }
     for (int i = 0; i < myText.getTexts().size(); i++) {
       String curText = myText.getTexts().get(i);
@@ -147,16 +152,18 @@ final class InlineDebugRenderer implements EditorCustomElementRenderer {
 
       Color fgColor = isHovered ? inlineAttributes.getForegroundColor() : attr.getFgColor();
       g.setColor(fgColor);
-      g.drawString(curText, curX, r.y + metrics.getAscent());
+      g.drawString(curText, curX, r.y + inlay.getEditor().getAscent());
       curX += fontInfo.fontMetrics().stringWidth(curText);
     }
     if (isHovered) {
+      Icon icon;
       if (myCustomNode) {
-        AllIcons.Actions.Close.paintIcon(inlay.getEditor().getComponent(), g, curX, r.y);
+        icon = AllIcons.Actions.Close;
         myRemoveOffset = curX;
       } else {
-        AllIcons.General.ArrowDown.paintIcon(inlay.getEditor().getComponent(), g, curX, r.y);
+        icon = AllIcons.General.LinkDropTriangle;
       }
+      icon.paintIcon(inlay.getEditor().getComponent(), g, curX, getIconY(icon, r));
     }
 
     paintEffects(g, r, editor, inlineAttributes, fontInfo, metrics);
