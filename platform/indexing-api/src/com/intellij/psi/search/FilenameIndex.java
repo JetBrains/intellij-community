@@ -31,12 +31,12 @@ public final class FilenameIndex {
   @NonNls
   public static final ID<String, Void> NAME = ID.create("FilenameIndex");
 
-  public static @NotNull String @NotNull [] getAllFilenames(@Nullable Project project) {
+  public static @NotNull String @NotNull [] getAllFilenames(@NotNull Project project) {
     Set<String> names = new HashSet<>();
     processAllFileNames((String s) -> {
       names.add(s);
       return true;
-    }, project == null ? new EverythingGlobalScope() : GlobalSearchScope.allScope(project), null);
+    }, GlobalSearchScope.allScope(project), null);
     return ArrayUtilRt.toStringArray(names);
   }
 
