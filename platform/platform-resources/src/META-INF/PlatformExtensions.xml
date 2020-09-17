@@ -508,7 +508,7 @@
     <fileType name="Native" implementationClass="com.intellij.openapi.fileTypes.NativeFileType" fieldName="INSTANCE"
               extensions="doc;docx;xls;xlsx;ppt;pptx;mdb;vsd;pdf;hlp;chm;odt"/>
     <fileType name="UNKNOWN" implementationClass="com.intellij.openapi.fileTypes.UnknownFileType" fieldName="INSTANCE"/>
-    <fileType name="AUTO_DETECTED" implementationClass="com.intellij.openapi.fileTypes.ex.DetectByContentFileType" fieldName="INSTANCE"/>
+    <fileType name="AUTO_DETECTED" implementationClass="com.intellij.openapi.fileTypes.ex.DetectedByContentFileType" fieldName="INSTANCE"/>
 
     <fileType name="IDEA_WORKSPACE" implementationClass="com.intellij.ide.highlighter.WorkspaceFileType"  fieldName="INSTANCE" extensions="iws"/>
     <fileType name="IDEA_MODULE" implementationClass="com.intellij.ide.highlighter.ModuleFileType" fieldName="INSTANCE" extensions="iml"/>

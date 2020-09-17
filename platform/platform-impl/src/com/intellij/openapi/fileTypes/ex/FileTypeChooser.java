@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -45,9 +46,15 @@ public final class FileTypeChooser extends DialogWrapper {
 
     myFileName = fileName;
     myOpenInIdea.setText(FileTypesBundle.message("filetype.chooser.association", ApplicationNamesInfo.getInstance().getFullProductName()));
-    myDetectFileType.setText(FileTypesBundle.message("filetype.chooser.autodetect", ApplicationNamesInfo.getInstance().getFullProductName()));
+    myDetectFileType.setText(FileTypesBundle.message("filetype.chooser.autodetect"));
+    ActionListener actionListener = e -> myList.setEnabled(myOpenInIdea.isSelected());
+    myDetectFileType.addActionListener(actionListener);
+    myOpenInIdea.addActionListener(actionListener);
+    myOpenAsNative.addActionListener(actionListener);
+
     if (fileName.indexOf('.') < 0) {
       myDetectFileType.setSelected(true);
+      myList.setEnabled(false);
     }
 
     FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
@@ -55,7 +62,7 @@ public final class FileTypeChooser extends DialogWrapper {
 
     final DefaultListModel<FileType> model = new DefaultListModel<>();
     for (FileType type : fileTypes) {
-      if (!type.isReadOnly() && type != FileTypes.UNKNOWN && !(type instanceof NativeFileType) && type != DetectByContentFileType.INSTANCE) {
+      if (!type.isReadOnly() && type != FileTypes.UNKNOWN && !(type instanceof NativeFileType) && type != DetectedByContentFileType.INSTANCE) {
         model.addElement(type);
       }
     }
@@ -114,7 +121,7 @@ public final class FileTypeChooser extends DialogWrapper {
   }
 
   public FileType getSelectedType() {
-    if (myDetectFileType.isSelected()) return DetectByContentFileType.INSTANCE;
+    if (myDetectFileType.isSelected()) return DetectedByContentFileType.INSTANCE;
     return myOpenAsNative.isSelected() ? NativeFileType.INSTANCE : myList.getSelectedValue();
   }
 

@@ -628,7 +628,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
 
     FileType fileType = getFileTypeByFileName(file.getNameSequence());
-    if (fileType == UnknownFileType.INSTANCE || fileType == DetectByContentFileType.INSTANCE) {
+    if (fileType == UnknownFileType.INSTANCE || fileType == DetectedByContentFileType.INSTANCE) {
       fileType = null;
     }
     if (toLog()) {

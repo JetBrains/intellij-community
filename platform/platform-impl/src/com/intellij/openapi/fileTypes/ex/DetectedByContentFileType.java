@@ -13,10 +13,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public final class DetectByContentFileType implements FileType {
-  public static final DetectByContentFileType INSTANCE = new DetectByContentFileType();
+public final class DetectedByContentFileType implements FileType {
+  public static final DetectedByContentFileType INSTANCE = new DetectedByContentFileType();
 
-  private DetectByContentFileType() { }
+  private DetectedByContentFileType() { }
 
   @Override
   public @NonNls @NotNull String getName() {
