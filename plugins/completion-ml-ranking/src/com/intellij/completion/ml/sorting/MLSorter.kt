@@ -166,12 +166,12 @@ class MLSorter : CompletionFinalSorter() {
                              positionsBefore: Map<LookupElement, Int>,
                              lookupStorage: MutableLookupStorage,
                              lookup: LookupImpl): Iterable<LookupElement> {
-    val mlScoresUsed = element2score.values.none { it == null } && lookupStorage.shouldRankByML()
+    val shouldSort = element2score.values.none { it == null } && lookupStorage.shouldReRank()
     if (LOG.isDebugEnabled) {
-      LOG.debug("ML sorting in completion used=$mlScoresUsed for language=${lookupStorage.language.id}")
+      LOG.debug("ML sorting in completion used=$shouldSort for language=${lookupStorage.language.id}")
     }
 
-    if (mlScoresUsed) {
+    if (shouldSort) {
       lookupStorage.fireReorderedUsingMLScores()
       val topItemsCount = if (reorderOnlyTopItems) REORDER_ONLY_TOP_K else Int.MAX_VALUE
       return items.reorderByMLScores(element2score, topItemsCount).addDiagnosticsIfNeeded(positionsBefore, topItemsCount, lookup)

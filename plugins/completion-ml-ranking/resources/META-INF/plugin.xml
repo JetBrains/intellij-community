@@ -17,8 +17,8 @@
   <depends>com.intellij.modules.platform</depends>
 
   <extensionPoints>
-    <extensionPoint name="ngram.policy" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.completion.ml.ngram.NgramCompletionPolicy"/>
+    <extensionPoint name="features.policy" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.completion.ml.features.CompletionFeaturesPolicy"/>
     </extensionPoint>
 
     <extensionPoint name="policy" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">

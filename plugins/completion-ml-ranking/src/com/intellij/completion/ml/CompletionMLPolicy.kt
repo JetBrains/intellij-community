@@ -9,11 +9,11 @@ interface CompletionMLPolicy {
     companion object {
         val INSTANCE = LanguageExtension<CompletionMLPolicy>("com.intellij.completion.ml.ranking.policy")
 
-        fun disableMLRanking(language: Language, parameters: CompletionParameters): Boolean {
+        fun isReRankingDisabled(language: Language, parameters: CompletionParameters): Boolean {
             val policy = INSTANCE.forLanguage(language) ?: return false
-            return policy.disableMLRanking(parameters)
+            return policy.isReRankingDisabled(parameters)
         }
     }
 
-    fun disableMLRanking(parameters: CompletionParameters): Boolean
+    fun isReRankingDisabled(parameters: CompletionParameters): Boolean
 }

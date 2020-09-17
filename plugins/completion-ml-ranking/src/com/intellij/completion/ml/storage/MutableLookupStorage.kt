@@ -38,7 +38,7 @@ class MutableLookupStorage(
     get() = contextFeaturesStorage?.asMap() ?: emptyMap()
 
   private var mlUsed: Boolean = false
-  private var shouldRankByML = model != null
+  private var shouldReRank = model != null
 
   private var _loggingEnabled: Boolean = false
   override val performanceTracker: CompletionPerformanceTracker = CompletionPerformanceTracker()
@@ -87,14 +87,14 @@ class MutableLookupStorage(
     performanceTracker.reorderedByML()
   }
 
-  override fun shouldComputeFeatures(): Boolean = shouldRankByML() ||
+  override fun shouldComputeFeatures(): Boolean = shouldReRank() ||
                                                   (ApplicationManager.getApplication().isUnitTestMode && alwaysComputeFeaturesInTests) ||
                                                   (_loggingEnabled && !experimentWithoutComputingFeatures())
 
-  override fun shouldRankByML(): Boolean = model != null && shouldRankByML
+  override fun shouldReRank(): Boolean = model != null && shouldReRank
 
-  fun disableMLRanking() {
-    shouldRankByML = false
+  fun disableReRanking() {
+    shouldReRank = false
   }
 
   fun isContextFactorsInitialized(): Boolean = contextFeaturesStorage != null

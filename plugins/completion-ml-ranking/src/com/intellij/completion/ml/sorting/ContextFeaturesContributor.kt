@@ -23,8 +23,8 @@ class ContextFeaturesContributor : CompletionContributor(), DumbAware {
     if (lookup != null) {
       val storage = MutableLookupStorage.get(lookup)
       if (storage != null) {
-        if (CompletionMLPolicy.disableMLRanking(storage.language, parameters)) {
-          storage.disableMLRanking()
+        if (CompletionMLPolicy.isReRankingDisabled(storage.language, parameters)) {
+          storage.disableReRanking()
         }
         if (storage.shouldComputeFeatures() && !storage.isContextFactorsInitialized()) {
           calculateContextFactors(lookup, parameters, storage)
