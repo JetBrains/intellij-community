@@ -90,11 +90,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   @NotNull
   @Override
-  public ListPopup createConfirmation(@PopupTitle String title,
-                                      final String yesText,
-                                      String noText,
-                                      final Runnable onYes,
-                                      int defaultOptionIndex) {
+  public ListPopup createConfirmation(@PopupTitle String title, final String yesText, String noText, final Runnable onYes, int defaultOptionIndex) {
     return createConfirmation(title, yesText, noText, onYes, EmptyRunnable.getInstance(), defaultOptionIndex);
   }
 
@@ -122,20 +118,17 @@ public class PopupFactoryImpl extends JBPopupFactory {
   }
 
   @Override
-  protected <T> PopupChooserBuilder.@NotNull PopupComponentAdapter<T> createPopupComponentAdapter(@NotNull PopupChooserBuilder<T> builder,
-                                                                                                  @NotNull JList<T> list) {
+  protected <T> PopupChooserBuilder.@NotNull PopupComponentAdapter<T> createPopupComponentAdapter(@NotNull PopupChooserBuilder<T> builder, @NotNull JList<T> list) {
     return new PopupListAdapter<>(builder, list);
   }
 
   @Override
-  protected <T> PopupChooserBuilder.@NotNull PopupComponentAdapter<T> createPopupComponentAdapter(@NotNull PopupChooserBuilder<T> builder,
-                                                                                                  @NotNull JTree tree) {
+  protected <T> PopupChooserBuilder.@NotNull PopupComponentAdapter<T> createPopupComponentAdapter(@NotNull PopupChooserBuilder<T> builder, @NotNull JTree tree) {
     return new PopupTreeAdapter<>(builder, tree);
   }
 
   @Override
-  protected <T> PopupChooserBuilder.@NotNull PopupComponentAdapter<T> createPopupComponentAdapter(@NotNull PopupChooserBuilder<T> builder,
-                                                                                                  @NotNull JTable table) {
+  protected <T> PopupChooserBuilder.@NotNull PopupComponentAdapter<T> createPopupComponentAdapter(@NotNull PopupChooserBuilder<T> builder, @NotNull JTable table) {
     return new PopupTableAdapter<>(builder, table);
   }
 
@@ -221,8 +214,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                             @Nullable PresentationFactory presentationFactory,
                             boolean autoSelection) {
       this(null, createStep(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics,
-                            preselectActionCondition, actionPlace, presentationFactory, autoSelection), disposeCallback, dataContext,
-           actionPlace, maxRowCount);
+                            preselectActionCondition, actionPlace, presentationFactory, autoSelection), disposeCallback, dataContext, actionPlace, maxRowCount);
       UiInspectorUtil.registerProvider(getList(), () -> UiInspectorUtil.collectActionGroupInfo("Menu", actionGroup, actionPlace));
     }
 
@@ -265,8 +257,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
                           ActionManager.getInstance(), 0);
       actionEvent.setInjectedContext(action.isInInjectedContext());
       ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), action, actionEvent, false);
-      actionItem.setIcon(presentation.getIcon());
-
       return presentation;
     }
 
@@ -285,17 +275,13 @@ public class PopupFactoryImpl extends JBPopupFactory {
       LOG.assertTrue(component != null, "dataContext has no component for new ListPopupStep");
 
       List<ActionItem> items = ActionPopupStep.createActionItems(
-        actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, actionPlace,
-        presentationFactory);
+          actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, actionPlace, presentationFactory);
 
-      return new ActionPopupStep(items, title, getComponentContextSupplier(component), actionPlace,
-                                 showNumbers || honorActionMnemonics && itemsHaveMnemonics(items),
+      return new ActionPopupStep(items, title, getComponentContextSupplier(component), actionPlace, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items),
                                  preselectActionCondition, autoSelection, showDisabledActions, presentationFactory);
     }
 
-    /**
-     * @deprecated Use {@link ActionPopupStep#createActionItems(ActionGroup, DataContext, boolean, boolean, boolean, boolean, String, PresentationFactory)} instead.
-     */
+    /** @deprecated Use {@link ActionPopupStep#createActionItems(ActionGroup, DataContext, boolean, boolean, boolean, boolean, String, PresentationFactory)} instead. */
     @Deprecated
     @NotNull
     public static List<ActionItem> getActionItems(@NotNull ActionGroup actionGroup,
@@ -408,7 +394,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                           final int maxRowCount,
                                           final Condition<? super AnAction> preselectActionCondition) {
     return new ActionGroupPopup(title, actionGroup, dataContext, showNumbers, true, showDisabledActions, honorActionMnemonics,
-                                disposeCallback, maxRowCount, preselectActionCondition, null);
+                                  disposeCallback, maxRowCount, preselectActionCondition, null);
   }
 
   @NotNull
@@ -613,7 +599,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   @Override
   public boolean isPopupActive() {
-    return IdeEventQueue.getInstance().isPopupActive();
+  return IdeEventQueue.getInstance().isPopupActive();
   }
 
   @NotNull
@@ -687,7 +673,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
   @Override
   public BalloonBuilder createHtmlTextBalloonBuilder(@NotNull String htmlContent,
                                                      MessageType messageType,
-                                                     @Nullable HyperlinkListener listener) {
+                                                     @Nullable HyperlinkListener listener)
+  {
     return createHtmlTextBalloonBuilder(htmlContent, messageType.getDefaultIcon(), messageType.getPopupBackground(), listener);
   }
 
@@ -696,7 +683,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private final AnAction myAction;
     private @NlsContexts.ListItem String myText;
     private final boolean myIsEnabled;
-    private Icon myIcon;
+    private final Icon myIcon;
     private final Icon mySelectedIcon;
     private final boolean myPrependWithSeparator;
     private final @NlsContexts.Separator String mySeparatorText;
@@ -743,10 +730,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
     @Nullable
     public Icon getIcon(boolean selected) {
       return selected && mySelectedIcon != null ? mySelectedIcon : myIcon;
-    }
-
-    public void setIcon(Icon icon) {
-      myIcon = icon;
     }
 
     public boolean isPrependWithSeparator() {
