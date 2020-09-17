@@ -1,7 +1,6 @@
-package com.intellij.completion.ml.experiment.ranker.local
+package com.intellij.completion.ml.ranker.local
 
 import com.intellij.openapi.application.PluginPathManager
-import com.jetbrains.completion.ranker.model.ZipModelMetadataReader
 import org.junit.Test
 import java.io.File
 

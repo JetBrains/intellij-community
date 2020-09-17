@@ -5,6 +5,7 @@ import com.intellij.completion.ml.experiment.ExperimentInfo
 import com.intellij.completion.ml.experiment.ExperimentStatus
 import com.intellij.completion.ml.ranker.ExperimentModelProvider
 import com.intellij.completion.ml.ranker.ExperimentModelProvider.Companion.match
+import com.intellij.completion.ml.ranker.local.MLCompletionLocalModelsUtil
 import com.intellij.completion.ml.settings.CompletionMLRankingSettings
 import com.intellij.internal.ml.completion.RankingModelProvider
 import com.intellij.lang.Language
@@ -12,7 +13,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
-import com.jetbrains.completion.ranker.model.MLCompletionLocalModelsUtil
 import org.jetbrains.annotations.TestOnly
 
 object RankingSupport {
