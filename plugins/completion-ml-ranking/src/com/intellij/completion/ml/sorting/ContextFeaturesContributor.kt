@@ -22,11 +22,12 @@ class ContextFeaturesContributor : CompletionContributor(), DumbAware {
     val lookup = LookupManager.getActiveLookup(parameters.editor) as? LookupImpl
     if (lookup != null) {
       val storage = MutableLookupStorage.get(lookup)
-      if (storage != null && storage.shouldComputeFeatures() && !storage.isContextFactorsInitialized()) {
-        if (!CompletionMLPolicy.disableMLRanking(storage.language, parameters)) {
-          calculateContextFactors(lookup, parameters, storage)
-        } else {
+      if (storage != null) {
+        if (CompletionMLPolicy.disableMLRanking(storage.language, parameters)) {
           storage.disableMLRanking()
+        }
+        if (storage.shouldComputeFeatures() && !storage.isContextFactorsInitialized()) {
+          calculateContextFactors(lookup, parameters, storage)
         }
       }
     }
