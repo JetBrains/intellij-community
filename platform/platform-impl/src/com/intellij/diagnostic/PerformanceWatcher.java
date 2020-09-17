@@ -5,13 +5,18 @@ import com.intellij.application.options.RegistryManager;
 import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Attachment;
@@ -298,9 +303,19 @@ public final class PerformanceWatcher implements Disposable {
 
   private void notifyJitDisabled() {
     if (myJitProblemReported.compareAndSet(false, true)) {
-      NOTIFICATION_GROUP.createNotification(
-        IdeBundle.message("notification.content.jit.compiler.disabled"),
-        MessageType.ERROR).notify(null);
+      ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+      String action = IdeBundle.message("ide.restart.required.notification",
+                                        IdeBundle.message(app.isRestartCapable() ? "ide.restart.action" : "ide.shutdown.action"));
+      Notification notification = NOTIFICATION_GROUP.createNotification(
+        IdeBundle.message("notification.content.jit.compiler.disabled"), MessageType.ERROR)
+        .addAction(new NotificationAction(action) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+          notification.expire();
+          app.restart(true);
+        }
+      });
+      notification.notify(null);
     }
   }
 
