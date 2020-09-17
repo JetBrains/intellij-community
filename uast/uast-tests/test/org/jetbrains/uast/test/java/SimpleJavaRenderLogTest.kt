@@ -4,6 +4,10 @@ package org.jetbrains.uast.test.java
 import org.junit.Test
 
 class SimpleJavaRenderLogTest : AbstractJavaRenderLogTest() {
+
+  @Test
+  fun testComments() = doTest("Simple/Comments.java")
+
   @Test
   fun testDataClass() = doTest("DataClass/DataClass.java")
 
