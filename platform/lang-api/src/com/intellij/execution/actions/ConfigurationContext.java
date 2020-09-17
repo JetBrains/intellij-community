@@ -91,7 +91,10 @@ public class ConfigurationContext {
       ExecutionEnvironment environment = dataContext.getData(LangDataKeys.EXECUTION_ENVIRONMENT);
       if (environment != null) {
         myConfiguration = environment.getRunnerAndConfigurationSettings();
-        myExistingConfiguration = Ref.create(myConfiguration);
+        if (myConfiguration != null) {
+          myExistingConfiguration = Ref.create(myConfiguration);
+          configuration = myConfiguration.getConfiguration();
+        }
       }
     }
     myRuntimeConfiguration = configuration;
