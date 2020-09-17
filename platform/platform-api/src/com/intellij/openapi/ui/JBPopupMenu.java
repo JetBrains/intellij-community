@@ -79,6 +79,8 @@ public class JBPopupMenu extends JPopupMenu {
   }
 
   public static void showAbove(@NotNull Component component, @NotNull JPopupMenu menu) {
+    // We need `menu.show(component, 0, -menu.getHeight());`, but `menu.getHeight()` will return 0 if the menu hasn't been shown yet.
+    // Let's show it somewhere, and once it's shown, move it to the desired location.
     menu.show(component, 0, 0);
     UiNotifyConnector.doWhenFirstShown(menu, () -> {
       Window window = UIUtil.getWindow(menu);
@@ -86,7 +88,8 @@ public class JBPopupMenu extends JPopupMenu {
         LOG.error("Cannot find window for menu popup " + menu + ", " + menu.isShowing());
       }
       else {
-        window.setLocation(window.getX(), window.getY() - window.getHeight());
+        Point diff = SwingUtilities.convertPoint(component, 0, 0, window);
+        window.setLocation(window.getX(), window.getY() + diff.y - window.getHeight());
       }
     });
   }
