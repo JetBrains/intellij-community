@@ -7,15 +7,13 @@ class Main {
       f();
 
       try {
-          f();
-      } catch (Exception e) {
-      }
+      f();
+    } catch (Exception e) {}
 
-      try {
-          f();
-          f();
-      } catch (Exception e) {
-      }
+    try {
+      f();
+      f();
+    } catch (Exception e) {}
   }
 }
 
@@ -24,14 +22,12 @@ class B {
       new Main().f();
 
       try {
-          new Main().f();
-      } catch (Exception e) {
-      }
+      new Main().f();
+    } catch (Exception e) {}
 
-      try {
-          new Main().f();
-          new Main().f();
-      } catch (Exception e) {
-      }
+    try {
+      new Main().f();
+      new Main().f();
+    } catch (Exception e) {}
   }
 }

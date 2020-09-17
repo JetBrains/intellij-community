@@ -372,16 +372,9 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
         return Arrays.stream(tryStatement.getCatchSections())
           .map(PsiCatchSection::getCatchType)
           .filter(Objects::nonNull)
-          .filter(e -> ! isGenericException(e))
+          .filter(e -> ! ExceptionUtil.isGeneralExceptionType(e))
           .noneMatch(e -> e.isAssignableFrom(myType));
       }
     }
   }
-
-  static boolean isGenericException(@NotNull final PsiType typ) {
-    return typ.equalsToText(CommonClassNames.JAVA_LANG_EXCEPTION) ||
-           typ.equalsToText(CommonClassNames.JAVA_LANG_THROWABLE) ||
-           typ.equalsToText(CommonClassNames.JAVA_LANG_ERROR);
-  }
-
 }
