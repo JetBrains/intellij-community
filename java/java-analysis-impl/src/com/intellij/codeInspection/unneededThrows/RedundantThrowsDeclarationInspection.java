@@ -372,7 +372,7 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
       /**
        * The method adds two vertices into the graph and a connection between them
        * @param from a vertex of the connection's start
-       * @param from a vertex of the connection's end
+       * @param to a vertex of the connection's end
        */
       private void add(final @NotNull Vertex from, final @NotNull Vertex to) {
         final Set<@NotNull Vertex> elements = myVertices.computeIfAbsent(from, k -> new HashSet<>());
@@ -437,8 +437,6 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
           if (type instanceof PsiDisjunctionType) {
             final PsiDisjunctionType disjunctionType = (PsiDisjunctionType)type;
             for (PsiType disjunction : disjunctionType.getDisjunctions()) {
-              if (!(disjunction instanceof PsiClassType)) continue;
-
               final CatchTypeVertex catchTypeVertex = new CatchTypeVertex(disjunction);
               add(catchVertex, catchTypeVertex);
             }
@@ -477,7 +475,7 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
             final PsiExpression exception = statement.getException();
             if (exception == null) return;
 
-            final PsiClassType type = (PsiClassType)exception.getType();
+            final PsiType type = exception.getType();
             if (type == null) return;
 
             add(new CatchTypeVertex(type), new ExceptionInducerVertex(statement));
@@ -518,9 +516,9 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
             final CatchTypeVertex typeVertex = (CatchTypeVertex)catchTypeVertex;
             if (redundantTypes.stream().noneMatch(typeVertex.myType::isAssignableFrom)) continue;
 
-            final Iterator<@NotNull Vertex> callSiteIterator = get(catchTypeVertex).iterator();
-            while (callSiteIterator.hasNext()) {
-              final ExceptionInducerVertex next = (ExceptionInducerVertex)callSiteIterator.next();
+            final Iterator<@NotNull Vertex> catchTypeInducers = get(catchTypeVertex).iterator();
+            while (catchTypeInducers.hasNext()) {
+              final ExceptionInducerVertex next = (ExceptionInducerVertex)catchTypeInducers.next();
 
               final PsiElement callInducer = next.myElement;
               if (!(callInducer instanceof PsiCall)) continue;
@@ -529,7 +527,7 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
               final PsiElement element = result.getElement();
               final PsiMethod resolvedMethod = element instanceof PsiMethod ? (PsiMethod)element : null;
 
-              if (resolvedMethod == method) callSiteIterator.remove();
+              if (resolvedMethod == method) catchTypeInducers.remove();
             }
           }
         }
