@@ -19,12 +19,14 @@ import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.configLocation
 import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.workspaceModel.ide.impl.jps.serialization.ErrorReporter
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.mutableModuleMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableModuleModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
+import com.intellij.workspaceModel.storage.VirtualFileUrl
 import com.intellij.workspaceModel.storage.VirtualFileUrlManager
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
@@ -145,7 +147,11 @@ internal class ModifiableModuleModelBridgeImpl(
     removeUnloadedModule(moduleName)
 
     val builder = WorkspaceEntityStorageBuilder.create()
-    JpsProjectEntitiesLoader.loadModule(Paths.get(filePath), project.configLocation!!, builder, virtualFileManager)
+    JpsProjectEntitiesLoader.loadModule(Paths.get(filePath), project.configLocation!!, builder, object : ErrorReporter {
+      override fun reportError(message: String, file: VirtualFileUrl) {
+        //todo report
+      }
+    }, virtualFileManager)
     diff.addDiff(builder)
     val moduleEntity = diff.entities(ModuleEntity::class.java).find { it.name == moduleName }
     if (moduleEntity == null) {

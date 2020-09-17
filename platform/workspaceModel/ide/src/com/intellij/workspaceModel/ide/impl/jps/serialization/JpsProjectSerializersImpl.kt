@@ -94,7 +94,8 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   }
 
   override fun reloadFromChangedFiles(change: JpsConfigurationFilesChange,
-                                      reader: JpsFileContentReader): Pair<Set<EntitySource>, WorkspaceEntityStorageBuilder> {
+                                      reader: JpsFileContentReader,
+                                      errorReporter: ErrorReporter): Pair<Set<EntitySource>, WorkspaceEntityStorageBuilder> {
     val obsoleteSerializers = ArrayList<JpsFileEntitiesSerializer<*>>()
     val newFileSerializers = ArrayList<JpsFileEntitiesSerializer<*>>()
 
@@ -168,18 +169,18 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
 
     val builder = WorkspaceEntityStorageBuilder.create()
     affectedFileLoaders.forEach {
-      it.loadEntities(builder, reader, virtualFileManager)
+      it.loadEntities(builder, reader, errorReporter, virtualFileManager)
     }
     return Pair(changedSources, builder)
   }
 
-  override fun loadAll(reader: JpsFileContentReader, builder: WorkspaceEntityStorageBuilder) {
+  override fun loadAll(reader: JpsFileContentReader, builder: WorkspaceEntityStorageBuilder, errorReporter: ErrorReporter) {
     val service = AppExecutorUtil.createBoundedApplicationPoolExecutor("ModuleManager Loader", 1)
     try {
       val tasks = fileSerializersByUrl.values.map { serializer ->
         Callable {
           val myBuilder = WorkspaceEntityStorageBuilder.create()
-          serializer.loadEntities(myBuilder, reader, virtualFileManager)
+          serializer.loadEntities(myBuilder, reader, errorReporter, virtualFileManager)
           myBuilder
         }
       }

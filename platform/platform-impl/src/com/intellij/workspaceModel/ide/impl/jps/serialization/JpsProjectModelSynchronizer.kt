@@ -44,6 +44,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   private lateinit var fileContentReader: JpsFileContentReaderWithCache
   private val serializers = AtomicReference<JpsProjectSerializers?>()
   private val sourcesToSave = Collections.synchronizedSet(HashSet<EntitySource>())
+  private val errorReporter = IdeErrorReporter()
 
   init {
     if (!project.isDefault) {
@@ -88,7 +89,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     }
 
     LOG.debug { "Reload entities from changed files:\n$changes" }
-    val (changedSources, builder) = serializers.reloadFromChangedFiles(changes, fileContentReader)
+    val (changedSources, builder) = serializers.reloadFromChangedFiles(changes, fileContentReader, errorReporter)
     fileContentReader.clearCache()
     LOG.debugValues("Changed entity sources", changedSources)
     if (changedSources.isEmpty() && builder.isEmpty()) return
@@ -160,7 +161,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
 
     if (!WorkspaceModelInitialTestContent.hasInitialContent) {
       childActivity = childActivity.endAndStart("(wm) Read serializers")
-      serializers.loadAll(fileContentReader, builder)
+      serializers.loadAll(fileContentReader, builder, errorReporter)
       childActivity = childActivity.endAndStart("(wm) Add changes to store")
       WriteAction.runAndWait<RuntimeException> {
         WorkspaceModel.getInstance(project).updateProjectModel { updater ->
@@ -182,7 +183,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
 
     val tmpBuilder = WorkspaceEntityStorageBuilder.create()
     val unloaded = unloadedModulePaths.map { modulePath ->
-      serializers.findModuleSerializer(modulePath)!!.loadEntities(tmpBuilder, fileContentReader, virtualFileManager)
+      serializers.findModuleSerializer(modulePath)!!.loadEntities(tmpBuilder, fileContentReader, errorReporter, virtualFileManager)
 
       val moduleEntity = tmpBuilder.resolve(ModuleId(modulePath.moduleName)) ?: return@map null
       val pointerManager = VirtualFilePointerManager.getInstance()
@@ -260,6 +261,12 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   companion object {
     fun getInstance(project: Project): JpsProjectModelSynchronizer? = project.getComponent(JpsProjectModelSynchronizer::class.java)
     private val LOG = logger<JpsProjectModelSynchronizer>()
+  }
+
+  private class IdeErrorReporter : ErrorReporter {
+    override fun reportError(message: String, file: VirtualFileUrl) {
+      //todo implement
+    }
   }
 }
 
