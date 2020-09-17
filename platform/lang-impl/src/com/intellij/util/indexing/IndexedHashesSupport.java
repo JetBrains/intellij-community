@@ -28,10 +28,16 @@ public final class IndexedHashesSupport {
 
   public static byte @NotNull [] getOrInitIndexedHash(@NotNull FileContentImpl content) {
     byte[] hash = content.getHash();
-    if (hash == null) {
-      hash = calculateIndexedHashForFileContent(content);
-      content.setHashes(hash);
+    if (hash != null) return hash;
+
+    byte[] contentHash = PersistentFSImpl.getContentHashIfStored(content.getFile());
+    if (contentHash == null) {
+      contentHash = getBinaryContentHash(content.getContent());
+      // todo store content hash in FS
     }
+
+    hash = calculateIndexedHash(content, contentHash, false);
+    content.setHashes(hash);
     return hash;
   }
 
@@ -86,15 +92,6 @@ public final class IndexedHashesSupport {
     }
 
     return hasher.hash().asBytes();
-  }
-
-  private static byte @NotNull [] calculateIndexedHashForFileContent(@NotNull FileContentImpl content) {
-    byte[] contentHash = PersistentFSImpl.getContentHashIfStored(content.getFile());
-    if (contentHash == null) {
-      contentHash = getBinaryContentHash(content.getContent());
-      // todo store content hash in FS
-    }
-    return calculateIndexedHash(content, contentHash, false);
   }
 
   private static <F> void buildFlavorHash(@NotNull IndexedFile indexedFile,
