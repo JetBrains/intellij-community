@@ -4,7 +4,9 @@ package com.intellij.analysis.problemsView.toolWindow
 import com.intellij.analysis.problemsView.FileProblem
 import com.intellij.analysis.problemsView.Problem
 import com.intellij.ide.projectView.PresentationData
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.pom.Navigatable
 import com.intellij.ui.SimpleTextAttributes.GRAYED_ATTRIBUTES
 import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
 import com.intellij.ui.tree.LeafState
@@ -29,6 +31,12 @@ internal class ProblemNode(parent: FileNode, val problem: Problem) : Node(parent
   override fun getLeafState() = LeafState.ALWAYS
 
   override fun getName() = text
+
+  override fun getVirtualFile() = file
+
+  override fun getDescriptor() = project?.let { OpenFileDescriptor(it, file, line, column) }
+
+  override fun getNavigatable() = problem as? Navigatable ?: getDescriptor()
 
   override fun update(project: Project, presentation: PresentationData) {
     // update values before comparison because of general contract
