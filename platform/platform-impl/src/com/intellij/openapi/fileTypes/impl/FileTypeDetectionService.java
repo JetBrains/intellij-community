@@ -12,6 +12,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.UnknownFileType;
+import com.intellij.openapi.fileTypes.ex.DetectByContentFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
@@ -170,7 +171,13 @@ final class FileTypeDetectionService implements Disposable {
 
   @NotNull
   FileType getOrDetectFromContent(@NotNull VirtualFile file, byte @Nullable [] content) {
-    if (!isDetectable(file)) return UnknownFileType.INSTANCE;
+    if (!isDetectable(file)) {
+      if (myFileTypeManager.getFileTypeByFileName(file.getName()) == DetectByContentFileType.INSTANCE) {
+        //allow to open empty file in IDEA's editor
+        return DetectByContentFileType.INSTANCE;
+      }
+      return UnknownFileType.INSTANCE;
+    }
 
     // while vfs events are processing do not access cache, it can be in invalid state;
     if (myRestrictCachedDetectedFileTypeAccess) {

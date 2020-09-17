@@ -37,6 +37,7 @@ public final class FileTypeChooser extends DialogWrapper {
   private JPanel myPanel;
   private JRadioButton myOpenInIdea;
   private JRadioButton myOpenAsNative;
+  private JRadioButton myDetectFileType;
   private final String myFileName;
 
   private FileTypeChooser(@NotNull List<String> patterns, @NotNull String fileName) {
@@ -44,13 +45,17 @@ public final class FileTypeChooser extends DialogWrapper {
 
     myFileName = fileName;
     myOpenInIdea.setText(FileTypesBundle.message("filetype.chooser.association", ApplicationNamesInfo.getInstance().getFullProductName()));
+    myDetectFileType.setText(FileTypesBundle.message("filetype.chooser.autodetect", ApplicationNamesInfo.getInstance().getFullProductName()));
+    if (fileName.indexOf('.') < 0) {
+      myDetectFileType.setSelected(true);
+    }
 
     FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
     Arrays.sort(fileTypes, (ft1, ft2) -> ft1 == null ? 1 : ft2 == null ? -1 : ft1.getDescription().compareToIgnoreCase(ft2.getDescription()));
 
     final DefaultListModel<FileType> model = new DefaultListModel<>();
     for (FileType type : fileTypes) {
-      if (!type.isReadOnly() && type != FileTypes.UNKNOWN && !(type instanceof NativeFileType)) {
+      if (!type.isReadOnly() && type != FileTypes.UNKNOWN && !(type instanceof NativeFileType) && type != DetectByContentFileType.INSTANCE) {
         model.addElement(type);
       }
     }
@@ -100,7 +105,7 @@ public final class FileTypeChooser extends DialogWrapper {
   }
 
   private void updateButtonsState() {
-    setOKActionEnabled(myList.getSelectedIndex() != -1 || myOpenAsNative.isSelected());
+    setOKActionEnabled(myList.getSelectedIndex() != -1 || myOpenAsNative.isSelected() || myDetectFileType.isSelected());
   }
 
   @Override
@@ -109,6 +114,7 @@ public final class FileTypeChooser extends DialogWrapper {
   }
 
   public FileType getSelectedType() {
+    if (myDetectFileType.isSelected()) return DetectByContentFileType.INSTANCE;
     return myOpenAsNative.isSelected() ? NativeFileType.INSTANCE : myList.getSelectedValue();
   }
 
