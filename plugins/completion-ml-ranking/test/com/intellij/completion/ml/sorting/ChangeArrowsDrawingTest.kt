@@ -63,7 +63,9 @@ class ChangeArrowsDrawingTest : LightFixtureCompletionTestCase() {
     override fun forLanguage(language: Language): ExperimentInfo =
       ExperimentInfo(true, VERSION, true, true, true)
 
-    override fun experimentChanged(language: Language): Boolean = true
+    override fun disable() = Unit
+
+    override fun isDisabled(): Boolean = false
   }
 
   private class ArrowPresenceChecker : LookupCellRenderer.ItemPresentationCustomizer {

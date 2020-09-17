@@ -1,9 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.settings;
 
+import com.intellij.completion.ml.experiment.ExperimentStatus;
 import com.intellij.completion.ml.ranker.ExperimentModelProvider;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
@@ -35,6 +38,7 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
   public void setRankingEnabled(boolean value) {
     if (value == isRankingEnabled()) return;
     myState.rankingEnabled = value;
+    disableExperiment();
     triggerSettingsChanged(value);
   }
 
@@ -46,6 +50,7 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
     if (isEnabled == isLanguageEnabled(rankerId)) return;
     setRankerEnabledImpl(rankerId, isEnabled);
     logCompletionState(rankerId, isEnabled);
+    disableExperiment();
     if (isRankingEnabled()) {
       // log only if language ranking settings changes impact completion behavior
       MLCompletionSettingsCollector.rankingSettingsChanged(rankerId, isEnabled, isEnabledByDefault(rankerId), true);
@@ -55,7 +60,21 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
   public void setShowDiffEnabled(boolean isEnabled) {
     if (isEnabled == isShowDiffEnabled()) return;
     myState.showDiff = isEnabled;
+    disableExperiment();
     MLCompletionSettingsCollector.decorationSettingChanged(isEnabled);
+  }
+
+  @ApiStatus.Internal
+  public void updateRankingInExperiment(@NotNull String rankerId, boolean isEnabled) {
+    if (isEnabled) {
+      myState.rankingEnabled = true;
+    }
+    setRankerEnabledImpl(rankerId, isEnabled);
+  }
+
+  @ApiStatus.Internal
+  public void updateShowDiffInExperiment(boolean isEnabled) {
+    myState.showDiff = isEnabled;
   }
 
   @Override
@@ -68,6 +87,12 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
     myState.rankingEnabled = state.rankingEnabled;
     myState.showDiff = state.showDiff;
     state.language2state.forEach((lang, enabled) -> setRankerEnabledImpl(lang, enabled));
+  }
+
+  private static void disableExperiment() {
+    if (ApplicationManager.getApplication().isEAP()) {
+      ExperimentStatus.Companion.getInstance().disable();
+    }
   }
 
   private void logCompletionState(@NotNull String languageName, boolean isEnabled) {
