@@ -395,10 +395,15 @@ public class FileUtil extends FileUtilRt {
   private static void performCopy(@NotNull File fromFile, @NotNull File toFile, final boolean syncTimestamp) throws IOException {
     if (filesEqual(fromFile, toFile)) return;
 
-    try (FileOutputStream fos = openOutputStream(toFile)) {
-      try (FileInputStream fis = new FileInputStream(fromFile)) {
-        copy(fis, fos);
+    try {
+      try (FileOutputStream fos = openOutputStream(toFile)) {
+        try (FileInputStream fis = new FileInputStream(fromFile)) {
+          copy(fis, fos);
+        }
       }
+    }
+    catch (IOException e) {
+      throw new IOException(String.format("Couldn't copy [%s] to [%s]", fromFile, toFile), e);
     }
 
     if (syncTimestamp) {
