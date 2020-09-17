@@ -10,6 +10,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields.Enum
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger.configVersion
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.openapi.wm.impl.ToolWindowEventSource
 
 class ToolWindowEventLogGroup : CounterUsagesCollector() {
   companion object {
@@ -22,6 +23,8 @@ class ToolWindowEventLogGroup : CounterUsagesCollector() {
     val VIEW_MODE: EnumEventField<ViewMode> = Enum("ViewMode", ViewMode::class.java) { mode: ViewMode -> mode.name }
     @JvmField
     val LOCATION: EnumEventField<Anchor> = Enum("Location", Anchor::class.java) { location: Anchor -> location.name }
+    @JvmField
+    val SOURCE: EnumEventField<ToolWindowEventSource> = Enum("Source", ToolWindowEventSource::class.java)
 
     @JvmField
     val ACTIVATED = registerToolwindowEvent("activated")
@@ -31,7 +34,7 @@ class ToolWindowEventLogGroup : CounterUsagesCollector() {
     val HIDDEN = registerToolwindowEvent("hidden")
 
     private fun registerToolwindowEvent(eventId: String): VarargEventId {
-      return GROUP.registerVarargEvent(eventId, TOOLWINDOW_ID, EventFields.PluginInfo, VIEW_MODE, LOCATION)
+      return GROUP.registerVarargEvent(eventId, TOOLWINDOW_ID, EventFields.PluginInfo, VIEW_MODE, LOCATION, SOURCE)
     }
   }
 

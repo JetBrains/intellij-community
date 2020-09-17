@@ -92,7 +92,7 @@ abstract class ToolWindowHeader internal constructor(
     westPanel.addMouseListener(
       object : MouseAdapter() {
         override fun mouseClicked(e: MouseEvent) {
-          toolWindow.fireActivated()
+          toolWindow.fireActivated(ToolWindowEventSource.ToolWindowHeader)
         }
       }
     )
@@ -107,14 +107,14 @@ abstract class ToolWindowHeader internal constructor(
 
           if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_RELEASED)) {
             if (e.isAltDown) {
-              toolWindow.fireHidden()
+              toolWindow.fireHidden(ToolWindowEventSource.ToolWindowHeaderAltClick)
             }
             else {
-              toolWindow.fireHiddenSide()
+              toolWindow.fireHiddenSide(ToolWindowEventSource.ToolWindowHeader)
             }
           }
           else {
-            toolWindow.fireActivated()
+            toolWindow.fireActivated(ToolWindowEventSource.ToolWindowHeader)
           }
         }
       }
