@@ -13,6 +13,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -130,11 +131,13 @@ public final class PerformanceWatcher implements Disposable {
               Attachment[] attachments = new Attachment[]{attachment};
 
               // look for extended crash logs
-              File extraLog = new File("jbr_err_pid" + pid + ".log");
-              if (extraLog.isFile()) {
-                Attachment extraAttachment = new Attachment("jbr_err.txt", FileUtil.loadFile(extraLog));
-                extraAttachment.setIncluded(true);
-                attachments = ArrayUtil.append(attachments, extraAttachment);
+              if (SystemInfo.isMac) {
+                File extraLog = new File("jbr_err_pid" + pid + ".log");
+                if (extraLog.isFile() && extraLog.lastModified() > appInfoFile.lastModified()) {
+                  Attachment extraAttachment = new Attachment("jbr_err.txt", FileUtil.loadFile(extraLog));
+                  extraAttachment.setIncluded(true);
+                  attachments = ArrayUtil.append(attachments, extraAttachment);
+                }
               }
 
               String message = StringUtil.substringBefore(content, "---------------  P R O C E S S  ---------------");
