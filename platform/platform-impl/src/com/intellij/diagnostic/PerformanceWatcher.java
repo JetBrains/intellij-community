@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
@@ -179,8 +180,18 @@ public final class PerformanceWatcher implements Disposable {
               String content = FileUtil.loadFile(file);
               Attachment attachment = new Attachment("crash.txt", content);
               attachment.setIncluded(true);
+              Attachment[] attachments = new Attachment[]{attachment};
+
+              // look for extended crash logs
+              File extraLog = new File("jbr_err_pid" + pid + ".log");
+              if (extraLog.isFile()) {
+                Attachment extraAttachment = new Attachment("jbr_err.txt", FileUtil.loadFile(extraLog));
+                extraAttachment.setIncluded(true);
+                attachments = ArrayUtil.append(attachments, extraAttachment);
+              }
+
               String message = StringUtil.substringBefore(content, "---------------  P R O C E S S  ---------------");
-              IdeaLoggingEvent event = LogMessage.createEvent(new JBRCrash(), message, attachment);
+              IdeaLoggingEvent event = LogMessage.createEvent(new JBRCrash(), message, attachments);
               IdeaFreezeReporter.setAppInfo(event, FileUtil.loadFile(appInfoFile));
               IdeaFreezeReporter.report(event);
               break;
