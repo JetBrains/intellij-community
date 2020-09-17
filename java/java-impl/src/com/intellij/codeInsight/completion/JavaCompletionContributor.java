@@ -383,7 +383,7 @@ public class JavaCompletionContributor extends CompletionContributor implements 
   private static void smartCompleteNonExpression(CompletionParameters parameters, CompletionResultSet result) {
     PsiElement position = parameters.getPosition();
     PsiElement parent = position.getParent();
-    if (!SmartCastProvider.shouldSuggestCast(parameters) && parent instanceof PsiJavaCodeReferenceElement) {
+    if (!SmartCastProvider.inCastContext(parameters) && parent instanceof PsiJavaCodeReferenceElement) {
       JavaSmartCompletionContributor.addClassReferenceSuggestions(parameters, result, position, (PsiJavaCodeReferenceElement)parent);
     }
     if (InstanceofTypeProvider.AFTER_INSTANCEOF.accepts(position)) {
@@ -401,7 +401,7 @@ public class JavaCompletionContributor extends CompletionContributor implements 
                                                  CompletionResultSet result,
                                                  Set<? extends ExpectedTypeInfo> infos) {
     PsiElement position = parameters.getPosition();
-    if (SmartCastProvider.shouldSuggestCast(parameters) ||
+    if (SmartCastProvider.inCastContext(parameters) ||
         !JavaSmartCompletionContributor.INSIDE_EXPRESSION.accepts(position) ||
         !(position.getParent() instanceof PsiJavaCodeReferenceElement)) {
       return false;
@@ -534,7 +534,7 @@ public class JavaCompletionContributor extends CompletionContributor implements 
   private static boolean shouldAddExpressionVariants(CompletionParameters parameters) {
     return JavaSmartCompletionContributor.INSIDE_EXPRESSION.accepts(parameters.getPosition()) &&
            !JavaKeywordCompletion.AFTER_DOT.accepts(parameters.getPosition()) &&
-           !SmartCastProvider.shouldSuggestCast(parameters);
+           !SmartCastProvider.inCastContext(parameters);
   }
 
   private static void addExpressionVariants(@NotNull CompletionParameters parameters, PsiElement position, Consumer<? super LookupElement> result) {
@@ -580,7 +580,7 @@ public class JavaCompletionContributor extends CompletionContributor implements 
 
     boolean smart = parameters.getCompletionType() == CompletionType.SMART;
     if (smart) {
-      if (JavaSmartCompletionContributor.INSIDE_TYPECAST_EXPRESSION.accepts(position) || SmartCastProvider.shouldSuggestCast(parameters)) {
+      if (JavaSmartCompletionContributor.INSIDE_TYPECAST_EXPRESSION.accepts(position) || SmartCastProvider.inCastContext(parameters)) {
         return Collections.emptyList();
       }
 
