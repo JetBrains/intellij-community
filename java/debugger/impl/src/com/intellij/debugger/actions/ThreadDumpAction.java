@@ -2,8 +2,8 @@
 
 package com.intellij.debugger.actions;
 
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
@@ -23,6 +23,7 @@ import com.intellij.util.SmartList;
 import com.intellij.xdebugger.XDebugSession;
 import com.sun.jdi.*;
 import gnu.trove.TIntObjectHashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -277,11 +278,9 @@ public class ThreadDumpAction extends DumbAwareAction implements AnAction.Transp
     }
   }
 
-  public static String renderLocation(final Location location) {
-    return JavaDebuggerBundle.message("export.threads.stackframe.format",
-                                      DebuggerUtilsEx.getLocationMethodQName(location),
-                                      DebuggerUtilsEx.getSourceName(location, e -> "Unknown Source"),
-                                      DebuggerUtilsEx.getLineNumber(location, false));
+  public static @NonNls String renderLocation(final Location location) {
+    return "at "+DebuggerUtilsEx.getLocationMethodQName(location)+
+           "("+DebuggerUtilsEx.getSourceName(location, e -> "Unknown Source")+":"+DebuggerUtilsEx.getLineNumber(location, false)+")";
   }
 
   private static String threadName(ThreadReference threadReference) {
