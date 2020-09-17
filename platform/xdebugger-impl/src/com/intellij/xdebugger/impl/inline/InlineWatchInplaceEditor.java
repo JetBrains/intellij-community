@@ -27,13 +27,13 @@ public class InlineWatchInplaceEditor extends InplaceEditor {
 
   public InlineWatchInplaceEditor(XSourcePosition position,
                                   @NotNull XDebugSession session,
-                                  Editor editor) {
+                                  @NotNull Editor editor) {
     this(position, session, editor, null);
   }
 
   public InlineWatchInplaceEditor(XSourcePosition position,
                                   @NotNull XDebugSession session,
-                                  Editor editor,
+                                  @NotNull Editor editor,
                                   XExpression expression) {
     myPosition = position;
     mySession = session;

@@ -36,6 +36,10 @@ import com.intellij.xdebugger.impl.XDebuggerWatchesManager;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
 import com.intellij.xdebugger.impl.evaluate.quick.common.DebuggerTreeCreator;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -47,6 +51,7 @@ import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.Collections;
+import java.util.List;
 
 import static com.intellij.xdebugger.impl.ui.DebuggerSessionTabBase.getCustomizedActionGroup;
 
@@ -209,6 +214,18 @@ public class XDebuggerTreeInlayPopup<D> {
     }
     myPopup.show(new RelativePoint(myEditor.getContentComponent(), myPoint));
 
+    ((XDebuggerTree)tree).addTreeListener(new XDebuggerTreeListener() {
+      @Override
+      public void childrenLoaded(@NotNull XDebuggerTreeNode node,
+                                 @NotNull List<? extends XValueContainerNode<?>> children,
+                                 boolean last) {
+        if (last) {
+          updateInitialBounds(tree);
+          ((XDebuggerTree)tree).removeTreeListener(this);
+        }
+      }
+    });
+
     updateInitialBounds(tree);
   }
 
@@ -239,8 +256,9 @@ public class XDebuggerTreeInlayPopup<D> {
     final Rectangle windowBounds = popupWindow.getBounds();
     final Rectangle targetBounds = new Rectangle(location.x,
                                                  location.y,
-                                                 Math.max(size.width + 250, windowBounds.width),
-                                                 Math.max(size.height, windowBounds.height));
+                                                 size.width + 175,
+                                                 tree.getRowCount() * tree.getRowHeight() + 75);
+
     ScreenUtil.cropRectangleToFitTheScreen(targetBounds);
     popupWindow.setBounds(targetBounds);
     popupWindow.validate();

@@ -19,16 +19,19 @@ import static com.intellij.xdebugger.impl.actions.handlers.XAddToWatchesFromEdit
 public class XAddToInlineWatchesFromEditorActionHandler extends XDebuggerActionHandler {
   @Override
   protected boolean isEnabled(@NotNull XDebugSession session, DataContext dataContext) {
-    return true;
+    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    return editor != null;
   }
 
   @Override
   protected void perform(@NotNull XDebugSession session, DataContext dataContext) {
+    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    if (editor == null) return;
+
     getTextToEvaluate(dataContext, session)
       .onSuccess(text -> {
         UIUtil.invokeLaterIfNeeded(() -> {
           XDebuggerWatchesManager watchesManager = ((XDebuggerManagerImpl)XDebuggerManager.getInstance(session.getProject())).getWatchesManager();
-          final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
           XSourcePosition caretPosition = XDebuggerUtilImpl.getCaretPosition(session.getProject(), dataContext);
           if (text != null) {
             watchesManager.addInlineWatchExpression(XExpressionImpl.fromText(text), -1, caretPosition, true);

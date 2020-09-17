@@ -106,7 +106,7 @@ public final class XDebuggerWatchesManager {
   }
 
   public void showInplaceEditor(XSourcePosition position,
-                                Editor mainEditor,
+                                @NotNull Editor mainEditor,
                                 @NotNull XDebugSession session,
                                 @Nullable XExpression expression) {
     InlineWatchInplaceEditor inplaceEditor = new InlineWatchInplaceEditor(position, session, mainEditor, expression);
