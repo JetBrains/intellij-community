@@ -17,6 +17,7 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.ui.TopHitCache
 import com.intellij.ide.ui.UIThemeProvider
+import com.intellij.ide.util.TipDialog
 import com.intellij.idea.IdeaLogger
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
@@ -449,7 +450,10 @@ object DynamicPlugins {
       if (options.save) {
         saveDocumentsAndProjectsAndApp(true)
       }
+      TipDialog.hideForProject(null)
+      
       application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginUnload(pluginDescriptor, options.isUpdate)
+      
       IdeEventQueue.getInstance().flushQueue()
 
       application.runWriteAction {
