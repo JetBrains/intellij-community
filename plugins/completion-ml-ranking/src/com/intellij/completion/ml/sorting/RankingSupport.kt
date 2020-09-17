@@ -1,35 +1,27 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.sorting
 
-import com.intellij.application.options.CodeCompletionOptions
-import com.intellij.completion.ml.MLCompletionBundle
-import com.intellij.completion.ml.experiment.ExperimentInfo
 import com.intellij.completion.ml.experiment.ExperimentStatus
 import com.intellij.completion.ml.ranker.ExperimentModelProvider
-import com.intellij.completion.ml.settings.CompletionMLRankingSettings
 import com.intellij.completion.ml.ranker.ExperimentModelProvider.Companion.match
+import com.intellij.completion.ml.settings.CompletionMLRankingSettings
 import com.intellij.internal.ml.completion.RankingModelProvider
 import com.intellij.lang.Language
-import com.intellij.notification.*
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
 import com.jetbrains.completion.ranker.model.MLCompletionLocalModelsUtil
 import org.jetbrains.annotations.TestOnly
 
 object RankingSupport {
-  private const val SHOW_ARROWS_NOTIFICATION_REGISTRY = "completion.ml.show.arrows.notification"
   private val LOG = logger<RankingSupport>()
   private var enabledInTests: Boolean = false
 
   fun getRankingModel(language: Language): RankingModelWrapper? {
     MLCompletionLocalModelsUtil.getModel(language.id)?.let { return LanguageRankingModel(it) }
     val provider = findProviderSafe(language)
-    return if (provider != null && shouldSortByML(language, provider)) tryGetModel(provider) else null
+    return if (provider != null && shouldSortByML(provider)) tryGetModel(provider) else null
   }
 
   fun availableRankers(): List<RankingModelProvider> {
@@ -43,7 +35,7 @@ object RankingSupport {
       }.toList()
   }
 
-  private fun findProviderSafe(language: Language): RankingModelProvider? {
+  fun findProviderSafe(language: Language): RankingModelProvider? {
     val experimentInfo = ExperimentStatus.getInstance().forLanguage(language)
     try {
       return ExperimentModelProvider.findProvider(language, experimentInfo.version)
@@ -64,54 +56,11 @@ object RankingSupport {
     }
   }
 
-  private fun shouldSortByML(language: Language, provider: RankingModelProvider): Boolean {
-    val application = ApplicationManager.getApplication()
-    if (application.isUnitTestMode) return enabledInTests
-    val experimentStatus = ExperimentStatus.getInstance()
-    val experimentInfo = experimentStatus.forLanguage(language)
-    if (application.isEAP && experimentInfo.inExperiment && experimentStatus.experimentChanged(language)) {
-      configureSettingsInExperimentOnce(experimentInfo, provider.id)
-    }
+  private fun shouldSortByML(provider: RankingModelProvider): Boolean {
+    if (ApplicationManager.getApplication().isUnitTestMode) return enabledInTests
 
     val settings = CompletionMLRankingSettings.getInstance()
     return settings.isRankingEnabled && settings.isLanguageEnabled(provider.id)
-  }
-
-  private fun configureSettingsInExperimentOnce(experimentInfo: ExperimentInfo, rankerId: String) {
-    val settings = CompletionMLRankingSettings.getInstance()
-    if (experimentInfo.shouldRank) settings.isRankingEnabled = experimentInfo.shouldRank
-    settings.setLanguageEnabled(rankerId, experimentInfo.shouldRank)
-    settings.isShowDiffEnabled = experimentInfo.shouldShowArrows
-    if (experimentInfo.shouldShowArrows && shouldShowArrowsNotification()) {
-      showNotificationAboutArrows()
-    }
-  }
-
-  private fun shouldShowArrowsNotification(): Boolean = Registry.`is`(SHOW_ARROWS_NOTIFICATION_REGISTRY, true)
-
-  private fun showNotificationAboutArrows() {
-    Notification(
-      MLCompletionBundle.message("ml.completion.show.diff.notification.groupId"),
-      MLCompletionBundle.message("ml.completion.show.diff.notification.title"),
-      MLCompletionBundle.message("ml.completion.show.diff.notification.content"),
-      NotificationType.INFORMATION
-    ).addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.show.diff.notification.ok")) {
-        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          notification.expire()
-        }
-      })
-      .addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.show.diff.notification.disable")) {
-        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          CompletionMLRankingSettings.getInstance().isShowDiffEnabled = false
-          notification.expire()
-        }
-      })
-      .addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.show.diff.notification.settings")) {
-        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          ShowSettingsUtil.getInstance().showSettingsDialog(null, CodeCompletionOptions::class.java)
-          notification.expire()
-        }
-      }).notify(null)
   }
 
   @TestOnly
