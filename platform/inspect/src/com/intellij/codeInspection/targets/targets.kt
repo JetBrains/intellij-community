@@ -95,7 +95,7 @@ class TargetsRunner(val application: InspectionApplication,
         if (target.isAboveThreshold(count)) {
           progressIndicator.cancel()
         }
-        macroManager.collapsePaths(element)
+        macroManager.collapsePathsRecursively(element)
         super.consume(element)
       }
     }
