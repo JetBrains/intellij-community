@@ -45,10 +45,7 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 public class RunConfigurationStorageUi {
   private static final Logger LOG = Logger.getInstance(RunConfigurationStorageUi.class);
@@ -62,22 +59,22 @@ public class RunConfigurationStorageUi {
   private final ActionButton myStoreAsFileGearButton;
 
   private final @NotNull Project myProject;
-  private final @NotNull RunnerAndConfigurationSettings mySettings;
   private final @Nullable Runnable myOnModifiedRunnable;
+
+  private RCStorageType myRCStorageTypeInitial;
+  private @Nullable @SystemIndependent @NonNls String myFolderPathIfStoredInArbitraryFileInitial;
 
   private RCStorageType myRCStorageType;
   private @Nullable @SystemIndependent @NonNls String myFolderPathIfStoredInArbitraryFile;
 
   @Nullable Boolean myDotIdeaStorageVcsIgnored = null; // used as cache; null means not initialized yet
 
-  public RunConfigurationStorageUi(@NotNull Project project,
-                                   @NotNull RunnerAndConfigurationSettings settings,
-                                   @Nullable Runnable onModifiedRunnable) {
+  public RunConfigurationStorageUi(@NotNull Project project, @Nullable Runnable onModifiedRunnable) {
     if (project.isDefault()) LOG.error("Don't use RunConfigurationStorageUi for default project");
 
     myProject = project;
-    mySettings = settings;
     myOnModifiedRunnable = onModifiedRunnable;
+
     myStoreAsFileCheckBox = new JBCheckBox(ExecutionBundle.message("run.configuration.store.as.project.file"));
     myStoreAsFileGearButton = createStoreAsFileGearButton();
 
@@ -151,8 +148,8 @@ public class RunConfigurationStorageUi {
     if (getErrorIfBadFolderPathForStoringInArbitraryFile(myProject, path) == null) {
       pathsToSuggest.add(path);
     }
-    if (mySettings.isStoredInArbitraryFileInProject()) {
-      pathsToSuggest.add(PathUtil.getParentPath(StringUtil.notNullize(mySettings.getPathIfStoredInArbitraryFileInProject())));
+    if (myRCStorageTypeInitial == RCStorageType.ArbitraryFileInProject && myFolderPathIfStoredInArbitraryFileInitial != null) {
+      pathsToSuggest.add(myFolderPathIfStoredInArbitraryFileInitial);
     }
     pathsToSuggest.add(getDotIdeaStoragePath(myProject));
     pathsToSuggest.addAll(getFolderPathsWithinProjectWhereRunConfigurationsStored(myProject));
@@ -252,16 +249,15 @@ public class RunConfigurationStorageUi {
 
     // 1. If this RC had been shared before Run Configurations dialog was opened - use the state that was used before.
     // This handles the case when user opens shared RC for editing and clicks the 'Save to file' check box two times.
-    if (mySettings.isStoredInDotIdeaFolder()) {
+    if (myRCStorageTypeInitial == RCStorageType.DotIdeaFolder) {
       myRCStorageType = RCStorageType.DotIdeaFolder;
       myFolderPathIfStoredInArbitraryFile = null;
       return;
     }
 
-    if (mySettings.isStoredInArbitraryFileInProject()) {
+    if (myRCStorageTypeInitial == RCStorageType.ArbitraryFileInProject) {
       myRCStorageType = RCStorageType.ArbitraryFileInProject;
-      myFolderPathIfStoredInArbitraryFile =
-        PathUtil.getParentPath(StringUtil.notNullize(mySettings.getPathIfStoredInArbitraryFileInProject()));
+      myFolderPathIfStoredInArbitraryFile = StringUtil.notNullize(myFolderPathIfStoredInArbitraryFileInitial);
       return;
     }
 
@@ -345,29 +341,26 @@ public class RunConfigurationStorageUi {
   }
 
   public boolean isModified() {
-    switch (myRCStorageType) {
-      case Workspace:
-        return !mySettings.isStoredInLocalWorkspace();
-      case DotIdeaFolder:
-        return !mySettings.isStoredInDotIdeaFolder();
-      case ArbitraryFileInProject:
-        return !mySettings.isStoredInArbitraryFileInProject() ||
-               !PathUtil.getParentPath(StringUtil.notNullize(mySettings.getPathIfStoredInArbitraryFileInProject()))
-                 .equals(myFolderPathIfStoredInArbitraryFile);
+    if (myRCStorageType != myRCStorageTypeInitial) return true;
+    if (myRCStorageType == RCStorageType.ArbitraryFileInProject &&
+        !Objects.equals(myFolderPathIfStoredInArbitraryFileInitial, myFolderPathIfStoredInArbitraryFile)) {
+      return true;
     }
     return false;
   }
 
-  public void reset() {
-    boolean isManagedRunConfiguration = mySettings.getConfiguration().getType().isManaged();
+  public void reset(@NotNull RunnerAndConfigurationSettings settings) {
+    boolean isManagedRunConfiguration = settings.getConfiguration().getType().isManaged();
 
-    myRCStorageType = mySettings.isStoredInArbitraryFileInProject()
+    myRCStorageType = settings.isStoredInArbitraryFileInProject()
                       ? RCStorageType.ArbitraryFileInProject
-                      : mySettings.isStoredInDotIdeaFolder()
+                      : settings.isStoredInDotIdeaFolder()
                         ? RCStorageType.DotIdeaFolder
                         : RCStorageType.Workspace;
-    myFolderPathIfStoredInArbitraryFile =
-      PathUtil.getParentPath(StringUtil.notNullize(mySettings.getPathIfStoredInArbitraryFileInProject()));
+    myFolderPathIfStoredInArbitraryFile = PathUtil.getParentPath(StringUtil.notNullize(settings.getPathIfStoredInArbitraryFileInProject()));
+
+    myRCStorageTypeInitial = myRCStorageType;
+    myFolderPathIfStoredInArbitraryFileInitial = myFolderPathIfStoredInArbitraryFile;
 
     myStoreAsFileCheckBox.setEnabled(isManagedRunConfiguration);
     myStoreAsFileCheckBox.setSelected(myRCStorageType == RCStorageType.DotIdeaFolder ||
@@ -376,23 +369,25 @@ public class RunConfigurationStorageUi {
     myStoreAsFileGearButton.setEnabled(myStoreAsFileCheckBox.isSelected());
   }
 
-  public void apply() {
+  public void apply(@NotNull RunnerAndConfigurationSettings settings) {
     if (!isModified()) return;
 
     switch (myRCStorageType) {
       case Workspace:
-        mySettings.storeInLocalWorkspace();
+        settings.storeInLocalWorkspace();
         break;
       case DotIdeaFolder:
-        mySettings.storeInDotIdeaFolder();
+        settings.storeInDotIdeaFolder();
         break;
       case ArbitraryFileInProject:
         if (getErrorIfBadFolderPathForStoringInArbitraryFile(myProject, myFolderPathIfStoredInArbitraryFile) != null) {
           // don't apply incorrect UI to the model
         }
         else {
-          String fileName = getFileNameByRCName(mySettings.getName());
-          mySettings.storeInArbitraryFileInProject(myFolderPathIfStoredInArbitraryFile + "/" + fileName);
+          // not sure the 'Template' prefix of the 'Template XXX.run.xml' file name should be localized.
+          String name = settings.isTemplate() ? "Template " + settings.getType().getDisplayName() : settings.getName();
+          String fileName = getFileNameByRCName(name);
+          settings.storeInArbitraryFileInProject(myFolderPathIfStoredInArbitraryFile + "/" + fileName);
         }
         break;
       default:

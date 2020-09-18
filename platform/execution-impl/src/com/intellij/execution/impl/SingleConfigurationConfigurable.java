@@ -130,7 +130,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     settings.setFolderName(myFolderName);
 
     if (myComponent.myRCStorageUi != null) {
-      myComponent.myRCStorageUi.apply();
+      myComponent.myRCStorageUi.apply(settings);
     }
 
     super.apply();
@@ -400,7 +400,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         myIsAllowRunningInParallel = myIsAllowRunningInParallelCheckBox.isSelected();
       });
 
-      myRCStorageUi = !myProject.isDefault() ? new RunConfigurationStorageUi(myProject, getSettings(), () -> setModified(true))
+      myRCStorageUi = !myProject.isDefault() ? new RunConfigurationStorageUi(myProject, () -> setModified(true))
                                              : null;
       if (myRCStorageUi != null) {
         myRCStoragePanel.add(myRCStorageUi.createComponent());
@@ -437,7 +437,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       boolean isManagedRunConfiguration = configuration.getType().isManaged();
 
       if (myRCStorageUi != null) {
-        myRCStorageUi.reset();
+        myRCStorageUi.reset(getSettings());
       }
 
       boolean targetAware =

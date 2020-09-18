@@ -66,7 +66,7 @@ public final class ConfigurationSettingsEditorWrapper extends SettingsEditor<Run
     Project project = settings.getConfiguration().getProject();
     // RunConfigurationStorageUi for non-template settings is managed by com.intellij.execution.impl.SingleConfigurationConfigurable
     myRCStorageUi = !project.isDefault() && settings.isTemplate()
-                    ? new RunConfigurationStorageUi(project, settings, null)
+                    ? new RunConfigurationStorageUi(project, null)
                     : null;
     if (myRCStorageUi != null) {
       myRCStoragePanel.add(myRCStorageUi.createComponent());
@@ -107,7 +107,7 @@ public final class ConfigurationSettingsEditorWrapper extends SettingsEditor<Run
                                                   settings.getFactory().getSingletonPolicy().isPolicyConfigurable());
 
     if (myRCStorageUi != null) {
-      myRCStorageUi.reset();
+      myRCStorageUi.reset(settings);
     }
 
     myDisclaimerPanel.setVisible(settings.isTemplate() && ProjectManager.getInstance().getOpenProjects().length != 0);
@@ -139,7 +139,7 @@ public final class ConfigurationSettingsEditorWrapper extends SettingsEditor<Run
     doApply((RunnerAndConfigurationSettingsImpl)settings, false);
 
     if (myRCStorageUi != null) {
-      myRCStorageUi.apply();
+      myRCStorageUi.apply(settings);
     }
   }
 
