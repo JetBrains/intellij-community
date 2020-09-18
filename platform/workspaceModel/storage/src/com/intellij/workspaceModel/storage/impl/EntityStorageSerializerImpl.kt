@@ -476,6 +476,24 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
     return builder
   }
 
+  fun deserializeClassToIntConverter(stream: InputStream) {
+    Input(stream, KRYO_BUFFER_SIZE).use { input ->
+      val kryo = createKryo()
+
+      // Read version
+      val cacheVersion = input.readString()
+      if (cacheVersion != serializerDataFormatVersion) {
+        logger.info("Cache isn't loaded. Current version of cache: $serializerDataFormatVersion, version of cache file: $cacheVersion")
+        return
+      }
+
+      val classes = kryo.readClassAndObject(input) as List<Pair<TypeInfo, Int>>
+
+      val map = classes.map { (first, second) -> typesResolver.resolveClass(first.name, first.pluginId) to second }.toMap()
+      ClassToIntConverter.fromMap(map)
+    }
+  }
+
   private data class TypeInfo(val name: String, val pluginId: String?)
 
   companion object {

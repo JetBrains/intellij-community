@@ -45,9 +45,12 @@ fun main() {
   val leftFile = dir.resolve("Left_Store")
   val rightFile = dir.resolve("Right_Store")
   val rightDiffLogFile = dir.resolve("Right_Diff_Log")
+  val converterFile = dir.resolve("ClassToIntConverter")
   val resFile = dir.resolve("Res_Store")
 
   val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl())
+
+  serializer.deserializeClassToIntConverter(converterFile.inputStream())
 
   val leftStore = serializer.deserializeCache(leftFile.inputStream())!!
   val rightStore = serializer.deserializeCacheAndDiffLog(rightFile.inputStream(), rightDiffLogFile.inputStream())!!
