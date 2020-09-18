@@ -62,7 +62,7 @@ class ControlFlowImpl extends AbstractControlFlow {
   
   ControlFlow immutableCopy() {
     return new ImmutableControlFlow(myInstructions.toArray(new Instruction[0]),
-                                    myElementToOffsetMap,
+                                    new Object2LongOpenHashMap<>(myElementToOffsetMap),
                                     myElementsForInstructions.toArray(PsiElement.EMPTY_ARRAY),
                                     myConstantConditionOccurred);
   }
@@ -87,10 +87,10 @@ class ControlFlowImpl extends AbstractControlFlow {
 
     private ImmutableControlFlow(@NotNull Instruction @NotNull [] instructions, 
                                  @NotNull Object2LongOpenHashMap<PsiElement> myElementToOffsetMap,
-                                 @NotNull PsiElement @NotNull [] forInstructions, boolean occurred) {
+                                 @NotNull PsiElement @NotNull [] elementsForInstructions, boolean occurred) {
       super(myElementToOffsetMap);
       myInstructions = Arrays.asList(instructions);
-      myElementsForInstructions = forInstructions;
+      myElementsForInstructions = elementsForInstructions;
       myConstantConditionOccurred = occurred;
     }
 
