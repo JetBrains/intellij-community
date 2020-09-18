@@ -39,12 +39,14 @@ internal sealed class GTDActionResult {
    */
   class SingleTarget(val navigatable: Navigatable) : GTDActionResult()
 
-  class MultipleTargets(val targets: List<Pair<Navigatable, TargetPopupPresentation>>) : GTDActionResult() {
+  class MultipleTargets(val targets: List<GTDTarget>) : GTDActionResult() {
     init {
       require(targets.isNotEmpty())
     }
   }
 }
+
+internal data class GTDTarget(val navigatable: Navigatable, val presentation: TargetPopupPresentation)
 
 private fun gotoDeclarationInner(file: PsiFile, offset: Int): GTDActionData? {
   return fromDirectNavigation(file, offset)
@@ -88,7 +90,7 @@ private class TargetGTDActionData(private val project: Project, private val targ
       0 -> null
       1 -> GTDActionResult.SingleTarget(result.single().first) // don't compute presentation for single target
       else -> GTDActionResult.MultipleTargets(result.map { (navigatable, navigationTarget) ->
-        Pair(navigatable, navigationTarget.targetPresentation)
+        GTDTarget(navigatable, navigationTarget.targetPresentation)
       })
     }
   }

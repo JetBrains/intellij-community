@@ -4,12 +4,8 @@ package com.intellij.codeInsight.navigation.actions
 import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.navigation.CtrlMouseInfo
-import com.intellij.codeInsight.navigation.impl.GTDActionData
-import com.intellij.codeInsight.navigation.impl.GTDActionResult
-import com.intellij.codeInsight.navigation.impl.fromGTDProviders
-import com.intellij.codeInsight.navigation.impl.gotoDeclaration
+import com.intellij.codeInsight.navigation.impl.*
 import com.intellij.featureStatistics.FeatureUsageTracker
-import com.intellij.navigation.TargetPopupPresentation
 import com.intellij.navigation.chooseTargetPopup
 import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
 import com.intellij.openapi.editor.Editor
@@ -17,7 +13,6 @@ import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
-import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiFile
 
 internal object GotoDeclarationOnlyHandler2 : CodeInsightActionHandler {
@@ -67,7 +62,7 @@ internal object GotoDeclarationOnlyHandler2 : CodeInsightActionHandler {
       is GTDActionResult.MultipleTargets -> {
         val popup = chooseTargetPopup(
           CodeInsightBundle.message("declaration.navigation.title"),
-          actionResult.targets, Pair<Navigatable, TargetPopupPresentation>::second
+          actionResult.targets, GTDTarget::presentation
         ) { (navigatable, _) ->
           gotoTarget(editor, file, navigatable)
         }

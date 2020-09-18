@@ -68,7 +68,7 @@ private class GTDProviderData(
       0 -> null
       1 -> GTDActionResult.SingleTarget(result.single().first)
       else -> GTDActionResult.MultipleTargets(result.map { (navigatable, targetElement) ->
-        Pair(navigatable, PsiElementTargetPopupPresentation(targetElement))
+        GTDTarget(navigatable, PsiElementTargetPopupPresentation(targetElement))
       })
     }
   }
