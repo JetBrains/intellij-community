@@ -44,9 +44,32 @@ public class Main {
         System.out.println("initializer already exists");
     }
 
-    final long x = 0, count2 = Stream.of(1,2,3,4).filter(i -> i % 2 == 0).count();
+    final long x = 0;
+    final long count2;
 
-    final long count3 = Stream.of(1,2,3,4).filter(i -> i % 2 == 0).count(), y = 0;
+    {
+        long result = 0L;
+        for (Integer i : Arrays.asList(1, 2, 3, 4)) {
+            if (i % 2 == 0) {
+                result++;
+            }
+        }
+        count2 = result;
+    }
+
+    final long count3;
+
+    {
+        long result = 0L;
+        for (Integer i : Arrays.asList(1, 2, 3, 4)) {
+            if (i % 2 == 0) {
+                result++;
+            }
+        }
+        count3 = result;
+    }
+
+    final long y = 0;
 
     final long[] countArray;
 

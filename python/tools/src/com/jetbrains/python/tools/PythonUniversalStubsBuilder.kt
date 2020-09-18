@@ -5,7 +5,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.stubs.PrebuiltStubsProviderBase
 import com.intellij.util.io.Compressor
 import com.jetbrains.python.psi.impl.stubs.PyPrebuiltStubsProvider
-import org.jetbrains.intellij.build.pycharm.PyCharmBuildOptions
 import java.io.File
 import kotlin.system.exitProcess
 
@@ -19,7 +18,7 @@ fun main(args: Array<String>) {
     }
     else {
       val zipsDirectory = System.getProperty("intellij.build.pycharm.zips.directory")
-      val prebuiltStubsArchive = PyCharmBuildOptions.getPrebuiltStubsArchive()
+      val prebuiltStubsArchive = System.getProperty("intellij.build.pycharm.prebuilt.stubs.archive")
       if (zipsDirectory.isNullOrBlank() || prebuiltStubsArchive.isNullOrBlank()) {
         throw IllegalArgumentException(
           "Usage: PythonUniversalStubsBuilderKt <input folder with files> <output folder to store universal stubs>")

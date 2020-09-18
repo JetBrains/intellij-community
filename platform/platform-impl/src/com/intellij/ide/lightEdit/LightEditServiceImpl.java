@@ -52,15 +52,20 @@ public final class LightEditServiceImpl implements LightEditService,
   private final LightEditorManagerImpl myEditorManager;
   private final LightEditConfiguration myConfiguration = new LightEditConfiguration();
   private final LightEditProjectManager myLightEditProjectManager = new LightEditProjectManager();
+  private LightEditFilePatterns myFilePatterns = new LightEditFilePatterns();
 
   @Override
   public @NotNull LightEditConfiguration getState() {
+    myConfiguration.supportedFilePatterns = myFilePatterns.getPatterns();
     return myConfiguration;
   }
 
   @Override
   public void loadState(@NotNull LightEditConfiguration state) {
     XmlSerializerUtil.copyBean(state, myConfiguration);
+    if (myConfiguration.supportedFilePatterns != null) {
+      myFilePatterns.setPatterns(myConfiguration.supportedFilePatterns);
+    }
   }
 
   public LightEditServiceImpl() {
@@ -106,8 +111,8 @@ public final class LightEditServiceImpl implements LightEditService,
   }
 
   @Override
-  public boolean openFile(@NotNull VirtualFile file) {
-    if (LightEditUtil.isLightEditEnabled()) {
+  public boolean openFile(@NotNull VirtualFile file, boolean force) {
+    if (force || canOpen(file)) {
       doWhenActionManagerInitialized(() -> {
         doOpenFile(file);
       });
@@ -127,6 +132,11 @@ public final class LightEditServiceImpl implements LightEditService,
     else {
       invokeOnEdt(callback);
     }
+  }
+
+  @Override
+  public boolean canOpen(@NotNull VirtualFile file) {
+    return LightEditUtil.isLightEditEnabled() && myFilePatterns.match(file);
   }
 
   private static void invokeOnEdt(@NotNull Runnable callback) {
@@ -405,5 +415,15 @@ public final class LightEditServiceImpl implements LightEditService,
     }
     Disposer.dispose(myEditorManager);
     myLightEditProjectManager.close();
+  }
+
+  @Override
+  public @NotNull LightEditFilePatterns getSupportedFilePatterns() {
+    return myFilePatterns;
+  }
+
+  @Override
+  public void setSupportedFilePatterns(@NotNull LightEditFilePatterns filePatterns) {
+    myFilePatterns = filePatterns;
   }
 }

@@ -28,7 +28,10 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Supplier;
+
+import static com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromBranchPatterns;
 
 public class BranchFilterPopupComponent
   extends MultipleValueFilterPopupComponent<BranchFilters, VcsLogClassicFilterUi.BranchFilterModel> {
@@ -101,8 +104,14 @@ public class BranchFilterPopupComponent
     actionGroup.add(createAllAction());
     actionGroup.add(createSelectMultipleValuesAction());
 
-    actionGroup.add(new MyBranchPopupBuilder(myFilterModel.getDataPack(), myBranchFilterModel.getVisibleRoots(),
-                                             getRecentValuesFromSettings()).build());
+    VcsLogDataPack logData = myFilterModel.getDataPack();
+
+    List<List<String>> branchFilters = processRecentBranchFilters(
+      ContainerUtil.map2Set(logData.getRefs().getBranches(), VcsRef::getName),
+      getRecentValuesFromSettings());
+
+    actionGroup.add(new MyBranchPopupBuilder(logData, myBranchFilterModel.getVisibleRoots(), branchFilters).build());
+
     return actionGroup;
   }
 
@@ -114,6 +123,17 @@ public class BranchFilterPopupComponent
       branches = ContainerUtil.filter(branches, branch -> myBranchFilterModel.getVisibleRoots().contains(branch.getRoot()));
     }
     return ContainerUtil.map(branches, VcsRef::getName);
+  }
+
+  @NotNull
+  private static List<List<String>> processRecentBranchFilters(@NotNull Set<String> availableBranches,
+                                                               @NotNull List<List<String>> recentBranchFilters) {
+    if (availableBranches.isEmpty()) {
+      return recentBranchFilters;
+    }
+
+    return ContainerUtil.filter(recentBranchFilters, recentFilter ->
+      !fromBranchPatterns(recentFilter, availableBranches, true).isEmpty());
   }
 
   private class MyBranchPopupBuilder extends BranchPopupBuilder {

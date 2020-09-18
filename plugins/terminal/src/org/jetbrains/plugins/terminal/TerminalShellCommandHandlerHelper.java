@@ -204,11 +204,12 @@ public final class TerminalShellCommandHandlerHelper {
     });
   }
 
-  public boolean processEnterKeyPressed(@NotNull String command, @NotNull KeyEvent keyPressed) {
+  public boolean processEnterKeyPressed(@NotNull KeyEvent keyPressed) {
     if (!isFeatureEnabled() || !isEnabledForProject()) {
       onShellCommandExecuted();
       return false;
     }
+    String command = myWidget.getTypedShellCommand().trim();
     if (LOG.isDebugEnabled()) {
       LOG.debug("typed shell command to execute: " + command);
     }

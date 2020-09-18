@@ -72,6 +72,7 @@ import java.lang.reflect.Proxy;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.*;
+import java.util.function.Predicate;
 
 public class FileDocumentManagerImpl extends FileDocumentManager implements SafeWriteRequestor {
   private static final Logger LOG = Logger.getInstance(FileDocumentManagerImpl.class);
@@ -317,6 +318,15 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
    * @param isExplicit caused by user directly (Save action) or indirectly (e.g. Compile)
    */
   public void saveAllDocuments(boolean isExplicit) {
+    saveDocuments(null, isExplicit);
+  }
+
+  @Override
+  public void saveDocuments(@NotNull Predicate<Document> filter) {
+    saveDocuments(filter, true);
+  }
+
+  private void saveDocuments(@Nullable Predicate<Document> filter, boolean isExplicit) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
 
@@ -329,6 +339,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
       int count = 0;
 
       for (Document document : myUnsavedDocuments) {
+        if (filter != null && !filter.test(document)) continue;
         if (failedToSave.containsKey(document)) continue;
         if (vetoed.contains(document)) continue;
         try {
@@ -432,11 +443,11 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
     }
 
     boolean saveNeeded = false;
-    IOException ioException = null;
+    Exception ioException = null;
     try {
       saveNeeded = isSaveNeeded(document, file);
     }
-    catch (IOException e) {
+    catch (IOException|RuntimeException e) {
       // in case of corrupted VFS try to stay consistent
       ioException = e;
     }
@@ -446,7 +457,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
       }
       removeFromUnsaved(document);
       updateModifiedProperty(file);
-      if (ioException != null) throw ioException;
+      if (ioException instanceof IOException) throw (IOException)ioException;
+      if (ioException instanceof RuntimeException) throw (RuntimeException)ioException;
       return;
     }
 

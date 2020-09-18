@@ -161,6 +161,19 @@ public class JavaDocRenderTest extends AbstractEditorTest {
     }
   }
 
+  public void testTypingAfterCollapse() {
+    configure("/**\n" +
+              " * doc<caret>\n" +
+              " */\n" +
+              "class C {}", false);
+    toggleItem();
+    type("  ");
+    checkResultByText("/**\n" +
+                      " * doc\n" +
+                      " */\n" +
+                      "  <caret>class C {}");
+  }
+
   public void testAddedCommentIsNotCollapsed() {
     configure("class C {}", true);
     runWriteCommand(() -> getEditor().getDocument().insertString(0, "/**\n * comment\n */\n"));

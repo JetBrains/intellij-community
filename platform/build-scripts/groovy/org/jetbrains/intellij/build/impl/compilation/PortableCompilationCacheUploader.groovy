@@ -24,25 +24,27 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 @CompileStatic
-class CompilationOutputsUploader {
+class PortableCompilationCacheUploader {
   private final CompilationContext context
   private final BuildMessages messages
   private final String remoteCacheUrl
   private final String syncFolder
   private final boolean uploadCompilationOutputsOnly
+  private final boolean forcedUpload
 
   private final AtomicInteger uploadedOutputsCount = new AtomicInteger()
 
   private final SourcesStateProcessor sourcesStateProcessor = new SourcesStateProcessor(context)
-  private final JpsCompilationPartsUploader uploader = new JpsCompilationPartsUploader(remoteCacheUrl, context.messages)
+  private final Uploader uploader = new Uploader(remoteCacheUrl, context.messages)
 
   private final String remoteGitUrl
   private final String commitHash
   private final CommitsHistory commitsHistory = new CommitsHistory([(remoteGitUrl): [commitHash].toSet()])
 
-  CompilationOutputsUploader(CompilationContext context, String remoteCacheUrl,
-                             String remoteGitUrl, String commitHash,
-                             String syncFolder, boolean uploadCompilationOutputsOnly) {
+  PortableCompilationCacheUploader(CompilationContext context, String remoteCacheUrl,
+                                   String remoteGitUrl, String commitHash,
+                                   String syncFolder, boolean uploadCompilationOutputsOnly,
+                                   boolean forcedUpload) {
     this.syncFolder = syncFolder
     this.remoteCacheUrl = remoteCacheUrl
     this.messages = context.messages
@@ -50,6 +52,7 @@ class CompilationOutputsUploader {
     this.commitHash = commitHash
     this.context = context
     this.uploadCompilationOutputsOnly = uploadCompilationOutputsOnly
+    this.forcedUpload = forcedUpload
   }
 
   def upload() {
@@ -64,12 +67,10 @@ class CompilationOutputsUploader {
     executor.prestartAllCoreThreads()
     try {
       def start = System.nanoTime()
-      // No need to upload JPS caches archive if only hot compile outputs are required
-      // without any incremental compilation (for tests execution as an example)
       if (!uploadCompilationOutputsOnly) {
         executor.submit {
-          // Upload jps caches started first because of the significant size of the output
-          uploadCompilationCache()
+          // Jps Caches upload is started first because of significant size
+          uploadJpsCaches()
         }
       }
 
@@ -91,17 +92,17 @@ class CompilationOutputsUploader {
     }
   }
 
-  File buildCompilationCacheZip() {
+  File buildJpsCacheZip() {
     File dataStorageRoot = context.compilationData.dataStorageRoot
     File zipFile = new File(dataStorageRoot.parent, commitHash)
     zipBinaryData(zipFile, dataStorageRoot)
     return zipFile
   }
 
-  private void uploadCompilationCache() {
-    File zipFile = buildCompilationCacheZip()
+  private void uploadJpsCaches() {
+    File zipFile = buildJpsCacheZip()
     String cachePath = "caches/$commitHash"
-    if (!uploader.isExist(cachePath)) {
+    if (forcedUpload || !uploader.isExist(cachePath, true)) {
       uploader.upload(cachePath, zipFile)
     }
     File zipCopy = new File(syncFolder, cachePath)
@@ -116,22 +117,22 @@ class CompilationOutputsUploader {
     move(sourceStateFile, sourceStateFileCopy)
   }
 
-  void uploadCompilationOutputs(Map<String, Map<String, BuildTargetState>> currentSourcesState,
-                                JpsCompilationPartsUploader uploader, NamedThreadPoolExecutor executor) {
+  private void uploadCompilationOutputs(Map<String, Map<String, BuildTargetState>> currentSourcesState,
+                                        Uploader uploader, NamedThreadPoolExecutor executor) {
     sourcesStateProcessor.getAllCompilationOutputs(currentSourcesState).forEach { CompilationOutput it ->
       uploadCompilationOutput(it, uploader, executor)
     }
   }
 
   private void uploadCompilationOutput(CompilationOutput compilationOutput,
-                                       JpsCompilationPartsUploader uploader,
+                                       Uploader uploader,
                                        NamedThreadPoolExecutor executor) {
     executor.submit {
-      def sourcePath = compilationOutput.sourcePath
+      def sourcePath = compilationOutput.remotePath
       def outputFolder = new File(compilationOutput.path)
       File zipFile = new File(outputFolder.getParent(), compilationOutput.hash)
       zipBinaryData(zipFile, outputFolder)
-      if (!uploader.isExist(sourcePath, false)) {
+      if (!uploader.isExist(sourcePath)) {
         uploader.upload(sourcePath, zipFile)
         uploadedOutputsCount.incrementAndGet()
       }
@@ -166,7 +167,7 @@ class CompilationOutputsUploader {
         return
       }
       if (cacheUploaded != metadataUploaded) {
-        context.messages.error("JPS cache is uploaded: $cacheUploaded, metadata is uploaded: $metadataUploaded")
+        context.messages.error("JPS Caches are uploaded: $cacheUploaded, metadata is uploaded: $metadataUploaded")
       }
     }
     if (!overrideRemoteHistory) commitsHistory += remoteCommitHistory()
@@ -174,7 +175,7 @@ class CompilationOutputsUploader {
   }
 
   CommitsHistory remoteCommitHistory() {
-    if (uploader.isExist(CommitsHistory.JSON_FILE, false)) {
+    if (uploader.isExist(CommitsHistory.JSON_FILE)) {
       def json = uploader.getAsString(CommitsHistory.JSON_FILE)
       new CommitsHistory(json)
     }
@@ -186,7 +187,11 @@ class CompilationOutputsUploader {
   private File writeCommitHistory(CommitsHistory commitsHistory) {
     File commitHistoryFile = new File(syncFolder, CommitsHistory.JSON_FILE)
     commitHistoryFile.parentFile.mkdirs()
-    commitHistoryFile.write(commitsHistory.toJson())
+    def json = commitsHistory.toJson()
+    commitHistoryFile.write(json)
+    context.messages.block(CommitsHistory.JSON_FILE) {
+      context.messages.info(json)
+    }
     return commitHistoryFile
   }
 
@@ -196,29 +201,17 @@ class CompilationOutputsUploader {
     if (!dst.exists()) throw new IllegalStateException("File $dst doesn't exist.")
   }
 
-  void delete(CommitsHistory commitsHistory) {
-    commitsHistory.commitsForRemote(remoteGitUrl).each { commitHash ->
-      uploader.delete("caches/$commitHash")
-      def metadataJson = uploader.getAsString("metadata/$commitHash")
-      def metadata = sourcesStateProcessor.parseSourcesStateFile(metadataJson)
-      sourcesStateProcessor.getAllCompilationOutputs(metadata).each {
-        uploader.delete(it.sourcePath)
-      }
-      uploader.delete("metadata/$commitHash")
-    }
-  }
-
   @CompileStatic
-  private static class JpsCompilationPartsUploader extends CompilationPartsUploader {
-    private JpsCompilationPartsUploader(@NotNull String serverUrl, @NotNull BuildMessages messages) {
+  private static class Uploader extends CompilationPartsUploader {
+    private Uploader(@NotNull String serverUrl, @NotNull BuildMessages messages) {
       super(serverUrl, messages)
     }
 
-    boolean isExist(@NotNull final String path, boolean logIfExists = true) {
+    boolean isExist(@NotNull final String path, boolean logIfExists = false) {
       int code = doHead(path)
       if (code == 200) {
         if (logIfExists) {
-          log("File '$path' already exist on server, nothing to upload")
+          log("File '$path' already exists on server, nothing to upload")
         }
         return true
       }
@@ -250,11 +243,6 @@ class CompilationOutputsUploader {
     boolean upload(@NotNull final String path, @NotNull final File file) {
       log("Uploading '$path'.")
       return super.upload(path, file, false)
-    }
-
-    void delete(@NotNull String path) {
-      log("Deleting '$path'.")
-      super.doDelete(path)
     }
   }
 }

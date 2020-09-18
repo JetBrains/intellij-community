@@ -28,7 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.DirectoryProjectConfigurator
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
-import com.jetbrains.python.sdk.pipenv.detectAndSetupPipEnv
+import kotlin.streams.asSequence
 
 /**
  * @author vlan
@@ -126,19 +126,19 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
       return
     }
 
-    // TODO: Introduce an extension for configuring a project via a Python SDK provider
     if (indicator.isCanceled) return
 
-    indicator.text = PyBundle.message("looking.for.pipfile")
-    LOGGER.debug("Looking for a Pipfile")
-    guardIndicator(indicator) { detectAndSetupPipEnv(project, module, existingSdks) }?.let {
-      LOGGER.debug { "Pipenv: $it" }
-      onEdt(project) {
-        SdkConfigurationUtil.addSdk(it)
-        SdkConfigurationUtil.setDirectoryProjectSdk(project, it)
-        notifyAboutConfiguredSdk(project, module, it)
+    PySdkProvider.EP_NAME.extensions().asSequence().forEach { extension ->
+      indicator.text = extension.configureSdkProgressText
+      LOGGER.debug(extension.configureSdkProgressText)
+      guardIndicator(indicator) { extension.configureSdk(project, module, existingSdks) }?.let {
+        onEdt(project) {
+          SdkConfigurationUtil.addSdk(it)
+          SdkConfigurationUtil.setDirectoryProjectSdk(project, it)
+          notifyAboutConfiguredSdk(project, module, it)
+        }
+        return
       }
-      return
     }
 
     if (indicator.isCanceled) return

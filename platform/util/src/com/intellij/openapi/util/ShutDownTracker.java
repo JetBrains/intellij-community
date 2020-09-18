@@ -3,6 +3,7 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
@@ -104,6 +105,11 @@ public class ShutDownTracker implements Runnable {
 
   public synchronized void unregisterStopperThread(@NotNull Thread thread) {
     myThreads.remove(thread);
+  }
+
+  public void registerShutdownTask(@NotNull Runnable task, @NotNull Disposable parentDisposable) {
+    registerShutdownTask(task);
+    Disposer.register(parentDisposable, () -> unregisterShutdownTask(task));
   }
 
   public synchronized void registerShutdownTask(@NotNull Runnable task) {

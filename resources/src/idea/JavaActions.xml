@@ -89,6 +89,7 @@
       </action>
       <action id="MakeModule" class="com.intellij.compiler.actions.MakeModuleAction"/>
       <action id="Compile" class="com.intellij.compiler.actions.CompileAction"/>
+      <action id="CompileFile" class="com.intellij.compiler.actions.CompileFileAction" use-shortcut-of="Compile"/>
       <separator/>
       <action id="CompileProject" class="com.intellij.compiler.actions.CompileProjectAction"/>
       <separator/>

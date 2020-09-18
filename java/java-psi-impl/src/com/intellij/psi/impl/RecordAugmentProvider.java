@@ -2,6 +2,7 @@
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.light.LightMethod;
@@ -9,6 +10,7 @@ import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.impl.light.LightRecordField;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.impl.source.PsiExtensibleClass;
+import com.intellij.psi.util.AccessModifier;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,8 +71,13 @@ public class RecordAugmentProvider extends PsiAugmentProvider implements DumbAwa
       if (JavaPsiRecordUtil.isCompactConstructor(method) || JavaPsiRecordUtil.isExplicitCanonicalConstructor(method)) return null;
     }
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(recordHeader.getProject());
-    String sb = "public " + className + recordHeader.getText() + "{}";
+    String sb = className + recordHeader.getText() + "{"
+                + StringUtil.join(recordHeader.getRecordComponents(), c -> "this." + c.getName() + "=" + c.getName() + ";", "\n")
+                + "}";
     PsiMethod nonPhysical = factory.createMethodFromText(sb, recordHeader.getContainingClass());
+    PsiModifierList classModifierList = aClass.getModifierList();
+    AccessModifier modifier = classModifierList == null ? AccessModifier.PUBLIC : AccessModifier.fromModifierList(classModifierList);
+    nonPhysical.getModifierList().setModifierProperty(modifier.toPsiModifier(), true);
     return new LightRecordCanonicalConstructor(nonPhysical, aClass);
   }
 

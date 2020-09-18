@@ -116,4 +116,15 @@ public interface PyStringLiteralExpression extends PyLiteralExpression, StringLi
    * @return true if this element has single string node and its type is {@link com.jetbrains.python.PyTokenTypes#DOCSTRING}
    */
   boolean isDocString();
+
+  /**
+   * Checks whether this literal contains expression fragments. Formatted "f" nodes without any fragments are not considered interpolated.
+   * <p>
+   * For example, the "glued" literal
+   * <pre>{@code f'foo{expr}' "bar"}</pre> is considered interpolated, but {@code f'foo'} and {@code """bar"""} are not.
+   *
+   * @see PyFormattedStringElement#getFragments()
+   * @see PyStringElement#isFormatted()
+   */
+  boolean isInterpolated();
 }

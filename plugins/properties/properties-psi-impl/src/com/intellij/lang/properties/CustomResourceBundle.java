@@ -71,7 +71,7 @@ public class CustomResourceBundle extends ResourceBundle {
   public VirtualFile getBaseDirectory() {
     VirtualFile baseDir = null;
     for (PropertiesFile file : myFiles) {
-      final VirtualFile currentBaseDir = file.getContainingFile().getContainingDirectory().getVirtualFile();
+      final VirtualFile currentBaseDir = file.getContainingFile().getVirtualFile().getParent();
       if (baseDir == null) {
         baseDir = currentBaseDir;
       } else if (!baseDir.equals(currentBaseDir)) {

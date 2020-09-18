@@ -54,10 +54,8 @@ class CommitsHistory {
   private Map<String, Set<String>> subtract(Map<String, Set<String>> map) {
     if (map.isEmpty()) return commitsPerRemote
     if (commitsPerRemote.isEmpty()) return commitsPerRemote
-    Map<String, Set<String>> result = [:]
-    commitsPerRemote.forEach { String remote, Set<String> commits ->
-      result[remote] = (commits - map[remote] ?: []) as Set<String>
-    }
-    return result
+    return commitsPerRemote.collectEntries { String remote, Set<String> commits ->
+      [remote, (commits - map[remote] ?: []) as Set<String>]
+    } as Map<String, Set<String>>
   }
 }

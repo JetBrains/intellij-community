@@ -136,13 +136,24 @@ internal open class GitRebaseCommitsTableView(
     else -> NodeType.SIMPLE_NODE
   }
 
-  private class UndoAction(private val table: GitRebaseCommitsTableView) : DumbAwareAction() {
+  private abstract class DisabledDuringRewordAction(protected val table: GitRebaseCommitsTableView) : DumbAwareAction() {
+    override fun update(e: AnActionEvent) {
+      super.update(e)
+      val presentation = e.presentation
+      presentation.isEnabledAndVisible = true
+      if (table.editingRow != -1) {
+        presentation.isEnabledAndVisible = false
+      }
+    }
+  }
+
+  private class UndoAction(table: GitRebaseCommitsTableView) : DisabledDuringRewordAction(table) {
     override fun actionPerformed(e: AnActionEvent) {
       table.model.undo()
     }
   }
 
-  private class RedoAction(private val table: GitRebaseCommitsTableView) : DumbAwareAction() {
+  private class RedoAction(table: GitRebaseCommitsTableView) : DisabledDuringRewordAction(table) {
     override fun actionPerformed(e: AnActionEvent) {
       table.model.redo()
     }

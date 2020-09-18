@@ -25,10 +25,12 @@ import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
 import org.jetbrains.intellij.build.impl.retry.Retry
 import org.jetbrains.intellij.build.impl.retry.StopTrying
 
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 import java.util.concurrent.TimeUnit
 
 @CompileStatic
-class CompilationOutputsDownloader implements AutoCloseable {
+class PortableCompilationCacheDownloader implements AutoCloseable {
   private static final int COMMITS_COUNT = 1_000
 
   private final GetClient getClient = new GetClient(context.messages)
@@ -65,7 +67,7 @@ class CompilationOutputsDownloader implements AutoCloseable {
     new CommitsHistory(json).commitsForRemote(gitUrl)
   }()
 
-  CompilationOutputsDownloader(CompilationContext context, String remoteCacheUrl, String gitUrl, boolean availableForHeadCommit) {
+  PortableCompilationCacheDownloader(CompilationContext context, String remoteCacheUrl, String gitUrl, boolean availableForHeadCommit) {
     this.context = context
     this.remoteCacheUrl = StringUtil.trimEnd(remoteCacheUrl, '/')
     this.gitUrl = gitUrl
@@ -75,13 +77,20 @@ class CompilationOutputsDownloader implements AutoCloseable {
     executor = new NamedThreadPoolExecutor("Jps Output Upload", executorThreadsCount)
   }
 
+  def anyLocalChanges() {
+    def localChanges = git.status()
+    context.messages.info('Local changes:')
+    localChanges.each { context.messages.info("\t$it") }
+    !localChanges.isEmpty()
+  }
+
   @Override
   void close() {
     executor.close()
     executor.reportErrors(context.messages)
   }
 
-  void downloadCachesAndOutput() {
+  void download() {
     if (availableCommitDepth != -1) {
       String lastCachedCommit = lastCommits[availableCommitDepth]
       if (lastCachedCommit == null) {
@@ -91,9 +100,9 @@ class CompilationOutputsDownloader implements AutoCloseable {
       context.messages.info("Using $executor.corePoolSize threads to download caches.")
       // In case if outputs are available for the current commit
       // cache is not needed as we are not going to compile anything.
-      if (!availableForHeadCommit) {
+      if (!availableForHeadCommit || anyLocalChanges()) {
         executor.submit {
-          saveCache(lastCachedCommit)
+          saveJpsCache(lastCachedCommit)
         }
       }
 
@@ -116,29 +125,29 @@ class CompilationOutputsDownloader implements AutoCloseable {
     sourcesStateProcessor.parseSourcesStateFile(getClient.doGet("$remoteCacheUrl/metadata/$commitHash"))
   }
 
-  private void saveCache(String commitHash) {
+  private void saveJpsCache(String commitHash) {
     File cacheArchive = null
     try {
-      cacheArchive = downloadCache(commitHash)
+      cacheArchive = downloadJpsCache(commitHash)
 
       def cacheDestination = context.compilationData.dataStorageRoot
 
       long start = System.currentTimeMillis()
       new Decompressor.Zip(cacheArchive).overwrite(true).extract(cacheDestination)
-      context.messages.info("Cache was uncompresed to $cacheDestination in ${System.currentTimeMillis() - start}ms.")
+      context.messages.info("Jps Cache was uncompresed to $cacheDestination in ${System.currentTimeMillis() - start}ms.")
     }
     finally {
       cacheArchive?.delete()
     }
   }
 
-  private File downloadCache(String commitHash) {
+  private File downloadJpsCache(String commitHash) {
     File cacheArchive = File.createTempFile('cache', '.zip')
 
-    context.messages.info('Downloading cache...')
+    context.messages.info('Downloading Jps Cache...')
     long start = System.currentTimeMillis()
     getClient.doGet("$remoteCacheUrl/caches/$commitHash", cacheArchive)
-    context.messages.info("Cache was downloaded in ${System.currentTimeMillis() - start}ms.")
+    context.messages.info("Jps Cache was downloaded in ${System.currentTimeMillis() - start}ms.")
 
     return cacheArchive
   }
@@ -159,7 +168,7 @@ class CompilationOutputsDownloader implements AutoCloseable {
     def outputArchive = new File(compilationOutput.path, 'tmp-output.zip')
     FileUtil.createParentDirs(outputArchive)
 
-    getClient.doGet("$remoteCacheUrl/${compilationOutput.sourcePath}", outputArchive)
+    getClient.doGet("$remoteCacheUrl/${compilationOutput.remotePath}", outputArchive)
 
     return outputArchive
   }
@@ -216,7 +225,9 @@ class GetClient {
           DownloadException downloadException = new DownloadException(url, response.statusLine.statusCode, response.entity.content.text)
           throwDownloadException(response, downloadException)
         }
-        file << response.entity.content
+        response.entity.content.withCloseable {
+          Files.copy(it, file.toPath(), StandardCopyOption.REPLACE_EXISTING)
+        }
       }
     })
   }

@@ -157,7 +157,7 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
   void "test abbreviations on top"() {
     def abbreviationManager = AbbreviationManager.getInstance()
     def actionManager = ActionManager.getInstance()
-    def ui = createTestUI([GotoActionTest.createActionContributor(project, testRootDisposable)])
+    def ui = createTestUI([GotoActionTest.createActionContributor(project)])
 
     try {
       abbreviationManager.register("cp", "CloseProject")

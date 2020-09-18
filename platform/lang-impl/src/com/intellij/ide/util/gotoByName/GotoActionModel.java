@@ -713,7 +713,12 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
         if (myGroupMapping != null) myGroupMapping.updateBeforeShow(myDataContext);
       };
       if (ApplicationManager.getApplication().isDispatchThread()) {
-        r.run();
+        try {
+          r.run();
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
       }
       else {
         myModel.updateOnEdt(r);

@@ -25,6 +25,7 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil.invokeLaterIfNeeded
 import git4idea.GitUtil
+import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitBranchUtil.equalBranches
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
@@ -43,6 +44,7 @@ import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.CalledInBackground
 import java.awt.BorderLayout
 import java.awt.Insets
+import java.awt.event.InputEvent
 import java.awt.event.ItemEvent
 import java.util.Collections.synchronizedMap
 import java.util.function.Function
@@ -158,7 +160,7 @@ class GitMergeDialog(private val project: Project,
       }
 
       branches[repository] = repository.branches
-        .let { it.localBranches.sorted() + it.remoteBranches.sorted() }
+        .let { it.localBranches + it.remoteBranches }
         .map { it.name }
     }
 
@@ -227,7 +229,7 @@ class GitMergeDialog(private val project: Project,
   }
 
   private fun updateBranchesField() {
-    val branches = getBranches()
+    val branches = splitAndSortBranches(getBranches())
 
     val model = branchField.model as MutableCollectionComboBoxModel
     model.update(branches)
@@ -242,6 +244,22 @@ class GitMergeDialog(private val project: Project,
     }
 
     model.selectedItem = matchingBranch
+  }
+
+  private fun splitAndSortBranches(branches: List<String>): List<String> {
+    val local = mutableListOf<String>()
+    val remote = mutableListOf<String>()
+
+    for (branch in branches) {
+      if (branch.startsWith(REMOTE_REF)) {
+        remote += branch.substring(REMOTE_REF.length)
+      }
+      else {
+        local += branch
+      }
+    }
+
+    return GitBranchUtil.sortBranchNames(local) + GitBranchUtil.sortBranchNames(remote)
   }
 
   private fun getBranches(): List<String> {
@@ -379,6 +397,24 @@ class GitMergeDialog(private val project: Project,
       ::getOptionInfo,
       { selectedOptions },
       { option -> isOptionEnabled(option) })
+
+    override fun handleSelect(handleFinalChoices: Boolean) {
+      if (handleFinalChoices) {
+        handleSelect()
+      }
+    }
+
+    override fun handleSelect(handleFinalChoices: Boolean, e: InputEvent?) {
+      if (handleFinalChoices) {
+        handleSelect()
+      }
+    }
+
+    private fun handleSelect() {
+      (selectedValues.firstOrNull() as? GitMergeOption)?.let { option -> optionChosen(option) }
+
+      list.repaint()
+    }
   }
 
   private fun getOptionInfo(option: GitMergeOption) = optionInfos.computeIfAbsent(option) {
@@ -469,5 +505,6 @@ class GitMergeDialog(private val project: Project,
   companion object {
     private val LOG = logger<GitMergeDialog>()
     private val LINK_REF_REGEX = Pattern.compile(".+\\s->\\s.+")
+    private const val REMOTE_REF = "remotes/"
   }
 }

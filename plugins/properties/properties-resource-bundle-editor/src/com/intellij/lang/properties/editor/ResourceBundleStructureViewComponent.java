@@ -108,7 +108,12 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
   }
 
   private PsiFile @NotNull [] getSelectedPsiFiles() {
-    return ContainerUtil.map2Array(myResourceBundle.getPropertiesFiles(), PsiFile.class, propFile -> propFile.getContainingFile());
+    for (ResourceBundleEditorViewElement element : ((ResourceBundleEditor)getFileEditor()).getSelectedElements()) {
+      if (element.getFiles() != null) {
+        return element.getFiles();
+      }
+    }
+    return PsiFile.EMPTY_ARRAY;
   }
 
   @Override

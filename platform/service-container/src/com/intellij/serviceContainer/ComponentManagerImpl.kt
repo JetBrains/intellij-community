@@ -955,7 +955,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   fun processServices(processor: Consumer<Any>) {
     lightServices?.values?.forEach(processor)
     for (adapter in picoContainer.componentAdapters) {
-      if (adapter is ServiceComponentAdapter) {
+      if (adapter is BaseComponentAdapter) {
         processor.accept(adapter.getInitializedInstance() ?: continue)
       }
     }

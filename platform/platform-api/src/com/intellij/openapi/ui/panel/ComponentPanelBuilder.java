@@ -275,6 +275,13 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
   @NotNull
   public static JLabel createCommentComponent(@Nullable @NlsContexts.DetailedDescription String commentText,
                                               boolean isCommentBelow,
+                                              int maxLineLength) {
+    return createCommentComponent(commentText, isCommentBelow, maxLineLength, true);
+  }
+
+  @NotNull
+  public static JLabel createCommentComponent(@Nullable @NlsContexts.DetailedDescription String commentText,
+                                              boolean isCommentBelow,
                                               int maxLineLength,
                                               boolean allowAutoWrapping) {
     return createCommentComponent(() -> new JBLabel(""), commentText, isCommentBelow, maxLineLength, allowAutoWrapping);

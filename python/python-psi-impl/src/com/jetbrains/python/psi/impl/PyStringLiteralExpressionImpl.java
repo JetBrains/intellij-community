@@ -94,6 +94,13 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   }
 
   @Override
+  public boolean isInterpolated() {
+    return StreamEx.of(getStringElements())
+      .select(PyFormattedStringElement.class)
+      .anyMatch(element -> !element.getFragments().isEmpty());
+  }
+
+  @Override
   @NotNull
   public List<ASTNode> getStringNodes() {
     final TokenSet stringNodeTypes = TokenSet.orSet(PyTokenTypes.STRING_NODES, TokenSet.create(PyElementTypes.FSTRING_NODE));

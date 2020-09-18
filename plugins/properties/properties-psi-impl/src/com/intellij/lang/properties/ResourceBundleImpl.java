@@ -46,7 +46,7 @@ public class ResourceBundleImpl extends ResourceBundle {
   @Override
   @NotNull
   public VirtualFile getBaseDirectory() {
-    return getDefaultPropertiesFile().getParent().getVirtualFile();
+    return getDefaultPropertiesFile().getVirtualFile().getParent();
   }
 
   @Override
