@@ -20,7 +20,8 @@ import kotlin.coroutines.resumeWithException
  * NOTE that `promise.asDeferred().await()` is different from `promise.await()` w.r.t. cancellation,
  * see the description of [await] for the details.
  */
-fun <T> Promise<T>.asDeferred(): Deferred<T> = CompletableDeferred<T>().also { deferred ->
+fun <T> Promise<T>.asDeferred(): Deferred<T> = asDeferredInternal()
+internal fun <T> Promise<T>.asDeferredInternal(): Deferred<T> = CompletableDeferred<T>().also { deferred ->
   if (this is Future<*> && isDone()) { // Fast path if already completed
     try {
       deferred.complete(this.getResultOrThrowError())
@@ -47,7 +48,8 @@ fun <T> Promise<T>.asDeferred(): Deferred<T> = CompletableDeferred<T>().also { d
  * a promise is cancelled as well (provided that the promise is also an instance of [Future]).
  * If cancelling the given promise is undesired, `promise.asDeferred().await()` should be used instead.
  */
-suspend fun <T> Promise<T>.await(): T =
+suspend fun <T> Promise<T>.await(): T = awaitInternal()
+internal suspend fun <T> Promise<T>.awaitInternal(): T =
   if (this is Future<*> && isDone()) { // Fast path if already completed
     this.getResultOrThrowError()
   }
