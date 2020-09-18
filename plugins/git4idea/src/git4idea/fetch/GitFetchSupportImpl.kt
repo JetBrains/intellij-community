@@ -106,9 +106,15 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
         val results = waitForFetchTasks(tasks)
 
         val mergedResults = mutableMapOf<GitRepository, RepoResult>()
+        val succeedResults = mutableListOf<SingleRemoteResult>()
         for (result in results) {
           val res = mergedResults[result.repository]
           mergedResults[result.repository] = mergeRepoResults(res, result)
+          if (result.success()) succeedResults.add(result)
+        }
+        val successFetchesMap = succeedResults.groupBy({ it.repository }, { it.remote })
+        if (successFetchesMap.isNotEmpty()) {
+          GitFetchHandler.afterSuccessfulFetch(project, successFetchesMap, progressManager.progressIndicator)
         }
         activity.finished()
         FetchResultImpl(project, VcsNotifier.getInstance(project), mergedResults)

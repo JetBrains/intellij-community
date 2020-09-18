@@ -548,6 +548,7 @@
     <extensionPoint interface="git4idea.checkin.GitCheckinExplicitMovementProvider"
                     name="GitCheckinExplicitMovementProvider"
                     dynamic="true"/>
+    <extensionPoint interface="git4idea.fetch.GitFetchHandler" name="gitFetchHandler" dynamic="true"/>
   </extensionPoints>
 
   <projectListeners>
