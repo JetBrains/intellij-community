@@ -26,12 +26,13 @@ import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import org.jetbrains.jps.util.JpsPathUtil
-import java.io.File
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Future
+import kotlin.streams.toList
 
 class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectoryEntitiesSerializerFactory<*>>,
                                 moduleListSerializers: List<JpsModuleListSerializer>,
@@ -80,11 +81,19 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   }
 
   private fun createDirectorySerializers(factory: JpsDirectoryEntitiesSerializerFactory<*>): List<JpsFileEntitiesSerializer<*>> {
-    val files = JpsPathUtil.urlToFile(factory.directoryUrl).listFiles { file: File -> file.extension == "xml" && file.isFile }
-                ?: return emptyList()
+    val osPath = JpsPathUtil.urlToOsPath(factory.directoryUrl)
+    val libPath = Paths.get(osPath)
+    val files = when {
+      Files.exists(libPath) -> Files.list(libPath).use { stream ->
+        stream.filter { path: Path -> PathUtil.getFileExtension(path.toString()) == "xml" && Files.isRegularFile(path) }
+          .toList()
+      }
+      else -> emptyList()
+    }
     return files.map {
-      factory.createSerializer("${factory.directoryUrl}/${it.name}",
-                               createFileInDirectorySource(virtualFileManager.fromUrl(factory.directoryUrl), it.name),
+      val fileName = it.fileName
+      factory.createSerializer("${factory.directoryUrl}/$fileName",
+                               createFileInDirectorySource(virtualFileManager.fromUrl(factory.directoryUrl), fileName.toString()),
                                virtualFileManager)
     }
   }
