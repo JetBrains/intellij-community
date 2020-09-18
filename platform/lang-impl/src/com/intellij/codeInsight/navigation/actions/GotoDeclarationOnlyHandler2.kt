@@ -58,12 +58,16 @@ internal object GotoDeclarationOnlyHandler2 : CodeInsightActionHandler {
 
   internal fun gotoDeclaration(editor: Editor, file: PsiFile, actionResult: GTDActionResult) {
     when (actionResult) {
-      is GTDActionResult.SingleTarget -> gotoTarget(editor, file, actionResult.navigatable)
+      is GTDActionResult.SingleTarget -> {
+        GotoDeclarationAction.recordGTDNavigation(actionResult.navigationProvider?.javaClass)
+        gotoTarget(editor, file, actionResult.navigatable)
+      }
       is GTDActionResult.MultipleTargets -> {
         val popup = chooseTargetPopup(
           CodeInsightBundle.message("declaration.navigation.title"),
           actionResult.targets, GTDTarget::presentation
-        ) { (navigatable, _) ->
+        ) { (navigatable, _, navigationProvider) ->
+          GotoDeclarationAction.recordGTDNavigation(navigationProvider?.javaClass)
           gotoTarget(editor, file, navigatable)
         }
         popup.showInBestPositionFor(editor)

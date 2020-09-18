@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.navigation.impl
 
 import com.intellij.codeInsight.navigation.CtrlMouseInfo
+import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiSymbolService
 import com.intellij.model.psi.impl.TargetData
 import com.intellij.model.psi.impl.declaredReferencedData
@@ -37,7 +38,7 @@ internal sealed class GTDActionResult {
    *
    * Might be obtained from direct navigation, in this case requiring [TargetPopupPresentation] doesn't make sense.
    */
-  class SingleTarget(val navigatable: Navigatable) : GTDActionResult()
+  class SingleTarget(val navigatable: Navigatable, val navigationProvider: Any?) : GTDActionResult()
 
   class MultipleTargets(val targets: List<GTDTarget>) : GTDActionResult() {
     init {
@@ -46,7 +47,7 @@ internal sealed class GTDActionResult {
   }
 }
 
-internal data class GTDTarget(val navigatable: Navigatable, val presentation: TargetPopupPresentation)
+internal data class GTDTarget(val navigatable: Navigatable, val presentation: TargetPopupPresentation, val navigationProvider: Any?)
 
 private fun gotoDeclarationInner(file: PsiFile, offset: Int): GTDActionData? {
   return fromDirectNavigation(file, offset)
@@ -71,27 +72,37 @@ private class TargetGTDActionData(private val project: Project, private val targ
 
   override fun result(): GTDActionResult? {
     //old behaviour: use gtd target provider if element has only a single target
-    targetData.targets.singleOrNull()
-      ?.let(PsiSymbolService.getInstance()::extractElementFromSymbol)
-      ?.let { el ->
-        val nav = gtdTargetNavigatable(el) ?: return@let
-        if (nav != el) return GTDActionResult.SingleTarget(nav)
-      }
+    targetData.targets.singleOrNull()?.let { (symbol, navigationProvider) ->
+      extractSingleTargetResult(symbol, navigationProvider)?.let { result -> return result }
+    }
 
-    val result = SmartList<Pair<Navigatable, NavigationTarget>>()
+    data class GTDSingleTarget(val navigatable: Navigatable, val target: NavigationTarget, val navigationProvider: Any?)
 
-    for (symbol in targetData.targets) {
+    val result = SmartList<GTDSingleTarget>()
+    for ((symbol, navigationProvider) in targetData.targets) {
       for (navigationTarget in SymbolNavigationService.getInstance().getNavigationTargets(project, symbol)) {
         val navigatable = navigationTarget.navigatable ?: continue
-        result += Pair(navigatable, navigationTarget)
+        result += GTDSingleTarget(navigatable, navigationTarget, navigationProvider)
       }
     }
     return when (result.size) {
       0 -> null
-      1 -> GTDActionResult.SingleTarget(result.single().first) // don't compute presentation for single target
-      else -> GTDActionResult.MultipleTargets(result.map { (navigatable, navigationTarget) ->
-        GTDTarget(navigatable, navigationTarget.targetPresentation)
+      1 -> {
+        // don't compute presentation for single target
+        val (navigatable, _, navigationProvider) = result.single()
+        GTDActionResult.SingleTarget(navigatable, navigationProvider)
+      }
+      else -> GTDActionResult.MultipleTargets(result.map { (navigatable, navigationTarget, navigationProvider) ->
+        GTDTarget(navigatable, navigationTarget.targetPresentation, navigationProvider)
       })
     }
+  }
+
+  private fun extractSingleTargetResult(symbol: Symbol, navigationProvider: Any?): GTDActionResult.SingleTarget? {
+    PsiSymbolService.getInstance().extractElementFromSymbol(symbol)?.let { el ->
+      val nav = gtdTargetNavigatable(el) ?: return null
+      if (nav != el) return GTDActionResult.SingleTarget(nav, navigationProvider)
+    }
+    return null
   }
 }

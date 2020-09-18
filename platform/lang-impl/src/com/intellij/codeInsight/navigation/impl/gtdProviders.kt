@@ -6,7 +6,7 @@ import com.intellij.codeInsight.navigation.CtrlMouseInfo
 import com.intellij.codeInsight.navigation.MultipleTargetElementsInfo
 import com.intellij.codeInsight.navigation.PsiElementTargetPopupPresentation
 import com.intellij.codeInsight.navigation.SingleTargetElementInfo
-import com.intellij.codeInsight.navigation.action.GotoDeclarationUtil.findTargetElementsFromProviders
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
@@ -28,16 +28,20 @@ private fun fromGTDProvidersInner(project: Project, editor: Editor, offset: Int)
   val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return null
   val adjustedOffset: Int = TargetElementUtil.adjustOffset(file, document, offset)
   val leafElement: PsiElement = file.findElementAt(adjustedOffset) ?: return null
-  val fromProviders: Array<out PsiElement>? = findTargetElementsFromProviders(leafElement, offset, editor)
-  if (fromProviders.isNullOrEmpty()) {
-    return null
+  for (handler in GotoDeclarationHandler.EP_NAME.extensionList) {
+    val fromProvider: Array<out PsiElement>? = handler.getGotoDeclarationTargets(leafElement, offset, editor)
+    if (fromProvider.isNullOrEmpty()) {
+      continue
+    }
+    return GTDProviderData(leafElement, fromProvider.toList(), handler)
   }
-  return GTDProviderData(leafElement, fromProviders.toList())
+  return null
 }
 
 private class GTDProviderData(
   private val leafElement: PsiElement,
-  private val targetElements: Collection<PsiElement>
+  private val targetElements: Collection<PsiElement>,
+  private val navigationProvider: GotoDeclarationHandler
 ) : GTDActionData {
 
   init {
@@ -57,7 +61,9 @@ private class GTDProviderData(
   override fun result(): GTDActionResult? {
     val singleTarget = targetElements.singleOrNull()
     if (singleTarget != null) {
-      return gtdTargetNavigatable(singleTarget)?.let(GTDActionResult::SingleTarget)
+      return gtdTargetNavigatable(singleTarget)?.let { navigatable ->
+        GTDActionResult.SingleTarget(navigatable, navigationProvider)
+      }
     }
     val result: List<Pair<Navigatable, PsiElement>> = targetElements.mapNotNullTo(SmartList()) { targetElement ->
       psiNavigatable(targetElement)?.let { navigatable ->
@@ -66,9 +72,9 @@ private class GTDProviderData(
     }
     return when (result.size) {
       0 -> null
-      1 -> GTDActionResult.SingleTarget(result.single().first)
+      1 -> GTDActionResult.SingleTarget(result.single().first, navigationProvider)
       else -> GTDActionResult.MultipleTargets(result.map { (navigatable, targetElement) ->
-        GTDTarget(navigatable, PsiElementTargetPopupPresentation(targetElement))
+        GTDTarget(navigatable, PsiElementTargetPopupPresentation(targetElement), navigationProvider)
       })
     }
   }

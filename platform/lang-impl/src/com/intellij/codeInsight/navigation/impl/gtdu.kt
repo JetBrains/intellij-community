@@ -96,7 +96,7 @@ private fun searchTargetVariants(project: Project, data: TargetData): List<Targe
       }
     }
     is TargetData.Referenced -> {
-      symbolSearchTargets(project, data.targets).map(::SearchTargetVariant)
+      symbolSearchTargets(project, data.targets.map { it.symbol }).map(::SearchTargetVariant)
     }
     is TargetData.Evaluator -> {
       data.targetElements.map(::PsiTargetVariant)
