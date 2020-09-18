@@ -28,18 +28,20 @@ internal class ExternalStorageConfigurationManagerImpl(private val project: Proj
    */
   override fun setEnabled(value: Boolean) {
     state.enabled = value
-    ApplicationManager.getApplication().invokeAndWait(Runnable {
-      runWriteAction {
-        WorkspaceModel.getInstance(project).updateProjectModel { updater ->
-          val entitiesMap = updater.entitiesBySource { it is JpsImportedEntitySource && it.storedExternally != value }
-          entitiesMap.values.asSequence().flatMap { it.values.asSequence().flatMap { entities -> entities.asSequence() } }.forEach { entity ->
-            val source = entity.entitySource
-            if (source is JpsImportedEntitySource) {
-              updater.changeSource(entity, JpsImportedEntitySource(source.internalFile, source.externalSystemId, value))
+    if (WorkspaceModel.isEnabled) {
+      ApplicationManager.getApplication().invokeAndWait(Runnable {
+        runWriteAction {
+          WorkspaceModel.getInstance(project).updateProjectModel { updater ->
+            val entitiesMap = updater.entitiesBySource { it is JpsImportedEntitySource && it.storedExternally != value }
+            entitiesMap.values.asSequence().flatMap { it.values.asSequence().flatMap { entities -> entities.asSequence() } }.forEach { entity ->
+              val source = entity.entitySource
+              if (source is JpsImportedEntitySource) {
+                updater.changeSource(entity, JpsImportedEntitySource(source.internalFile, source.externalSystemId, value))
+              }
             }
           }
         }
-      }
-    })
+      })
+    }
   }
 }
