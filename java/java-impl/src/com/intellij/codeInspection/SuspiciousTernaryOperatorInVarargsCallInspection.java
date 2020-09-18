@@ -4,7 +4,6 @@ package com.intellij.codeInspection;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
@@ -41,10 +40,10 @@ public class SuspiciousTernaryOperatorInVarargsCallInspection extends AbstractBa
         if (isThenArray == elseType instanceof PsiArrayType) return;
 
         final PsiExpression nonArray = isThenArray ? elseExpression : thenExpression;
-        PsiType varargsType = varargsExpression.getType();
+        PsiClassType varargsType = ObjectUtils.tryCast(varargsExpression.getType(), PsiClassType.class);
         if (varargsType == null) return;
 
-        final String replacementText = String.format("new %s[]{%s}", ((PsiClassReferenceType)varargsType).getName(), nonArray.getText());
+        final String replacementText = String.format("new %s[]{%s}", varargsType.getName(), nonArray.getText());
 
         holder.registerProblem(nonArray,
                                JavaBundle.message("inspection.suspicious.ternary.in.varargs.description"),
