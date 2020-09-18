@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.UnknownSdkTracker;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.DefaultModuleConfigurationEditorFactory;
@@ -683,7 +684,7 @@ public final class CompileDriver {
         }
       }
       if (!modulesWithoutJdkAssigned.isEmpty()) {
-        showNotSpecifiedError("error.jdk.not.specified", projectSdkNotSpecified, modulesWithoutJdkAssigned, JavaCompilerBundle.message("modules.classpath.title"));
+        UnknownSdkTracker.getInstance(myProject).updateAndSuggestSdkFixModal();
         return false;
       }
 
@@ -761,7 +762,9 @@ public final class CompileDriver {
     return !ModuleRootManager.getInstance(module).getSourceRoots(rootType).isEmpty();
   }
 
-  private void showNotSpecifiedError(@PropertyKey(resourceBundle = JavaCompilerBundle.BUNDLE) @NonNls String resourceId, boolean notSpecifiedValueInheritedFromProject, List<String> modules,
+  private void showNotSpecifiedError(@PropertyKey(resourceBundle = JavaCompilerBundle.BUNDLE) @NonNls String resourceId,
+                                     boolean notSpecifiedValueInheritedFromProject,
+                                     List<String> modules,
                                      String editorNameToSelect) {
     String nameToSelect = null;
     final StringBuilder names = new StringBuilder();

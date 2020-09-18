@@ -1,11 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
+import com.intellij.notification.Notification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -54,26 +56,7 @@ public class UnknownSdkTracker {
 
   @NotNull
   private Update newUpdateTask() {
-    return new Update("update") {
-      @Override
-      public void run() {
-        if (!Registry.is("unknown.sdk") || !UnknownSdkResolver.EP_NAME.hasAnyExtensions()) {
-          showStatus(Collections.emptyList(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyList());
-          return;
-        }
-
-        new UnknownSdkCollector(myProject)
-          .collectSdksPromise(snapshot -> {
-
-            //there is nothing to do if we see the same snapshot, IDEA-236153
-            if (snapshot.equals(myPreviousRequestCache)) return;
-            myPreviousRequestCache = snapshot;
-
-            //we cannot use snapshot#missingSdks here, because it affects other IDEs/languages where our logic is not good enough
-            onFixableAndMissingSdksCollected(filterOnlyAllowedEntries(snapshot.getResolvableSdks()), filterOnlyAllowedSdkEntries(snapshot.getKnownSdks()));
-          });
-      }
-    };
+    return new DefaultUnknownSdkUpdateTask("update") { };
   }
 
   public void updateUnknownSdksNow() {
@@ -82,6 +65,76 @@ public class UnknownSdkTracker {
 
   public void updateUnknownSdks() {
     myUpdateQueue.queue(newUpdateTask());
+  }
+
+  /**
+   * @return true if we were able to resolve an issue
+   */
+  public boolean updateAndSuggestSdkFixModal() {
+    ModalSdkUpdateTask task = new ModalSdkUpdateTask();
+    task.run();
+
+    //looks like something went wrong
+    if (!task.myIsFinished) return false;
+    return task.myHadLocalFixes;
+  }
+
+  private class ModalSdkUpdateTask extends UnknownSdkUpdateTask {
+    private boolean myIsFinished = false;
+    private boolean myHadLocalFixes = false;
+    private ProgressIndicator myProgressIndicator;
+
+    ModalSdkUpdateTask() {
+      super("modal");
+    }
+
+    @Override
+    protected void doProcessSdks() {
+      ProgressManager.getInstance()
+        .run(new Task.Modal(myProject, ProjectBundle.message("progress.title.resolving.sdks"), true) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            myProgressIndicator = indicator;
+            superDoProcessSdks();
+          }
+
+          @Override
+          public void onSuccess() {
+            super.onSuccess();
+          }
+
+          @Override
+          public void onFinished() {
+            myIsFinished = true;
+            super.onFinished();
+          }
+        });
+    }
+
+    private void superDoProcessSdks() {
+      super.doProcessSdks();
+    }
+
+    @Override
+    protected void runTaskUnderProgress(@NotNull Progressive action) {
+      action.run(myProgressIndicator);
+    }
+
+    @Override
+    protected void showStatus(@NotNull List<UnknownSdk> unknownSdksWithoutFix,
+                              @NotNull Map<UnknownSdk, UnknownSdkLocalSdkFix> localFixes,
+                              @NotNull Map<UnknownSdk, UnknownSdkDownloadableSdkFix> downloadFixes,
+                              @NotNull List<UnknownInvalidSdk> invalidSdks) {
+      myHadLocalFixes = !localFixes.isEmpty();
+
+      ApplicationManager.getApplication().invokeLater(() -> {
+        var outcome = UnknownSdkModalNotification.getInstance(myProject).showNotifications(
+          unknownSdksWithoutFix, localFixes, downloadFixes, invalidSdks
+        );
+
+        //TODO: test the outcome, rescan for problems?
+      });
+    }
   }
 
   private static boolean allowFixesFor(@NotNull SdkTypeId type) {
@@ -116,14 +169,43 @@ public class UnknownSdkTracker {
     return copy;
   }
 
-  private void onFixableAndMissingSdksCollected(@NotNull List<UnknownSdk> fixable, @NotNull List<Sdk> usedSdks) {
-    if (fixable.isEmpty() && usedSdks.isEmpty()) {
-      showStatus(Collections.emptyList(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyList());
-      return;
+  private abstract class UnknownSdkUpdateTask extends Update {
+    protected UnknownSdkUpdateTask(@NotNull Object identity) {
+      super(identity);
     }
 
-    ProgressManager.getInstance()
-      .run(new Task.Backgroundable(myProject, ProjectBundle.message("progress.title.resolving.sdks"), false, ALWAYS_BACKGROUND) {
+    @Override
+    public final void run() {
+      if (!Registry.is("unknown.sdk") || !UnknownSdkResolver.EP_NAME.hasAnyExtensions()) {
+        showStatus(Collections.emptyList(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyList());
+        return;
+      }
+
+      doProcessSdks();
+    }
+
+    protected void doProcessSdks() {
+      new UnknownSdkCollector(myProject)
+        .collectSdksPromise(snapshot -> {
+          onFixableAndMissingSdksCollected(snapshot);
+        });
+    }
+
+    protected abstract void runTaskUnderProgress(@NotNull Progressive action);
+
+    protected void onFixableAndMissingSdksCollected(@NotNull UnknownSdkSnapshot snapshot) {
+      //we cannot use snapshot#missingSdks here, because it affects other IDEs/languages where our logic is not good enough
+      onFixableAndMissingSdksCollected(filterOnlyAllowedEntries(snapshot.getResolvableSdks()), filterOnlyAllowedSdkEntries(snapshot.getKnownSdks()));
+    }
+
+    private void onFixableAndMissingSdksCollected(@NotNull List<UnknownSdk> fixable, @NotNull List<Sdk> usedSdks) {
+      if (fixable.isEmpty() && usedSdks.isEmpty()) {
+        showStatus(Collections.emptyList(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyList());
+        return;
+      }
+
+      runTaskUnderProgress(
+        new Progressive() {
              @Override
              public void run(@NotNull ProgressIndicator indicator) {
                List<UnknownInvalidSdk> invalidSdks = new ArrayList<>();
@@ -168,21 +250,53 @@ public class UnknownSdkTracker {
                showStatus(fixable, localFixes, downloadFixes, invalidSdks);
              }
            }
-      );
+        );
+    }
+
+    protected abstract void showStatus(@NotNull List<UnknownSdk> unknownSdksWithoutFix,
+                                       @NotNull Map<UnknownSdk, UnknownSdkLocalSdkFix> localFixes,
+                                       @NotNull Map<UnknownSdk, UnknownSdkDownloadableSdkFix> downloadFixes,
+                                       @NotNull List<UnknownInvalidSdk> invalidSdks);
   }
 
-  private void showStatus(@NotNull List<UnknownSdk> unknownSdksWithoutFix,
-                          @NotNull Map<UnknownSdk, UnknownSdkLocalSdkFix> localFixes,
-                          @NotNull Map<UnknownSdk, UnknownSdkDownloadableSdkFix> downloadFixes,
-                          @NotNull List<UnknownInvalidSdk> invalidSdks) {
-    UnknownSdkBalloonNotification
-      .getInstance(myProject)
-      .notifyFixedSdks(localFixes);
+  private class DefaultUnknownSdkUpdateTask extends UnknownSdkUpdateTask {
+    DefaultUnknownSdkUpdateTask(@NotNull Object identity) {
+      super(identity);
+    }
 
-    UnknownSdkEditorNotification
-      .getInstance(myProject)
-      .showNotifications(unknownSdksWithoutFix, downloadFixes, invalidSdks);
+    @Override
+    protected void runTaskUnderProgress(@NotNull Progressive action) {
+      ProgressManager.getInstance()
+        .run(new Task.Backgroundable(myProject, ProjectBundle.message("progress.title.resolving.sdks"), false, ALWAYS_BACKGROUND) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            action.run(indicator);
+          }
+        });
+    }
 
+    @Override
+    protected void onFixableAndMissingSdksCollected(@NotNull UnknownSdkSnapshot snapshot) {
+      //there is nothing to do if we see the same snapshot, IDEA-236153
+      if (snapshot.equals(myPreviousRequestCache)) return;
+      myPreviousRequestCache = snapshot;
+
+      super.onFixableAndMissingSdksCollected(snapshot);
+    }
+
+    @Override
+    protected void showStatus(@NotNull List<UnknownSdk> unknownSdksWithoutFix,
+                              @NotNull Map<UnknownSdk, UnknownSdkLocalSdkFix> localFixes,
+                              @NotNull Map<UnknownSdk, UnknownSdkDownloadableSdkFix> downloadFixes,
+                              @NotNull List<UnknownInvalidSdk> invalidSdks) {
+      UnknownSdkBalloonNotification
+        .getInstance(myProject)
+        .notifyFixedSdks(localFixes);
+
+      UnknownSdkEditorNotification
+        .getInstance(myProject)
+        .showNotifications(unknownSdksWithoutFix, downloadFixes, invalidSdks);
+    }
   }
 
   @NotNull

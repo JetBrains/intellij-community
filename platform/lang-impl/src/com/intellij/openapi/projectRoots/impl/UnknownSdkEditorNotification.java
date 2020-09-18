@@ -72,6 +72,20 @@ public class UnknownSdkEditorNotification {
   public void showNotifications(@NotNull List<UnknownSdk> unfixableSdks,
                                 @NotNull Map<UnknownSdk, UnknownSdkDownloadableSdkFix> files,
                                 @NotNull List<UnknownInvalidSdk> invalidSdks) {
+    myNotifications.set(ImmutableSet.copyOf(buildNotifications(unfixableSdks, files, invalidSdks)));
+    EditorNotifications.getInstance(myProject).updateAllNotifications();
+
+    ApplicationManager.getApplication().invokeLater(() -> {
+      for (FileEditor editor : myFileEditorManager.getAllEditors()) {
+        updateEditorNotifications(editor);
+      }
+    });
+  }
+
+  @NotNull
+  public Set<SimpleSdkFixInfo> buildNotifications(@NotNull List<UnknownSdk> unfixableSdks,
+                                                  @NotNull Map<UnknownSdk, UnknownSdkDownloadableSdkFix> files,
+                                                  @NotNull List<UnknownInvalidSdk> invalidSdks) {
     ImmutableSet.Builder<SimpleSdkFixInfo> notifications = ImmutableSet.builder();
 
     if (Registry.is("unknown.sdk.show.editor.actions")) {
@@ -96,14 +110,7 @@ public class UnknownSdkEditorNotification {
       }
     }
 
-    myNotifications.set(notifications.build());
-    EditorNotifications.getInstance(myProject).updateAllNotifications();
-
-    ApplicationManager.getApplication().invokeLater(() -> {
-      for (FileEditor editor : myFileEditorManager.getAllEditors()) {
-        updateEditorNotifications(editor);
-      }
-    });
+    return notifications.build();
   }
 
   private void updateEditorNotifications(@NotNull FileEditor editor) {
@@ -140,12 +147,16 @@ public class UnknownSdkEditorNotification {
       mySdkType = sdkType;
     }
 
-    final @Nullable EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull Project project) {
+    public final @Nullable EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull Project project) {
       // we must not show the notification for an irrelevant files in the project
-      return !mySdkType.isRelevantForFile(project, file) ? null : createNotificationPanelImpl(file, project);
+      return !mySdkType.isRelevantForFile(project, file) ? null : createNotificationPanel(project);
     }
 
-    abstract @NotNull EditorNotificationPanel createNotificationPanelImpl(@NotNull VirtualFile file, @NotNull Project project);
+    public final @NotNull EditorNotificationPanel createNotificationPanel(@NotNull Project project) {
+      return createNotificationPanelImpl(project);
+    }
+
+    protected abstract @NotNull EditorNotificationPanel createNotificationPanelImpl(@NotNull Project project);
 
     protected @NotNull EditorNotificationPanel newNotificationPanel(@IntentionName @NotNull String intentionActionText) {
       return new EditorNotificationPanel() {
@@ -180,7 +191,7 @@ public class UnknownSdkEditorNotification {
     }
 
     @Override
-    final @NotNull EditorNotificationPanel createNotificationPanelImpl(@NotNull VirtualFile file, @NotNull Project project) {
+    protected final @NotNull EditorNotificationPanel createNotificationPanelImpl(@NotNull Project project) {
       String sdkTypeName = mySdkType.getPresentableName();
       String notificationText = ProjectBundle.message("config.unknown.sdk.notification.text", sdkTypeName, mySdkName);
       String configureText = ProjectBundle.message("config.unknown.sdk.configure");
@@ -237,7 +248,7 @@ public class UnknownSdkEditorNotification {
     }
 
     @Override
-    final @NotNull EditorNotificationPanel createNotificationPanelImpl(@NotNull VirtualFile file, @NotNull Project project) {
+    protected final @NotNull EditorNotificationPanel createNotificationPanelImpl(@NotNull Project project) {
       String sdkTypeName = mySdkType.getPresentableName();
       String notificationText = ProjectBundle.message("config.invalid.sdk.notification.text", sdkTypeName, mySdkName);
       String configureText = ProjectBundle.message("config.invalid.sdk.configure");
