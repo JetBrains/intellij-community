@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.InplaceButton;
@@ -285,7 +286,7 @@ public class TabLabel extends JPanel implements Accessible {
     myTabs.myActivePopup.addPopupMenuListener(myTabs.myPopupListener);
 
     myTabs.myActivePopup.addPopupMenuListener(myTabs);
-    myTabs.myActivePopup.show(e.getComponent(), e.getX(), e.getY());
+    JBPopupMenu.showByEvent(e, myTabs.myActivePopup);
   }
 
 

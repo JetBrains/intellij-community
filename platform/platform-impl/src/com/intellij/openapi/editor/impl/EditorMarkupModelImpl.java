@@ -36,6 +36,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -49,7 +50,6 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
@@ -1620,10 +1620,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
           group.add(new CompactViewAction());
           */
           if (0 < group.getChildrenCount()) {
-            ActionManager.getInstance()
-              .createActionPopupMenu(ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR, group)
-              .getComponent()
-              .show(me.getComponent(), me.getX(), me.getY());
+            JBPopupMenu.showByEvent(me, ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR, group);
           }
         }
 

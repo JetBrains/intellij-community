@@ -8,6 +8,7 @@ import com.intellij.jdkEx.JdkEx
 import com.intellij.jna.JnaLoader
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.io.WindowsRegistryUtil
@@ -246,7 +247,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
         }
         ic.addMouseListener(object : MouseAdapter(){
             override fun mousePressed(e: MouseEvent?) {
-                menu.show(ic, 0, ic.height)
+                JBPopupMenu.showBelow(ic, menu)
             }
         })
 
