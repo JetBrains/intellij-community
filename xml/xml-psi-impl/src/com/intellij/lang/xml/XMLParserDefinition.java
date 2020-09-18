@@ -73,14 +73,21 @@ public class XMLParserDefinition implements ParserDefinition {
 
   @Override
   public SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
-    final Lexer lexer = createLexer(left.getPsi().getProject());
-    return canStickTokensTogetherByLexerInXml(left, right, lexer, 0);
+    return canStickTokensTogether(left, right);
   }
 
+  /**
+   * @deprecated use {@link XMLParserDefinition#canStickTokensTogether(ASTNode, ASTNode)} instead
+   */
+  @Deprecated
   public static SpaceRequirements canStickTokensTogetherByLexerInXml(final ASTNode left,
                                                                                       final ASTNode right,
                                                                                       final Lexer lexer,
                                                                                       int state) {
+    return canStickTokensTogether(left, right);
+  }
+
+  public static SpaceRequirements canStickTokensTogether(final ASTNode left, final ASTNode right) {
     if (left.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN ||
         right.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
       return SpaceRequirements.MUST_NOT;
