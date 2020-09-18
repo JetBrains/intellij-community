@@ -19,6 +19,7 @@ import com.intellij.ui.ScrollingUtil;
 import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,7 +83,16 @@ public final class FileTypeChooser extends DialogWrapper {
                          FileTypesBundle.message("filetype.chooser.change.prompt", myFileName, fileType.getName()));
 
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    myList.setCellRenderer(new FileTypeRenderer());
+    myList.setCellRenderer(new FileTypeRenderer() {
+      @Override
+      public void customize(@NotNull JList<? extends FileType> list, FileType value, int index, boolean selected, boolean hasFocus) {
+        super.customize(list, value, index, selected, hasFocus);
+        if (!myOpenInIdea.isSelected()) {
+          setForeground(selected ? UIUtil.getListSelectionForeground(hasFocus) : UIUtil.getComboBoxDisabledForeground());
+          setBackground(selected ? UIUtil.getListSelectionBackground(hasFocus) : UIUtil.getComboBoxDisabledBackground());
+        }
+      }
+    });
 
     new DoubleClickListener() {
       @Override
