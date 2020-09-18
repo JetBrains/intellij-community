@@ -19,14 +19,17 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.ui.layout.*
+import com.intellij.util.Function
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.VcsExecutablePathSelector
@@ -44,9 +47,12 @@ import git4idea.update.GitUpdateProjectInfoLogProperties
 import git4idea.update.getUpdateMethods
 import org.jetbrains.annotations.CalledInAny
 import java.awt.Color
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
 import javax.swing.JLabel
 import javax.swing.border.Border
 
+private fun gitSharedSettings(project: Project) = GitSharedSettings.getInstance(project)
 private fun projectSettings(project: Project) = GitVcsSettings.getInstance(project)
 private val applicationSettings get() = GitVcsApplicationSettings.getInstance()
 private val gitOptionGroupName get() = message("settings.git.option.group")
@@ -61,6 +67,7 @@ private fun cdAutoUpdateOnPush(project: Project)                              = 
 private fun cdShowCommitAndPushDialog(project: Project)                       = CheckboxDescriptor(message("settings.push.dialog"), PropertyBinding({ projectSettings(project).shouldPreviewPushOnCommitAndPush() }, { projectSettings(project).setPreviewPushOnCommitAndPush(it) }), groupName = gitOptionGroupName)
 private fun cdHidePushDialogForNonProtectedBranches(project: Project)         = CheckboxDescriptor(message("settings.push.dialog.for.protected.branches"), PropertyBinding({ projectSettings(project).isPreviewPushProtectedOnly }, { projectSettings(project).isPreviewPushProtectedOnly = it }), groupName = gitOptionGroupName)
 private val cdOverrideCredentialHelper                                  get() = CheckboxDescriptor(message("settings.credential.helper"), PropertyBinding({ applicationSettings.isUseCredentialHelper }, { applicationSettings.isUseCredentialHelper = it }), groupName = gitOptionGroupName)
+private fun synchronizeBranchProtectionRules(project: Project)                = CheckboxDescriptor(message("settings.synchronize.branch.protection.rules"), PropertyBinding({gitSharedSettings(project).isSynchronizeBranchProtectionRules}, { gitSharedSettings(project).isSynchronizeBranchProtectionRules = it }), groupName = gitOptionGroupName, comment = message("settings.synchronize.branch.protection.rules.description"))
 // @formatter:on
 
 internal fun gitOptionDescriptors(project: Project): List<OptionDescription> {
@@ -322,8 +329,12 @@ internal class GitVcsPanel(private val project: Project) :
     row {
       cell {
         label(message("settings.protected.branched"))
-        val protectedBranchesField = ExpandableTextField(ParametersListUtil.COLON_LINE_PARSER, ParametersListUtil.COLON_LINE_JOINER)
-        val sharedSettings = GitSharedSettings.getInstance(project)
+        val sharedSettings = gitSharedSettings(project)
+        val protectedBranchesField =
+          ExpandableTextFieldWithReadOnlyText(ParametersListUtil.COLON_LINE_PARSER, ParametersListUtil.COLON_LINE_JOINER)
+        if (sharedSettings.isSynchronizeBranchProtectionRules) {
+          protectedBranchesField.readOnlyText = ParametersListUtil.COLON_LINE_JOINER.`fun`(sharedSettings.additionalProhibitedPatterns)
+        }
         protectedBranchesField(growX)
           .withBinding<List<String>>(
             { ParametersListUtil.COLON_LINE_PARSER.`fun`(it.text) },
@@ -332,6 +343,9 @@ internal class GitVcsPanel(private val project: Project) :
               { sharedSettings.forcePushProhibitedPatterns },
               { sharedSettings.forcePushProhibitedPatterns = it })
           )
+      }
+      row {
+        checkBox(synchronizeBranchProtectionRules(project))
       }
     }
     row {
@@ -386,4 +400,47 @@ internal class GitVcsPanel(private val project: Project) :
       }
     }
   }
+}
+
+private typealias ParserFunction = Function<String, List<String>>
+private typealias JoinerFunction = Function<List<String>, String>
+
+internal class ExpandableTextFieldWithReadOnlyText(lineParser: ParserFunction,
+                                                   private val lineJoiner: JoinerFunction) : ExpandableTextField(lineParser, lineJoiner) {
+  var readOnlyText = ""
+
+  init {
+    addFocusListener(object : FocusAdapter() {
+      override fun focusLost(e: FocusEvent) {
+        val myComponent = this@ExpandableTextFieldWithReadOnlyText
+        if (e.component == myComponent) {
+          val document = myComponent.document
+          val documentText = document.getText(0, document.length)
+          updateReadOnlyText(documentText)
+        }
+      }
+    })
+  }
+
+  override fun setText(t: String?) {
+    if (!t.isNullOrBlank() && t != text) {
+      updateReadOnlyText(t)
+    }
+    super.setText(t)
+  }
+
+  private fun updateReadOnlyText(@NlsSafe text: String) {
+    if (readOnlyText.isBlank()) return
+
+    val readOnlySuffix = if (text.isBlank()) readOnlyText else lineJoiner.join("", readOnlyText) // NON-NLS
+    with(emptyText as TextComponentEmptyText) {
+      clear()
+      appendText(text, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+      appendText(readOnlySuffix, SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      setTextToTriggerStatus(text) //this will force status text rendering in case if the text field is not empty
+    }
+  }
+
+  @SuppressWarnings("SameParameterValue")
+  private fun JoinerFunction.join(vararg items: String) = `fun`(items.toList())
 }
