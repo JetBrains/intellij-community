@@ -27,6 +27,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -52,6 +53,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.function.Consumer;
 
 import static com.intellij.openapi.externalSystem.debugger.DebuggerBackendExtension.RUNTIME_MODULE_DIR_KEY;
 
@@ -105,6 +107,12 @@ class ForkedDebuggerThread extends Thread {
   public void run() {
     while (!myMainProcessHandler.isProcessTerminated() && !myMainProcessHandler.isProcessTerminating() && !mySocket.isClosed()) {
       try {
+        if (ExternalSystemTaskDebugRunner.LOG.isDebugEnabled()) {
+          int port = mySocket.getLocalPort();
+          String host = mySocket.getInetAddress().getHostAddress();
+          String productName = ApplicationNamesInfo.getInstance().getFullProductName();
+          ExternalSystemTaskDebugRunner.LOG.debug(String.format("%s wait for debug process signal on '%s:%d'", productName, host, port));
+        }
         handleForkedProcessSignal(mySocket.accept());
       }
       catch (EOFException ignored) {
@@ -133,6 +141,12 @@ class ForkedDebuggerThread extends Thread {
     String debuggerId = stream.readUTF();
     String processName = stream.readUTF();
     String processParameters = stream.readUTF();
+
+    if (ExternalSystemTaskDebugRunner.LOG.isDebugEnabled()) {
+      String productName = ApplicationNamesInfo.getInstance().getFullProductName();
+      String logMessage = "%s received debug process signal ID='%s', PROC_NAME='%s', PARAMS='%s'";
+      ExternalSystemTaskDebugRunner.LOG.debug(String.format(logMessage, productName, debuggerId, processName, processParameters));
+    }
 
     if (processParameters.startsWith(ForkedDebuggerHelper.FINISH_PARAMS)) {
       removeTerminatedForks(processName, accept, stream);
