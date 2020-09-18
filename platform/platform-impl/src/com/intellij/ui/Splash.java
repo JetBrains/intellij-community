@@ -33,12 +33,11 @@ public final class Splash extends Window {
   private final Icon myProgressTail;
   private final @Nullable ProgressSlidePainter myProgressSlidePainter;
   private final Image myImage;
-  private final SplashSlideLoader mySlideLoader = new SplashSlideLoader();
 
   public Splash(@NotNull ApplicationInfoEx info) {
     super(null);
 
-    myProgressSlidePainter = info.getProgressSlides().isEmpty() ? null : new ProgressSlidePainter(info, mySlideLoader);
+    myProgressSlidePainter = info.getProgressSlides().isEmpty() ? null : new ProgressSlidePainter(info);
     myProgressHeight = uiScale(info.getProgressHeight());
     myProgressY = uiScale(info.getProgressY());
 
@@ -95,7 +94,7 @@ public final class Splash extends Window {
   }
 
   private @NotNull Image loadImage(@NotNull String path) {
-    Image result = mySlideLoader.loadImage(path, true);
+    Image result = SplashSlideLoader.loadImage(path);
     if (result == null) {
       throw new IllegalStateException("Cannot find image: " + path);
     }
