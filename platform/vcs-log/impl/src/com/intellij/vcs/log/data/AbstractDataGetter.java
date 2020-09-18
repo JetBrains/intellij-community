@@ -140,6 +140,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
     }
 
     if (toLoad.isEmpty()) {
+      myCurrentTaskIndex--;
       Runnable process = () -> {
         sortCommitsByRow(result, commits);
         consumer.consume(result);
