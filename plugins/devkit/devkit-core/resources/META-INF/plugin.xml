@@ -394,6 +394,12 @@
     <notificationGroup id="Update from Sources" displayType="BALLOON"/>
     <notificationGroup id="testdata" displayType="BALLOON"/>
     <notificationGroup id="Migrate DevKit plugin to Gradle" displayType="STICKY_BALLOON" bundle="messages.DevKitBundle" key="convert.devkit.to.gradle.notification"/>
+
+    <!-- Threading Model Helper -->
+    <buildProcess.parametersProvider implementation="org.jetbrains.idea.devkit.threadingModelHelper.TMHBuildProcessParametersProvider"/>
+    <registryKey key="tmh.generate.assertions.for.annotations" defaultValue="false"
+                 description="Generate assertions for @RequiresEdt and similar annotations.
+                 The assertions are added by instrumenting class files during compilation."/>
   </extensions>
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
     <ProviderFactory implementation="org.jetbrains.idea.devkit.themes.ThemeJsonSchemaProviderFactory"/>

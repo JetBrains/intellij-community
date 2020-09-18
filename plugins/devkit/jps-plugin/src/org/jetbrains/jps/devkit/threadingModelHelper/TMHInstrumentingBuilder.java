@@ -3,6 +3,7 @@ package org.jetbrains.jps.devkit.threadingModelHelper;
 
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,6 +22,7 @@ import java.util.Collection;
 
 public class TMHInstrumentingBuilder extends BaseInstrumentingBuilder {
   private static final Logger LOG = Logger.getInstance(TMHInstrumentingBuilder.class);
+  private static final String INSTRUMENT_ANNOTATIONS_PROPERTY = "tmh.instrument.annotations";
 
   public TMHInstrumentingBuilder() {
   }
@@ -38,7 +40,7 @@ public class TMHInstrumentingBuilder extends BaseInstrumentingBuilder {
 
   @Override
   protected boolean isEnabled(CompileContext context, ModuleChunk chunk) {
-    return true;
+    return SystemProperties.getBooleanProperty(INSTRUMENT_ANNOTATIONS_PROPERTY, false);
   }
 
   @Override
