@@ -10,7 +10,6 @@ import com.intellij.codeInsight.completion.util.CompletionStyleUtil;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -167,7 +166,6 @@ final class SmartCastProvider {
         if (aClass != null) {
           presentation.setIcon(aClass.getIcon(0));
         }
-        presentation.setTypeText(JavaBundle.message("complete.type.cast"));
       }
 
       @Override
