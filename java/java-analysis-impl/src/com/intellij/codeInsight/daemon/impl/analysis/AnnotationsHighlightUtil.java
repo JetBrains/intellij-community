@@ -612,7 +612,8 @@ public final class AnnotationsHighlightUtil {
     PsiClass container = getRepeatableContainer(annotation);
     if (container == null) return null;
 
-    PsiMethod[] methods = container.findMethodsByName("value", false);
+    PsiMethod[] methods = !container.isAnnotationType() ? PsiMethod.EMPTY_ARRAY 
+                                                        : container.findMethodsByName("value", false);
     if (methods.length == 0) {
       return JavaErrorBundle.message("annotation.container.no.value", container.getQualifiedName());
     }
@@ -656,7 +657,7 @@ public final class AnnotationsHighlightUtil {
     PsiType containerType = ((PsiClassObjectAccessExpression)containerRef).getOperand().getType();
     if (!(containerType instanceof PsiClassType)) return null;
     PsiClass container = ((PsiClassType)containerType).resolve();
-    if (container == null || !container.isAnnotationType()) return null;
+    if (container == null) return null;
     return container;
   }
 
