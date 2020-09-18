@@ -1950,6 +1950,9 @@ public final class HighlightMethodUtil {
     PsiType componentType = component.getType();
     PsiType methodType = method.getReturnType();
     if (methodType == null) return null; // Either constructor or incorrect method, will be reported in another way
+    if (componentType instanceof PsiEllipsisType) {
+      componentType = ((PsiEllipsisType)componentType).getComponentType().createArrayType();
+    }
     if (!componentType.equals(methodType)) {
       String message =
         JavaErrorBundle.message("record.accessor.wrong.return.type", componentType.getPresentableText(), methodType.getPresentableText());
