@@ -79,6 +79,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.CancellablePromise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.awt.*;
@@ -547,7 +548,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     CancellablePromise<PsiElement> elementPromise =
       ReadAction.nonBlocking(() -> findTargetElementFromContext(editor, finalFile, originalElement)).coalesceBy(this)
         .submit(AppExecutorUtil.getAppExecutorService());
-    CompletableFuture<PsiElement> elementFuture = toCompletableFuture(elementPromise);
+    CompletableFuture<PsiElement> elementFuture = Promises.asCompletableFuture(elementPromise);
 
     PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(project) {
       @Override
@@ -1633,13 +1634,5 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       c = c.getParent();
     }
     return Optional.empty();
-  }
-
-  @NotNull
-  private static CompletableFuture<PsiElement> toCompletableFuture(@NotNull CancellablePromise<PsiElement> promise) {
-    CompletableFuture<PsiElement> future = new CompletableFuture<>();
-    promise.onSuccess(element -> future.complete(element));
-    promise.onError(ex -> future.completeExceptionally(ex));
-    return future;
   }
 }

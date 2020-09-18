@@ -1,14 +1,39 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:JvmMultifileClass
+@file:JvmName("Promises")
 package org.jetbrains.concurrency
 
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.suspendCancellableCoroutine
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Future
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+
+/**
+ * Converts this promise to an instance of [CompletableFuture].
+ * Whenever the resulting future is cancelled, this promise is cancelled as well
+ * (provided that the promise is also an instance of [Future]).
+ */
+fun <T> Promise<T>.asCompletableFuture(): CompletableFuture<T> =
+  when {
+    this is AsyncPromise<T> -> this.f
+    this is Future<*> && isDone() -> // Fast path if already completed
+      try {
+        CompletableFuture.completedFuture<T>(this.getResultOrThrowError())
+      }
+      catch (e: Throwable) {
+        CompletableFuture.failedFuture<T>(e)
+      }
+    else -> CompletableFuture<T>().also { future ->
+      onSuccess { future.complete(it) }
+      onError { future.completeExceptionally(it) }
+      if (this is Future<*>) future.whenComplete { _, _ -> this.cancel(false) }
+    }
+  }
 
 // Mostly reflects asDeferred/await implementations from 'kotlinx.coroutines.future'.
 
@@ -21,21 +46,22 @@ import kotlin.coroutines.resumeWithException
  * see the description of [await] for the details.
  */
 fun <T> Promise<T>.asDeferred(): Deferred<T> = asDeferredInternal()
-internal fun <T> Promise<T>.asDeferredInternal(): Deferred<T> = CompletableDeferred<T>().also { deferred ->
-  if (this is Future<*> && isDone()) { // Fast path if already completed
-    try {
-      deferred.complete(this.getResultOrThrowError())
+internal fun <T> Promise<T>.asDeferredInternal(): Deferred<T> =
+  CompletableDeferred<T>().also { deferred ->
+    if (this is Future<*> && isDone()) { // Fast path if already completed
+      try {
+        deferred.complete(this.getResultOrThrowError())
+      }
+      catch (e: Throwable) {
+        deferred.completeExceptionally(e)
+      }
     }
-    catch (e: Throwable) {
-      deferred.completeExceptionally(e)
+    else {
+      onSuccess { deferred.complete(it) }
+      onError { deferred.completeExceptionally(it) }
+      if (this is Future<*>) deferred.invokeOnCompletion { this.cancel(false) }
     }
   }
-  else {
-    onSuccess { deferred.complete(it) }
-    onError { deferred.completeExceptionally(it) }
-    if (this is Future<*>) deferred.invokeOnCompletion { this.cancel(false) }
-  }
-}
 
 /**
  * Awaits for completion of the promise without blocking a thread.
