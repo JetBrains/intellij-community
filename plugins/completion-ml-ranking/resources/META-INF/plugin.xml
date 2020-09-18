@@ -38,7 +38,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationInitializedListener implementation="com.intellij.completion.ml.tracker.FactorsTrackerInitializer"/>
-    <applicationService serviceImplementation="com.intellij.completion.ml.settings.CompletionMLRankingSettings"/>
+    <applicationService serviceImplementation="com.intellij.completion.ml.settings.CompletionMLRankingSettings" preload="true"/>
 
     <applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionFinalSorter$Factory"
                         serviceImplementation="com.intellij.completion.ml.sorting.MLSorterFactory"/>
@@ -90,8 +90,6 @@
     <statistics.validation.customValidationRule
       implementation="com.intellij.completion.ml.settings.MLCompletionSettingsCollector$MLRankingSettingsValidationRule"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.completion.ml.settings.MLCompletionSettingsCollector"/>
-
-    <preloadingActivity implementation="com.intellij.completion.ml.experiment.ExperimentInitializationActivity"/>
   </extensions>
 
   <applicationListeners>
