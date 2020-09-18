@@ -73,6 +73,8 @@ public class RunConfigurationStorageUi {
   public RunConfigurationStorageUi(@NotNull Project project,
                                    @NotNull RunnerAndConfigurationSettings settings,
                                    @Nullable Runnable onModifiedRunnable) {
+    if (project.isDefault()) LOG.error("Don't use RunConfigurationStorageUi for default project");
+
     myProject = project;
     mySettings = settings;
     myOnModifiedRunnable = onModifiedRunnable;
@@ -329,7 +331,7 @@ public class RunConfigurationStorageUi {
   }
 
   public JPanel createComponent() {
-    return FormBuilder.createFormBuilder().setHorizontalGap(0)
+    return FormBuilder.createFormBuilder().setFormLeftIndent(10).setHorizontalGap(0)
       .addLabeledComponent(myStoreAsFileCheckBox, myStoreAsFileGearButton)
       .getPanel();
   }

@@ -16,6 +16,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.HideableDecorator;
@@ -26,6 +27,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -41,6 +43,8 @@ public final class ConfigurationSettingsEditorWrapper extends SettingsEditor<Run
 
   private JPanel myBeforeLaunchContainer;
   private JBCheckBox myIsAllowRunningInParallelCheckBox;
+  private JPanel myRCStoragePanel;
+  private final @Nullable RunConfigurationStorageUi myRCStorageUi;
   private JPanel myDisclaimerPanel;
   private JLabel myDisclaimerLabel;
   private JLabel myCreateNewRCLabel;
@@ -57,7 +61,17 @@ public final class ConfigurationSettingsEditorWrapper extends SettingsEditor<Run
     return myEditor.selectTabAndGetEditor(editorClass);
   }
 
-  private ConfigurationSettingsEditorWrapper(@NotNull RunnerAndConfigurationSettings settings, SettingsEditor<RunConfiguration> configurationEditor) {
+  private ConfigurationSettingsEditorWrapper(@NotNull RunnerAndConfigurationSettings settings,
+                                             @NotNull SettingsEditor<RunConfiguration> configurationEditor) {
+    Project project = settings.getConfiguration().getProject();
+    // RunConfigurationStorageUi for non-template settings is managed by com.intellij.execution.impl.SingleConfigurationConfigurable
+    myRCStorageUi = !project.isDefault() && settings.isTemplate()
+                    ? new RunConfigurationStorageUi(project, settings, null)
+                    : null;
+    if (myRCStorageUi != null) {
+      myRCStoragePanel.add(myRCStorageUi.createComponent());
+    }
+
     myEditor = new ConfigurationSettingsEditor(settings, configurationEditor);
     myEditor.addSettingsEditorListener(editor -> fireStepsBeforeRunChanged());
     Disposer.register(this, myEditor);
@@ -89,7 +103,12 @@ public final class ConfigurationSettingsEditorWrapper extends SettingsEditor<Run
     myBeforeLaunchContainer.setVisible(!(settings.getConfiguration() instanceof WithoutOwnBeforeRunSteps));
 
     myIsAllowRunningInParallelCheckBox.setSelected(settings.getConfiguration().isAllowRunningInParallel());
-    myIsAllowRunningInParallelCheckBox.setVisible(settings.isTemplate() && settings.getFactory().getSingletonPolicy().isPolicyConfigurable());
+    myIsAllowRunningInParallelCheckBox.setVisible(settings.isTemplate() &&
+                                                  settings.getFactory().getSingletonPolicy().isPolicyConfigurable());
+
+    if (myRCStorageUi != null) {
+      myRCStorageUi.reset();
+    }
 
     myDisclaimerPanel.setVisible(settings.isTemplate() && ProjectManager.getInstance().getOpenProjects().length != 0);
   }
@@ -118,6 +137,10 @@ public final class ConfigurationSettingsEditorWrapper extends SettingsEditor<Run
   public void applyEditorTo(@NotNull final RunnerAndConfigurationSettings settings) throws ConfigurationException {
     myEditor.applyEditorTo(settings);
     doApply((RunnerAndConfigurationSettingsImpl)settings, false);
+
+    if (myRCStorageUi != null) {
+      myRCStorageUi.apply();
+    }
   }
 
   @NotNull

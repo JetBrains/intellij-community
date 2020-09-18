@@ -58,7 +58,6 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
   @NotNull private final Project myProject;
   @Nullable private final Executor myExecutor;
-
   private ValidationResult myLastValidationResult = null;
   private boolean myValidationResultValid = false;
   private MyValidatableComponent myComponent;
@@ -115,7 +114,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
   @Override
   boolean isSpecificallyModified() {
-    return myComponent != null && myComponent.myRCStorageUi.isModified();
+    return myComponent != null && myComponent.myRCStorageUi != null && myComponent.myRCStorageUi.isModified();
   }
 
   @Override
@@ -130,7 +129,9 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     }
     settings.setFolderName(myFolderName);
 
-    myComponent.myRCStorageUi.apply();
+    if (myComponent.myRCStorageUi != null) {
+      myComponent.myRCStorageUi.apply();
+    }
 
     super.apply();
     RunManagerImpl.getInstanceImpl(myProject).addConfiguration(settings);
@@ -183,7 +184,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   }
 
   public boolean isStoredInFile() {
-    return myComponent != null && myComponent.myRCStorageUi.isStoredInFile();
+    return myComponent != null && myComponent.myRCStorageUi != null && myComponent.myRCStorageUi.isStoredInFile();
   }
 
   @Nullable
@@ -265,7 +266,9 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   }
 
   public final void addSharedListener(ActionListener listener) {
-    myComponent.myRCStorageUi.addStoreAsFileCheckBoxListener(listener);
+    if (myComponent.myRCStorageUi != null) {
+      myComponent.myRCStorageUi.addStoreAsFileCheckBoxListener(listener);
+    }
   }
 
   public final void setNameText(final String name) {
@@ -351,7 +354,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     private JBCheckBox myIsAllowRunningInParallelCheckBox;
 
     private JPanel myRCStoragePanel;
-    private final RunConfigurationStorageUi myRCStorageUi;
+    private final @Nullable RunConfigurationStorageUi myRCStorageUi;
 
     private JPanel myValidationPanel;
     private JBScrollPane myJBScrollPane;
@@ -397,8 +400,11 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         myIsAllowRunningInParallel = myIsAllowRunningInParallelCheckBox.isSelected();
       });
 
-      myRCStorageUi = new RunConfigurationStorageUi(myProject, getSettings(), () -> setModified(true));
-      myRCStoragePanel.add(myRCStorageUi.createComponent());
+      myRCStorageUi = !myProject.isDefault() ? new RunConfigurationStorageUi(myProject, getSettings(), () -> setModified(true))
+                                             : null;
+      if (myRCStorageUi != null) {
+        myRCStoragePanel.add(myRCStorageUi.createComponent());
+      }
 
       myRunOnPanel.setBorder(JBUI.Borders.emptyLeft(5));
       UI.PanelFactory.panel(myRunOnPanelInner)
@@ -430,7 +436,9 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       RunConfiguration configuration = getSettings().getConfiguration();
       boolean isManagedRunConfiguration = configuration.getType().isManaged();
 
-      myRCStorageUi.reset();
+      if (myRCStorageUi != null) {
+        myRCStorageUi.reset();
+      }
 
       boolean targetAware =
         configuration instanceof TargetEnvironmentAwareRunProfile && Experiments.getInstance().isFeatureEnabled("run.targets");
