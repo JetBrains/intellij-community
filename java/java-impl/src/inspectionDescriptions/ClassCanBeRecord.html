@@ -1,0 +1,80 @@
+<html>
+<body>
+Suggests replacing classes with records.
+The inspection could be useful if you need to focus on modeling immutable data rather than extensible behavior.
+Automatic implementation of data-driven methods such as equals and accessors helps to get rid of boilerplate.
+<p>
+  Note that not every class can be a record. Here are some of the restrictions:
+</p>
+<ul>
+  <li>Class must contain no inheritors and must be a top level class.</li>
+  <li>Class must contain no fields with the name clone, finalize, getClass, hashCode, notify, notifyAll, toString, or wait.</li>
+  <li>Class must contain no native methods.</li>
+</ul>
+To get a full list of the restrictions refer to http://cr.openjdk.java.net/~gbierman/jep384/jep384-20200506/specs/records-jls.html.
+<!-- tooltip end -->
+<p>Example:</p>
+<pre>
+  interface I<T> {
+    T getA();
+  }
+  class Result<T> implements I<T> {
+    static int constant = 42;
+    @Field final T a;
+    final int b;
+    @FieldAndMethod final int[] c;
+
+    Result(@Parameter T a, @Parameter int b, int... c) {
+        this.a = a;
+        this.b = b;
+        this.c = c;
+    }
+
+    @Override
+    @Method
+    public T getA() {
+        return a;
+    }
+
+    @Method
+    int b() {
+        return b;
+    }
+
+    int[] getC() throws ArrayIndexOutOfBoundsException {
+        return c[0] > 0 ? c : Arrays.copyOf(c, 2);
+    }
+
+    static void test() {
+    }
+  }
+</pre>
+This record will be converted to:
+<pre>
+  interface I<T> {
+    T a();
+  }
+  record Result<T>(@Field @Method T a, @Method int b, @FieldAndMethod int... c) implements I<T> {
+    static int constant = 42;
+    Result(@Parameter T a, @Parameter int b, int... c) {
+        this.a = a;
+        this.b = b;
+        this.c = c;
+    }
+
+    /**
+     * @throws ArrayIndexOutOfBoundsException
+     */
+    @Override
+    public int[] c() {
+        return c[0] > 0 ? c : Arrays.copyOf(c, 2);
+    }
+
+    static void test() {
+    }
+  }
+</pre>
+<p>This inspection only applies to language level 14 preview and higher.</p>
+<p><small>New in 2020.3</small></p>
+</body>
+</html>

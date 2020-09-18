@@ -73,6 +73,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 public final class HighlightUtil {
+  public static final Set<String> RESTRICTED_RECORD_COMPONENT_NAMES = Set.of(
+    "clone", "finalize", "getClass", "hashCode", "notify", "notifyAll", "toString", "wait");
+
   private static final Logger LOG = Logger.getInstance(HighlightUtil.class);
 
   private static final Map<String, Set<String>> ourInterfaceIncompatibleModifiers = new THashMap<>(7);
@@ -87,8 +90,6 @@ public final class HighlightUtil {
     ContainerUtil.newTroveSet(PsiModifier.ABSTRACT, PsiModifier.STATIC, PsiModifier.NATIVE, PsiModifier.FINAL, PsiModifier.STRICTFP, PsiModifier.SYNCHRONIZED);
 
   private static final String SERIAL_PERSISTENT_FIELDS_FIELD_NAME = "serialPersistentFields";
-  private static final Set<String> RESTRICTED_RECORD_COMPONENT_NAMES = Set.of(
-    "clone", "finalize", "getClass", "hashCode", "notify", "notifyAll", "toString", "wait");
 
   static {
     ourClassIncompatibleModifiers.put(PsiModifier.ABSTRACT, ContainerUtil.newTroveSet(PsiModifier.FINAL));
