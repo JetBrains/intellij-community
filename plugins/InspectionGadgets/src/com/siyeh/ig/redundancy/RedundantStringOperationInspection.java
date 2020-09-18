@@ -906,7 +906,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     private final String myText;
 
     private ByteArrayOutputStreamToStringFix(String text) {
-      this.myText = text;
+      myText = text;
     }
 
     @Override
