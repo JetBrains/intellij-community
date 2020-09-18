@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
+import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiFile
 
 internal object GotoDeclarationOnlyHandler2 : CodeInsightActionHandler {
@@ -59,19 +60,24 @@ internal object GotoDeclarationOnlyHandler2 : CodeInsightActionHandler {
   internal fun gotoDeclaration(editor: Editor, file: PsiFile, actionResult: GTDActionResult) {
     when (actionResult) {
       is GTDActionResult.SingleTarget -> {
-        GotoDeclarationAction.recordGTDNavigation(actionResult.navigationProvider?.javaClass)
-        gotoTarget(editor, file, actionResult.navigatable)
+        recordAndNavigate(editor, file, actionResult.navigatable, actionResult.navigationProvider)
       }
       is GTDActionResult.MultipleTargets -> {
         val popup = chooseTargetPopup(
           CodeInsightBundle.message("declaration.navigation.title"),
           actionResult.targets, GTDTarget::presentation
         ) { (navigatable, _, navigationProvider) ->
-          GotoDeclarationAction.recordGTDNavigation(navigationProvider?.javaClass)
-          gotoTarget(editor, file, navigatable)
+          recordAndNavigate(editor, file, navigatable, navigationProvider)
         }
         popup.showInBestPositionFor(editor)
       }
     }
+  }
+
+  private fun recordAndNavigate(editor: Editor, file: PsiFile, navigatable: Navigatable, navigationProvider: Any?) {
+    if (navigationProvider != null) {
+      GotoDeclarationAction.recordGTDNavigation(navigationProvider.javaClass)
+    }
+    gotoTarget(editor, file, navigatable)
   }
 }

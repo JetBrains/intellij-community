@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.navigation.actions;
 
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup;
-import com.intellij.internal.statistic.eventLog.*;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
@@ -20,7 +20,7 @@ final class GTDUCollector extends CounterUsagesCollector {
   }
 
   private static final EnumEventField<GTDUChoice> CHOICE = EventFields.Enum("choice", GTDUChoice.class);
-  public static final ClassEventField NAVIGATION_PROVIDER_CLASS = EventFields.Class("navigation_provider_class");
+  private static final ClassEventField NAVIGATION_PROVIDER_CLASS = EventFields.Class("navigation_provider_class");
   private static final EventLogGroup GROUP = new EventLogGroup("actions.gtdu", FeatureUsageLogger.getConfigVersion());
 
   private static final VarargEventId PERFORMED = registerGTDUEvent("performed");
@@ -43,8 +43,8 @@ final class GTDUCollector extends CounterUsagesCollector {
     PERFORMED.log(ContainerUtil.append(eventData, CHOICE.with(choice)).toArray(new EventPair[0]));
   }
 
-  static void recordNavigated(@NotNull List<@NotNull EventPair<?>> eventData) {
-    NAVIGATED.log(eventData.toArray(new EventPair[0]));
+  static void recordNavigated(@NotNull List<@NotNull EventPair<?>> eventData, @NotNull Class<?> navigationProviderClass) {
+    NAVIGATED.log(ContainerUtil.append(eventData, NAVIGATION_PROVIDER_CLASS.with(navigationProviderClass)).toArray(new EventPair[0]));
   }
 
   @Override

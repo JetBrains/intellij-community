@@ -92,17 +92,18 @@ private class TargetGTDActionData(private val project: Project, private val targ
         val (navigatable, _, navigationProvider) = result.single()
         GTDActionResult.SingleTarget(navigatable, navigationProvider)
       }
-      else -> GTDActionResult.MultipleTargets(result.map { (navigatable, navigationTarget, navigationProvider) ->
-        GTDTarget(navigatable, navigationTarget.targetPresentation, navigationProvider)
-      })
+      else -> {
+        val targets = result.map { (navigatable, navigationTarget, navigationProvider) ->
+          GTDTarget(navigatable, navigationTarget.targetPresentation, navigationProvider)
+        }
+        GTDActionResult.MultipleTargets(targets)
+      }
     }
   }
 
   private fun extractSingleTargetResult(symbol: Symbol, navigationProvider: Any?): GTDActionResult.SingleTarget? {
-    PsiSymbolService.getInstance().extractElementFromSymbol(symbol)?.let { el ->
-      val nav = gtdTargetNavigatable(el) ?: return null
-      if (nav != el) return GTDActionResult.SingleTarget(nav, navigationProvider)
-    }
-    return null
+    val el = PsiSymbolService.getInstance().extractElementFromSymbol(symbol) ?: return null
+    val nav = gtdTargetNavigatable(el) ?: return null
+    return if (nav == el) null else GTDActionResult.SingleTarget(nav, navigationProvider)
   }
 }
