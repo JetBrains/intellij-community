@@ -18,6 +18,9 @@ class ClientExperimentStatus : ExperimentStatus {
 
     fun loadExperimentInfo(): ExperimentConfig {
       try{
+        if (!ApplicationManager.getApplication().isEAP) {
+          return ExperimentConfig.disabledExperiment()
+        }
         val json = ClientExperimentStatus::class.java.getResource(PATH_TO_EXPERIMENT_CONFIG).readText()
         val experimentInfo = GSON.fromJson(json, ExperimentConfig::class.java)
         checkExperimentGroups(experimentInfo)
@@ -73,7 +76,11 @@ class ClientExperimentStatus : ExperimentStatus {
     return language2group[matchingLanguage] ?: ExperimentInfo(false, experimentConfig.version)
   }
 
-  override fun disable() = setDisabled(true)
+  override fun disable() {
+    if (ApplicationManager.getApplication().isEAP) {
+      setDisabled(true)
+    }
+  }
 
   override fun isDisabled(): Boolean = PropertiesComponent.getInstance().isTrueValue(EXPERIMENT_DISABLED_PROPERTY_KEY)
 
