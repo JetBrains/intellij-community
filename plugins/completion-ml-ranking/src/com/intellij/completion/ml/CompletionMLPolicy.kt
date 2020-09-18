@@ -7,11 +7,10 @@ import com.intellij.lang.LanguageExtension
 
 interface CompletionMLPolicy {
     companion object {
-        val INSTANCE = LanguageExtension<CompletionMLPolicy>("com.intellij.completion.ml.ranking.policy")
+        private val INSTANCE = LanguageExtension<CompletionMLPolicy>("com.intellij.completion.ml.ranking.policy")
 
         fun isReRankingDisabled(language: Language, parameters: CompletionParameters): Boolean {
-            val policy = INSTANCE.forLanguage(language) ?: return false
-            return policy.isReRankingDisabled(parameters)
+            return INSTANCE.allForLanguageOrAny(language).any { it.isReRankingDisabled(parameters) }
         }
     }
 
