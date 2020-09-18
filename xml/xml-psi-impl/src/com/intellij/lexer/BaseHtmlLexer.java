@@ -8,7 +8,6 @@ import com.intellij.lang.LanguageHtmlScriptContentProvider;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlTokenType;
@@ -75,7 +74,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
       if (seenScript && !seenTag) {
         seenContentType = false;
         if (((firstCh == 'l' || firstCh == 't') || (caseInsensitive && (firstCh == 'L' || firstCh == 'T')))) {
-          @NonNls String name = TreeUtil.getTokenText(lexer);
+          @NonNls String name = lexer.getTokenText();
           seenContentType = Comparing.strEqual("language", name, !caseInsensitive) || Comparing.strEqual("type", name, !caseInsensitive);
           return;
         }
@@ -83,7 +82,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
       if (seenStyle && !seenTag) {
         seenStylesheetType = false;
         if (firstCh == 't' || caseInsensitive && firstCh == 'T') {
-          seenStylesheetType = Comparing.strEqual(TreeUtil.getTokenText(lexer), "type", !caseInsensitive);
+          seenStylesheetType = Comparing.strEqual(lexer.getTokenText(), "type", !caseInsensitive);
           return;
         }
       }
@@ -92,7 +91,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
         return; // optimization
       }
 
-      String name = TreeUtil.getTokenText(lexer);
+      String name = lexer.getTokenText();
       if (caseInsensitive) name = StringUtil.toLowerCase(name);
 
       final boolean style = name.equals(TOKEN_STYLE);
@@ -167,11 +166,11 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
     @Override
     public void handleElement(Lexer lexer) {
       if (seenContentType && seenScript && !seenAttribute) {
-        @NonNls String mimeType = TreeUtil.getTokenText(lexer);
+        @NonNls String mimeType = lexer.getTokenText();
         scriptType = caseInsensitive ? StringUtil.toLowerCase(mimeType) : mimeType;
       }
       if (seenStylesheetType && seenStyle && !seenAttribute) {
-        @NonNls String type = TreeUtil.getTokenText(lexer).trim();
+        @NonNls String type = lexer.getTokenText().trim();
         styleType = caseInsensitive ? StringUtil.toLowerCase(type) : type;
       }
     }
@@ -208,7 +207,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
   protected IElementType getCurrentStylesheetElementType() {
     Language language = getStyleLanguage();
     if (language != null) {
-      for (EmbeddedTokenTypesProvider provider : EmbeddedTokenTypesProvider.EXTENSION_POINT_NAME.getExtensionList()) {
+      for (EmbeddedTokenTypesProvider provider : EmbeddedTokenTypesProvider.getProviders()) {
         IElementType elementType = provider.getElementType();
         if (language.is(elementType.getLanguage())) {
           return elementType;
@@ -366,7 +365,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
         }
 
         if (base.getTokenType() == XmlTokenType.XML_NAME) {
-          String name = TreeUtil.getTokenText(base);
+          String name = base.getTokenText();
           if (caseInsensitive) name = StringUtil.toLowerCase(name);
 
           if(endOfTheEmbeddment(name)) {

@@ -8,6 +8,7 @@ import com.intellij.lang.LanguageUtil;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,8 +35,8 @@ public class HtmlLexer extends BaseHtmlLexer {
   }
 
   private static @Nullable IElementType getInlineStyleElementType() {
-    EmbeddedTokenTypesProvider provider =
-      EmbeddedTokenTypesProvider.EXTENSION_POINT_NAME.findFirstSafe(p -> INLINE_STYLE_NAME.equals(p.getName()));
+    EmbeddedTokenTypesProvider provider = ContainerUtil.find(EmbeddedTokenTypesProvider.getProviders(),
+                                                             p -> INLINE_STYLE_NAME.equals(p.getName()));
     return provider != null ? provider.getElementType() : null;
   }
 

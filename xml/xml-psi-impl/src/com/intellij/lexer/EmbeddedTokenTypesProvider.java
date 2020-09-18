@@ -19,8 +19,14 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public interface EmbeddedTokenTypesProvider {
   ExtensionPointName<EmbeddedTokenTypesProvider> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.embeddedTokenTypesProvider");
+
+  static List<EmbeddedTokenTypesProvider> getProviders() {
+    return EXTENSION_POINT_NAME.getExtensionList();
+  }
 
   /**
    * @return name of provider, doesn't related to language name.
