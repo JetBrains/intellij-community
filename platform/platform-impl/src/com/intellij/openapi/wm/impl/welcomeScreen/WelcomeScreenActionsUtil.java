@@ -17,6 +17,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.accessibility.AccessibleState;
 import javax.swing.*;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
@@ -118,6 +119,7 @@ public class WelcomeScreenActionsUtil {
       myPanel = new NonOpaquePanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, JBUI.scale(12), false, false));
       myPanel.add(iconWrapper);
       myPanel.add(myLabel);
+      myIconButton.getAccessibleContext().setAccessibleName(myLabel.getText());
     }
 
     void updateIconBackground(boolean selected) {
