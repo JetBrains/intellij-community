@@ -20,6 +20,8 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.i18n.GitBundle
+import git4idea.repo.GitRepository
+import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
 import git4idea.repo.GitUntrackedFilesHolder
 
@@ -38,6 +40,9 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
           refresh { roots.contains(it.root) }
         }
       }
+    })
+    connection.subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener { repository ->
+      refresh { it.root == repository.root }
     })
   }
 
