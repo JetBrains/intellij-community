@@ -4,29 +4,21 @@ package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.parameterInfo.LanguageParameterInfo;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorActivityManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.LightweightHint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -83,9 +75,6 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
 
     final int initialOffset = editor.getCaretModel().getOffset();
 
-    Lookup lookup = LookupManager.getInstance(project).getActiveLookup();
-    LookupElement lookupElement = lookup != null ? lookup.getCurrentItem() : null;
-
     runTask(project,
             ReadAction.nonBlocking(() -> {
               final int offset = editor.getCaretModel().getOffset();
@@ -112,29 +101,13 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
               final ParameterInfoHandler<PsiElement, Object>[] handlers =
                 getHandlers(project, language, file.getViewProvider().getBaseLanguage());
 
-              if (lookup != null) {
-                if (lookupElement != null) {
-                  for (ParameterInfoHandler<PsiElement, Object> handler : handlers) {
-                    if (handler.couldShowInLookup()) {
-                      final Object[] items = handler.getParametersForLookup(lookupElement, context);
-                      if (items != null && items.length > 0) {
-                        return (Runnable)() -> {
-                          showLookupEditorHint(items, editor, handler, requestFocus);
-                        };
-                      }
-                      return null;
-                    }
-                  }
-                }
-                return null;
-              }
 
               return dumbService.computeWithAlternativeResolveEnabled(() -> {
                 try {
                   for (ParameterInfoHandler<PsiElement, Object> handler : handlers) {
                     PsiElement element = handler.findElementForParameterInfo(context);
                     if (element != null) {
-                      return () -> {
+                      return (Runnable)() -> {
                         if (element.isValid()) {
                           handler.showParameterInfo(element, context);
                         }
@@ -158,25 +131,6 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
             },
             progressTitle,
             editor);
-  }
-
-  private static void showLookupEditorHint(Object[] descriptors,
-                                           final Editor editor,
-                                           ParameterInfoHandler handler,
-                                           boolean requestFocus) {
-    ParameterInfoComponent component = new ParameterInfoComponent(descriptors, editor, handler, requestFocus, false);
-    component.update(false);
-
-    final LightweightHint hint = new LightweightHint(component);
-    hint.setSelectingHint(true);
-    final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
-    final Pair<Point, Short> pos = ParameterInfoController.chooseBestHintPosition(editor, null, hint, null,HintManager.DEFAULT, true);
-    ApplicationManager.getApplication().invokeLater(() -> {
-      if (!EditorActivityManager.getInstance().isVisible(editor)) return;
-      hintManager.showEditorHint(hint, editor, pos.getFirst(),
-                                 HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_LOOKUP_ITEM_CHANGE | HintManager.UPDATE_BY_SCROLLING,
-                                 0, false, pos.getSecond());
-    });
   }
 
   public static ParameterInfoHandler @NotNull [] getHandlers(Project project, final Language... languages) {

@@ -16,6 +16,7 @@ package com.intellij.lang.parameterInfo;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +24,15 @@ import java.awt.*;
 
 public interface ParameterInfoHandler <ParameterOwner extends Object & PsiElement, ParameterType> {
   boolean couldShowInLookup();
-  Object @Nullable [] getParametersForLookup(LookupElement item, ParameterInfoContext context);
+
+  /**
+   * @deprecated unused
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  default Object @Nullable [] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
+    return null;
+  }
 
   /**
    * <p>Find psiElement for parameter info should also set ItemsToShow in context and may set highlighted element</p>
