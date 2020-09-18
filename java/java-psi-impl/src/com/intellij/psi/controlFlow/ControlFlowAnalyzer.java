@@ -114,7 +114,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       throw new AnalysisCanceledException(e.getErrorElement());
     }
 
-    return myCurrentFlow;
+    return myCurrentFlow.immutableCopy();
   }
 
   private void generateCompactConstructorAssignments() {
