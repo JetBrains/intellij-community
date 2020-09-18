@@ -28,7 +28,7 @@ private fun fromGTDProvidersInner(project: Project, editor: Editor, offset: Int)
   val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return null
   val adjustedOffset: Int = TargetElementUtil.adjustOffset(file, document, offset)
   val leafElement: PsiElement = file.findElementAt(adjustedOffset) ?: return null
-  val fromProviders: Array<out PsiElement>? = findTargetElementsFromProviders(leafElement, adjustedOffset, editor)
+  val fromProviders: Array<out PsiElement>? = findTargetElementsFromProviders(leafElement, offset, editor)
   if (fromProviders.isNullOrEmpty()) {
     return null
   }
