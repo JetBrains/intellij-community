@@ -25,7 +25,6 @@ import com.intellij.testFramework.utils.parameterInfo.MockParameterInfoUIContext
 import com.intellij.testFramework.utils.parameterInfo.MockUpdateParameterInfoContext;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.testFramework.fixtures.EditorHintFixture.removeCurrentParameterColor;
 
@@ -501,11 +500,6 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
       @Override
       public boolean couldShowInLookup() {
         return false;
-      }
-
-      @Override
-      public Object @Nullable [] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
-        return null;
       }
 
       @NotNull
