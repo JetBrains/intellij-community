@@ -89,7 +89,7 @@ public final class XDebuggerInlayUtil {
             Pair<XValue, String> descriptor = Pair.create(container, name);
             Rectangle bounds = inlay.getBounds();
             Point point = new Point(bounds.x, bounds.y + bounds.height);
-            XDebuggerTreeInlayPopup.showTreePopup(creator, descriptor, valueNode, e, point, project, () -> {
+            XDebuggerTreeInlayPopup.showTreePopup(creator, descriptor, valueNode, e, point, session, () -> {
             });
           };
 

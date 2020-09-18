@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.inline;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
@@ -18,6 +19,7 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativePoint;
@@ -38,12 +40,14 @@ import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
 import com.intellij.xdebugger.impl.evaluate.quick.common.DebuggerTreeCreator;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener;
+import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
@@ -58,22 +62,23 @@ import static com.intellij.xdebugger.impl.ui.DebuggerSessionTabBase.getCustomize
 public class XDebuggerTreeInlayPopup<D> {
   private static final Logger LOG = Logger.getInstance(XDebuggerTreeInlayPopup.class);
   protected final DebuggerTreeCreator<D> myTreeCreator;
-  @NotNull protected final Project myProject;
+  @NotNull protected final XDebugSession mySession;
   @NonNls private final static String DIMENSION_SERVICE_KEY = "DebuggerActiveHint";
   private JBPopup myPopup;
   private final Editor myEditor;
   private final Point myPoint;
   @Nullable private final Runnable myHideRunnable;
   private XValueNodeImpl myValueNode;
+  private ActionToolbar myToolbar;
 
   private XDebuggerTreeInlayPopup(@NotNull DebuggerTreeCreator<D> creator,
                                   @NotNull Editor editor,
                                   @NotNull Point point,
-                                  @NotNull Project project,
+                                  @NotNull XDebugSession session,
                                   @Nullable Runnable hideRunnable,
                                   @NotNull XValueNodeImpl valueNode) {
     myTreeCreator = creator;
-    myProject = project;
+    mySession = session;
     myEditor = editor;
     myPoint = point;
     myHideRunnable = hideRunnable;
@@ -95,11 +100,13 @@ public class XDebuggerTreeInlayPopup<D> {
   private JComponent createToolbar(JPanel parent, Tree tree) {
     DefaultActionGroup toolbarGroup = new DefaultActionGroup();
     toolbarGroup.addAll(getCustomizedActionGroup(XDebuggerActions.WATCHES_INLINE_POPUP_GROUP));
-    if (myValueNode instanceof InlineWatchNodeImpl) {
-      toolbarGroup.add(new EditInlineWatch());
-    }
+    AnAction watchAction = myValueNode instanceof InlineWatchNodeImpl
+                           ? new EditInlineWatch()
+                           : new AddInlineWatch();
 
-    ActionToolbar toolbar = new ActionToolbarImpl("XDebuggerTreeInlayPopup", toolbarGroup, true) {
+    toolbarGroup.add(watchAction, Constraints.LAST);
+
+    myToolbar = new ActionToolbarImpl("XDebuggerTreeInlayPopup", toolbarGroup, true) {
       @Override
       protected @NotNull ActionButton createToolbarButton(@NotNull AnAction action,
                                                           ActionButtonLook look,
@@ -109,7 +116,35 @@ public class XDebuggerTreeInlayPopup<D> {
         return new ActionButtonWithText(action, presentation, place, minimumSize);
       }
     };
-    return toolbar.getComponent();
+
+    return myToolbar.getComponent();
+  }
+
+  private class AddInlineWatch extends XDebuggerTreeActionBase {
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setIcon(AllIcons.Debugger.AddToWatch);
+      e.getPresentation().setText(XDebuggerBundle.message("debugger.inline.watches.popup.action.add.as.inline.watch"));
+      super.update(e);
+    }
+
+    @Override
+    protected void perform(XValueNodeImpl node, @NotNull String nodeName, AnActionEvent e) {
+      node.getValueContainer().calculateEvaluationExpression()
+        .thenAsync(expr -> {
+          if (expr == null && node != myValueNode) {
+            return myValueNode.getValueContainer().calculateEvaluationExpression();
+          } else {
+            return Promises.resolvedPromise(expr);
+          }
+        }).onSuccess(expr -> {
+        AppUIUtil.invokeOnEdt(() -> {
+          XDebuggerWatchesManager manager = ((XDebuggerManagerImpl)XDebuggerManager.getInstance(mySession.getProject())).getWatchesManager();
+          manager.showInplaceEditor(node.getTree().getSourcePosition(), myEditor, mySession, expr);
+        });
+      });
+    }
   }
 
   private class EditInlineWatch extends AnAction {
@@ -127,7 +162,7 @@ public class XDebuggerTreeInlayPopup<D> {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       InlineWatchNodeImpl watch = (InlineWatchNodeImpl)myValueNode;
-      XDebuggerWatchesManager watchesManager = ((XDebuggerManagerImpl)XDebuggerManager.getInstance(myProject)).getWatchesManager();
+      XDebuggerWatchesManager watchesManager = ((XDebuggerManagerImpl)XDebuggerManager.getInstance(mySession.getProject())).getWatchesManager();
       XDebugSession session = e.getData(XDebugSession.DATA_KEY);
       if (session == null) {
         Project project = e.getProject();
@@ -151,8 +186,8 @@ public class XDebuggerTreeInlayPopup<D> {
   }
 
   public static <D> void showTreePopup(XDebuggerTreeCreator creator, Pair<XValue, String> initialItem, XValueNodeImpl valueNode, @NotNull Editor editor,
-                                       @NotNull Point point, @NotNull Project project, Runnable hideRunnable) {
-    new XDebuggerTreeInlayPopup<>(creator, editor, point, project, hideRunnable, valueNode).updateTree(initialItem);
+                                       @NotNull Point point, @NotNull XDebugSession session, Runnable hideRunnable) {
+    new XDebuggerTreeInlayPopup<>(creator, editor, point, session, hideRunnable, valueNode).updateTree(initialItem);
   }
 
   private TreeModelListener createTreeListener(final Tree tree) {
@@ -173,7 +208,7 @@ public class XDebuggerTreeInlayPopup<D> {
       .setRequestFocus(true)
       .setResizable(true)
       .setMovable(true)
-      .setDimensionServiceKey(myProject, DIMENSION_SERVICE_KEY, false)
+      .setDimensionServiceKey(mySession.getProject(), DIMENSION_SERVICE_KEY, false)
       .setMayBeParent(true)
       .setCancelOnOtherWindowOpen(true)
       .setKeyEventHandler(event -> {
@@ -254,10 +289,12 @@ public class XDebuggerTreeInlayPopup<D> {
     final Dimension size = tree.getPreferredSize();
     final Point location = popupWindow.getLocation();
     final Rectangle windowBounds = popupWindow.getBounds();
+    int width = Math.max(size.width, myToolbar.getComponent().getPreferredSize().width) + 150;
+    int maxWidth = 600;
     final Rectangle targetBounds = new Rectangle(location.x,
                                                  location.y,
-                                                 size.width + 175,
-                                                 tree.getRowCount() * tree.getRowHeight() + 75);
+                                                 Math.min(width, maxWidth),
+                                                 Math.min(tree.getRowCount(), 12) * tree.getRowHeight() + 75);
 
     ScreenUtil.cropRectangleToFitTheScreen(targetBounds);
     popupWindow.setBounds(targetBounds);
