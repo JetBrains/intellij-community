@@ -943,6 +943,8 @@
       <separator/>
       <action id="FileChooser.ShowHiddens" class="com.intellij.openapi.fileChooser.actions.ShowHiddensAction"
               icon="AllIcons.Actions.ShowHiddens"/>
+
+      <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
     <group id="ChangeScheme">
