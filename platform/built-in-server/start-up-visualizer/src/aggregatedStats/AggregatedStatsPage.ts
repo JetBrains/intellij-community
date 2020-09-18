@@ -193,7 +193,7 @@ export abstract class AggregatedStatsPage extends Vue {
       return
     }
 
-    console.log(`machine changed (${oldMachine?.join()} => ${machine?.join()})`)
+    console.log(`machine changed (${Array.isArray(oldMachine) ? oldMachine.join() : oldMachine} => ${Array.isArray(machine) ? machine.join() : machine})`)
     if (machine == null) {
       return
     }
