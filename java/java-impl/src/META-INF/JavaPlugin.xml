@@ -1376,6 +1376,12 @@
                      bundle="messages.JavaBundle"
                      key="inspection.redundant.explicit.close"
                      implementationClass="com.intellij.codeInspection.RedundantExplicitCloseInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="SuspiciousTernaryOperatorInVarargsCall"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
+                     bundle="messages.JavaBundle"
+                     key="inspection.suspicious.ternary.in.varargs.display.name"
+                     implementationClass="com.intellij.codeInspection.SuspiciousTernaryOperatorInVarargsCallInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantFileCreation"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
