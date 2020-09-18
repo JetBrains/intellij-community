@@ -23,11 +23,12 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 public final class DebugReflectionUtil {
-  private static final Map<Class, Field[]> allFields = new THashMap<>(new TObjectHashingStrategy<Class>() {
+  private static final Map<Class, Field[]> allFields = Collections.synchronizedMap(new THashMap<>(new TObjectHashingStrategy<Class>() {
     // default strategy seems to be too slow
     @Override
     public int computeHashCode(Class aClass) {
@@ -38,7 +39,7 @@ public final class DebugReflectionUtil {
     public boolean equals(Class o1, Class o2) {
       return o1 == o2;
     }
-  });
+  }));
   private static final Field[] EMPTY_FIELD_ARRAY = new Field[0];
   private static final Method Unsafe_shouldBeInitialized;
 
