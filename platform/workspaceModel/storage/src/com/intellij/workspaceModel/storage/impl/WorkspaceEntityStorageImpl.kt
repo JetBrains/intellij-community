@@ -292,6 +292,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     replaceWith as AbstractEntityStorage
 
     val initialStore = this.toStorage()
+    val initialChangeLogSize = this.changeLog.size
 
     this.assertConsistencyInStrictMode()
     replaceWith.assertConsistencyInStrictMode()
@@ -375,7 +376,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
             val clonedEntity = matchedEntityData.clone()
             val persistentIdBefore = matchedEntityData.persistentId(replaceWith)
                                      ?: rbsFailedAndReport("PersistentId expected for $matchedEntityData", sourceFilter, initialStore,
-                                                           replaceWith, this)
+                                                           replaceWith, this, initialChangeLogSize)
             clonedEntity.id = localNode.id
             val clonedEntityId = matchedEntityId.copy(arrayId = clonedEntity.id)
             this.entitiesByType.replaceById(clonedEntity as WorkspaceEntityData<WorkspaceEntity>, clonedEntityId.clazz)
@@ -464,7 +465,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
               if (connectionId.canRemoveChild()) {
                 this.refs.removeParentToChildRef(connectionId, unmatchedId, childId)
               }
-              else rbsFailedAndReport("Cannot remove link to child entity. $connectionId", sourceFilter, initialStore, replaceWith, this)
+              else rbsFailedAndReport("Cannot remove link to child entity. $connectionId", sourceFilter, initialStore, replaceWith, this, initialChangeLogSize)
             }
           }
         }
@@ -493,7 +494,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
         // Check not restored connections
         for ((connectionId, parentId) in removedConnections) {
           if (!connectionId.canRemoveParent()) rbsFailedAndReport("Cannot restore connection to $parentId; $connectionId", sourceFilter,
-                                                                  initialStore, replaceWith, this)
+                                                                  initialStore, replaceWith, this, initialChangeLogSize)
         }
 
         // ----------------- Update children references -----------------------
@@ -519,7 +520,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     // Some children left without parents. We should delete these children as well.
     for (entityId in lostChildren) {
       if (this.refs.getParentRefsOfChild(entityId).any { !it.key.isChildNullable }) {
-        rbsFailedAndReport("Trying to remove lost children. Cannot perform operation because some parents have strong ref to this child", sourceFilter, initialStore, replaceWith, this)
+        rbsFailedAndReport("Trying to remove lost children. Cannot perform operation because some parents have strong ref to this child", sourceFilter, initialStore, replaceWith, this, initialChangeLogSize)
       }
       removeEntity(entityId)
     }
@@ -533,7 +534,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
             val localParent = this.entityDataById(parentId)
             if (localParent == null) rbsFailedAndReport(
               "Cannot link entities. Child entity doesn't have a parent after operation; $connectionId", sourceFilter, initialStore,
-              replaceWith, this)
+              replaceWith, this, initialChangeLogSize)
 
             val localChildId = replaceMap.inverse().getValue(nodeId)
 
@@ -550,7 +551,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     }
 
     // Assert consistency
-    this.assertConsistencyInStrictModeForRbs("Check after replaceBySource", sourceFilter, initialStore, replaceWith, this)
+    this.assertConsistencyInStrictModeForRbs("Check after replaceBySource", sourceFilter, initialStore, replaceWith, this, initialChangeLogSize)
 
     LOG.debug { "Replace by source finished" }
   }
@@ -559,16 +560,18 @@ internal class WorkspaceEntityStorageBuilderImpl(
                                  sourceFilter: (EntitySource) -> Boolean,
                                  left: WorkspaceEntityStorage,
                                  right: WorkspaceEntityStorage,
-                                 resulting: WorkspaceEntityStorage): Nothing {
-    reportConsistencyIssue(message, ReplaceBySourceException(message), sourceFilter, left, right, resulting)
+                                 resulting: WorkspaceEntityStorageBuilder,
+                                 initialChangeLogSize: Int): Nothing {
+    reportConsistencyIssue(message, ReplaceBySourceException(message), sourceFilter, left, right, resulting, initialChangeLogSize)
     rbsFailed(message)
   }
 
   private fun addDiffAndReport(message: String,
                                left: WorkspaceEntityStorage,
                                right: WorkspaceEntityStorage,
-                               resulting: WorkspaceEntityStorage): Nothing {
-    reportConsistencyIssue(message, AddDiffException(message), null, left, right, resulting)
+                               resulting: WorkspaceEntityStorageBuilder,
+                               initialChangeLogSize: Int): Nothing {
+    reportConsistencyIssue(message, AddDiffException(message), null, left, right, resulting, initialChangeLogSize)
     adFailed(message)
   }
 
@@ -646,6 +649,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
   override fun addDiff(diff: WorkspaceEntityStorageDiffBuilder) {
     diff as WorkspaceEntityStorageBuilderImpl
     val initialStorage = this.toStorage()
+    val initialChangeLogSize = this.changeLog.size
     val replaceMap = HashBiMap.create<EntityId, EntityId>()
     val diffLog = diff.changeLog
     for (change in diffLog) {
@@ -656,14 +660,14 @@ internal class WorkspaceEntityStorageBuilderImpl(
           val newPersistentId = change.entityData.persistentId(this)
           if (newPersistentId != null) {
             val existingIds = this.indexes.persistentIdIndex.getIdsByEntry(newPersistentId)
-            if (existingIds != null && existingIds.isNotEmpty()) addDiffAndReport("PersistentId already exists: $newPersistentId", initialStorage, diff, this)
+            if (existingIds != null && existingIds.isNotEmpty()) addDiffAndReport("PersistentId already exists: $newPersistentId", initialStorage, diff, this, initialChangeLogSize)
           }
 
           val updatedChildren = change.children.mapValues { it.value.map { v -> replaceMap.getOrDefault(v, v) }.toSet() }
           val updatedParents = change.parents.mapValues { replaceMap.getOrDefault(it.value, it.value) }
 
           val entity2id = cloneEntity(change.entityData, change.clazz, replaceMap)
-          updateEntityRefs(entity2id.second, updatedChildren, updatedParents, initialStorage, diff)
+          updateEntityRefs(entity2id.second, updatedChildren, updatedParents, initialStorage, initialChangeLogSize, diff)
           indexes.updateIndices(change.entityData.createPid(), entity2id.second, diff)
           updateChangeLog {
             it.add(ChangeEntry.AddEntity(entity2id.first, change.clazz, updatedChildren, updatedParents))
@@ -695,7 +699,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
           if (newPersistentId != null) {
             val existingIds = this.indexes.persistentIdIndex.getIdsByEntry(newPersistentId)
             if (existingIds != null && existingIds.isNotEmpty() && existingIds.single() != newData.createPid()) {
-              addDiffAndReport("PersistentId already exists: $newPersistentId", initialStorage, diff, this)
+              addDiffAndReport("PersistentId already exists: $newPersistentId", initialStorage, diff, this, initialChangeLogSize)
             }
           }
 
@@ -703,7 +707,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
           if (this.entityDataById(usedPid) != null) {
             indexes.updateIndices(outdatedId, newData.createPid(), diff)
             updateChangeLog { it.add(ChangeEntry.ReplaceEntity(newData, updatedNewChildren, updatedRemovedChildren, updatedModifiedParents)) }
-            replaceEntityWithRefs(newData, outdatedId.clazz, updatedNewChildren, updatedRemovedChildren, updatedModifiedParents, initialStorage, diff)
+            replaceEntityWithRefs(newData, outdatedId.clazz, updatedNewChildren, updatedRemovedChildren, updatedModifiedParents, initialStorage, initialChangeLogSize, diff)
           }
         }
       }
@@ -713,7 +717,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     // Assert consistency
     this.assertConsistencyInStrictMode()
     //this.assertConsistencyInStrictModeForAddDiff("Check after add Diff", initialStorage, diff, this)
-    this.assertConsistencyInStrictModeForRbs("Check after add Diff", { true }, initialStorage, diff, this)
+    this.assertConsistencyInStrictModeForRbs("Check after add Diff", { true }, initialStorage, diff, this, initialChangeLogSize)
   }
 
   @Suppress("UNCHECKED_CAST")
@@ -782,11 +786,12 @@ internal class WorkspaceEntityStorageBuilderImpl(
                                updatedChildren: Map<ConnectionId, Set<EntityId>>,
                                updatedParents: Map<ConnectionId, EntityId>,
                                initialStorage: WorkspaceEntityStorageImpl,
+                               initialChangeLogSize: Int,
                                diff: WorkspaceEntityStorageBuilderImpl) {
     // Restore children references of the entity
     for ((connectionId, children) in updatedChildren) {
       val (missingChildren, existingChildren) = children.partition { this.entityDataById(it) == null }
-      if (missingChildren.isNotEmpty() && !connectionId.canRemoveChild()) addDiffAndReport("Cannot restore some dependencies; $connectionId", initialStorage, diff, this)
+      if (missingChildren.isNotEmpty() && !connectionId.canRemoveChild()) addDiffAndReport("Cannot restore some dependencies; $connectionId", initialStorage, diff, this, initialChangeLogSize)
       refs.updateChildrenOfParent(connectionId, entityId, existingChildren)
     }
 
@@ -795,7 +800,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
       if (this.entityDataById(parent) != null) {
         refs.updateParentOfChild(connection, entityId, parent)
       }
-      else if (!connection.canRemoveParent()) addDiffAndReport("Cannot restore some dependencies; $connection", initialStorage, diff, this)
+      else if (!connection.canRemoveParent()) addDiffAndReport("Cannot restore some dependencies; $connection", initialStorage, diff, this, initialChangeLogSize)
     }
   }
 
@@ -806,6 +811,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     removedChildren: List<Pair<ConnectionId, EntityId>>,
     modifiedParents: Map<ConnectionId, EntityId?>,
     initialStorage: WorkspaceEntityStorageImpl,
+    initialChangeLogSize: Int,
     diff: WorkspaceEntityStorageBuilderImpl
   ) {
 
@@ -837,7 +843,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
       for (addedChild in addedChildrenSet) {
         if (addedChild !in mutableChildren) {
           val addedEntityData = this.entityDataById(addedChild)
-          if (addedEntityData == null && !connectionId.canRemoveParent()) addDiffAndReport("Cannot restore some dependencies; $connectionId", initialStorage, diff, this)
+          if (addedEntityData == null && !connectionId.canRemoveParent()) addDiffAndReport("Cannot restore some dependencies; $connectionId", initialStorage, diff, this, initialChangeLogSize)
           mutableChildren.add(addedChild)
         }
       }
@@ -845,7 +851,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
       // ...    Remove removed children ....
       val removedChildrenSet = removedChildrenMap[connectionId] ?: mutableSetOf()
       for (removedChild in removedChildrenSet) {
-        if (removedChild !in mutableChildren && StrictMode.enabled) addDiffAndReport("Trying to remove child that isn't present", initialStorage, diff, this)
+        if (removedChild !in mutableChildren && StrictMode.enabled) addDiffAndReport("Trying to remove child that isn't present", initialStorage, diff, this, initialChangeLogSize)
         mutableChildren.remove(removedChild)
       }
 
@@ -857,7 +863,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
       removedChildrenMap.removeAll(connectionId)
     }
     // Do we have more children to remove? This should not happen
-    if (!removedChildrenMap.isEmpty && StrictMode.enabled) addDiffAndReport("Trying to remove children that aren't present", initialStorage, diff, this)
+    if (!removedChildrenMap.isEmpty && StrictMode.enabled) addDiffAndReport("Trying to remove children that aren't present", initialStorage, diff, this, initialChangeLogSize)
     // Do we have more children to add? Add them
     for ((connectionId, children) in addedChildrenMap.asMap()) {
       refs.updateChildrenOfParent(connectionId, id, children)
@@ -875,7 +881,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
         }
         else if (parent == null || this.entityDataById(parent) != null) {
           // This child doesn't have a pareny anymore
-          if (!connectionId.canRemoveParent()) addDiffAndReport("Cannot restore some dependencies; $connectionId", initialStorage, diff, this)
+          if (!connectionId.canRemoveParent()) addDiffAndReport("Cannot restore some dependencies; $connectionId", initialStorage, diff, this, initialChangeLogSize)
           else refs.removeParentToChildRef(connectionId, existingParent, id)
         }
         modifiedParentsMap.remove(connectionId)
@@ -887,7 +893,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
       if (this.entityDataById(parentId) != null) {
         refs.updateParentOfChild(connectionId, id, parentId)
       }
-      else if (!connectionId.canRemoveParent()) addDiffAndReport("Cannot restore some dependencies; $connectionId", initialStorage, diff, this)
+      else if (!connectionId.canRemoveParent()) addDiffAndReport("Cannot restore some dependencies; $connectionId", initialStorage, diff, this, initialChangeLogSize)
     }
   }
 
@@ -1134,29 +1140,29 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     if (StrictMode.enabled) this.assertConsistency()
   }
 
-  internal fun assertConsistencyInStrictModeForRbs(message: String, sourceFilter: (EntitySource) -> Boolean, left: WorkspaceEntityStorage, right: WorkspaceEntityStorage, resulting: WorkspaceEntityStorage) {
+  internal fun assertConsistencyInStrictModeForRbs(message: String, sourceFilter: (EntitySource) -> Boolean, left: WorkspaceEntityStorage, right: WorkspaceEntityStorage, resulting: WorkspaceEntityStorageBuilder, initialChangeLogSize: Int) {
     if (StrictMode.enabled || StrictMode.rbsEnabled) {
       try {
         this.assertConsistency()
       }
       catch (e: Throwable) {
-        reportConsistencyIssue(message, e, sourceFilter, left, right, resulting)
+        reportConsistencyIssue(message, e, sourceFilter, left, right, resulting, initialChangeLogSize)
       }
     }
   }
 
-  internal fun assertConsistencyInStrictModeForAddDiff(message: String, left: WorkspaceEntityStorage, right: WorkspaceEntityStorage, resulting: WorkspaceEntityStorage) {
+  internal fun assertConsistencyInStrictModeForAddDiff(message: String, left: WorkspaceEntityStorage, right: WorkspaceEntityStorage, resulting: WorkspaceEntityStorageBuilder) {
     if (StrictMode.enabled || StrictMode.rbsEnabled) {
       try {
         this.quickAssertConsistency()
       }
       catch (e: Throwable) {
-        reportConsistencyIssue(message, e, null, left, right, resulting)
+        reportConsistencyIssue(message, e, null, left, right, resulting, 0)
       }
     }
   }
 
-  internal fun reportConsistencyIssue(message: String, e: Throwable, sourceFilter: ((EntitySource) -> Boolean)?, left: WorkspaceEntityStorage, right: WorkspaceEntityStorage, resulting: WorkspaceEntityStorage) {
+  internal fun reportConsistencyIssue(message: String, e: Throwable, sourceFilter: ((EntitySource) -> Boolean)?, left: WorkspaceEntityStorage, right: WorkspaceEntityStorage, resulting: WorkspaceEntityStorageBuilder, initialChangeLogSize: Int) {
     val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl())
 
     val entitySourceFilter = if (sourceFilter != null) {
@@ -1166,12 +1172,17 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     } else null
 
     val rightLogBytes = if (right is WorkspaceEntityStorageBuilder) {
+      right as WorkspaceEntityStorageBuilderImpl
       val stream = ByteArrayOutputStream()
-      serializer.serializeDiffLog(stream, right)
+      serializer.serializeDiffLog(stream, right.changeLogImpl)
       stream.toByteArray()
     } else null
 
     var stream = ByteArrayOutputStream()
+    serializer.serializeDiffLog(stream, (resulting as WorkspaceEntityStorageBuilderImpl).changeLogImpl.take(initialChangeLogSize))
+    val leftLogBytes = stream.toByteArray()
+
+    stream = ByteArrayOutputStream()
     serializer.serializeCache(stream, left.makeSureItsStore())
     val leftBytes = stream.toByteArray()
 
@@ -1196,13 +1207,14 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     val rightAttachment = createAttachment("Right_Store", rightBytes, displayText)
     val resAttachment = createAttachment("Res_Store", resBytes, displayText)
     val classToIntConverterAttachment = createAttachment("ClassToIntConverter", classToIntConverter, "Class to int converter")
+    val leftLogAttachment = createAttachment("Left_Diff_Log", leftLogBytes, "Log of left builder")
 
     if (rightLogBytes == null) {
-      LOG.error(_message, e, leftAttachment, rightAttachment, resAttachment, classToIntConverterAttachment)
+      LOG.error(_message, e, leftAttachment, rightAttachment, resAttachment, classToIntConverterAttachment, leftLogAttachment)
     }
     else {
       val rightLogAttachment = createAttachment("Right_Diff_Log", rightLogBytes, "Log of right builder")
-      LOG.error(_message, e, leftAttachment, rightAttachment, resAttachment, rightLogAttachment, classToIntConverterAttachment)
+      LOG.error(_message, e, leftAttachment, rightAttachment, resAttachment, rightLogAttachment, classToIntConverterAttachment, leftLogAttachment)
     }
   }
 

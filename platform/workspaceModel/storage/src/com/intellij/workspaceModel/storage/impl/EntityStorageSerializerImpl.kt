@@ -317,9 +317,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
     }
   }
 
-  fun serializeDiffLog(stream: OutputStream, storage: WorkspaceEntityStorageBuilder) {
-    storage as WorkspaceEntityStorageBuilderImpl
-
+  internal fun serializeDiffLog(stream: OutputStream, changeLog: List<WorkspaceEntityStorageBuilderImpl.ChangeEntry>) {
     val output = Output(stream, KRYO_BUFFER_SIZE)
     try {
       val kryo = createKryo()
@@ -327,7 +325,6 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
       // Save version
       output.writeString(serializerDataFormatVersion)
 
-      val changeLog = storage.changeLogImpl
       val entityDataSequence = changeLog.mapNotNull {
         when (it) {
           is WorkspaceEntityStorageBuilderImpl.ChangeEntry.AddEntity<*> -> it.entityData
