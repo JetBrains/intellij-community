@@ -9,6 +9,7 @@ import com.intellij.openapi.wm.WelcomeScreenTab;
 import com.intellij.openapi.wm.WelcomeTabFactory;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.CardLayoutPanel;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -28,6 +29,7 @@ import java.awt.*;
 
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.createSmallLogo;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getMainTabListBackground;
+import static com.intellij.ui.UIBundle.*;
 
 public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
 
@@ -41,6 +43,7 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
 
     JBList<WelcomeScreenTab> tabList = createListWithTabs(mainListModel);
     tabList.addListSelectionListener(e -> centralPanel.select(tabList.getSelectedValue(), true));
+    tabList.getAccessibleContext().setAccessibleName(message("welcome.screen.welcome.screen.categories.accessible.name"));
 
     JComponent logoComponent = createSmallLogo();
     logoComponent.setFocusable(false);
