@@ -9,7 +9,7 @@ class Hello {
       f();
       g();
       throw new Ex1();
-    } catch (Ex1 | Ex3 | Ex2 ex2) {
+    } catch (Ex1 | Ex2 | Ex3 ex2) {
       ex2.printStackTrace();
     } catch (Ex1 ex4) {
       ex4.printStackTrace();

@@ -226,7 +226,7 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
         final Map<@NotNull PsiElement, @Nullable PsiElement> mappings = new HashMap<>();
 
         for (final PsiTryStatement tryStatement : tryStatements) {
-          final TryStatementGraph graph = new TryStatementGraph(tryStatement);
+          final TryStatementInfo graph = new TryStatementInfo(tryStatement);
 
           graph.breakConnectionsFromRedundantExceptions(redundantTypes, method);
 
@@ -335,138 +335,129 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
     }
 
     /**
-     * The class represents a directed acyclic graph of catch sections, exceptions and exceptions inducers
-     * in a single try statement.
-     * For example, for the following code
-     * <pre>
-     *   void func1() throws Ex1 {}
-     *   void func2() throws Ex2 {}
-     *   void func3() throws Ex3, Ex4 {}
-     *   try {
-     *     func1();
-     *     func2();
-     *     func3();
-     *   } catch (Ex1 | Ex2 | Ex3 e) {
-     *   } catch (Ex4 e) {
-     *   }
-     * </pre>
-     * the graph has the following structure:
-     *
-     * <pre>
-     *      CatchSection1   CatchSection2
-     *        /   |    \       |
-     *      Ex1  Ex2   Ex3    Ex4
-     *      /     |      \    /
-     *  func1() func2() func3()
-     *
-     *  </pre>
-     *
-     *  It looks like a tree where the top-level vertices are {@link PsiCatchSection}s, then
-     *  there are vertices for the exceptions the top-level vertices handle. A {@link PsiCatchSection}
-     *  can handle a disjoint set of exceptions that is why one {@link PsiCatchSection} can have multiple
-     *  children. In the lowest level there are particular expressions that induce exceptions.
+     * This class represents relations among catch sections, catch types and exception inducers in a {@link PsiTryStatement}.
+     * <p>
+     * It contains two maps:
+     * <ol>
+     *   <li>{@link RedundantThrowsDeclarationInspection.MyQuickFix.TryStatementInfo#catchToCatchTypes}
+     *   contains relations between a catch section and exception types the section handles</li>
+     *   <li>{@link RedundantThrowsDeclarationInspection.MyQuickFix.TryStatementInfo#exceptionToInducers}
+     *   contains relations between an exception type and places in the code that induce the exception</li>
+     * </ol>
+     * </p>
      */
-    private static final class TryStatementGraph {
-      private final @NotNull Map<@NotNull Vertex, @NotNull Set<@NotNull Vertex>> myVertices;
+    private static final class TryStatementInfo {
+      private final @NotNull Map<@NotNull PsiCatchSection, @NotNull Set<@NotNull PsiType>> catchToCatchTypes;
+      private final @NotNull Map<@NotNull PsiType, @NotNull Set<@NotNull PsiElement>> exceptionToInducers;
 
-      /**
-       * The method adds two vertices into the graph and a connection between them
-       * @param from a vertex of the connection's start
-       * @param to a vertex of the connection's end
-       */
-      private void add(final @NotNull Vertex from, final @NotNull Vertex to) {
-        final Set<@NotNull Vertex> elements = myVertices.computeIfAbsent(from, k -> new HashSet<>());
-        elements.add(to);
-        myVertices.putIfAbsent(to, new HashSet<>());
-      }
-
-      /**
-       * The method returns a stream of {@link CatchVertex} vertices, which are the top-level vertices in the graph.
-       * The method is used as an entry point to traverse a graph.
-       *
-       * @return a stream of {@link CatchVertex}.
-       */
-      @Contract(pure = true)
-      public @NotNull StreamEx<CatchVertex> getCatchVertices() {
-        return StreamEx.of(myVertices.keySet()).select(CatchVertex.class);
-      }
-
-      /**
-       * The method returns adjacent vertices of a vertex
-       * @param from a vertex to get adjacent vertices for
-       * @return a set of adjacent vertices
-       */
-      @Contract(pure = true)
-      public @NotNull Set<@NotNull Vertex> get(final @NotNull Vertex from) {
-        return myVertices.get(from);
-      }
-
-      /**
-       * Build the graph of catch sections, exceptions and exceptions' inducers for a {@link PsiTryStatement}
-       * @param tryStatement a {@link PsiTryStatement} to build a graph for
-       * @return a graph of catch sections, exceptions and exceptions' inducers
-       */
-      @Contract(pure = true)
-      private TryStatementGraph(final @NotNull PsiTryStatement tryStatement) {
-        myVertices = new HashMap<>();
-
-        connectCatchToCatchTypeVertices(tryStatement);
+      private TryStatementInfo(final @NotNull PsiTryStatement tryStatement) {
+        catchToCatchTypes = new HashMap<>();
+        exceptionToInducers = new HashMap<>();
+        analyzeCatchSections(tryStatement);
 
         final PsiCodeBlock block = tryStatement.getTryBlock();
         final PsiResourceList resourceList = tryStatement.getResourceList();
+        analyzeCodeBlock(block);
+        analyzeCodeBlock((PsiElement)resourceList);
+        analyzeCodeBlock(resourceList);
+      }
 
-        connectCatchTypesToInducers(block);
-        connectCatchTypesToInducers((PsiElement) resourceList);
-        connectCatchTypesToInducers(resourceList);
+
+      /**
+       * The method returns a set of {@link PsiCatchSection}s that are in the {@link PsiTryStatement}
+       *
+       * @return a set of {@link PsiCatchSection}s.
+       */
+      @Contract(pure = true)
+      private @NotNull Set<@NotNull PsiCatchSection> getCatchSections() {
+        return catchToCatchTypes.keySet();
       }
 
       /**
-       * The method traverses the {@link PsiCatchSection}s of a {@link PsiTryStatement}
-       * and connects the catch vertices to catch type vertices.
-       * @param tryStatement a try statement to traverse
+       * The method returns a set of {@link PsiType}s that are handled by a {@link PsiCatchSection}
+       * @param catchSection a catch section to get a set of {@link PsiType}s for
+       * @return a set of {@link PsiType}s for a {@link PsiCatchSection}
        */
-      private void connectCatchToCatchTypeVertices(final @NotNull PsiTryStatement tryStatement) {
-        for (final PsiCatchSection catchSection : tryStatement.getCatchSections()) {
-          final CatchVertex catchVertex = new CatchVertex(catchSection);
+      @Contract(pure = true)
+      private @NotNull Set<@NotNull PsiType> get(final @NotNull PsiCatchSection catchSection) {
+        return catchToCatchTypes.get(catchSection);
+      }
 
+      /**
+       * The method returns a set of {@link PsiElement}s that induce a {@link PsiType}
+       * @param exceptionType a type of an exception for which to get a set of {@link PsiElement} that induce the exception
+       * @return a set of {@link PsiElement}s that induce the exception
+       */
+      @Contract(pure = true)
+      private @NotNull Set<@NotNull PsiElement> get(final @NotNull PsiType exceptionType) {
+        return exceptionToInducers.get(exceptionType);
+      }
+
+      /**
+       * The method traverses the set of exceptions of a catch and filters out those exceptions that have no inducers,
+       * ignoring {@link RuntimeException}s and generic exception like
+       * {@link Throwable}s, {@link Exception}s, {@link Error}s.
+       *
+       * @param catchSection a catch section to analyze exceptions of
+       * @return a list of exceptions that have inducers according to the graph.
+       */
+      @Contract(pure = true)
+      private @NotNull List<@NotNull PsiType> getEssentialExceptionsOfCatch(final @NotNull PsiCatchSection catchSection) {
+        final Predicate<PsiType> isEssential = type -> {
+          if (ExceptionUtil.isGeneralExceptionType(type)) return true;
+          if (type instanceof PsiClassType && ExceptionUtil.isUncheckedException((PsiClassType)type)) return true;
+          return !get(type).isEmpty();
+        };
+
+        return StreamEx.of(get(catchSection))
+          .filter(isEssential)
+          .toList();
+      }
+
+      /**
+       * This method extracts {@link PsiCatchSection}s from a {@link PsiTryStatement} and adds them and the exception types
+       * they handle into {@link RedundantThrowsDeclarationInspection.MyQuickFix.TryStatementInfo#catchToCatchTypes},
+       * so it is easy to have access to exceptions a particular catch statement handles.
+       *
+       * @param tryStatement a {@link PsiTryStatement} to analyze
+       */
+      @Contract(pure = true)
+      private void analyzeCatchSections(final @NotNull PsiTryStatement tryStatement) {
+        for (final PsiCatchSection catchSection : tryStatement.getCatchSections()) {
           final PsiParameter parameter = catchSection.getParameter();
           if (parameter == null) continue;
 
-          final PsiType type = parameter.getType();
+          final PsiType catchType = parameter.getType();
 
-          if (type instanceof PsiDisjunctionType) {
-            final PsiDisjunctionType disjunctionType = (PsiDisjunctionType)type;
-            for (PsiType disjunction : disjunctionType.getDisjunctions()) {
-              final CatchTypeVertex catchTypeVertex = new CatchTypeVertex(disjunction);
-              add(catchVertex, catchTypeVertex);
+          if (catchType instanceof PsiDisjunctionType) {
+            final PsiDisjunctionType disjunctionType = (PsiDisjunctionType)catchType;
+            for (final PsiType disjunction : disjunctionType.getDisjunctions()) {
+              add(catchSection, disjunction);
             }
           }
           else {
-            final CatchTypeVertex exceptionVert = new CatchTypeVertex(type);
-            add(catchVertex, exceptionVert);
+            add(catchSection, catchType);
           }
         }
       }
 
       /**
-       * The method extracts {@link PsiCallExpression}s and {@link PsiThrowStatement}s in block that throws
-       * exceptions and connects them to the exceptions vertices in the graph
+       * This method walks through a code block and deduces which expressions throw which exceptions.
+       * Such information is stored into {@link RedundantThrowsDeclarationInspection.MyQuickFix.TryStatementInfo#exceptionToInducers},
+       * so it becomes easy to get all the places in the code that throw a particular exception.
        *
        * @param block a block of code to analyze
        */
       @Contract(pure = true)
-      private void connectCatchTypesToInducers(final @Nullable PsiElement block) {
+      private void analyzeCodeBlock(final @Nullable PsiElement block) {
         if (block == null) return;
 
         block.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override
           public void visitCallExpression(PsiCallExpression callExpression) {
-            final ExceptionInducerVertex exceptionInducerVertex = new ExceptionInducerVertex(callExpression);
-
             final List<PsiClassType> exceptions = ExceptionUtil.getUnhandledExceptions(callExpression, block);
             for (PsiClassType exception : exceptions) {
-              final CatchTypeVertex catchTypeVertex = new CatchTypeVertex(exception);
-              add(catchTypeVertex, exceptionInducerVertex);
+              add(exception, callExpression);
             }
           }
 
@@ -478,49 +469,59 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
             final PsiType type = exception.getType();
             if (type == null) return;
 
-            add(new CatchTypeVertex(type), new ExceptionInducerVertex(statement));
+            add(type, statement);
           }
         });
       }
 
       /**
-       * The method traverses the variables in the {@link PsiResourceList} and connects the
-       * exceptions from their <code>close</code> method to the exceptions vertices in the graph
-       * @param resourceList a resource list to traverse
+       * This method does the same job as {@link RedundantThrowsDeclarationInspection.MyQuickFix.TryStatementInfo#analyzeCodeBlock(PsiElement)},
+       * but it instead of places in code it analyzes variables from a {@link PsiResourceList}
+       * and checks what exceptions the <code>#close()</code> method of a variable throws.
+       *
+       * @param resourceList a resourceList from <code>try-with-resources</code> to analyze
        */
-      private void connectCatchTypesToInducers(final @Nullable PsiResourceList resourceList) {
+      @Contract(pure = true)
+      private void analyzeCodeBlock(final @Nullable PsiResourceList resourceList) {
         if (resourceList == null) return;
 
         for (final PsiResourceListElement element : resourceList) {
-          final ExceptionInducerVertex resource = new ExceptionInducerVertex(element);
           final List<PsiClassType> exceptions = ExceptionUtil.getCloserExceptions(element);
           for (PsiClassType exception : exceptions) {
-            final CatchTypeVertex catchType = new CatchTypeVertex(exception);
-            add(catchType, resource);
+            add(exception, element);
           }
         }
       }
 
+      private void add(final @NotNull PsiCatchSection from, final @NotNull PsiType to) {
+        final Set<@NotNull PsiType> types = catchToCatchTypes.computeIfAbsent(from, k -> new LinkedHashSet<>());
+        types.add(to);
+        exceptionToInducers.computeIfAbsent(to, k -> new HashSet<>());
+      }
+
+      private void add(final @NotNull PsiType from, final @NotNull PsiElement to) {
+        final Set<@NotNull PsiElement> inducers = exceptionToInducers.computeIfAbsent(from, k -> new HashSet<>());
+        inducers.add(to);
+      }
+
       /**
-       * The method breaks connections between the exceptions' vertices and the vertices of their inducers
-       * if an exception is in the redundantTypes set and the inducer is a reference to the method
+       * The method breaks connections between exceptions and the their inducers
+       * for exceptions that are in the redundantTypes set and the inducer is a reference to the method
        * @param redundantTypes a list of redundant exception types
        * @param method a method for which the references should break connections to exceptions
        */
       private void breakConnectionsFromRedundantExceptions(final @NotNull Set<PsiClassType> redundantTypes,
                                                            final @NotNull PsiMethod method) {
-        for (final CatchVertex catchVertex : getCatchVertices()) {
-          final Set<@NotNull Vertex> catchTypeVertices = get(catchVertex);
+        for (final @NotNull PsiCatchSection catchVertex : getCatchSections()) {
+          final @NotNull Set<@NotNull PsiType> catchTypeVertices = get(catchVertex);
 
-          for (final Vertex catchTypeVertex : catchTypeVertices) {
-            final CatchTypeVertex typeVertex = (CatchTypeVertex)catchTypeVertex;
-            if (redundantTypes.stream().noneMatch(typeVertex.myType::isAssignableFrom)) continue;
+          for (final @NotNull PsiType catchTypeVertex : catchTypeVertices) {
+            if (redundantTypes.stream().noneMatch(catchTypeVertex::isAssignableFrom)) continue;
 
-            final Iterator<@NotNull Vertex> catchTypeInducers = get(catchTypeVertex).iterator();
+            final Iterator<@NotNull PsiElement> catchTypeInducers = get(catchTypeVertex).iterator();
             while (catchTypeInducers.hasNext()) {
-              final ExceptionInducerVertex next = (ExceptionInducerVertex)catchTypeInducers.next();
+              final @NotNull PsiElement callInducer = catchTypeInducers.next();
 
-              final PsiElement callInducer = next.myElement;
               if (!(callInducer instanceof PsiCall)) continue;
 
               final JavaResolveResult result = PsiDiamondType.getDiamondsAwareResolveResult((PsiCall)callInducer);
@@ -530,108 +531,6 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
               if (resolvedMethod == method) catchTypeInducers.remove();
             }
           }
-        }
-      }
-
-      /**
-       * The method traverses the set of exceptions' vertices of a catch
-       * and filter out those exceptions that have no inducers, ignoring
-       * {@link RuntimeException}s and generic exception like {@link Throwable}s,
-       * {@link Exception}s, {@link Error}s.
-       *
-       * @param section a catch section to analyze exceptions of
-       * @return a list of exceptions that have inducers according to the graph.
-       */
-      @Contract(pure = true)
-      private @NotNull List<@NotNull PsiType> getEssentialExceptionsOfCatch(final @NotNull PsiCatchSection section) {
-        final Predicate<CatchTypeVertex> isEssential = catchType -> {
-          final PsiType type = catchType.myType;
-          if (ExceptionUtil.isGeneralExceptionType(type)) return true;
-          if (type instanceof PsiClassType && ExceptionUtil.isUncheckedException((PsiClassType)type)) return true;
-          return !get(catchType).isEmpty();
-        };
-
-        return StreamEx.of(get(new CatchVertex(section)))
-          .select(CatchTypeVertex.class)
-          .filter(isEssential)
-          .map(e -> e.myType)
-          .select(PsiType.class)
-          .toList();
-      }
-
-      private interface Vertex { }
-      private static final class CatchVertex implements Vertex {
-        private final PsiCatchSection myCatchSection;
-
-        private CatchVertex(@NotNull final PsiCatchSection section) {
-          myCatchSection = section;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-          if (this == o) return true;
-          if (o == null || getClass() != o.getClass()) return false;
-          CatchVertex aCatch = (CatchVertex)o;
-          return Objects.equals(myCatchSection, aCatch.myCatchSection);
-        }
-
-        @Override
-        public int hashCode() {
-          return Objects.hash(myCatchSection);
-        }
-
-        @Override
-        public String toString() {
-          return myCatchSection.toString();
-        }
-      }
-      private static final class CatchTypeVertex implements Vertex {
-        private final PsiType myType;
-
-        private CatchTypeVertex(final @NotNull PsiType type) {
-          myType = type;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-          if (this == o) return true;
-          if (o == null || getClass() != o.getClass()) return false;
-          CatchTypeVertex type = (CatchTypeVertex)o;
-          return Objects.equals(myType, type.myType);
-        }
-
-        @Override
-        public int hashCode() {
-          return Objects.hash(myType);
-        }
-
-        @Override
-        public String toString() {
-          return myType.toString();
-        }
-      }
-      private static final class ExceptionInducerVertex implements Vertex {
-        private final PsiElement myElement;
-
-        private ExceptionInducerVertex(PsiElement element) {myElement = element;}
-
-
-        @Override
-        public boolean equals(Object o) {
-          if (this == o) return true;
-          if (o == null || getClass() != o.getClass()) return false;
-          ExceptionInducerVertex element = (ExceptionInducerVertex)o;
-          return Objects.equals(myElement, element.myElement);
-        }
-
-        @Override
-        public int hashCode() {
-          return Objects.hash(myElement);
-        }
-
-        @Override
-        public String toString() {
-          return myElement.toString();
         }
       }
     }
