@@ -26,6 +26,7 @@ import git4idea.GitRemoteBranch;
 import git4idea.actions.GitOngoingOperationAction;
 import git4idea.branch.*;
 import git4idea.config.GitVcsSettings;
+import git4idea.config.UpdateMethod;
 import git4idea.fetch.GitFetchSupport;
 import git4idea.i18n.GitBundle;
 import git4idea.push.GitPushSource;
@@ -492,8 +493,8 @@ public class GitBranchPopupActions {
         new CompareAction(myProject, myRepositories, myBranchName),
         new ShowDiffWithBranchAction(myProject, myRepositories, myBranchName),
         new Separator(),
-        new RebaseAction(myProject, myRepositories, myBranchName),
-        new MergeAction(myProject, myRepositories, myBranchName, false),
+        new PullWithRebaseAction(myProject, myRepositories, myBranchName),
+        new PullWithMergeAction(myProject, myRepositories, myBranchName),
         new Separator(),
         new RemoteDeleteAction(myProject, myRepositories, myBranchName)
       };
@@ -578,6 +579,65 @@ public class GitBranchPopupActions {
         });
       }
     }
+
+    private static class PullArbitraryBranchBaseAction extends DumbAwareAction {
+
+      private final Project myProject;
+      private final List<? extends GitRepository> myRepositories;
+      private final String myBranchName;
+      private final UpdateMethod myUpdateMethod;
+
+      PullArbitraryBranchBaseAction(@NotNull Project project,
+                                    @NotNull List<? extends GitRepository> repositories,
+                                    @NotNull String branchName,
+                                    UpdateMethod updateMethod) {
+        myProject = project;
+        myRepositories = repositories;
+        myBranchName = branchName;
+        myUpdateMethod = updateMethod;
+      }
+
+      private static Map<GitRepository, GitBranchPair> configureTarget(List<? extends GitRepository> repositories, String branchName) {
+
+        Map<GitRepository, GitBranchPair> map = new LinkedHashMap<>();
+
+        for (GitRepository repo : repositories) {
+          GitLocalBranch localBranch = repo.getCurrentBranch();
+          GitRemoteBranch remoteBranch = repo.getBranches().findRemoteBranch(branchName);
+          if (localBranch != null && remoteBranch != null) {
+            map.put(repo, new GitBranchPair(localBranch, remoteBranch));
+          }
+        }
+
+        return map;
+      }
+
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        new GitUpdateExecutionProcess(myProject,
+                                      myRepositories,
+                                      configureTarget(myRepositories, myBranchName),
+                                      myUpdateMethod, false)
+          .execute();
+      }
+    }
+
+      private class PullWithMergeAction extends PullArbitraryBranchBaseAction {
+
+        PullWithMergeAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
+          super(project, repositories, branchName, UpdateMethod.MERGE);
+          getTemplatePresentation().setText(GitBundle.messagePointer("branches.action.pull.merge"));
+        }
+
+      }
+
+      private class PullWithRebaseAction extends PullArbitraryBranchBaseAction {
+
+        PullWithRebaseAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
+          super(project, repositories, branchName, UpdateMethod.REBASE);
+          getTemplatePresentation().setText(GitBundle.messagePointer("branches.action.pull.rebase"));
+        }
+      }
 
     private static class RemoteDeleteAction extends DumbAwareAction {
       private final Project myProject;
