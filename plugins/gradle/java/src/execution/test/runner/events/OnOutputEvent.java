@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.execution.testframework.sm.runner.events.TestOutputEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
 
@@ -24,6 +25,8 @@ public class OnOutputEvent extends AbstractTestEvent {
     SMTestProxy testProxy = findTestProxy(testId);
     if (testProxy == null) return;
 
-    testProxy.addOutput(output, "StdOut".equals(destination) ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR);
+    boolean isOut = "StdOut".equals(destination);
+    testProxy.addOutput(output, isOut ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR);
+    getExecutionConsole().getEventPublisher().onTestOutput(testProxy, new TestOutputEvent(testProxy.getName(), output, isOut));
   }
 }

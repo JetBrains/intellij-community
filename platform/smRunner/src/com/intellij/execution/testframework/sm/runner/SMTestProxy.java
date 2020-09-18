@@ -1009,6 +1009,10 @@ public class SMTestProxy extends AbstractTestProxy {
       return result;
     }
 
+    public void setExecutionId(long id) {
+      myExecutionId = id;
+    }
+
     @Override
     public @NlsSafe String getComment() {
       return myComment;
