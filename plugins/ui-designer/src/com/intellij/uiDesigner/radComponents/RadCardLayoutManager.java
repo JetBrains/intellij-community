@@ -22,7 +22,6 @@ import com.intellij.uiDesigner.propertyInspector.properties.HGapProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.VGapProperty;
 import com.intellij.uiDesigner.propertyInspector.renderers.ComponentRenderer;
 import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
-import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,9 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.lang.reflect.Field;
 import java.util.List;
-import java.util.Vector;
 
 /**
  * @author yole
@@ -135,48 +132,6 @@ public class RadCardLayoutManager extends RadLayoutManager {
     return true;
   }
 
-  @Override public void createSnapshotLayout(final SnapshotContext context,
-                                             final JComponent parent,
-                                             final RadContainer container,
-                                             final LayoutManager layout) {
-    CardLayout cardLayout = (CardLayout) layout;
-    container.setLayout(new CardLayout(cardLayout.getHgap(), cardLayout.getVgap()));
-  }
-
-
-  @SuppressWarnings({"UseOfObsoleteCollectionType"})
-  @Override
-  public void addSnapshotComponent(final JComponent parent,
-                                   final JComponent child,
-                                   final RadContainer container,
-                                   final RadComponent component) {
-    // unfortunately card can be extracted only through reflection
-    String cardName = null;
-    try {
-      final LayoutManager layout = parent.getLayout();
-      Field vectorField = layout.getClass().getDeclaredField("vector");
-      vectorField.setAccessible(true);
-      Vector vector = (Vector) vectorField.get(parent.getLayout());
-      for (Object card : vector) {
-        Field nameField = card.getClass().getDeclaredField("name");
-        nameField.setAccessible(true);
-        Field compField = card.getClass().getDeclaredField("comp");
-        compField.setAccessible(true);
-        if (compField.get(card) == child) {
-          cardName = (String) nameField.get(card);
-          break;
-        }
-      }
-    }
-    catch (Exception e) {
-      // ignore
-    }
-
-    if (cardName != null) {
-      component.setCustomLayoutConstraints(cardName);
-      container.addComponent(component);
-    }
-  }
 
   private static class CardDropLocation implements ComponentDropLocation {
     private final RadContainer myContainer;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.radComponents;
 
@@ -21,9 +21,6 @@ import com.intellij.uiDesigner.propertyInspector.properties.AbstractInsetsProper
 import com.intellij.uiDesigner.propertyInspector.properties.AlignPropertyProvider;
 import com.intellij.uiDesigner.propertyInspector.properties.HorzAlignProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.VertAlignProperty;
-import com.intellij.uiDesigner.snapShooter.SnapshotContext;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.PlatformColors;
 import com.jgoodies.forms.factories.FormFactory;
 import com.jgoodies.forms.layout.*;
@@ -31,11 +28,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -842,49 +837,6 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
     return 0;
   }
 
-  @Override
-  public void createSnapshotLayout(final SnapshotContext context,
-                                   final JComponent parent,
-                                   final RadContainer container,
-                                   final LayoutManager layout) {
-    ColumnSpec[] colSpecs;
-    RowSpec[] rowSpecs;
-    int[][] rowGroups;
-    int[][] columnGroups;
-    try {
-      Method method = layout.getClass().getMethod("getRowCount", ArrayUtil.EMPTY_CLASS_ARRAY);
-      int rowCount = ((Integer)method.invoke(layout, ArrayUtilRt.EMPTY_OBJECT_ARRAY)).intValue();
-      method = layout.getClass().getMethod("getColumnCount", ArrayUtil.EMPTY_CLASS_ARRAY);
-      int columnCount = ((Integer)method.invoke(layout, ArrayUtilRt.EMPTY_OBJECT_ARRAY)).intValue();
-
-      rowSpecs = new RowSpec[rowCount];
-      colSpecs = new ColumnSpec[columnCount];
-
-      method = layout.getClass().getMethod("getRowSpec", int.class);
-      for (int i = 0; i < rowCount; i++) {
-        rowSpecs[i] = (RowSpec)createSerializedCopy(method.invoke(layout, i + 1));
-      }
-      method = layout.getClass().getMethod("getColumnSpec", int.class);
-      for (int i = 0; i < columnCount; i++) {
-        colSpecs[i] = (ColumnSpec)createSerializedCopy(method.invoke(layout, i + 1));
-      }
-
-      method = layout.getClass().getMethod("getRowGroups", ArrayUtil.EMPTY_CLASS_ARRAY);
-      rowGroups = (int[][])method.invoke(layout);
-
-      method = layout.getClass().getMethod("getColumnGroups", ArrayUtil.EMPTY_CLASS_ARRAY);
-      columnGroups = (int[][])method.invoke(layout);
-    }
-    catch (Exception ex) {
-      throw new RuntimeException(ex);
-    }
-
-    final FormLayout formLayout = new FormLayout(colSpecs, rowSpecs);
-    formLayout.setRowGroups(rowGroups);
-    formLayout.setColumnGroups(columnGroups);
-    container.setLayout(formLayout);
-  }
-
   private static Object createSerializedCopy(final Object original) {
     // FormLayout may have been loaded with a different classloader, so we need to create a copy through serialization
     Object copy;
@@ -902,25 +854,6 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
       throw new RuntimeException(e);
     }
     return copy;
-  }
-
-  @Override
-  public void addSnapshotComponent(final JComponent parent,
-                                   final JComponent child,
-                                   final RadContainer container,
-                                   final RadComponent component) {
-    CellConstraints cc;
-    try {
-      LayoutManager layout = parent.getLayout();
-      Method method = layout.getClass().getMethod("getConstraints", Component.class);
-      cc = (CellConstraints)createSerializedCopy(method.invoke(layout, child));
-    }
-    catch (Exception ex) {
-      throw new RuntimeException(ex);
-    }
-    copyCellToGridConstraints(component.getConstraints(), cc);
-    component.setCustomLayoutConstraints(cc);
-    container.addComponent(component);
   }
 
   private static class ComponentInsetsProperty extends AbstractInsetsProperty<RadComponent> {

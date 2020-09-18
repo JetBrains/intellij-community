@@ -41,7 +41,6 @@
     <favoriteNodeProvider implementation="com.intellij.uiDesigner.projectView.UIDesignerFavoriteNodeProvider"/>
     <renameHandler implementation="com.intellij.uiDesigner.projectView.FormRenameHandler"/>
     <implicitUsageProvider implementation="com.intellij.uiDesigner.binding.UIDesignerImplicitUsageProvider"/>
-    <runConfigurationExtension implementation="com.intellij.uiDesigner.snapShooter.SnapShooterConfigurationExtension"/>
     <usageTypeProvider implementation="com.intellij.uiDesigner.binding.FormUsageTypeProvider"/>
 
     <localInspection language="TEXT" displayName="Invalid property key in a UI form"
@@ -252,7 +251,6 @@
       <separator/>
       <action id="NewForm" class="com.intellij.uiDesigner.actions.CreateFormAction"/>
       <action id="NewDialog" class="com.intellij.uiDesigner.actions.CreateDialogAction"/>
-      <action id="NewFormSnapshot" class="com.intellij.uiDesigner.snapShooter.CreateSnapShotAction"/>
 
       <add-to-group anchor="after" group-id="NewGroup" relative-to-action="NewFromTemplate"/>
     </group>

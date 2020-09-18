@@ -1,17 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.properties;
 
-import com.intellij.uiDesigner.SwingProperties;
 import com.intellij.uiDesigner.propertyInspector.IntrospectedProperty;
 import com.intellij.uiDesigner.propertyInspector.PropertyEditor;
 import com.intellij.uiDesigner.propertyInspector.PropertyRenderer;
 import com.intellij.uiDesigner.propertyInspector.editors.IntEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
-import com.intellij.uiDesigner.radComponents.RadComponent;
-import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.lang.reflect.Method;
 
 /**
@@ -52,13 +48,5 @@ public final class IntroIntProperty extends IntrospectedProperty<Integer> {
       myEditor = new IntEditor(Integer.MIN_VALUE);
     }
     return myEditor;
-  }
-
-  @Override
-  public void importSnapshotValue(final SnapshotContext context, final JComponent component, final RadComponent radComponent) {
-    // exclude property from snapshot import to avoid exceptions because of not imported model
-    if (!getName().equals(SwingProperties.SELECTED_INDEX)) {
-      super.importSnapshotValue(context, component, radComponent);
-    }
   }
 }

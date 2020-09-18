@@ -369,14 +369,6 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
     return getOptions().getRedirectOptions();
   }
 
-  public boolean isSwingInspectorEnabled() {
-    return getOptions().isSwingInspectorEnabled();
-  }
-
-  public void setSwingInspectorEnabled(boolean value) {
-    getOptions().setSwingInspectorEnabled(value);
-  }
-
   @Override
   public Module getDefaultModule() {
     PsiClass mainClass = getMainClass();
