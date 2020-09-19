@@ -88,7 +88,7 @@ public class SuspiciousIndentAfterControlStatement {
 
     public void x(int i) {
         if (i == 3)
-<warning descr="Suspicious indentation after 'if' statement">        </warning>System.out.println("-->");
+<warning descr="Suspicious indentation after 'if' statement">	    </warning>System.out.println("-->");
         System.out.println(i);
     }
 
