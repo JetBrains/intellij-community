@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.codeStyle.CodeStyleSettings
@@ -68,6 +69,7 @@ import java.io.File
 import java.io.IOException
 
 abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFixtureTestCaseBase() {
+
     private val exceptions = ArrayList<Throwable>()
 
     protected open val captureExceptions = false
