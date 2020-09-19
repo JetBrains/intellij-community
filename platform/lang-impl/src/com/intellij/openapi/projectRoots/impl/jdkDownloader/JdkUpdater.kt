@@ -44,7 +44,7 @@ internal class JdkUpdaterStartup : StartupActivity.Background {
               "Download " + feedItem.fullPresentationText,
               Runnable { updateJdk(project, jdk, feedItem) }))
             .addAction(NotificationAction.createSimple(
-              "Cancel",
+              "Skip this update",
               Runnable { TODO("remember we've cancelled an ide") }))
             .notify(project)
         }
