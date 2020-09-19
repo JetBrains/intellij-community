@@ -24,8 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
@@ -102,13 +100,7 @@ public final class FileTypeChooser extends DialogWrapper {
       }
     }.installOn(myList);
 
-    myList.getSelectionModel().addListSelectionListener(
-      new ListSelectionListener() {
-        @Override
-        public void valueChanged(ListSelectionEvent e) {
-          updateButtonsState();
-        }
-      }
+    myList.getSelectionModel().addListSelectionListener(__ -> updateButtonsState()
     );
 
     ScrollingUtil.selectItem(myList, FileTypes.PLAIN_TEXT);
@@ -179,9 +171,13 @@ public final class FileTypeChooser extends DialogWrapper {
     final FileType type = chooser.getSelectedType();
     if (type == FileTypes.UNKNOWN || type == null) return null;
 
-    ApplicationManager.getApplication().runWriteAction(() -> FileTypeManagerEx.getInstanceEx().associatePattern(type, (String)chooser.myPattern.getSelectedItem()));
+    ApplicationManager.getApplication().runWriteAction(() -> FileTypeManagerEx.getInstanceEx().associatePattern(type, chooser.getSelectedPattern()));
 
     return type;
+  }
+
+  private String getSelectedPattern() {
+    return (String)myPattern.getSelectedItem();
   }
 
   @NotNull
