@@ -35,6 +35,9 @@ class ConflictingMappingTracker {
                    @NotNull FileNameMatcher matcher,
                    @NotNull String fileTypeNameOld,
                    @NotNull String fileTypeNameNew) {
+    if (fileTypeNameNew.equals(fileTypeNameOld)) {
+      throw new IllegalArgumentException("expected different file types but got "+fileTypeNameOld);
+    }
     String title = FileTypesBundle.message("notification.title.file.type.conflict.found", fileTypeNameOld, fileTypeNameNew);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       AssertionError error = new AssertionError(title + "; matcher: " + matcher);
@@ -63,10 +66,10 @@ class ConflictingMappingTracker {
           Messages.showMessageDialog(project, m, FileTypesBundle.message("dialog.title.pattern.reassigned"), Messages.getInformationIcon());
         }
       }));
-      if (fileTypeOld != null) {
+      if (fileTypeOld != null && !fileTypeOld.isReadOnly()) {
         notification.addAction(NotificationAction.createSimple(FileTypesBundle.message("notification.content.edit", fileTypeNameOld), () -> editFileType(project, fileTypeOld)));
       }
-      if (fileTypeNew != null) {
+      if (fileTypeNew != null && !fileTypeNew.isReadOnly()) {
         notification.addAction(NotificationAction.createSimple(FileTypesBundle.message("notification.content.edit", fileTypeNameNew), () -> editFileType(project, fileTypeNew)));
       }
       Notifications.Bus.notify(notification, project);
