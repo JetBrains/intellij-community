@@ -37,8 +37,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
@@ -81,15 +79,10 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     myFileTypePanel.myAssociatePanel.setVisible(OSAssociateFileTypesUtil.isAvailable());
     myFileTypePanel.myAssociateButton.setText(
       FileTypesBundle.message("filetype.associate.button", ApplicationNamesInfo.getInstance().getFullProductName()));
-    myFileTypePanel.myAssociateButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        OSAssociateFileTypesUtil.chooseAndAssociate(
-          message -> showAssociationBalloon(message, HintUtil.getInformationColor()),
-          message -> showAssociationBalloon(message, HintUtil.getErrorColor())
-        );
-      }
-    });
+    myFileTypePanel.myAssociateButton.addActionListener(__ -> OSAssociateFileTypesUtil.chooseAndAssociate(
+      message -> showAssociationBalloon(message, HintUtil.getInformationColor()),
+      message -> showAssociationBalloon(message, HintUtil.getErrorColor())
+    ));
     return myFileTypePanel.myWholePanel;
   }
 
@@ -472,8 +465,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       return myFileTypesList.getSelectedValue();
     }
 
-    @SuppressWarnings("DuplicatedCode")
-    void setFileTypes(Iterable<FileType> types) {
+    void setFileTypes(@NotNull Iterable<? extends FileType> types) {
       DefaultListModel<FileType> listModel = (DefaultListModel<FileType>)myFileTypesList.getModel();
       listModel.clear();
       for (FileType type : types) {
@@ -547,10 +539,10 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       return myList.getSelectedValue();
     }
 
-    private void refill(List<FileNameMatcher> matchers) {
+    private void refill(@NotNull List<? extends FileNameMatcher> matchers) {
       clearList();
       List<FileNameMatcher> copy = new ArrayList<>(matchers);
-      Collections.sort(copy, Comparator.comparing(FileNameMatcher::getPresentableString));
+      copy.sort(Comparator.comparing(FileNameMatcher::getPresentableString));
       DefaultListModel<String> model = (DefaultListModel<String>)myList.getModel();
       for (FileNameMatcher matcher : copy) {
         model.addElement(matcher.getPresentableString());
@@ -577,7 +569,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
           return component;
         }
       });
-      myList.getEmptyText().setText(FileTypesBundle.message("filetype.settings.no.patterns"));
+      myList.setEmptyText(FileTypesBundle.message("filetype.settings.no.patterns"));
 
       ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myList)
         .setAddAction(__ -> editHashBang(null))
@@ -587,7 +579,6 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
         .disableUpDownActions();
 
       panel.add(decorator.createPanel(), BorderLayout.CENTER);
-
       panel.setBorder(IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetype.hashbang.group"), false, TITLE_INSETS).setShowLine(false));
     }
 
@@ -611,7 +602,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       return myList.getSelectedValue();
     }
 
-    private void refill(List<String> patterns) {
+    private void refill(@NotNull List<String> patterns) {
       clearList();
       Collections.sort(patterns);
       DefaultListModel<String> model = (DefaultListModel<String>)myList.getModel();

@@ -1274,7 +1274,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     myPatternsTable = assocTable.copy();
     fireFileTypesChanged();
 
-    myRemovedMappingTracker.removeMatching((matcher, fileTypeName) -> {
+    myRemovedMappingTracker.removeIf((matcher, fileTypeName) -> {
       FileType fileType = getFileTypeByName(fileTypeName);
       return fileType != null && assocTable.isAssociatedWith(fileType, matcher);
     });
