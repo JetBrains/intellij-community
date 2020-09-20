@@ -3,6 +3,7 @@ package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ResourceUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -42,7 +43,8 @@ class ResourceTextDescriptor implements TextDescriptor {
     if (stream == null) {
       throw new IOException("Resource not found: " + myResourcePath);
     }
-    return ResourceUtil.loadText(stream);
+    @Nls String text= ResourceUtil.loadText(stream);
+    return text;
   }
 
   @NotNull

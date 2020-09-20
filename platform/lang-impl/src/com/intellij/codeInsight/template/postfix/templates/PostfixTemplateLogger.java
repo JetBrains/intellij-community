@@ -13,15 +13,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class PostfixTemplateLogger {
-  private static final String USAGE_GROUP = "completion.postfix";
-  private static final String CUSTOM = "custom";
-  private static final String NO_PROVIDER = "no.provider";
-  private static final String TEMPLATE_FIELD = "template";
-  private static final String PROVIDER_FIELD = "provider";
+  private static final @NonNls String USAGE_GROUP = "completion.postfix";
+  private static final @NonNls String CUSTOM = "custom";
+  private static final @NonNls String NO_PROVIDER = "no.provider";
+  private static final @NonNls String TEMPLATE_FIELD = "template";
+  private static final @NonNls String PROVIDER_FIELD = "provider";
 
   static void log(@NotNull final PostfixTemplate template, @NotNull final PsiElement context) {
     final Project project = context.getProject();

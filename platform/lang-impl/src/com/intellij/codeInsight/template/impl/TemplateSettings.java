@@ -20,6 +20,8 @@ import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.serviceContainer.NonInjectable;
@@ -86,7 +88,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
   @NonNls private static final String KEY = "key";
   @NonNls private static final String ID = "id";
 
-  static final String TEMPLATES_DIR_PATH = "templates";
+  @NonNls static final String TEMPLATES_DIR_PATH = "templates";
 
   private final MultiMap<String, TemplateImpl> myTemplates = MultiMap.createLinked();
 
@@ -455,7 +457,12 @@ public final class TemplateSettings implements PersistentStateComponent<Template
   }
 
   @NotNull
-  private static TemplateImpl createTemplate(@NotNull String key, String string, @NotNull String group, String description, @Nullable String shortcut, String id) {
+  private static TemplateImpl createTemplate(@NotNull @NlsSafe String key,
+                                             @NlsSafe String string,
+                                             @NotNull @NonNls String group,
+                                             @NlsContexts.DetailedDescription String description,
+                                             @Nullable @NlsSafe String shortcut,
+                                             @NonNls String id) {
     TemplateImpl template = new TemplateImpl(key, string, group, false);
     template.setId(id);
     template.setDescription(description);
@@ -654,7 +661,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
       description = bundle.getString(key);
     }
     else {
-      description = element.getAttributeValue(DESCRIPTION);
+      description = element.getAttributeValue(DESCRIPTION); //NON-NLS
     }
 
     String shortcut = element.getAttributeValue(SHORTCUT);

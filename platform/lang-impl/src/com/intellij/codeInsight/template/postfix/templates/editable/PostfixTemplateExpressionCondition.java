@@ -2,26 +2,26 @@
 package com.intellij.codeInsight.template.postfix.templates.editable;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.psi.PsiElement;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public interface PostfixTemplateExpressionCondition<T extends PsiElement> extends Condition<T> {
 
-  String ID_ATTR = "id";
+  @NonNls String ID_ATTR = "id";
 
   /**
    * @return presentable name for postfix editor dialog
    */
-  @NotNull
-  String getPresentableName();
+  @NotNull @NlsActions.ActionText String getPresentableName();
 
 
   /**
    * @return id for serialization
    */
-  @NotNull
-  String getId();
+  @NotNull @NonNls String getId();
 
   boolean equals(Object o);
 

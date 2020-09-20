@@ -5,6 +5,8 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.options.SchemeElement;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -16,12 +18,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class TemplateImpl extends TemplateBase implements SchemeElement {
-  private String myKey;
-  private String myDescription;
+  private @NlsSafe String myKey;
+  private @NlsContexts.DetailedDescription String myDescription;
   private String myGroupName;
   private char myShortcutChar = TemplateConstants.DEFAULT_CHAR;
   private final List<Variable> myVariables = new SmartList<>();
-  private String myId;
+  private @NonNls String myId;
 
   @Override
   public boolean equals(Object o) {
@@ -85,18 +87,18 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
 
   private boolean myIsInline;
 
-  public TemplateImpl(@NotNull String key, @NotNull String group) {
+  public TemplateImpl(@NotNull @NlsSafe String key, @NotNull @NonNls String group) {
     this(key, null, group);
     setToParseSegments(false);
     setTemplateText("");
     setSegments(new SmartList<>());
   }
 
-  public TemplateImpl(@NotNull String key, String string, @NotNull String group) {
+  public TemplateImpl(@NotNull @NlsSafe String key, @Nullable @NlsSafe String string, @NotNull @NonNls String group) {
     this(key, string, group, true);
   }
 
-  TemplateImpl(@NotNull String key, String string, @NotNull String group, boolean storeBuildingStacktrace) {
+  TemplateImpl(@NotNull @NlsSafe String key, @NlsSafe String string, @NotNull @NonNls String group, boolean storeBuildingStacktrace) {
     myKey = key;
     setString(StringUtil.convertLineSeparators(StringUtil.notNullize(string)));
     myGroupName = group;
@@ -111,7 +113,7 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
 
   @NotNull
   @Override
-  public Variable addVariable(@NotNull String name,
+  public Variable addVariable(@NotNull @NlsSafe String name,
                               Expression expression,
                               Expression defaultValueExpression,
                               boolean isAlwaysStopAt,
@@ -126,7 +128,7 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
 
   @NotNull
   @Override
-  public Variable addVariable(@NotNull String name, String expression, String defaultValue, boolean isAlwaysStopAt) {
+  public Variable addVariable(@NotNull @NlsSafe String name, @NlsSafe String expression, @NlsSafe String defaultValue, boolean isAlwaysStopAt) {
     Variable variable = new Variable(name, expression, defaultValue, isAlwaysStopAt);
     myVariables.add(variable);
     return variable;
@@ -148,7 +150,7 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
   }
 
   @Override
-  public String getId() {
+  public @NonNls String getId() {
     return myId;
   }
 
@@ -257,12 +259,12 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
   }
 
   @NotNull
-  public String getVariableNameAt(int i) {
+  public @NlsSafe String getVariableNameAt(int i) {
     return myVariables.get(i).getName();
   }
 
   @NotNull
-  public String getExpressionStringAt(int i) {
+  public @NlsSafe String getExpressionStringAt(int i) {
     return myVariables.get(i).getExpressionString();
   }
 
@@ -272,7 +274,7 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
   }
 
   @NotNull
-  public String getDefaultValueStringAt(int i) {
+  public @NlsSafe String getDefaultValueStringAt(int i) {
     return myVariables.get(i).getDefaultValueString();
   }
 
@@ -286,20 +288,20 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
   }
 
   @Override
-  public String getKey() {
+  public @NlsSafe String getKey() {
     return myKey;
   }
 
-  public void setKey(String key) {
+  public void setKey(@NlsSafe String key) {
     myKey = key;
   }
 
   @Override
-  public String getDescription() {
+  public @NlsContexts.DetailedDescription String getDescription() {
     return myDescription;
   }
 
-  public void setDescription(@Nullable String value) {
+  public void setDescription(@NlsContexts.DetailedDescription @Nullable String value) {
     value = StringUtil.notNullize(value).trim();
     if (!StringUtil.equals(value, myDescription)) {
       myDescription = value;
@@ -314,12 +316,12 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
     myShortcutChar = shortcutChar;
   }
 
-  public String getGroupName() {
+  public @NonNls String getGroupName() {
     return myGroupName;
   }
 
   @Override
-  public void setGroupName(@NotNull String groupName) {
+  public void setGroupName(@NotNull @NonNls String groupName) {
     myGroupName = groupName;
   }
 
