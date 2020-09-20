@@ -64,6 +64,8 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipFile;
 
 import static com.intellij.ide.GeneralSettings.IDE_GENERAL_XML;
+import static com.intellij.ide.SpecialConfigFiles.CHROME_USER_DATA;
+import static com.intellij.ide.SpecialConfigFiles.USER_WEB_TOKEN;
 import static com.intellij.openapi.application.CustomConfigMigrationOption.readCustomConfigMigrationOptionAndRemoveMarkerFile;
 import static com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY;
 import static com.intellij.openapi.util.Pair.pair;
@@ -970,12 +972,16 @@ public final class ConfigImportHelper {
   private static boolean blockImport(Path path, Path oldConfig, Path newConfig, Path oldPluginsDir) {
     if (oldConfig.equals(path.getParent())) {
       String name = path.getFileName().toString();
-      return "user.web.token".equals(name) ||
-             name.startsWith("chrome-user-data") ||
+      return shouldSkipFileDuringImport(name) ||
              Files.exists(newConfig.resolve(path.getFileName())) ||
              path.startsWith(oldPluginsDir);
     }
     return false;
+  }
+
+  private static boolean shouldSkipFileDuringImport(@NotNull String fileName) {
+    return fileName.equals(USER_WEB_TOKEN) ||
+           fileName.startsWith(CHROME_USER_DATA);
   }
 
   private static String defaultConfigPath(String selector) {

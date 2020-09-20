@@ -10,6 +10,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationType
 import com.intellij.notification.SingletonNotificationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.ide.SpecialConfigFiles.USER_WEB_TOKEN
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
@@ -51,9 +52,6 @@ import java.util.concurrent.TimeUnit
 import javax.swing.SwingUtilities
 
 internal val LOG = logger<BuiltInWebServer>()
-
-// name is duplicated in the ConfigImportHelper
-private const val IDE_TOKEN_FILE = "user.web.token"
 
 private val notificationManager by lazy {
   SingletonNotificationManager(BuiltInServerManagerImpl.NOTIFICATION_GROUP.value, NotificationType.INFORMATION, null)
@@ -102,7 +100,7 @@ const val TOKEN_HEADER_NAME = "x-ijt"
 private val STANDARD_COOKIE by lazy {
   val productName = ApplicationNamesInfo.getInstance().lowercaseProductName
   val configPath = PathManager.getConfigPath()
-  val file = Paths.get(configPath, IDE_TOKEN_FILE)
+  val file = Paths.get(configPath, USER_WEB_TOKEN)
   var token: String? = null
   if (file.exists()) {
     try {
