@@ -192,19 +192,11 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   protected void showGroupInPopup(AnActionEvent e, ActionGroup actionGroup) {
-    PresentationFactory presentationFactory = new PresentationFactory() {
-      @Override
-      protected void processPresentation(Presentation presentation) {
-        super.processPresentation(presentation);
-        presentation.setIcon(null);
-        presentation.setHoveredIcon(null);
-      }
-    };
     ListPopup popup = new PopupFactoryImpl.ActionGroupPopup(null, actionGroup, e.getDataContext(), false,
                                                             false, true, false,
                                                             null, -1, null,
-                                                            ActionPlaces.getActionGroupPopupPlace(e.getPlace()), presentationFactory,
-                                                            false);
+                                                            ActionPlaces.getActionGroupPopupPlace(e.getPlace()),
+                                                            createPresentationFactory(), false);
 
     popup.showUnderneathOf(e.getInputEvent().getComponent());
   }
@@ -214,16 +206,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     if (myPopupState.isRecentlyHidden()) return; // do not show new popup
     final ActionManagerImpl am = (ActionManagerImpl) ActionManager.getInstance();
     String place = ActionPlaces.getActionGroupPopupPlace(event.getPlace());
-    ActionPopupMenuImpl popupMenu = (ActionPopupMenuImpl)am.createActionPopupMenu(place, actionGroup, new MenuItemPresentationFactory() {
-      @Override
-      protected void processPresentation(Presentation presentation) {
-        super.processPresentation(presentation);
-        if (myNoIconsInPopup) {
-          presentation.setIcon(null);
-          presentation.setHoveredIcon(null);
-        }
-      }
-    });
+    ActionPopupMenuImpl popupMenu = (ActionPopupMenuImpl)am.createActionPopupMenu(place, actionGroup, createPresentationFactory());
     popupMenu.setDataContextProvider(() -> getDataContext());
     popupMenu.getComponent().addPopupMenuListener(myPopupState);
 
@@ -233,6 +216,20 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     else {
       popupMenu.getComponent().show(this, getWidth(), 0);
     }
+  }
+
+  @NotNull
+  private MenuItemPresentationFactory createPresentationFactory() {
+    return new MenuItemPresentationFactory() {
+      @Override
+      protected void processPresentation(Presentation presentation) {
+        super.processPresentation(presentation);
+        if (myNoIconsInPopup) {
+          presentation.setIcon(null);
+          presentation.setHoveredIcon(null);
+        }
+      }
+    };
   }
 
   private static boolean isPopupMenuAction(AnActionEvent event, AnAction action) {
