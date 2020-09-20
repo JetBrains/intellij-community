@@ -64,8 +64,7 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipFile;
 
 import static com.intellij.ide.GeneralSettings.IDE_GENERAL_XML;
-import static com.intellij.ide.SpecialConfigFiles.CHROME_USER_DATA;
-import static com.intellij.ide.SpecialConfigFiles.USER_WEB_TOKEN;
+import static com.intellij.ide.SpecialConfigFiles.*;
 import static com.intellij.openapi.application.CustomConfigMigrationOption.readCustomConfigMigrationOptionAndRemoveMarkerFile;
 import static com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY;
 import static com.intellij.openapi.util.Pair.pair;
@@ -258,7 +257,7 @@ public final class ConfigImportHelper {
   private static File backupCurrentConfigToTempAndDelete(@NotNull Path currentConfig, @NotNull Logger log, boolean smartDelete) throws IOException {
     File tempBackupDir = FileUtil.createTempDirectory(getConfigDirName(), "-backup");
     log.info("Backup config from " + currentConfig + " to " + tempBackupDir);
-    FileUtil.copyDir(PathManager.getConfigDir().toFile(), tempBackupDir);
+    FileUtil.copyDir(PathManager.getConfigDir().toFile(), tempBackupDir, file -> !shouldSkipFileDuringImport(file.getName()));
 
     deleteCurrentConfigDir(currentConfig, log, smartDelete);
 
@@ -980,8 +979,8 @@ public final class ConfigImportHelper {
   }
 
   private static boolean shouldSkipFileDuringImport(@NotNull String fileName) {
-    return fileName.equals(USER_WEB_TOKEN) ||
-           fileName.startsWith(CHROME_USER_DATA);
+    List<String> filesToSkip = Arrays.asList(PORT_FILE, PORT_LOCK_FILE, TOKEN_FILE, USER_WEB_TOKEN);
+    return filesToSkip.contains(fileName) || fileName.startsWith(CHROME_USER_DATA);
   }
 
   private static String defaultConfigPath(String selector) {
