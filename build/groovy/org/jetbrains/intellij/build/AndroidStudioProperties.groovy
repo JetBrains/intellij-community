@@ -305,16 +305,16 @@ class AndroidStudioProperties extends BaseIdeaProperties {
   void copyAdditionalFiles(BuildContext buildContext, String targetDirectory) {
     super.copyAdditionalFiles(buildContext, targetDirectory)
 
-    if (buildContext.options.studioSdk) {
-      return
-    }
-
     buildContext.ant.copy(todir: targetDirectory) {
       fileset(file: "$buildContext.paths.communityHome/LICENSE.txt")
       fileset(file: "$buildContext.paths.communityHome/NOTICE.txt")
     }
     buildContext.ant.copy(todir: "$targetDirectory/bin") {
       fileset(dir: "$buildContext.paths.communityHome/build/conf/ideaCE/common/bin")
+    }
+
+    if (buildContext.options.studioSdk) {
+      return
     }
 
     def root = "$buildContext.paths.communityHome/../.."
