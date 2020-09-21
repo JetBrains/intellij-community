@@ -22,11 +22,13 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.text.VersionComparatorUtil
+import com.intellij.util.xmlb.annotations.OptionTag
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 class JdkUpdaterStateData : BaseState() {
+  @get:OptionTag
   val dndVersions by stringSet()
 }
 
@@ -44,12 +46,14 @@ internal class JdkUpdaterState : SimplePersistentStateComponent<JdkUpdaterStateD
     super.loadState(state)
   }
 
-  fun isAllowed(feedItem: JdkItem) = lock.withLock {
-    feedItem.fullPresentationText !in state.dndVersions
+  private fun key(forJdk: Sdk, feedItem: JdkItem) = "for(${forJdk.name})-${feedItem.fullPresentationText}"
+
+  fun isAllowed(forJdk: Sdk, feedItem: JdkItem) = lock.withLock {
+    key(forJdk, feedItem) !in state.dndVersions
   }
 
-  fun blockVersion(feedItem: JdkItem) = lock.withLock {
-    state.dndVersions += feedItem.fullPresentationText
+  fun blockVersion(forJdk: Sdk, feedItem: JdkItem) = lock.withLock {
+    state.dndVersions += key(forJdk, feedItem)
     state.intIncrementModificationCount()
   }
 }
@@ -100,7 +104,7 @@ internal class JdkUpdater(
       .forEach { jdk ->
         val actualItem = JdkInstaller.getInstance().findJdkItemForInstalledJdk(jdk.homePath) ?: return@forEach
         val feedItem = jdkFeed[actualItem.suggestedSdkName] ?: return@forEach
-        if (!service<JdkUpdaterState>().isAllowed(feedItem)) return@forEach
+        if (!service<JdkUpdaterState>().isAllowed(jdk, feedItem)) return@forEach
         if (VersionComparatorUtil.compare(feedItem.jdkVersion, actualItem.jdkVersion) <= 0) return@forEach
 
         val title = ProjectBundle.message("notification.title.jdk.update.found")
@@ -115,7 +119,7 @@ internal class JdkUpdater(
           .addAction(NotificationAction.createSimple(
             ProjectBundle.message("notification.link.jdk.update.skip"),
             Runnable {
-              service<JdkUpdaterState>().blockVersion(feedItem)
+              service<JdkUpdaterState>().blockVersion(jdk, feedItem)
             }))
           .notify(project)
       }
