@@ -17,16 +17,12 @@ package com.intellij.psi.xml;
 
 import com.intellij.lang.*;
 import com.intellij.lang.dtd.DTDLanguage;
-import com.intellij.lang.html.HTMLLanguage;
-import com.intellij.lang.html.HTMLParser;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.parsing.xml.DtdParsing;
 import com.intellij.psi.tree.*;
 import com.intellij.psi.tree.xml.IXmlElementType;
 import com.intellij.util.CharTable;
-import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -74,22 +70,6 @@ public interface XmlElementType extends XmlTokenType {
       return new DtdParsing(text, XML_MARKUP_DECL, DtdParsing.TYPE_FOR_MARKUP_DECL, null).parse();
     }
   };
-
-  class EmbeddedHtmlContentElementType extends ILazyParseableElementType implements ILightLazyParseableElementType {
-    public EmbeddedHtmlContentElementType() {
-      super("HTML_EMBEDDED_CONTENT", HTMLLanguage.INSTANCE);
-    }
-
-    @Override
-    public FlyweightCapableTreeStructure<LighterASTNode> parseContents(LighterLazyParseableNode chameleon) {
-      final PsiFile file = chameleon.getContainingFile();
-      assert file != null : chameleon;
-
-      final PsiBuilder builder = PsiBuilderFactory.getInstance().createBuilder(file.getProject(), chameleon);
-      new HTMLParser().parseWithoutBuildingTree(HTML_FILE, builder);
-      return builder.getLightTree();
-    }
-  }
 
   final class XmlTagElementType extends IXmlElementType implements IXmlTagElementType {
     public XmlTagElementType(String debugName) {super(debugName);}
