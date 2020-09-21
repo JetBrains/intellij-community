@@ -58,7 +58,8 @@ public class UnknownSdkTracker {
     return Registry.is("unknown.sdk") && UnknownSdkResolver.EP_NAME.hasAnyExtensions();
   }
 
-  public void updateUnknownSdksBlocking(@NotNull ShowStatusCallback showStatus) {
+  public void updateUnknownSdksBlocking(@NotNull UnknownSdkCollector collector,
+                                        @NotNull ShowStatusCallback showStatus) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!isEnabled()) {
       showStatus.showEmptyStatus();
@@ -69,7 +70,7 @@ public class UnknownSdkTracker {
       .run(new Task.Modal(myProject, ProjectBundle.message("progress.title.resolving.sdks"), false) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          var snapshot = new UnknownSdkCollector(myProject).collectSdksBlocking();
+          var snapshot = collector.collectSdksBlocking();
 
           var action = createProcessSdksAction(snapshot, showStatus);
           if (action == null) return;
@@ -227,7 +228,7 @@ public class UnknownSdkTracker {
          };
   }
 
-  private interface ShowStatusCallback {
+  public interface ShowStatusCallback {
     default void showInterruptedStatus() {
       showEmptyStatus();
     }

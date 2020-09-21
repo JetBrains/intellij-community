@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager.checkCanceled
@@ -98,6 +99,9 @@ open class UnknownSdkCollector(private val myProject: Project) {
    */
   fun collectSdksBlocking() : UnknownSdkSnapshot = runReadAction { collectSdksUnderReadAction() }
 
+  protected open fun checkProjectSdk(project: Project) : Boolean = true
+  protected open fun collectModulesToCheckSdk(project: Project) : List<Module> = ModuleManager.getInstance(myProject).modules.toList()
+
   private fun collectSdksUnderReadAction(): UnknownSdkSnapshot {
 
     val knownSdks = mutableSetOf<Sdk>()
@@ -107,20 +111,23 @@ open class UnknownSdkCollector(private val myProject: Project) {
 
     checkCanceled()
 
-    val rootManager = ProjectRootManager.getInstance(myProject)
-    val projectSdk = rootManager.projectSdk
-    if (projectSdk == null) {
-      val sdkName = rootManager.projectSdkName
-      val sdkTypeName = rootManager.projectSdkTypeName
+    if (checkProjectSdk(myProject)) {
+      val rootManager = ProjectRootManager.getInstance(myProject)
+      val projectSdk = rootManager.projectSdk
+      if (projectSdk == null) {
+        val sdkName = rootManager.projectSdkName
+        val sdkTypeName = rootManager.projectSdkTypeName
 
-      if (sdkName != null) {
-        sdkToTypes.put(sdkName, sdkTypeName)
+        if (sdkName != null) {
+          sdkToTypes.put(sdkName, sdkTypeName)
+        }
       }
-    } else {
-      knownSdks += projectSdk
+      else {
+        knownSdks += projectSdk
+      }
     }
 
-    for (module in ModuleManager.getInstance(myProject).modules) {
+    for (module in collectModulesToCheckSdk(myProject)) {
       checkCanceled()
 
       val moduleRootManager = ModuleRootManager.getInstance(module)

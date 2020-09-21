@@ -684,7 +684,10 @@ public final class CompileDriver {
         }
       }
       if (!modulesWithoutJdkAssigned.isEmpty()) {
-        UnknownSdkTracker.getInstance(myProject).updateAndSuggestSdkFixModal();
+        CompilerDriverUnknownSdkTracker.getInstance(myProject).fixSdkSettings(projectSdkNotSpecified, Arrays.asList(scopeModules));
+        //TODO: restart the test and see if it was helpful
+
+        showNotSpecifiedError("error.jdk.not.specified", projectSdkNotSpecified, modulesWithoutJdkAssigned, JavaCompilerBundle.message("modules.classpath.title"));
         return false;
       }
 
