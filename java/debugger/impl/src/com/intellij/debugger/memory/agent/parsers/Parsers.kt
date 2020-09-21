@@ -3,6 +3,7 @@ package com.intellij.debugger.memory.agent.parsers
 
 import com.intellij.debugger.engine.ReferringObject
 import com.intellij.debugger.memory.agent.*
+import com.intellij.openapi.util.Pair
 import com.sun.jdi.*
 
 object StringParser : ResultParser<String> {
@@ -59,7 +60,8 @@ object ObjectReferencesParser : ResultParser<List<ObjectReference>> {
 object ObjectsReferencesInfoParser : ResultParser<ReferringObjectsInfo> {
   override fun parse(value: Value): ReferringObjectsInfo {
     if (value !is ArrayReference) throw UnexpectedValueFormatException("Array of arrays is expected")
-    if (value.length() != 3) throw UnexpectedValueFormatException("Array must represent 3 values: objects, backward references and weak/soft reachability flags")
+    if (value.length() != 3) throw UnexpectedValueFormatException(
+      "Array must represent 3 values: objects, backward references and weak/soft reachability flags")
 
     val objects = ObjectReferencesParser.parse(value.getValue(0))
     val weakSoftReachable = BooleanArrayParser.parse(value.getValue(2))
@@ -129,6 +131,28 @@ object LongArrayParser : ResultParser<List<Long>> {
   }
 }
 
+object ShallowAndRetainedSizeParser : ResultParser<Pair<List<Long>, List<Long>>> {
+  override fun parse(value: Value): Pair<List<Long>, List<Long>> {
+    if (value !is ArrayReference) throw UnexpectedValueFormatException("Array expected")
+    if (value.length() < 2) throw UnexpectedValueFormatException("Two arrays expected")
+    return Pair(
+      LongArrayParser.parse(value.getValue(0)),
+      LongArrayParser.parse(value.getValue(1))
+    )
+  }
+}
+
+object SizeAndHeldObjectsParser : ResultParser<Pair<Long, List<ObjectReference>>> {
+  override fun parse(value: Value): Pair<Long, List<ObjectReference>> {
+    if (value !is ArrayReference) throw UnexpectedValueFormatException("Array expected")
+    if (value.length() < 2) throw UnexpectedValueFormatException("long and array of objects expected")
+    return Pair(
+      LongArrayParser.parse(value.getValue(0))[0],
+      ObjectReferencesParser.parse(value.getValue(1))
+    )
+  }
+}
+
 object BooleanArrayParser : ResultParser<List<Boolean>> {
   override fun parse(value: Value): List<Boolean> {
     if (value !is ArrayReference) throw UnexpectedValueFormatException("Array expected")
@@ -169,8 +193,9 @@ object MemoryAgentReferringObjectCreator {
       when (kind) {
         MemoryAgentReferenceKind.FIELD,
         MemoryAgentReferenceKind.STATIC_FIELD -> {
-          val field = getFieldByJVMTIFieldIndex(referrer, IntArrayParser.parse(value)[0]) ?:
-                      return MemoryAgentKindReferringObject(referrer, isWeakSoftReachable, kind)
+          val field = getFieldByJVMTIFieldIndex(referrer, IntArrayParser.parse(value)[0]) ?: return MemoryAgentKindReferringObject(referrer,
+                                                                                                                                   isWeakSoftReachable,
+                                                                                                                                   kind)
           MemoryAgentFieldReferringObject(referrer, isWeakSoftReachable, field)
         }
         MemoryAgentReferenceKind.CONSTANT_POOL ->

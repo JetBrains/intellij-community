@@ -5,7 +5,9 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.openapi.util.Pair;
 import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -31,9 +33,18 @@ public interface MemoryAgent {
   @NotNull
   MemoryAgentCapabilities capabilities();
 
-  long estimateObjectSize(@NotNull EvaluationContextImpl evaluationContext, @NotNull ObjectReference reference) throws EvaluateException;
+  Pair<Long, ObjectReference[]> estimateObjectSize(@NotNull EvaluationContextImpl evaluationContext, @NotNull ObjectReference reference) throws EvaluateException;
 
   long[] estimateObjectsSizes(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ObjectReference> references)
+    throws EvaluateException;
+
+  long[] getShallowSizeByClasses(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ReferenceType> classes)
+    throws EvaluateException;
+
+  long[] getRetainedSizeByClasses(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ReferenceType> classes)
+    throws EvaluateException;
+
+  Pair<long[], long[]> getShallowAndRetainedSizeByClasses(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ReferenceType> classes)
     throws EvaluateException;
 
   @NotNull
