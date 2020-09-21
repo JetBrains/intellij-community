@@ -14,10 +14,11 @@ final class AfterLineEndInlayImpl<R extends EditorCustomElementRenderer> extends
   private static int ourGlobalCounter = 0;
   final int myOrder;
 
-  AfterLineEndInlayImpl(@NotNull EditorImpl editor, int offset, boolean relatesToPrecedingText, @NotNull R renderer) {
+  AfterLineEndInlayImpl(@NotNull EditorImpl editor, int offset, boolean relatesToPrecedingText, boolean insertFirst, @NotNull R renderer) {
     super(editor, offset, relatesToPrecedingText, renderer);
     //noinspection AssignmentToStaticFieldFromInstanceMethod
-    myOrder = ourGlobalCounter++;
+    int order = ourGlobalCounter++;
+    myOrder = insertFirst ? -order : order;
   }
 
   @Override
