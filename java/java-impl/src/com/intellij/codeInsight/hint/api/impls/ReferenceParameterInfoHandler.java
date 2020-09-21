@@ -29,11 +29,6 @@ import java.util.Arrays;
 public class ReferenceParameterInfoHandler implements ParameterInfoHandler<PsiReferenceParameterList,PsiTypeParameter> {
 
   @Override
-  public boolean couldShowInLookup() {
-    return false;
-  }
-
-  @Override
   public PsiReferenceParameterList findElementForParameterInfo(@NotNull final CreateParameterInfoContext context) {
     final PsiReferenceParameterList referenceParameterList =
       ParameterInfoUtils.findParentOfType(context.getFile(), context.getOffset(), PsiReferenceParameterList.class);

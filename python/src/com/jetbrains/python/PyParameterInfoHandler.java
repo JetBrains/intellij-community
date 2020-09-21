@@ -22,11 +22,6 @@ import java.util.List;
 public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentList, Pair<PyCallExpression, PyCallableType>> {
 
   @Override
-  public boolean couldShowInLookup() {
-    return true;
-  }
-
-  @Override
   @Nullable
   public PyArgumentList findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {
     PsiFile file = context.getFile();

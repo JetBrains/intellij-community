@@ -59,11 +59,6 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   private static final Key<List<Inlay>> HIGHLIGHTED_HINTS = Key.create("highlighted.hints");
 
   @Override
-  public boolean couldShowInLookup() {
-    return true;
-  }
-
-  @Override
   @Nullable
   public PsiExpressionList findElementForParameterInfo(@NotNull final CreateParameterInfoContext context) {
     PsiExpressionList argumentList = findArgumentList(context.getFile(), context.getOffset(), context.getParameterListStart(), true);

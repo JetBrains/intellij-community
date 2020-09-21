@@ -65,11 +65,6 @@ public class GroovyAnnotationAttributeInfoHandler implements ParameterInfoHandle
     return GrAnnotationArgumentList.class;
   }
 
-  @Override
-  public boolean couldShowInLookup() {
-    return true;
-  }
-
   private static PsiAnnotationMethod @NotNull [] extractAnnotationMethodsFromClass(@NotNull PsiClass o) {
     if (o.isAnnotationType()) {
       PsiMethod[] methods = o.getMethods();

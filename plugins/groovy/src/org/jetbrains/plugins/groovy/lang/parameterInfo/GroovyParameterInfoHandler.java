@@ -46,11 +46,6 @@ import java.util.*;
 public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabActionSupport<GroovyPsiElement, Object, GroovyPsiElement> {
   private static final Logger LOG = Logger.getInstance(GroovyParameterInfoHandler.class);
 
-  @Override
-  public boolean couldShowInLookup() {
-    return true;
-  }
-
   private static final Set<Class<?>> ourStopSearch = Collections.singleton(GrMethod.class);
 
   @NotNull

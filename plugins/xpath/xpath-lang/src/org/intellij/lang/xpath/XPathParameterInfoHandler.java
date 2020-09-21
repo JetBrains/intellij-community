@@ -29,12 +29,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class XPathParameterInfoHandler implements ParameterInfoHandler<XPathFunctionCall, XPathFunction> {
-    @Override
-    public boolean couldShowInLookup() {
-        return false;
-    }
 
-    @Override
+  @Override
     public XPathFunctionCall findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {
         final XPathFunctionCall call = findFunctionCall(context.getFile(), context.getOffset());
         if (call != null) {

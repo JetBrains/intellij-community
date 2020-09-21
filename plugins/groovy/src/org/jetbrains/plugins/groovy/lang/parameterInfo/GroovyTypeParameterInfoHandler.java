@@ -62,11 +62,6 @@ public class GroovyTypeParameterInfoHandler implements ParameterInfoHandlerWithT
     return GrTypeArgumentList.class;
   }
 
-  @Override
-  public boolean couldShowInLookup() {
-    return false;
-  }
-
   @Nullable
   @Override
   public GrTypeArgumentList findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {

@@ -497,11 +497,6 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
   public void testCustomHandlerHighlighterWithEscaping() {
     myFixture.configureByText(PlainTextFileType.INSTANCE, " ");
     LanguageParameterInfo.INSTANCE.addExplicitExtension(PlainTextLanguage.INSTANCE, new ParameterInfoHandler<>() {
-      @Override
-      public boolean couldShowInLookup() {
-        return false;
-      }
-
       @NotNull
       @Override
       public PsiElement findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {

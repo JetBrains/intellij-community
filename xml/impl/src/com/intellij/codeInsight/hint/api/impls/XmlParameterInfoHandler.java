@@ -50,11 +50,6 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
   }
 
   @Override
-  public boolean couldShowInLookup() {
-    return true;
-  }
-
-  @Override
   public XmlTag findElementForParameterInfo(@NotNull final CreateParameterInfoContext context) {
     final XmlTag tag = findXmlTag(context.getFile(), context.getOffset());
     final XmlElementDescriptor descriptor = tag != null ? tag.getDescriptor() : null;
