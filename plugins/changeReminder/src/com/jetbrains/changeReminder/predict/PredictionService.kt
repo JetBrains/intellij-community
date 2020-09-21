@@ -67,7 +67,7 @@ internal class PredictionService(val project: Project) : Disposable {
       calculatePrediction()
     }
 
-    override fun traverserBecomeInvalid() = synchronized(LOCK) {
+    override fun traverserDisposed() = synchronized(LOCK) {
       disposeTraverser()
     }
   }

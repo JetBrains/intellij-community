@@ -37,7 +37,7 @@ fun subscribeForGitHistoryTraverserCreation(project: Project, listener: GitHisto
     override fun logDisposed(manager: VcsLogManager) {
       logData = null
       logData?.removeDataPackChangeListener(dataPackChangeListener)
-      listener.traverserBecomeInvalid()
+      listener.traverserDisposed()
     }
   }
 
@@ -67,5 +67,5 @@ interface GitHistoryTraverserListener {
 
   fun graphUpdated()
 
-  fun traverserBecomeInvalid()
+  fun traverserDisposed()
 }
