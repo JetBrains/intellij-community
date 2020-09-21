@@ -16,7 +16,8 @@ internal class KotlinOutputChecker(
     private val testDir: String,
     appPath: String,
     outputPath: String,
-    private val useIrBackend: Boolean
+    private val useIrBackend: Boolean,
+    private val expectedOutputFile: File,
 ) : OutputChecker(appPath, outputPath) {
     companion object {
         @JvmStatic

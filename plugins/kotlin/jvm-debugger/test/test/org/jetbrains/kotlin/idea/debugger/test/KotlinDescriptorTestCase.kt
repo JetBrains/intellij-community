@@ -48,6 +48,7 @@ import org.jetbrains.kotlin.idea.test.addRoot
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.test.Directives
 import org.jetbrains.kotlin.test.KotlinBaseTest.TestFile
+import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.test.KotlinTestUtils.*
 import org.junit.ComparisonFailure
 import java.io.File
@@ -229,7 +230,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
     abstract fun doMultiFileTest(files: TestFiles, preferences: DebuggerPreferences)
 
     override fun initOutputChecker(): OutputChecker {
-        return KotlinOutputChecker(getTestDataPath(), testAppPath, appOutputPath, useIrBackend())
+        return KotlinOutputChecker(getTestDataPath(), testAppPath, appOutputPath, useIrBackend(), getExpectedOutputFile())
     }
 
     override fun setUpModule() {
@@ -295,9 +296,16 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
         try {
             super.checkTestOutput()
         } catch (e: ComparisonFailure) {
-            assertEqualsToFile(File(getTestDataPath(), getTestName(true) + ".out"), e.actual)
+            KotlinTestUtils.assertEqualsToFile(getExpectedOutputFile(), e.actual)
         }
+    }
 
+    private fun getExpectedOutputFile(): File {
+        if (useIrBackend()) {
+            val irOut = File(getTestDataPath(), getTestName(true) + ".ir.out")
+            if (irOut.exists()) return irOut
+        }
+        return File(getTestDataPath(), getTestName(true) + ".out")
     }
 
     override fun getData(dataId: String): Any? {
