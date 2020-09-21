@@ -42,7 +42,8 @@ internal class GitHistoryTraverserImpl(private val project: Project, private val
 
     val permanentGraph = dataPack.permanentGraph as PermanentGraphImpl<Int>
 
-    val hashNodeId = permanentGraph.permanentCommitsInfo.getNodeId(hashIndex)
+    val hashNodeId = permanentGraph.permanentCommitsInfo.getNodeId(hashIndex).takeIf { it != -1 }
+                     ?: throw IllegalArgumentException("Hash '${start.asString()}' doesn't exist in repository: $root")
     val graph = LinearGraphUtils.asLiteLinearGraph(permanentGraph.linearGraph)
     val visited = BitSetFlags(graph.nodesCount())
     val traverse = TraverseImpl(this, root)
@@ -61,9 +62,14 @@ internal class GitHistoryTraverserImpl(private val project: Project, private val
     type: GitHistoryTraverser.TraverseType,
     commitHandler: Traverse.(id: TraverseCommitInfo) -> Boolean
   ) {
+    fun findBranchHash(branchName: String) =
+      VcsLogUtil.findBranch(logData.dataPack.refsModel, root, branchName)?.commitHash
+      ?: throw IllegalArgumentException("Branch '$branchName' doesn't exist in the repository: $root")
+
     val hash = when (start) {
       is GitHistoryTraverser.StartNode.SpecificHash -> start.hash
-      GitHistoryTraverser.StartNode.Head -> VcsLogUtil.findBranch(logData.dataPack.refsModel, root, GitUtil.HEAD)!!.commitHash
+      GitHistoryTraverser.StartNode.Head -> findBranchHash(GitUtil.HEAD)
+      is GitHistoryTraverser.StartNode.Branch -> findBranchHash(start.branchName)
     }
     startSearch(
       hash,

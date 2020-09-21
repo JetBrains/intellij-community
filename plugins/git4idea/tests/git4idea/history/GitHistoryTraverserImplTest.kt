@@ -10,6 +10,7 @@ import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.HashImpl
 import com.intellij.vcs.log.impl.VcsUserImpl
+import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.log.createLogData
 import git4idea.log.refreshAndWait
@@ -17,6 +18,7 @@ import git4idea.test.GitSingleRepoTest
 import git4idea.test.makeCommit
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
+import kotlin.random.nextInt
 
 class GitHistoryTraverserImplTest : GitSingleRepoTest() {
   private lateinit var logData: VcsLogData
@@ -150,6 +152,72 @@ class GitHistoryTraverserImplTest : GitSingleRepoTest() {
     }
     finally {
       Disposer.dispose(indexWaiterDisposable)
+    }
+  }
+
+  fun `test traverse from master`() {
+    val file = "file.txt"
+    touch(file, "content")
+    val expectedCommitsCount = 10 // with initial commit
+    repeat(expectedCommitsCount - 1) {
+      makeCommit(file)
+    }
+    logData.refreshAndWait(repo, withIndex = true)
+
+    var commitsCount = 0
+    traverser.traverse(
+      repo.root,
+      start = GitHistoryTraverser.StartNode.Branch("master"),
+    ) {
+      commitsCount++
+      true
+    }
+
+    assertEquals(expectedCommitsCount, commitsCount)
+  }
+
+  fun `test IllegalArgumentException when start hash doesn't exist`() {
+    val file = "file.txt"
+    touch(file, "content")
+    val expectedCommitsCount = 10 // with initial commit
+    repeat(expectedCommitsCount - 1) {
+      makeCommit(file)
+    }
+    logData.refreshAndWait(repo, withIndex = true)
+
+    val commitHashes = mutableSetOf<Hash>()
+    traverser.traverse(
+      repo.root,
+      start = GitHistoryTraverser.StartNode.Branch("master"),
+    ) { (id, _) ->
+      loadMetadataLater(id) { metaData ->
+        commitHashes.add(metaData.id)
+      }
+      true
+    }
+    fun getRandomHash(): Hash = HashImpl.build(
+      buildString {
+        repeat(VcsLogUtil.FULL_HASH_LENGTH) {
+          val randomHexChar = kotlin.random.Random.nextInt(0 until 16).toString(16)
+          append(randomHexChar)
+        }
+      }
+    )
+
+    var notExistedHash = getRandomHash()
+    while (notExistedHash in commitHashes) {
+      notExistedHash = getRandomHash()
+    }
+    try {
+      traverser.traverse(
+        repo.root,
+        start = GitHistoryTraverser.StartNode.SpecificHash(notExistedHash)
+      ) {
+        true
+      }
+      fail()
+    }
+    catch (e: IllegalArgumentException) {
     }
   }
 }

@@ -24,6 +24,8 @@ interface GitHistoryTraverser {
    * Start traversing down through the repository history started from [start].
    * Each commit will be handled by [commitHandler] which could return false to finish traversing
    * (in case of [GitHistoryTraverser.TraverseType.BFS] the remaining elements in the queue will be fully processed).
+   *
+   * @throws IllegalArgumentException if given [StartNode] doesn't exist in the repository.
    */
   fun traverse(
     root: VirtualFile,
@@ -122,6 +124,7 @@ interface GitHistoryTraverser {
 
   sealed class StartNode {
     class SpecificHash(val hash: Hash) : StartNode()
+    class Branch(val branchName: String) : StartNode()
     object Head : StartNode()
   }
 
