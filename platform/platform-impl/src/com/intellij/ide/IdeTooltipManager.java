@@ -728,7 +728,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
     } : new JEditorPane();
 
     HTMLEditorKit kit = new JBHtmlEditorKit() {
-      final HTMLFactory factory = new HTMLFactory() {
+      final HTMLFactory factory = new JBHtmlFactory() {
         @Override
         public View create(Element elem) {
           AttributeSet attrs = elem.getAttributes();
