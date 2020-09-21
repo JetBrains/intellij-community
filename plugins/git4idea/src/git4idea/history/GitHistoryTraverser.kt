@@ -11,8 +11,8 @@ import com.intellij.vcs.log.VcsUser
 import git4idea.GitCommit
 
 /**
- * Commit index which is used by [GitHistoryTraverser]
- * Can be obtained by [GitHistoryTraverser.traverse] and [GitHistoryTraverser.IndexedRoot.filterCommits] methods
+ * Commit index which is used by [GitHistoryTraverser].
+ * Can be obtained by [GitHistoryTraverser.traverse] and [GitHistoryTraverser.IndexedRoot.filterCommits] methods.
  *
  * @see subscribeForGitHistoryTraverserCreation
  * @see getTraverser
@@ -35,7 +35,7 @@ interface GitHistoryTraverser {
   /**
    * Subscribe for index finishing and call [block] when given roots are fully indexed.
    *
-   * [block] shouldn't execute long running tasks
+   * [block] shouldn't execute long running tasks.
    */
   fun withIndex(roots: Collection<VirtualFile>, disposable: Disposable, block: GitHistoryTraverser.(Collection<IndexedRoot>) -> Unit)
 
@@ -46,13 +46,15 @@ interface GitHistoryTraverser {
 
   /**
    * Load basic commit details like message, hash, commit time, author time, etc.
-   * This method is slow due to Git command executing, so it is better to use this method with commit batches.
+   * This method can be slow due to Git command execution, so it is better to use this method with commit batches.
    */
   fun loadMetadata(root: VirtualFile, ids: List<TraverseCommitId>): List<VcsCommitMetadata>
 
   /**
    * Load commits details with its changes.
    * If commit contains huge amount of changes, this method can be slow, so use it only if you need changes.
+   *
+   * Also, this method can be slow due to Git command execution, so it is better to use this method with commit batches.
    */
   fun loadFullDetails(
     root: VirtualFile,
@@ -85,30 +87,34 @@ interface GitHistoryTraverser {
     /**
      * Return all commits from repository fit by [TraverseCommitsFilter].
      *
-     * Note that may become unreachable from any branches, so it's better to check that given commits are reachable during [traverse]
+     * Note that they may become unreachable from any branches, so it's better to check that given commits are reachable during [traverse].
      */
     fun filterCommits(filter: TraverseCommitsFilter): Collection<TraverseCommitId>
 
     /**
      * Load commit hash with timestamp and parents.
+     *
+     * This method uses prepared index and don't execute Git commands.
      */
     fun loadTimedCommit(id: TraverseCommitId): TimedVcsCommit
 
     /**
      * Load basic commit details like message, hash, commit time, author time, etc.
+     *
+     * This method uses prepared index and don't execute Git commands.
      */
     fun loadMetadata(id: TraverseCommitId): VcsCommitMetadata
 
     sealed class TraverseCommitsFilter {
       /**
-       * Note that author filter may return commits from another roots, so check that given commits are from [root] during [traverse]
+       * Note that author filter may return commits from another roots, so check that given commits are from [root] during [traverse].
        */
       class Author(val author: VcsUser) : TraverseCommitsFilter()
 
       /**
        * Commits filter result by [file] has some specific aspects:
-       *   * contains only accurate renames (file name change without content change)
-       *   * contains all trivial merge commits whose subtrees contain [file] changes
+       *   * contains only exact renames (file name change without content change);
+       *   * contains all trivial merge commits whose subtrees contain [file] changes.
        */
       class File(val file: FilePath) : TraverseCommitsFilter()
     }
