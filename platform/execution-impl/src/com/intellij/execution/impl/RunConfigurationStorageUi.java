@@ -16,6 +16,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
@@ -67,7 +68,8 @@ public class RunConfigurationStorageUi {
   private RCStorageType myRCStorageType;
   private @Nullable @SystemIndependent @NonNls String myFolderPathIfStoredInArbitraryFile;
 
-  @Nullable Boolean myDotIdeaStorageVcsIgnored = null; // used as cache; null means not initialized yet
+  private @Nullable Boolean myDotIdeaStorageVcsIgnored = null; // used as cache; null means not initialized yet
+  private boolean myShowCompatibilityHint;
 
   public RunConfigurationStorageUi(@NotNull Project project, @Nullable Runnable onModifiedRunnable) {
     if (project.isDefault()) LOG.error("Don't use RunConfigurationStorageUi for default project");
@@ -121,12 +123,17 @@ public class RunConfigurationStorageUi {
     };
   }
 
+  void setShowCompatibilityHint(boolean showCompatibilityHint) {
+    myShowCompatibilityHint = showCompatibilityHint;
+  }
+
   private void manageStorageFileLocation() {
     Disposable balloonDisposable = Disposer.newDisposable();
 
     Function<String, String> pathToErrorMessage = path -> getErrorIfBadFolderPathForStoringInArbitraryFile(myProject, path);
     RunConfigurationStoragePopup popup =
-      new RunConfigurationStoragePopup(myProject, getDotIdeaStoragePath(myProject), pathToErrorMessage, balloonDisposable);
+      new RunConfigurationStoragePopup(myProject, getDotIdeaStoragePath(myProject), pathToErrorMessage, balloonDisposable,
+                                       myShowCompatibilityHint);
 
     Balloon balloon = JBPopupFactory.getInstance().createBalloonBuilder(popup.getMainPanel())
       .setDialogMode(true)
@@ -406,7 +413,8 @@ public class RunConfigurationStorageUi {
     RunConfigurationStoragePopup(@NotNull Project project,
                                  @NotNull String dotIdeaStoragePath,
                                  @NotNull Function<String, @NlsContexts.DialogMessage String> pathToErrorMessage,
-                                 @NotNull Disposable uiDisposable) {
+                                 @NotNull Disposable uiDisposable,
+                                 boolean showCompatibilityHint) {
       myDotIdeaStoragePath = dotIdeaStoragePath;
       myPathComboBox = createPathComboBox(project, uiDisposable);
 
@@ -419,15 +427,17 @@ public class RunConfigurationStorageUi {
         .andRegisterOnDocumentListener(comboBoxEditorComponent)
         .installOn(comboBoxEditorComponent);
 
-      JPanel comboBoxPanel = UI.PanelFactory.panel(myPathComboBox)
-        .withLabel(ExecutionBundle.message("run.configuration.store.in")).moveLabelOnTop()
-        .withComment(getCompatibilityHintText(project), false)
-        .withCommentHyperlinkListener(e -> {
-          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-            myPathComboBox.getEditor().setItem(FileUtil.toSystemDependentName(myDotIdeaStoragePath));
-          }
-        })
-        .createPanel();
+      ComponentPanelBuilder builder = UI.PanelFactory.panel(myPathComboBox)
+        .withLabel(ExecutionBundle.message("run.configuration.store.in")).moveLabelOnTop();
+      if (showCompatibilityHint) {
+        builder = builder.withComment(getCompatibilityHintText(project), false)
+          .withCommentHyperlinkListener(e -> {
+            if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+              myPathComboBox.getEditor().setItem(FileUtil.toSystemDependentName(myDotIdeaStoragePath));
+            }
+          });
+      }
+      JPanel comboBoxPanel = builder.createPanel();
 
       JButton doneButton = new JButton(ExecutionBundle.message("run.configuration.done.button"));
       doneButton.addActionListener(e -> myClosePopupAction.run());

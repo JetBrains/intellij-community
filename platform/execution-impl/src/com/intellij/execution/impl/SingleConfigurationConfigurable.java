@@ -403,6 +403,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       myRCStorageUi = !myProject.isDefault() ? new RunConfigurationStorageUi(myProject, () -> setModified(true))
                                              : null;
       if (myRCStorageUi != null) {
+        myRCStorageUi.setShowCompatibilityHint(true);
         myRCStoragePanel.add(myRCStorageUi.createComponent());
       }
 
