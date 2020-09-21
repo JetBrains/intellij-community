@@ -74,10 +74,17 @@ public class InstalledPluginsTableModel {
   protected final void setEnabled(@NotNull IdeaPluginDescriptor ideaPluginDescriptor) {
     PluginId pluginId = ideaPluginDescriptor.getPluginId();
 
-    boolean enabled = myPluginTracker == null ?
-                      ideaPluginDescriptor.isEnabled() :
-                      myPluginTracker.isEnabled(ideaPluginDescriptor) ||
-                      (!myPluginTracker.isDisabled(ideaPluginDescriptor) && ideaPluginDescriptor.isEnabled());
+    final boolean descriptorEnabled = ideaPluginDescriptor.isEnabled();
+    Boolean enabled;
+    if (descriptorEnabled || PluginManagerCore.isDisabled(pluginId)) {
+      enabled = myPluginTracker == null ?
+                descriptorEnabled :
+                myPluginTracker.isEnabled(ideaPluginDescriptor) ||
+                (!myPluginTracker.isDisabled(ideaPluginDescriptor) && descriptorEnabled);
+    }
+    else {
+      enabled = null;
+    }
 
     setEnabled(pluginId, enabled);
   }
