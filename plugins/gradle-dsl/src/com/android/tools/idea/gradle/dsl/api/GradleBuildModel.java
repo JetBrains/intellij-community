@@ -55,9 +55,7 @@ public interface GradleBuildModel extends GradleFileModel {
       Logger logger = Logger.getInstance(ProjectBuildModel.class);
       logger.error(e);
 
-      // Since this would have caused an IDE crash we still want to report any exceptions for monitoring.
-      /*StudioCrashReporter reporter = StudioCrashReporter.getInstance();
-      reporter.submit(new StudioExceptionReport.Builder().setThrowable(e, false).build());*/
+      BuildModelErrorReporter.getInstance().report(e);
       return null;
     }
   }
