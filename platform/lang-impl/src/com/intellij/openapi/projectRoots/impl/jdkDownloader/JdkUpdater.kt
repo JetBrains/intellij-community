@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkType
@@ -82,7 +83,7 @@ internal class JdkUpdater(
       if (knownSdks.isEmpty()) return@collectSdksPromise
 
       ProgressManager.getInstance().run(
-        object : Task.Backgroundable(project, "Checking for JDK updates", true, ALWAYS_BACKGROUND) {
+        object : Task.Backgroundable(project, ProjectBundle.message("progress.title.checking.for.jdk.updates"), true, ALWAYS_BACKGROUND) {
           override fun run(indicator: ProgressIndicator) {
             updateWithSnapshot(knownSdks, indicator)
           }
@@ -102,17 +103,17 @@ internal class JdkUpdater(
         if (!service<JdkUpdaterState>().isAllowed(feedItem)) return@forEach
         if (VersionComparatorUtil.compare(feedItem.jdkVersion, actualItem.jdkVersion) <= 0) return@forEach
 
-        val title = "Update JDK '" + jdk.name + "' to " + feedItem.fullPresentationText
-        val message = "The current version of the JDK is " + actualItem.jdkVersion + ", would you like to update?"
+        val title = ProjectBundle.message("notification.title.jdk.update.found")
+        val message = ProjectBundle.message("notification.text.jdk.update.found", jdk.name, feedItem.fullPresentationText, actualItem.fullPresentationText)
 
         NotificationGroupManager.getInstance().getNotificationGroup("Update JDK")
           .createNotification(title, message, NotificationType.INFORMATION, null)
           .setImportant(true)
           .addAction(NotificationAction.createSimple(
-            "Download " + feedItem.fullPresentationText + "...",
+            ProjectBundle.message("notification.link.jdk.update.apply"),
             Runnable { updateJdk(project, jdk, feedItem) }))
           .addAction(NotificationAction.createSimple(
-            "Skip this update",
+            ProjectBundle.message("notification.link.jdk.update.skip"),
             Runnable {
               service<JdkUpdaterState>().blockVersion(feedItem)
             }))
@@ -122,7 +123,7 @@ internal class JdkUpdater(
 
   private fun updateJdk(project: Project, jdk: Sdk, feedItem: JdkItem) {
     ProgressManager.getInstance().run(
-      object : Task.Backgroundable(project, "Updating JDK '${jdk.name}' to ${feedItem.fullPresentationText}", true, ALWAYS_BACKGROUND) {
+      object : Task.Backgroundable(project, ProjectBundle.message("progress.title.updating.jdk.0.to.1", jdk.name, feedItem.fullPresentationText), true, ALWAYS_BACKGROUND) {
 
         override fun run(indicator: ProgressIndicator) {
           val installer = JdkInstaller.getInstance()
