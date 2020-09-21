@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.lightEdit.menuBar;
 
-import com.intellij.ide.lightEdit.actions.LightEditExitAction;
-import com.intellij.ide.lightEdit.actions.LightEditNewFileAction;
-import com.intellij.ide.lightEdit.actions.LightEditOpenFileInProjectAction;
-import com.intellij.ide.lightEdit.actions.LightEditSaveAsAction;
+import com.intellij.ide.lightEdit.actions.*;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.NlsActions;
@@ -28,6 +25,8 @@ public final class LightEditMenuBar extends IdeMenuBar {
                         Separator.create(),
                         new LightEditSaveAsAction(),
                         standardAction("SaveAll"),
+                        Separator.create(),
+                        new LightEditReloadFileAction(),
                         Separator.create(),
                         new LightEditExitAction()
       )
