@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
-import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker;
@@ -293,9 +292,6 @@ public class SdkEditor implements Configurable, Place.Navigator {
     }
     setHomePathValue(homePath.replace('/', File.separatorChar));
 
-    final String newSdkName = suggestSdkName(homePath);
-    ((ProjectJdkImpl)mySdk).setName(newSdkName);
-
     try {
       final Sdk dummySdk = (Sdk)mySdk.clone();
       SdkModificator sdkModificator = dummySdk.getSdkModificator();
@@ -322,23 +318,6 @@ public class SdkEditor implements Configurable, Place.Navigator {
     catch (CloneNotSupportedException e) {
       LOG.error(e); // should not happen in normal program
     }
-  }
-
-  private String suggestSdkName(final String homePath) {
-    final String currentName = mySdk.getName();
-    final String suggestedName = ((SdkType)mySdk.getSdkType()).suggestSdkName(currentName, homePath);
-    if (Objects.equals(currentName, suggestedName)) return currentName;
-    String newSdkName = suggestedName;
-    final Set<String> allNames = new HashSet<>();
-    Sdk[] sdks = mySdkModel.getSdks();
-    for (Sdk sdk : sdks) {
-      allNames.add(sdk.getName());
-    }
-    int i = 0;
-    while (allNames.contains(newSdkName)) {
-      newSdkName = suggestedName + " (" + ++i + ")";
-    }
-    return newSdkName;
   }
 
   private void updateAdditionalDataComponent() {
