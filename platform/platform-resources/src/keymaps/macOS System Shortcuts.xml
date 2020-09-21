@@ -233,9 +233,33 @@
     <keyboard-shortcut first-keystroke="alt HOME"/>
   </action>
 
+  <action id="List-selectFirstRow">
+    <keyboard-shortcut first-keystroke="alt UP"/>
+  </action>
+
+  <action id="List-selectFirstRowExtendSelection">
+    <keyboard-shortcut first-keystroke="alt shift UP"/>
+  </action>
+
+  <action id="Tree-selectFirst">
+    <keyboard-shortcut first-keystroke="alt UP"/>
+  </action>
+
+  <action id="Tree-selectFirstExtendSelection">
+    <keyboard-shortcut first-keystroke="alt shift UP"/>
+  </action>
+
   <action id="EditorTextEnd">
     <keyboard-shortcut first-keystroke="meta DOWN"/>
     <keyboard-shortcut first-keystroke="meta END"/>
+  </action>
+
+  <action id="EditSource">
+    <keyboard-shortcut first-keystroke="F4"/>
+  </action>
+
+  <action id="EditSourceNotInEditor">
+    <keyboard-shortcut first-keystroke="meta DOWN"/>
   </action>
 
   <action id="MoveStatementDown">
@@ -249,6 +273,22 @@
   <action id="EditorTextEndWithSelection">
     <keyboard-shortcut first-keystroke="meta shift DOWN"/>
     <keyboard-shortcut first-keystroke="meta shift END"/>
+  </action>
+
+  <action id="List-selectLastRow">
+    <keyboard-shortcut first-keystroke="alt DOWN"/>
+  </action>
+
+  <action id="List-selectLastRowExtendSelection">
+    <keyboard-shortcut first-keystroke="alt shift DOWN"/>
+  </action>
+
+  <action id="Tree-selectLast">
+    <keyboard-shortcut first-keystroke="alt DOWN"/>
+  </action>
+
+  <action id="Tree-selectLastExtendSelection">
+    <keyboard-shortcut first-keystroke="alt shift DOWN"/>
   </action>
 
   <action id="GotoRelated">
