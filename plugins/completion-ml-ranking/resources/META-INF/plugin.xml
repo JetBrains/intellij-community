@@ -38,7 +38,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationInitializedListener implementation="com.intellij.completion.ml.tracker.FactorsTrackerInitializer"/>
-    <applicationService serviceImplementation="com.intellij.completion.ml.settings.CompletionMLRankingSettings" preload="true"/>
+    <applicationService serviceImplementation="com.intellij.completion.ml.settings.CompletionMLRankingSettings"/>
 
     <applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionFinalSorter$Factory"
                         serviceImplementation="com.intellij.completion.ml.sorting.MLSorterFactory"/>
@@ -53,7 +53,8 @@
     <projectService serviceImplementation="com.intellij.completion.ml.personalization.impl.ProjectUserFactorStorage"/>
 
     <applicationService serviceInterface="com.intellij.completion.ml.experiment.ExperimentStatus"
-                        serviceImplementation="com.intellij.completion.ml.experiment.ClientExperimentStatus"/>
+                        serviceImplementation="com.intellij.completion.ml.experiment.ClientExperimentStatus"
+                        preload="true"/>
 
     <projectService serviceImplementation="com.intellij.completion.ml.ngram.NGramModelRunnerManager"/>
 
