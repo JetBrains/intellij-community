@@ -80,43 +80,37 @@ public final class HtmlUtil {
   }
 
   private static final Set<String> EMPTY_TAGS_MAP = new HashSet<>();
-  @NonNls private static final String[] OPTIONAL_END_TAGS = {
+  private static final Set<String> OPTIONAL_END_TAGS_MAP = ContainerUtil.set(
     //"html",
     "head",
     //"body",
     "p", "li", "dd", "dt", "thead", "tfoot", "tbody", "colgroup", "tr", "th", "td", "option", "embed", "noembed",
     "caption"
-  };
-  private static final Set<String> OPTIONAL_END_TAGS_MAP = new HashSet<>();
+  );
 
-  @NonNls private static final String[] BLOCK_TAGS = {"p", "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "dir", "menu", "pre",
-    "dl", "div", "center", "noscript", "noframes", "blockquote", "form", "isindex", "hr", "table", "fieldset", "address",
-    // nonexplicitly specified
-    "map",
-    // flow elements
-    "body", "object", "applet", "ins", "del", "dd", "li", "button", "th", "td", "iframe", "comment"
-  };
+  private static final Set<String> BLOCK_TAGS_MAP =
+    ContainerUtil.set("p", "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "dir", "menu", "pre",
+                      "dl", "div", "center", "noscript", "noframes", "blockquote", "form", "isindex", "hr", "table", "fieldset", "address",
+                      // nonexplicitly specified
+                      "map",
+                      // flow elements
+                      "body", "object", "applet", "ins", "del", "dd", "li", "button", "th", "td", "iframe", "comment");
 
   // flow elements are block or inline, so they should not close <p> for example
-  @NonNls private static final String[] POSSIBLY_INLINE_TAGS =
-    {"a", "abbr", "acronym", "applet", "b", "basefont", "bdo", "big", "br", "button",
-      "cite", "code", "del", "dfn", "em", "font", "i", "iframe", "img", "input", "ins",
-      "kbd", "label", "map", "object", "q", "s", "samp", "select", "small", "span", "strike",
-      "strong", "sub", "sup", "textarea", "tt", "u", "var"};
+  private static final Set<String> POSSIBLY_INLINE_TAGS_MAP =
+    ContainerUtil.set("a", "abbr", "acronym", "applet", "b", "basefont", "bdo", "big", "br", "button",
+                      "cite", "code", "del", "dfn", "em", "font", "i", "iframe", "img", "input", "ins",
+                      "kbd", "label", "map", "object", "q", "s", "samp", "select", "small", "span", "strike",
+                      "strong", "sub", "sup", "textarea", "tt", "u", "var");
 
-  private static final Set<String> BLOCK_TAGS_MAP = new HashSet<>();
+  private static final Set<String> INLINE_ELEMENTS_CONTAINER_MAP = ContainerUtil.set("p", "h1", "h2", "h3", "h4", "h5", "h6", "pre");
 
-  @NonNls private static final String[] INLINE_ELEMENTS_CONTAINER = {"p", "h1", "h2", "h3", "h4", "h5", "h6", "pre"};
-  private static final Set<String> INLINE_ELEMENTS_CONTAINER_MAP = new HashSet<>();
-
-  private static final Set<String> POSSIBLY_INLINE_TAGS_MAP = new HashSet<>();
-
-  @NonNls private static final String[] HTML5_TAGS = {
-    "article", "aside", "audio", "canvas", "command", "datalist", "details", "embed", "figcaption", "figure", "footer", "header",
-    "keygen", "mark", "meter", "nav", "output", "progress", "rp", "rt", "ruby", "section", "source", "summary", "time", "video", "wbr",
-    "main"
-  };
-  private static final Set<String> HTML5_TAGS_SET = new HashSet<>();
+  private static final Set<String> HTML5_TAGS_SET = ContainerUtil.set("article", "aside", "audio", "canvas", "command", "datalist",
+                                                                      "details", "embed", "figcaption", "figure", "footer", "header",
+                                                                      "keygen", "mark", "meter", "nav", "output", "progress", "rp", "rt",
+                                                                      "ruby", "section", "source", "summary", "time", "video", "wbr",
+                                                                      "main"
+  );
   private static final Map<String, Set<String>> AUTO_CLOSE_BY_MAP = new HashMap<>();
 
   static {
@@ -125,11 +119,6 @@ public final class HtmlUtil {
       if (control.endTag == HTMLControls.TagState.FORBIDDEN) EMPTY_TAGS_MAP.add(tagName);
       AUTO_CLOSE_BY_MAP.put(tagName, new HashSet<>(control.autoClosedBy));
     }
-    ContainerUtil.addAll(OPTIONAL_END_TAGS_MAP, OPTIONAL_END_TAGS);
-    ContainerUtil.addAll(BLOCK_TAGS_MAP, BLOCK_TAGS);
-    ContainerUtil.addAll(INLINE_ELEMENTS_CONTAINER_MAP, INLINE_ELEMENTS_CONTAINER);
-    ContainerUtil.addAll(POSSIBLY_INLINE_TAGS_MAP, POSSIBLY_INLINE_TAGS);
-    ContainerUtil.addAll(HTML5_TAGS_SET, HTML5_TAGS);
   }
 
   public static boolean isSingleHtmlTag(@NotNull XmlTag tag, boolean lowerCase) {
