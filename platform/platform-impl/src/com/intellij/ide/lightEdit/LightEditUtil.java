@@ -73,7 +73,7 @@ public final class LightEditUtil {
     if (path.getFileName() == null) {
       LOG.error("No file name is given");
     }
-    if (path.getNameCount() > 0) {
+    if (isLightEditEnabled() && path.getNameCount() > 0) {
       String fileName = path.getFileName().toString();
       final Ref<String> creationMessage = Ref.create();
       if (path.getNameCount() > 1) {
