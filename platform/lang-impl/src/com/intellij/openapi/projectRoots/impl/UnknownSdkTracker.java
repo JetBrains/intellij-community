@@ -12,6 +12,8 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.impl.UnknownSdkBalloonNotification.FixedSdkNotification;
+import com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotification.FixableSdkNotifications;
 import com.intellij.openapi.roots.ui.configuration.*;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver.UnknownSdkLookup;
 import com.intellij.openapi.util.io.FileUtil;
@@ -123,11 +125,11 @@ public class UnknownSdkTracker {
   };
 
   public void updateUnknownSdksNow() {
-    myUpdateQueue.run(newUpdateTask(myDefaultShowAction, myIsNewSnapshot));
+    myUpdateQueue.run(newUpdateTask(new DefaultShowStatusCallbackAdapter(), myIsNewSnapshot));
   }
 
   public void updateUnknownSdks() {
-    myUpdateQueue.queue(newUpdateTask(myDefaultShowAction, myIsNewSnapshot));
+    myUpdateQueue.queue(newUpdateTask(new DefaultShowStatusCallbackAdapter(), myIsNewSnapshot));
   }
 
   private static boolean allowFixesFor(@NotNull SdkTypeId type) {
@@ -243,21 +245,40 @@ public class UnknownSdkTracker {
                     @NotNull List<UnknownInvalidSdk> invalidSdks);
   }
 
-  private final ShowStatusCallback myDefaultShowAction = new ShowStatusCallback() {
-    @Override
-    public void showStatus(@NotNull List<UnknownSdk> unknownSdksWithoutFix,
-                           @NotNull Map<UnknownSdk, UnknownSdkLocalSdkFix> localFixes,
-                           @NotNull Map<UnknownSdk, UnknownSdkDownloadableSdkFix> downloadFixes,
-                           @NotNull List<UnknownInvalidSdk> invalidSdks) {
-      UnknownSdkBalloonNotification
-        .getInstance(myProject)
-        .notifyFixedSdks(localFixes);
+  public static abstract class ShowStatusCallbackAdapter implements ShowStatusCallback {
+    protected final UnknownSdkBalloonNotification mySdkBalloonNotification;
+    protected final UnknownSdkEditorNotification mySdkEditorNotification;
 
-      UnknownSdkEditorNotification
-        .getInstance(myProject)
-        .showNotifications(unknownSdksWithoutFix, downloadFixes, invalidSdks);
+    protected ShowStatusCallbackAdapter(@NotNull Project project) {
+      mySdkBalloonNotification = UnknownSdkBalloonNotification.getInstance(project);
+      mySdkEditorNotification = UnknownSdkEditorNotification.getInstance(project);
     }
-  };
+
+    @Override
+    public final void showStatus(@NotNull List<UnknownSdk> unknownSdksWithoutFix,
+                                 @NotNull Map<UnknownSdk, UnknownSdkLocalSdkFix> localFixes,
+                                 @NotNull Map<UnknownSdk, UnknownSdkDownloadableSdkFix> downloadFixes,
+                                 @NotNull List<UnknownInvalidSdk> invalidSdks) {
+      FixedSdkNotification fixed = mySdkBalloonNotification.buildNotifications(localFixes);
+      FixableSdkNotifications actions = mySdkEditorNotification.buildNotifications(unknownSdksWithoutFix, downloadFixes, invalidSdks);
+      notifySdks(fixed, actions);
+    }
+
+    protected abstract void notifySdks(@Nullable FixedSdkNotification fixed,
+                                       @NotNull FixableSdkNotifications actions);
+  }
+
+  private class DefaultShowStatusCallbackAdapter extends ShowStatusCallbackAdapter {
+    private DefaultShowStatusCallbackAdapter() {
+      super(myProject);
+    }
+
+    @Override
+    protected void notifySdks(@Nullable FixedSdkNotification fixed, @NotNull FixableSdkNotifications actions) {
+      mySdkBalloonNotification.notifyFixedSdks(fixed);
+      mySdkEditorNotification.showNotifications(actions);
+    }
+  }
 
   @NotNull
   private List<UnknownSdkLookup> collectSdkLookups(@NotNull ProgressIndicator indicator) {

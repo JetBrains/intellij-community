@@ -69,10 +69,8 @@ public class UnknownSdkEditorNotification {
     return ImmutableList.copyOf(myNotifications.get());
   }
 
-  public void showNotifications(@NotNull List<UnknownSdk> unfixableSdks,
-                                @NotNull Map<UnknownSdk, UnknownSdkDownloadableSdkFix> files,
-                                @NotNull List<UnknownInvalidSdk> invalidSdks) {
-    myNotifications.set(ImmutableSet.copyOf(buildNotifications(unfixableSdks, files, invalidSdks)));
+  public void showNotifications(@NotNull FixableSdkNotifications notifications) {
+    myNotifications.set(ImmutableSet.copyOf(notifications.getInfos()));
     EditorNotifications.getInstance(myProject).updateAllNotifications();
 
     ApplicationManager.getApplication().invokeLater(() -> {
@@ -82,10 +80,23 @@ public class UnknownSdkEditorNotification {
     });
   }
 
+  public static final class FixableSdkNotifications {
+    private final Set<SimpleSdkFixInfo> myInfos;
+
+    private FixableSdkNotifications(@NotNull Set<SimpleSdkFixInfo> infos) {
+      myInfos = ImmutableSet.copyOf(infos);
+    }
+
+    @NotNull
+    public Set<SimpleSdkFixInfo> getInfos() {
+      return myInfos;
+    }
+  }
+
   @NotNull
-  public Set<SimpleSdkFixInfo> buildNotifications(@NotNull List<UnknownSdk> unfixableSdks,
-                                                  @NotNull Map<UnknownSdk, UnknownSdkDownloadableSdkFix> files,
-                                                  @NotNull List<UnknownInvalidSdk> invalidSdks) {
+  public FixableSdkNotifications buildNotifications(@NotNull List<UnknownSdk> unfixableSdks,
+                                                    @NotNull Map<UnknownSdk, UnknownSdkDownloadableSdkFix> files,
+                                                    @NotNull List<UnknownInvalidSdk> invalidSdks) {
     ImmutableSet.Builder<SimpleSdkFixInfo> notifications = ImmutableSet.builder();
 
     if (Registry.is("unknown.sdk.show.editor.actions")) {
@@ -110,7 +121,7 @@ public class UnknownSdkEditorNotification {
       }
     }
 
-    return notifications.build();
+    return new FixableSdkNotifications(notifications.build());
   }
 
   private void updateEditorNotifications(@NotNull FileEditor editor) {

@@ -63,16 +63,16 @@ public class UnknownSdkBalloonNotification {
     return new FixedSdkNotification(usages, title, message.toString(), change);
   }
 
-  public static class FixedSdkNotification {
+  public static final class FixedSdkNotification {
     private final Set<@Nls String> myUsages;
     private final String myTitle;
     private final String myMessage;
     private final String myChangeAction;
 
-    public FixedSdkNotification(@NotNull Set<@Nls String> usages,
-                                @Nls @NotNull String title,
-                                @Nls @NotNull String message,
-                                @Nls @NotNull String changeAction) {
+    private FixedSdkNotification(@NotNull Set<@Nls String> usages,
+                                 @Nls @NotNull String title,
+                                 @Nls @NotNull String message,
+                                 @Nls @NotNull String changeAction) {
       myUsages = usages;
       myTitle = title;
       myMessage = message;
@@ -101,9 +101,8 @@ public class UnknownSdkBalloonNotification {
     }
   }
 
-  public void notifyFixedSdks(@NotNull Map<? extends UnknownSdk, UnknownSdkLocalSdkFix> localFixes) {
-    FixedSdkNotification info = buildNotifications(localFixes);
-    if (info == null) return;
+  public void notifyFixedSdks(@Nullable FixedSdkNotification info) {
+    if (info == null || info.getUsages().isEmpty()) return;
 
     NotificationGroupManager.getInstance().getNotificationGroup("Missing SDKs")
       .createNotification(info.getTitle(), info.getMessage(), NotificationType.INFORMATION, null)
