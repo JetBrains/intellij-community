@@ -98,7 +98,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
       final int state = getState() & BASE_STATE_MASK;
       final boolean script = name.equals(TOKEN_SCRIPT) ||
                        ((name.startsWith(TOKEN_ON) && name.indexOf(':') == -1 && !isHtmlTagState(state) &&
-                         HtmlDescriptorsTable.getAttributeDescriptor(name) != null));
+                         HtmlDescriptorsTable.isKnownAttributeDescriptor(name)));
 
       if (style || script) {
         // encountered tag name in end of tag
