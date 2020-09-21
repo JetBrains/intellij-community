@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.options.ConfigurationException;
@@ -24,9 +10,6 @@ import org.jetbrains.idea.maven.execution.MavenRunConfiguration;
 
 import javax.swing.*;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenGeneralSettingsEditor extends SettingsEditor<MavenRunConfiguration> {
 
   private final MavenGeneralPanel myPanel;
@@ -42,7 +25,13 @@ public class MavenGeneralSettingsEditor extends SettingsEditor<MavenRunConfigura
 
   @Override
   protected void resetEditorFrom(@NotNull MavenRunConfiguration s) {
-    myUseProjectSettings.setSelected(s.getGeneralSettings() == null);
+    boolean localTarget = MavenRunConfiguration.getTargetName(this) == null;
+    if (localTarget) {
+      myUseProjectSettings.setSelected(s.getGeneralSettings() == null);
+    }
+    else {
+      myUseProjectSettings.setSelected(false);
+    }
 
     if (s.getGeneralSettings() == null) {
       MavenGeneralSettings settings = MavenProjectsManager.getInstance(myProject).getGeneralSettings();
@@ -54,19 +43,27 @@ public class MavenGeneralSettingsEditor extends SettingsEditor<MavenRunConfigura
   }
 
   @Override
-  protected void applyEditorTo(@NotNull MavenRunConfiguration s) throws ConfigurationException {
+  protected void applyEditorTo(@NotNull MavenRunConfiguration runConfiguration) throws ConfigurationException {
+    String targetName = MavenRunConfiguration.getTargetName(this);
+    boolean localTarget = targetName == null;
+    myUseProjectSettings.setEnabled(localTarget);
+    if (!localTarget) {
+      myUseProjectSettings.setSelected(false);
+    }
+
     if (myUseProjectSettings.isSelected()) {
-      s.setGeneralSettings(null);
+      runConfiguration.setGeneralSettings(null);
     }
     else {
-      MavenGeneralSettings state = s.getGeneralSettings();
-      if (state != null) {
-        myPanel.setData(state);
+      MavenGeneralSettings generalSettings = runConfiguration.getGeneralSettings();
+      myPanel.applyTargetEnvironmentConfiguration(targetName);
+      if (generalSettings != null) {
+        myPanel.setData(generalSettings);
       }
       else {
         MavenGeneralSettings settings = MavenProjectsManager.getInstance(myProject).getGeneralSettings().clone();
         myPanel.setData(settings);
-        s.setGeneralSettings(settings);
+        runConfiguration.setGeneralSettings(settings);
       }
     }
   }
