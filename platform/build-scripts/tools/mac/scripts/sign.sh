@@ -20,7 +20,7 @@ function log() {
 set -euo pipefail
 
 # Cleanup files left from previous sign attempt (if any)
-find "$APP_DIRECTORY" -name '*.cstemp' -exec rm '{}' +
+find "$APP_DIRECTORY" -name '*.cstemp' -exec rm '{}' \;
 
 log "Signing libraries and executables..."
 # -perm +111 searches for executables
@@ -36,7 +36,7 @@ for f in \
       -type f \( -name "*.jnilib" -o -name "*.dylib" -o -name "*.so" -o -perm +111 \) \
       -exec codesign --timestamp \
       -v -s "$JB_CERT" --options=runtime \
-      --entitlements entitlements.xml {} +
+      --entitlements entitlements.xml {} \;
   fi
 done
 
@@ -46,7 +46,7 @@ log "Signing libraries in jars in $PWD"
 # `-e` prevents `grep -q && printf` loginc
 # with `-o pipefail` there's no input for 'while' loop
 find "$APP_DIRECTORY" -name '*.jar' \
-  -exec sh -c "set -u; unzip -l \"\$0\" | grep -q -e '\.dylib\$' -e '\.jnilib\$' -e '\.so\$' -e '^jattach\$' && printf \"\$0\0\" " {} + |
+  -exec sh -c "set -u; unzip -l \"\$0\" | grep -q -e '\.dylib\$' -e '\.jnilib\$' -e '\.so\$' -e '^jattach\$' && printf \"\$0\0\" " {} \; |
   while IFS= read -r -d $'\0' file; do
     log "Processing libraries in $file"
 
@@ -60,7 +60,7 @@ find "$APP_DIRECTORY" -name '*.jar' \
       -type f \( -name "*.jnilib" -o -name "*.dylib" -o -name "*.so" -o -name "jattach" \) \
       -exec codesign --timestamp \
       -v -s "$JB_CERT" --options=runtime \
-      --entitlements entitlements.xml {} +
+      --entitlements entitlements.xml {} \;
 
     (cd jarfolder; zip -q -r -o ../jar.jar .)
     mv jar.jar "$file"
@@ -78,7 +78,7 @@ for f in \
       -type f \( -name "*.jnilib" -o -name "*.dylib" -o -name "*.so" -o -perm +111 \) \
       -exec codesign --timestamp \
       -v -s "$JB_CERT" --options=runtime \
-      --entitlements entitlements.xml {} +
+      --entitlements entitlements.xml {} \;
   fi
 done
 
@@ -96,4 +96,4 @@ codesign --timestamp \
 
 log "Verifying java is not broken"
 find "$APP_DIRECTORY" \
-  -type f -name 'java' -perm +111 -exec {} -version +
+  -type f -name 'java' -perm +111 -exec {} -version \;
