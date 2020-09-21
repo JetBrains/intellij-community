@@ -4,7 +4,9 @@ package com.intellij.codeInspection;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -18,17 +20,20 @@ public class SuspiciousTernaryOperatorInVarargsCallInspection extends AbstractBa
       @Override
       public void visitMethodCallExpression(PsiMethodCallExpression expression) {
         super.visitMethodCallExpression(expression);
+
+        PsiExpressionList argumentList = expression.getArgumentList();
+        if (argumentList.isEmpty()) return;
+
+        final PsiExpression[] args = argumentList.getExpressions();
+        PsiExpression varargsExpression = ArrayUtil.getLastElement(args);
+        final PsiConditionalExpression conditional = ObjectUtils.tryCast(varargsExpression, PsiConditionalExpression.class);
+        if (conditional == null) return;
+
         final PsiMethod method = expression.resolveMethod();
         if (method == null || !method.isVarArgs()) return;
 
-        final PsiExpression[] args = expression.getArgumentList().getExpressions();
         final PsiParameter[] params = method.getParameterList().getParameters();
         if (args.length != params.length) return;
-
-        int varargsPosition = args.length - 1;
-        PsiExpression varargsExpression = args[varargsPosition];
-        final PsiConditionalExpression conditional = ObjectUtils.tryCast(varargsExpression, PsiConditionalExpression.class);
-        if (conditional == null) return;
 
         final PsiExpression thenExpression = conditional.getThenExpression();
         final PsiExpression elseExpression = conditional.getElseExpression();
@@ -40,15 +45,19 @@ public class SuspiciousTernaryOperatorInVarargsCallInspection extends AbstractBa
         if (isThenArray == elseType instanceof PsiArrayType) return;
 
         final PsiExpression nonArray = isThenArray ? elseExpression : thenExpression;
+        final PsiType nonArrayType = nonArray.getType();
+
         PsiClassType varargsType = ObjectUtils.tryCast(varargsExpression.getType(), PsiClassType.class);
         if (varargsType == null) return;
 
-        final String replacementText = String.format("new %s[]{%s}", varargsType.getName(), nonArray.getText());
+        String typeName = varargsType.getName();
+        final String replacementText = String.format("new %s[]{%s}", typeName, nonArray.getText());
+        final LocalQuickFix fix = ClassUtils.isPrimitive(nonArrayType) ? null : new WrapInArrayInitializerFix(replacementText, typeName);
 
         holder.registerProblem(nonArray,
                                JavaBundle.message("inspection.suspicious.ternary.in.varargs.description"),
                                ProblemHighlightType.WARNING,
-                               new WrapInArrayInitializerFix(replacementText));
+                               fix);
       }
 
     };
@@ -56,17 +65,19 @@ public class SuspiciousTernaryOperatorInVarargsCallInspection extends AbstractBa
 
   private static class WrapInArrayInitializerFix implements LocalQuickFix {
 
-    private final String myReplacementText;
+    private final String myReplacementMessage;
+    private final String myTypeName;
 
-    WrapInArrayInitializerFix(String replacementText) {
-      myReplacementText = replacementText;
+    WrapInArrayInitializerFix(String replacementMessage, String typeName) {
+      myReplacementMessage = replacementMessage;
+      myTypeName = typeName;
     }
 
     @Nls
     @NotNull
     @Override
     public String getName() {
-      return CommonQuickFixBundle.message("fix.replace.with.x", myReplacementText);
+      return CommonQuickFixBundle.message("fix.replace.with.x", myReplacementMessage);
     }
 
     @Nls
@@ -81,8 +92,9 @@ public class SuspiciousTernaryOperatorInVarargsCallInspection extends AbstractBa
       PsiElement element = descriptor.getPsiElement();
       if (element == null || !element.isValid()) return;
 
-      CommentTracker commentTracker = new CommentTracker();
-      commentTracker.replaceAndRestoreComments(element, myReplacementText);
+      CommentTracker ct = new CommentTracker();
+      final String replacementText = String.format("new %s[]{%s}", myTypeName, ct.text(element));
+      ct.replaceAndRestoreComments(element, replacementText);
     }
   }
 }
