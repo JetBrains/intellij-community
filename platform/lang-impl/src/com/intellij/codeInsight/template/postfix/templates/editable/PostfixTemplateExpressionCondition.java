@@ -2,9 +2,9 @@
 package com.intellij.codeInsight.template.postfix.templates.editable;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.NlsActions;
 import com.intellij.psi.PsiElement;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,7 +15,7 @@ public interface PostfixTemplateExpressionCondition<T extends PsiElement> extend
   /**
    * @return presentable name for postfix editor dialog
    */
-  @NotNull @NlsActions.ActionText String getPresentableName();
+  @NotNull @Nls String getPresentableName();
 
 
   /**
