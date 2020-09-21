@@ -20,7 +20,7 @@ internal object ClassToIntConverter {
   fun fromMap(map: Map<Class<*>, Int>) {
     class2Int.clear()
     class2Int.putAll(map)
-    idGenerator.set(map.map { it.value }.max()!! + 1)
+    idGenerator.set((map.map { it.value }.maxOrNull() ?: -1) + 1)
   }
 }
 
