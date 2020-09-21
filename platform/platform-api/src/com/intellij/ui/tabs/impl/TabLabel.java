@@ -26,6 +26,7 @@ import com.intellij.util.ui.Centerizer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.Accessible;
@@ -35,6 +36,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.List;
 
 public class TabLabel extends JPanel implements Accessible {
   private static final Logger LOG = Logger.getInstance(TabLabel.class);
@@ -212,10 +214,27 @@ public class TabLabel extends JPanel implements Accessible {
     return label;
   }
 
+  public boolean isPinned() {
+    return myInfo != null && myInfo.isPinned();
+  }
+
+  @Override
+  public Dimension getPreferredSize() {
+    Dimension size = getNotStrictPreferredSize();
+    if (isPinned()) {
+      size.width = Math.min(TabLayout.getMaxPinnedTabWidth(), size.width);
+    }
+    return size;
+  }
+
+  public Dimension getNotStrictPreferredSize() {
+    return super.getPreferredSize();
+  }
+
   @Override
   public Insets getInsets() {
     Insets insets = super.getInsets();
-    if (myTabs.isEditorTabs() && UISettings.getShadowInstance().getShowCloseButton() && hasIcons()) {
+    if (myTabs.isEditorTabs() && (UISettings.getShadowInstance().getShowCloseButton() || myInfo.isPinned()) && hasIcons()) {
       if (UISettings.getShadowInstance().getCloseTabButtonOnTheRight()) {
         insets.right -= JBUIScale.scale(4);
       }
@@ -257,6 +276,31 @@ public class TabLabel extends JPanel implements Accessible {
 
   private void doPaint(final Graphics g) {
     super.paint(g);
+  }
+
+  public boolean isLastPinned() {
+    if (myInfo.isPinned()) {
+      @NotNull List<TabInfo> tabs = myTabs.getTabs();
+      for (int i = 0; i < tabs.size(); i++) {
+        TabInfo info = tabs.get(i);
+        if (info == myInfo && i < tabs.size() - 1) {
+          return !tabs.get(i + 1).isPinned();
+        }
+      }
+    }
+    return false;
+  }
+
+  public boolean isNextToLastPinned() {
+    if (!myInfo.isPinned()) {
+      @NotNull List<TabInfo> tabs = myTabs.getTabs();
+      boolean wasPinned = false;
+      for (TabInfo info : tabs) {
+        if (wasPinned && info == myInfo) return true;
+        wasPinned = info.isPinned();
+      }
+    }
+    return false;
   }
 
   private void handlePopup(final MouseEvent e) {
@@ -628,7 +672,7 @@ public class TabLabel extends JPanel implements Accessible {
 
     private boolean doCustomLayout(Container parent) {
       int tabPlacement = UISettings.getInstance().getEditorTabPlacement();
-      if (myTabs != null && myTabs.ignoreTabLabelLimitedWidthWhenPaint() &&
+      if (!myInfo.isPinned() && myTabs != null && myTabs.ignoreTabLabelLimitedWidthWhenPaint() &&
           (tabPlacement == SwingConstants.TOP || tabPlacement == SwingConstants.BOTTOM) &&
           parent.getWidth() < parent.getPreferredSize().width) {
         int spaceTop = parent.getInsets().top;

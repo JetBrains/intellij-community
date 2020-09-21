@@ -3,7 +3,6 @@ package com.intellij.ui.tabs.impl
 
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.tabs.JBTabPainter
-import com.intellij.ui.tabs.JBTabsPosition
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Rectangle
@@ -35,18 +34,34 @@ class EditorTabPainterAdapter : TabPainterAdapter {
   }
 
   private fun paintBorders(g: Graphics2D, label: TabLabel, tabs: JBTabsImpl) {
-    if(tabs.position == JBTabsPosition.top && (Registry.`is`("ide.new.editor.tabs.vertical.borders") || !tabs.isSingleRow) ||
-       (tabs.position == JBTabsPosition.bottom && Registry.`is`("ide.new.editor.tabs.vertical.borders"))) {
+    val paintStandardBorder = !tabs.isSingleRow
+                              || (!tabs.position.isSide && Registry.`is`("ide.new.editor.tabs.vertical.borders"))
+    val lastPinned = label.isLastPinned
+    val nextToLastPinned = label.isNextToLastPinned
+    val rect = Rectangle(0, 0, label.width, label.height)
+    if (paintStandardBorder || lastPinned || nextToLastPinned) {
 
-      val rect = Rectangle(0, 0, label.width, label.height)
 
       val bounds = label.bounds
-      if (bounds.x > magicOffset) {
+      if (bounds.x > magicOffset && (paintStandardBorder || nextToLastPinned)) {
         painter.paintLeftGap(tabs.position, g, rect, tabs.borderThickness)
       }
 
-      if (bounds.x + bounds.width < tabs.width - magicOffset) {
+      if (bounds.x + bounds.width < tabs.width - magicOffset && (paintStandardBorder || lastPinned)) {
         painter.paintRightGap(tabs.position, g, rect, tabs.borderThickness)
+      }
+    }
+
+    if (tabs.position.isSide && lastPinned) {
+      val bounds = label.bounds
+      if (bounds.y + bounds.height < tabs.height - magicOffset) {
+        painter.paintBottomGap(tabs.position, g, rect, tabs.borderThickness)
+      }
+    }
+    if (tabs.position.isSide && nextToLastPinned) {
+      val bounds = label.bounds
+      if (bounds.y + bounds.height < tabs.height - magicOffset) {
+        painter.paintTopGap(tabs.position, g, rect, tabs.borderThickness)
       }
     }
   }

@@ -11,6 +11,7 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ShadowAction
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.BitUtil
 import java.awt.event.InputEvent
@@ -28,13 +29,22 @@ class CloseTab(c: JComponent,
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.icon = AllIcons.Actions.Close
-    e.presentation.hoveredIcon = AllIcons.Actions.CloseHovered
-    e.presentation.isVisible = instance.showCloseButton
-    e.presentation.setText(IdeBundle.messagePointer("action.presentation.EditorTabbedContainer.text"))
+    val pinned = isPinned()
+    e.presentation.icon = if (!pinned) AllIcons.Actions.Close else AllIcons.Actions.PinTab
+    e.presentation.hoveredIcon = if (!pinned) AllIcons.Actions.CloseHovered else AllIcons.Actions.PinTab
+    e.presentation.isVisible = instance.showCloseButton || pinned
+    if (pinned && !Registry.get("ide.editor.tabs.interactive.pin.button").asBoolean()) {
+      e.presentation.setText("")
+    }
+    else {
+      e.presentation.setText(IdeBundle.messagePointer("action.presentation.EditorTabbedContainer.text"))
+    }
   }
 
+  private fun isPinned() = editorWindow.isFilePinned(file)
+
   override fun actionPerformed(e: AnActionEvent) {
+    if (isPinned() && !Registry.get("ide.editor.tabs.interactive.pin.button").asBoolean()) return
     val mgr = FileEditorManagerEx.getInstanceEx(project)
     val window: EditorWindow?
     if (ActionPlaces.EDITOR_TAB == e.place) {
