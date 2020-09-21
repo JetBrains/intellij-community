@@ -43,8 +43,6 @@ public interface CommitExecutor {
   @SuppressWarnings("deprecation")
   @NotNull
   default CommitSession createCommitSession(@NotNull CommitContext commitContext) {
-    CommitSession commitSession = createCommitSession();
-    if (commitSession instanceof CommitSessionContextAware) ((CommitSessionContextAware)commitSession).setContext(commitContext);
-    return commitSession;
+    return createCommitSession();
   }
 }
