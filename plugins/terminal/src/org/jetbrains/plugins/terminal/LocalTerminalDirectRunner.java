@@ -243,6 +243,15 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
    *         {@link LocalTerminalCustomizer#customizeCommandAndEnvironment} to it.
    */
   public @NotNull List<String> getInitialCommand(@NotNull Map<String, String> envs) {
+    return getCommands(envs);
+  }
+
+  /**
+   * @deprecated use {@link #getInitialCommand(Map)} instead
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @Deprecated
+  public @NotNull List<String> getCommands(@NotNull Map<String, String> envs) {
     return Arrays.asList(getCommand(envs));
   }
 
@@ -254,15 +263,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   public String[] getCommand(Map<String, String> envs) {
     String shellPath = getShellPath();
     return ArrayUtil.toStringArray(getCommand(shellPath, envs, TerminalOptionsProvider.getInstance().shellIntegration()));
-  }
-
-  /**
-   * @deprecated use {@link #getInitialCommand(Map)} instead
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  @Deprecated
-  public @NotNull List<String> getCommands(@NotNull Map<String, String> envs) {
-    return getInitialCommand(envs);
   }
 
   private @NotNull String getShellPath() {
