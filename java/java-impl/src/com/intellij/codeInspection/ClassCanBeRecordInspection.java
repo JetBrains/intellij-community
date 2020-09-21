@@ -1,14 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.java.JavaBundle;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiIdentifier;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.convertToRecord.ConvertToRecordHandler;
 import com.siyeh.ig.BaseInspection;
@@ -22,7 +21,7 @@ public class ClassCanBeRecordInspection extends BaseInspection {
 
   @Override
   public boolean shouldInspect(PsiFile file) {
-    return PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_14_PREVIEW);
+    return HighlightingFeature.RECORDS.isAvailable(file);
   }
 
   @Override

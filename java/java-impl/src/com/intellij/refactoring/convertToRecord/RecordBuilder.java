@@ -10,7 +10,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.refactoring.convertToRecord.ConvertToRecordHandler.FieldAccessorDefinition;
+import com.intellij.refactoring.convertToRecord.ConvertToRecordHandler.FieldAccessorCandidate;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -35,10 +35,10 @@ class RecordBuilder {
     myRecordText.append("record");
   }
 
-  void addRecordHeader(@Nullable PsiMethod canonicalCtor, @NotNull Map<PsiField, @Nullable FieldAccessorDefinition> fieldAccessors) {
+  void addRecordHeader(@Nullable PsiMethod canonicalCtor, @NotNull Map<PsiField, @Nullable FieldAccessorCandidate> fieldAccessors) {
     myRecordText.append("(");
     if (canonicalCtor != null) {
-      StringJoiner recordComponentsJoiner = new StringJoiner(", ");
+      StringJoiner recordComponentsJoiner = new StringJoiner(",");
       for (JvmParameter jvmParameter : canonicalCtor.getParameters()) {
         PsiParameter parameter = ObjectUtils.tryCast(jvmParameter, PsiParameter.class);
         if (parameter == null) continue;
@@ -58,15 +58,15 @@ class RecordBuilder {
     myRecordText.append(canonicalCtor.getText());
   }
 
-  void addFieldAccessor(@NotNull FieldAccessorDefinition fieldAccessorDef) {
-    PsiMethod fieldAccessor = fieldAccessorDef.getAccessor();
-    if (fieldAccessorDef.isDefault()) {
+  void addFieldAccessor(@NotNull FieldAccessorCandidate fieldAccessorCandidate) {
+    PsiMethod fieldAccessor = fieldAccessorCandidate.getAccessor();
+    if (fieldAccessorCandidate.isDefault()) {
       trimEndingWhiteSpaces();
       return;
     }
-    PsiModifierList fieldModifiers = fieldAccessor.getModifierList();
-    VisibilityUtil.setVisibility(fieldModifiers, PsiModifier.PUBLIC);
-    processOverrideAnnotation(fieldModifiers);
+    PsiModifierList accessorModifiers = fieldAccessor.getModifierList();
+    VisibilityUtil.setVisibility(accessorModifiers, PsiModifier.PUBLIC);
+    processOverrideAnnotation(accessorModifiers);
     processUncheckedExceptions(fieldAccessor);
     CodeStyleManager.getInstance(myOriginClass.getProject()).reformat(fieldAccessor);
     myRecordText.append(fieldAccessor.getText());
@@ -78,26 +78,31 @@ class RecordBuilder {
 
   @NotNull
   PsiClass build() {
-    return JavaPsiFacade.getElementFactory(myOriginClass.getProject()).createRecordFromText(myRecordText.toString(), null);
+    PsiClass psiRecord = JavaPsiFacade.getElementFactory(myOriginClass.getProject()).createRecordFromText(myRecordText.toString(), null);
+    PsiRecordHeader recordHeader = psiRecord.getRecordHeader();
+    assert recordHeader != null;
+    CodeStyleManager.getInstance(myOriginClass.getProject()).reformat(recordHeader);
+    return psiRecord;
   }
 
   @NotNull
   private static String generateAnnotationsText(@NotNull String parameterName,
-                                                @NotNull Map<PsiField, @Nullable FieldAccessorDefinition> fieldAccessors) {
+                                                @NotNull Map<PsiField, @Nullable FieldAccessorCandidate> fieldAccessors) {
     PsiField field = null;
-    FieldAccessorDefinition fieldAccessorDef = null;
+    FieldAccessorCandidate fieldAccessorCandidate = null;
     for (var entry : fieldAccessors.entrySet()) {
       if (entry.getKey().getName().equals(parameterName)) {
         field = entry.getKey();
-        fieldAccessorDef = entry.getValue();
+        fieldAccessorCandidate = entry.getValue();
+        break;
       }
     }
     assert field != null;
     PsiAnnotation[] fieldAnnotations = field.getAnnotations();
     String fieldAnnotationsText = Arrays.stream(fieldAnnotations).map(PsiAnnotation::getText).collect(Collectors.joining(" "));
     String annotationsText = fieldAnnotationsText == "" ? fieldAnnotationsText : fieldAnnotationsText + " ";
-    if (fieldAccessorDef != null && fieldAccessorDef.isDefault()) {
-      String accessorAnnotationsText = Arrays.stream(fieldAccessorDef.getAccessor().getAnnotations())
+    if (fieldAccessorCandidate != null && fieldAccessorCandidate.isDefault()) {
+      String accessorAnnotationsText = Arrays.stream(fieldAccessorCandidate.getAccessor().getAnnotations())
         .filter(accessorAnn -> !CommonClassNames.JAVA_LANG_OVERRIDE.equals(accessorAnn.getQualifiedName()))
         .filter(accessorAnn -> !ContainerUtil.exists(fieldAnnotations, fieldAnn -> AnnotationUtil.equal(fieldAnn, accessorAnn)))
         .map(PsiAnnotation::getText).collect(Collectors.joining(" "));
@@ -106,9 +111,9 @@ class RecordBuilder {
     return annotationsText;
   }
 
-  private void processOverrideAnnotation(@NotNull PsiModifierList fieldModifiers) {
+  private void processOverrideAnnotation(@NotNull PsiModifierList accessorModifiers) {
     PsiAnnotation annotation = AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(CommonClassNames.JAVA_LANG_OVERRIDE,
-                                                                                 PsiNameValuePair.EMPTY_ARRAY, fieldModifiers);
+                                                                                 PsiNameValuePair.EMPTY_ARRAY, accessorModifiers);
     if (annotation != null) {
       JavaCodeStyleManager.getInstance(myOriginClass.getProject()).shortenClassReferences(annotation);
     }

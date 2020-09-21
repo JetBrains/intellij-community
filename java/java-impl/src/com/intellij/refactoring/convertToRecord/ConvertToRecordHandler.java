@@ -61,8 +61,8 @@ public class ConvertToRecordHandler implements RefactoringActionHandler {
     else {
       return;
     }
-    PsiClassDefinition psiClassDef = getClassDefinition(psiClass);
-    if (psiClassDef == null) {
+    RecordCandidate recordCandidate = getClassDefinition(psiClass);
+    if (recordCandidate == null) {
       String message = JavaRefactoringBundle.message("convert.to.record.is.inappropriate");
       CommonRefactoringUtil.showErrorHint(project, CommonDataKeys.EDITOR.getData(dataContext),
                                           RefactoringBundle.getCannotRefactorMessage(message),
@@ -70,7 +70,7 @@ public class ConvertToRecordHandler implements RefactoringActionHandler {
                                           HelpID.CONVERT_TO_RECORD);
       return;
     }
-    new ConvertToRecordDialog(psiClassDef).show();
+    new ConvertToRecordDialog(recordCandidate).show();
   }
 
   public static boolean isAppropriatePsiClass(@NotNull PsiClass psiClass) {
@@ -81,7 +81,7 @@ public class ConvertToRecordHandler implements RefactoringActionHandler {
    * There are some restrictions for records:
    * http://cr.openjdk.java.net/~gbierman/jep384/jep384-20200506/specs/records-jls.html
    */
-  public static PsiClassDefinition getClassDefinition(@NotNull PsiClass psiClass) {
+  public static RecordCandidate getClassDefinition(@NotNull PsiClass psiClass) {
     boolean isNotAppropriatePsiClass = psiClass.isEnum() || psiClass.isAnnotationType() || psiClass instanceof PsiAnonymousClass ||
                                        psiClass.isInterface() || psiClass.isRecord();
     if (isNotAppropriatePsiClass) return null;
@@ -99,11 +99,11 @@ public class ConvertToRecordHandler implements RefactoringActionHandler {
     PsiClass superClass = psiClass.getSuperClass();
     if (superClass == null || !CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) return null;
 
-    if (ClassInheritorsSearch.search(psiClass, false).findFirst() != null) return null;
     if (ContainerUtil.exists(psiClass.getInitializers(), initializer -> !initializer.hasModifierProperty(STATIC))) return null;
 
-    PsiClassDefinition result = new PsiClassDefinition(psiClass);
-    return result.isValid() ? result : null;
+    RecordCandidate result = new RecordCandidate(psiClass);
+    if (!result.isValid()) return null;
+    return ClassInheritorsSearch.search(psiClass, false).findFirst() == null ? result : null;
   }
 
   /**
@@ -117,15 +117,15 @@ public class ConvertToRecordHandler implements RefactoringActionHandler {
    * Encapsulates necessary information about the converting class e.g its existing fields, accessors...
    * It helps to validate whether a class will be a well-formed record and supports performing a refactoring.
    */
-  static class PsiClassDefinition {
+  static class RecordCandidate {
     private final PsiClass myClass;
-    private final MultiMap<PsiField, FieldAccessorDefinition> myFieldAccessors = new MultiMap<>();
+    private final MultiMap<PsiField, FieldAccessorCandidate> myFieldAccessors = new MultiMap<>();
     private final List<PsiMethod> myOrdinaryMethods = new SmartList<>();
-    private final List<ConstructorDefinition> myConstructors = new SmartList<>();
+    private final List<RecordConstructorCandidate> myConstructors = new SmartList<>();
 
-    private Map<PsiField, FieldAccessorDefinition> fieldAccessorsCache;
+    private Map<PsiField, FieldAccessorCandidate> myFieldAccessorsCache;
 
-    private PsiClassDefinition(@NotNull PsiClass psiClass) {
+    private RecordCandidate(@NotNull PsiClass psiClass) {
       myClass = psiClass;
       prepare();
     }
@@ -139,17 +139,17 @@ public class ConvertToRecordHandler implements RefactoringActionHandler {
     }
 
     @NotNull
-    Map<PsiField, @Nullable FieldAccessorDefinition> getFieldAccessors() {
-      if (fieldAccessorsCache != null) return fieldAccessorsCache;
+    Map<PsiField, @Nullable FieldAccessorCandidate> getFieldAccessors() {
+      if (myFieldAccessorsCache != null) return myFieldAccessorsCache;
 
-      Map<PsiField, FieldAccessorDefinition> result = new HashMap<>();
+      Map<PsiField, FieldAccessorCandidate> result = new HashMap<>();
       for (var entry : myFieldAccessors.entrySet()) {
         PsiField newKey = entry.getKey();
-        Collection<FieldAccessorDefinition> oldValue = entry.getValue();
-        FieldAccessorDefinition newValue = oldValue.size() == 1 ? oldValue.iterator().next() : null;
+        Collection<FieldAccessorCandidate> oldValue = entry.getValue();
+        FieldAccessorCandidate newValue = ContainerUtil.getOnlyItem(oldValue);
         result.put(newKey, newValue);
       }
-      fieldAccessorsCache = result;
+      myFieldAccessorsCache = result;
       return result;
     }
 
@@ -161,8 +161,8 @@ public class ConvertToRecordHandler implements RefactoringActionHandler {
     private boolean isValid() {
       if (myConstructors.size() > 1) return false;
       if (myConstructors.size() == 1) {
-        ConstructorDefinition ctor = myConstructors.get(0);
-        boolean isCanonical = ctor.myCanonical && throwsOnlyUncheckedExceptions(ctor.myConstructor);
+        RecordConstructorCandidate ctorCandidate = myConstructors.get(0);
+        boolean isCanonical = ctorCandidate.myCanonical && throwsOnlyUncheckedExceptions(ctorCandidate.myConstructor);
         if (!isCanonical) return false;
       }
       for (var entry : myFieldAccessors.entrySet()) {
@@ -173,8 +173,9 @@ public class ConvertToRecordHandler implements RefactoringActionHandler {
       }
       for (PsiMethod ordinaryMethod : myOrdinaryMethods) {
         if (ordinaryMethod.hasModifierProperty(NATIVE)) return false;
-        boolean conflictsWithPotentialAccessor = ContainerUtil.exists(myFieldAccessors.keySet(), field ->
-          ordinaryMethod.getParameterList().isEmpty() && field.getName().equals(ordinaryMethod.getName()));
+        boolean conflictsWithPotentialAccessor = ordinaryMethod.getParameterList().isEmpty() &&
+                                                 ContainerUtil.exists(myFieldAccessors.keySet(),
+                                                                      field -> field.getName().equals(ordinaryMethod.getName()));
         if (conflictsWithPotentialAccessor) return false;
       }
       return true;
@@ -185,19 +186,19 @@ public class ConvertToRecordHandler implements RefactoringActionHandler {
         .forEach(field -> myFieldAccessors.put(field, new ArrayList<>()));
       for (PsiMethod method : myClass.getMethods()) {
         if (method.isConstructor()) {
-          myConstructors.add(new ConstructorDefinition(method, myFieldAccessors.keySet()));
+          myConstructors.add(new RecordConstructorCandidate(method, myFieldAccessors.keySet()));
           continue;
         }
         if (!throwsOnlyUncheckedExceptions(method)) {
           myOrdinaryMethods.add(method);
           continue;
         }
-        FieldAccessorDefinition fieldAccessorDef = createFieldAccessor(method);
-        if (fieldAccessorDef == null) {
+        FieldAccessorCandidate fieldAccessorCandidate = createFieldAccessor(method);
+        if (fieldAccessorCandidate == null) {
           myOrdinaryMethods.add(method);
         }
         else {
-          myFieldAccessors.putValue(fieldAccessorDef.myBackingField, fieldAccessorDef);
+          myFieldAccessors.putValue(fieldAccessorCandidate.myBackingField, fieldAccessorCandidate);
         }
       }
     }
@@ -214,13 +215,14 @@ public class ConvertToRecordHandler implements RefactoringActionHandler {
     }
 
     @Nullable
-    private FieldAccessorDefinition createFieldAccessor(@NotNull PsiMethod psiMethod) {
+    private FieldAccessorCandidate createFieldAccessor(@NotNull PsiMethod psiMethod) {
       if (!psiMethod.getParameterList().isEmpty()) return null;
       String methodName = psiMethod.getName();
       PsiField backingField = null;
       boolean recordStyleNaming = false;
       for (PsiField field : myFieldAccessors.keySet()) {
-        if (!field.getType().equalsToText(Objects.requireNonNull(psiMethod.getReturnType()).getCanonicalText())) continue;
+        if (!field.getType().equals(psiMethod.getReturnType())) continue;
+        //if (!field.getType().equalsToText(Objects.requireNonNull(psiMethod.getReturnType()).getCanonicalText())) continue;
         String fieldName = field.getName();
         if (fieldName.equals(methodName)) {
           backingField = field;
@@ -232,18 +234,18 @@ public class ConvertToRecordHandler implements RefactoringActionHandler {
           break;
         }
       }
-      return backingField == null ? null : new FieldAccessorDefinition(psiMethod, backingField, recordStyleNaming);
+      return backingField == null ? null : new FieldAccessorCandidate(psiMethod, backingField, recordStyleNaming);
     }
   }
 
   /**
    * Encapsulates information about the converting constructor e.g whether its canonical or not.
    */
-  private static class ConstructorDefinition {
+  private static class RecordConstructorCandidate {
     private final PsiMethod myConstructor;
     private final boolean myCanonical;
 
-    private ConstructorDefinition(@NotNull PsiMethod constructor, @NotNull Set<PsiField> instanceFields) {
+    private RecordConstructorCandidate(@NotNull PsiMethod constructor, @NotNull Set<PsiField> instanceFields) {
       myConstructor = constructor;
 
       Map<String, JvmType> ctorParams =
@@ -266,13 +268,13 @@ public class ConvertToRecordHandler implements RefactoringActionHandler {
    * Encapsulates information about the converting of field accessors.
    * For instance an existing default accessor may be removed during further record creation.
    */
-  static class FieldAccessorDefinition {
+  static class FieldAccessorCandidate {
     private final PsiMethod myFieldAccessor;
     private final PsiField myBackingField;
     private final boolean myDefault;
     private final boolean myRecordStyleNaming;
 
-    private FieldAccessorDefinition(@NotNull PsiMethod accessor, @NotNull PsiField backingField, boolean recordStyleNaming) {
+    private FieldAccessorCandidate(@NotNull PsiMethod accessor, @NotNull PsiField backingField, boolean recordStyleNaming) {
       myFieldAccessor = accessor;
       myBackingField = backingField;
       myRecordStyleNaming = recordStyleNaming;
@@ -287,8 +289,8 @@ public class ConvertToRecordHandler implements RefactoringActionHandler {
         myDefault = false;
         return;
       }
-      myDefault = !existsAnnotationConflicts(accessor, backingField, TargetType.FIELD) &&
-                  !existsAnnotationConflicts(backingField, accessor, TargetType.METHOD);
+      myDefault = !hasAnnotationConflict(accessor, backingField, TargetType.FIELD) &&
+                  !hasAnnotationConflict(backingField, accessor, TargetType.METHOD);
     }
 
     @NotNull
@@ -316,16 +318,14 @@ public class ConvertToRecordHandler implements RefactoringActionHandler {
    * then we have to check whether the method is already marked by this annotation
    * as a compiler propagates annotations of the record components to appropriate targets automatically.
    */
-  private static boolean existsAnnotationConflicts(@NotNull PsiModifierListOwner first,
-                                                   @NotNull PsiModifierListOwner second,
-                                                   @NotNull TargetType targetType) {
+  private static boolean hasAnnotationConflict(@NotNull PsiModifierListOwner first,
+                                               @NotNull PsiModifierListOwner second,
+                                               @NotNull TargetType targetType) {
     boolean result = false;
     for (PsiAnnotation firstAnn : first.getAnnotations()) {
-      PsiClass firstAnnType = firstAnn.resolveAnnotationType();
-      if (firstAnnType == null) continue;
-      TargetType firstAnnTarget = AnnotationTargetUtil.findAnnotationTarget(firstAnnType, targetType);
-      boolean hasFieldTarget = firstAnnTarget != null && firstAnnTarget != TargetType.UNKNOWN;
-      if (!hasFieldTarget) continue;
+      TargetType firstAnnTarget = AnnotationTargetUtil.findAnnotationTarget(firstAnn, targetType);
+      boolean hasDesiredTarget = firstAnnTarget != null && firstAnnTarget != TargetType.UNKNOWN;
+      if (!hasDesiredTarget) continue;
       if (!ContainerUtil.exists(second.getAnnotations(), secondAnn -> AnnotationUtil.equal(firstAnn, secondAnn))) {
         result = true;
         break;

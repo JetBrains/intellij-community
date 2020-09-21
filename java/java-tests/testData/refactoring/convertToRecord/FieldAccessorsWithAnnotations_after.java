@@ -31,7 +31,8 @@ interface IR<T> {
     T a();
 }
 
-record R<T extends Number>(@Method T a, @Field(value = 1) @Field(value = 2) int b, @FieldAndMethod(1) int c, @FieldAndMethod(3) int d, int e) implements IR<T> {
+record R<T extends Number>(@Method T a, @Field(value = 1) @Field(value = 2) int b, @FieldAndMethod(1) int c,
+                           @FieldAndMethod(3) int d, int e) implements IR<T> {
     R(@Parameter T a, int b, int c, int d, int e) {
         this.a = a;
         this.b = b;

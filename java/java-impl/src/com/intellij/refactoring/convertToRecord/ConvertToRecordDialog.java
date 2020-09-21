@@ -3,7 +3,7 @@ package com.intellij.refactoring.convertToRecord;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.convertToRecord.ConvertToRecordHandler.PsiClassDefinition;
+import com.intellij.refactoring.convertToRecord.ConvertToRecordHandler.RecordCandidate;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -14,13 +14,13 @@ import javax.swing.*;
 import java.awt.*;
 
 class ConvertToRecordDialog extends RefactoringDialog {
-  private final PsiClassDefinition myPsiClassDef;
+  private final RecordCandidate myRecordCandidate;
 
   private JCheckBox mySearchWeakenVisibilityCheckBox;
 
-  ConvertToRecordDialog(@NotNull PsiClassDefinition psiClassDef) {
-    super(psiClassDef.getProject(), false);
-    myPsiClassDef = psiClassDef;
+  ConvertToRecordDialog(@NotNull RecordCandidate recordCandidate) {
+    super(recordCandidate.getProject(), false);
+    myRecordCandidate = recordCandidate;
 
     setTitle(JavaRefactoringBundle.message("convert.to.record.title"));
     init();
@@ -28,7 +28,7 @@ class ConvertToRecordDialog extends RefactoringDialog {
 
   @Override
   protected void doAction() {
-    invokeRefactoring(new ConvertToRecordProcessor(myPsiClassDef, mySearchWeakenVisibilityCheckBox.isSelected()));
+    invokeRefactoring(new ConvertToRecordProcessor(myRecordCandidate, mySearchWeakenVisibilityCheckBox.isSelected()));
   }
 
   @Override

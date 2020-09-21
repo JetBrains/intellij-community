@@ -9,8 +9,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.BaseRefactoringProcessor;
-import com.intellij.refactoring.convertToRecord.ConvertToRecordHandler.FieldAccessorDefinition;
-import com.intellij.refactoring.convertToRecord.ConvertToRecordHandler.PsiClassDefinition;
+import com.intellij.refactoring.convertToRecord.ConvertToRecordHandler.FieldAccessorCandidate;
+import com.intellij.refactoring.convertToRecord.ConvertToRecordHandler.RecordCandidate;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.RenameUtil;
@@ -32,14 +32,14 @@ import java.util.*;
 import static com.intellij.psi.PsiModifier.PRIVATE;
 
 public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
-  private final PsiClassDefinition myPsiClassDef;
+  private final RecordCandidate myRecordCandidate;
   private final boolean mySearchWeakenVisibility;
 
   private final Map<PsiElement, String> allRenames = new LinkedHashMap<>();
 
-  public ConvertToRecordProcessor(@NotNull PsiClassDefinition psiClassDef, boolean searchWeakenVisibility) {
-    super(psiClassDef.getProject());
-    myPsiClassDef = psiClassDef;
+  public ConvertToRecordProcessor(@NotNull RecordCandidate recordCandidate, boolean searchWeakenVisibility) {
+    super(recordCandidate.getProject());
+    myRecordCandidate = recordCandidate;
     mySearchWeakenVisibility = searchWeakenVisibility;
   }
 
@@ -61,18 +61,18 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
   @Override
   protected UsageInfo @NotNull [] findUsages() {
     List<UsageInfo> usages = new SmartList<>();
-    for (var entry : myPsiClassDef.getFieldAccessors().entrySet()) {
+    for (var entry : myRecordCandidate.getFieldAccessors().entrySet()) {
       PsiField psiField = entry.getKey();
       if (!psiField.hasModifierProperty(PRIVATE)) {
         usages.add(new FieldUsageInfo(psiField));
       }
-      FieldAccessorDefinition fieldAccessorDef = entry.getValue();
-      if (fieldAccessorDef != null && !fieldAccessorDef.isRecordStyleNaming()) {
-        PsiMethod[] superMethods = fieldAccessorDef.getAccessor().findSuperMethods();
-        String backingFieldName = fieldAccessorDef.getBackingField().getName();
+      FieldAccessorCandidate fieldAccessorCandidate = entry.getValue();
+      if (fieldAccessorCandidate != null && !fieldAccessorCandidate.isRecordStyleNaming()) {
+        PsiMethod[] superMethods = fieldAccessorCandidate.getAccessor().findSuperMethods();
+        String backingFieldName = fieldAccessorCandidate.getBackingField().getName();
         PsiMethod method;
         if (superMethods.length == 0) {
-          method = fieldAccessorDef.getAccessor();
+          method = fieldAccessorCandidate.getAccessor();
         }
         else {
           method = superMethods[0];
@@ -81,7 +81,7 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
         RenamePsiElementProcessor methodRenameProcessor = RenamePsiElementProcessor.forElement(method);
         methodRenameProcessor.prepareRenaming(method, backingFieldName, allRenames);
         UsageInfo[] methodUsages = RenameUtil.findUsages(method, backingFieldName, false, false, allRenames);
-        usages.add(new RenameMethodUsageInfo(fieldAccessorDef.getAccessor(), backingFieldName));
+        usages.add(new RenameMethodUsageInfo(fieldAccessorCandidate.getAccessor(), backingFieldName));
         usages.addAll(Arrays.asList(methodUsages));
       }
     }
@@ -95,19 +95,19 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
     if (!mySearchWeakenVisibility) return Collections.emptyList();
 
     List<UsageInfo> result = new SmartList<>();
-    for (var entry : myPsiClassDef.getFieldAccessors().entrySet()) {
+    for (var entry : myRecordCandidate.getFieldAccessors().entrySet()) {
       PsiField psiField = entry.getKey();
-      FieldAccessorDefinition fieldAccessorDef = entry.getValue();
-      if (fieldAccessorDef == null) {
-        if (firstHasWeakerAccess(myPsiClassDef.getPsiClass(), psiField)) {
+      FieldAccessorCandidate fieldAccessorCandidate = entry.getValue();
+      if (fieldAccessorCandidate == null) {
+        if (firstHasWeakerAccess(myRecordCandidate.getPsiClass(), psiField)) {
           result.add(new BrokenEncapsulationUsageInfo(psiField, JavaRefactoringBundle
             .message("convert.to.record.weakens.field.visibility", RefactoringUIUtil.getDescription(psiField, true),
                      VisibilityUtil.getVisibilityStringToDisplay(psiField), VisibilityUtil.toPresentableText(PsiModifier.PUBLIC))));
         }
       }
       else {
-        PsiMethod accessor = fieldAccessorDef.getAccessor();
-        if (firstHasWeakerAccess(myPsiClassDef.getPsiClass(), accessor)) {
+        PsiMethod accessor = fieldAccessorCandidate.getAccessor();
+        if (firstHasWeakerAccess(myRecordCandidate.getPsiClass(), accessor)) {
           result.add(new BrokenEncapsulationUsageInfo(accessor, JavaRefactoringBundle
             .message("convert.to.record.weakens.accessor.visibility", RefactoringUIUtil.getDescription(accessor, true),
                      VisibilityUtil.getVisibilityStringToDisplay(accessor),
@@ -115,12 +115,12 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
         }
       }
     }
-    PsiMethod canonicalCtor = myPsiClassDef.getCanonicalConstructor();
-    if (canonicalCtor != null && firstHasWeakerAccess(myPsiClassDef.getPsiClass(), canonicalCtor)) {
+    PsiMethod canonicalCtor = myRecordCandidate.getCanonicalConstructor();
+    if (canonicalCtor != null && firstHasWeakerAccess(myRecordCandidate.getPsiClass(), canonicalCtor)) {
       result.add(new BrokenEncapsulationUsageInfo(canonicalCtor, JavaRefactoringBundle
         .message("convert.to.record.weakens.ctor.visibility", RefactoringUIUtil.getDescription(canonicalCtor, true),
                  VisibilityUtil.getVisibilityStringToDisplay(canonicalCtor),
-                 VisibilityUtil.getVisibilityStringToDisplay(myPsiClassDef.getPsiClass()))));
+                 VisibilityUtil.getVisibilityStringToDisplay(myRecordCandidate.getPsiClass()))));
     }
     return result;
   }
@@ -144,7 +144,7 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
         renameMethodProcessor.findExistingNameConflicts(renameMethodInfo.myMethod, renameMethodInfo.myNewName, conflicts, allRenames);
       }
     }
-    RefactoringConflictsUtil.analyzeAccessibilityConflicts(conflictingFields, myPsiClassDef.getPsiClass(), conflicts, PRIVATE);
+    RefactoringConflictsUtil.analyzeAccessibilityConflicts(conflictingFields, myRecordCandidate.getPsiClass(), conflicts, PRIVATE);
 
     if (!conflicts.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {
       if (!ConflictsInTestsException.isTestIgnore()) {
@@ -160,9 +160,9 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
   protected void performRefactoring(UsageInfo @NotNull [] usages) {
     renameMembers(usages);
 
-    PsiClass psiClass = myPsiClassDef.getPsiClass();
-    PsiMethod canonicalCtor = myPsiClassDef.getCanonicalConstructor();
-    Map<PsiField, FieldAccessorDefinition> fieldAccessors = myPsiClassDef.getFieldAccessors();
+    PsiClass psiClass = myRecordCandidate.getPsiClass();
+    PsiMethod canonicalCtor = myRecordCandidate.getCanonicalConstructor();
+    Map<PsiField, FieldAccessorCandidate> fieldAccessors = myRecordCandidate.getFieldAccessors();
     RecordBuilder recordBuilder = new RecordBuilder(psiClass);
     PsiIdentifier classIdentifier = null;
     PsiElement nextElement = psiClass.getFirstChild();
@@ -193,12 +193,12 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
           recordBuilder.addCanonicalCtor(canonicalCtor);
         }
         else {
-          FieldAccessorDefinition fieldAccessorDef = getFieldAccessorDef(fieldAccessors, (PsiMethod)nextElement);
-          if (fieldAccessorDef == null) {
+          FieldAccessorCandidate fieldAccessorCandidate = getFieldAccessorCandidate(fieldAccessors, (PsiMethod)nextElement);
+          if (fieldAccessorCandidate == null) {
             recordBuilder.addPsiElement(nextElement);
           }
           else {
-            recordBuilder.addFieldAccessor(fieldAccessorDef);
+            recordBuilder.addFieldAccessor(fieldAccessorCandidate);
           }
         }
       }
@@ -233,8 +233,8 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
   }
 
   @Nullable
-  private static FieldAccessorDefinition getFieldAccessorDef(@NotNull Map<PsiField, @Nullable FieldAccessorDefinition> fieldAccessors,
-                                                             @NotNull PsiMethod psiMethod) {
+  private static FieldAccessorCandidate getFieldAccessorCandidate(@NotNull Map<PsiField, @Nullable FieldAccessorCandidate> fieldAccessors,
+                                                                  @NotNull PsiMethod psiMethod) {
     return ContainerUtil.find(fieldAccessors.values(), value -> value != null && psiMethod.equals(value.getAccessor()));
   }
 }
