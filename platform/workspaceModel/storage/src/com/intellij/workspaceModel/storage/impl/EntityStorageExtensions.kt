@@ -62,8 +62,15 @@ internal fun <Parent : WorkspaceEntityBase> WorkspaceEntityStorageBuilderImpl.up
 internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractOneToManyChildren(connectionId: ConnectionId,
                                                                                      parentId: EntityId): Sequence<Child> {
   val entitiesList = entitiesByType[connectionId.childClass] ?: return emptySequence()
-  return refs.getOneToManyChildren(connectionId, parentId.arrayId)?.map { entitiesList[it]!!.createEntity(this) } as? Sequence<Child>
-         ?: emptySequence()
+  return refs.getOneToManyChildren(connectionId, parentId.arrayId)?.map {
+    entitiesList[it]?.createEntity(this) ?: error(
+      """Cannot resolve entity.
+        |Connection id: $connectionId
+        |Unresolved array id: $it
+        |All child array ids: ${refs.getOneToManyChildren(connectionId, parentId.arrayId)?.toArray()}
+      """.trimMargin()
+    )
+  } as? Sequence<Child> ?: emptySequence()
 }
 
 internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractOneToAbstractManyChildren(connectionId: ConnectionId,
