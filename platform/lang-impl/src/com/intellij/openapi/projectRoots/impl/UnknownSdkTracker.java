@@ -3,9 +3,11 @@ package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -16,6 +18,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.util.Consumer;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TripleFunction;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -64,11 +67,26 @@ public class UnknownSdkTracker {
 
         new UnknownSdkCollector(myProject)
           .collectSdksPromise(snapshot -> {
-
             if (!shouldProcessSnapshot.test(snapshot)) return;
 
             //we cannot use snapshot#missingSdks here, because it affects other IDEs/languages where our logic is not good enough
-            onFixableAndMissingSdksCollected(filterOnlyAllowedEntries(snapshot.getResolvableSdks()), filterOnlyAllowedSdkEntries(snapshot.getKnownSdks()), showStatus);
+            List<UnknownSdk> fixable = filterOnlyAllowedEntries(snapshot.getResolvableSdks());
+            List<Sdk> usedSdks = filterOnlyAllowedSdkEntries(snapshot.getKnownSdks());
+
+            if (fixable.isEmpty() && usedSdks.isEmpty()) {
+              showStatus.showStatus(Collections.emptyList(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyList());
+              return;
+            }
+
+            var action = createProcessSdksAction(fixable, usedSdks, showStatus);
+
+            ProgressManager.getInstance()
+              .run(new Task.Backgroundable(myProject, ProjectBundle.message("progress.title.resolving.sdks"), false, ALWAYS_BACKGROUND) {
+                @Override
+                public void run(@NotNull ProgressIndicator indicator) {
+                  action.run(indicator);
+                }
+              });
           });
       }
     };
@@ -126,18 +144,14 @@ public class UnknownSdkTracker {
     return copy;
   }
 
-  private void onFixableAndMissingSdksCollected(@NotNull List<UnknownSdk> fixable,
-                                                @NotNull List<Sdk> usedSdks,
-                                                @NotNull ShowStatusCallback showStatus) {
-    if (fixable.isEmpty() && usedSdks.isEmpty()) {
-      showStatus.showStatus(Collections.emptyList(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyList());
-      return;
-    }
-
-    ProgressManager.getInstance()
-      .run(new Task.Backgroundable(myProject, ProjectBundle.message("progress.title.resolving.sdks"), false, ALWAYS_BACKGROUND) {
-             @Override
-             public void run(@NotNull ProgressIndicator indicator) {
+  @NotNull
+  private Progressive createProcessSdksAction(@NotNull List<UnknownSdk> fixable,
+                                              @NotNull List<Sdk> usedSdks,
+                                              @NotNull ShowStatusCallback showStatus) {
+    return new Progressive() {
+           @Override
+           public void run(@NotNull ProgressIndicator indicator) {
+             try {
                List<UnknownInvalidSdk> invalidSdks = new ArrayList<>();
                Map<UnknownSdk, UnknownSdkLocalSdkFix> localFixes = new HashMap<>();
                Map<UnknownSdk, UnknownSdkDownloadableSdkFix> downloadFixes = new HashMap<>();
@@ -178,9 +192,13 @@ public class UnknownSdkTracker {
                }
 
                showStatus.showStatus(fixable, localFixes, downloadFixes, invalidSdks);
+             } catch (Throwable t) {
+               showStatus.showStatus(Collections.emptyList(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyList());
+               if (t instanceof ControlFlowException) ExceptionUtil.rethrow(t);
+               LOG.warn("Failed to complete SDKs lookup. " + t.getMessage(), t);
              }
            }
-      );
+         };
   }
 
   private interface ShowStatusCallback {
