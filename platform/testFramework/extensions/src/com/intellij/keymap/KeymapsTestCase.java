@@ -412,6 +412,11 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift meta ENTER",         "Console.Jpa.GenerateSql", "EditorStartNewLineBefore",  "org.jetbrains.r.actions.RRunAction", "Terminal.SmartCommandExecution.Debug"},
     { "shift meta T",             "ReopenClosedTab", "ServiceView.ShowServices"}
     });
+    put("macOS System Shortcuts", new String[][] {
+      { "meta I",                   "DatabaseView.PropertiesAction", "QuickJavaDoc"},
+      { "shift meta T",             "ReopenClosedTab", "ServiceView.ShowServices"},
+      { "ctrl O",                   "EditorSplitLine", "ExportToTextFile"},
+    });
   }};
   // @formatter:on
 
