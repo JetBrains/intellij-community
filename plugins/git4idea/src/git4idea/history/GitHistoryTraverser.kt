@@ -123,7 +123,7 @@ interface GitHistoryTraverser {
   }
 
   sealed class StartNode {
-    class SpecificHash(val hash: Hash) : StartNode()
+    class CommitHash(val hash: Hash) : StartNode()
     class Branch(val branchName: String) : StartNode()
     object Head : StartNode()
   }

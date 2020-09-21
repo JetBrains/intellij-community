@@ -67,7 +67,7 @@ internal class GitHistoryTraverserImpl(private val project: Project, private val
       ?: throw IllegalArgumentException("Branch '$branchName' doesn't exist in the repository: $root")
 
     val hash = when (start) {
-      is GitHistoryTraverser.StartNode.SpecificHash -> start.hash
+      is GitHistoryTraverser.StartNode.CommitHash -> start.hash
       GitHistoryTraverser.StartNode.Head -> findBranchHash(GitUtil.HEAD)
       is GitHistoryTraverser.StartNode.Branch -> findBranchHash(start.branchName)
     }

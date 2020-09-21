@@ -211,7 +211,7 @@ class GitHistoryTraverserImplTest : GitSingleRepoTest() {
     try {
       traverser.traverse(
         repo.root,
-        start = GitHistoryTraverser.StartNode.SpecificHash(notExistedHash)
+        start = GitHistoryTraverser.StartNode.CommitHash(notExistedHash)
       ) {
         true
       }
