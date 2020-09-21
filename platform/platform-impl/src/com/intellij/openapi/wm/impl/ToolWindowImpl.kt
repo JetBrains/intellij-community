@@ -574,7 +574,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
       addAction(toggleToolbarGroup).setAsSecondary(true)
       addSeparator()
-      add(ToolWindowViewModeAction.Group())
+      add(ActionManager.getInstance().getAction("TW.ViewModeGroup"))
       add(ToolWindowMoveAction.Group())
       add(ResizeActionGroup())
       addSeparator()
