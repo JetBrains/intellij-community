@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.welcomeScreen
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.ide.ui.*
 import com.intellij.openapi.Disposable
@@ -74,7 +75,7 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
   private val adjustColorsProperty = propertyGraph.graphProperty { settings.colorBlindness != null }
 
   init {
-    lafProperty.afterChange({ laf.lookAndFeelReference = it }, parentDisposable)
+    lafProperty.afterChange({ QuickChangeLookAndFeel.switchLafAndUpdateUI(laf, laf.findLaf(it), true) }, parentDisposable)
     ideFontProperty.afterChange({
                                   settings.overrideLafFonts = true
                                   settings.fontSize = it
@@ -134,9 +135,15 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
       blockRow {
         header(IdeBundle.message("welcome.screen.color.theme.header"))
         fullRow {
-          val theme = comboBox(laf.lafComboBoxModel, lafProperty, laf.lookAndFeelCellRenderer)
+          comboBox(laf.lafComboBoxModel, lafProperty, laf.lookAndFeelCellRenderer)
+
+          val syncCheckBox = checkBox(IdeBundle.message("preferred.theme.autodetect.selector"),
+                                      { laf.autodetect }, { laf.autodetect = it }).withLargeLeftGap()
+
+          syncCheckBox.visible(laf.autodetectSupported)
+
           component(laf.settingsToolbar)
-            .visibleIf(theme.component.selectedValueIs(LafManager.LafReference.SYNC_OS))
+            .visibleIf(syncCheckBox.selected)
             .withLeftGap()
         }
       }.largeGapAfter()

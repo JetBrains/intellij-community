@@ -36,9 +36,6 @@ public class HeadlessLafManagerImpl extends LafManager {
   }
 
   @Override
-  public void setLookAndFeelReference(LafReference reference) {}
-
-  @Override
   public ListCellRenderer<LafReference> getLookAndFeelCellRenderer() {
     return null;
   }
@@ -69,7 +66,15 @@ public class HeadlessLafManagerImpl extends LafManager {
   public void repaintUI() { }
 
   @Override
-  public boolean isAutoDetect() {
+  public boolean getAutodetect() {
+    return false;
+  }
+
+  @Override
+  public void setAutodetect(boolean value) {}
+
+  @Override
+  public boolean getAutodetectSupported() {
     return false;
   }
 

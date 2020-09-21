@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.NlsContexts;
@@ -33,9 +32,6 @@ public abstract class LafManager {
   public abstract LafReference getLookAndFeelReference();
 
   @ApiStatus.Internal
-  public abstract void setLookAndFeelReference(LafReference reference);
-
-  @ApiStatus.Internal
   public abstract ListCellRenderer<LafReference> getLookAndFeelCellRenderer();
 
   @ApiStatus.Internal
@@ -51,7 +47,11 @@ public abstract class LafManager {
 
   public abstract void repaintUI();
 
-  public abstract boolean isAutoDetect();
+  public abstract boolean getAutodetect();
+
+  public abstract void setAutodetect(boolean value);
+
+  public abstract boolean getAutodetectSupported();
 
   /**
    * @deprecated Use {@link LafManagerListener#TOPIC}
@@ -72,8 +72,6 @@ public abstract class LafManager {
   public abstract void removeLafManagerListener(@NotNull LafManagerListener listener);
 
   public static final class LafReference {
-    public static final LafReference SYNC_OS = new LafReference(IdeBundle.message("preferred.theme.autodetect.selector"), null, null);
-
     private final String name;
     private final String className;
     private final String themeId;

@@ -420,9 +420,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       result.add(createLafReference(info));
 
       if (Objects.equals(lafNameOrder.get(info.getName()), maxNameOrder)) {
-        if (lafDetector.getDetectionSupported()) {
-          result.add(LafReference.SYNC_OS);
-        }
         addSeparator = true;
       }
     }
@@ -436,7 +433,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   private void selectComboboxModel() {
     if (myLafComboBoxModel.isInitialized()) {
-      myLafComboBoxModel.getValue().setSelectedItem(autodetect ? LafReference.SYNC_OS : createLafReference(myCurrentLaf));
+      myLafComboBoxModel.getValue().setSelectedItem(createLafReference(myCurrentLaf));
     }
   }
 
@@ -462,20 +459,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   @Override
   public LafReference getLookAndFeelReference() {
-    return autodetect ? LafReference.SYNC_OS : createLafReference(getCurrentLookAndFeel());
-  }
-
-  @Override
-  public void setLookAndFeelReference(LafReference reference) {
-    if (reference != LafManager.LafReference.SYNC_OS) {
-      autodetect = false;
-      QuickChangeLookAndFeel.switchLafAndUpdateUI(this, findLaf(reference), true);
-    }
-    else {
-      autodetect = true;
-      selectComboboxModel();
-      detectAndSyncLaf();
-    }
+    return createLafReference(getCurrentLookAndFeel());
   }
 
   @Override
@@ -1065,8 +1049,21 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   @Override
-  public boolean isAutoDetect() {
+  public boolean getAutodetect() {
     return autodetect;
+  }
+
+  @Override
+  public void setAutodetect(boolean value) {
+    autodetect = value;
+    if (autodetect) {
+      detectAndSyncLaf();
+    }
+  }
+
+  @Override
+  public boolean getAutodetectSupported() {
+    return lafDetector.getDetectionSupported();
   }
 
   private static void repaintUI(Window window) {
