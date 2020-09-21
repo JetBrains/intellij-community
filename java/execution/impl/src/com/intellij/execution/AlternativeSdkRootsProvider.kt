@@ -6,6 +6,7 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkUpdateCheckContributor
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
 import com.intellij.openapi.roots.JavaSyntheticLibrary
 import com.intellij.openapi.roots.OrderRootType
@@ -78,5 +79,11 @@ class AlternativeSdkRootsProvider : AdditionalLibraryRootsProvider() {
         }
       }
     }
+  }
+}
+
+class AlternativeSdkRootsProviderForJdkUpdate : JdkUpdateCheckContributor {
+  override fun contributeJdks(project: Project): List<Sdk> {
+    return AlternativeSdkRootsProvider.getAdditionalProjectJdks(project)
   }
 }

@@ -7,6 +7,9 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -17,8 +20,11 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.projectRoots.impl.DependentSdkType
 import com.intellij.openapi.projectRoots.impl.UnknownSdkCollector
+import com.intellij.openapi.projectRoots.impl.UnknownSdkContributor
+import com.intellij.openapi.roots.ui.configuration.UnknownSdk
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.text.VersionComparatorUtil
@@ -26,6 +32,21 @@ import com.intellij.util.xmlb.annotations.OptionTag
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
+
+/**
+ * This extension point is used to collect
+ * additional [Sdk] instances to check for a possible
+ * JDK update
+ */
+private val EP_NAME = ExtensionPointName.create<JdkUpdateCheckContributor>("com.intellij.jdkUpdateCheckContributor")
+interface JdkUpdateCheckContributor {
+  /**
+   * Executed from any thread (possibly without read-lock) to
+   * collect SDKs, which should be considered for
+   * JDK Update check
+   */
+  fun contributeJdks(project: Project) : List<Sdk>
+}
 
 class JdkUpdaterStateData : BaseState() {
   @get:OptionTag
@@ -58,6 +79,8 @@ internal class JdkUpdaterState : SimplePersistentStateComponent<JdkUpdaterStateD
   }
 }
 
+private val LOG = logger<JdkUpdater>()
+
 @Service
 internal class JdkUpdater(
   private val project: Project
@@ -67,8 +90,14 @@ internal class JdkUpdater(
   init {
     val future = AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(
       Runnable {
-        if (!project.isDisposed) {
+        if (project.isDisposed) return@Runnable
+
+        try {
           updateNotifications()
+        }
+        catch (t: Throwable) {
+          if (t is ControlFlowException) return@Runnable
+          LOG.warn("Failed to complete JDK Update check. ${t.message}", t)
         }
       },
       12,
@@ -79,10 +108,22 @@ internal class JdkUpdater(
   }
 
   fun updateNotifications() {
-    UnknownSdkCollector(project).collectSdksPromise { snapshot ->
+    object : UnknownSdkCollector(project) {
+      override fun getContributors(): List<UnknownSdkContributor> {
+        return super.getContributors() + EP_NAME.extensionList.map {
+          object : UnknownSdkContributor {
+            override fun contributeUnknownSdks(project: Project) = listOf<UnknownSdk>()
+            override fun contributeKnownSdks(project: Project): List<Sdk> = it.contributeJdks(project)
+          }
+        }
+      }
+    }.collectSdksPromise { snapshot ->
+      //this callback happens in the GUI thread!
       val knownSdks = snapshot
-        .knownSdks //TODO: include AlternativeSdkRootsProvider here too!
+        .knownSdks
         .filter { it.sdkType is JavaSdkType && it.sdkType !is DependentSdkType }
+        .distinct()
+        .sortedBy { it.name }
 
       if (knownSdks.isEmpty()) return@collectSdksPromise
 
@@ -139,6 +180,11 @@ internal class JdkUpdater(
               installer.installJdk(prepare, indicator, project)
               prepare.javaHome
             }
+
+          indicator.text = ProjectBundle.message("progress.text.updating.jdk.setting.up")
+
+          //make sure VFS sees the files and sets up the JDK correctly
+          VfsUtil.markDirtyAndRefresh(false, true, true, newJdkHome.toFile())
 
           runWriteAction {
             jdk.sdkModificator.apply {

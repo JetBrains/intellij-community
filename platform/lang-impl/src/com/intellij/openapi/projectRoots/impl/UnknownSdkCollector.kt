@@ -77,7 +77,7 @@ private data class MissingSdkInfo(
   override fun getSdkType() = mySdkType
 }
 
-class UnknownSdkCollector(private val myProject: Project) {
+open class UnknownSdkCollector(private val myProject: Project) {
   companion object {
     private val LOG = logger<UnknownSdkCollector>()
   }
@@ -160,7 +160,7 @@ class UnknownSdkCollector(private val myProject: Project) {
 
     val detectedUnknownSdkNames = resolvableSdks.mapNotNull { it.sdkName }.toMutableSet()
 
-    EP_NAME.forEachExtensionSafe {
+    getContributors().forEach {
       val contrib = try {
         it.contributeUnknownSdks(myProject)
       } catch (e: ProcessCanceledException) {
@@ -185,6 +185,8 @@ class UnknownSdkCollector(private val myProject: Project) {
       }
     }
 
-    return UnknownSdkSnapshot(totallyUnknownSdks, resolvableSdks, knownSdks.toList().sortedBy { it.name })
+    return UnknownSdkSnapshot(totallyUnknownSdks, resolvableSdks, knownSdks.toList().sortedBy { it.name }.distinct())
   }
+
+  protected open fun getContributors(): List<UnknownSdkContributor> = EP_NAME.extensionList
 }
