@@ -164,4 +164,20 @@ def foo() {
 }
 """
   }
+
+  void 'test @NamedVariant with autodelegate'() {
+    highlightingTest """
+class Foo {
+    int aaa
+    boolean bbb
+}
+
+@groovy.transform.NamedVariant(autoDelegate = true)
+static def bar(Foo a) {}
+
+@groovy.transform.CompileStatic
+static def foo() {
+    bar(aaa: 10, bbb: true)
+}"""
+  }
 }

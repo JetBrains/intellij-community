@@ -78,7 +78,13 @@ internal fun collectNamedParamsFromNamedVariantMethod(method: GrMethod): List<Na
     PsiImplUtil.getAnnotation(it, GROOVY_TRANSFORM_NAMED_DELEGATE) == null
   }
   if (useAllParameters) {
-    return method.parameters.map { NamedParamData(it.name, it.type, it, it, !it.isOptional) }
+    val anno = method.getAnnotation(GROOVY_TRANSFORM_NAMED_VARIANT)
+    return if (anno != null && GrAnnotationUtil.inferBooleanAttribute(anno, "autoDelegate") == true) {
+      val parameter = method.parameters.singleOrNull() ?: return emptyList()
+      getNamedParamDataFromClass(parameter.type, parameter, parameter)
+    } else {
+      method.parameters.map { NamedParamData(it.name, it.type, it, it, !it.isOptional) }
+    }
   }
   for (parameter in method.parameterList.parameters) {
     val type = parameter.type
@@ -90,14 +96,17 @@ internal fun collectNamedParamsFromNamedVariantMethod(method: GrMethod): List<Na
       result.add(NamedParamData(name, type, parameter, namedParamsAnn, required))
       continue
     }
-
     val psiAnnotation = PsiImplUtil.getAnnotation(parameter, GROOVY_TRANSFORM_NAMED_DELEGATE) ?: continue
-    val parameterClass = (type as? PsiClassType)?.resolve() ?: continue
-    getProperties(parameterClass).forEach { (propertyName, propertyType) ->
-      result.add(NamedParamData(propertyName, propertyType, parameter, psiAnnotation))
-    }
+    result.addAll(getNamedParamDataFromClass(type, parameter, psiAnnotation))
   }
   return result
+}
+
+fun getNamedParamDataFromClass(type : PsiType, parameter: PsiParameter, navigationElement: PsiElement) : List<NamedParamData> {
+  val parameterClass = (type as? PsiClassType)?.resolve() ?: return emptyList()
+  return getProperties(parameterClass).map { (propertyName, propertyType) ->
+    NamedParamData(propertyName, propertyType, parameter, navigationElement)
+  }
 }
 
 private fun getProperties(psiClass: PsiClass): Map<String, PsiType?> {
