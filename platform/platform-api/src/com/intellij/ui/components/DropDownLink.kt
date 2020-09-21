@@ -3,9 +3,9 @@ package com.intellij.ui.components
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.ui.popup.JBPopup
-import com.intellij.ui.popup.util.PopupState
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.popup.util.PopupState
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -14,6 +14,7 @@ import java.awt.Dimension
 import java.awt.Point
 import java.awt.event.ItemEvent
 import java.util.function.Consumer
+import java.util.function.Function
 import javax.swing.DefaultListCellRenderer
 import javax.swing.JList
 import javax.swing.SwingConstants
@@ -30,8 +31,10 @@ open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) 
       fireItemStateChanged(newItem, ItemEvent.SELECTED)
     }
 
+  private var textConverter : Function<Any?, String> = Function{ it.toString() }
+
   init {
-    text = item.toString()
+    text = textConverter.apply(item)
     icon = AllIcons.General.LinkDropTriangle
     iconTextGap = scale(1)
     horizontalTextPosition = SwingConstants.LEADING
@@ -63,7 +66,7 @@ open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) 
         @Suppress("UNCHECKED_CAST")
         (event.item as? T)?.let {
           onSelect.accept(it)
-          if (updateText) text = it.toString()
+          if (updateText) text = textConverter.apply(it)
         }
       }
     }
@@ -75,6 +78,12 @@ open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) 
 
   private fun fireItemStateChanged(item: T, state: Int) {
     itemListeners.forEach { it.itemStateChanged(ItemEvent(this, ItemEvent.ITEM_STATE_CHANGED, item, state)) }
+  }
+
+  fun withTextConverter(converter: Function<Any?, String>): DropDownLink<T> {
+    this.textConverter = converter
+    text = converter.apply(selectedItem)
+    return this
   }
 }
 
