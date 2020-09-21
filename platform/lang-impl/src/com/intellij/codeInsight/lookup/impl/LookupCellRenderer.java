@@ -120,7 +120,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     myAsyncRendering = new AsyncRendering(myLookup);
 
     myLookupWidthUpdateAlarm = new SingleAlarm(this::updateLookupWidthFromVisibleItems, 50);
-    Disposer.register(lookup, () -> Disposer.dispose(myLookupWidthUpdateAlarm));
+    Disposer.register(lookup, myLookupWidthUpdateAlarm);
 
     myShrinkLookup = Registry.is("ide.lookup.shrink");
   }
@@ -533,6 +533,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   }
 
   void itemAdded(@NotNull LookupElement element, @NotNull LookupElementPresentation fastPresentation) {
+    updateIconWidth(fastPresentation);
     scheduleUpdateLookupWidthFromVisibleItems();
     AsyncRendering.rememberPresentation(element, fastPresentation);
 
@@ -546,19 +547,22 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     }
   }
 
-  private int updateMaximumWidth(LookupElementPresentation p, LookupElement item) {
+  private void updateIconWidth(LookupElementPresentation p){
     Icon icon = p.getIcon();
     if (icon != null && (icon.getIconWidth() > myEmptyIcon.getIconWidth() || icon.getIconHeight() > myEmptyIcon.getIconHeight())) {
       if (icon instanceof DeferredIcon) {
         icon = ((DeferredIcon)icon).getBaseIcon();
       }
       icon = removeVisibilityIfNeeded(myLookup.getEditor(), icon, myEmptyIcon);
+
       myEmptyIcon = EmptyIcon.create(Math.max(icon.getIconWidth(), myEmptyIcon.getIconWidth()),
                                      Math.max(icon.getIconHeight(), myEmptyIcon.getIconHeight()));
-
       myNameComponent.setIpad(JBUI.insetsLeft(6));
     }
+  }
 
+  private int updateMaximumWidth(LookupElementPresentation p, LookupElement item) {
+    updateIconWidth(p);
     return calculateWidth(p, getRealFontMetrics(item, false, CUSTOM_NAME_FONT), getRealFontMetrics(item, true, CUSTOM_NAME_FONT)) +
            calcSpacing(myTailComponent, null) + calcSpacing(myTypeLabel, null);
   }
