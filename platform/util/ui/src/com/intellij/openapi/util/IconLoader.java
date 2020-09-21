@@ -210,7 +210,7 @@ public final class IconLoader {
   // result is not cached
   @SuppressWarnings("DuplicatedCode")
   @ApiStatus.Internal
-  public static @NotNull IconUrlResolver loadRasterizedIcon(@NotNull String path, @NotNull Class<?> aClass, long cacheKey) {
+  public static @NotNull IconLoader.IconDataLoader loadRasterizedIcon(@NotNull String path, @NotNull Class<?> aClass, long cacheKey) {
     ClassLoader classLoader = aClass.getClassLoader();
     long startTime = StartUpMeasurer.getCurrentTimeIfEnabled();
     Pair<String, ClassLoader> patchedPath = ourTransform.get().patchPath(path, classLoader);
@@ -219,7 +219,7 @@ public final class IconLoader {
       classLoader = patchedPath.second;
     }
 
-    IconUrlResolver resolver = new UrlResolverImpl(effectivePath, aClass, classLoader, null, /* useCacheOnLoad = */ true) {
+    IconDataLoader resolver = new UrlResolverImpl(effectivePath, aClass, classLoader, null, /* useCacheOnLoad = */ true) {
       @Override
       public @Nullable Image loadImage(@Nullable List<ImageFilter> filters, @NotNull ScaleContext scaleContext, boolean isDark) {
         // do not use cache
@@ -287,7 +287,7 @@ public final class IconLoader {
     return findIcon(url, true);
   }
 
-  public static @Nullable Icon findIcon(URL url, boolean useCache) {
+  public static @Nullable Icon findIcon(@Nullable URL url, boolean useCache) {
     if (url == null) {
       return null;
     }
@@ -623,7 +623,7 @@ public final class IconLoader {
   @ApiStatus.Internal
   public static class CachedImageIcon extends com.intellij.ui.icons.LazyImageIcon {
     @Nullable private final String originalPath;
-    @Nullable private volatile IconUrlResolver resolver;
+    @Nullable private volatile IconLoader.IconDataLoader resolver;
     @Nullable("when not overridden") private final Boolean isDarkOverridden;
     @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
     private int transformModCount;
@@ -632,16 +632,18 @@ public final class IconLoader {
     private final ScaledIconCache scaledIconCache = new ScaledIconCache(this);
     private final ScaledIconCache selectedIconCache = new ScaledIconCache(this);
 
+    private volatile CachedImageIcon darkVariant;
+
     public CachedImageIcon(@NotNull URL url) {
       this(null, new UrlResolverImpl(url, null, true), null, null);
     }
 
-    CachedImageIcon(@Nullable URL url, boolean useCacheOnLoad) {
+    CachedImageIcon(@NotNull URL url, boolean useCacheOnLoad) {
       this(null, new UrlResolverImpl(url, null, useCacheOnLoad), null, null);
     }
 
     protected CachedImageIcon(@Nullable String originalPath,
-                              @Nullable IconUrlResolver resolver,
+                              @Nullable IconLoader.IconDataLoader resolver,
                               @Nullable Boolean darkOverridden,
                               @Nullable Supplier<? extends RGBImageFilter> localFilterSupplier) {
       this.originalPath = originalPath;
@@ -668,7 +670,7 @@ public final class IconLoader {
             myRealIcon = null;
             scaledIconCache.clear();
             if (originalPath != null) {
-              IconUrlResolver resolver = this.resolver;
+              IconDataLoader resolver = this.resolver;
               if (resolver == null) {
                 return EMPTY_ICON;
               }
@@ -709,13 +711,13 @@ public final class IconLoader {
     }
 
     private boolean isValid() {
-      IconUrlResolver resolver = this.resolver;
+      IconDataLoader resolver = this.resolver;
       return resolver != null && ourTransformModCount.get() == transformModCount && resolver.isResolved();
     }
 
     @Override
     public final String toString() {
-      IconUrlResolver resolver = this.resolver;
+      IconDataLoader resolver = this.resolver;
       if (resolver != null && resolver.isResolved()) {
         return resolver.toString();
       }
@@ -737,11 +739,22 @@ public final class IconLoader {
 
     @Override
     public final @NotNull Icon getDarkIcon(boolean isDark) {
-      IconUrlResolver resolver = this.resolver;
+      IconDataLoader resolver = this.resolver;
       if (resolver == null) {
         return EMPTY_ICON;
       }
-      return new CachedImageIcon(originalPath, resolver, isDark, myLocalFilterSupplier);
+
+      CachedImageIcon result = darkVariant;
+      if (result == null) {
+        synchronized (myLock) {
+          result = darkVariant;
+          if (result == null) {
+            result = new CachedImageIcon(originalPath, resolver, isDark, myLocalFilterSupplier);
+            darkVariant = result;
+          }
+        }
+      }
+      return result;
     }
 
     @Override
@@ -765,7 +778,7 @@ public final class IconLoader {
     }
 
     private @NotNull Icon createWithFilter(@NotNull Supplier<? extends RGBImageFilter> filterSupplier) {
-      IconUrlResolver resolver = this.resolver;
+      IconDataLoader resolver = this.resolver;
       if (resolver == null) {
         return EMPTY_ICON;
       }
@@ -791,14 +804,14 @@ public final class IconLoader {
     }
 
     public final @Nullable URL getURL() {
-      IconUrlResolver resolver = this.resolver;
+      IconDataLoader resolver = this.resolver;
       return resolver == null ? null : resolver.getURL();
     }
 
     private @Nullable Image loadFromUrl(@NotNull ScaleContext scaleContext, boolean isDark) {
       long start = StartUpMeasurer.getCurrentTimeIfEnabled();
 
-      IconUrlResolver resolver = this.resolver;
+      IconDataLoader resolver = this.resolver;
       if (resolver == null) {
         return null;
       }
@@ -812,7 +825,7 @@ public final class IconLoader {
 
     final void detachClassLoader(@NotNull ClassLoader loader) {
       synchronized (myLock) {
-        IconUrlResolver resolver = this.resolver;
+        IconDataLoader resolver = this.resolver;
         if (resolver != null) {
           this.resolver = resolver.detachClassLoader(loader);
         }
@@ -883,7 +896,7 @@ public final class IconLoader {
   }
 
   @ApiStatus.Internal
-  public interface IconUrlResolver {
+  public interface IconDataLoader {
     @Nullable Image loadImage(@Nullable List<ImageFilter> filters, @NotNull ScaleContext scaleContext, boolean isDark);
 
     boolean isResolved();
@@ -891,27 +904,37 @@ public final class IconLoader {
     @Nullable
     URL getURL();
 
-    IconUrlResolver patch(@NotNull String originalPath, @NotNull IconTransform transform);
+    @NotNull IconDataLoader patch(@NotNull String originalPath, @NotNull IconTransform transform);
 
-    @Nullable IconUrlResolver detachClassLoader(@NotNull ClassLoader loader);
+    @Nullable IconLoader.IconDataLoader detachClassLoader(@NotNull ClassLoader loader);
   }
 
   /**
    * Used to defer URL resolve.
    */
-  private static class UrlResolverImpl implements IconUrlResolver {
+  private static class UrlResolverImpl implements IconDataLoader {
+    private static final URL UNRESOLVED_URL;
+
+    static {
+      try {
+        UNRESOLVED_URL = new URL("file:///unresolved");
+      }
+      catch (MalformedURLException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
     @Nullable protected final Class<?> ownerClass;
     @Nullable protected final ClassLoader classLoader;
     @Nullable protected final String overriddenPath;
     @NotNull private final HandleNotFound handleNotFound;
-    // Every url write is performed before isResolved write (see resolve())
-    // and every url read is performed after isResolved read (see getUrl()), thus
-    // no necessary to declare url as volatile: happens-before is established via isResolved.
-    @Nullable private URL url;
+
+    private volatile URL url;
     private volatile boolean isResolved;
+
     private final boolean useCacheOnLoad;
 
-    UrlResolverImpl(@Nullable URL url, @Nullable ClassLoader classLoader, boolean useCacheOnLoad) {
+    UrlResolverImpl(@NotNull URL url, @Nullable ClassLoader classLoader, boolean useCacheOnLoad) {
       ownerClass = null;
       overriddenPath = null;
       this.classLoader = classLoader;
@@ -921,7 +944,7 @@ public final class IconLoader {
       this.useCacheOnLoad = useCacheOnLoad;
     }
 
-    UrlResolverImpl(@Nullable URL url, @NotNull String path, @Nullable ClassLoader classLoader, boolean useCacheOnLoad) {
+    UrlResolverImpl(@NotNull URL url, @NotNull String path, @Nullable ClassLoader classLoader, boolean useCacheOnLoad) {
       ownerClass = null;
       overriddenPath = path;
       this.classLoader = classLoader;
@@ -944,6 +967,7 @@ public final class IconLoader {
       }
       this.handleNotFound = handleNotFound;
       this.useCacheOnLoad = useCacheOnLoad;
+      url = UNRESOLVED_URL;
     }
 
     @Override
@@ -957,13 +981,12 @@ public final class IconLoader {
       }
 
       if (ownerClass != null && overriddenPath != null) {
-        return ImageLoader.loadFromUrl(overriddenPath, ownerClass, flags, filters, scaleContext);
+        Image image = ImageLoader.loadFromUrl(overriddenPath, ownerClass, flags, filters, scaleContext);
+        isResolved = true;
+        return image;
       }
       else {
-        if (!isResolved) {
-          resolve();
-        }
-        URL url = this.url;
+        URL url = getURL();
         return url == null ? null : ImageLoader.loadFromUrl(url.toString(), null, flags, filters, scaleContext);
       }
     }
@@ -977,16 +1000,7 @@ public final class IconLoader {
      * Resolves the URL if it's not yet resolved.
      */
     public final void resolve() {
-      if (isResolved) {
-        return;
-      }
-
-      try {
-        url = doResolve(overriddenPath, classLoader, ownerClass, handleNotFound);
-      }
-      finally {
-        isResolved = true;
-      }
+      getURL();
     }
 
     private static @Nullable URL doResolve(@Nullable String overriddenPath,
@@ -1014,14 +1028,21 @@ public final class IconLoader {
 
     @Override
     public final @Nullable URL getURL() {
-      if (!isResolved()) {
-        resolve();
+      URL result = this.url;
+      if (result == UNRESOLVED_URL) {
+        result = null;
+        try {
+          result = doResolve(overriddenPath, classLoader, ownerClass, handleNotFound);
+        }
+        finally {
+          this.url = result;
+        }
       }
-      return url;
+      return result;
     }
 
     @Override
-    public final IconUrlResolver patch(@NotNull String originalPath, @NotNull IconTransform transform) {
+    public final @NotNull IconDataLoader patch(@NotNull String originalPath, @NotNull IconTransform transform) {
       Pair<String, ClassLoader> patchedPath = transform.patchPath(originalPath, classLoader);
       if (patchedPath == null) {
         return this;
@@ -1073,7 +1094,7 @@ public final class IconLoader {
     }
 
     @Override
-    public final IconUrlResolver detachClassLoader(@NotNull ClassLoader loader) {
+    public final IconDataLoader detachClassLoader(@NotNull ClassLoader loader) {
       return classLoader == loader ? null : this;
     }
 

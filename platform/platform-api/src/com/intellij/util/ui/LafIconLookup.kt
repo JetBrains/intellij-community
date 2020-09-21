@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui
 
 import com.intellij.icons.AllIcons
@@ -11,7 +11,7 @@ import javax.swing.Icon
 private const val ICONS_DIR_PREFIX = "/com/intellij/ide/ui/laf/icons/"
 
 open class DirProvider {
-  open fun dir() : String = ICONS_DIR_PREFIX + if (UIUtil.isUnderDarcula()) "darcula/" else "intellij/"
+  open fun dir() : String = ICONS_DIR_PREFIX + if (StartupUiUtil.isUnderDarcula()) "darcula/" else "intellij/"
 }
 
 object LafIconLookup {
@@ -44,8 +44,12 @@ object LafIconLookup {
                isThrowErrorIfNotFound: Boolean = false,
                dirProvider: DirProvider = DirProvider()): Icon? {
     var key = name
-    if (editable) key += "Editable"
-    if (selected) key += "Selected"
+    if (editable) {
+      key += "Editable"
+    }
+    if (selected) {
+      key += "Selected"
+    }
 
     when {
       pressed -> key += "Pressed"
@@ -53,8 +57,17 @@ object LafIconLookup {
       !enabled -> key += "Disabled"
     }
 
-    // For Mac blue theme and other LAFs use default directory icons
-    return IconLoader.findLafIcon(dirProvider.dir() + key, dirProvider.javaClass, isThrowErrorIfNotFound)
+    // for Mac blue theme and other LAFs use default directory icons
+    val clazz = dirProvider.javaClass
+    val dir = dirProvider.dir()
+    val path = if (dir.startsWith(ICONS_DIR_PREFIX)) {
+      // optimization - all icons are SVG
+      "$dir$key.svg"
+    }
+    else {
+      "$dir$key.png"
+    }
+    return IconLoader.findIcon(path, clazz, true, isThrowErrorIfNotFound)
   }
 
   @JvmStatic

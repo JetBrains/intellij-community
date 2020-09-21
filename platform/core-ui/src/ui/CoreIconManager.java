@@ -7,7 +7,6 @@ import com.intellij.ide.IconLayerProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.IconLoader.IconUrlResolver;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
@@ -51,7 +50,7 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
 
   @Override
   public @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull Class<?> aClass, long cacheKey) {
-    IconUrlResolver resolver = IconLoader.loadRasterizedIcon(path, aClass, cacheKey);
+    IconLoader.IconDataLoader resolver = IconLoader.loadRasterizedIcon(path, aClass, cacheKey);
     return new IconWithToolTipImpl(path, resolver);
   }
 
@@ -59,7 +58,7 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
     private String result;
     private boolean isTooltipCalculated;
 
-    IconWithToolTipImpl(@NotNull String originalPath, @NotNull IconUrlResolver resolver) {
+    IconWithToolTipImpl(@NotNull String originalPath, @NotNull IconLoader.IconDataLoader resolver) {
       super(originalPath, resolver, null, null);
     }
 

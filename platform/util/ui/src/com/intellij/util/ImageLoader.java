@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
+import java.awt.image.FilteredImageSource;
 import java.awt.image.ImageFilter;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -101,10 +102,10 @@ public final class ImageLoader {
     String _ext = isSvg ? "svg" : ext;
     double _scale = isSvg ? scale : (retina ? 2 : 1);
 
-    list.add(new ImageDescriptor(name + (isDark ? "_dark" : "") + (retina ? "@2x" : "") + "." + _ext, _scale, isSvg, isDark));
     if (retina && isDark) {
       list.add(new ImageDescriptor(name + "@2x_dark" + "." + _ext, _scale, isSvg, true));
     }
+    list.add(new ImageDescriptor(name + (isDark ? "_dark" : "") + (retina ? "@2x" : "") + "." + _ext, _scale, isSvg, isDark));
     if (retina) {
       // a fallback to 1x icon
       list.add(new ImageDescriptor(name + (isDark ? "_dark" : "") + "." + _ext, isSvg ? scale : 1, isSvg, isDark));
@@ -210,7 +211,7 @@ public final class ImageLoader {
         if (stream == null) {
           return null;
         }
-        image = loadFromStream(stream, null, descriptor.scale, descriptor.isDark, descriptor.originalUserSize, false);
+        image = loadFromStream(stream, null, descriptor.scale, descriptor.isDark, descriptor.originalUserSize, descriptor.isSvg);
       }
       if (start != -1) {
         IconLoadMeasurer.addLoadFromResources(start);
@@ -300,9 +301,10 @@ public final class ImageLoader {
     }
 
     if (filters != null && !filters.isEmpty()) {
+      Toolkit toolkit = Toolkit.getDefaultToolkit();
       for (ImageFilter filter : filters) {
         if (filter != null) {
-          image = ImageUtil.filter(image, filter);
+          image = toolkit.createImage(new FilteredImageSource(ImageUtil.toBufferedImage(image, false).getSource(), filter));
         }
       }
     }
@@ -351,6 +353,9 @@ public final class ImageLoader {
       if (isDark) {
         // fallback to non-dark
         addFileNameVariant(retina, false, isSvg, name, ext, scale, list);
+        if (!isSvg && BitUtil.isSet(flags, FIND_SVG)) {
+          addFileNameVariant(false, false, true, name, ext, scale, list);
+        }
       }
     }
     return list;
@@ -422,7 +427,7 @@ public final class ImageLoader {
     // Using "QUALITY" instead of "ULTRA_QUALITY" results in images that are less blurry
     // because ultra quality performs a few more passes when scaling, which introduces blurriness
     // when the scaling factor is relatively small (i.e. <= 3.0f) -- which is the case here.
-    return Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.QUALITY, Scalr.Mode.FIT_EXACT, width, height, (BufferedImageOp[])null);
+    return Scalr.resize(ImageUtil.toBufferedImage(image, false), Scalr.Method.QUALITY, Scalr.Mode.FIT_EXACT, width, height, (BufferedImageOp[])null);
   }
 
   @NotNull

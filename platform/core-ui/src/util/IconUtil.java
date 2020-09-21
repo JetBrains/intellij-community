@@ -63,14 +63,17 @@ public class IconUtil {
       return icon;
     }
 
-    Image image = toImage(icon);
-    if (image == null) return icon;
+    Image image = IconLoader.toImage(icon, null);
+    if (image == null) {
+      return icon;
+    }
 
     double scale = 1f;
     if (image instanceof JBHiDPIScaledImage) {
       scale = ((JBHiDPIScaledImage)image).getScale();
       image = ((JBHiDPIScaledImage)image).getDelegate();
     }
+
     BufferedImage bi = ImageUtil.toBufferedImage(image);
     final Graphics2D g = bi.createGraphics();
 
