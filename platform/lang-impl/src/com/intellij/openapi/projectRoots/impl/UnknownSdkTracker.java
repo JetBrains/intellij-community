@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 import static com.intellij.openapi.progress.PerformInBackgroundOption.ALWAYS_BACKGROUND;
 
@@ -38,8 +39,6 @@ public class UnknownSdkTracker {
   @NotNull private final Project myProject;
   @NotNull private final MergingUpdateQueue myUpdateQueue;
 
-  private UnknownSdkSnapshot myPreviousRequestCache = null;
-
   public UnknownSdkTracker(@NotNull Project project) {
     myProject = project;
     myUpdateQueue = new MergingUpdateQueue(getClass().getSimpleName(),
@@ -53,7 +52,8 @@ public class UnknownSdkTracker {
   }
 
   @NotNull
-  private Update newUpdateTask(@NotNull ShowStatusCallback showStatus) {
+  private Update newUpdateTask(@NotNull ShowStatusCallback showStatus,
+                               @NotNull Predicate<UnknownSdkSnapshot> shouldProcessSnapshot) {
     return new Update("update") {
       @Override
       public void run() {
@@ -65,9 +65,7 @@ public class UnknownSdkTracker {
         new UnknownSdkCollector(myProject)
           .collectSdksPromise(snapshot -> {
 
-            //there is nothing to do if we see the same snapshot, IDEA-236153
-            if (snapshot.equals(myPreviousRequestCache)) return;
-            myPreviousRequestCache = snapshot;
+            if (!shouldProcessSnapshot.test(snapshot)) return;
 
             //we cannot use snapshot#missingSdks here, because it affects other IDEs/languages where our logic is not good enough
             onFixableAndMissingSdksCollected(filterOnlyAllowedEntries(snapshot.getResolvableSdks()), filterOnlyAllowedSdkEntries(snapshot.getKnownSdks()), showStatus);
@@ -76,12 +74,24 @@ public class UnknownSdkTracker {
     };
   }
 
+  private final Predicate<UnknownSdkSnapshot> myIsNewSnapshot = new Predicate<>() {
+    private UnknownSdkSnapshot myPreviousRequestCache = null;
+
+    @Override
+    public boolean test(UnknownSdkSnapshot snapshot) {
+      //there is nothing to do if we see the same snapshot, IDEA-236153
+      if (snapshot.equals(myPreviousRequestCache)) return false;
+      myPreviousRequestCache = snapshot;
+      return true;
+    }
+  };
+
   public void updateUnknownSdksNow() {
-    myUpdateQueue.run(newUpdateTask(DEFAULT_SHOW_STATUS));
+    myUpdateQueue.run(newUpdateTask(myDefaultShowAction, myIsNewSnapshot));
   }
 
   public void updateUnknownSdks() {
-    myUpdateQueue.queue(newUpdateTask(DEFAULT_SHOW_STATUS));
+    myUpdateQueue.queue(newUpdateTask(myDefaultShowAction, myIsNewSnapshot));
   }
 
   private static boolean allowFixesFor(@NotNull SdkTypeId type) {
@@ -180,7 +190,7 @@ public class UnknownSdkTracker {
                     @NotNull List<UnknownInvalidSdk> invalidSdks);
   }
 
-  private final ShowStatusCallback DEFAULT_SHOW_STATUS = new ShowStatusCallback() {
+  private final ShowStatusCallback myDefaultShowAction = new ShowStatusCallback() {
     @Override
     public void showStatus(@NotNull List<UnknownSdk> unknownSdksWithoutFix,
                            @NotNull Map<UnknownSdk, UnknownSdkLocalSdkFix> localFixes,
