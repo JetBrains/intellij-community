@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 
 // ------------------------- Updating references ------------------------
@@ -92,20 +93,55 @@ internal fun <Parent : WorkspaceEntity> AbstractEntityStorage.extractOneToAbstra
   return refs.getOneToAbstractOneParent(connectionId, childId)?.let { entityDataByIdOrDie(it).createEntity(this) as Parent }
 }
 
-internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractOneToOneChild(connectionId: ConnectionId,
-                                                                                 parentId: EntityId): Child? {
+internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractOneToOneChild(connectionId: ConnectionId, parentId: EntityId): Child? {
   val entitiesList = entitiesByType[connectionId.childClass] ?: return null
-  return refs.getOneToOneChild(connectionId, parentId.arrayId) { entitiesList[it]!!.createEntity(this) as? Child }
+  return refs.getOneToOneChild(connectionId, parentId.arrayId) {
+    val childEntityData = entitiesList[it]
+    if (childEntityData == null) {
+      logger<AbstractEntityStorage>().error("""
+        Consistency issue. Cannot get a child in one to one connection.
+        Connection id: $connectionId
+        Parent id: $parentId
+        Child array id: $it
+      """.trimIndent())
+      null
+    }
+    else childEntityData.createEntity(this) as Child
+  }
 }
 
 internal fun <Parent : WorkspaceEntity> AbstractEntityStorage.extractOneToOneParent(connectionId: ConnectionId,
-                                                                               childId: EntityId): Parent? {
+                                                                                    childId: EntityId): Parent? {
   val entitiesList = entitiesByType[connectionId.parentClass] ?: return null
-  return refs.getOneToOneParent(connectionId, childId.arrayId) { entitiesList[it]!!.createEntity(this) as? Parent }
+  return refs.getOneToOneParent(connectionId, childId.arrayId) {
+    val parentEntityData = entitiesList[it]
+    if (parentEntityData == null) {
+      logger<AbstractEntityStorage>().error("""
+        Consistency issue. Cannot get a parent in one to one connection.
+        Connection id: $connectionId
+        Child id: $childId
+        Parent array id: $it
+      """.trimIndent())
+      null
+    }
+    else parentEntityData.createEntity(this) as Parent
+  }
 }
 
 internal fun <Parent : WorkspaceEntity> AbstractEntityStorage.extractOneToManyParent(connectionId: ConnectionId, childId: EntityId): Parent? {
   val entitiesList = entitiesByType[connectionId.parentClass] ?: return null
-  return refs.getOneToManyParent(connectionId, childId.arrayId) { entitiesList[it]!!.createEntity(this) as? Parent }
+  return refs.getOneToManyParent(connectionId, childId.arrayId) {
+    val parentEntityData = entitiesList[it]
+    if (parentEntityData == null) {
+      logger<AbstractEntityStorage>().error("""
+        Consistency issue. Cannot get a parent in one to many connection.
+        Connection id: $connectionId
+        Child id: $childId
+        Parent array id: $it
+      """.trimIndent())
+      null
+    }
+    else parentEntityData.createEntity(this) as Parent
+  }
 }
 
