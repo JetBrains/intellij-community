@@ -111,6 +111,8 @@
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyUnresolvedModuleAttributeCompletionContributor"/>
     <completion.contributor language="Python"
+                            implementationClass="com.jetbrains.python.codeInsight.completion.PyUnresolvedModuleTransitiveAttributeCompletionContributor"/>
+    <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyFStringLikeCompletionContributor"/>
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyMultipleArgumentsCompletionContributor"/>
