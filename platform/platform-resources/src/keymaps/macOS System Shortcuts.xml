@@ -182,6 +182,16 @@
     <keyboard-shortcut first-keystroke="meta shift alt F7"/>
   </action>
 
+  <action id="EditorPageDown">
+    <keyboard-shortcut first-keystroke="PAGE_DOWN"/>
+    <keyboard-shortcut first-keystroke="ctrl V"/>
+  </action>
+
+  <action id="EditorPageDownWithSelection">
+    <keyboard-shortcut first-keystroke="PAGE_DOWN"/>
+    <keyboard-shortcut first-keystroke="ctrl shift V"/>
+  </action>
+
   <action id="Synchronize">
     <keyboard-shortcut first-keystroke="meta shift Y"/>
   </action>
