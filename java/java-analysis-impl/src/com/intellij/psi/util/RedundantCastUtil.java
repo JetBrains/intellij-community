@@ -874,7 +874,8 @@ public final class RedundantCastUtil {
         if (!PsiUtil.isLanguageLevel5OrHigher(typeCast)) {
           return;
         }
-        if (!PsiPolyExpressionUtil.isPolyExpression(parent)) {    //branches need to be of the same type
+        if (!PsiPolyExpressionUtil.isInAssignmentOrInvocationContext(parent) || 
+            PsiPolyExpressionUtil.sameBooleanOrNumeric(operand, oppositeOperand)) {    //branches need to be of the same type
           if (oppositeOperand == null || !Comparing.equal(conditionalType, oppositeOperand.getType())) return;
         }
       }
