@@ -33,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -339,7 +338,7 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
      * <p>
      * It contains two maps:
      * <ol>
-     *   <li>{@link RedundantThrowsDeclarationInspection.MyQuickFix.TryStatementInfo#catchToCatchTypes}
+     *   <li>{@link RedundantThrowsDeclarationInspection.MyQuickFix.TryStatementInfo#catchToExceptionTypes}
      *   contains relations between a catch section and exception types the section handles</li>
      *   <li>{@link RedundantThrowsDeclarationInspection.MyQuickFix.TryStatementInfo#exceptionToInducers}
      *   contains relations between an exception type and places in the code that induce the exception</li>
@@ -347,11 +346,11 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
      * </p>
      */
     private static final class TryStatementInfo {
-      private final @NotNull Map<@NotNull PsiCatchSection, @NotNull Set<@NotNull PsiType>> catchToCatchTypes;
+      private final @NotNull Map<@NotNull PsiCatchSection, @NotNull Set<@NotNull PsiType>> catchToExceptionTypes;
       private final @NotNull Map<@NotNull PsiType, @NotNull Set<@NotNull PsiElement>> exceptionToInducers;
 
       private TryStatementInfo(final @NotNull PsiTryStatement tryStatement) {
-        catchToCatchTypes = new HashMap<>();
+        catchToExceptionTypes = new HashMap<>();
         exceptionToInducers = new HashMap<>();
         analyzeCatchSections(tryStatement);
 
@@ -362,35 +361,15 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
         analyzeCodeBlock(resourceList);
       }
 
-
-      /**
-       * The method returns a set of {@link PsiCatchSection}s that are in the {@link PsiTryStatement}
-       *
-       * @return a set of {@link PsiCatchSection}s.
-       */
-      @Contract(pure = true)
-      private @NotNull Set<@NotNull PsiCatchSection> getCatchSections() {
-        return catchToCatchTypes.keySet();
-      }
-
-      /**
-       * The method returns a set of {@link PsiType}s that are handled by a {@link PsiCatchSection}
-       * @param catchSection a catch section to get a set of {@link PsiType}s for
-       * @return a set of {@link PsiType}s for a {@link PsiCatchSection}
-       */
-      @Contract(pure = true)
-      private @NotNull Set<@NotNull PsiType> get(final @NotNull PsiCatchSection catchSection) {
-        return catchToCatchTypes.get(catchSection);
-      }
-
       /**
        * The method returns a set of {@link PsiElement}s that induce a {@link PsiType}
        * @param exceptionType a type of an exception for which to get a set of {@link PsiElement} that induce the exception
-       * @return a set of {@link PsiElement}s that induce the exception
+       * @return a set of {@link PsiElement}s that induce the exception or {@link Collections#emptySet}
+       * if no inducers for the exception found
        */
       @Contract(pure = true)
-      private @NotNull Set<@NotNull PsiElement> get(final @NotNull PsiType exceptionType) {
-        return exceptionToInducers.get(exceptionType);
+      private @NotNull Set<@NotNull PsiElement> getExceptionInducers(final @NotNull PsiType exceptionType) {
+        return exceptionToInducers.getOrDefault(exceptionType, Collections.emptySet());
       }
 
       /**
@@ -399,24 +378,23 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
        * {@link Throwable}s, {@link Exception}s, {@link Error}s.
        *
        * @param catchSection a catch section to analyze exceptions of
-       * @return a list of exceptions that have inducers according to the graph.
+       * @return a list of exceptions that have inducers
        */
       @Contract(pure = true)
       private @NotNull List<@NotNull PsiType> getEssentialExceptionsOfCatch(final @NotNull PsiCatchSection catchSection) {
-        final Predicate<PsiType> isEssential = type -> {
-          if (ExceptionUtil.isGeneralExceptionType(type)) return true;
-          if (type instanceof PsiClassType && ExceptionUtil.isUncheckedException((PsiClassType)type)) return true;
-          return !get(type).isEmpty();
-        };
+        return ContainerUtil.filter(catchToExceptionTypes.get(catchSection), this::isEssentialException);
+      }
 
-        return StreamEx.of(get(catchSection))
-          .filter(isEssential)
-          .toList();
+      @Contract(pure = true)
+      private boolean isEssentialException(final @NotNull PsiType type) {
+        if (ExceptionUtil.isGeneralExceptionType(type)) return true;
+        if (type instanceof PsiClassType && ExceptionUtil.isUncheckedException((PsiClassType)type)) return true;
+        return !getExceptionInducers(type).isEmpty();
       }
 
       /**
        * This method extracts {@link PsiCatchSection}s from a {@link PsiTryStatement} and adds them and the exception types
-       * they handle into {@link RedundantThrowsDeclarationInspection.MyQuickFix.TryStatementInfo#catchToCatchTypes},
+       * they handle into {@link RedundantThrowsDeclarationInspection.MyQuickFix.TryStatementInfo#catchToExceptionTypes},
        * so it is easy to have access to exceptions a particular catch statement handles.
        *
        * @param tryStatement a {@link PsiTryStatement} to analyze
@@ -432,11 +410,11 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
           if (catchType instanceof PsiDisjunctionType) {
             final PsiDisjunctionType disjunctionType = (PsiDisjunctionType)catchType;
             for (final PsiType disjunction : disjunctionType.getDisjunctions()) {
-              add(catchSection, disjunction);
+              addCatchSectionType(catchSection, disjunction);
             }
           }
           else {
-            add(catchSection, catchType);
+            addCatchSectionType(catchSection, catchType);
           }
         }
       }
@@ -457,7 +435,7 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
           public void visitCallExpression(PsiCallExpression callExpression) {
             final List<PsiClassType> exceptions = ExceptionUtil.getUnhandledExceptions(callExpression, block);
             for (PsiClassType exception : exceptions) {
-              add(exception, callExpression);
+              addExceptionInducer(exception, callExpression);
             }
           }
 
@@ -469,7 +447,7 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
             final PsiType type = exception.getType();
             if (type == null) return;
 
-            add(type, statement);
+            addExceptionInducer(type, statement);
           }
         });
       }
@@ -488,20 +466,29 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
         for (final PsiResourceListElement element : resourceList) {
           final List<PsiClassType> exceptions = ExceptionUtil.getCloserExceptions(element);
           for (PsiClassType exception : exceptions) {
-            add(exception, element);
+            addExceptionInducer(exception, element);
           }
         }
       }
 
-      private void add(final @NotNull PsiCatchSection from, final @NotNull PsiType to) {
-        final Set<@NotNull PsiType> types = catchToCatchTypes.computeIfAbsent(from, k -> new LinkedHashSet<>());
-        types.add(to);
-        exceptionToInducers.computeIfAbsent(to, k -> new HashSet<>());
+      /**
+       * The method adds a new link between a catch section and an exception type
+       * @param catchSection a catch section to add an exception to
+       * @param exception an exception to add to the catch section
+       */
+      private void addCatchSectionType(final @NotNull PsiCatchSection catchSection, final @NotNull PsiType exception) {
+        final Set<@NotNull PsiType> exceptionTypes = catchToExceptionTypes.computeIfAbsent(catchSection, k -> new LinkedHashSet<>());
+        exceptionTypes.add(exception);
       }
 
-      private void add(final @NotNull PsiType from, final @NotNull PsiElement to) {
-        final Set<@NotNull PsiElement> inducers = exceptionToInducers.computeIfAbsent(from, k -> new HashSet<>());
-        inducers.add(to);
+      /**
+       * This method adds a new link between an exception and a place in the code (inducer) that induces the exception
+       * @param exception exception type
+       * @param inducer a place in the code that induces the exception
+       */
+      private void addExceptionInducer(final @NotNull PsiType exception, final @NotNull PsiElement inducer) {
+        final Set<@NotNull PsiElement> inducers = exceptionToInducers.computeIfAbsent(exception, k -> new HashSet<>());
+        inducers.add(inducer);
       }
 
       /**
@@ -512,13 +499,11 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
        */
       private void breakConnectionsFromRedundantExceptions(final @NotNull Set<PsiClassType> redundantTypes,
                                                            final @NotNull PsiMethod method) {
-        for (final @NotNull PsiCatchSection catchVertex : getCatchSections()) {
-          final @NotNull Set<@NotNull PsiType> catchTypeVertices = get(catchVertex);
+        for (final @NotNull PsiCatchSection catchSection : catchToExceptionTypes.keySet()) {
+          for (final @NotNull PsiType exception : catchToExceptionTypes.get(catchSection)) {
+            if (redundantTypes.stream().noneMatch(exception::isAssignableFrom)) continue;
 
-          for (final @NotNull PsiType catchTypeVertex : catchTypeVertices) {
-            if (redundantTypes.stream().noneMatch(catchTypeVertex::isAssignableFrom)) continue;
-
-            final Iterator<@NotNull PsiElement> catchTypeInducers = get(catchTypeVertex).iterator();
+            final Iterator<@NotNull PsiElement> catchTypeInducers = getExceptionInducers(exception).iterator();
             while (catchTypeInducers.hasNext()) {
               final @NotNull PsiElement callInducer = catchTypeInducers.next();
 
