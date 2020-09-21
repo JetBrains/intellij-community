@@ -1163,7 +1163,7 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
   }
 
   internal fun reportConsistencyIssue(message: String, e: Throwable, sourceFilter: ((EntitySource) -> Boolean)?, left: WorkspaceEntityStorage, right: WorkspaceEntityStorage, resulting: WorkspaceEntityStorageBuilder, initialChangeLogSize: Int) {
-    val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl())
+    val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl(), false)
 
     val entitySourceFilter = if (sourceFilter != null) {
       val allEntitySources = (left as AbstractEntityStorage).indexes.entitySourceIndex.entries().toHashSet()

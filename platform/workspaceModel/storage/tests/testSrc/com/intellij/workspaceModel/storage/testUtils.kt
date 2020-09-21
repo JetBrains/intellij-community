@@ -27,9 +27,7 @@ object SerializationRoundTripChecker {
   fun verifyPSerializationRoundTrip(storage: WorkspaceEntityStorage, virtualFileManager: VirtualFileUrlManager): ByteArray {
     storage as WorkspaceEntityStorageImpl
 
-    val serializer = EntityStorageSerializerImpl(
-      TestEntityTypesResolver(),
-      virtualFileManager)
+    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), virtualFileManager, true)
 
     val stream = ByteArrayOutputStream()
     serializer.serializeCache(stream, storage)

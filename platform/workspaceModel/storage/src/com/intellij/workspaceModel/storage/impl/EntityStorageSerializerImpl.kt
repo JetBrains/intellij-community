@@ -36,7 +36,8 @@ import kotlin.reflect.jvm.jvmErasure
 import kotlin.reflect.jvm.jvmName
 
 class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver,
-                                  private val virtualFileManager: VirtualFileUrlManager) : EntityStorageSerializer {
+                                  private val virtualFileManager: VirtualFileUrlManager,
+                                  private val registrationRequired: Boolean) : EntityStorageSerializer {
   private val KRYO_BUFFER_SIZE = 64 * 1024
 
   @set:TestOnly
@@ -45,7 +46,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
   private fun createKryo(): Kryo {
     val kryo = Kryo()
 
-    kryo.isRegistrationRequired = StrictMode.enabled
+    kryo.isRegistrationRequired = registrationRequired
     kryo.instantiatorStrategy = StdInstantiatorStrategy()
 
     kryo.register(VirtualFileUrl::class.java, object : Serializer<VirtualFileUrl>(false, true) {

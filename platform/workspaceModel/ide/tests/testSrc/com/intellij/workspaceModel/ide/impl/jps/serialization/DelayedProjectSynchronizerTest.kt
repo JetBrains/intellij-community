@@ -36,7 +36,7 @@ class DelayedProjectSynchronizerTest {
   fun setUp() {
     WorkspaceModelImpl.forceEnableCaching = true
     virtualFileManager = VirtualFileUrlManagerImpl()
-    serializer = EntityStorageSerializerImpl(WorkspaceModelCacheImpl.PluginAwareEntityTypesResolver, virtualFileManager)
+    serializer = EntityStorageSerializerImpl(WorkspaceModelCacheImpl.PluginAwareEntityTypesResolver, virtualFileManager, true)
   }
 
   @After
