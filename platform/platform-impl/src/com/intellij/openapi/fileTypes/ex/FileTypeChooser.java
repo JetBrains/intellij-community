@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.impl.FileTypeRenderer;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -16,6 +17,7 @@ import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.ScrollingUtil;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -38,6 +40,7 @@ public final class FileTypeChooser extends DialogWrapper {
   private JRadioButton myOpenInIdea;
   private JRadioButton myOpenAsNative;
   private JRadioButton myDetectFileType;
+  private JBLabel myContextHelpLabel;
   private final String myFileName;
 
   private FileTypeChooser(@NotNull List<String> patterns, @NotNull String fileName) {
@@ -69,6 +72,8 @@ public final class FileTypeChooser extends DialogWrapper {
     myPattern.setModel(new CollectionComboBoxModel<>(ContainerUtil.map(patterns, FunctionUtil.id()), patterns.get(0)));
     new ListSpeedSearch(myList, (Function<Object, String>)o -> ((FileType)o).getDescription());
 
+    myContextHelpLabel.setForeground(UIUtil.getContextHelpForeground());
+    myContextHelpLabel.setText(FileTypesBundle.message("label.help.change.association", ShowSettingsUtil.getSettingsMenuName()));
     setTitle(FileTypesBundle.message("filetype.chooser.title"));
     init();
   }
