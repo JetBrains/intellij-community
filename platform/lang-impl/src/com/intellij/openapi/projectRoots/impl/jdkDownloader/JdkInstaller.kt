@@ -10,6 +10,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
+import com.intellij.openapi.projectRoots.JdkUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.Urls
@@ -197,10 +198,7 @@ class JdkInstaller {
 
     Files.createDirectories(home)
 
-    val javaHome = when {
-      jdkItem.packageToBinJavaPrefix.isBlank() -> targetPath
-      else -> targetPath.resolve(jdkItem.packageToBinJavaPrefix)
-    }
+    val javaHome = jdkItem.resolveJavaHome(targetPath)
 
     Files.createDirectories(javaHome)
     val request = object: JdkInstallRequest {
@@ -229,8 +227,17 @@ class JdkInstaller {
   fun findJdkItemForInstalledJdk(jdkHome: String?): JdkItem? {
     try {
       if (jdkHome == null) return null
-
       val jdkPath = Paths.get(jdkHome)
+      return findJdkItemForInstalledJdk(jdkPath)
+    }
+    catch (t: Throwable) {
+      return null
+    }
+  }
+
+  fun findJdkItemForInstalledJdk(jdkPath: Path?): JdkItem? {
+    try {
+      if (jdkPath == null) return null
       if (!jdkPath.isDirectory()) return null
 
       // Java package install dir have several folders up from it, e.g. Contents/Home on macOS
@@ -246,5 +253,32 @@ class JdkInstaller {
     catch (e: Throwable) {
       return null
     }
+  }
+
+  /**
+   * Scans locally installed with the JdkInstaller JDKs to
+   * find one that is the same as expected here
+   */
+  fun findLocallyInstalledJdk(feedItem: JdkItem) : Path? {
+    try {
+      //TODO: we may track install locations nad use the data to scan more paths
+      Files.list(defaultInstallDir()).use { list ->
+        for (installDir in list) {
+          if (!installDir.isDirectory()) continue
+          val item = findJdkItemForInstalledJdk(installDir) ?: continue
+          if (item != feedItem) continue
+
+          val jdkHome = item.resolveJavaHome(installDir)
+          if (jdkHome.isDirectory() && JdkUtil.checkForJdk(jdkHome.toFile())) {
+            return jdkHome
+          }
+        }
+      }
+    } catch (t: Throwable) {
+      LOG.warn("Failed to scan for installed JDKs. ${t.message}", t)
+      //NOP
+    }
+
+    return null
   }
 }

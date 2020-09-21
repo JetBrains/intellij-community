@@ -11,7 +11,9 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.*
+import com.intellij.openapi.projectRoots.JavaSdkType
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.projectRoots.impl.DependentSdkType
 import com.intellij.openapi.projectRoots.impl.UnknownSdkCollector
 import com.intellij.openapi.startup.StartupActivity
@@ -74,7 +76,7 @@ internal class JdkUpdater(
   fun updateNotifications() {
     UnknownSdkCollector(project).collectSdksPromise { snapshot ->
       val knownSdks = snapshot
-        .knownSdks
+        .knownSdks //TODO: include AlternativeSdkRootsProvider here too!
         .filter { it.sdkType is JavaSdkType && it.sdkType !is DependentSdkType }
 
       if (knownSdks.isEmpty()) return@collectSdksPromise
@@ -121,21 +123,26 @@ internal class JdkUpdater(
   private fun updateJdk(project: Project, jdk: Sdk, feedItem: JdkItem) {
     ProgressManager.getInstance().run(
       object : Task.Backgroundable(project, "Updating JDK '${jdk.name}' to ${feedItem.fullPresentationText}", true, ALWAYS_BACKGROUND) {
+
         override fun run(indicator: ProgressIndicator) {
           val installer = JdkInstaller.getInstance()
-          val prepare = installer.prepareJdkInstallation(feedItem, installer.defaultInstallDir(feedItem))
-          installer.installJdk(prepare, indicator, project)
+
+          val newJdkHome =
+            //Optimization: try to check if a given JDK is already installed
+            installer.findLocallyInstalledJdk(feedItem) ?: run {
+              val prepare = installer.prepareJdkInstallation(feedItem, installer.defaultInstallDir(feedItem))
+              installer.installJdk(prepare, indicator, project)
+              prepare.javaHome
+            }
 
           runWriteAction {
             jdk.sdkModificator.apply {
               removeAllRoots()
-              homePath = prepare.javaHome.systemIndependentPath
+              homePath = newJdkHome.systemIndependentPath
             }.commitChanges()
 
-            val sdkType = SdkType
-                            .getAllTypes()
-                            .singleOrNull(SimpleJavaSdkType.notSimpleJavaSdkTypeIfAlternativeExistsAndNotDependentSdkType()::value)
-                          ?: return@runWriteAction null
+
+            val sdkType = jdk.sdkType as? SdkType ?: return@runWriteAction null
 
             sdkType.setupSdkPaths(jdk)
           }

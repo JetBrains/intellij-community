@@ -95,6 +95,18 @@ data class JdkItem(
     saveToFile(file)
   }
 
+  /**
+   * the Java Home folder (which contains the `bin` folder and `bin/java` path
+   * may be deep inside a JDK package, e.g. on macOS
+   * This method helps to find a traditional Java Home
+   * from a JDK install directory
+   */
+  fun resolveJavaHome(installDir: Path): Path {
+    val packageToBinJavaPrefix = packageToBinJavaPrefix
+    if (packageToBinJavaPrefix.isBlank()) return installDir
+    return installDir.resolve(packageToBinJavaPrefix)
+  }
+
   val vendorPrefix
     get() = suggestedSdkName.split("-").dropLast(1).joinToString("-")
 
