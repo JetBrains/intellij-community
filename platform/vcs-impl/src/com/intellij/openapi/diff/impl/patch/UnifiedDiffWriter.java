@@ -19,6 +19,8 @@ import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.*;
 
+import static com.intellij.openapi.vcs.changes.patch.PatchWriter.shouldUseDefaultSeparator;
+
 public final class UnifiedDiffWriter {
   @NonNls private static final String INDEX_SIGNATURE = "Index: {0}{1}";
   @NonNls public static final String ADDITIONAL_PREFIX = "IDEA additional info:";
@@ -71,7 +73,8 @@ public final class UnifiedDiffWriter {
           }
         }
       }
-      String fileContentLineSeparator = ObjectUtils.coalesce(patch.getLineSeparator(), lineSeparator, "\n");
+      String fileContentLineSeparator =
+        shouldUseDefaultSeparator(project) ? "\n" : ObjectUtils.coalesce(patch.getLineSeparator(), lineSeparator, "\n");
       writeFileHeading(patch, writer, lineSeparator, additionalMap);
       for(PatchHunk hunk: patch.getHunks()) {
         writeHunkStart(writer, hunk.getStartLineBefore(), hunk.getEndLineBefore(), hunk.getStartLineAfter(), hunk.getEndLineAfter(),
