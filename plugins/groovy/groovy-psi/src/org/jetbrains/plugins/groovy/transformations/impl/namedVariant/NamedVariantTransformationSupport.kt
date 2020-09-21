@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.transformations.impl.namedVariant
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP
 import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiModifier
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.getAnnotation
@@ -13,6 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightModifierList
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport
 import org.jetbrains.plugins.groovy.transformations.TransformationContext
+import org.jetbrains.plugins.groovy.transformations.impl.synch.isStatic
 
 class NamedVariantTransformationSupport : AstTransformationSupport {
   override fun applyTransformation(context: TransformationContext) {
@@ -52,6 +54,9 @@ class NamedVariantTransformationSupport : AstTransformationSupport {
     builder.containingClass = psiClass
     builder.returnType = method.returnType
     builder.navigationElement = method
+    if (method.isStatic()) {
+      builder.modifierList.addModifier(PsiModifier.STATIC)
+    }
     builder.isConstructor = method.isConstructor
     parameters.forEach {
       builder.addParameter(it)
