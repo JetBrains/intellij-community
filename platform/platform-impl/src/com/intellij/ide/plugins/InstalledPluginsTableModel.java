@@ -67,8 +67,8 @@ public class InstalledPluginsTableModel {
     return myDependentToRequiredListMap.get(pluginId);
   }
 
-  public boolean isLoaded(PluginId pluginId) {
-    return myEnabled.get(pluginId) != null;
+  public final boolean isLoaded(@NotNull PluginId pluginId) {
+    return isLoaded(pluginId, getEnabledMap());
   }
 
   protected final void setEnabled(@NotNull IdeaPluginDescriptor ideaPluginDescriptor) {
@@ -166,7 +166,7 @@ public class InstalledPluginsTableModel {
       PluginId currentPluginId = ideaPluginDescriptor.getPluginId();
       enabledMap.put(
         currentPluginId,
-        enabledMap.get(currentPluginId) == null ? Boolean.FALSE : enabled
+        isLoaded(currentPluginId, enabledMap) ? enabled : Boolean.FALSE
       );
     }
   }
@@ -284,5 +284,10 @@ public class InstalledPluginsTableModel {
                                       @NotNull Map<PluginId, Boolean> enabledMap) {
     Boolean enabled = enabledMap.get(descriptor.getPluginId());
     return enabled == null || !enabled;
+  }
+
+  protected static boolean isLoaded(@NotNull PluginId pluginId,
+                                    @NotNull Map<PluginId, Boolean> enabledMap) {
+    return enabledMap.get(pluginId) != null;
   }
 }

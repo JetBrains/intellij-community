@@ -211,7 +211,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     }
     myPerProjectPlugins.clear();
 
-    boolean enableDisableAppliedWithoutRestart = applyEnableDisablePlugins(parent, getEnabledMap());
+    boolean enableDisableAppliedWithoutRestart = applyEnableDisablePlugins(parent);
     myDynamicPluginsToUninstall.clear();
     boolean changesAppliedWithoutRestart = enableDisableAppliedWithoutRestart &&
                                            uninstallsRequiringRestart.isEmpty() &&
@@ -228,7 +228,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     myPluginsToRemoveOnCancel.clear();
   }
 
-  private boolean applyEnableDisablePlugins(JComponent parentComponent, Map<PluginId, Boolean> enabledMap) {
+  private boolean applyEnableDisablePlugins(@Nullable JComponent parentComponent) {
     List<IdeaPluginDescriptor> pluginDescriptorsToDisable = new ArrayList<>();
     List<IdeaPluginDescriptor> pluginDescriptorsToEnable = new ArrayList<>();
 
@@ -242,7 +242,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       }
 
       PluginId pluginId = descriptor.getPluginId();
-      if (enabledMap.get(pluginId) == null) { // if enableMap contains null for id => enable/disable checkbox don't touch
+      if (!isLoaded(pluginId)) { // if enableMap contains null for id => enable/disable checkbox don't touch
         continue;
       }
       boolean shouldEnable = isEnabled(pluginId);
