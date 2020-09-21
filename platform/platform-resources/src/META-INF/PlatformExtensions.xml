@@ -599,6 +599,7 @@
     <bundledKeymap file="$default.xml"/>
     <bundledKeymap file="Mac OS X 10.5+.xml"/>
     <bundledKeymap file="Mac OS X.xml"/>
+    <bundledKeymap file="macOS System Shortcuts.xml"/>
     <bundledKeymap file="Default for XWin.xml"/>
     <bundledKeymap file="Default for GNOME.xml"/>
     <bundledKeymap file="Default for KDE.xml"/>

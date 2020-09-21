@@ -3,6 +3,7 @@ package com.intellij.keymap;
 
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -65,11 +66,8 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control alt S",            "ShowSettings", "org.jetbrains.r.rendering.chunk.InterruptChunkExecutionAction"},
     { "control alt UP",           "PreviousOccurence", "Console.TableResult.PreviousPage"},
     { "control alt N",            "Inline", "Console.TableResult.SetNull"},
-    { "control alt M",            "ExtractMethod", "TodoViewGroupByShowModules", "ChangesView.GroupBy.Module"},
-    { "control alt P",            "ChangesView.GroupBy.Directory", "IntroduceParameter", "TodoViewGroupByShowPackages", "ServiceView.GroupByServiceGroups"},
-    { "control alt T",            "ServiceView.GroupByContributor", "SurroundWith"},
     { "control alt X",            "SECOND_STROKE_SHORTCUT", "org.jetbrains.r.rendering.chunk.DebugChunkAction"},
-    { "ctrl alt C",               "IntroduceConstant", "TodoViewGroupByFlattenPackage", "org.jetbrains.r.rendering.chunk.RunChunkAction"},
+    { "ctrl alt C",               "IntroduceConstant", "org.jetbrains.r.rendering.chunk.RunChunkAction"},
     { "ctrl alt U",               "ShowUmlDiagramPopup", "ChangesView.UnshelveSilently"},
     { "ctrl alt F",               "IntroduceField", "ShowFilterPopup"},
     { "control MINUS",            "CollapseAll", "CollapseExpandableComponent", "CollapseRegion"},
@@ -123,18 +121,13 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "BACK_SPACE",               "$Delete", "EditorBackSpace"},
     { "shift BACK_SPACE",         "EditorBackSpace", "UsageView.Include"},
     { "meta BACK_SPACE",          "EditorDeleteLine", "$Delete"},
-    { "control LEFT",             "Diff.PrevChange", "PreviousTab"},
-    { "control RIGHT",            "Diff.NextChange", "NextTab"},
-    { "control DOWN",             "EditorLookupDown", "JupyterSelectCellBelowAction", "MethodDown", "ShowContent"},
+    { "control DOWN",             "EditorLookupDown", "JupyterSelectCellBelowAction", "MethodDown"},
     { "control UP",               "EditorLookupUp", "JupyterSelectCellAboveAction", "MethodUp"},
     { "control TAB",              "Switcher", "Diff.FocusOppositePane"},
     { "control D",                "Debug", "org.jetbrains.r.console.RConsoleView.REofAction"},
-    { "control M",                "ChangesView.GroupBy.Module", "EditorMatchBrace", "Vcs.ShowMessageHistory", "TodoViewGroupByShowModules"},
+    { "control M",                "EditorMatchBrace", "Vcs.ShowMessageHistory"},
     { "control O",                "ExportToTextFile", "OverrideMethods"},
-    { "control P",                "ChangesView.GroupBy.Directory", "EditorUp", "TodoViewGroupByShowPackages", "ServiceView.GroupByServiceGroups"},
-    { "control T",                "Refactorings.QuickListPopupAction", "ServiceView.GroupByContributor"},
     { "ctrl alt F",               "EditorNextWord", "ShowFilterPopup"},
-    { "ctrl F",                   "EditorRight", "TodoViewGroupByFlattenPackage"},
     { "control ENTER",            "Generate", "NotebookRunCellAction", "NewElement", "PyExecuteCellAction"},
     { "control SPACE",            "CodeCompletion", "ChangesView.SetDefault"},
     { "shift control TAB",        "Switcher", "Diff.FocusOppositePaneAndScroll"},
@@ -162,14 +155,12 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "BACK_SPACE",               "$Delete", "EditorBackSpace"},
     { "control LEFT",             "Diff.PrevChange", "PreviousTab"},
     { "control RIGHT",            "Diff.NextChange", "NextTab"},
-    { "control DOWN",             "EditorLookupDown", "JupyterSelectCellBelowAction", "MethodDown", "ShowContent"},
+    { "control DOWN",             "EditorLookupDown", "JupyterSelectCellBelowAction", "MethodDown"},
     { "control UP",               "EditorLookupUp", "JupyterSelectCellAboveAction", "MethodUp"},
     { "control ENTER",            "Generate", "NotebookRunCellAction", "NewElement", "PyExecuteCellAction"},
     { "control F5",               "Refresh", "Rerun"},
     { "control TAB",              "Switcher", "Diff.FocusOppositePane"},
     { "control N",                "Generate", "NewElement"},
-    { "control M",                "ChangesView.GroupBy.Module", "TodoViewGroupByShowModules", "Vcs.ShowMessageHistory"},
-    { "control P",                "ChangesView.GroupBy.Directory", "TodoViewGroupByShowPackages", "ServiceView.GroupByServiceGroups"},
     { "shift control TAB",        "Switcher", "Diff.FocusOppositePaneAndScroll"},
     { "meta 1",                   "ActivateProjectToolWindow", "FileChooser.GotoHome", "DuplicatesForm.SendToLeft"},
     { "meta 2",                   "ActivateFavoritesToolWindow", "FileChooser.GotoProject", "DuplicatesForm.SendToRight"},
@@ -230,7 +221,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "ctrl SUBTRACT",            "Back", "CollapseAll", "CollapseExpandableComponent"},
     { "ctrl R,R",                 "ChangesView.Rename", "Git.Rename.Local.Branch", "Git.Reword.Commit", "RenameElement", "ShelvedChanges.Rename"},
     { "shift alt LEFT",           "Diff.ApplyRightSide", "EditorLeftWithSelection"},
-    { "ctrl alt P",               "ChangesView.GroupBy.Directory", "ServiceView.GroupByServiceGroups", "TodoViewGroupByShowPackages", "XDebugger.AttachToProcess"},
     { "shift ctrl alt K",         "Git.Commit.And.Push.Executor", "Hg.Commit.And.Push.Executor"},
     { "ctrl E",                   SECOND_STROKE, "SwitcherIterateItems", "SwitcherRecentEditedChangedToggleCheckBox"},
     { "shift alt RIGHT",          "Diff.ApplyLeftSide", "EditorRightWithSelection"},
@@ -416,6 +406,16 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       { "meta I",                   "DatabaseView.PropertiesAction", "QuickJavaDoc"},
       { "shift meta T",             "ReopenClosedTab", "ServiceView.ShowServices"},
       { "ctrl O",                   "EditorSplitLine", "ExportToTextFile"},
+      { "meta DOWN",                "EditSourceNotInEditor", "EditorTextEnd"},
+      { "meta alt I",               "Move", "RMarkdownNewChunk"},
+      { "shift meta DOWN",          "EditorTextEndWithSelection", "ResizeToolWindowDown"},
+      { "shift meta UP",            "EditorTextStartWithSelection", "ResizeToolWindowUp"},
+      { "ctrl ENTER",               "EditorSplitLine", "NotebookRunCellAction", "PyExecuteCellAction"},
+      { "meta alt S",               "ChangeSignature", "org.jetbrains.r.rendering.chunk.InterruptChunkExecutionAction"},
+      { "meta CLOSE_BRACKET",       "Forward", "NextDiff"},
+      { "meta OPEN_BRACKET",        "Back", "PreviousDiff"},
+      { "shift meta L",             "EvaluateExpression", "Jdbc.OpenConsole.New", "rspec.LetIntroduce"},
+      { "meta alt E",               "Console.History.Browse", "GotoNextElementUnderCaretUsage", "PerforceDirect.Edit"},
     });
   }};
   // @formatter:on
@@ -437,15 +437,26 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     "List-selectLastRowExtendSelection",
     "List-selectLastRow",
     "List-selectFirstRowExtendSelection",
-    "List-s" +
-    "electFirstRow"
+    "List-selectFirstRow",
+    "Tree-selectLastExtendSelection",
+    "Tree-selectLast",
+    "Tree-selectFirstExtendSelection",
+    "Tree-selectFirst"
   );
   protected static final List<String> DEFAULT_CONFLICT_SAFE_GROUPS =
     List.of("Log.KeymapGroup", "UsageGroupingActionGroup", "SearchEverywhereActions", "Images.ThumbnailViewActions", "Images.ImageViewActions",
-            "ArrangementRulesGroup");
+            "ArrangementRulesGroup", "ServiceViewTreeToolbar", "TodoViewGroupByGroup", "ChangesView.GroupBy");
 
   @Override
   protected Collection<String> getConflictSafeGroups() {
     return DEFAULT_CONFLICT_SAFE_GROUPS;
+  }
+
+  @Override
+  protected String getGroupForUnknownAction(@NotNull String actionId) {
+    if (actionId.equals("ChangesView.GroupBy.Module")) {
+      return "ChangesView.GroupBy";
+    }
+    return null;
   }
 }

@@ -154,7 +154,6 @@
     <keyboard-shortcut first-keystroke="control UP"/>
   </action>
   <action id="ShowContent">
-    <keyboard-shortcut first-keystroke="control DOWN"/>
   </action>
   <action id="NextEditorTab">
     <keyboard-shortcut first-keystroke="control shift RIGHT"/>
@@ -528,11 +527,9 @@
   </action>
   <action id="Diff.PrevChange">
     <keyboard-shortcut first-keystroke="meta shift OPEN_BRACKET"/>
-    <keyboard-shortcut first-keystroke="control LEFT"/>
   </action>
   <action id="Diff.NextChange">
     <keyboard-shortcut first-keystroke="meta shift CLOSE_BRACKET"/>
-    <keyboard-shortcut first-keystroke="control RIGHT"/>
   </action>
   <action id="Diff.ApplyLeftSide">
     <keyboard-shortcut first-keystroke="control shift RIGHT"/>

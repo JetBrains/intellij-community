@@ -45,6 +45,10 @@
     <keyboard-shortcut first-keystroke="ctrl H"/>
   </action>
 
+  <action id="CallHierarchy">
+    <keyboard-shortcut first-keystroke="ctrl shift H"/>
+  </action>
+
   <action id="TypeHierarchy">
     <keyboard-shortcut first-keystroke="ctrl alt H"/>
   </action>
@@ -81,6 +85,13 @@
   <action id="EvaluateExpression">
     <keyboard-shortcut first-keystroke="meta shift L"/>
     <keyboard-shortcut first-keystroke="alt F8"/>
+  </action>
+
+  <action id="Generate">
+    <keyboard-shortcut first-keystroke="meta N"/>
+  </action>
+  <action id="NewElement">
+    <keyboard-shortcut first-keystroke="meta N"/>
   </action>
 
   <action id="NewScratchFile">
@@ -192,7 +203,7 @@
   </action>
 
   <action id="EditorPageDownWithSelection">
-    <keyboard-shortcut first-keystroke="PAGE_DOWN"/>
+    <keyboard-shortcut first-keystroke="shift PAGE_DOWN"/>
     <keyboard-shortcut first-keystroke="ctrl shift V"/>
   </action>
 
@@ -370,6 +381,10 @@
   <action id="ForceStepOver">
     <keyboard-shortcut first-keystroke="shift alt QUOTE"/>
     <keyboard-shortcut first-keystroke="alt shift F8"/>
+  </action>
+
+  <action id="MaximizeToolWindow">
+    <keyboard-shortcut first-keystroke="ctrl shift QUOTE"/>
   </action>
 
   <action id="Resume">

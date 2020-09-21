@@ -44,6 +44,10 @@ public abstract class KeymapsTestCaseBase extends LightPlatformTestCase {
 
   protected abstract Collection<String> getConflictSafeGroups();
 
+  protected String getGroupForUnknownAction(@NotNull String actionId) {
+    return null;
+  }
+
   protected static Map<String, Map<String, List<String>>> parseKnownDuplicates(Map<String, String[][]> duplicates) {
     HashMap<String, Map<String, List<String>>> result = new HashMap<>();
     for (Map.Entry<String, String[][]> eachKeymap : duplicates.entrySet()) {
@@ -344,6 +348,12 @@ public abstract class KeymapsTestCaseBase extends LightPlatformTestCase {
     Collection<String> ids = ((ActionManagerImpl)ActionManager.getInstance()).getParentGroupIds(actionId);
     for (String groupId : ids) {
       if (getConflictSafeGroups().contains(groupId) || isConflictSafeAction(groupId)) {
+        return true;
+      }
+    }
+    if (ids.isEmpty()) {
+      String group = getGroupForUnknownAction(actionId);
+      if (group != null && getConflictSafeGroups().contains(group)) {
         return true;
       }
     }
