@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 internal class GitHistoryTraverserImpl(private val project: Project, private val logData: VcsLogData) : GitHistoryTraverser {
   override fun toHash(id: TraverseCommitId) = logData.getCommitId(id)!!.hash
+
   private fun startSearch(
     start: Hash,
     root: VirtualFile,
@@ -46,7 +47,7 @@ internal class GitHistoryTraverserImpl(private val project: Project, private val
                      ?: throw IllegalArgumentException("Hash '${start.asString()}' doesn't exist in repository: $root")
     val graph = LinearGraphUtils.asLiteLinearGraph(permanentGraph.linearGraph)
     val visited = BitSetFlags(graph.nodesCount())
-    val traverse = TraverseImpl(this, root)
+    val traverse = TraverseImpl(this)
     walker(hashNodeId, graph, visited) {
       ProgressManager.checkCanceled()
       val commitId = permanentGraph.permanentCommitsInfo.getCommitId(it)
@@ -111,21 +112,27 @@ internal class GitHistoryTraverserImpl(private val project: Project, private val
     runBlockIfIndexed(listener)
   }
 
-  override fun loadMetadata(root: VirtualFile, ids: List<TraverseCommitId>): List<VcsCommitMetadata> =
-    GitLogUtil.collectMetadata(project, GitVcs.getInstance(project), root, ids.map { toHash(it).asString() })
+  override fun loadMetadata(ids: List<TraverseCommitId>): List<VcsCommitMetadata> =
+    ids.groupBy { getRoot(it) }.map { (root, commits) ->
+      GitLogUtil.collectMetadata(project, GitVcs.getInstance(project), root, commits.map { toHash(it).asString() })
+    }.flatten()
+
 
   override fun loadFullDetails(
-    root: VirtualFile,
     ids: List<TraverseCommitId>,
     requirements: GitCommitRequirements,
     fullDetailsHandler: (GitCommit) -> Unit
   ) {
-    GitLogUtil.readFullDetailsForHashes(project, root, ids.map { toHash(it).asString() }, requirements, Consumer<GitCommit> {
-      fullDetailsHandler(it)
-    })
+    ids.groupBy { getRoot(it) }.forEach { (root, commits) ->
+      GitLogUtil.readFullDetailsForHashes(project, root, commits.map { toHash(it).asString() }, requirements, Consumer {
+        fullDetailsHandler(it)
+      })
+    }
   }
 
   override fun getCurrentUser(root: VirtualFile): VcsUser? = logData.currentUser[root]
+
+  private fun getRoot(id: TraverseCommitId): VirtualFile = logData.getCommitId(id)!!.root
 
   private class IndexedRootImpl(
     private val traverser: GitHistoryTraverser,
@@ -155,10 +162,7 @@ internal class GitHistoryTraverserImpl(private val project: Project, private val
     }
   }
 
-  private class TraverseImpl(
-    private val traverser: GitHistoryTraverser,
-    private val root: VirtualFile
-  ) : Traverse {
+  private class TraverseImpl(private val traverser: GitHistoryTraverser) : Traverse {
     val requests = mutableListOf<Request>()
 
     override fun loadMetadataLater(id: TraverseCommitId, onLoad: (VcsCommitMetadata) -> Unit) {
@@ -175,7 +179,7 @@ internal class GitHistoryTraverserImpl(private val project: Project, private val
     }
 
     private fun loadMetadata(loadMetadataRequests: List<Request.LoadMetadata>) {
-      val commitsMetadata = traverser.loadMetadata(root, loadMetadataRequests.map { it.id }).associateBy { it.id }
+      val commitsMetadata = traverser.loadMetadata(loadMetadataRequests.map { it.id }).associateBy { it.id }
       for (request in loadMetadataRequests) {
         val hash = traverser.toHash(request.id)
         val details = commitsMetadata[hash] ?: continue
@@ -194,7 +198,7 @@ internal class GitHistoryTraverserImpl(private val project: Project, private val
 
       val requirementTypes = loadFullDetailsRequests.map { it.requirements }.distinct()
       requirementTypes.forEach { requirements ->
-        traverser.loadFullDetails(root, loadFullDetailsRequests.map { it.id }, requirements) { details ->
+        traverser.loadFullDetails(loadFullDetailsRequests.map { it.id }, requirements) { details ->
           handlers[details.id]?.get(requirements)?.forEach { onLoad ->
             onLoad(details)
           }
