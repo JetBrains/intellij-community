@@ -1036,7 +1036,9 @@ public class AllIcons {
 
   public final static class Toolbar {
     /** 16x16 */ public static final @NotNull Icon Filterdups = load("/toolbar/filterdups.svg", -7818967912011252536L);
+    /** 16x16 */ public static final @NotNull Icon Locale = load("/toolbar/locale.svg", 7252302317078657735L);
     /** 16x16 */ public static final @NotNull Icon Unknown = load("/toolbar/unknown.svg", 2447412449977660417L);
+    /** 16x16 */ public static final @NotNull Icon Xcode = load("/toolbar/Xcode.svg", 3828604517349201373L);
 
   }
 
