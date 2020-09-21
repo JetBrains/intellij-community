@@ -975,9 +975,10 @@ public final class RedundantCastUtil {
       if (opType instanceof PsiClassType && ((PsiClassType)opType).isRaw()) return true;
     }
 
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(typeCast.getParent());
     final PsiExpression stripParenthesisOperand = PsiUtil.skipParenthesizedExprDown(operand);
     if (stripParenthesisOperand instanceof PsiFunctionalExpression) {
-      if (isCastToSerializable(castType)) return true;
+      if (isCastToSerializable(castType) && !isCastToSerializable(PsiTypesUtil.getExpectedTypeByParent(typeCast))) return true;
     }
     else if (stripParenthesisOperand instanceof PsiConditionalExpression) {
       if (PsiUtil.skipParenthesizedExprDown(((PsiConditionalExpression)stripParenthesisOperand).getThenExpression()) instanceof PsiFunctionalExpression ||
@@ -985,8 +986,6 @@ public final class RedundantCastUtil {
         return true;
       }
     }
-
-    PsiElement parent = PsiUtil.skipParenthesizedExprUp(typeCast.getParent());
 
     if (parent instanceof PsiBinaryExpression) {
       PsiBinaryExpression expression = (PsiBinaryExpression)parent;
