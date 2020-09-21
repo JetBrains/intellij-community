@@ -5,6 +5,7 @@ import com.google.common.collect.MultimapBuilder
 import com.google.common.hash.Hashing
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.ModuleManager
@@ -81,6 +82,7 @@ open class UnknownSdkCollector(private val myProject: Project) {
   companion object {
     private val LOG = logger<UnknownSdkCollector>()
   }
+
   fun collectSdksPromise(onCompleted: Consumer<UnknownSdkSnapshot>) {
     ReadAction.nonBlocking<UnknownSdkSnapshot> { collectSdksUnderReadAction() }
       .expireWith(myProject)
@@ -88,6 +90,13 @@ open class UnknownSdkCollector(private val myProject: Project) {
       .finishOnUiThread(ApplicationManager.getApplication().defaultModalityState, onCompleted)
       .submit(AppExecutorUtil.getAppExecutorService())
   }
+
+  /**
+   * Starts collection of Sdks blockingly inside one read action.
+   * For background activities it's more recommended to use [collectSdksPromise]
+   * instead to allow better concurrency
+   */
+  fun collectSdksBlocking() : UnknownSdkSnapshot = runReadAction { collectSdksUnderReadAction() }
 
   private fun collectSdksUnderReadAction(): UnknownSdkSnapshot {
 
