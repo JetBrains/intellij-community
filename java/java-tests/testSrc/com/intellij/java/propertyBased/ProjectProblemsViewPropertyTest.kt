@@ -263,7 +263,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
       val psiFile = reportedElement.containingFile
       val fileName = psiFile.name
       val offset = reportedElement.textOffset
-      val textEditor = FileEditorManager.getInstance(myProject).openFile(psiFile.virtualFile, true) as TextEditor
+      val textEditor = FileEditorManager.getInstance(myProject).openFile(psiFile.virtualFile, true)[0] as TextEditor
       val fileErrors = rehighlight(psiFile, textEditor.editor).filter { it.severity == HighlightSeverity.ERROR }
       return ProblemData(fileName, offset, reportedElement.text, context.text, fileErrors)
     }
