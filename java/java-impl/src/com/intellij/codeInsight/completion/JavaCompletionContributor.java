@@ -73,8 +73,12 @@ import static com.intellij.util.ObjectUtils.tryCast;
  * @author peter
  */
 public class JavaCompletionContributor extends CompletionContributor implements DumbAware {
-  private static final ElementPattern<PsiElement> UNEXPECTED_REFERENCE_AFTER_DOT =
-    psiElement().afterLeaf(".").insideStarting(psiExpressionStatement());
+  private static final ElementPattern<PsiElement> UNEXPECTED_REFERENCE_AFTER_DOT = or(
+      // dot at the statement beginning
+      psiElement().afterLeaf(".").insideStarting(psiExpressionStatement()),
+      // like `call(Cls::methodRef.<caret>`
+      psiElement().afterLeaf(psiElement(JavaTokenType.DOT).afterSibling(psiElement(PsiMethodCallExpression.class).withLastChild(
+        psiElement(PsiExpressionList.class).withLastChild(psiElement(PsiErrorElement.class))))));
   private static final PsiNameValuePairPattern NAME_VALUE_PAIR =
     psiNameValuePair().withSuperParent(2, psiElement(PsiAnnotation.class));
   private static final ElementPattern<PsiElement> ANNOTATION_ATTRIBUTE_NAME =

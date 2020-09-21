@@ -506,5 +506,23 @@ class Test88 {
     myFixture.type('\n')
     myFixture.checkResult('class C { byte[] s = "hello".getBytes(java.nio.charset.StandardCharsets.UTF_8) }')
   }
+  
+  @NeedsIndex.ForStandardLibrary
+  void testDotAfterMethodRef() {
+    myFixture.configureByText 'a.java', """import java.util.HashSet;
+import java.util.stream.Collectors;
+
+class Scratch {
+    public static void main(String[] args) {
+      HashSet<String> set = new HashSet<>();
+      set
+        .stream()
+        .filter(String::isEmpty.<caret>)
+        .collect(Collectors.joining());
+    }
+}"""
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == []
+  }
 
 }
