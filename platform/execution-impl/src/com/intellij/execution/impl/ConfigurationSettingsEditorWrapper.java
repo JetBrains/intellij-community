@@ -66,7 +66,7 @@ public final class ConfigurationSettingsEditorWrapper extends SettingsEditor<Run
     Project project = settings.getConfiguration().getProject();
     // RunConfigurationStorageUi for non-template settings is managed by com.intellij.execution.impl.SingleConfigurationConfigurable
     myRCStorageUi = !project.isDefault() && settings.isTemplate()
-                    ? new RunConfigurationStorageUi(project, null)
+                    ? new RunConfigurationStorageUi(project, () -> fireEditorStateChanged())
                     : null;
     if (myRCStorageUi != null) {
       myRCStoragePanel.add(myRCStorageUi.createComponent());
