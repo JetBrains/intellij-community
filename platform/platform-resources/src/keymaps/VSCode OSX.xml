@@ -655,4 +655,9 @@
     <action id="Sql.EditParameter">
         <keyboard-shortcut first-keystroke="f4" />
     </action>
+
+    <action id="EditorTranspose">
+        <keyboard-shortcut first-keystroke="ctrl T"/>
+    </action>
+
 </keymap>

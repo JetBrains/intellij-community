@@ -144,6 +144,10 @@
     <keyboard-shortcut first-keystroke="meta F6"/>
   </action>
 
+  <action id="EditorTranspose">
+    <keyboard-shortcut first-keystroke="ctrl T"/>
+  </action>
+
   <action id="GotoTest">
     <keyboard-shortcut first-keystroke="ctrl shift T"/>
   </action>

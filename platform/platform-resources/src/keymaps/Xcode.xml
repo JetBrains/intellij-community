@@ -623,4 +623,8 @@
   <action id="ShowUmlDiagramPopup">
     <keyboard-shortcut first-keystroke="meta alt control U"/>
   </action>
+
+  <action id="EditorTranspose">
+    <keyboard-shortcut first-keystroke="ctrl T"/>
+  </action>
 </keymap>

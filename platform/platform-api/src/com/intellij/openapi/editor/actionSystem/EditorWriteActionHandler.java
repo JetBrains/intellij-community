@@ -74,7 +74,7 @@ public abstract class EditorWriteActionHandler extends EditorActionHandler {
     executeWriteAction(editor, editor.getCaretModel().getCurrentCaret(), dataContext);
   }
 
-  public void executeWriteAction(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+  public void executeWriteAction(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
     if (inExecution) {
       return;
     }
