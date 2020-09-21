@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.transformations.impl.namedVariant
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP
+import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiModifier
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
@@ -12,6 +13,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightModifierList
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter
+import org.jetbrains.plugins.groovy.lang.resolve.ast.extractVisibility
+import org.jetbrains.plugins.groovy.lang.resolve.ast.getVisibility
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport
 import org.jetbrains.plugins.groovy.transformations.TransformationContext
 import org.jetbrains.plugins.groovy.transformations.impl.synch.isStatic
@@ -27,6 +30,7 @@ class NamedVariantTransformationSupport : AstTransformationSupport {
 
   private fun constructNamedMethod(method: GrMethod): GrLightMethodBuilder? {
     val parameters = mutableListOf<GrParameter>()
+    val namedVariantAnnotation = method.getAnnotation(GROOVY_TRANSFORM_NAMED_VARIANT) ?: return null
     val mapType = TypesUtil.createType(JAVA_UTIL_MAP, method)
     val mapParameter = GrLightParameter(NAMED_ARGS_PARAMETER_NAME, mapType, method)
     val modifierList = GrLightModifierList(mapParameter)
@@ -43,17 +47,20 @@ class NamedVariantTransformationSupport : AstTransformationSupport {
       parameters.addAll(requiredParameters)
     }
 
-    return buildMethod(parameters, method)
+    return buildMethod(parameters, method, namedVariantAnnotation)
   }
 
   internal class NamedVariantGeneratedMethod(manager: PsiManager?, name: @NlsSafe String?) : GrLightMethodBuilder(manager, name)
 
-  private fun buildMethod(parameters: List<GrParameter>, method: GrMethod): GrLightMethodBuilder? {
+  private fun buildMethod(parameters: List<GrParameter>, method: GrMethod, namedVariantAnnotation : PsiAnnotation): GrLightMethodBuilder? {
     val builder = NamedVariantGeneratedMethod(method.manager, method.name + "")
     val psiClass = method.containingClass ?: return null
     builder.containingClass = psiClass
     builder.returnType = method.returnType
     builder.navigationElement = method
+    val defaultVisibility = extractVisibility(method)
+    val requiredVisibility = getVisibility(namedVariantAnnotation, builder, defaultVisibility)
+    builder.modifierList.addModifier(requiredVisibility.toString())
     if (method.isStatic()) {
       builder.modifierList.addModifier(PsiModifier.STATIC)
     }
