@@ -23,7 +23,12 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 public interface ParameterInfoHandler <ParameterOwner extends Object & PsiElement, ParameterType> {
-  boolean couldShowInLookup();
+  /**
+   * @deprecated unused
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  default boolean couldShowInLookup() { return false; }
 
   /**
    * @deprecated unused
