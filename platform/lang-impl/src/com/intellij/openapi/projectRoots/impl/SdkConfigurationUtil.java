@@ -283,16 +283,22 @@ public final class SdkConfigurationUtil {
     selectSdkHome(sdkType, null, consumer);
   }
 
-  public static void selectSdkHome(@NotNull final SdkType sdkType,
-                                   @Nullable Component component,
-                                   @NotNull final Consumer<? super String> consumer) {
-    final FileChooserDescriptor descriptor = sdkType.getHomeChooserDescriptor();
+  public static boolean selectSdkHomeForTests(@NotNull SdkType sdkType, @NotNull Consumer<? super String> consumer) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       Sdk sdk = ProjectJdkTable.getInstance().findMostRecentSdkOfType(sdkType);
       if (sdk == null) throw new RuntimeException("No SDK of type " + sdkType + " found");
       consumer.consume(sdk.getHomePath());
-      return;
+      return true;
     }
+    return false;
+  }
+
+  public static void selectSdkHome(@NotNull final SdkType sdkType,
+                                   @Nullable Component component,
+                                   @NotNull final Consumer<? super String> consumer) {
+    if (selectSdkHomeForTests(sdkType, consumer)) return;
+
+    final FileChooserDescriptor descriptor = sdkType.getHomeChooserDescriptor();
     // passing project instance here seems to be the right idea, but it would make the dialog
     // selecting the last opened project path, instead of the suggested detected JDK home (one of many).
     // The behaviour may also depend on the FileChooser implementations which does not reuse that code

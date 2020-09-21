@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory;
@@ -286,6 +287,12 @@ public class SdkEditor implements Configurable, Place.Navigator {
 
   private void doSelectHomePath() {
     final SdkType sdkType = (SdkType)mySdk.getSdkType();
+
+    //handle tests behaviour
+    if (SdkConfigurationUtil.selectSdkHomeForTests(sdkType, path -> doSetHomePath(path, sdkType))) {
+      return;
+    }
+
     SdkPopupFactory
       .newBuilder()
       .withSdkType(sdkType)
