@@ -41,6 +41,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class RepositoriesModelImpl extends GradleDslBlockModel implements RepositoriesModel {
@@ -197,22 +199,4 @@ public class RepositoriesModelImpl extends GradleDslBlockModel implements Reposi
     return containsMavenRepositoryByUrl(GOOGLE_DEFAULT_REPO_URL);
   }
 
-  @Override
-  public void addGoogleMavenRepository(@NotNull Project project) {
-    addMavenRepositoryByUrl(GOOGLE_DEFAULT_REPO_URL, GOOGLE_DEFAULT_REPO_NAME);
-    //TODO
-    /*
-    if (GradleVersions.getInstance().isGradle4OrNewer(project)) {
-      addRepositoryByMethodName(GOOGLE_METHOD_NAME);
-    }
-    else {
-      addMavenRepositoryByUrl(GOOGLE_DEFAULT_REPO_URL, GOOGLE_DEFAULT_REPO_NAME);
-    }
-     */
-  }
-
-  @Override
-  public void addGoogleMavenRepository(@NotNull String version) {
-
-  }
 }

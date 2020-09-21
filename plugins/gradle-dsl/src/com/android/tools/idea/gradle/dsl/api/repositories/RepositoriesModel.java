@@ -37,8 +37,4 @@ public interface RepositoriesModel extends GradleDslModel {
 
   boolean hasGoogleMavenRepository();
 
-  void addGoogleMavenRepository(@NotNull Project project);
-
-  void addGoogleMavenRepository(@NotNull String version);
-
 }

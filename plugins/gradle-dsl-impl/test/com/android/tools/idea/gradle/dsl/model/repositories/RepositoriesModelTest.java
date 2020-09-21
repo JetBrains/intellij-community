@@ -609,17 +609,4 @@ public class RepositoriesModelTest extends GradleFileModelTestCase {
     assertThat(thirdModel).isInstanceOf(MavenRepositoryModelImpl.class);
     assertEquals("file:/some/repo", ((MavenRepositoryModelImpl)thirdModel).url().toString());
   }
-
-  @Test
-  public void testMultipleGoogleRepos() throws IOException {
-    writeToBuildFile(REPOSITORIES_MODEL_ADD_GOOGLE_REPOSITORY_WITH_WITH);
-
-    GradleBuildModel buildModel = getGradleBuildModel();
-    RepositoriesModel repositoriesModel = buildModel.buildscript().repositories();
-
-    repositoriesModel.addGoogleMavenRepository("4.10.1");
-    applyChangesAndReparse(buildModel);
-
-    verifyFileContents(myBuildFile, REPOSITORIES_MODEL_ADD_GOOGLE_REPOSITORY_WITH_WITH);
-  }
 }
