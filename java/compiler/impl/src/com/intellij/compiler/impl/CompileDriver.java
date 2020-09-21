@@ -639,7 +639,7 @@ public final class CompileDriver {
     return true;
   }
 
-  private boolean validateCompilerConfiguration(final CompileScope scope) {
+  private boolean validateCompilerConfiguration(@NotNull final CompileScope scope) {
     try {
       final Module[] scopeModules = scope.getAffectedModules();
       final List<String> modulesWithoutOutputPathSpecified = new ArrayList<>();
