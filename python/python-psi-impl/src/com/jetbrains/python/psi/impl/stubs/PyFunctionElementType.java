@@ -23,8 +23,11 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyStubElementType;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyFunctionImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.stubs.PyExportedModuleAttributeIndex;
+import com.jetbrains.python.psi.stubs.PyFileStub;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import org.jetbrains.annotations.NonNls;
@@ -112,6 +115,9 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
     final String name = stub.getName();
     if (name != null) {
       sink.occurrence(PyFunctionNameIndex.KEY, name);
+      if (stub.getParentStub() instanceof PyFileStub && PyUtil.getInitialUnderscores(name) == 0) {
+        sink.occurrence(PyExportedModuleAttributeIndex.KEY, name);
+      }
     }
   }
 
