@@ -9,7 +9,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.htmlComponent
 import com.intellij.ui.layout.*
+import java.awt.BorderLayout
 import javax.swing.JComponent
+import javax.swing.JPanel
 
 @Service
 class UnknownSdkModalNotification(
@@ -36,6 +38,7 @@ class UnknownSdkModalNotification(
       object : DialogWrapper(project, true) {
         init {
           title = "Resolve Missing SDKs"
+          init()
         }
 
         override fun createCenterPanel(): JComponent {
@@ -43,7 +46,10 @@ class UnknownSdkModalNotification(
             for (info in actions.infos) {
               val control = info.createNotificationPanel(project)
               row {
-                control(CCFlags.grow)
+                val wrap = JPanel(BorderLayout())
+                wrap.add(control, BorderLayout.CENTER)
+                wrap.minimumSize = control.preferredSize
+                wrap(CCFlags.grow)
               }
               row {
                 htmlComponent(control.text)
