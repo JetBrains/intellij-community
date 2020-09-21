@@ -55,8 +55,8 @@
     },
     {
       "id": "scala",
-      "experimentBucketsCount": 8,
-      "includeGroups": [ 7, 8, 11, 12, 13 ]
+      "experimentBucketsCount": 4,
+      "includeGroups": [ 7, 8, 12, 13 ]
     },
     {
       "id": "php",
