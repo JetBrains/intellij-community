@@ -123,9 +123,11 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       }
     }
 
-    for (Map.Entry<PluginId, Boolean> entry : getEnabledMap().entrySet()) {
-      Boolean enabled = entry.getValue();
-      if (enabled != null && !enabled && !PluginManagerCore.isDisabled(entry.getKey())) {
+    for (Map.Entry<PluginId, PluginEnabledState> entry : getEnabledMap().entrySet()) {
+      PluginEnabledState enabled = entry.getValue();
+      if (enabled != null &&
+          !enabled.isEnabled() &&
+          !PluginManagerCore.isDisabled(entry.getKey())) {
         return true;
       }
     }
@@ -701,7 +703,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
         view.set(i, descriptor);
       }
 
-      setEnabled(id, Boolean.TRUE);
+      setEnabled(id, PluginEnabledState.ENABLED);
     }
 
     if (restartNeeded) {
@@ -808,7 +810,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   public boolean isEnabled(@NotNull IdeaPluginDescriptor descriptor) {
-    return isEnabled(descriptor, getEnabledMap());
+    return !isDisabled(descriptor.getPluginId());
   }
 
   public @NotNull PluginEnabledState getState(@NotNull IdeaPluginDescriptor descriptor) {
@@ -865,7 +867,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
           d -> d instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)d).getModules().contains(pluginId)
         );
         if (result != null) {
-          getEnabledMap().put(pluginId, Boolean.TRUE);
+          setEnabled(pluginId, PluginEnabledState.ENABLED); // todo
         }
       }
       if (result != null) {
