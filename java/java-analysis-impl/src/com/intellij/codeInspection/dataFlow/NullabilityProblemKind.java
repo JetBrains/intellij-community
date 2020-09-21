@@ -88,6 +88,8 @@ public final class NullabilityProblemKind<T extends PsiElement> {
   public static final NullabilityProblemKind<PsiExpression> passingToNotNullParameter =
     new NullabilityProblemKind<>(RE, "passingToNotNullParameter", "dataflow.message.passing.null.argument",
                                  "dataflow.message.passing.nullable.argument");
+  public static final NullabilityProblemKind<PsiMethodReferenceExpression> unboxingMethodRefParameter =
+    new NullabilityProblemKind<>(NPE, "unboxingMethodRefParameter", "dataflow.message.passing.nullable.argument.methodref");
   public static final NullabilityProblemKind<PsiMethodReferenceExpression> passingToNotNullMethodRefParameter =
     new NullabilityProblemKind<>(RE, "passingToNotNullMethodRefParameter", "dataflow.message.passing.nullable.argument.methodref");
   public static final NullabilityProblemKind<PsiExpression> passingToNonAnnotatedParameter =
