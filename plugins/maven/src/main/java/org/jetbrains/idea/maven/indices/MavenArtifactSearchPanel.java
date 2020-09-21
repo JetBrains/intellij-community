@@ -191,16 +191,13 @@ public class MavenArtifactSearchPanel extends JPanel {
     SwingUtilities.invokeLater(() -> {
       if (!myDialog.isVisible()) return;
 
+      myResultList.getEmptyText().setText(MavenDomBundle.message("maven.search.no.results"));
       if (myClassMode) {
-        myResultList.getEmptyText().setText(MavenDomBundle.message("maven.search.no.results.class"));
-        myResultList.getEmptyText().appendLine(MavenDomBundle.message("maven.search.no.results.indices.update"), LINK_BOLD_ATTRIBUTES,
+        myResultList.getEmptyText().appendLine(MavenDomBundle.message("maven.search.no.results.indices.try.update"), LINK_BOLD_ATTRIBUTES,
                                                e -> {
                                                  ShowSettingsUtil.getInstance()
                                                    .showSettingsDialog(myProject, MavenRepositoriesConfigurable.class);
                                                });
-      }
-      else {
-        myResultList.getEmptyText().setText(MavenDomBundle.message("maven.search.no.results"));
       }
 
       myResultList.setModel(model);
