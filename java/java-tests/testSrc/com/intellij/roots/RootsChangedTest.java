@@ -4,6 +4,7 @@ package com.intellij.roots;
 import com.intellij.ProjectTopics;
 import com.intellij.configurationStore.StateStorageManagerKt;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -13,6 +14,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -39,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.List;
 
@@ -538,5 +541,30 @@ public class RootsChangedTest extends JavaModuleTestCase {
     VfsTestUtil.deleteFile(f1);
     VfsTestUtil.deleteFile(f2);
     assertEventsCount(0);
+  }
+
+  public void testBulkRootsChanging() {
+    WriteAction.run(() -> {
+      myModuleRootListener.reset();
+      ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(() -> {
+        for (int i = 0; i < 10; i++) {
+          ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
+          try {
+            File dir = createTempDir("src-" + i);
+            VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
+            model.addContentEntry(vDir);
+          }
+          catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+          model.commit();
+
+          assertEquals(1, myModuleRootListener.beforeCount);
+          assertEquals(0, myModuleRootListener.afterCount);
+        }
+      });
+      assertEventsCount(1);
+    });
+
   }
 }

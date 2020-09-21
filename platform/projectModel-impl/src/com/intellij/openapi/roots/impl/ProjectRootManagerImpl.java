@@ -87,9 +87,8 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
     public void beforeRootsChanged() {
       if (myBatchLevel == 0 || !myChanged) {
-        if (fireBeforeRootsChanged(myFileTypes)) {
-          myChanged = true;
-        }
+        fireBeforeRootsChanged(myFileTypes);
+        myChanged = true;
       }
     }
 
@@ -320,34 +319,15 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     return element;
   }
 
-  private boolean myMergedCallStarted;
-  private boolean myMergedCallHasRootChange;
-  private int myRootsChangesDepth;
-
   @Override
   public void mergeRootsChangesDuring(@NotNull Runnable runnable) {
-    if (getBatchSession(false).myBatchLevel == 0 && !myMergedCallStarted) {
-      if (myRootsChangesDepth != 0) {
-        int depth = myRootsChangesDepth;
-        myRootsChangesDepth = 0;
-        LOG.error("Merged rootsChanged not allowed inside rootsChanged, rootsChanged level == " + depth);
-      }
-      myMergedCallStarted = true;
-      myMergedCallHasRootChange = false;
-      try {
-        runnable.run();
-      }
-      finally {
-        if (myMergedCallHasRootChange) {
-          LOG.assertTrue(myRootsChangesDepth == 1, "myMergedCallDepth = " + myRootsChangesDepth);
-          getBatchSession(false).rootsChanged();
-        }
-        myMergedCallStarted = false;
-        myMergedCallHasRootChange = false;
-      }
-    }
-    else {
+    BatchSession batchSession = getBatchSession(false);
+    batchSession.levelUp();
+    try {
       runnable.run();
+    }
+    finally {
+      batchSession.levelDown();
     }
   }
 
@@ -384,25 +364,12 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   protected boolean isFiringEvent;
 
-  private boolean fireBeforeRootsChanged(boolean fileTypes) {
+  private void fireBeforeRootsChanged(boolean fileTypes) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
     LOG.assertTrue(!isFiringEvent, "Do not use API that changes roots from roots events. Try using invoke later or something else.");
 
-    if (myMergedCallStarted) {
-      LOG.assertTrue(!fileTypes, "File types change is not supported inside merged call");
-    }
-
-    if (myRootsChangesDepth++ == 0) {
-      if (myMergedCallStarted) {
-        myMergedCallHasRootChange = true;
-        myRootsChangesDepth++; // blocks all firing until finishRootsChangedOnDemand
-      }
-      fireBeforeRootsChangeEvent(fileTypes);
-      return true;
-    }
-
-    return false;
+    fireBeforeRootsChangeEvent(fileTypes);
   }
 
   @ApiStatus.Internal
@@ -414,17 +381,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
     LOG.assertTrue(!isFiringEvent, "Do not use API that changes roots from roots events. Try using invoke later or something else.");
-
-    if (myMergedCallStarted) {
-      LOG.assertTrue(!fileTypes, "File types change is not supported inside merged call");
-    }
-
-    myRootsChangesDepth--;
-    if (myRootsChangesDepth > 0) return false;
-    if (myRootsChangesDepth < 0) {
-      LOG.info("Restoring from roots change start/finish mismatch: ", new Throwable());
-      myRootsChangesDepth = 0;
-    }
 
     clearScopesCaches();
 
