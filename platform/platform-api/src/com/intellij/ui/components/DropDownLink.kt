@@ -14,7 +14,6 @@ import java.awt.Dimension
 import java.awt.Point
 import java.awt.event.ItemEvent
 import java.util.function.Consumer
-import java.util.function.Function
 import javax.swing.DefaultListCellRenderer
 import javax.swing.JList
 import javax.swing.SwingConstants
@@ -31,10 +30,10 @@ open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) 
       fireItemStateChanged(newItem, ItemEvent.SELECTED)
     }
 
-  private var textConverter : Function<Any?, String> = Function{ it.toString() }
+  private var textFromItem: (T) -> String = { it.toString() }
 
   init {
-    text = textConverter.apply(item)
+    text = textFromItem(item)
     icon = AllIcons.General.LinkDropTriangle
     iconTextGap = scale(1)
     horizontalTextPosition = SwingConstants.LEADING
@@ -66,7 +65,7 @@ open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) 
         @Suppress("UNCHECKED_CAST")
         (event.item as? T)?.let {
           onSelect.accept(it)
-          if (updateText) text = textConverter.apply(it)
+          if (updateText) text = textFromItem(it)
         }
       }
     }
@@ -80,9 +79,9 @@ open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) 
     itemListeners.forEach { it.itemStateChanged(ItemEvent(this, ItemEvent.ITEM_STATE_CHANGED, item, state)) }
   }
 
-  fun withTextConverter(converter: Function<Any?, String>): DropDownLink<T> {
-    this.textConverter = converter
-    text = converter.apply(selectedItem)
+  fun withTextConverter(textFromItem: (T) -> String): DropDownLink<T> {
+    this.textFromItem = textFromItem
+    text = textFromItem(selectedItem)
     return this
   }
 }
