@@ -70,7 +70,7 @@
     },
     {
       "id": "ruby",
-      "experimentBucketsCount": 2,
+      "experimentBucketsCount": 4,
       "includeGroups": [ 7, 8 ]
     },
     {
