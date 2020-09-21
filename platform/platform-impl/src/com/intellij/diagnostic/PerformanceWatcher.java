@@ -318,8 +318,7 @@ public final class PerformanceWatcher implements Disposable {
   private void notifyJitDisabled() {
     if (myJitProblemReported.compareAndSet(false, true)) {
       ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-      String action = IdeBundle.message("ide.restart.required.notification",
-                                        IdeBundle.message(app.isRestartCapable() ? "ide.restart.action" : "ide.shutdown.action"));
+      String action = IdeBundle.message(app.isRestartCapable() ? "ide.restart.action" : "ide.shutdown.action");
       Notification notification = NOTIFICATION_GROUP.createNotification(
         IdeBundle.message("notification.content.jit.compiler.disabled"), MessageType.ERROR)
         .addAction(new NotificationAction(action) {
