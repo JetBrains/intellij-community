@@ -62,6 +62,7 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.*;
 
@@ -280,8 +281,7 @@ public class JavaCompletionContributor extends CompletionContributor implements 
         PsiAnnotation anno = findAnnotationWhoseAttributeIsCompleted(position);
         if (anno != null) {
           PsiClass annoClass = anno.resolveAnnotationType();
-          mayCompleteReference = psiElement().afterLeaf("(").accepts(position) &&
-                              annoClass != null && annoClass.findMethodsByName("value", false).length > 0;
+          mayCompleteReference = mayCompleteValueExpression(position, annoClass);
           if (annoClass != null) {
             completeAnnotationAttributeName(result, position, anno, annoClass);
             JavaKeywordCompletion.addPrimitiveTypes(result, position, session);
@@ -373,6 +373,11 @@ public class JavaCompletionContributor extends CompletionContributor implements 
     if (!smart && parent instanceof PsiJavaModuleReferenceElement) {
       addModuleReferences(parent, parameters.getOriginalFile(), result);
     }
+  }
+
+  @VisibleForTesting
+  public static boolean mayCompleteValueExpression(@NotNull PsiElement position, @Nullable PsiClass annoClass) {
+    return psiElement().afterLeaf("(").accepts(position) && annoClass != null && annoClass.findMethodsByName("value", false).length > 0;
   }
 
   private static List<LookupElement> filterReferenceSuggestions(CompletionParameters parameters,
