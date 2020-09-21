@@ -18,7 +18,6 @@ import java.util.stream.Collectors;
 public final class CompletionMLRankingSettings implements PersistentStateComponent<CompletionMLRankingSettings.State> {
   private static final Logger LOG = Logger.getInstance(CompletionMLRankingSettings.class);
 
-  private static final Collection<String> enabledByDefault = ExperimentModelProvider.enabledByDefault();
   private final State myState;
 
   public CompletionMLRankingSettings() {
@@ -82,11 +81,8 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
     myState.rankingEnabled = state.rankingEnabled;
     myState.showDiff = state.showDiff;
     state.language2state.forEach((rankerId, enabled) -> {
-      if (myState.language2state.containsKey(rankerId) && myState.language2state.get(rankerId) != enabled) {
-        disableExperiment();
-      }
       myState.language2state.put(rankerId, enabled);
-    } );
+    });
   }
 
   private void logCompletionState(@NotNull String languageName, boolean isEnabled) {
@@ -99,8 +95,8 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
     ExperimentStatus.Companion.getInstance().disable();
   }
 
-  private static boolean isEnabledByDefault(@NotNull String languageName) {
-    return enabledByDefault.contains(languageName);
+  private static boolean isEnabledByDefault(@NotNull String rankerId) {
+    return ExperimentModelProvider.enabledByDefault().contains(rankerId);
   }
 
   private void triggerSettingsChanged(boolean enabled) {
@@ -123,14 +119,14 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
 
     public State() {
       ExperimentStatus experimentStatus = ExperimentStatus.Companion.getInstance();
-      for (Language language: Language.getRegisteredLanguages()) {
+      for (Language language : Language.getRegisteredLanguages()) {
         RankingModelProvider ranker = RankingSupport.INSTANCE.findProviderSafe(language);
         if (ranker != null) {
           ExperimentInfo experimentInfo = experimentStatus.forLanguage(language);
           if (!experimentStatus.isDisabled() && experimentInfo.getInExperiment()) {
             language2state.put(ranker.getId(), experimentInfo.getShouldRank());
           } else {
-            language2state.put(ranker.getId(), isEnabledByDefault(ranker.getId()));
+            language2state.put(ranker.getId(), ranker.isEnabledByDefault());
           }
         }
       }
