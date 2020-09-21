@@ -169,7 +169,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   protected PtyProcess createProcess(@Nullable String directory, @Nullable String commandHistoryFilePath) throws ExecutionException {
     Map<String, String> envs = getTerminalEnvironment();
 
-    String[] command = ArrayUtil.toStringArray(getCommands(envs));
+    String[] command = ArrayUtil.toStringArray(getInitialCommand(envs));
 
     for (LocalTerminalCustomizer customizer : LocalTerminalCustomizer.EP_NAME.getExtensions()) {
       try {
@@ -237,19 +237,32 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     return "Local Terminal";
   }
 
+  /**
+   * @param envs environment variables
+   * @return initial command. The result command to execute is calculated by applying
+   *         {@link LocalTerminalCustomizer#customizeCommandAndEnvironment} to it.
+   */
+  public @NotNull List<String> getInitialCommand(@NotNull Map<String, String> envs) {
+    return Arrays.asList(getCommand(envs));
+  }
 
   /**
-   * @deprecated use {@link #getCommands(Map)} instead
+   * @deprecated use {@link #getInitialCommand(Map)} instead
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
   public String[] getCommand(Map<String, String> envs) {
-    return ArrayUtil.toStringArray(getCommands(envs));
+    String shellPath = getShellPath();
+    return ArrayUtil.toStringArray(getCommand(shellPath, envs, TerminalOptionsProvider.getInstance().shellIntegration()));
   }
 
+  /**
+   * @deprecated use {@link #getInitialCommand(Map)} instead
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
+  @Deprecated
   public @NotNull List<String> getCommands(@NotNull Map<String, String> envs) {
-    String shellPath = getShellPath();
-    return getCommand(shellPath, envs, TerminalOptionsProvider.getInstance().shellIntegration());
+    return getInitialCommand(envs);
   }
 
   private @NotNull String getShellPath() {
