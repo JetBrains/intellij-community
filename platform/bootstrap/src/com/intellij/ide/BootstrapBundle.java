@@ -7,10 +7,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-public class BootstrapBundle extends AbstractBundle {
+public final class BootstrapBundle extends AbstractBundle {
   private static final String BUNDLE = "messages.BootstrapBundle";
 
   private static final @Nullable BootstrapBundle INSTANCE;
+
   static {
     BootstrapBundle instance = null;
     try {

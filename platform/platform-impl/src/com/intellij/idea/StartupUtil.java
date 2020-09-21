@@ -45,7 +45,10 @@ import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.helpers.LogLog;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.io.BuiltInServer;
 
 import javax.swing.*;
@@ -483,35 +486,36 @@ public final class StartupUtil {
   }
 
   private static boolean checkDirectory(@NotNull Path directory, String kind, String property, boolean checkWrite, boolean checkLock, boolean checkExec) {
-    @Nls String problem = null, reason = null;
+    String problem = null;
+    String reason = null;
     Path tempFile = null;
 
     try {
-      problem = BootstrapBundle.message("bootstrap.error.message.check.ide.directory.problem.cannot.create.the.directory");
-      reason = BootstrapBundle.message("bootstrap.error.message.check.ide.directory.possible.reason.path.is.incorrect");
+      problem = "bootstrap.error.message.check.ide.directory.problem.cannot.create.the.directory";
+      reason = "bootstrap.error.message.check.ide.directory.possible.reason.path.is.incorrect";
       if (!Files.isDirectory(directory)) {
-        problem = BootstrapBundle.message("bootstrap.error.message.check.ide.directory.problem.cannot.create.the.directory");
-        reason = BootstrapBundle.message("bootstrap.error.message.check.ide.directory.possible.reason.directory.is.read.only.or.the.user.lacks.necessary.permissions");
+        problem = "bootstrap.error.message.check.ide.directory.problem.cannot.create.the.directory";
+        reason = "bootstrap.error.message.check.ide.directory.possible.reason.directory.is.read.only.or.the.user.lacks.necessary.permissions";
         Files.createDirectories(directory);
       }
 
       if (checkWrite || checkLock || checkExec) {
-        problem = BootstrapBundle.message("bootstrap.error.message.check.ide.directory.problem.the.ide.cannot.create.a.temporary.file.in.the.directory");
-        reason = BootstrapBundle.message("bootstrap.error.message.check.ide.directory.possible.reason.directory.is.read.only.or.the.user.lacks.necessary.permissions");
+        problem = "bootstrap.error.message.check.ide.directory.problem.the.ide.cannot.create.a.temporary.file.in.the.directory";
+        reason = "bootstrap.error.message.check.ide.directory.possible.reason.directory.is.read.only.or.the.user.lacks.necessary.permissions";
         tempFile = directory.resolve("ij" + new Random().nextInt(Integer.MAX_VALUE) + ".tmp");
         OpenOption[] options = {StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE};
         Files.write(tempFile, "#!/bin/sh\nexit 0".getBytes(StandardCharsets.UTF_8), options);
 
         if (checkLock) {
-          problem = BootstrapBundle.message("bootstrap.error.message.check.ide.directory.problem.the.ide.cannot.create.a.lock.in.directory");
-          reason = BootstrapBundle.message("bootstrap.error.message.check.ide.directory.possible.reason.the.directory.is.located.on.a.network.disk");
+          problem = "bootstrap.error.message.check.ide.directory.problem.the.ide.cannot.create.a.lock.in.directory";
+          reason = "bootstrap.error.message.check.ide.directory.possible.reason.the.directory.is.located.on.a.network.disk";
           try (FileChannel channel = FileChannel.open(tempFile, StandardOpenOption.WRITE); FileLock lock = channel.tryLock()) {
             if (lock == null) throw new IOException("File is locked");
           }
         }
         else if (checkExec) {
-          problem = BootstrapBundle.message("bootstrap.error.message.check.ide.directory.problem.the.ide.cannot.execute.test.script");
-          reason = BootstrapBundle.message("bootstrap.error.message.check.ide.directory.possible.reason.partition.is.mounted.with.no.exec.option");
+          problem = "bootstrap.error.message.check.ide.directory.problem.the.ide.cannot.execute.test.script";
+          reason = "bootstrap.error.message.check.ide.directory.possible.reason.partition.is.mounted.with.no.exec.option";
           Files.getFileAttributeView(tempFile, PosixFileAttributeView.class).setPermissions(EnumSet.of(OWNER_READ, OWNER_WRITE, OWNER_EXECUTE));
           int ec = new ProcessBuilder(tempFile.toAbsolutePath().toString()).start().waitFor();
           if (ec != 0) {
@@ -528,7 +532,7 @@ public final class StartupUtil {
                       ? BootstrapBundle.message("bootstrap.error.message.invalid.ide.directory.trans.located.macos.directory.advice")
                       : BootstrapBundle.message("bootstrap.error.message.invalid.ide.directory.ensure.the.modified.property.0.is.correct", property);
       String message = BootstrapBundle.message("bootstrap.error.message.invalid.ide.directory.problem.0.possible.reason.1.advice.2.location.3.exception.class.4.exception.message.5",
-                                               problem, reason, advice, directory, e.getClass().getName(), e.getMessage());
+                                               BootstrapBundle.message(problem), BootstrapBundle.message(reason), advice, directory, e.getClass().getName(), e.getMessage());
       Main.showMessage(title, message, true);
       return false;
     }
