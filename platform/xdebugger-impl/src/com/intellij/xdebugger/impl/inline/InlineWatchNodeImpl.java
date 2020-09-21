@@ -21,6 +21,7 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -61,6 +62,23 @@ public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNod
       inlays.forEach(Disposer::dispose);
       inlays.clear();
     });
+  }
+
+  @Nullable
+  @Override
+  public XDebuggerTreeNodeHyperlink getLink() {
+    return new XDebuggerTreeNodeHyperlink(" " + myWatch.getPosition().getFile().getName() + ":" + myWatch.getPosition().getLine()) {
+      @Override
+      public boolean alwaysOnScreen() {
+        return true;
+      }
+
+      @Override
+      public void onClick(MouseEvent event) {
+        myWatch.getPosition().createNavigatable(myTree.getProject()).navigate(true);
+        event.consume();
+      }
+    };
   }
 
   private static class XInlineWatchValue extends XNamedValue {
