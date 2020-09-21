@@ -2,9 +2,7 @@
 package com.intellij.model.presentation;
 
 import com.intellij.model.Symbol;
-import com.intellij.navigation.TargetPopupPresentation;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Implement this interface in the {@link Symbol} to customize its appearance.
@@ -14,14 +12,4 @@ import org.jetbrains.annotations.Nullable;
 public interface PresentableSymbol extends Symbol {
 
   @NotNull SymbolPresentation getSymbolPresentation();
-
-  /**
-   * Implement this method to customize appearance of the symbol in the popup,
-   * which is shown when there are several symbols to choose from.
-   * <p>
-   * Be default the popup presentation is derived from the {@link #getSymbolPresentation()}
-   */
-  default @Nullable TargetPopupPresentation getPopupPresentation() {
-    return null;
-  }
 }
