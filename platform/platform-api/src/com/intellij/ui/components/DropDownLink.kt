@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components
 
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.awt.RelativePoint
@@ -16,7 +15,6 @@ import java.awt.event.ItemEvent
 import java.util.function.Consumer
 import javax.swing.DefaultListCellRenderer
 import javax.swing.JList
-import javax.swing.SwingConstants
 
 open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) : ActionLink() {
 
@@ -34,9 +32,7 @@ open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) 
 
   init {
     text = textFromItem(item)
-    icon = AllIcons.General.LinkDropTriangle
-    iconTextGap = scale(1)
-    horizontalTextPosition = SwingConstants.LEADING
+    setDropDownLinkIcon()
     addActionListener {
       if (!popupState.isRecentlyHidden) {
         val popup = popupBuilder(this)
