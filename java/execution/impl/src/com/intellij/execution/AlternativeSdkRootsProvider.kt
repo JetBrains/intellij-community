@@ -20,7 +20,7 @@ import com.intellij.ui.AppUIUtil
 
 class AlternativeSdkRootsProvider : AdditionalLibraryRootsProvider() {
   override fun getAdditionalProjectLibraries(project: Project): Collection<SyntheticLibrary> {
-    return getAdditionalProjectJdks(project)
+    return getAdditionalProjectJdksToIndex(project)
       .map { createSdkLibrary(it) }
       .toList()
   }
@@ -45,18 +45,26 @@ class AlternativeSdkRootsProvider : AdditionalLibraryRootsProvider() {
     }
 
     @JvmStatic
-    fun getAdditionalProjectJdks(project: Project): List<Sdk> {
+    fun getAdditionalProjectJdksToIndex(project: Project): List<Sdk> {
       if (shouldIndexAlternativeJre()) {
-        return RunManager.getInstance(project).allConfigurationsList
-          .asSequence()
-          .filterIsInstance(ConfigurationWithAlternativeJre::class.java)
-          .filter { it.isAlternativeJrePathEnabled }
-          .mapNotNull { it.alternativeJrePath }
-          .mapNotNull { ProjectJdkTable.getInstance().findJdk(it) }
-          .distinct()
-          .toList()
+        return getAdditionalProjectJdks(project)
       }
       return emptyList()
+    }
+
+    /**
+     * Returns all [Sdk] that are used in Run configurations
+     */
+    @JvmStatic
+    fun getAdditionalProjectJdks(project: Project): List<Sdk> {
+      return RunManager.getInstance(project).allConfigurationsList
+        .asSequence()
+        .filterIsInstance(ConfigurationWithAlternativeJre::class.java)
+        .filter { it.isAlternativeJrePathEnabled }
+        .mapNotNull { it.alternativeJrePath }
+        .mapNotNull { ProjectJdkTable.getInstance().findJdk(it) }
+        .distinct()
+        .toList()
     }
 
     @JvmStatic
