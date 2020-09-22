@@ -102,10 +102,6 @@ internal class ChangesViewCommitWorkflowHandler(
     return commitOptions
   }
 
-  private fun isDefaultCommitEnabled() =
-    workflow.vcses.isNotEmpty() && !workflow.isExecuting && !amendCommitHandler.isLoading &&
-    (amendCommitHandler.isAmendWithoutChangesAllowed() || !isCommitEmpty())
-
   private fun commitHandlersChanged() {
     if (workflow.isExecuting) return
 
@@ -126,16 +122,15 @@ internal class ChangesViewCommitWorkflowHandler(
 
   override fun executionStarted() = updateDefaultCommitActionEnabled()
   override fun executionEnded() {
-    // Local Changes tree is not yet updated here. So calling `updateDefaultCommitActionEnabled()` leads to button blinking.
-    // Next `inclusionChanged()` (likely because of `synchronizeInclusion()` after committed changes refresh) will set correct button
-    // state without blinking.
-
+    updateDefaultCommitActionEnabled()
     ui.endExecution()
   }
 
   internal fun updateDefaultCommitActionEnabled() {
-    ui.isDefaultCommitActionEnabled = isDefaultCommitEnabled()
+    ui.isDefaultCommitActionEnabled = isReady()
   }
+
+  private fun isReady() = workflow.vcses.isNotEmpty() && !workflow.isExecuting && !amendCommitHandler.isLoading
 
   private fun createCommitExecutorActions(): List<AnAction> {
     val executors = workflow.commitExecutors.ifEmpty { return emptyList() }
@@ -248,7 +243,6 @@ internal class ChangesViewCommitWorkflowHandler(
     // ensure all included active changes are known => if user explicitly checks and unchecks some change, we know it is unchecked
     knownActiveChanges = knownActiveChanges.union(includedActiveChanges)
 
-    updateDefaultCommitActionEnabled()
     super.inclusionChanged()
   }
 
@@ -261,6 +255,18 @@ internal class ChangesViewCommitWorkflowHandler(
       if (isToggleCommitUi.asBoolean()) deactivate(true)
     }
   }
+
+  override fun isExecutorEnabled(executor: CommitExecutor): Boolean = super.isExecutorEnabled(executor) && isReady()
+
+  override fun checkCommit(executor: CommitExecutor?): Boolean =
+    ui.commitProgressUi.run {
+      val executorWithoutChangesAllowed = executor is CommitExecutorBase && !executor.areChangesRequired()
+
+      isEmptyChanges = !amendCommitHandler.isAmendWithoutChangesAllowed() && !executorWithoutChangesAllowed && isCommitEmpty()
+      isEmptyMessage = getCommitMessage().isBlank()
+
+      !isEmptyChanges && !isEmptyMessage
+    }
 
   override fun updateWorkflow() {
     workflow.commitState = getCommitState()

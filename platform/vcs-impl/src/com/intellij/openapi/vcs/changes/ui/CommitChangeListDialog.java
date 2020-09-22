@@ -689,10 +689,14 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
 
   @Override
   public boolean confirmCommitWithEmptyMessage() {
+    return showEmptyCommitMessageConfirmation(myProject);
+  }
+
+  public static boolean showEmptyCommitMessageConfirmation(@NotNull Project project) {
     return MessageDialogBuilder
       .yesNo(message("confirmation.title.check.in.with.empty.comment"), message("confirmation.text.check.in.with.empty.comment"))
       .icon(Messages.getWarningIcon())
-      .ask(myProject);
+      .ask(project);
   }
 
   @Override

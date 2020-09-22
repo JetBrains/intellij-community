@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.ComponentContainer
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
@@ -65,12 +64,6 @@ private val DEFAULT_COMMIT_ACTION_SHORTCUT: ShortcutSet =
 fun getDefaultCommitShortcut() = DEFAULT_COMMIT_ACTION_SHORTCUT
 
 private fun panel(layout: LayoutManager): JBPanel<*> = JBPanel<JBPanel<*>>(layout)
-
-fun showEmptyCommitMessageConfirmation() = Messages.YES == Messages.showYesNoDialog(
-  message("confirmation.text.check.in.with.empty.comment"),
-  message("confirmation.title.check.in.with.empty.comment"),
-  Messages.getWarningIcon()
-)
 
 fun JBOptionButton.getBottomInset(): Int =
   border?.getBorderInsets(this)?.bottom
@@ -133,6 +126,7 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
     override fun isDefaultButton(): Boolean = IdeFocusManager.getInstance(project).getFocusedDescendantFor(rootComponent) != null
   }
   private val commitAuthorComponent = CommitAuthorComponent(project)
+  private val progressPanel = ChangesViewCommitProgressPanel(this, commitMessage.editorField)
 
   private var needUpdateCommitOptionsUi = false
 
@@ -173,6 +167,7 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
       .addToBottom(panel(VerticalLayout(0)).apply {
         background = getButtonPanelBackground()
 
+        add(progressPanel.apply { border = empty(6) })
         add(commitAuthorComponent.apply { border = empty(0, 5, 4, 0) })
         add(buttonPanel)
       })
@@ -373,7 +368,7 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
   override fun addInclusionListener(listener: InclusionListener, parent: Disposable) =
     inclusionEventDispatcher.addListener(listener, parent)
 
-  override fun confirmCommitWithEmptyMessage(): Boolean = showEmptyCommitMessageConfirmation()
+  override val commitProgressUi: CommitProgressUi get() = progressPanel
 
   override fun startBeforeCommitChecks() = Unit
   override fun endBeforeCommitChecks(result: CheckinHandler.ReturnResult) = Unit
