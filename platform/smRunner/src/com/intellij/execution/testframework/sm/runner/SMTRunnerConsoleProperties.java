@@ -11,6 +11,7 @@ import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
+import com.intellij.execution.testframework.sm.FileUrlProvider;
 import com.intellij.execution.testframework.sm.SMStacktraceParserEx;
 import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction;
 import com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsFromFileAction;
@@ -48,7 +49,8 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
 
   /**
    * @param config
-   * @param testFrameworkName Prefix for storage which keeps runner settings. E.g. "RubyTestUnit"
+   * @param testFrameworkName Prefix for storage which keeps runner settings. E.g. "RubyTestUnit". 
+   *                          Is used to distinguish problems of different test frameworks in logged exceptions
    * @param executor
    */
   public SMTRunnerConsoleProperties(@NotNull RunConfiguration config, @NlsSafe @NotNull String testFrameworkName, @NotNull Executor executor) {
@@ -88,6 +90,10 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
     return myIdBasedTestTree;
   }
 
+  /**
+   * To switch between {@link GeneralIdBasedToSMTRunnerEventsConvertor} and 
+   * {@link GeneralToSMTRunnerEventsConvertor}. Use first one if framework provides unique ids for tests
+   */
   public void setIdBasedTestTree(boolean idBasedTestTree) {
     myIdBasedTestTree = idBasedTestTree;
   }
@@ -183,10 +189,16 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
     return PsiNavigationSupport.getInstance().createNavigatable(project, file, offset);
   }
 
+  /**
+   * Called if no tests were detected in the suite. Show suggestion to change the configuration so some tests would be found
+   */
   public boolean fixEmptySuite() {
     return false;
   }
 
+  /**
+   * @return custom test locator which would be combined with default {@link FileUrlProvider}
+   */
   @Nullable
   public SMTestLocator getTestLocator() {
     return null;
@@ -207,6 +219,9 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
     return myTestFrameworkName;
   }
 
+  /**
+   * @return true to make test status progress indeterminate, e.g. if repeat count set to `until failure`, so it's impossible to predict total number of tests
+   */
   public boolean isUndefined() {
     return false;
   }
