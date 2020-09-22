@@ -8,6 +8,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -36,6 +37,7 @@ import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
@@ -44,6 +46,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class RootsChangedTest extends JavaModuleTestCase {
   private MyModuleRootListener myModuleRootListener;
@@ -565,6 +568,35 @@ public class RootsChangedTest extends JavaModuleTestCase {
       });
       assertEventsCount(1);
     });
+  }
 
+  public void testRootDirDeletionDoesntLeadToIndexing() throws IOException {
+    File contentRoot = createTempDir("content-root");
+    File excludedRoot = new File(contentRoot, "excluded-root");
+    assertTrue(excludedRoot.mkdirs());
+    VirtualFile excludedRootVFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(excludedRoot);
+
+    ModuleRootModificationUtil.updateModel(myModule, model -> {
+      model.addContentEntry(excludedRootVFile.getParent()).addExcludeFolder(excludedRootVFile);
+    });
+
+    AtomicInteger dumbModeCount = new AtomicInteger();
+    SimpleMessageBusConnection connection = myProject.getMessageBus().simpleConnect();
+    try {
+      connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+        @Override
+        public void enteredDumbMode() {
+          dumbModeCount.incrementAndGet();
+        }
+      });
+
+      FileUtil.delete(excludedRoot);
+      excludedRootVFile.refresh(false, true);
+      assertFalse(excludedRootVFile.isValid());
+      assertEquals(0, dumbModeCount.get());
+    }
+    finally {
+      connection.disconnect();
+    }
   }
 }

@@ -55,6 +55,8 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     "Indexing", getMaxNumberOfIndexingThreads()
   );
   private static final @NotNull Key<Boolean> CONTENT_SCANNED = Key.create("CONTENT_SCANNED");
+  private static final @NotNull Key<UnindexedFilesUpdater> RUNNING_TASK = Key.create("RUNNING_INDEX_UPDATER_TASK");
+  private static final Object ourLastRunningTaskLock = new Object();
 
   private final FileBasedIndexImpl myIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
   private final Project myProject;
@@ -75,6 +77,24 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
       }
     });
     myProject.putUserData(CONTENT_SCANNED, null);
+
+    synchronized (ourLastRunningTaskLock) {
+      UnindexedFilesUpdater runningTask = myProject.getUserData(RUNNING_TASK);
+      if (runningTask != null) {
+        DumbService.getInstance(project).cancelTask(runningTask);
+      }
+      myProject.putUserData(RUNNING_TASK, this);
+    }
+  }
+
+  @Override
+  public void dispose() {
+    synchronized (ourLastRunningTaskLock) {
+      UnindexedFilesUpdater lastRunningTask = myProject.getUserData(RUNNING_TASK);
+      if (lastRunningTask == this) {
+        myProject.putUserData(RUNNING_TASK, null);
+      }
+    }
   }
 
   public UnindexedFilesUpdater(@NotNull Project project) {

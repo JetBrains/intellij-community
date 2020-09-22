@@ -57,10 +57,12 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   private final RootProvider.RootSetChangedListener myRootProviderChangeListener = new RootProviderChangeListener();
 
-  protected final class BatchSession {
+  @ApiStatus.Internal
+  public abstract class BatchSession<Change> {
     private final boolean myFileTypes;
     private int myBatchLevel;
     private boolean myChanged;
+    private Change myChanges;
 
     private BatchSession(final boolean fileTypes) {
       myFileTypes = fileTypes;
@@ -69,6 +71,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     void levelUp() {
       if (myBatchLevel == 0) {
         myChanged = false;
+        myChanges = null;
       }
       myBatchLevel += 1;
     }
@@ -77,10 +80,14 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
       myBatchLevel -= 1;
       if (myChanged && myBatchLevel == 0) {
         try {
-          WriteAction.run(() -> fireRootsChanged(myFileTypes));
+          if (myChanges == null) {
+            myChanges = getGenericChange();
+          }
+          WriteAction.run(() -> fireRootsChanged(myChanges));
         }
         finally {
           myChanged = false;
+          myChanges = null;
         }
       }
     }
@@ -92,17 +99,77 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
       }
     }
 
-    public void rootsChanged() {
-      if (myBatchLevel == 0) {
-        if (fireRootsChanged(myFileTypes)) {
+    public void rootsChanged(@NotNull Change change) {
+      myChanges = myChanges == null ? change : accumulate(myChanges, change);
+
+      if (myBatchLevel == 0 && myChanged) {
+        if (fireRootsChanged(myChanges)) {
           myChanged = false;
+          myChanges = null;
         }
       }
     }
+
+    public void rootsChanged() {
+     rootsChanged(getGenericChange());
+    }
+
+    protected abstract boolean fireRootsChanged(@NotNull Change change);
+
+    @NotNull
+    protected abstract Change accumulate(@NotNull Change current, @NotNull Change change);
+
+    @NotNull
+    protected abstract Change getGenericChange();
   }
 
-  protected final BatchSession myRootsChanged = new BatchSession(false);
-  protected final BatchSession myFileTypesChanged = new BatchSession(true);
+  @ApiStatus.Internal
+  public enum RootsChangeType {
+    ROOTS_REMOVED, ROOTS_ADDED, GENERIC
+  }
+
+  @ApiStatus.Internal
+  public BatchSession<RootsChangeType> getRootsChanged() {
+    return myRootsChanged;
+  }
+
+  protected final BatchSession<RootsChangeType> myRootsChanged = new BatchSession<>(false) {
+    @Override
+    protected boolean fireRootsChanged(@NotNull ProjectRootManagerImpl.RootsChangeType cause) {
+      return ProjectRootManagerImpl.this.fireRootsChanged(false, cause);
+    }
+
+    @Override
+    protected @NotNull ProjectRootManagerImpl.RootsChangeType accumulate(@NotNull ProjectRootManagerImpl.RootsChangeType current, @NotNull ProjectRootManagerImpl.RootsChangeType cause) {
+      if (current == RootsChangeType.GENERIC || cause == RootsChangeType.GENERIC) {
+        return RootsChangeType.GENERIC;
+      }
+      if (current != cause) return RootsChangeType.GENERIC;
+      return current;
+    }
+
+    @Override
+    protected @NotNull ProjectRootManagerImpl.RootsChangeType getGenericChange() {
+      return RootsChangeType.GENERIC;
+    }
+  };
+
+  protected final BatchSession<Boolean> myFileTypesChanged = new BatchSession<>(true) {
+    @Override
+    protected boolean fireRootsChanged(@NotNull Boolean aBoolean) {
+      return ProjectRootManagerImpl.this.fireRootsChanged(true, null);
+    }
+
+    @Override
+    protected @NotNull Boolean accumulate(@NotNull Boolean current, @NotNull Boolean change) {
+      return current || change;
+    }
+
+    @Override
+    protected @NotNull Boolean getGenericChange() {
+      return Boolean.TRUE;
+    }
+  };
   private final VirtualFilePointerListener myEmptyRootsValidityChangedListener = new VirtualFilePointerListener(){};
 
   public static ProjectRootManagerImpl getInstanceImpl(Project project) {
@@ -321,7 +388,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   @Override
   public void mergeRootsChangesDuring(@NotNull Runnable runnable) {
-    BatchSession batchSession = getBatchSession(false);
+    BatchSession<?> batchSession = myRootsChanged;
     batchSession.levelUp();
     try {
       runnable.run();
@@ -347,7 +414,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   @Override
   public void makeRootsChange(@NotNull Runnable runnable, boolean fileTypes, boolean fireEvents) {
     if (myProject.isDisposed()) return;
-    BatchSession session = getBatchSession(fileTypes);
+    BatchSession<?> session = fileTypes ? myFileTypesChanged : myRootsChanged;
     try {
       if (fireEvents) session.beforeRootsChanged();
       runnable.run();
@@ -355,11 +422,6 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     finally {
       if (fireEvents) session.rootsChanged();
     }
-  }
-
-  @NotNull
-  protected BatchSession getBatchSession(final boolean fileTypes) {
-    return fileTypes ? myFileTypesChanged : myRootsChanged;
   }
 
   protected boolean isFiringEvent;
@@ -375,7 +437,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   @ApiStatus.Internal
   protected void fireBeforeRootsChangeEvent(boolean fileTypes) { }
 
-  private boolean fireRootsChanged(boolean fileTypes) {
+  private boolean fireRootsChanged(boolean fileTypes, @Nullable ProjectRootManagerImpl.RootsChangeType cause) {
     if (myProject.isDisposed()) return false;
 
     ApplicationManager.getApplication().assertWriteAccessAllowed();
@@ -386,13 +448,14 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
     incModificationCount();
 
-    fireRootsChangedEvent(fileTypes);
+    fireRootsChangedEvent(fileTypes, cause);
 
     return true;
   }
 
   @ApiStatus.Internal
-  protected void fireRootsChangedEvent(boolean fileTypes) { }
+  protected void fireRootsChangedEvent(boolean fileTypes,
+                                       @Nullable ProjectRootManagerImpl.RootsChangeType cause) { }
 
   @NotNull
   public Project getProject() {
