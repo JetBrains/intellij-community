@@ -96,7 +96,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     val unmodifiableEntityClassId = unmodifiableEntityClass.toClassId()
 
     // Construct entity data
-    val pEntityData = entityDataClass.java.newInstance()
+    val pEntityData = entityDataClass.java.getDeclaredConstructor().newInstance()
     pEntityData.entitySource = source
 
     // Add entity data to the structure
