@@ -18,6 +18,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +37,13 @@ public final class UnknownSdkDownloader {
                                  @NotNull Function<? super SdkDownloadTask, ? extends Sdk> createSdk,
                                  @NotNull Consumer<? super Sdk> onSdkNameReady,
                                  @NotNull Consumer<? super Sdk> onCompleted) {
+    if (!Registry.is("unknown.sdk.apply.download.fix")) {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        onCompleted.consume(null);
+      });
+      return;
+    }
+
     SdkDownloadTask task;
     String title = ProjectBundle.message("progress.title.downloading.sdk");
     try {

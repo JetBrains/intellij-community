@@ -62,7 +62,7 @@ public class UnknownSdkTracker {
 
   public void updateUnknownSdksBlocking(@NotNull UnknownSdkCollector collector,
                                         @NotNull ShowStatusCallback showStatus) {
-    if (!isEnabled()) {
+    if (!isEnabled() || !Registry.is("unknown.sdk.modal")) {
       showStatus.showEmptyStatus();
       return;
     }
@@ -87,7 +87,7 @@ public class UnknownSdkTracker {
     return new Update("update") {
       @Override
       public void run() {
-        if (!isEnabled()) {
+        if (!isEnabled() || !Registry.is("unknown.sdk.auto")) {
           showStatus.showEmptyStatus();
           return;
         }
@@ -360,6 +360,11 @@ public class UnknownSdkTracker {
                                        @NotNull UnknownSdkLocalSdkFix fix,
                                        @NotNull Consumer<? super Sdk> onCompleted) {
     ApplicationManager.getApplication().invokeLater(() -> {
+      if (!Registry.is("unknown.sdk.apply.local.fix")) {
+        onCompleted.consume(null);
+        return;
+      }
+
       try {
         String actualSdkName = info.getSdkName();
         if (actualSdkName == null) {
