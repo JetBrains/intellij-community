@@ -105,11 +105,11 @@ public final class XDebuggerWatchesManager {
     }, ModalityState.NON_MODAL, myProject.getDisposed());
   }
 
-  public void showInplaceEditor(XSourcePosition position,
+  public void showInplaceEditor(@NotNull XSourcePosition presentationPosition,
                                 @NotNull Editor mainEditor,
                                 @NotNull XDebugSession session,
                                 @Nullable XExpression expression) {
-    InlineWatchInplaceEditor inplaceEditor = new InlineWatchInplaceEditor(position, session, mainEditor, expression);
+    InlineWatchInplaceEditor inplaceEditor = new InlineWatchInplaceEditor(presentationPosition, session, mainEditor, expression);
     inplaceEditor.show();
   }
 

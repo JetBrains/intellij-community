@@ -79,7 +79,7 @@ public final class XDebuggerInlayUtil {
           Editor e = ((TextEditor)editor).getEditor();
 
           XDebuggerTreeCreator creator =
-            new XDebuggerTreeCreator(project, session.getDebugProcess().getEditorsProvider(), position, ((XDebugSessionImpl)session).getValueMarkers());
+            new XDebuggerTreeCreator(project, session.getDebugProcess().getEditorsProvider(), session.getCurrentPosition(), ((XDebugSessionImpl)session).getValueMarkers());
 
           Consumer<Inlay> onClick = (inlay) -> {
             String name = "valueName";
@@ -89,7 +89,7 @@ public final class XDebuggerInlayUtil {
             Pair<XValue, String> descriptor = Pair.create(container, name);
             Rectangle bounds = inlay.getBounds();
             Point point = new Point(bounds.x, bounds.y + bounds.height);
-            XDebuggerTreeInlayPopup.showTreePopup(creator, descriptor, valueNode, e, point, session, () -> {
+            XDebuggerTreeInlayPopup.showTreePopup(creator, descriptor, valueNode, e, point, position, session, () -> {
             });
           };
 

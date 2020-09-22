@@ -32,6 +32,7 @@ import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.XDebuggerWatchesManager;
@@ -62,6 +63,7 @@ import static com.intellij.xdebugger.impl.ui.DebuggerSessionTabBase.getCustomize
 public class XDebuggerTreeInlayPopup<D> {
   private static final Logger LOG = Logger.getInstance(XDebuggerTreeInlayPopup.class);
   protected final DebuggerTreeCreator<D> myTreeCreator;
+  private final XSourcePosition myPresentationPosition;
   @NotNull protected final XDebugSession mySession;
   @NonNls private final static String DIMENSION_SERVICE_KEY = "DebuggerActiveHint";
   private JBPopup myPopup;
@@ -74,10 +76,12 @@ public class XDebuggerTreeInlayPopup<D> {
   private XDebuggerTreeInlayPopup(@NotNull DebuggerTreeCreator<D> creator,
                                   @NotNull Editor editor,
                                   @NotNull Point point,
+                                  @NotNull XSourcePosition presentationPosition,
                                   @NotNull XDebugSession session,
                                   @Nullable Runnable hideRunnable,
                                   @NotNull XValueNodeImpl valueNode) {
     myTreeCreator = creator;
+    myPresentationPosition = presentationPosition;
     mySession = session;
     myEditor = editor;
     myPoint = point;
@@ -141,7 +145,7 @@ public class XDebuggerTreeInlayPopup<D> {
         }).onSuccess(expr -> {
         AppUIUtil.invokeOnEdt(() -> {
           XDebuggerWatchesManager manager = ((XDebuggerManagerImpl)XDebuggerManager.getInstance(mySession.getProject())).getWatchesManager();
-          manager.showInplaceEditor(node.getTree().getSourcePosition(), myEditor, mySession, expr);
+          manager.showInplaceEditor(myPresentationPosition, myEditor, mySession, expr);
         });
       });
     }
@@ -185,9 +189,15 @@ public class XDebuggerTreeInlayPopup<D> {
     }
   }
 
-  public static <D> void showTreePopup(XDebuggerTreeCreator creator, Pair<XValue, String> initialItem, XValueNodeImpl valueNode, @NotNull Editor editor,
-                                       @NotNull Point point, @NotNull XDebugSession session, Runnable hideRunnable) {
-    new XDebuggerTreeInlayPopup<>(creator, editor, point, session, hideRunnable, valueNode).updateTree(initialItem);
+  public static <D> void showTreePopup(XDebuggerTreeCreator creator,
+                                       Pair<XValue, String> initialItem,
+                                       XValueNodeImpl valueNode,
+                                       @NotNull Editor editor,
+                                       @NotNull Point point,
+                                       @NotNull XSourcePosition position,
+                                       @NotNull XDebugSession session,
+                                       Runnable hideRunnable) {
+    new XDebuggerTreeInlayPopup<>(creator, editor, point, position, session, hideRunnable, valueNode).updateTree(initialItem);
   }
 
   private TreeModelListener createTreeListener(final Tree tree) {
