@@ -70,12 +70,6 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     myStartSuspended = startSuspended;
     myRunExtensionsForFilesMarkedAsIndexed = runExtensionsForFilesMarkedAsIndexed;
     myPusher = PushedFilePropertiesUpdater.getInstance(myProject);
-    project.getMessageBus().connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-      @Override
-      public void rootsChanged(@NotNull ModuleRootEvent event) {
-        DumbService.getInstance(project).cancelTask(UnindexedFilesUpdater.this);
-      }
-    });
     myProject.putUserData(CONTENT_SCANNED, null);
 
     synchronized (ourLastRunningTaskLock) {
