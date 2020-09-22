@@ -171,6 +171,8 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     myBuilder = new MyBuilder(new SimpleTreeStructure.Impl(myRoot));
     myBuilder.setFilteringMerge(300, null);
     Disposer.register(this, myBuilder);
+
+    myTree.getAccessibleContext().setAccessibleName(UIBundle.message("settings.tree.settings.categories.accessible.name"));
   }
 
   @Override
