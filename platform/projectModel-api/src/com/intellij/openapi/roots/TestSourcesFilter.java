@@ -23,7 +23,6 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
  * @see JpsModuleSourceRootType#isForTests()
  * @author zolotov
  */
-@ApiStatus.OverrideOnly
 public abstract class TestSourcesFilter {
   private static final ExtensionPointName<TestSourcesFilter> EP_NAME = ExtensionPointName.create("com.intellij.testSourcesFilter");
 
@@ -36,5 +35,6 @@ public abstract class TestSourcesFilter {
     return false;
   }
 
+  @ApiStatus.OverrideOnly
   public abstract boolean isTestSource(@NotNull VirtualFile file, @NotNull Project project);
 }
