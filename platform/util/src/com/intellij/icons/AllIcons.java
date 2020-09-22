@@ -443,7 +443,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon LayoutEditorOnly = load("/general/layoutEditorOnly.svg", 1088258443597501009L);
     /** 16x16 */ public static final @NotNull Icon LayoutEditorPreview = load("/general/layoutEditorPreview.svg", 3673712096870153275L);
     /** 16x16 */ public static final @NotNull Icon LayoutPreviewOnly = load("/general/layoutPreviewOnly.svg", 1619797511352235504L);
-    /** 14x14 */ public static final @NotNull Icon LinkDropTriangle = load("/general/linkDropTriangle.svg", -2106266203633659162L);
+    /** 14x14 */ public static final @NotNull Icon LinkDropTriangle = load("/general/linkDropTriangle.svg", -6818786480200846246L);
     /** 16x16 */ public static final @NotNull Icon LocalizationSettings = load("/general/localizationSettings.svg", 1129882380169447330L);
     /** 16x16 */ public static final @NotNull Icon Locate = load("/general/locate.svg", -8870828557268362968L);
     /** 13x13 */ public static final @NotNull Icon Modified = load("/general/modified.svg", 1570099630349865226L);
@@ -550,7 +550,7 @@ public class AllIcons {
   public final static class Ide {
     /** 16x16 */ public static final @NotNull Icon ConfigFile = load("/ide/configFile.svg", 6175200971126648414L);
     /** 6x6 */ public static final @NotNull Icon ErrorPoint = load("/ide/errorPoint.svg", 4488396373024669885L);
-    /** 14x14 */ public static final @NotNull Icon External_link_arrow = load("/ide/external_link_arrow.svg", -8361390438695525121L);
+    /** 14x14 */ public static final @NotNull Icon External_link_arrow = load("/ide/external_link_arrow.svg", -2323131850938518353L);
     /** 16x16 */ public static final @NotNull Icon FatalError_read = load("/ide/fatalError-read.svg", 4475306829138033128L);
     /** 16x16 */ public static final @NotNull Icon FatalError = load("/ide/fatalError.svg", 6940067591364899422L);
     /** 16x16 */ public static final @NotNull Icon Gift = load("/ide/gift.svg", -8462435934720345936L);

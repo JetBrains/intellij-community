@@ -160,7 +160,6 @@ public class WelcomeScreenComponentFactory {
   static JLabel createArrow(final ActionLink link) {
     JLabel arrow = new JLabel(AllIcons.General.LinkDropTriangle);
     arrow.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    arrow.setVerticalAlignment(SwingConstants.BOTTOM);
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {

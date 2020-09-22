@@ -22,6 +22,8 @@ open class ActionLink() : JButton() {
   }
 
   constructor(text: String, perform: (ActionEvent) -> Unit) : this(text, ActionListener { perform(it) })
+
+  @JvmOverloads
   constructor(text: String, listener: ActionListener? = null) : this() {
     this.text = text
     listener?.let { addActionListener(it) }

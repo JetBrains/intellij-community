@@ -280,11 +280,8 @@ public final class LiveTemplateSettingsEditor extends JPanel {
 
   private JPanel createShortContextPanel() {
     JLabel ctxLabel = new JBLabel();
-    ActionLink change = new ActionLink();
-    change.setText(CodeInsightBundle.message("link.change.context"));
-    change.setIcon(AllIcons.General.LinkDropTriangle);
-    change.setIconTextGap(JBUIScale.scale(1));
-    change.setHorizontalTextPosition(SwingConstants.LEADING);
+    ActionLink change = new ActionLink(CodeInsightBundle.message("link.change.context"));
+    change.setDropDownLinkIcon();
 
     final Runnable updateLabel = () -> {
       myExpandByCombo.setEnabled(isExpandableFromEditor());
