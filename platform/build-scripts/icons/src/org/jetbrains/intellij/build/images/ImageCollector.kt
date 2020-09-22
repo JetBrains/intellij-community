@@ -4,8 +4,8 @@ package org.jetbrains.intellij.build.images
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.icons.ImageDescriptor
 import com.intellij.util.SystemProperties
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
@@ -30,18 +30,38 @@ internal const val ROBOTS_FILE_NAME = "icon-robots.txt"
 internal class ImagePaths(val id: String,
                           val sourceRoot: JpsModuleSourceRoot,
                           val phantom: Boolean) {
-  private var flags: ImageFlags = ImageFlags()
-  private var images: MutableList<Path> = ContainerUtil.createConcurrentList()
+  private var flags = ImageFlags()
+  private var images: MutableList<Path> = ArrayList()
 
+  @Synchronized
   fun addImage(file: Path, fileFlags: ImageFlags) {
     images.add(file)
-    flags = mergeImageFlags(flags, fileFlags, file.toString())
+    flags = mergeImageFlags(flags, fileFlags, file)
   }
 
   val files: List<Path>
     get() = images
 
   fun getFiles(vararg types: ImageType): List<Path> = files.filter { ImageType.fromFile(it) in types }
+
+  fun getFlags(): Int {
+    var result = 0
+    for (image in images) {
+      val path = image.toString()
+      when {
+        path.contains("@2x.") -> {
+          result = result or ImageDescriptor.HAS_2x
+        }
+        path.contains("@2x_dark.") -> {
+          result = result or ImageDescriptor.HAS_DARK_2x
+        }
+        path.contains("_dark.") -> {
+          result = result or ImageDescriptor.HAS_DARK
+        }
+      }
+    }
+    return result
+  }
 
   @Suppress("SimplifiableCallChain")
   val file: Path?
@@ -91,26 +111,37 @@ internal class ImageCollector(private val projectHome: Path,
   // files processed in parallel, so, concurrent data structures must be used
   private val icons = ConcurrentHashMap<String, ImagePaths>()
   private val phantomIcons = ConcurrentHashMap<String, ImagePaths>()
-  private val usedIconsRobots: MutableSet<Path> = Collections.newSetFromMap(ConcurrentHashMap<Path, Boolean>())
+  private val usedIconsRobots: MutableSet<Path> = Collections.newSetFromMap(ConcurrentHashMap())
 
   fun collect(module: JpsModule, includePhantom: Boolean = false): List<ImagePaths> {
     for (sourceRoot in module.sourceRoots) {
-      if (sourceRoot.rootType == JavaResourceRootType.RESOURCE) {
-        val rootDir = Paths.get(JpsPathUtil.urlToPath(sourceRoot.url))
-        if (rootDir.fileName.toString() != "compatibilityResources") {
-          processRoot(sourceRoot, rootDir)
+      if (sourceRoot.rootType != JavaResourceRootType.RESOURCE) {
+        continue
+      }
+
+      val rootDir = Paths.get(JpsPathUtil.urlToPath(sourceRoot.url))
+      if (rootDir.fileName.toString() != "compatibilityResources") {
+        processRoot(sourceRoot, rootDir)
+      }
+      else if (SystemProperties.getBooleanProperty("remove.extra.icon.robots.files", false)) {
+        // under flag because not required for regular usage (to avoid FS call)
+        try {
+          Files.delete(rootDir.resolve(ROBOTS_FILE_NAME))
         }
-        else if (SystemProperties.getBooleanProperty("remove.extra.icon.robots.files", false)) {
-          // under flag because not required for regular usage (to avoid FS call)
-          try {
-            Files.delete(rootDir.resolve(ROBOTS_FILE_NAME))
-          }
-          catch (ignored: NoSuchFileException) {
-          }
+        catch (ignored: NoSuchFileException) {
         }
       }
     }
 
+    val result = ArrayList(icons.values.toMutableList())
+    if (includePhantom) {
+      result.addAll(phantomIcons.values)
+    }
+    return result
+  }
+
+  fun collectSubDir(sourceRoot: JpsModuleSourceRoot, name: String, includePhantom: Boolean = false): List<ImagePaths> {
+    processRoot(sourceRoot, Paths.get(JpsPathUtil.urlToPath(sourceRoot.url)).resolve(name))
     val result = ArrayList(icons.values)
     if (includePhantom) {
       result.addAll(phantomIcons.values)
@@ -142,11 +173,16 @@ internal class ImageCollector(private val projectHome: Path,
 
     val robotData = rootRobotData.fork(iconsRoot, rootDir)
 
-    processDirectory(iconsRoot, sourceRoot, robotData, emptyList(), 0)
+    processDirectory(iconsRoot, rootDir, sourceRoot, robotData, emptyList(), 0)
     processPhantomIcons(iconsRoot, sourceRoot, robotData, emptyList())
   }
 
-  private fun processDirectory(dir: Path, sourceRoot: JpsModuleSourceRoot, robotData: IconRobotsData, prefix: List<String>, level: Int) {
+  private fun processDirectory(dir: Path,
+                               rootDir: Path,
+                               sourceRoot: JpsModuleSourceRoot,
+                               robotData: IconRobotsData,
+                               prefix: List<String>,
+                               level: Int) {
     // do not process in parallel for if level >= 3 because no sense - parents processed in parallel already
     dir.processChildren(level < 3) { file ->
       if (robotData.isSkipped(file)) {
@@ -154,10 +190,9 @@ internal class ImageCollector(private val projectHome: Path,
       }
 
       if (Files.isDirectory(file)) {
-        val root = Paths.get(JpsPathUtil.urlToPath(sourceRoot.url))
-        val childRobotData = robotData.fork(file, root)
+        val childRobotData = robotData.fork(file, rootDir)
         val childPrefix = prefix + file.fileName.toString()
-        processDirectory(file, sourceRoot, childRobotData, childPrefix, level + 1)
+        processDirectory(file, rootDir, sourceRoot, childRobotData, childPrefix, level + 1)
 
         if (childRobotData != robotData) {
           processPhantomIcons(file, sourceRoot, childRobotData, childPrefix)
@@ -267,7 +302,7 @@ internal class IconRobotsData(private val parent: IconRobotsData? = null,
     val deprecationData = findDeprecatedData(file)
     val flags = ImageFlags(isSkipped, isUsed, deprecationData)
     val parentFlags = parent?.getImageFlags(file) ?: return flags
-    return mergeImageFlags(flags, parentFlags, file.toString())
+    return mergeImageFlags(flags, parentFlags, file)
   }
 
   fun getImageSyncFlags(file: Path) = ImageSyncFlags(skipSync = matches(file, skipSync), forceSync = matches(file, forceSync))
@@ -392,7 +427,7 @@ internal class IconRobotsData(private val parent: IconRobotsData? = null,
 
 private data class RobotFileHandler(val start: String, val handler: (String) -> Unit)
 
-private fun mergeImageFlags(flags1: ImageFlags, flags2: ImageFlags, comment: String): ImageFlags {
+private fun mergeImageFlags(flags1: ImageFlags, flags2: ImageFlags, comment: Path): ImageFlags {
   return ImageFlags(flags1.skipped || flags2.skipped,
                     flags1.used || flags2.used,
                     mergeDeprecations(flags1.deprecation, flags2.deprecation, comment))
@@ -400,10 +435,13 @@ private fun mergeImageFlags(flags1: ImageFlags, flags2: ImageFlags, comment: Str
 
 private fun mergeDeprecations(data1: DeprecationData?,
                               data2: DeprecationData?,
-                              comment: String): DeprecationData? {
-  if (data1 == null) return data2
-  if (data2 == null) return data1
-  if (data1 == data2) return data1
+                              comment: Path): DeprecationData? {
+  if (data1 == null) {
+    return data2
+  }
+  if (data2 == null || data1 == data2) {
+    return data1
+  }
 
   throw AssertionError("Different deprecation statements found for icon: $comment\n$data1\n$data2")
 }

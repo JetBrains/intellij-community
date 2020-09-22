@@ -69,24 +69,25 @@ public final class AppUIUtil {
       ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
       String svgIconUrl = appInfo.getApplicationSvgIconUrl();
       String smallSvgIconUrl = appInfo.getSmallApplicationSvgIconUrl();
-      ScaleContext ctx = ScaleContext.create(window);
+      ScaleContext scaleContext = ScaleContext.create(window);
 
       if (SystemInfoRt.isUnix) {
-        @SuppressWarnings("deprecation") String fallback = appInfo.getBigIconUrl();
-        Image element = loadApplicationIconImage(svgIconUrl, ctx, 128, fallback);
-        if (element != null) {
-          images.add(element);
+        @SuppressWarnings("deprecation")
+        Image image = loadApplicationIconImage(svgIconUrl, scaleContext, 128, appInfo.getBigIconUrl());
+        if (image != null) {
+          images.add(image);
         }
       }
 
-      @SuppressWarnings("deprecation") String fallback = appInfo.getIconUrl();
-      Image element = loadApplicationIconImage(smallSvgIconUrl, ctx, 32, fallback);
+      @SuppressWarnings("deprecation")
+      Image element = loadApplicationIconImage(smallSvgIconUrl, scaleContext, 32, appInfo.getIconUrl());
       if (element != null) {
         images.add(element);
       }
 
       if (SystemInfoRt.isWindows) {
-        images.add(loadSmallApplicationIconImage(ctx, 16));
+        //noinspection deprecation
+        images.add(loadApplicationIconImage(smallSvgIconUrl, scaleContext, 16, appInfo.getSmallIconUrl()));
       }
 
       for (int i = 0; i < images.size(); i++) {
@@ -101,7 +102,7 @@ public final class AppUIUtil {
       if (!SystemInfoRt.isMac) {
         window.setIconImages(images);
       }
-      else if (!ourMacDocIconSet && (PlatformUtils.isIntelliJClient() || PluginManagerCore.isRunningFromSources())) {
+      else if (!ourMacDocIconSet) {
         MacAppIcon.setDockIcon(ImageUtil.toBufferedImage(images.get(0)));
         ourMacDocIconSet = true;
       }
@@ -115,13 +116,6 @@ public final class AppUIUtil {
 
     // todo[tav] 'jbre.win.app.icon.supported' is defined by JBRE, remove when OpenJDK supports it as well
     return SystemInfoRt.isWindows && Boolean.getBoolean("ide.native.launcher") && Boolean.getBoolean("jbre.win.app.icon.supported");
-  }
-
-  @SuppressWarnings("SameParameterValue")
-  private static @NotNull Image loadSmallApplicationIconImage(@NotNull ScaleContext scaleContext, int size) {
-    ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-    //noinspection deprecation
-    return loadApplicationIconImage(appInfo.getSmallApplicationSvgIconUrl(), scaleContext, size, appInfo.getSmallIconUrl());
   }
 
   public static @NotNull Icon loadSmallApplicationIcon(@NotNull ScaleContext ctx) {
@@ -156,7 +150,7 @@ public final class AppUIUtil {
   private static @Nullable Image loadApplicationIconImage(@Nullable String svgPath, ScaleContext scaleContext, int size, @Nullable String fallbackPath) {
     Icon icon = svgPath == null ? null : loadApplicationIcon(svgPath, scaleContext, size);
     if (icon != null) {
-      return IconUtil.toImage(icon, scaleContext);
+      return IconLoader.toImage(icon, scaleContext);
     }
 
     if (fallbackPath != null) {

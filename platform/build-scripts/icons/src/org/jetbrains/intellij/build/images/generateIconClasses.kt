@@ -6,7 +6,6 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.AppScheduledExecutorService
 import org.jetbrains.intellij.build.images.sync.jpsProject
 import org.jetbrains.jps.model.module.JpsModule
-import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -22,7 +21,7 @@ fun main(args: Array<String>) {
 internal abstract class IconsClasses {
   open val homePath: String get() = PathManager.getHomePath()
   open val modules: List<JpsModule> get() = jpsProject(homePath).modules
-  open fun generator(home: File, modules: List<JpsModule>) = IconsClassGenerator(home, modules)
+  open fun generator(home: Path, modules: List<JpsModule>) = IconsClassGenerator(home, modules)
 }
 
 private class IntellijIconsClasses : IconsClasses() {
@@ -34,7 +33,7 @@ private class IntellijIconsClasses : IconsClasses() {
 }
 
 internal fun generateIconsClasses(dbFile: Path?, config: IconsClasses = IntellijIconsClasses()) {
-  val home = File(config.homePath)
+  val home = Paths.get(config.homePath)
 
   val modules = config.modules
 

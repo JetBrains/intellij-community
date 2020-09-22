@@ -49,7 +49,7 @@ import java.util.Map;
 @ApiStatus.Internal
 public final class SVGLoader {
   private static final byte[] DEFAULT_THEME = ArrayUtilRt.EMPTY_BYTE_ARRAY;
-  public static final boolean USE_CACHE = Boolean.parseBoolean(System.getProperty("idea.ui.icons.svg.disk.cache", "true"));
+  private static final boolean USE_CACHE = Boolean.parseBoolean(System.getProperty("idea.ui.icons.svg.disk.cache", "true"));
 
   private static SvgElementColorPatcherProvider ourColorPatcher;
   private static SvgElementColorPatcherProvider ourColorPatcherForSelection;
@@ -127,57 +127,64 @@ public final class SVGLoader {
                                                       double scale,
                                                       boolean isDark,
                                                       @NotNull ImageLoader.Dimension2DDouble docSize /*OUT*/) throws IOException {
-    long start = StartUpMeasurer.getCurrentTimeIfEnabled();
-
     byte[] svgBytes = null;
-
+    byte[] theme ;
     InputStream stream = null;
-    byte[] theme = DEFAULT_THEME;
-    SvgElementColorPatcherProvider colorPatcher = ourColorPatcher;
-    if (colorPatcher != null) {
-      SvgElementColorPatcher subPatcher = colorPatcher.forPath(path);
-      if (subPatcher != null) {
-        theme = subPatcher.digest();
-      }
-    }
 
-    if (theme != null) {
-      Image image;
-      if (theme == DEFAULT_THEME && rasterizedCacheKey != 0) {
-        SvgPrebuiltCacheManager cache = prebuiltPersistentCache;
-        if (cache != null) {
-          image = cache.loadFromCache(rasterizedCacheKey, scale, isDark, docSize);
-          if (image != null) {
-            return image;
-          }
+    if (USE_CACHE && !isSelectionContext()) {
+      long start = StartUpMeasurer.getCurrentTimeIfEnabled();
+
+      theme = DEFAULT_THEME;
+
+      SvgElementColorPatcherProvider colorPatcher = ourColorPatcher;
+      if (colorPatcher != null) {
+        SvgElementColorPatcher subPatcher = colorPatcher.forPath(path);
+        if (subPatcher != null) {
+          theme = subPatcher.digest();
         }
       }
 
-      //noinspection IOResourceOpenedButNotSafelyClosed
-      stream = resourceClass.getResourceAsStream(path);
-      if (stream == null) {
-        return null;
-      }
-      try {
-        svgBytes = stream.readAllBytes();
-      }
-      finally {
-        stream.close();
+      if (theme != null) {
+        Image image;
+        if (theme == DEFAULT_THEME && rasterizedCacheKey != 0) {
+          SvgPrebuiltCacheManager cache = prebuiltPersistentCache;
+          if (cache != null) {
+            image = cache.loadFromCache(rasterizedCacheKey, scale, isDark, docSize);
+            if (image != null) {
+              return image;
+            }
+          }
+        }
+
+        //noinspection IOResourceOpenedButNotSafelyClosed
+        stream = resourceClass.getResourceAsStream(path);
+        if (stream == null) {
+          return null;
+        }
+        try {
+          svgBytes = stream.readAllBytes();
+        }
+        finally {
+          stream.close();
+        }
+
+        image = persistentCache.loadFromCache(theme, svgBytes, scale, isDark, docSize);
+        if (image != null) {
+          return image;
+        }
+
+        stream = new ByteArrayInputStream(svgBytes);
       }
 
-      image = persistentCache.loadFromCache(theme, svgBytes, scale, isDark, docSize);
-      if (image != null) {
-        return image;
+      if (start != -1) {
+        IconLoadMeasurer.svgCacheRead.addDurationStartedAt(start);
       }
-
-      stream = new ByteArrayInputStream(svgBytes);
+    }
+    else {
+      theme = null;
     }
 
-    if (start != -1) {
-      IconLoadMeasurer.svgCacheRead.addDurationStartedAt(start);
-    }
-
-    start = StartUpMeasurer.getCurrentTimeIfEnabled();
+    long start = StartUpMeasurer.getCurrentTimeIfEnabled();
 
     BufferedImage bufferedImage;
     if (stream == null) {

@@ -11,9 +11,8 @@ import javax.swing.*;
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
 public final class TerminalIcons {
-  private static @NotNull Icon load(@NotNull String path, long cacheKey) {
-    return IconManager.getInstance().loadRasterizedIcon(path, TerminalIcons.class, cacheKey);
+  private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {
+    return IconManager.getInstance().loadRasterizedIcon(path, TerminalIcons.class, cacheKey, flags);
   }
-
-  /** 13x13 */ public static final @NotNull Icon OpenTerminal_13x13 = load("/icons/OpenTerminal_13x13.svg", -3545226572293660105L);
+  /** 13x13 */ public static final @NotNull Icon OpenTerminal_13x13 = load("/icons/OpenTerminal_13x13.svg", -3545226572293660105L, 2);
 }

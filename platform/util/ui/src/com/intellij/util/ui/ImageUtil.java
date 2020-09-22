@@ -30,13 +30,8 @@ public final class ImageUtil {
    * @return a HiDPI-aware BufferedImage in device scale
    * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
    */
-  @NotNull
-  public static BufferedImage createImage(int width, int height, int type) {
-    if (StartupUiUtil.isJreHiDPI()) {
-      return RetinaImage.create(width, height, type);
-    }
-    //noinspection UndesirableClassUsage
-    return new BufferedImage(width, height, type);
+  public static @NotNull BufferedImage createImage(int width, int height, int type) {
+    return createImage((GraphicsConfiguration)null, width, height, type);
   }
 
   /**
@@ -50,13 +45,28 @@ public final class ImageUtil {
    * @return a HiDPI-aware BufferedImage in the graphics scale
    * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
    */
-  @NotNull
-  public static BufferedImage createImage(GraphicsConfiguration gc, int width, int height, int type) {
+  public static @NotNull BufferedImage createImage(@Nullable GraphicsConfiguration gc, int width, int height, int type) {
     if (JreHiDpiUtil.isJreHiDPI(gc)) {
-      return RetinaImage.create(gc, width, height, type);
+      return new JBHiDPIScaledImage(gc, width, height, type);
     }
-    //noinspection UndesirableClassUsage
-    return new BufferedImage(width, height, type);
+    else {
+      //noinspection UndesirableClassUsage
+      return new BufferedImage(width, height, type);
+    }
+  }
+
+  /**
+   * @throws IllegalArgumentException if {@code width} or {@code height} is not greater than 0
+   * @see #createImage(GraphicsConfiguration, double, double, int, PaintUtil.RoundingMode)
+   */
+  public static @NotNull BufferedImage createImage(ScaleContext context, double width, double height, int type, @NotNull PaintUtil.RoundingMode rm) {
+    if (StartupUiUtil.isJreHiDPI(context)) {
+      return new JBHiDPIScaledImage(context, width, height, type, rm);
+    }
+    else {
+      //noinspection UndesirableClassUsage
+      return new BufferedImage(rm.round(width), rm.round(height), type);
+    }
   }
 
   /**

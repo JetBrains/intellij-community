@@ -11,18 +11,16 @@ import javax.swing.*;
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
 public final class VcsLogIcons {
-  private static @NotNull Icon load(@NotNull String path, long cacheKey) {
-    return IconManager.getInstance().loadRasterizedIcon(path, VcsLogIcons.class, cacheKey);
+  private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {
+    return IconManager.getInstance().loadRasterizedIcon(path, VcsLogIcons.class, cacheKey, flags);
   }
+  /** 16x16 */ public static final @NotNull Icon IntelliSort = load("/icons/IntelliSort.svg", 8600726778366817778L, 2);
 
-  /** 16x16 */ public static final @NotNull Icon IntelliSort = load("/icons/IntelliSort.svg", 8600726778366817778L);
-
-  public final static class Process {
-    /** 16x16 */ public static final @NotNull Icon Dots_1 = load("/icons/process/dots_1.svg", -7960068513318106661L);
-    /** 16x16 */ public static final @NotNull Icon Dots_2 = load("/icons/process/dots_2.svg", 6728581507243537195L);
-    /** 16x16 */ public static final @NotNull Icon Dots_3 = load("/icons/process/dots_3.svg", -611889846528343093L);
-    /** 16x16 */ public static final @NotNull Icon Dots_4 = load("/icons/process/dots_4.svg", -839139880432464280L);
-    /** 16x16 */ public static final @NotNull Icon Dots_5 = load("/icons/process/dots_5.svg", 4974563447289713619L);
-
+  public static final class Process {
+    /** 16x16 */ public static final @NotNull Icon Dots_1 = load("/icons/process/dots_1.svg", -7960068513318106661L, 0);
+    /** 16x16 */ public static final @NotNull Icon Dots_2 = load("/icons/process/dots_2.svg", 6728581507243537195L, 0);
+    /** 16x16 */ public static final @NotNull Icon Dots_3 = load("/icons/process/dots_3.svg", -611889846528343093L, 0);
+    /** 16x16 */ public static final @NotNull Icon Dots_4 = load("/icons/process/dots_4.svg", -839139880432464280L, 0);
+    /** 16x16 */ public static final @NotNull Icon Dots_5 = load("/icons/process/dots_5.svg", 4974563447289713619L, 0);
   }
 }

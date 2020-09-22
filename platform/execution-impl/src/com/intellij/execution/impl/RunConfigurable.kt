@@ -1156,7 +1156,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
   }
 
   protected inner class MySaveAction : AnAction(ExecutionBundle.message("action.name.save.configuration"), null,
-                                                AllIcons.Actions.Menu_saveall) {
+                                                AllIcons.Actions.MenuSaveall) {
     override fun actionPerformed(e: AnActionEvent) {
       val configurationConfigurable = selectedConfiguration
       LOG.assertTrue(configurationConfigurable != null)

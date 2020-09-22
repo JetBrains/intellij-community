@@ -222,10 +222,10 @@ public final class RunConfigurationsComboBoxAction extends ComboBoxAction implem
     return allActionsGroup;
   }
 
-  private static class SaveTemporaryAction extends DumbAwareAction {
+  private static final class SaveTemporaryAction extends DumbAwareAction {
     SaveTemporaryAction() {
       Presentation presentation = getTemplatePresentation();
-      presentation.setIcon(AllIcons.Actions.Menu_saveall);
+      presentation.setIcon(AllIcons.Actions.MenuSaveall);
     }
 
     @Override

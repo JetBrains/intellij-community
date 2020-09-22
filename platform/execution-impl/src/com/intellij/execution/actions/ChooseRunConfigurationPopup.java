@@ -83,8 +83,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     myPopup.showCenteredInCurrentWindow(myProject);
   }
 
-  @Nullable
-  protected String getAdText(final Executor alternateExecutor) {
+  private @Nullable String getAdText(final Executor alternateExecutor) {
     final PropertiesComponent properties = PropertiesComponent.getInstance();
     if (alternateExecutor != null && !properties.isTrueValue(myAddKey)) {
       return String
@@ -174,7 +173,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     myPopup.setCaption(getExecutor().getActionName());
   }
 
-  static void execute(final ItemWrapper itemWrapper, final Executor executor) {
+  private static void execute(ItemWrapper<?> itemWrapper, @Nullable Executor executor) {
     if (executor == null) {
       return;
     }
@@ -186,7 +185,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
   }
 
-  void editConfiguration(@NotNull Project project, @NotNull RunnerAndConfigurationSettings configuration) {
+  private void editConfiguration(@NotNull Project project, @NotNull RunnerAndConfigurationSettings configuration) {
     final Executor executor = getExecutor();
     PropertiesComponent.getInstance().setValue("run.configuration.edit.ad", Boolean.toString(true));
     if (RunDialog.editConfiguration(project, configuration, ExecutionBundle.message("dialog.title.edit.configuration.settings"), executor)) {
@@ -351,7 +350,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
 
     public static ItemWrapper wrap(@NotNull final Project project, @NotNull final RunnerAndConfigurationSettings settings) {
-      return new ItemWrapper<RunnerAndConfigurationSettings>(settings) {
+      return new ItemWrapper<>(settings) {
         @Override
         public void perform(@NotNull Project project, @NotNull Executor executor, @NotNull DataContext context) {
           RunnerAndConfigurationSettings config = getValue();
@@ -610,7 +609,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
       });
 
       if (settings.isTemporary() || dynamic) {
-        result.add(new ActionWrapper(ExecutionBundle.message("choose.run.popup.save"), AllIcons.Actions.Menu_saveall) {
+        result.add(new ActionWrapper(ExecutionBundle.message("choose.run.popup.save"), AllIcons.Actions.MenuSaveall) {
           @Override
           public void perform() {
             final RunManager manager = RunManager.getInstance(project);

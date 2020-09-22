@@ -15,6 +15,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.ui.DialogEarthquakeShaker
 import com.intellij.openapi.util.IconLoader
@@ -57,7 +58,8 @@ private fun executeInitAppInEdt(args: List<String>,
                                 pluginDescriptorFuture: CompletableFuture<List<IdeaPluginDescriptorImpl>>) {
   StartupUtil.patchSystem(LOG)
   val app = runActivity("create app") {
-    ApplicationImpl(java.lang.Boolean.getBoolean(PluginManagerCore.IDEA_IS_INTERNAL_PROPERTY), false, Main.isHeadless(), Main.isCommandLine())
+    ApplicationImpl(java.lang.Boolean.getBoolean(PluginManagerCore.IDEA_IS_INTERNAL_PROPERTY), false, Main.isHeadless(),
+                    Main.isCommandLine())
   }
   val registerFuture = registerAppComponents(pluginDescriptorFuture, app)
 
@@ -193,7 +195,15 @@ private fun startApp(app: ApplicationImpl,
 
       val loadComponentInEdtFuture = CompletableFuture.runAsync(Runnable {
         placeOnEventQueueActivity.end()
-        app.loadComponents(SplashManager.createProgressIndicator())
+
+        app.loadComponents(if (SplashManager.SPLASH_WINDOW == null) {
+          null
+        }
+        else object : EmptyProgressIndicator() {
+          override fun setFraction(fraction: Double) {
+            SplashManager.SPLASH_WINDOW.showProgress(fraction)
+          }
+        })
       }, edtExecutor)
 
       CompletableFuture.allOf(loadComponentInEdtFuture, preloadSyncServiceFuture)
@@ -222,7 +232,7 @@ private fun startApp(app: ApplicationImpl,
       }
     },
       // if `loadComponentInEdtFuture` is completed after `preloadSyncServiceFuture`, then this task will be executed in EDT, so force execution out of EDT
-      nonEdtExecutor)
+                             nonEdtExecutor)
     .thenRun {
       if (starter.requiredModality == ApplicationStarter.NOT_IN_EDT) {
         starter.main(args)
@@ -338,10 +348,10 @@ private fun addActivateAndWindowsCliListeners() {
 
     val ref = AtomicReference<Future<CliResult>>()
     app.invokeAndWait({
-      val result = CommandLineProcessor.processExternalCommandLine(args.toList(), currentDirectory)
-      ref.set(result.future)
-      result.showErrorIfFailed()
-    }, state)
+                        val result = CommandLineProcessor.processExternalCommandLine(args.toList(), currentDirectory)
+                        ref.set(result.future)
+                        result.showErrorIfFailed()
+                      }, state)
     CliResult.unmap(ref.get(), Main.ACTIVATE_ERROR).exitCode
   }
 

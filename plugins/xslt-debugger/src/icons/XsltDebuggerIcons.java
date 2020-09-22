@@ -11,9 +11,8 @@ import javax.swing.*;
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
 public final class XsltDebuggerIcons {
-  private static @NotNull Icon load(@NotNull String path, long cacheKey) {
-    return IconManager.getInstance().loadRasterizedIcon(path, XsltDebuggerIcons.class, cacheKey);
+  private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {
+    return IconManager.getInstance().loadRasterizedIcon(path, XsltDebuggerIcons.class, cacheKey, flags);
   }
-
-  /** 16x16 */ public static final @NotNull Icon XmlComment = load("/icons/xmlComment.svg", 6425537726148766859L);
+  /** 16x16 */ public static final @NotNull Icon XmlComment = load("/icons/xmlComment.svg", 6425537726148766859L, 0);
 }

@@ -79,8 +79,8 @@ public final class HiDPIPluginLogoIcon extends PluginLogoIcon {
     myCachedJBLogo2x = null;
     myCachedErrorLogo2x = null;
     myCachedDisabledJBLogo2x = null;
-    synchronized (DisabledIcons) {
-      DisabledIcons.clear();
+    synchronized (disabledIcons) {
+      disabledIcons.clear();
     }
   }
 

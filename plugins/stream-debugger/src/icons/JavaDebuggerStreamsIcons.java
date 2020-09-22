@@ -11,9 +11,8 @@ import javax.swing.*;
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
 public final class JavaDebuggerStreamsIcons {
-  private static @NotNull Icon load(@NotNull String path, long cacheKey) {
-    return IconManager.getInstance().loadRasterizedIcon(path, JavaDebuggerStreamsIcons.class, cacheKey);
+  private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {
+    return IconManager.getInstance().loadRasterizedIcon(path, JavaDebuggerStreamsIcons.class, cacheKey, flags);
   }
-
-  /** 16x16 */ public static final @NotNull Icon Stream_debugger = load("/icons/stream_debugger.svg", 6487287427462794443L);
+  /** 16x16 */ public static final @NotNull Icon Stream_debugger = load("/icons/stream_debugger.svg", 6487287427462794443L, 2);
 }

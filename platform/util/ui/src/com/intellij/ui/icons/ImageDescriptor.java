@@ -1,21 +1,20 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.icons;
 
-import com.intellij.util.ImageLoader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
 public final class ImageDescriptor {
+  public static final int HAS_2x = 1;
+  public static final int HAS_DARK = 2;
+  public static final int HAS_DARK_2x = 4;
+
   public final boolean isDark;
   public final @NotNull String path;
   public final double scale; // initial scale factor
   public final boolean isSvg;
   public final boolean original; // path is not altered
-
-  // The original user space size of the image. In case of SVG it's the size specified in the SVG doc.
-  // Otherwise it's the size of the original image divided by the image's scale (defined by the extension @2x).
-  public final @NotNull ImageLoader.Dimension2DDouble originalUserSize;
 
   public ImageDescriptor(@NotNull String path, double scale, boolean isSvg, boolean isDark) {
     this(path, scale, isSvg, isDark, false);
@@ -28,7 +27,6 @@ public final class ImageDescriptor {
     this.scale = scale;
     this.isSvg = isSvg;
     this.original = original;
-    this.originalUserSize = new ImageLoader.Dimension2DDouble(0, 0);
     this.isDark = isDark;
   }
 

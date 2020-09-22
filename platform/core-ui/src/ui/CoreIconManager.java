@@ -49,16 +49,15 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
   }
 
   @Override
-  public @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull Class<?> aClass, long cacheKey) {
-    IconLoader.IconDataLoader resolver = IconLoader.loadRasterizedIcon(path, aClass, cacheKey);
-    return new IconWithToolTipImpl(path, resolver);
+  public @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull Class<?> aClass, long cacheKey, int flags) {
+    return new IconWithToolTipImpl(path, IconLoader.loadRasterizedIcon(path, aClass, cacheKey, flags));
   }
 
   private static class IconWithToolTipImpl extends IconLoader.CachedImageIcon implements IconWithToolTip {
     private String result;
     private boolean isTooltipCalculated;
 
-    IconWithToolTipImpl(@NotNull String originalPath, @NotNull IconLoader.IconDataLoader resolver) {
+    IconWithToolTipImpl(@NotNull String originalPath, @NotNull IconLoader.ImageDataLoader resolver) {
       super(originalPath, resolver, null, null);
     }
 
@@ -82,12 +81,6 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
   @Override
   public <T> Icon createDeferredIcon(@Nullable Icon base, T param, @NotNull Function<? super T, ? extends Icon> f) {
     return IconDeferrer.getInstance().defer(base, param, f);
-  }
-
-  @NotNull
-  @Override
-  public Icon getAnalyzeIcon() {
-    return IconUtil.getAnalyzeIcon();
   }
 
   @Override

@@ -90,7 +90,7 @@ public class OpenFileAction extends AnAction implements DumbAware, LightEditComp
         presentation.setText(ActionsBundle.message("action.Tabbed.WelcomeScreen.OpenProject.text"));
       }
       else {
-        presentation.setIcon(AllIcons.Actions.Menu_open);
+        presentation.setIcon(AllIcons.Actions.MenuOpen);
       }
     }
   }
@@ -103,7 +103,7 @@ public class OpenFileAction extends AnAction implements DumbAware, LightEditComp
   @Override
   public void update(@NotNull AnActionEvent e) {
     if (NewWelcomeScreen.isNewWelcomeScreen(e)) {
-      e.getPresentation().setIcon(AllIcons.Actions.Menu_open);
+      e.getPresentation().setIcon(AllIcons.Actions.MenuOpen);
     }
   }
 

@@ -11,10 +11,9 @@ import javax.swing.*;
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
 public final class SpellcheckerIcons {
-  private static @NotNull Icon load(@NotNull String path, long cacheKey) {
-    return IconManager.getInstance().loadRasterizedIcon(path, SpellcheckerIcons.class, cacheKey);
+  private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {
+    return IconManager.getInstance().loadRasterizedIcon(path, SpellcheckerIcons.class, cacheKey, flags);
   }
-
-  /** 16x16 */ public static final @NotNull Icon Dictionary = load("/icons/dictionary.svg", -5210875592164432545L);
-  /** 16x16 */ public static final @NotNull Icon Spellcheck = load("/icons/spellcheck.svg", -7105625567968052552L);
+  /** 16x16 */ public static final @NotNull Icon Dictionary = load("/icons/dictionary.svg", -5210875592164432545L, 2);
+  /** 16x16 */ public static final @NotNull Icon Spellcheck = load("/icons/spellcheck.svg", -7105625567968052552L, 2);
 }

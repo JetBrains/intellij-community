@@ -8,33 +8,33 @@ import org.jetbrains.annotations.Nullable;
 public abstract class AbstractScaleContextAware<T extends UserScaleContext> implements ScaleContextAware {
   private final @NotNull T myScaleContext;
 
-  protected AbstractScaleContextAware(@NotNull T ctx) {
-    myScaleContext = ctx;
+  protected AbstractScaleContextAware(@NotNull T context) {
+    myScaleContext = context;
   }
 
   @NotNull
   @Override
-  public T getScaleContext() {
+  public final T getScaleContext() {
     return myScaleContext;
   }
 
   @Override
-  public boolean updateScaleContext(@Nullable UserScaleContext ctx) {
+  public final boolean updateScaleContext(@Nullable UserScaleContext ctx) {
     return myScaleContext.update(ctx);
   }
 
   @Override
-  public double getScale(@NotNull ScaleType type) {
+  public final double getScale(@NotNull ScaleType type) {
     return getScaleContext().getScale(type);
   }
 
   @Override
-  public double getScale(@NotNull DerivedScaleType type) {
+  public final double getScale(@NotNull DerivedScaleType type) {
     return getScaleContext().getScale(type);
   }
 
   @Override
-  public boolean setScale(@NotNull Scale scale) {
+  public final boolean setScale(@NotNull Scale scale) {
     return getScaleContext().setScale(scale);
   }
 }

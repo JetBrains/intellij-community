@@ -474,11 +474,9 @@ object DynamicPlugins {
             true
           }
 
-          if (!pluginDescriptor.isUseIdeaClassLoader) {
-            if (loadedPluginDescriptor.pluginClassLoader is PluginClassLoader) {
-              IconLoader.detachClassLoader(loadedPluginDescriptor.pluginClassLoader)
-              Language.unregisterLanguages(loadedPluginDescriptor.pluginClassLoader)
-            }
+          if (!pluginDescriptor.isUseIdeaClassLoader && loadedPluginDescriptor.pluginClassLoader is PluginClassLoader) {
+            IconLoader.detachClassLoader(loadedPluginDescriptor.pluginClassLoader)
+            Language.unregisterLanguages(loadedPluginDescriptor.pluginClassLoader)
           }
 
           unloadDependencyDescriptors(pluginDescriptor, loadedPluginDescriptor)

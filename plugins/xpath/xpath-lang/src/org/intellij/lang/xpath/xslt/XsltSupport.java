@@ -41,11 +41,10 @@ import java.util.Map;
 import java.util.Set;
 
 public final class XsltSupport {
-
-  public static final String XALAN_EXTENSION_PREFIX = "http://xml.apache.org/xalan/";
+  private static final String XALAN_EXTENSION_PREFIX = "http://xml.apache.org/xalan/";
   public static final String XSLT_NS = "http://www.w3.org/1999/XSL/Transform";
   public static final String PLUGIN_EXTENSIONS_NS = "urn:idea:xslt-plugin#extensions";
-  public static final Key<ParameterizedCachedValue<XsltChecker.LanguageLevel, PsiFile>> FORCE_XSLT_KEY = Key.create("FORCE_XSLT");
+  private static final Key<ParameterizedCachedValue<XsltChecker.LanguageLevel, PsiFile>> FORCE_XSLT_KEY = Key.create("FORCE_XSLT");
   public static final TextAttributesKey XSLT_DIRECTIVE =
     TextAttributesKey.createTextAttributesKey("XSLT_DIRECTIVE", DefaultLanguageHighlighterColors.TEMPLATE_LANGUAGE_COLOR);
 
@@ -345,7 +344,7 @@ public final class XsltSupport {
   }
 
   public static Icon createXsltIcon(Icon icon) {
-    return XpathIcons.Xslt_filetype_overlay;
+    return XpathIcons.XsltFiletypeOverlay;
   }
 
   private static class XsltSupportProvider implements ParameterizedCachedValueProvider<XsltChecker.LanguageLevel, PsiFile> {

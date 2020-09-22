@@ -5,9 +5,9 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaJBPopupComboPopup;
 import com.intellij.openapi.util.ColoredItem;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.StartupUiUtil;
@@ -59,7 +59,7 @@ public final class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
 
         Icon icon = MacIconLookup.getIcon("comboRight", false, false, comboBox.isEnabled(), comboBox.isEditable());
         if (getWidth() != icon.getIconWidth() || getHeight() != icon.getIconHeight()) {
-          Image image = IconUtil.toImage(icon);
+          Image image = IconLoader.toImage(icon, null);
           StartupUiUtil.drawImage(g, image, new Rectangle(0, 0, getWidth(), getHeight()), null);
         }
         else {
@@ -126,7 +126,7 @@ public final class MacIntelliJComboBoxUI extends DarculaComboBoxUI {
   @Override
   protected ComboPopup createPopup() {
     if (comboBox.getClientProperty(DarculaJBPopupComboPopup.CLIENT_PROP) != null) {
-      return new DarculaJBPopupComboPopup<Object>(comboBox) {
+      return new DarculaJBPopupComboPopup<>(comboBox) {
         @Override
         public void configureList(@NotNull JList<Object> list) {
           super.configureList(list);

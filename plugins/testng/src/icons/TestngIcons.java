@@ -11,9 +11,8 @@ import javax.swing.*;
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
 public final class TestngIcons {
-  private static @NotNull Icon load(@NotNull String path, long cacheKey) {
-    return IconManager.getInstance().loadRasterizedIcon(path, TestngIcons.class, cacheKey);
+  private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {
+    return IconManager.getInstance().loadRasterizedIcon(path, TestngIcons.class, cacheKey, flags);
   }
-
-  /** 16x16 */ public static final @NotNull Icon TestNG = load("/resources/testNG.svg", -8112459097595456845L);
+  /** 16x16 */ public static final @NotNull Icon TestNG = load("/resources/testNG.svg", -8112459097595456845L, 0);
 }

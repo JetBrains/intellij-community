@@ -11,10 +11,9 @@ import javax.swing.*;
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
 public final class TasksIcons {
-  private static @NotNull Icon load(@NotNull String path, long cacheKey) {
-    return IconManager.getInstance().loadRasterizedIcon(path, TasksIcons.class, cacheKey);
+  private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {
+    return IconManager.getInstance().loadRasterizedIcon(path, TasksIcons.class, cacheKey, flags);
   }
-
-  /** 16x16 */ public static final @NotNull Icon Bug = load("/icons/bug.svg", 8279670907554204057L);
-  /** 16x16 */ public static final @NotNull Icon Exception = load("/icons/exception.svg", 643436076469167435L);
+  /** 16x16 */ public static final @NotNull Icon Bug = load("/icons/bug.svg", 8279670907554204057L, 0);
+  /** 16x16 */ public static final @NotNull Icon Exception = load("/icons/exception.svg", 643436076469167435L, 0);
 }

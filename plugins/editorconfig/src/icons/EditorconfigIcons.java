@@ -11,10 +11,9 @@ import javax.swing.*;
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
 public final class EditorconfigIcons {
-  private static @NotNull Icon load(@NotNull String path, long cacheKey) {
-    return IconManager.getInstance().loadRasterizedIcon(path, EditorconfigIcons.class, cacheKey);
+  private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {
+    return IconManager.getInstance().loadRasterizedIcon(path, EditorconfigIcons.class, cacheKey, flags);
   }
-
-  /** 12x12 */ public static final @NotNull Icon PartiallyOverridden = load("/icons/partiallyOverridden.svg", 2156936138793948515L);
-  /** 12x12 */ public static final @NotNull Icon PartiallyOverriding = load("/icons/partiallyOverriding.svg", 2047374786249044622L);
+  /** 12x12 */ public static final @NotNull Icon PartiallyOverridden = load("/icons/partiallyOverridden.svg", 2156936138793948515L, 2);
+  /** 12x12 */ public static final @NotNull Icon PartiallyOverriding = load("/icons/partiallyOverriding.svg", 2047374786249044622L, 2);
 }

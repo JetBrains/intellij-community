@@ -11,11 +11,10 @@ import javax.swing.*;
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
 public final class PlatformDiffImplIcons {
-  private static @NotNull Icon load(@NotNull String path, long cacheKey) {
-    return IconManager.getInstance().loadRasterizedIcon(path, PlatformDiffImplIcons.class, cacheKey);
+  private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {
+    return IconManager.getInstance().loadRasterizedIcon(path, PlatformDiffImplIcons.class, cacheKey, flags);
   }
-
-  /** 128x128 */ public static final @NotNull Icon Diff_frame128 = load("/vcs/diff_frame128.png", 0L);
-  /** 32x32 */ public static final @NotNull Icon Diff_frame32 = load("/vcs/diff_frame32.png", 0L);
-  /** 64x64 */ public static final @NotNull Icon Diff_frame64 = load("/vcs/diff_frame64.png", 0L);
+  /** 128x128 */ public static final @NotNull Icon Diff_frame128 = load("/vcs/diff_frame128.png", 0L, 0);
+  /** 32x32 */ public static final @NotNull Icon Diff_frame32 = load("/vcs/diff_frame32.png", 0L, 0);
+  /** 64x64 */ public static final @NotNull Icon Diff_frame64 = load("/vcs/diff_frame64.png", 0L, 0);
 }

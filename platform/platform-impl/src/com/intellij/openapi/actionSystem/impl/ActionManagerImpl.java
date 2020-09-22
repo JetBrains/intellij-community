@@ -302,6 +302,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
                                        @NotNull PluginDescriptor pluginDescriptor,
                                        @NotNull String iconPath,
                                        @NotNull Presentation presentation) {
+    //noinspection deprecation
     presentation.setIcon(new IconLoader.LazyIcon() {
       @NotNull
       @Override

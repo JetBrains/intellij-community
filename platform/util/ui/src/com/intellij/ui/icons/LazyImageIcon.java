@@ -9,7 +9,6 @@ import com.intellij.util.SVGLoader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -17,7 +16,7 @@ import java.lang.ref.Reference;
 
 @SuppressWarnings("UnnecessaryFullyQualifiedName")
 @ApiStatus.Internal
-public abstract class LazyImageIcon extends ScaleContextSupport /* do not modify this FQN */
+public abstract class LazyImageIcon extends ScaleContextSupport
   implements CopyableIcon, ScalableIcon, DarkIconProvider, MenuBarIconProvider {
   protected final Object myLock = new Object();
 
@@ -42,12 +41,6 @@ public abstract class LazyImageIcon extends ScaleContextSupport /* do not modify
       icon = ((Reference<ImageIcon>)icon).get();
     }
     return icon instanceof ImageIcon ? (ImageIcon)icon : null;
-  }
-
-  @Nullable
-  @TestOnly
-  public final ImageIcon doGetRealIcon() {
-    return unwrapIcon(myRealIcon);
   }
 
   @Override
