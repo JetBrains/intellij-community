@@ -369,6 +369,6 @@ private class AAListCellRenderer(private val myUseEditorFont: Boolean) : SimpleL
       font = Font(scheme.editorFontName, Font.PLAIN, scheme.editorFontSize)
     }
 
-    text = value.toString()
+    text = value.presentableName
   }
 }

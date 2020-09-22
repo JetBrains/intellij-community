@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.PlatformEditorBundle;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -14,9 +15,9 @@ import java.util.function.Supplier;
 import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
 public enum AntialiasingType {
-  SUBPIXEL(() -> PlatformEditorBundle.message("settings.editor.antialiasing.subpixel"), RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB, true),
-  GREYSCALE(() ->  PlatformEditorBundle.message("settings.editor.antialiasing.greyscale"), RenderingHints.VALUE_TEXT_ANTIALIAS_ON, true),
-  OFF(() -> PlatformEditorBundle.message("settings.editor.antialiasing.no.antialiasing"), RenderingHints.VALUE_TEXT_ANTIALIAS_OFF, false);
+  SUBPIXEL("Subpixel", () -> PlatformEditorBundle.message("settings.editor.antialiasing.subpixel"), RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB, true),
+  GREYSCALE("Greyscale", () ->  PlatformEditorBundle.message("settings.editor.antialiasing.greyscale"), RenderingHints.VALUE_TEXT_ANTIALIAS_ON, true),
+  OFF("No antialiasing", () -> PlatformEditorBundle.message("settings.editor.antialiasing.no.antialiasing"), RenderingHints.VALUE_TEXT_ANTIALIAS_OFF, false);
 
   public static Object getAAHintForSwingComponent() {
     UISettings uiSettings = UISettings.getInstanceOrNull();
@@ -49,12 +50,17 @@ public enum AntialiasingType {
            ? context : new FontRenderContext(context.getTransform(), aaHint, context.getFractionalMetricsHint());
   }
 
-  private final Supplier<@Nls(capitalization = Sentence) String> myName;
+  private final String mySerializationName;
+  private final Supplier<@Nls(capitalization = Sentence) String> myPresentableName;
   private final Object myHint;
   private final boolean isEnabled;
 
-  AntialiasingType(Supplier<@Nls(capitalization = Sentence) String> name, Object hint, boolean enabled) {
-    myName = name;
+  AntialiasingType(@NonNls String serializationName,
+                   Supplier<@Nls(capitalization = Sentence) String> presentableName,
+                   Object hint,
+                   boolean enabled) {
+    mySerializationName = serializationName;
+    myPresentableName = presentableName;
     myHint = hint;
     isEnabled = enabled;
   }
@@ -64,8 +70,13 @@ public enum AntialiasingType {
   }
 
   @Override
-  @Nls(capitalization = Sentence)
+  @NonNls
   public String toString() {
-    return myName.get();
+    return mySerializationName;
+  }
+
+  @Nls(capitalization = Sentence)
+  public String getPresentableName() {
+    return myPresentableName.get();
   }
  }
