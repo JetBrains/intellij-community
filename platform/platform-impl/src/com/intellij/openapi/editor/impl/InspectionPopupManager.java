@@ -330,7 +330,13 @@ class InspectionPopupManager {
 
                                 FUCounterUsageLogger.getInstance().logEvent("inspection.widget", "highlight.level.changed", data);
                               },
-                              true).withTextConverter(item -> prefix + item.toString());
+                              true) {
+      @NotNull
+      @Override
+      protected String itemToString(InspectionsLevel item) {
+        return prefix + item.toString();
+      }
+    };
   }
 
 

@@ -30,10 +30,8 @@ open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) 
       fireItemStateChanged(newItem, ItemEvent.SELECTED)
     }
 
-  private var textFromItem: (T) -> String = { it.toString() }
-
   init {
-    text = textFromItem(item)
+    text = itemToString(item)
     setDropDownLinkIcon()
     addActionListener {
       if (!popupState.isRecentlyHidden) {
@@ -67,7 +65,7 @@ open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) 
         @Suppress("UNCHECKED_CAST")
         (event.item as? T)?.let {
           onSelect.accept(it)
-          if (updateText) text = textFromItem(it)
+          if (updateText) text = itemToString(it)
         }
       }
     }
@@ -81,11 +79,7 @@ open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) 
     itemListeners.forEach { it.itemStateChanged(ItemEvent(this, ItemEvent.ITEM_STATE_CHANGED, item, state)) }
   }
 
-  fun withTextConverter(textFromItem: (T) -> String): DropDownLink<T> {
-    this.textFromItem = textFromItem
-    text = textFromItem(selectedItem)
-    return this
-  }
+  protected open fun itemToString(item: T) : String = item.toString()
 }
 
 
