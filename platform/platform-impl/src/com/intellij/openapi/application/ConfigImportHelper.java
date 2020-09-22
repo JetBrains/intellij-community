@@ -38,6 +38,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
 import com.intellij.util.text.VersionComparatorUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,6 +70,7 @@ import static com.intellij.openapi.application.CustomConfigMigrationOption.readC
 import static com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY;
 import static com.intellij.openapi.util.Pair.pair;
 
+@ApiStatus.Internal
 public final class ConfigImportHelper {
   private static final String FIRST_SESSION_KEY = "intellij.first.ide.session";
   private static final String CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY = "intellij.config.imported.in.current.session";
@@ -176,7 +178,7 @@ public final class ConfigImportHelper {
           settings.importFinished(newConfigDir);
         }
 
-        System.setProperty(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY, Boolean.TRUE.toString());
+        setConfigImportedInThisSession();
       }
       else {
         log.info("No configs imported, starting with clean configs at " + newConfigDir);
@@ -358,7 +360,13 @@ public final class ConfigImportHelper {
     return FileTypeRegistry.getInstance().isFileOfType(file, ArchiveFileType.INSTANCE);
   }
 
-  /** Returns {@code true} when the IDE is launched for the first time, and configs were imported from another installation. */
+  public static void setConfigImportedInThisSession() {
+    System.setProperty(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY, Boolean.TRUE.toString());
+  }
+
+  /**
+   * Returns {@code true} when the IDE is launched for the first time, and configs were imported from another installation.
+   */
   public static boolean isConfigImported() {
     return Boolean.getBoolean(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY);
   }
