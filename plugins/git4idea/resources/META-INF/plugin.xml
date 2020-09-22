@@ -546,6 +546,7 @@
                         preloaderClassName="git4idea.stash.ui.GitStashContentPreloader"
                         displayNameSupplierClassName="git4idea.stash.ui.GitStashDisplayNameSupplier"/>
     <projectService serviceImplementation="git4idea.stash.GitStashTracker"/>
+    <projectService serviceImplementation="git4idea.stash.GitStashCache"/>
     <backgroundPostStartupActivity implementation="git4idea.stash.ui.GitStashStartupActivity"/>
 
     <vcs.consoleFolding implementation="git4idea.console.GitConsoleFolding"/>

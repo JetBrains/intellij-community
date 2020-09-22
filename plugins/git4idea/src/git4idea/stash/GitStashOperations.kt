@@ -9,12 +9,18 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
+import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog
+import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog.ChangelistData
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.xml.util.XmlStringUtil
 import git4idea.GitRevisionNumber
 import git4idea.GitUtil
+import git4idea.changes.GitChangeUtils
+import git4idea.changes.GitCommittedChangeList
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
@@ -24,6 +30,7 @@ import git4idea.repo.GitRepositoryManager
 import git4idea.ui.StashInfo
 import git4idea.util.GitUIUtil
 import java.awt.Component
+import java.util.*
 import javax.swing.event.HyperlinkEvent
 
 object GitStashOperations {
@@ -31,7 +38,8 @@ object GitStashOperations {
   @JvmStatic
   fun dropStashWithConfirmation(project: Project, parentComponent: Component?, stash: StashInfo): Boolean {
     val dialogBuilder = yesNo(GitBundle.message("git.unstash.drop.confirmation.title", stash.stash),
-                              GitBundle.message("git.unstash.drop.confirmation.message", stash.stash, stash.message)).icon(Messages.getQuestionIcon())
+                              GitBundle.message("git.unstash.drop.confirmation.message", stash.stash, stash.message)).icon(
+      Messages.getQuestionIcon())
     val confirmed = if (parentComponent != null) dialogBuilder.ask(parentComponent) else dialogBuilder.ask(project)
     if (!confirmed) return false
 
@@ -78,19 +86,20 @@ object GitStashOperations {
 
   @JvmStatic
   fun viewStash(project: Project, stash: StashInfo) {
-    val selectedStash = stash.stash
-    try {
-      val hash = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        ThrowableComputable<String, VcsException> { resolveHashOfStash(project, stash.root, selectedStash) },
-        GitBundle.message("unstash.dialog.stash.details.load.progress.indicator.title"),
-        true,
-        project
-      )
-      GitUtil.showSubmittedFiles(project, hash, stash.root, true, false)
+    val emptyChangeList = CommittedChangeListImpl(stash.stash, stash.message, "", -1, Date(0), emptyList())
+    val dialog = ChangeListViewerDialog(project, emptyChangeList, null)
+    dialog.loadChangesInBackground {
+      ChangelistData(loadStashedChanges(project, stash), null)
     }
-    catch (ex: VcsException) {
-      GitUIUtil.showOperationError(project, ex, GitBundle.message("operation.name.resolving.revision"))
-    }
+    dialog.title = GitBundle.message("unstash.view.dialog.title", stash.stash)
+    dialog.show()
+  }
+
+  @RequiresBackgroundThread
+  @Throws(VcsException::class)
+  fun loadStashedChanges(project: Project, stash: StashInfo): GitCommittedChangeList {
+    val hash = resolveHashOfStash(project, stash.root, stash.stash)
+    return GitChangeUtils.getRevisionChanges(project, GitUtil.getRootForFile(project, stash.root), hash, true, true, false)
   }
 
   @Throws(VcsException::class)
@@ -151,8 +160,10 @@ private class UnstashConflictResolver(project: Project,
 
   override fun notifyUnresolvedRemain() {
     VcsNotifier.getInstance(myProject).notifyImportantWarning("git.unstash.with.unresolved.conflicts",
-                                                              GitBundle.message("unstash.dialog.unresolved.conflict.warning.notification.title"),
-                                                              GitBundle.message("unstash.dialog.unresolved.conflict.warning.notification.message")
+                                                              GitBundle.message(
+                                                                "unstash.dialog.unresolved.conflict.warning.notification.title"),
+                                                              GitBundle.message(
+                                                                "unstash.dialog.unresolved.conflict.warning.notification.message")
     ) { _, event ->
       if (event.eventType == HyperlinkEvent.EventType.ACTIVATED) {
         if (event.description == "resolve") {

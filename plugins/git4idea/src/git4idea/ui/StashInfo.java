@@ -23,6 +23,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 /**
  * Information about one stash.
  */
@@ -79,5 +81,21 @@ public class StashInfo {
   @Nls
   public String getText() {
     return myText;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    StashInfo info = (StashInfo)o;
+    return myRoot.equals(info.myRoot) &&
+           myStash.equals(info.myStash) &&
+           Objects.equals(myBranch, info.myBranch) &&
+           Objects.equals(myMessage, info.myMessage);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myRoot, myStash, myBranch, myMessage);
   }
 }
