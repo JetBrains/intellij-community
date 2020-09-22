@@ -12,9 +12,11 @@ import java.awt.Component
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.event.ItemEvent
+import java.awt.event.KeyEvent
 import java.util.function.Consumer
 import javax.swing.DefaultListCellRenderer
 import javax.swing.JList
+import javax.swing.KeyStroke.getKeyStroke
 
 open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) : ActionLink() {
 
@@ -40,6 +42,10 @@ open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) 
         popup.addListener(popupState)
         popup.show(RelativePoint(this, showPoint))
       }
+    }
+    getInputMap(WHEN_FOCUSED)?.run {
+      put(getKeyStroke(KeyEvent.VK_DOWN, 0, false), "pressed")
+      put(getKeyStroke(KeyEvent.VK_DOWN, 0, true), "released")
     }
   }
 
