@@ -6,6 +6,7 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.ControlFlowException
@@ -204,15 +205,16 @@ internal class JdkUpdater(
           //make sure VFS sees the files and sets up the JDK correctly
           VfsUtil.markDirtyAndRefresh(false, true, true, newJdkHome.toFile())
 
-          runWriteAction {
-            jdk.sdkModificator.apply {
-              removeAllRoots()
-              homePath = newJdkHome.systemIndependentPath
-              versionString = feedItem.versionString
-            }.commitChanges()
+          invokeLater {
+            runWriteAction {
+              jdk.sdkModificator.apply {
+                removeAllRoots()
+                homePath = newJdkHome.systemIndependentPath
+                versionString = feedItem.versionString
+              }.commitChanges()
 
-            val sdkType = jdk.sdkType as? SdkType ?: return@runWriteAction null
-            sdkType.setupSdkPaths(jdk)
+              (jdk.sdkType as? SdkType)?.setupSdkPaths(jdk)
+            }
           }
         }
       }
