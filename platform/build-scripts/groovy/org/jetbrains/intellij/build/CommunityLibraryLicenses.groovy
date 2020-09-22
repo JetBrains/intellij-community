@@ -197,6 +197,8 @@ class CommunityLibraryLicenses {
                        url: "https://github.com/raphw/byte-buddy", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
     new LibraryLicense(name: "caffeine", libraryName: "caffeine", license: "Apache 2.0",
                        url: "https://github.com/ben-manes/caffeine", licenseUrl: "https://github.com/ben-manes/caffeine/blob/master/LICENSE"),
+    new LibraryLicense(name: "CatBoost Model Applier", libraryName: "ai.catboost:catboost-prediction:0.24", license: "Apache 2.0",
+                       url: "https://github.com/catboost/catboost", licenseUrl: "https://github.com/catboost/catboost/blob/master/LICENSE"),
     new LibraryLicense(name: "CGLib", libraryName: "CGLIB", license: "Apache", url: "http://cglib.sourceforge.net/",
                        licenseUrl: "http://www.apache.org/foundation/licence-FAQ.html"),
     new LibraryLicense(name: "classworlds", libraryName: "Maven", transitiveDependency: true, version: "1.1", license: "codehaus",

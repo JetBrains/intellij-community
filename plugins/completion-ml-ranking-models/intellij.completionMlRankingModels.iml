@@ -12,13 +12,13 @@
     <orderEntry type="module" module-name="intellij.completionMlRanking" />
     <orderEntry type="module-library">
       <library name="completion-ranking-java-exp" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-java:0.3.1" />
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-java:0.3.2" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-java/0.3.1/completion-ranking-java-0.3.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-java/0.3.2/completion-ranking-java-0.3.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-java/0.3.1/completion-ranking-java-0.3.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-java/0.3.2/completion-ranking-java-0.3.2-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -65,6 +65,20 @@
         <SOURCES>
           <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python/0.1.1/completion-ranking-python-0.1.1-sources.jar!/" />
         </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="ai.catboost:catboost-prediction:0.24" type="repository">
+        <properties maven-id="ai.catboost:catboost-prediction:0.24" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/catboost/catboost-prediction/0.24/catboost-prediction-0.24.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/javax/validation/validation-api/1.1.0.Final/validation-api-1.1.0.Final.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/1.7.25/slf4j-api-1.7.25.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/catboost/catboost-common/0.24/catboost-common-0.24.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
       </library>
     </orderEntry>
   </component>

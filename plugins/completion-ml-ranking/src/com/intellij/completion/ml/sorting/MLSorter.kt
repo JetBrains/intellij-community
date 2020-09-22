@@ -13,8 +13,6 @@ import com.intellij.completion.ml.util.RelevanceUtil
 import com.intellij.completion.ml.common.PrefixMatchingUtil
 import com.intellij.completion.ml.performance.CompletionPerformanceTracker
 import com.intellij.completion.ml.settings.CompletionMLRankingSettings
-import com.intellij.lang.Language
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.diagnostic.logger
@@ -36,7 +34,6 @@ class MLSorter : CompletionFinalSorter() {
   }
 
   private val cachedScore: MutableMap<LookupElement, ItemRankInfo> = IdentityHashMap()
-  private lateinit var sortingRestrictions: SortingRestriction
   private val reorderOnlyTopItems: Boolean = Registry.`is`("completion.ml.reorder.only.top.items", true)
 
   override fun getRelevanceObjects(items: MutableIterable<LookupElement>): Map<LookupElement, List<Pair<String, Any>>> {
@@ -80,10 +77,6 @@ class MLSorter : CompletionFinalSorter() {
     val startedTimestamp = System.currentTimeMillis()
     val queryLength = lookup.queryLength()
     val prefix = lookup.prefix()
-
-    if (!this::sortingRestrictions.isInitialized) {
-      sortingRestrictions = SortingRestriction.forLanguage(lookupStorage.language, lookupStorage.model?.version() ?: "")
-    }
 
     val element2score = mutableMapOf<LookupElement, Double?>()
     val elements = items.toList()
@@ -157,9 +150,7 @@ class MLSorter : CompletionFinalSorter() {
       val score = tracker.measure {
         val position = positionsBefore.getValue(element)
         val elementFeatures = features.withElementFeatures(relevance, additional)
-        val score = calculateElementScore(rankingModel, element, position, elementFeatures, queryLength)
-        sortingRestrictions.itemScored(elementFeatures)
-        return@measure score
+        return@measure calculateElementScore(rankingModel, element, position, elementFeatures, queryLength)
       }
       element2score[element] = score
 
@@ -175,7 +166,7 @@ class MLSorter : CompletionFinalSorter() {
                              positionsBefore: Map<LookupElement, Int>,
                              lookupStorage: MutableLookupStorage,
                              lookup: LookupImpl): Iterable<LookupElement> {
-    val mlScoresUsed = element2score.values.none { it == null } && sortingRestrictions.shouldSort()
+    val mlScoresUsed = element2score.values.none { it == null }
     if (LOG.isDebugEnabled) {
       LOG.debug("ML sorting in completion used=$mlScoresUsed for language=${lookupStorage.language.id}")
     }
@@ -295,46 +286,6 @@ class MLSorter : CompletionFinalSorter() {
       if (itemsScored != 0) {
         performanceTracker.itemsScored(itemsScored, TimeUnit.NANOSECONDS.toMillis(timeSpent))
       }
-    }
-  }
-
-  interface SortingRestriction {
-    companion object {
-      fun forLanguage(language: Language, version: String): SortingRestriction {
-        if (language.id.equals("Java", ignoreCase = true)
-            && version.equals("0.2.1", ignoreCase = true)
-            && !ApplicationManager.getApplication().isUnitTestMode) {
-          return SortOnlyWithRecommendersScore()
-        }
-        return SortAll()
-      }
-    }
-
-    fun itemScored(features: RankingFeatures)
-
-    fun shouldSort(): Boolean
-  }
-
-  private class SortAll : SortingRestriction {
-    override fun shouldSort(): Boolean = true
-    override fun itemScored(features: RankingFeatures) {}
-  }
-
-  private class SortOnlyWithRecommendersScore : SortingRestriction {
-    companion object {
-      private val REC_FEATURES_NAMES: List<String> = listOf("ml_rec-instances_probability", "ml_rec-statics2_probability")
-    }
-
-    private var recommendersScoreFound: Boolean = false
-
-    override fun itemScored(features: RankingFeatures) {
-      if (!recommendersScoreFound) {
-        recommendersScoreFound = REC_FEATURES_NAMES.any { features.hasFeature(it) }
-      }
-    }
-
-    override fun shouldSort(): Boolean {
-      return recommendersScoreFound
     }
   }
 }
