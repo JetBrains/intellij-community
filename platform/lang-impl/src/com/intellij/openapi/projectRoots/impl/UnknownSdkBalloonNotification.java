@@ -13,8 +13,8 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -32,9 +32,9 @@ public class UnknownSdkBalloonNotification {
     myProject = project;
   }
 
-  @Nullable
-  public FixedSdkNotification buildNotifications(@NotNull Map<? extends UnknownSdk, UnknownSdkLocalSdkFix> localFixes) {
-    if (localFixes.isEmpty()) return null;
+  @NotNull
+  public FixedSdksNotification buildNotifications(@NotNull Map<? extends UnknownSdk, UnknownSdkLocalSdkFix> localFixes) {
+    if (localFixes.isEmpty()) return emptyNotification();
 
     Set<@Nls String> usages = new TreeSet<>();
     for (Map.Entry<? extends UnknownSdk, UnknownSdkLocalSdkFix> entry : localFixes.entrySet()) {
@@ -61,19 +61,24 @@ public class UnknownSdkBalloonNotification {
       change = ProjectBundle.message("notification.link.change.sdks");
     }
 
-    return new FixedSdkNotification(usages, title, message, change);
+    return new FixedSdksNotification(usages, title, message, change);
   }
 
-  public static final class FixedSdkNotification {
+  @NotNull
+  private static FixedSdksNotification emptyNotification() {
+    return new FixedSdksNotification(Collections.emptySet(), "", "", "");
+  }
+
+  public static final class FixedSdksNotification {
     private final Set<@Nls String> myUsages;
     private final String myTitle;
     private final String myMessage;
     private final String myChangeAction;
 
-    private FixedSdkNotification(@NotNull Set<@Nls String> usages,
-                                 @Nls @NotNull String title,
-                                 @Nls @NotNull String message,
-                                 @Nls @NotNull String changeAction) {
+    private FixedSdksNotification(@NotNull Set<@Nls String> usages,
+                                  @Nls @NotNull String title,
+                                  @Nls @NotNull String message,
+                                  @Nls @NotNull String changeAction) {
       myUsages = usages;
       myTitle = title;
       myMessage = message;
@@ -102,8 +107,8 @@ public class UnknownSdkBalloonNotification {
     }
   }
 
-  public void notifyFixedSdks(@Nullable FixedSdkNotification info) {
-    if (info == null || info.getUsages().isEmpty()) return;
+  public void notifyFixedSdks(@NotNull FixedSdksNotification info) {
+    if (info.getUsages().isEmpty() || info.getMessage().isBlank()) return;
 
     NotificationGroupManager.getInstance().getNotificationGroup("Missing SDKs")
       .createNotification(info.getTitle(), info.getMessage(), NotificationType.INFORMATION, null)

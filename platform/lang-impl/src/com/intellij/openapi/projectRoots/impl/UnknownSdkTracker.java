@@ -12,8 +12,8 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
-import com.intellij.openapi.projectRoots.impl.UnknownSdkBalloonNotification.FixedSdkNotification;
-import com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotification.FixableSdkNotifications;
+import com.intellij.openapi.projectRoots.impl.UnknownSdkBalloonNotification.FixedSdksNotification;
+import com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotification.FixableSdkNotification;
 import com.intellij.openapi.roots.ui.configuration.*;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver.UnknownSdkLookup;
 import com.intellij.openapi.util.io.FileUtil;
@@ -62,7 +62,6 @@ public class UnknownSdkTracker {
 
   public void updateUnknownSdksBlocking(@NotNull UnknownSdkCollector collector,
                                         @NotNull ShowStatusCallback showStatus) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     if (!isEnabled()) {
       showStatus.showEmptyStatus();
       return;
@@ -259,13 +258,18 @@ public class UnknownSdkTracker {
                                  @NotNull Map<UnknownSdk, UnknownSdkLocalSdkFix> localFixes,
                                  @NotNull Map<UnknownSdk, UnknownSdkDownloadableSdkFix> downloadFixes,
                                  @NotNull List<UnknownInvalidSdk> invalidSdks) {
-      FixedSdkNotification fixed = mySdkBalloonNotification.buildNotifications(localFixes);
-      FixableSdkNotifications actions = mySdkEditorNotification.buildNotifications(unknownSdksWithoutFix, downloadFixes, invalidSdks);
+      var fixed = mySdkBalloonNotification.buildNotifications(localFixes);
+      var actions = mySdkEditorNotification.buildNotifications(unknownSdksWithoutFix, downloadFixes, invalidSdks);
       notifySdks(fixed, actions);
     }
 
-    protected abstract void notifySdks(@Nullable FixedSdkNotification fixed,
-                                       @NotNull FixableSdkNotifications actions);
+    /**
+     * The notification callback that can be executed on any thread,
+     * it can also be in the same call stack of the {@link #updateUnknownSdksBlocking(UnknownSdkCollector, ShowStatusCallback)}
+     * method call, if no actions were found.
+     */
+    protected abstract void notifySdks(@NotNull FixedSdksNotification fixed,
+                                       @NotNull FixableSdkNotification actions);
   }
 
   private class DefaultShowStatusCallbackAdapter extends ShowStatusCallbackAdapter {
@@ -274,7 +278,7 @@ public class UnknownSdkTracker {
     }
 
     @Override
-    protected void notifySdks(@Nullable FixedSdkNotification fixed, @NotNull FixableSdkNotifications actions) {
+    protected void notifySdks(@NotNull FixedSdksNotification fixed, @NotNull FixableSdkNotification actions) {
       mySdkBalloonNotification.notifyFixedSdks(fixed);
       mySdkEditorNotification.showNotifications(actions);
     }

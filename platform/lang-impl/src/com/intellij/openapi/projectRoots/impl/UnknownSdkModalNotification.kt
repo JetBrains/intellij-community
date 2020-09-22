@@ -1,11 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl
 
-import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.impl.UnknownSdkBalloonNotification.FixedSdksNotification
+import com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotification.FixableSdkNotification
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.htmlComponent
 import com.intellij.ui.layout.*
@@ -18,8 +19,6 @@ class UnknownSdkModalNotification(
   private val project: Project
 ) {
   companion object {
-    private val LOG = logger<UnknownSdkModalNotification>()
-
     @JvmStatic
     fun getInstance(project: Project) = project.service<UnknownSdkModalNotification>()
   }
@@ -30,10 +29,8 @@ class UnknownSdkModalNotification(
   }
 
   fun handleNotification() = object : UnknownSdkTracker.ShowStatusCallbackAdapter(project) {
-    override fun notifySdks(fixed: UnknownSdkBalloonNotification.FixedSdkNotification?, actions: UnknownSdkEditorNotification.FixableSdkNotifications) = invokeLater {
-      if (fixed != null) {
-        mySdkBalloonNotification.notifyFixedSdks(fixed)
-      }
+    override fun notifySdks(fixed: FixedSdksNotification, actions: FixableSdkNotification) : Unit = invokeAndWaitIfNeeded {
+      mySdkBalloonNotification.notifyFixedSdks(fixed)
 
       object : DialogWrapper(project, true) {
         init {

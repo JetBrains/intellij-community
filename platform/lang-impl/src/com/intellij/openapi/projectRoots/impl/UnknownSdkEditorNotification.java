@@ -69,7 +69,7 @@ public class UnknownSdkEditorNotification {
     return ImmutableList.copyOf(myNotifications.get());
   }
 
-  public void showNotifications(@NotNull FixableSdkNotifications notifications) {
+  public void showNotifications(@NotNull UnknownSdkEditorNotification.FixableSdkNotification notifications) {
     myNotifications.set(ImmutableSet.copyOf(notifications.getInfos()));
     EditorNotifications.getInstance(myProject).updateAllNotifications();
 
@@ -80,10 +80,10 @@ public class UnknownSdkEditorNotification {
     });
   }
 
-  public static final class FixableSdkNotifications {
+  public static final class FixableSdkNotification {
     private final Set<SimpleSdkFixInfo> myInfos;
 
-    private FixableSdkNotifications(@NotNull Set<SimpleSdkFixInfo> infos) {
+    private FixableSdkNotification(@NotNull Set<SimpleSdkFixInfo> infos) {
       myInfos = ImmutableSet.copyOf(infos);
     }
 
@@ -94,9 +94,9 @@ public class UnknownSdkEditorNotification {
   }
 
   @NotNull
-  public FixableSdkNotifications buildNotifications(@NotNull List<UnknownSdk> unfixableSdks,
-                                                    @NotNull Map<UnknownSdk, UnknownSdkDownloadableSdkFix> files,
-                                                    @NotNull List<UnknownInvalidSdk> invalidSdks) {
+  public FixableSdkNotification buildNotifications(@NotNull List<UnknownSdk> unfixableSdks,
+                                                   @NotNull Map<UnknownSdk, UnknownSdkDownloadableSdkFix> files,
+                                                   @NotNull List<UnknownInvalidSdk> invalidSdks) {
     ImmutableSet.Builder<SimpleSdkFixInfo> notifications = ImmutableSet.builder();
 
     if (Registry.is("unknown.sdk.show.editor.actions")) {
@@ -121,7 +121,7 @@ public class UnknownSdkEditorNotification {
       }
     }
 
-    return new FixableSdkNotifications(notifications.build());
+    return new FixableSdkNotification(notifications.build());
   }
 
   private void updateEditorNotifications(@NotNull FileEditor editor) {
