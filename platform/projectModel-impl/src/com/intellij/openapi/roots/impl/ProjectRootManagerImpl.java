@@ -80,6 +80,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
       myBatchLevel -= 1;
       if (myChanged && myBatchLevel == 0) {
         try {
+          // todo make sure it should be not null here
           if (myChanges == null) {
             myChanges = getGenericChange();
           }
