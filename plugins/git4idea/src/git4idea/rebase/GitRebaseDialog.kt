@@ -7,21 +7,16 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.popup.IconButton
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.InplaceButton
 import com.intellij.ui.MutableCollectionComboBoxModel
-import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.DropDownLink
-import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
@@ -32,6 +27,8 @@ import git4idea.branch.GitRebaseParams
 import git4idea.config.GitRebaseSettings
 import git4idea.config.GitVersionSpecialty.REBASE_MERGES_REPLACES_PRESERVE_MERGES
 import git4idea.i18n.GitBundle
+import git4idea.merge.createRepositoryField
+import git4idea.merge.createSouthPanelWithOptionsDropDown
 import git4idea.merge.dialog.*
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.ComboBoxWithAutoCompletion
@@ -39,7 +36,6 @@ import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
-import java.awt.BorderLayout
 import java.awt.Container
 import java.awt.Insets
 import java.awt.event.*
@@ -51,11 +47,14 @@ internal class GitRebaseDialog(private val project: Project,
                                private val roots: List<VirtualFile>,
                                private val defaultRoot: VirtualFile?) : DialogWrapper(project) {
 
-  private val repositories = DvcsUtil.sortRepositories(GitRepositoryManager.getInstance(project).repositories)
-
   private val rebaseSettings = project.service<GitRebaseSettings>()
 
+  private val repositories = DvcsUtil.sortRepositories(GitRepositoryManager.getInstance(project).repositories)
+
   private val selectedOptions = mutableSetOf<GitRebaseOption>()
+
+  private val popupBuilder = createPopupBuilder()
+
   private val optionInfos = mutableMapOf<GitRebaseOption, OptionInfo<GitRebaseOption>>()
 
   private val localBranches = mutableListOf<GitBranch>()
@@ -64,7 +63,7 @@ internal class GitRebaseDialog(private val project: Project,
 
   private var currentBranch: GitBranch? = null
 
-  private val rootField = createRootField()
+  private val rootField = createRepoField()
   private val branchField = createBranchField()
   private val upstreamField = createUpstreamField()
 
@@ -73,7 +72,7 @@ internal class GitRebaseDialog(private val project: Project,
 
   private val topPanel = createTopPanel()
   private val bottomPanel = createBottomPanel()
-  private val optionsPanel: JPanel = createOptionsPanel()
+  private val optionsPanel = GitOptionsPanel(::optionChosen, ::getOptionInfo)
 
   private val panel = createPanel()
 
@@ -101,28 +100,19 @@ internal class GitRebaseDialog(private val project: Project,
 
   override fun createCenterPanel() = panel
 
-  override fun doValidateAll(): MutableList<ValidationInfo> {
-    val validationResult = mutableListOf<ValidationInfo>()
-
-    validateNewBase()?.let { validationResult += it }
-    validateOnto()?.let { validationResult += it }
-    validateUpstream()?.let { validationResult += it }
-    validateRebaseInProgress()?.let { validationResult += it }
-    validateBranch()?.let { validationResult += it }
+  override fun doValidateAll(): List<ValidationInfo> {
+    val result = listOf(::validateNewBase,
+                        ::validateOnto,
+                        ::validateUpstream,
+                        ::validateRebaseInProgress,
+                        ::validateBranch).mapNotNull { it() }
 
     okActionTriggered = false
 
-    return validationResult
+    return result
   }
 
-  override fun createSouthPanel(): JComponent {
-    val southPanel = super.createSouthPanel()
-    (southPanel.components[0] as JPanel).apply {
-      (layout as BorderLayout).hgap = JBUI.scale(5)
-      add(createOptionsDropDown(), BorderLayout.EAST)
-    }
-    return southPanel
-  }
+  override fun createSouthPanel() = createSouthPanelWithOptionsDropDown(super.createSouthPanel(), createOptionsDropDown())
 
   override fun getHelpId() = "reference.VersionControl.Git.Rebase"
 
@@ -361,8 +351,6 @@ internal class GitRebaseDialog(private val project: Project,
     isVisible = false
   }
 
-  private fun createOptionsPanel() = JPanel(MigLayout(LC().insets("0").noGrid())).apply { isVisible = false }
-
   private fun createCmdLabel() = CmdLabel("git rebase",
                                           Insets(1, if (showRootField()) 0 else 1, 1, 0),
                                           JBDimension(JBUI.scale(85), branchField.preferredSize.height, true))
@@ -371,7 +359,6 @@ internal class GitRebaseDialog(private val project: Project,
                                            Insets(1, 1, 1, 0),
                                            JBDimension(JBUI.scale(80), branchField.preferredSize.height, true)).apply {
     isVisible = false
-
     addComponent(createOntoHelpButton())
   }
 
@@ -400,10 +387,9 @@ internal class GitRebaseDialog(private val project: Project,
   }
 
   private fun showRebaseHelpPopup() {
-    val helpPopupPanel = GitRebaseHelpPopupPanel()
     JBPopupFactory
       .getInstance()
-      .createComponentPopupBuilder(helpPopupPanel, null)
+      .createComponentPopupBuilder(GitRebaseHelpPopupPanel(), null)
       .setAdText(GitBundle.message("rebase.help.popup.ad.text"))
       .setFocusable(true)
       .setRequestFocus(true)
@@ -428,13 +414,7 @@ internal class GitRebaseDialog(private val project: Project,
     setUI(FlatComboBoxUI(outerInsets = Insets(BW.get(), 0, BW.get(), 0)))
   }
 
-  private fun createRootField() = ComboBox(CollectionComboBoxModel(repositories)).apply {
-    isSwingPopup = false
-    item = repositories.find { repo -> repo.root == defaultRoot } ?: repositories.first()
-    renderer = SimpleListCellRenderer.create("") { DvcsUtil.getShortRepositoryName(it) }
-    @Suppress("UsePropertyAccessSyntax")
-    setUI(FlatComboBoxUI(outerInsets = Insets(BW.get(), BW.get(), BW.get(), 0)))
-
+  private fun createRepoField() = createRepositoryField(repositories, defaultRoot).apply {
     val listener = ActionListener {
       loadRefs()
       updateBranches()
@@ -458,34 +438,20 @@ internal class GitRebaseDialog(private val project: Project,
     add(optionsPanel, CC().newline())
   }
 
-  private fun createOptionsDropDown() = DropDownLink(GitBundle.message("merge.options.modify")) { createOptionsPopup() }.apply {
+  private fun createOptionsDropDown() = DropDownLink(GitBundle.message("merge.options.modify")) {
+    popupBuilder.createPopup()
+  }.apply {
     mnemonic = KeyEvent.VK_M
   }
 
-  private fun createOptionsPopup() = object : ListPopupImpl(project, createOptionPopupStep()) {
-    override fun getListElementRenderer() = OptionListCellRenderer(
-      ::getOptionInfo,
-      { selectedOptions },
-      { isOptionEnabled(it) })
+  private fun createPopupBuilder() = GitOptionsPopupBuilder(project,
+                                                            GitBundle.message("rebase.options.modify.dialog.title"),
+                                                            GitRebaseOption.values().toMutableList(),
+                                                            OptionListCellRenderer(::getOptionInfo, ::isOptionSelected, ::isOptionEnabled),
+                                                            ::optionChosen,
+                                                            ::isOptionEnabled)
 
-    override fun handleSelect(handleFinalChoices: Boolean) {
-      if (handleFinalChoices) {
-        handleSelect()
-      }
-    }
-
-    override fun handleSelect(handleFinalChoices: Boolean, e: InputEvent?) {
-      if (handleFinalChoices) {
-        handleSelect()
-      }
-    }
-
-    private fun handleSelect() {
-      (selectedValues.firstOrNull() as? GitRebaseOption)?.let { option -> optionChosen(option) }
-
-      list.repaint()
-    }
-  }
+  private fun isOptionSelected(option: GitRebaseOption) = option in selectedOptions
 
   private fun isOptionEnabled(option: GitRebaseOption): Boolean {
     if (rebaseMergesAvailable) {
@@ -499,14 +465,6 @@ internal class GitRebaseDialog(private val project: Project,
     OptionInfo(option, option.getOption(gitVersion), option.description)
   }
 
-  private fun createOptionPopupStep() = object : BaseListPopupStep<GitRebaseOption>(GitBundle.message("rebase.options.modify.dialog.title"),
-                                                                                    GitRebaseOption.values().toMutableList()) {
-
-    override fun onChosen(selectedValue: GitRebaseOption?, finalChoice: Boolean) = doFinalStep(Runnable { optionChosen(selectedValue!!) })
-
-    override fun isSelectable(value: GitRebaseOption?) = isOptionEnabled(value!!)
-  }
-
   private fun optionChosen(option: GitRebaseOption) {
     if (option !in selectedOptions) {
       selectedOptions += option
@@ -516,7 +474,7 @@ internal class GitRebaseDialog(private val project: Project,
     }
     if (option in REBASE_FLAGS) {
       updateUpstreamField()
-      updateOptionsPanel()
+      optionsPanel.rerender(selectedOptions intersect REBASE_FLAGS)
       rerender()
     }
     else {
@@ -532,7 +490,7 @@ internal class GitRebaseDialog(private val project: Project,
     updateUpstreamField()
     updateTopPanel()
     updateBottomPanel()
-    updateOptionsPanel()
+    optionsPanel.rerender(selectedOptions intersect REBASE_FLAGS)
     updatePlaceholders()
     rerender()
   }
@@ -626,39 +584,11 @@ internal class GitRebaseDialog(private val project: Project,
 
   private fun getBottomPanelComponentConstraints(singleInRow: Boolean) = CC().alignY("top").width(if (singleInRow) "100%" else "50%")
 
-  private fun updateOptionsPanel() {
-    val selectedOptionsToShow = selectedOptions intersect REBASE_FLAGS
-
-    val shownOptions = mutableSetOf<GitRebaseOption>()
-    optionsPanel.components.forEach { c ->
-      @Suppress("UNCHECKED_CAST")
-      val optionButton = c as OptionButton<GitRebaseOption>
-      val rebaseOption = optionButton.option
-
-      if (rebaseOption in selectedOptionsToShow) {
-        shownOptions.add(rebaseOption)
-      }
-      else {
-        optionsPanel.remove(optionButton)
-      }
-    }
-
-    selectedOptionsToShow.forEach { option ->
-      if (option !in shownOptions) {
-        optionsPanel.add(createOptionButton(option))
-      }
-    }
-
-    optionsPanel.isVisible = selectedOptionsToShow.isNotEmpty()
-  }
-
   private fun getUpstreamFieldConstraints() = CC()
     .alignY("top")
     .minWidth("${JBUI.scale(if (!showRootField()) 370 else 280)}px")
     .growX()
     .pushX()
-
-  private fun createOptionButton(option: GitRebaseOption) = OptionButton(option, option.getOption(gitVersion)) { optionChosen(option) }
 
   private fun isAlreadyAdded(component: JComponent, container: Container) = component.parent == container
 
