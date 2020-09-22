@@ -5,6 +5,7 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.ControlFlowException
@@ -24,6 +25,7 @@ import com.intellij.openapi.projectRoots.impl.UnknownSdkContributor
 import com.intellij.openapi.roots.ui.configuration.UnknownSdk
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.systemIndependentPath
@@ -81,6 +83,10 @@ internal class JdkUpdaterState : SimplePersistentStateComponent<JdkUpdaterStateD
 
 private val LOG = logger<JdkUpdater>()
 
+private fun isEnabled() = Registry.`is`("jdk.updater") &&
+                          !ApplicationManager.getApplication().isUnitTestMode &&
+                          !ApplicationManager.getApplication().isHeadlessEnvironment
+
 @Service
 internal class JdkUpdater(
   private val project: Project
@@ -88,6 +94,12 @@ internal class JdkUpdater(
   override fun dispose() = Unit
 
   init {
+    schedule()
+  }
+
+  private fun schedule() {
+    if (!isEnabled()) return
+
     val future = AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(
       Runnable {
         if (project.isDisposed) return@Runnable
@@ -108,6 +120,8 @@ internal class JdkUpdater(
   }
 
   fun updateNotifications() {
+    if (!isEnabled()) return
+
     object : UnknownSdkCollector(project) {
       override fun getContributors(): List<UnknownSdkContributor> {
         return super.getContributors() + EP_NAME.extensionList.map {
@@ -138,32 +152,36 @@ internal class JdkUpdater(
   }
 
   private fun updateWithSnapshot(knownSdks: List<Sdk>, indicator: ProgressIndicator) {
-    val jdkFeed = JdkListDownloader.getInstance().downloadForUI(progress = indicator)
-      .associateBy { it.suggestedSdkName }
+    val jdkFeed by lazy {
+      JdkListDownloader
+        .getInstance()
+        .downloadForUI(progress = indicator)
+        .associateBy { it.suggestedSdkName }
+    }
 
-    knownSdks
-      .forEach { jdk ->
-        val actualItem = JdkInstaller.getInstance().findJdkItemForInstalledJdk(jdk.homePath) ?: return@forEach
-        val feedItem = jdkFeed[actualItem.suggestedSdkName] ?: return@forEach
-        if (!service<JdkUpdaterState>().isAllowed(jdk, feedItem)) return@forEach
-        if (VersionComparatorUtil.compare(feedItem.jdkVersion, actualItem.jdkVersion) <= 0) return@forEach
+    for (jdk in knownSdks) {
+      val actualItem = JdkInstaller.getInstance().findJdkItemForInstalledJdk(jdk.homePath) ?: continue
+      val feedItem = jdkFeed[actualItem.suggestedSdkName] ?: continue
 
-        val title = ProjectBundle.message("notification.title.jdk.update.found")
-        val message = ProjectBundle.message("notification.text.jdk.update.found", jdk.name, feedItem.fullPresentationText, actualItem.fullPresentationText)
+      if (!service<JdkUpdaterState>().isAllowed(jdk, feedItem)) continue
+      if (VersionComparatorUtil.compare(feedItem.jdkVersion, actualItem.jdkVersion) <= 0) continue
 
-        NotificationGroupManager.getInstance().getNotificationGroup("Update JDK")
-          .createNotification(title, message, NotificationType.INFORMATION, null)
-          .setImportant(true)
-          .addAction(NotificationAction.createSimple(
-            ProjectBundle.message("notification.link.jdk.update.apply"),
-            Runnable { updateJdk(project, jdk, feedItem) }))
-          .addAction(NotificationAction.createSimple(
-            ProjectBundle.message("notification.link.jdk.update.skip"),
-            Runnable {
-              service<JdkUpdaterState>().blockVersion(jdk, feedItem)
-            }))
-          .notify(project)
-      }
+      val title = ProjectBundle.message("notification.title.jdk.update.found")
+      val message = ProjectBundle.message("notification.text.jdk.update.found", jdk.name, feedItem.fullPresentationText, actualItem.fullPresentationText)
+
+      NotificationGroupManager.getInstance().getNotificationGroup("Update JDK")
+        .createNotification(title, message, NotificationType.INFORMATION, null)
+        .setImportant(true)
+        .addAction(NotificationAction.createSimple(
+          ProjectBundle.message("notification.link.jdk.update.apply"),
+          Runnable { updateJdk(project, jdk, feedItem) }))
+        .addAction(NotificationAction.createSimple(
+          ProjectBundle.message("notification.link.jdk.update.skip"),
+          Runnable {
+            service<JdkUpdaterState>().blockVersion(jdk, feedItem)
+          }))
+        .notify(project)
+    }
   }
 
   private fun updateJdk(project: Project, jdk: Sdk, feedItem: JdkItem) {
@@ -190,11 +208,10 @@ internal class JdkUpdater(
             jdk.sdkModificator.apply {
               removeAllRoots()
               homePath = newJdkHome.systemIndependentPath
+              versionString = feedItem.versionString
             }.commitChanges()
 
-
             val sdkType = jdk.sdkType as? SdkType ?: return@runWriteAction null
-
             sdkType.setupSdkPaths(jdk)
           }
         }
