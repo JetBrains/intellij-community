@@ -49,7 +49,10 @@ public final class FileTypeChooser extends DialogWrapper {
     myFileName = fileName;
     myOpenInIdea.setText(FileTypesBundle.message("filetype.chooser.association", ApplicationNamesInfo.getInstance().getFullProductName()));
     myDetectFileType.setText(FileTypesBundle.message("filetype.chooser.autodetect"));
-    ActionListener actionListener = e -> myList.setEnabled(myOpenInIdea.isSelected());
+    ActionListener actionListener = e -> {
+      myList.setEnabled(myOpenInIdea.isSelected());
+      updateContextHelp();
+    };
     myDetectFileType.addActionListener(actionListener);
     myOpenInIdea.addActionListener(actionListener);
     myOpenAsNative.addActionListener(actionListener);
@@ -69,13 +72,20 @@ public final class FileTypeChooser extends DialogWrapper {
       }
     }
     myList.setModel(model);
+    myList.addListSelectionListener(e -> updateContextHelp());
     myPattern.setModel(new CollectionComboBoxModel<>(ContainerUtil.map(patterns, FunctionUtil.id()), patterns.get(0)));
     new ListSpeedSearch(myList, (Function<Object, String>)o -> ((FileType)o).getDescription());
 
     myContextHelpLabel.setForeground(UIUtil.getContextHelpForeground());
-    myContextHelpLabel.setText(FileTypesBundle.message("label.help.change.association", ShowSettingsUtil.getSettingsMenuName()));
+    updateContextHelp();
     setTitle(FileTypesBundle.message("filetype.chooser.title"));
     init();
+  }
+
+  private void updateContextHelp() {
+    String fileTypeString = myOpenAsNative.isSelected() ? "" : (" | " + getSelectedType().getDescription());
+    myContextHelpLabel.setText(FileTypesBundle.message("label.help.change.association", ShowSettingsUtil.getSettingsMenuName(),
+                                                       fileTypeString));
   }
 
   @Override
