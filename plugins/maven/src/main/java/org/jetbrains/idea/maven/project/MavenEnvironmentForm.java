@@ -108,7 +108,8 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
     final ArrayList<String> foundMavenHomes = new ArrayList<>();
     foundMavenHomes.add(MavenServerManager.BUNDLED_MAVEN_3);
     final File mavenHomeDirectory = MavenUtil.resolveMavenHomeDirectory(null);
-    if (mavenHomeDirectory != null) {
+    final File bundledMavenHomeDirectory = MavenUtil.resolveMavenHomeDirectory(MavenServerManager.BUNDLED_MAVEN_3);
+    if (mavenHomeDirectory != null && ! FileUtil.filesEqual(mavenHomeDirectory, bundledMavenHomeDirectory)) {
       foundMavenHomes.add(FileUtil.toSystemIndependentName(mavenHomeDirectory.getPath()));
     }
     mavenHomeField.setHistory(foundMavenHomes);
@@ -158,7 +159,7 @@ public class MavenEnvironmentForm implements PanelWithAnchor {
   }
 
   private void updateMavenVersionLabel() {
-    String version = MavenServerManager.getInstance().getMavenVersion(getMavenHome());
+    String version = MavenUtil.getMavenVersion(MavenServerManager.getMavenHomeFile(getMavenHome()));
     String versionText = version == null ? MavenProjectBundle.message("label.invalid.maven.home.directory")
                                          : MavenProjectBundle.message("label.invalid.maven.home.version", version);
     mavenVersionLabelComponent.getComponent().setText(versionText);
