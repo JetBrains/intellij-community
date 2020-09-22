@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.icons.AllIcons
@@ -15,6 +15,7 @@ import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.JBColor.namedColor
 import com.intellij.ui.components.JBLabel
+import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.JBUI.emptySize
 import com.intellij.util.ui.UIUtil.rightArrow
 import com.intellij.vcs.branch.BranchData
@@ -27,6 +28,9 @@ import java.awt.Dimension
 import java.beans.PropertyChangeListener
 import javax.swing.JTree.TREE_MODEL_PROPERTY
 import javax.swing.UIManager
+import javax.swing.event.ChangeEvent
+import javax.swing.event.ChangeListener
+import kotlin.properties.Delegates.observable
 
 class CurrentBranchComponent(
   val project: Project,
@@ -34,7 +38,17 @@ class CurrentBranchComponent(
   private val commitWorkflowUi: CommitWorkflowUi
 ) : JBLabel() {
 
-  private var branches = setOf<BranchData>()
+  private val changeEventDispatcher = EventDispatcher.create(ChangeListener::class.java)
+
+  private var branches: Set<BranchData> by observable(setOf()) { _, oldValue, newValue ->
+    if (oldValue == newValue) return@observable
+
+    text = getText(newValue)
+    toolTipText = getTooltip(newValue)
+    isVisible = newValue.isNotEmpty()
+
+    changeEventDispatcher.multicaster.stateChanged(ChangeEvent(this))
+  }
 
   private val isGroupedByRepository: Boolean
     get() {
@@ -58,22 +72,24 @@ class CurrentBranchComponent(
     refresh()
   }
 
+  fun addChangeListener(block: () -> Unit, parent: Disposable) =
+    changeEventDispatcher.addListener(ChangeListener { block() }, parent)
+
   override fun getPreferredSize(): Dimension? = if (isVisible) super.getPreferredSize() else emptySize()
 
   private fun refresh() {
     val needShowBranch = !isGroupedByRepository
-    if (needShowBranch) setData(commitWorkflowUi.getDisplayedChanges(), commitWorkflowUi.getDisplayedUnversionedFiles())
 
-    isVisible = needShowBranch && branches.isNotEmpty()
+    branches =
+      if (needShowBranch) getBranches(commitWorkflowUi.getDisplayedChanges(), commitWorkflowUi.getDisplayedUnversionedFiles())
+      else emptySet()
   }
 
-  private fun setData(changes: Iterable<Change>, unversioned: Iterable<FilePath>) {
+  private fun getBranches(changes: Iterable<Change>, unversioned: Iterable<FilePath>): Set<BranchData> {
     val fromChanges = changes.mapNotNull { getCurrentBranch(project, it) }.toSet()
     val fromUnversioned = unversioned.mapNotNull { getCurrentBranch(project, it) }.toSet()
 
-    branches = fromChanges + fromUnversioned
-    text = getText(branches)
-    toolTipText = getTooltip(branches)
+    return fromChanges + fromUnversioned
   }
 
   private fun getText(branches: Collection<BranchData>): String {

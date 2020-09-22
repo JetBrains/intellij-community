@@ -142,9 +142,15 @@ public class ChangesViewManager implements ChangesViewEx,
   }
 
   public static class DisplayNameSupplier implements Supplier<String> {
+    private final @NotNull Project myProject;
+
+    public DisplayNameSupplier(@NotNull Project project) {
+      myProject = project;
+    }
+
     @Override
     public String get() {
-      return VcsBundle.getString("local.changes.tab");
+      return isCommitToolWindow(myProject) ? VcsBundle.message("tab.title.commit") : VcsBundle.message("local.changes.tab");
     }
   }
 
