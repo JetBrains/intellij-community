@@ -55,7 +55,7 @@ public class RetainedSizeDialog extends DialogWrapper {
   private final BorderLayoutPanel myPanel;
   private final NodeHighlighter myHighlighter;
   private final String myRootName;
-  private JBLabel myRetainedSizeLabel;
+  private final JBLabel myRetainedSizeLabel;
 
   public RetainedSizeDialog(@NotNull Project project,
                             XDebuggerEditorsProvider editorsProvider,
@@ -78,9 +78,20 @@ public class RetainedSizeDialog extends DialogWrapper {
     myHeldObjects = new HashSet<>();
     myRootName = name;
 
+    JBPanel topPanel = new JBPanel<>();
+    topPanel.setLayout(new VerticalFlowLayout());
+    myRetainedSizeLabel = new JBLabel(JavaDebuggerBundle.message("action.calculate.retained.size.waiting.message"));
+    topPanel.add(myRetainedSizeLabel);
+    topPanel.add(
+      new JBLabel(
+        JavaDebuggerBundle.message("action.calculate.retained.size.info", myRootName),
+        AllIcons.General.Information,
+        SwingConstants.LEFT
+      )
+    );
     myPanel = JBUI.Panels.simplePanel()
       .addToCenter(ScrollPaneFactory.createScrollPane(myTree))
-      .addToTop(createTopPanel());
+      .addToTop(topPanel);
 
     if (session != null) {
       session.addSessionListener(new XDebugSessionListener() {
@@ -162,22 +173,6 @@ public class RetainedSizeDialog extends DialogWrapper {
         }
       }
     }
-  }
-
-  @NotNull
-  private JBPanel createTopPanel() {
-    JBPanel panel = new JBPanel<>();
-    panel.setLayout(new VerticalFlowLayout());
-    myRetainedSizeLabel = new JBLabel(JavaDebuggerBundle.message("action.calculate.retained.size.waiting.message"));
-    panel.add(myRetainedSizeLabel);
-    panel.add(
-      new JBLabel(
-        JavaDebuggerBundle.message("action.calculate.retained.size.info", myRootName),
-        AllIcons.General.Information,
-        SwingConstants.LEFT
-      )
-    );
-    return panel;
   }
 
   private class NodeHighlighter implements XDebuggerTreeListener {

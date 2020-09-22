@@ -193,9 +193,8 @@ object MemoryAgentReferringObjectCreator {
       when (kind) {
         MemoryAgentReferenceKind.FIELD,
         MemoryAgentReferenceKind.STATIC_FIELD -> {
-          val field = getFieldByJVMTIFieldIndex(referrer, IntArrayParser.parse(value)[0]) ?: return MemoryAgentKindReferringObject(referrer,
-                                                                                                                                   isWeakSoftReachable,
-                                                                                                                                   kind)
+          val field = getFieldByJVMTIFieldIndex(referrer, IntArrayParser.parse(value)[0]) ?:
+                      return MemoryAgentKindReferringObject(referrer, isWeakSoftReachable, kind)
           MemoryAgentFieldReferringObject(referrer, isWeakSoftReachable, field)
         }
         MemoryAgentReferenceKind.CONSTANT_POOL ->
