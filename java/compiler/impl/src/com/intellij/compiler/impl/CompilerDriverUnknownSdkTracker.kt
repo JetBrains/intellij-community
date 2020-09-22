@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.impl.UnknownSdkCollector
 import com.intellij.openapi.projectRoots.impl.UnknownSdkModalNotification
 import com.intellij.openapi.projectRoots.impl.UnknownSdkTracker
+import org.jetbrains.annotations.Nls
 
 @Service
 class CompilerDriverUnknownSdkTracker(
@@ -22,12 +23,17 @@ class CompilerDriverUnknownSdkTracker(
   }
 
   fun fixSdkSettings(updateProjectSdk: Boolean,
-                     modules: List<Module>) {
+                     modules: List<Module>,
+                     @Nls errorMessage: String) {
     val collector = object: UnknownSdkCollector(project) {
       override fun checkProjectSdk(project: Project): Boolean = updateProjectSdk
       override fun collectModulesToCheckSdk(project: Project) = modules
     }
 
-    UnknownSdkTracker.getInstance(project).updateUnknownSdksBlocking(collector, UnknownSdkModalNotification.getInstance(project).handleNotification())
+    val handler = UnknownSdkModalNotification
+      .getInstance(project)
+      .newModalHandler(errorMessage)
+
+    UnknownSdkTracker.getInstance(project).updateUnknownSdksBlocking(collector, handler)
   }
 }

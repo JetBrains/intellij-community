@@ -83,6 +83,10 @@ public class UnknownSdkEditorNotification {
     public Set<UnknownSdkFix> getInfos() {
       return myInfos;
     }
+
+    public boolean isEmpty() {
+      return myInfos.isEmpty();
+    }
   }
 
   @NotNull

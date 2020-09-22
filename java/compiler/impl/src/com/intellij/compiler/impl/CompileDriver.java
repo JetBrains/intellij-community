@@ -24,7 +24,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.UnknownSdkTracker;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.DefaultModuleConfigurationEditorFactory;
@@ -684,15 +683,17 @@ public final class CompileDriver {
         }
       }
       if (!modulesWithoutJdkAssigned.isEmpty()) {
-        CompilerDriverUnknownSdkTracker.getInstance(myProject).fixSdkSettings(projectSdkNotSpecified, Arrays.asList(scopeModules));
+        String message = getNotSpecifiedErrorMessage("error.jdk.not.specified", modulesWithoutJdkAssigned);
+        CompilerDriverUnknownSdkTracker.getInstance(myProject).fixSdkSettings(projectSdkNotSpecified, Arrays.asList(scopeModules), message);
         //TODO: restart the test and see if it was helpful
 
-        showNotSpecifiedError("error.jdk.not.specified", projectSdkNotSpecified, modulesWithoutJdkAssigned, JavaCompilerBundle.message("modules.classpath.title"));
+        showNotSpecifiedError(message, projectSdkNotSpecified, modulesWithoutJdkAssigned, JavaCompilerBundle.message("modules.classpath.title"));
         return false;
       }
 
       if (!modulesWithoutOutputPathSpecified.isEmpty()) {
-        showNotSpecifiedError("error.output.not.specified", projectOutputNotSpecified, modulesWithoutOutputPathSpecified, DefaultModuleConfigurationEditorFactory.getInstance().getOutputEditorDisplayName());
+        String message = getNotSpecifiedErrorMessage("error.output.not.specified", modulesWithoutOutputPathSpecified);
+        showNotSpecifiedError(message, projectOutputNotSpecified, modulesWithoutOutputPathSpecified, DefaultModuleConfigurationEditorFactory.getInstance().getOutputEditorDisplayName());
         return false;
       }
 
@@ -765,17 +766,13 @@ public final class CompileDriver {
     return !ModuleRootManager.getInstance(module).getSourceRoots(rootType).isEmpty();
   }
 
-  private void showNotSpecifiedError(@PropertyKey(resourceBundle = JavaCompilerBundle.BUNDLE) @NonNls String resourceId,
-                                     boolean notSpecifiedValueInheritedFromProject,
-                                     List<String> modules,
-                                     String editorNameToSelect) {
-    String nameToSelect = null;
+  @Nls
+  @NotNull
+  private static String getNotSpecifiedErrorMessage(@PropertyKey(resourceBundle = JavaCompilerBundle.BUNDLE) @NonNls String resourceId,
+                                                    @NotNull List<String> modules) {
     final StringBuilder names = new StringBuilder();
-    final int maxModulesToShow = 10;
+    int maxModulesToShow = 10;
     for (String name : ContainerUtil.getFirstItems(modules, maxModulesToShow)) {
-      if (nameToSelect == null && !notSpecifiedValueInheritedFromProject) {
-        nameToSelect = name;
-      }
       if (names.length() > 0) {
         names.append(",\n");
       }
@@ -786,8 +783,13 @@ public final class CompileDriver {
     if (modules.size() > maxModulesToShow) {
       names.append(",\n...");
     }
-    final String message = JavaCompilerBundle.message(resourceId, modules.size(), names.toString());
+    return JavaCompilerBundle.message(resourceId, modules.size(), names.toString());
+  }
 
+  private void showNotSpecifiedError(@NotNull String message, boolean notSpecifiedValueInheritedFromProject,
+                                     @NotNull List<String> modules,
+                                     @Nullable String editorNameToSelect) {
+    String nameToSelect = notSpecifiedValueInheritedFromProject ? null : ContainerUtil.getFirstItem(modules, null);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       LOG.error(message);
     }
