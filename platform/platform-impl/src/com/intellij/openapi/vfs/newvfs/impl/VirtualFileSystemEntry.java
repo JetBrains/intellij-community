@@ -221,7 +221,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     }
   }
 
-  protected char @NotNull [] appendPathOnFileSystem(int accumulatedPathLength, int[] positionRef) {
+  protected char @NotNull [] appendPathOnFileSystem(int accumulatedPathLength, int @NotNull [] positionRef) {
     CharSequence name = getNameSequence();
 
     char[] chars = getParent().appendPathOnFileSystem(accumulatedPathLength + 1 + name.length(), positionRef);
