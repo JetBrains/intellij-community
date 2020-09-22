@@ -103,7 +103,8 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
                                  @Nullable Runnable replaceAction,
                                  @Nullable Runnable closeAction,
                                  @Nullable DataProvider dataProvider,
-                                 boolean showOnlySearchPanel) {
+                                 boolean showOnlySearchPanel,
+                                 boolean maximizeLeftPanelOnResize) {
     myProject = project;
     myTargetComponent = targetComponent;
     mySearchToolbarModifiedFlagGetter = searchToolbar1ModifiedFlagGetter;
@@ -202,12 +203,18 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       splitter.setHonorComponentsMinimumSize(true);
       splitter.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
       splitter.setHonorComponentsPreferredSize(true);
-      splitter.setDividerPositionStrategy(Splitter.DividerPositionStrategy.KEEP_FIRST_SIZE);
+      if(maximizeLeftPanelOnResize) {
+        splitter.setDividerPositionStrategy(Splitter.DividerPositionStrategy.KEEP_SECOND_SIZE);
+        splitter.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.SIMPLE_RATIO);
+      }else{
+        splitter.setDividerPositionStrategy(Splitter.DividerPositionStrategy.KEEP_FIRST_SIZE);
+      }
       splitter.setAndLoadSplitterProportionKey("FindSplitterProportion");
       splitter.setOpaque(false);
       splitter.getDivider().setOpaque(false);
       add(splitter, BorderLayout.CENTER);
     }
+
 
     update("", "", false, false);
 
@@ -626,6 +633,8 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     private final DefaultActionGroup myReplaceFieldActions = DefaultActionGroup.createFlatGroup(() -> "replace field actions");
 
     private boolean myShowOnlySearchPanel = false;
+    private boolean myMaximizeLeftPanelOnResize = false;
+
 
     private Builder(@Nullable Project project, @NotNull JComponent component) {
       myProject = project;
@@ -707,6 +716,12 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     }
 
     @NotNull
+    public Builder withMaximizeLeftPanelOnResize() {
+      myMaximizeLeftPanelOnResize = true;
+      return this;
+    }
+
+    @NotNull
     public SearchReplaceComponent build() {
       return new SearchReplaceComponent(myProject,
                                         myTargetComponent,
@@ -720,7 +735,8 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
                                         myReplaceAction,
                                         myCloseAction,
                                         myDataProvider,
-                                        myShowOnlySearchPanel);
+                                        myShowOnlySearchPanel,
+                                        myMaximizeLeftPanelOnResize);
     }
   }
 
