@@ -7,6 +7,7 @@ import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdk;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkDownloadableSdkFix;
 import com.intellij.ui.EditorNotificationPanel;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,11 +43,13 @@ class UnknownSdkFixForDownload extends UnknownSdkFix {
   }
 
   @Override
-  protected final @NotNull EditorNotificationPanel createNotificationPanelImpl(@NotNull Project project) {
+  public @Nls @NotNull String getNotificationText() {
     String sdkTypeName = mySdkType.getPresentableName();
-    String notificationText = ProjectBundle.message("config.unknown.sdk.notification.text", sdkTypeName, mySdkName);
-    String configureText = ProjectBundle.message("config.unknown.sdk.configure");
+    return ProjectBundle.message("config.unknown.sdk.notification.text", sdkTypeName, mySdkName);
+  }
 
+  @Override
+  protected final @NotNull EditorNotificationPanel createNotificationPanelImpl(@NotNull Project project) {
     EditorNotificationPanel notification;
 
     if (myDownloadFixAction != null) {
@@ -59,13 +62,13 @@ class UnknownSdkFixForDownload extends UnknownSdkFix {
         }
       }, true);
     } else {
+      String sdkTypeName = mySdkType.getPresentableName();
       String intentionActionText = ProjectBundle.message("config.unknown.sdk.configure.missing", sdkTypeName, mySdkName);
-
       notification = newNotificationPanel(intentionActionText);
     }
 
-    notification.setText(notificationText);
-    notification.createActionLabel(configureText,
+    notification.setText(getNotificationText());
+    notification.createActionLabel(ProjectBundle.message("config.unknown.sdk.configure"),
                                    UnknownSdkTracker
                                      .getInstance(myProject)
                                      .createSdkSelectionPopup(mySdkName, mySdkType),

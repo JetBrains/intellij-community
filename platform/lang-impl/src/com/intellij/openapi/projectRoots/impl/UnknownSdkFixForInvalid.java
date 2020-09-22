@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.ui.configuration.UnknownSdkDownloadableSdkFix;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkLocalSdkFix;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.HyperlinkLabel;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,35 +33,35 @@ final class UnknownSdkFixForInvalid extends UnknownSdkFix {
   }
 
   @Override
+  public @Nls @NotNull String getNotificationText() {
+    String sdkTypeName = mySdkType.getPresentableName();
+    return ProjectBundle.message("config.invalid.sdk.notification.text", sdkTypeName, mySdkName);
+  }
+
+  @Override
   protected final @NotNull EditorNotificationPanel createNotificationPanelImpl(@NotNull Project project) {
     String sdkTypeName = mySdkType.getPresentableName();
-    String notificationText = ProjectBundle.message("config.invalid.sdk.notification.text", sdkTypeName, mySdkName);
-    String configureText = ProjectBundle.message("config.invalid.sdk.configure");
-    String intentionActionText = ProjectBundle.message("config.invalid.sdk.configure.missing", sdkTypeName, mySdkName);
-
-    String localText = "";
-    String localTextTooltip = "";
+    EditorNotificationPanel notification;
     if (myLocalFix != null) {
-      localText =
-      intentionActionText = ProjectBundle.message("config.unknown.sdk.local", sdkTypeName, myLocalFix.getPresentableVersionString());
-      localTextTooltip = SdkListPresenter.presentDetectedSdkPath(myLocalFix.getExistingSdkHome(), 90, 40);
-    }
-
-    EditorNotificationPanel notification = newNotificationPanel(intentionActionText);
-    notification.setText(notificationText);
-
-    if (myLocalFix != null) {
-      HyperlinkLabel actionLabel = notification.createActionLabel(localText, () -> {
+      String intentionActionText = ProjectBundle.message("config.unknown.sdk.local", sdkTypeName, myLocalFix.getPresentableVersionString());
+      String localTextTooltip = SdkListPresenter.presentDetectedSdkPath(myLocalFix.getExistingSdkHome(), 90, 40);
+      notification = newNotificationPanel(intentionActionText);
+      HyperlinkLabel actionLabel = notification.createActionLabel(intentionActionText, () -> {
         mySdk.applyLocalFix(project);
       }, true);
       actionLabel.setToolTipText(localTextTooltip);
     }
-    else if (myDownloadFixAction != null) {
-      notification.createActionLabel(myDownloadFixAction.getActionText(), () -> mySdk.applyDownloadFix(myProject), true);
+    else if (myDownloadFixAction != null)  {
+      String intentionActionText = myDownloadFixAction.getActionText();
+      notification = newNotificationPanel(intentionActionText);
+      notification.createActionLabel(intentionActionText, () -> mySdk.applyDownloadFix(myProject), true);
+    } else {
+      String intentionActionText = ProjectBundle.message("config.invalid.sdk.configure.missing", sdkTypeName, mySdkName);
+      notification = newNotificationPanel(intentionActionText);
     }
 
-    notification.createActionLabel(configureText, mySdk.createSdkSelectionPopup(project), true);
-
+    notification.setText(getNotificationText());
+    notification.createActionLabel(ProjectBundle.message("config.invalid.sdk.configure"), mySdk.createSdkSelectionPopup(project), true);
     return notification;
   }
 
@@ -71,8 +72,8 @@ final class UnknownSdkFixForInvalid extends UnknownSdkFix {
     if (mySdk.myLocalSdkFix != null) {
       sb.append(", fix: ").append(mySdk.myLocalSdkFix.getExistingSdkHome());
     }
-    if (mySdk.myDownloadableSdkFix != null) {
-      sb.append(", fix: ").append(mySdk.myDownloadableSdkFix.getDownloadDescription());
+    if (myDownloadFixAction != null) {
+      sb.append(", fix: ").append(myDownloadFixAction.getFix().getDownloadDescription());
     }
     sb.append("}");
     return sb.toString();

@@ -60,6 +60,11 @@ public abstract class UnknownSdkFix {
     return panel;
   }
 
+  @Nls
+  @NotNull
+  public abstract String getNotificationText();
+
+  // TODO: in theory it could be a local fix action too, the default local fix action.
   @Nullable
   public abstract DownloadFixAction getDownloadAction();
 
