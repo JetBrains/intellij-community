@@ -36,9 +36,8 @@ open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) 
     addActionListener {
       if (!popupState.isRecentlyHidden) {
         val popup = popupBuilder(this)
-        val showPoint = Point(0, height + scale(4))
         popup.addListener(popupState)
-        popup.show(RelativePoint(this, showPoint))
+        popup.show(RelativePoint(this, popupPoint()))
       }
     }
     getInputMap(WHEN_FOCUSED)?.run {
@@ -79,7 +78,9 @@ open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) 
     itemListeners.forEach { it.itemStateChanged(ItemEvent(this, ItemEvent.ITEM_STATE_CHANGED, item, state)) }
   }
 
-  protected open fun itemToString(item: T) : String = item.toString()
+  protected open fun itemToString(item: T) = item.toString()
+
+  protected open fun popupPoint() = Point(0, height + scale(4))
 }
 
 
