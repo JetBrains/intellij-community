@@ -27,6 +27,7 @@ import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.frame.XVariablesView;
+import com.intellij.xdebugger.impl.inline.XDebuggerInlayUtil;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueTextRendererImpl;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
@@ -86,7 +87,16 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
       }
       final List<LineExtensionInfo> infos = new ArrayList<>();
       for (VariableText text : result) {
-        infos.addAll(text.infos);
+        LineExtensionInfo varNameInfo = text.infos.get(0);
+        LineExtensionInfo wrappedName =
+          new LineExtensionInfo("  " + varNameInfo.getText() + XDebuggerInlayUtil.INLINE_HINTS_DELIMETER + " ",
+                                varNameInfo.getColor(),
+                                varNameInfo.getEffectType(),
+                                varNameInfo.getEffectColor(),
+                                varNameInfo.getFontType());
+        List<LineExtensionInfo> value = text.infos.subList(1, text.infos.size());
+        infos.add(wrappedName);
+        infos.addAll(value);
       }
       return ContainerUtil.getFirstItems(infos, LINE_EXTENSIONS_MAX_COUNT);
     }
@@ -118,7 +128,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
                                                                      int lineNumber,
                                                                      Map<Variable, VariableValue> oldValues) {
     final VariableText res = new VariableText();
-    res.add(new LineExtensionInfo("  " + name + ": ", attributes));
+    res.add(new LineExtensionInfo(name, attributes));
 
     Variable var = new Variable(name, lineNumber);
     VariableValue variableValue = oldValues.computeIfAbsent(var, k -> new VariableValue(text.toString(), null, value.hashCode()));
@@ -303,11 +313,9 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
 
   private static class VariableText {
     final List<LineExtensionInfo> infos = new ArrayList<>();
-    int length;
 
     void add(LineExtensionInfo info) {
       infos.add(info);
-      length += info.getText().length();
     }
   }
 }

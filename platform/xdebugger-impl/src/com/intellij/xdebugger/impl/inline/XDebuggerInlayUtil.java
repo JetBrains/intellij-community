@@ -49,6 +49,7 @@ import java.util.function.Consumer;
 
 public final class XDebuggerInlayUtil {
   public static final Key<Helper> HELPER_KEY = Key.create("xdebug.inlay.helper");
+  public static final String INLINE_HINTS_DELIMETER = ":";
 
   private static int getIdentifierEndOffset(@NotNull CharSequence text, int startOffset) {
     while (startOffset < text.length() && Character.isJavaIdentifierPart(text.charAt(startOffset))) startOffset++;

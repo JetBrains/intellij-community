@@ -42,7 +42,8 @@ final class InlineDebugRenderer implements EditorCustomElementRenderer {
   private final Producer<Boolean> myIsOnExecutionLine;
   private @Nullable final Consumer<Inlay> myOnClick;
   private boolean isHovered = false;
-  private int myRemoveOffset = Integer.MAX_VALUE;
+  private int myRemoveXCoordinate = Integer.MAX_VALUE;
+  private int myTextStartXCoordinate;
 
   InlineDebugRenderer(SimpleColoredText text,
                       XValueNodeImpl valueNode,
@@ -68,29 +69,35 @@ final class InlineDebugRenderer implements EditorCustomElementRenderer {
 
 
   public void onClick(Inlay inlay, @NotNull EditorMouseEvent event) {
-    if (myCustomNode && event.getMouseEvent().getX() >= myRemoveOffset) {
+    int x = event.getMouseEvent().getX();
+    if (myCustomNode && x >= myRemoveXCoordinate) {
       myView.removeWatches(Collections.singletonList(myValueNode));
       inlay.update();
-    } else if (myOnClick != null) {
+    } else if (myOnClick != null && x >= myTextStartXCoordinate) {
       myOnClick.accept(inlay);
     }
   }
 
 
   public void onMouseExit(Inlay inlay, @NotNull EditorMouseEvent event) {
-    boolean oldState = isHovered;
-    isHovered = false;
-    ((EditorEx)event.getEditor()).setCustomCursor(InlineDebugRenderer.class, null);
-    if (oldState) {
-      inlay.update();
-    }
+   setHovered(false, inlay, (EditorEx)event.getEditor());
   }
 
   public void onMouseMove(Inlay inlay, @NotNull EditorMouseEvent event) {
+    EditorEx editorEx = (EditorEx)event.getEditor();
+    if (event.getMouseEvent().getX() >= myTextStartXCoordinate) {
+      setHovered(true, inlay, editorEx);
+    } else {
+      setHovered(false, inlay, editorEx);
+    }
+  }
+
+  private void setHovered(boolean active, Inlay inlay, EditorEx editorEx) {
     boolean oldState = isHovered;
-    isHovered = true;
-    ((EditorEx)event.getEditor()).setCustomCursor(InlineDebugRenderer.class, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    if (!oldState) {
+    isHovered = active;
+    Cursor cursor = active ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) : null;
+    editorEx.setCustomCursor(InlineDebugRenderer.class, cursor);
+    if (oldState != active) {
       inlay.update();
     }
   }
@@ -103,7 +110,7 @@ final class InlineDebugRenderer implements EditorCustomElementRenderer {
   @Override
   public int calcWidthInPixels(@NotNull Inlay inlay) {
     FontInfo fontInfo = getFontInfo(inlay.getEditor());
-    int width = fontInfo.fontMetrics().stringWidth(myText.toString() + " ");
+    int width = fontInfo.fontMetrics().stringWidth(myText.toString() + "  " + XDebuggerInlayUtil.INLINE_HINTS_DELIMETER + " ");
     width += myCustomNode ? AllIcons.Actions.Close.getIconWidth() : AllIcons.General.LinkDropTriangle.getIconWidth();
     if (myCustomNode) {
       width += AllIcons.Debugger.Watch.getIconWidth();
@@ -131,23 +138,29 @@ final class InlineDebugRenderer implements EditorCustomElementRenderer {
     int gap = 1;//(r.height < fontMetrics.lineHeight + 2) ? 1 : 2;
     int margin = metrics.charWidth(' ') / 4;
     Color backgroundColor = inlineAttributes.getBackgroundColor();
+    int curX = r.x + metrics.charWidth(' ');
+
     if (backgroundColor != null) {
       float alpha = BACKGROUND_ALPHA;
       GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
       GraphicsUtil.paintWithAlpha(g, alpha);
       g.setColor(backgroundColor);
-      g.fillRoundRect(r.x + margin, r.y + gap, r.width - (2 * margin), r.height - gap * 2, 6, 6);
+      g.fillRoundRect(curX + margin, r.y + gap, r.width - (2 * margin) - metrics.charWidth(' '), r.height - gap * 2, 6, 6);
       config.restore();
     }
 
-    int curX = r.x + (2 * margin);
+    curX += (2 * margin);
     if (myCustomNode) {
       Icon watchIcon = AllIcons.Debugger.Watch;
-      watchIcon.paintIcon(inlay.getEditor().getComponent(), g, curX + metrics.charWidth(' '), getIconY(watchIcon, r));
-      curX += watchIcon.getIconWidth();
+      watchIcon.paintIcon(inlay.getEditor().getComponent(), g, curX, getIconY(watchIcon, r));
+      curX += watchIcon.getIconWidth() + margin * 2;
     }
+    myTextStartXCoordinate = curX;
     for (int i = 0; i < myText.getTexts().size(); i++) {
       String curText = myText.getTexts().get(i);
+      if (i == 0) {
+        curText += XDebuggerInlayUtil.INLINE_HINTS_DELIMETER + " ";
+      }
       SimpleTextAttributes attr = myText.getAttributes().get(i);
 
       Color fgColor = isHovered ? inlineAttributes.getForegroundColor() : attr.getFgColor();
@@ -159,7 +172,7 @@ final class InlineDebugRenderer implements EditorCustomElementRenderer {
       Icon icon;
       if (myCustomNode) {
         icon = AllIcons.Actions.Close;
-        myRemoveOffset = curX;
+        myRemoveXCoordinate = curX;
       } else {
         icon = AllIcons.General.LinkDropTriangle;
       }
