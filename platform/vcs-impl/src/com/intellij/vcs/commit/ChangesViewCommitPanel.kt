@@ -2,7 +2,6 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsScheme
@@ -328,7 +327,6 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
 
       setOptions(options)
       border = empty(0, 10)
-      MnemonicHelper.init(this)
 
       // to reflect LaF changes as commit options components are created once per commit
       if (needUpdateCommitOptionsUi) {

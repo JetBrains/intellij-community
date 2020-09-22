@@ -8,6 +8,7 @@ import com.intellij.ide.actions.WindowAction;
 import com.intellij.ide.ui.PopupLocationTracker;
 import com.intellij.ide.ui.ScreenAreaConsumer;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -1532,6 +1533,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
     public MyContentPanel(@NotNull PopupBorder border) {
       super(new BorderLayout());
+      MnemonicHelper.init(this);
       putClientProperty(UIUtil.TEXT_COPY_ROOT, Boolean.TRUE);
       setBorder(border);
     }

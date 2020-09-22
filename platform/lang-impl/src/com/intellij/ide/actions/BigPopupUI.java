@@ -3,7 +3,6 @@ package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -159,8 +158,6 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
     addToCenter(suggestionsPanel);
 
     getAccessibleContext().setAccessibleName(getAccessibleName());
-
-    MnemonicHelper.init(this);
   }
 
   protected void addListDataListener(@NotNull AbstractListModel<Object> model) {

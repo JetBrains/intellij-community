@@ -15,7 +15,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
@@ -852,8 +851,6 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     add(scopesPanel, "sx 10, pushx, growx, ax left, wrap, gaptop 4, gapbottom 4");
     add(myPreviewSplitter, "pushx, growx, growy, pushy, sx 10, wrap, pad -4 -4 4 4");
     add(bottomPanel, "pushx, growx, dock south, sx 10");
-
-    MnemonicHelper.init(this);
 
     List<Component> focusOrder = new ArrayList<>();
     focusOrder.add(mySearchComponent);
