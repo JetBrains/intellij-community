@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.impl.UnknownSdkBalloonNotification.FixedSdksNotification
 import com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotification.FixableSdkNotification
+import com.intellij.openapi.projectRoots.impl.UnknownSdkFix.SuggestedFixAction
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.Nls
@@ -37,12 +38,31 @@ class UnknownSdkModalNotification(
       //nothing to do, so it's done!
       if (actions.isEmpty) return
 
+      val actionsWithFix = actions.infos.mapNotNull {
+        val fix = it.suggestedFixAction
+        if (fix != null) it to fix else null
+      }.toMap()
+
+      val actionsWithoutFix = actions.infos.filter { it.suggestedFixAction == null }
+
+      if (actionsWithoutFix.isNotEmpty()) {
+        //TODO: handle additional message that we cannot fix that one, so ProjectStructure dialog has to be open
+        "".toString()
+      }
+
+      val confirmActionText = when {
+        actionsWithFix.size == 1 -> actionsWithFix.values.single().actionText
+        else -> actionsWithFix.values.map { it.actionKindText }.distinct().sorted().joinToString(", ") //TODO: how to join?
+      }
+
       invokeAndWaitIfNeeded {
-        createConfirmSdkDownloadFixDialog(actions).showAndGet()
+        createConfirmSdkDownloadFixDialog(actionsWithFix, confirmActionText).showAndGet()
       }
     }
 
-    private fun createConfirmSdkDownloadFixDialog(actions: FixableSdkNotification) = object : DialogWrapper(project) {
+    private fun createConfirmSdkDownloadFixDialog(actions: Map<UnknownSdkFix, SuggestedFixAction>,
+                                                  @Nls confirmActionText : String
+    ) = object : DialogWrapper(project) {
       init {
         title = ProjectBundle.message("dialog.title.resolving.sdks")
         init()
@@ -52,9 +72,11 @@ class UnknownSdkModalNotification(
       }
 
       override fun createCenterPanel() = panel {
-        commentRow(errorMessage)
+        noteRow(errorMessage)
 
-        for (info in actions.infos) {
+        val mainMessages = actions.map { it.key.notificationText }.distinct().sorted()
+
+        for ((info, fix) in actions) {
           val control = info.createNotificationPanel(project)
           row {
             val wrap = JPanel(BorderLayout())
