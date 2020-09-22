@@ -446,6 +446,9 @@
     <pyClassMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibClassMembersProvider"/>
     <pyModuleMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibOverridingModuleMembersProvider"/>
 
+    <!-- TensorFlow -->
+    <importResolver implementation="com.jetbrains.tensorFlow.PyTensorFlowImportResolver"/>
+    <pyModuleMembersProvider implementation="com.jetbrains.tensorFlow.PyTensorFlowModuleMembersProvider"/>
 
   </extensions>
 
