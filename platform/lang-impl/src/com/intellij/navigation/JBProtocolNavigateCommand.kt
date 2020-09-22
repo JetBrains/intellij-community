@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.JBProtocolCommand
+import com.intellij.openapi.application.JBProtocolProjectLocator
 import com.intellij.openapi.application.JetBrainsProtocolHandler.FRAGMENT_PARAM_NAME
 import com.intellij.openapi.application.openProjectAndExecute
 import com.intellij.openapi.diagnostic.logger
@@ -60,7 +61,7 @@ open class JBProtocolNavigateCommand : JBProtocolCommand(NAVIGATE_COMMAND) {
       LOG.warn("JB navigate action supports only reference target, got $target")
       return
     }
-    openProjectAndExecute(projectName) { project ->
+    openProjectAndExecute(JBProtocolProjectLocator(projectName)) { project ->
       findAndNavigateToReference(project, parameters)
     }
   }

@@ -31,7 +31,7 @@ class JBProtocolActionCommand : JBProtocolCommand(COMMAND) {
       LOG.warn("Unable to execute action: '$ID' parameter is missing")
       return
     }
-    openProjectAndExecute(projectName) { project ->
+    openProjectAndExecute(JBProtocolProjectLocator(projectName)) { project ->
       val action = ActionManager.getInstance().getAction(actionId)
       if (action == null) {
         Notification(

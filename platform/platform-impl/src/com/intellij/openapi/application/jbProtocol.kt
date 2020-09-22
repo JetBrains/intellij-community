@@ -13,14 +13,20 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Paths
 
 @ApiStatus.Internal
-fun openProjectAndExecute(projectName: String, callback: (Project) -> Unit) {
+class JBProtocolProjectLocator(locator: String) {
+  private val aliases = locator.split(",").map { it.toLowerCase() }
+  fun matches(projectName: String): Boolean = projectName.toLowerCase() in aliases
+}
+
+@ApiStatus.Internal
+fun openProjectAndExecute(projectLocator: JBProtocolProjectLocator, callback: (Project) -> Unit) {
   for (recentProjectAction in RecentProjectListActionProvider.getInstance().getActions()) {
-    if (recentProjectAction !is ReopenProjectAction || recentProjectAction.projectName.toLowerCase() != projectName) {
+    if (recentProjectAction !is ReopenProjectAction || !projectLocator.matches(recentProjectAction.projectName)) {
       continue
     }
 
     for (project in ProjectUtil.getOpenProjects()) {
-      if (project.name == projectName) {
+      if (projectLocator.matches(project.name)) {
         callback(project)
         return
       }
