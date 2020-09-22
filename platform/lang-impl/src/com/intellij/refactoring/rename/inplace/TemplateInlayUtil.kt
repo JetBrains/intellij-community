@@ -7,6 +7,7 @@ import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.lang.LangBundle
+import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.*
@@ -77,6 +78,7 @@ object TemplateInlayUtil {
       try {
         editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POSITION, inlay.visualPosition)
         panel.border = JBEmptyBorder(JBInsets.create(Insets(8, 12, 4, 12)))
+        MnemonicHelper.init(panel)
         val popup = JBPopupFactory.getInstance()
           .createComponentPopupBuilder(panel, panel.preferredFocusedComponent)
           .setRequestFocus(true)
