@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.storage.impl
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 
 // ------------------------- Updating references ------------------------
@@ -60,18 +61,23 @@ internal fun <Parent : WorkspaceEntityBase> WorkspaceEntityStorageBuilderImpl.up
 
 // ------------------------- Extracting references references ------------------------
 
+@Suppress("UNCHECKED_CAST")
 internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractOneToManyChildren(connectionId: ConnectionId,
-                                                                                     parentId: EntityId): Sequence<Child> {
+                                                                                      parentId: EntityId): Sequence<Child> {
   val entitiesList = entitiesByType[connectionId.childClass] ?: return emptySequence()
   return refs.getOneToManyChildren(connectionId, parentId.arrayId)?.map {
-    entitiesList[it]?.createEntity(this) ?: error(
-      """Cannot resolve entity.
+    val entityData = entitiesList[it]
+    if (entityData == null) {
+      thisLogger().error(
+        """Cannot resolve entity.
         |Connection id: $connectionId
         |Unresolved array id: $it
         |All child array ids: ${refs.getOneToManyChildren(connectionId, parentId.arrayId)?.toArray()}
       """.trimMargin()
-    )
-  } as? Sequence<Child> ?: emptySequence()
+      )
+      null
+    } else entityData.createEntity(this)
+  }?.filterNotNull() as? Sequence<Child> ?: emptySequence()
 }
 
 internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractOneToAbstractManyChildren(connectionId: ConnectionId,

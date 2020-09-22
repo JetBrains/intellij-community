@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl.indices
 
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.workspaceModel.storage.impl.EntityId
 import com.intellij.workspaceModel.storage.impl.containers.copy
@@ -37,7 +38,7 @@ open class EntityStorageInternalIndex<T> private constructor(
       index[id] = entry
       if (oneToOneAssociation) {
         if (index.getKeysByValue(entry)?.size ?: 0 > 1) {
-          error("One to one association is violated. Id: $id, Entity: $entry. This id is already associated with ${index.getKeysByValue(entry)}")
+          thisLogger().error("One to one association is violated. Id: $id, Entity: $entry. This id is already associated with ${index.getKeysByValue(entry)}")
         }
       }
     }

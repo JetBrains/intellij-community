@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl
 
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityWithPersistentId
@@ -38,7 +39,10 @@ internal class MutableEntitiesBarrel private constructor(
 
   fun <T : WorkspaceEntity> replaceById(newEntity: WorkspaceEntityData<T>, clazz: Int) {
     val family = getMutableEntityFamily(clazz) as MutableEntityFamily<T>
-    if (!family.exists(newEntity.id)) error("Nothing to replace")
+    if (!family.exists(newEntity.id)) {
+      thisLogger().error("Nothing to replace. Class: $clazz, new entity: $newEntity")
+      return
+    }
     family.replaceById(newEntity)
   }
 
