@@ -12,6 +12,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.DummyHolderFactory;
+import com.intellij.psi.impl.source.PsiJavaFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.java.PsiExpressionListImpl;
@@ -136,6 +137,13 @@ public final class JavaResolveUtil {
 
       PsiClass memberTopLevelClass = getTopLevelClass(memberClass, null);
       if (fileResolveScope == null) {
+        // Avoid PSI traversal from place (which could be deep) if files don't match 
+        if (file instanceof PsiJavaFileImpl && memberTopLevelClass != null && file.isPhysical()) {
+          PsiFile memberFile = memberTopLevelClass.getContainingFile();
+          if (memberFile.isPhysical() && !manager.areElementsEquivalent(memberFile, file)) {
+            return false;
+          }
+        }
         PsiClass placeTopLevelClass = getTopLevelClass(place, null);
         return manager.areElementsEquivalent(placeTopLevelClass, memberTopLevelClass) &&
                !isInClassAnnotationParameterList(place, placeTopLevelClass);
