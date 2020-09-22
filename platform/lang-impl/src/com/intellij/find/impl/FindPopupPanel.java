@@ -100,6 +100,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import static com.intellij.openapi.actionSystem.IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT;
 import static com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
@@ -578,6 +579,12 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     TouchbarDataKeys.putDialogButtonDescriptor(myOKButton, 0, true);
     boolean enterAsOK = Registry.is("ide.find.enter.as.ok", false);
 
+    AnAction openInRightSplit = ActionManager.getInstance().getAction(ACTION_OPEN_IN_RIGHT_SPLIT);
+    if (openInRightSplit != null) {
+      ShortcutSet set = openInRightSplit.getShortcutSet();
+      new MyEnterAction(false).registerCustomShortcutSet(set, this);
+    }
+    
     new MyEnterAction(enterAsOK).registerCustomShortcutSet(new CustomShortcutSet(ENTER), this);
     DumbAwareAction.create(__ -> processCtrlEnter()).registerCustomShortcutSet(new CustomShortcutSet(ENTER_WITH_MODIFIERS), this);
     DumbAwareAction.create(__ -> myReplaceAllButton.doClick()).registerCustomShortcutSet(new CustomShortcutSet(REPLACE_ALL), this);

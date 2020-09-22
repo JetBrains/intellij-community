@@ -95,6 +95,9 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.intellij.openapi.actionSystem.IdeActions.ACTION_OPEN_IN_NEW_WINDOW;
+import static com.intellij.openapi.actionSystem.IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT;
+
 /**
  * @author Anton Katilin
  * @author Eugene Belyaev
@@ -109,6 +112,12 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   public static final Key<Boolean> CLOSING_TO_REOPEN = Key.create("CLOSING_TO_REOPEN");
   public static final String FILE_EDITOR_MANAGER = "FileEditorManager";
 
+  public enum OpenMode {
+    NEW_WINDOW,
+    RIGHT_SPLIT,
+    DEFAULT
+  }
+  
   private EditorsSplitters mySplitters;
   private final Project myProject;
   private final List<Pair<VirtualFile, EditorWindow>> mySelectionHistory = new ArrayList<>();
@@ -603,11 +612,15 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     }
     assertDispatchThread();
 
-    if (isOpenInNewWindow()) {
+    OpenMode mode = getOpenMode(IdeEventQueue.getInstance().getTrueCurrentEvent());
+    if (mode == OpenMode.NEW_WINDOW) {
       return openFileInNewWindow(file);
     }
-
-
+    if (mode == OpenMode.RIGHT_SPLIT) {
+      Pair<FileEditor[], FileEditorProvider[]> pair = openInRightSplit(file);
+      if (pair != null) return pair;
+    }
+    
     EditorWindow wndToOpenIn = null;
     if (searchForSplitter && UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE) {
       Set<EditorsSplitters> all = getAllSplitters();
@@ -643,27 +656,70 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   public Pair<FileEditor[], FileEditorProvider[]> openFileInNewWindow(@NotNull VirtualFile file) {
     return ((DockManagerImpl)DockManager.getInstance(getProject())).createNewDockContainerFor(file, this);
   }
+  
+  @Nullable
+  private Pair<FileEditor[], FileEditorProvider[]> openInRightSplit(@NotNull VirtualFile file) {
+    EditorsSplitters active = getSplitters();
+    EditorWindow window = active.getCurrentWindow();
+    if (window != null) {
+      if (window.inSplitter() && 
+          file.equals(window.getSelectedFile()) && 
+          file.equals(ArrayUtil.getLastElement(window.getFiles()))) {
+        //already in right splitter
+        return null;
+      }
+      
+      EditorWindow split = window.split(SwingConstants.VERTICAL, true, file, true);
+      if (split != null) {
+        Ref<Pair<FileEditor[], FileEditorProvider[]>> ref = Ref.create();
+        CommandProcessor.getInstance().executeCommand(myProject, () -> {
+          EditorWithProviderComposite[] editorsWithProvider = split.getEditors();
+          FileEditor[] editors = Arrays.stream(editorsWithProvider)
+            .map(el -> el.getEditors())
+            .flatMap(el -> Arrays.stream(el))
+            .toArray(FileEditor[]::new);
 
-  private static boolean isOpenInNewWindow() {
-    AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
+          FileEditorProvider[] providers = Arrays.stream(editorsWithProvider)
+            .map(el -> el.getProviders())
+            .flatMap(el -> Arrays.stream(el))
+            .toArray(FileEditorProvider[]::new);
+          ref.set(Pair.create(editors, providers));
+        }, "", null);
 
-    // Shift was used while clicking
-    if (event instanceof MouseEvent &&
-        ((MouseEvent)event).getModifiersEx() == InputEvent.SHIFT_DOWN_MASK &&
-        (event.getID() == MouseEvent.MOUSE_CLICKED ||
-         event.getID() == MouseEvent.MOUSE_PRESSED ||
-         event.getID() == MouseEvent.MOUSE_RELEASED)) {
-      return true;
+        return ref.get();
+      }
+    }
+    return null;
+  }
+
+  @NotNull
+  public static OpenMode getOpenMode(@NotNull AWTEvent event) {
+    if (event instanceof MouseEvent) {
+      boolean isMouseClick = event.getID() == MouseEvent.MOUSE_CLICKED ||
+                  event.getID() == MouseEvent.MOUSE_PRESSED ||
+                  event.getID() == MouseEvent.MOUSE_RELEASED;
+      int modifiers = ((MouseEvent)event).getModifiersEx();
+      if (modifiers == InputEvent.SHIFT_DOWN_MASK && isMouseClick) {
+        return OpenMode.NEW_WINDOW;
+      }
+      if (modifiers == InputEvent.ALT_DOWN_MASK && isMouseClick) {
+        return OpenMode.RIGHT_SPLIT;
+      }
     }
 
     if (event instanceof KeyEvent) {
       KeyEvent ke = (KeyEvent)event;
-      Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
-      String[] ids = keymap.getActionIds(KeyStroke.getKeyStroke(ke.getKeyCode(), ke.getModifiers()));
-      return Arrays.asList(ids).contains("OpenElementInNewWindow");
+      KeymapManager keymapManager = KeymapManager.getInstance();
+      if (keymapManager != null) {
+        Keymap keymap = keymapManager.getActiveKeymap();
+        String[] ids = keymap.getActionIds(KeyStroke.getKeyStroke(ke.getKeyCode(), ke.getModifiers()));
+        List<String> strings = Arrays.asList(ids);
+        if (strings.contains(ACTION_OPEN_IN_NEW_WINDOW)) return OpenMode.NEW_WINDOW;
+        if (strings.contains(ACTION_OPEN_IN_RIGHT_SPLIT)) return OpenMode.RIGHT_SPLIT;
+      }
     }
 
-    return false;
+    return OpenMode.DEFAULT;
   }
 
   private void openAssociatedFile(VirtualFile file, EditorWindow wndToOpenIn, @NotNull EditorsSplitters splitters) {

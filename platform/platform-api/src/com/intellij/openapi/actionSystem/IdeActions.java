@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
 import org.jetbrains.annotations.NonNls;
@@ -334,6 +334,8 @@ public interface IdeActions {
   String ACTION_RECENT_FILES = "RecentFiles";
   String ACTION_SEARCH_EVERYWHERE = "SearchEverywhere";
   String ACTION_RUN_ANYTHING = "RunAnything";
+  @NonNls String ACTION_OPEN_IN_RIGHT_SPLIT = "OpenInRightSplit";
+  @NonNls String ACTION_OPEN_IN_NEW_WINDOW = "OpenElementInNewWindow";
 
   String ACTION_MARK_ALL_NOTIFICATIONS_AS_READ = "MarkNotificationsAsRead";
   String ACTION_SWITCHER = "Switcher";
