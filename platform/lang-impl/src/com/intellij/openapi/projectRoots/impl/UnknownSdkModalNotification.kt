@@ -68,18 +68,30 @@ class UnknownSdkModalNotification(
       override fun createCenterPanel() = panel {
         noteRow(errorMessage)
 
-        for ((_, fix) in actions) {
+        if (actionsWithoutFix.isNotEmpty()) {
           row {
-            checkBox(text = fix.checkboxActionText,
-                     isSelected = true,
-                     comment = fix.checkboxActionTooltip
-                     )
+            label(ProjectBundle.message("dialog.text.resolving.sdks.unknowns"))
+          }
+
+          for (fix in actionsWithoutFix) {
+            row(ProjectBundle.message("dialog.section.bullet")) {
+              label(fix.notificationText)
+            }
           }
         }
 
-        for (fix in actionsWithoutFix) {
+        if (actions.isNotEmpty()) {
           row {
-            label(fix.notificationText)
+            label(ProjectBundle.message("dialog.text.resolving.sdks.suggestions"))
+          }
+
+          for ((_, fix) in actions) {
+            row(ProjectBundle.message("dialog.section.bullet")) {
+              val label = label(fix.checkboxActionText)
+              fix.checkboxActionTooltip?.let {
+                label.comment(it)
+              }
+            }
           }
         }
       }
