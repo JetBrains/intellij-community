@@ -8,6 +8,9 @@ import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.DynamicPluginListener;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.internal.statistic.IdeActivity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -80,7 +83,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   //used from EDT
   private final DumbServiceBalloon myBalloon;
 
-  public DumbServiceImpl(Project project) {
+  public DumbServiceImpl(@NotNull Project project) {
     myProject = project;
     myTrackedEdtActivityService = new TrackedEdtActivityService(project);
     myTaskQueue = new DumbServiceMergingTaskQueue();
@@ -94,6 +97,17 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     myBalloon = new DumbServiceBalloon(project, this);
     myAlternativeResolveTracker = new DumbServiceAlternativeResolveTracker();
     myState = new AtomicReference<>(project.isDefault() ? State.SMART : State.WAITING_PROJECT_SMART_MODE_STARTUP_TASKS);
+
+    project.getMessageBus().simpleConnect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+      @Override
+      public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
+        myRunWhenSmartQueue.removeIf(runnable -> {
+          ClassLoader classLoader = runnable.getClass().getClassLoader();
+          return classLoader instanceof PluginAwareClassLoader &&
+                 ((PluginAwareClassLoader)classLoader).getPluginId().equals(pluginDescriptor.getPluginId());
+        });
+      }
+    });
   }
 
   void queueStartupActivitiesRequiredForSmartMode() {
