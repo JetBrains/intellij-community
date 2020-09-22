@@ -18,10 +18,12 @@ import com.intellij.openapi.util.SystemInfo.isMac
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.*
-import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.getToolWindowFor
+import com.intellij.openapi.vcs.changes.ui.EditChangelistSupport
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.ui.CommitMessage
@@ -93,9 +95,10 @@ private fun JBPopup.showAbove(component: JComponent) {
 
 internal fun ChangesBrowserNode<*>.subtreeRootObject(): Any? = (path.getOrNull(1) as? ChangesBrowserNode<*>)?.userObject
 
-open class ChangesViewCommitPanel(private val changesView: ChangesListView, private val rootComponent: JComponent) :
+class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, private val rootComponent: JComponent) :
   BorderLayoutPanel(), ChangesViewCommitWorkflowUi, EditorColorsListener, ComponentContainer, DataProvider {
 
+  private val changesView get() = changesViewHost.changesView
   private val project get() = changesView.project
 
   private val dataProviders = mutableListOf<DataProvider>()
@@ -164,6 +167,7 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
       setInclusionListener { inclusionEventDispatcher.multicaster.inclusionChanged() }
       isShowCheckboxes = true
     }
+    changesViewHost.statusComponent = ChangesViewCommitStatusPanel(changesView, this)
 
     setupShortcuts(rootComponent)
   }
@@ -184,7 +188,6 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
         background = getButtonPanelBackground()
 
         add(commitAuthorComponent.apply { border = empty(0, 5, 4, 0) })
-        add(ChangesViewCommitStatusPanel(changesView, this@ChangesViewCommitPanel, getButtonPanelBackground()))
         add(buttonPanel)
       })
     addToCenter(centerPanel)
@@ -271,12 +274,10 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
     changesView.isShowCheckboxes = true
     isVisible = true
 
-    selectContent(contentManager)
+    contentManager.selectContent(LOCAL_CHANGES)
     toolWindow.activate({ commitMessage.requestFocusInMessage() }, false)
     return true
   }
-
-  protected open fun selectContent(contentManager: ChangesViewContentI) = contentManager.selectContent(LOCAL_CHANGES)
 
   override fun deactivate(isRestoreState: Boolean) {
     if (isRestoreState) restoreToolWindowState()
@@ -301,7 +302,7 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
     isHideToolWindowOnDeactivate = false
   }
 
-  protected open fun getVcsToolWindow(): ToolWindow? = getToolWindowFor(project, LOCAL_CHANGES)
+  private fun getVcsToolWindow(): ToolWindow? = getToolWindowFor(project, LOCAL_CHANGES)
 
   override fun expand(item: Any) {
     val node = changesView.findNodeInTree(item)
@@ -405,6 +406,7 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
   }
 
   override fun dispose() {
+    changesViewHost.statusComponent = null
     with(changesView) {
       isShowCheckboxes = false
       setInclusionListener(null)

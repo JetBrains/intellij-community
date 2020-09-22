@@ -578,7 +578,7 @@ public class ChangesViewManager implements ChangesViewEx,
       if (isNonModal) {
         if (myCommitPanel == null) {
           myChangesPanel.setToolbarHorizontal(isToolbarHorizontalSetting.asBoolean());
-          myCommitPanel = myChangesViewManager.createCommitPanel(myView, this);
+          myCommitPanel = new ChangesViewCommitPanel(myChangesPanel, this);
           myCommitPanel.setToolbarHorizontal(isToolbarHorizontalSetting.asBoolean());
           myCommitWorkflowHandler = new ChangesViewCommitWorkflowHandler(new ChangesViewCommitWorkflow(myProject), myCommitPanel);
           if (isToggleCommitUi().asBoolean()) myCommitWorkflowHandler.deactivate(false);
@@ -863,10 +863,6 @@ public class ChangesViewManager implements ChangesViewEx,
         return myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN;
       }
     }
-  }
-
-  protected ChangesViewCommitPanel createCommitPanel(@NotNull ChangesListView myView, @NotNull ChangesViewToolWindowPanel changesViewToolWindowPanel) {
-      return new ChangesViewCommitPanel(myView, changesViewToolWindowPanel);
   }
 
   private static final class MyContentDnDTarget extends VcsToolwindowDnDTarget {
