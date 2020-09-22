@@ -112,8 +112,14 @@ internal class WorkspaceEntityStorageBuilderImpl(
     pEntityData.persistentId(this)?.let { persistentId ->
       val ids = indexes.persistentIdIndex.getIdsByEntry(persistentId)
       if (ids != null && ids.isNotEmpty()) {
-        entitiesByType.remove(pEntityData.id, unmodifiableEntityClassId)
-        throw PersistentIdAlreadyExistsException(persistentId)
+        // Oh oh. This persistent id exists already
+        // Fallback strategy: remove existing entity with all it's references
+        val existingEntity = entityDataByIdOrDie(ids.single()).createEntity(this)
+        removeEntityAndAssertConsistency(existingEntity, false)
+        LOG.error("""
+          addEntity: persistent id already exists. Replacing entity with the new one.
+          Persistent id: $persistentId
+        """.trimIndent(), PersistentIdAlreadyExistsException(persistentId))
       }
     }
 
@@ -153,10 +159,17 @@ internal class WorkspaceEntityStorageBuilderImpl(
       if (newPersistentId != null) {
         val ids = indexes.persistentIdIndex.getIdsByEntry(newPersistentId)
         if (beforePersistentId != newPersistentId && ids != null && ids.isNotEmpty()) {
-            // Restore previous value
-          (entitiesByType.entityFamilies[e.id.clazz] as MutableEntityFamily<T>).set(e.id.arrayId, backup)
-            throw PersistentIdAlreadyExistsException(newPersistentId)
-          }
+          // Oh oh. This persistent id exists already.
+          // Remove an existing entity and replace it with the new one.
+
+          val existingEntity = entityDataByIdOrDie(ids.single()).createEntity(this)
+          removeEntityAndAssertConsistency(existingEntity, false)
+          LOG.error("""
+            modifyEntity: persistent id already exists. Replacing entity with the new one.
+            Old persistent id: $newPersistentId
+            Persistent id: $newPersistentId
+          """.trimIndent(), PersistentIdAlreadyExistsException(newPersistentId))
+        }
       }
       else {
         LOG.error("Persistent id expected for entity: $copiedData")
@@ -249,6 +262,10 @@ internal class WorkspaceEntityStorageBuilderImpl(
   }
 
   override fun removeEntity(e: WorkspaceEntity) {
+    removeEntityAndAssertConsistency(e, true)
+  }
+
+  private fun removeEntityAndAssertConsistency(e: WorkspaceEntity, assertConsistencyInStrict: Boolean) {
     e as WorkspaceEntityBase
 
     val removedEntities = removeEntity(e.id)
@@ -256,8 +273,10 @@ internal class WorkspaceEntityStorageBuilderImpl(
       removedEntities.forEach { removedEntityId -> it.add(ChangeEntry.RemoveEntity(removedEntityId)) }
     }
 
-    // Assert consistency
-    this.assertConsistencyInStrictMode()
+    if (assertConsistencyInStrict) {
+      // Assert consistency
+      this.assertConsistencyInStrictMode()
+    }
   }
 
   override fun <E : WorkspaceEntity> createReference(e: E): EntityReference<E> = EntityReferenceImpl((e as WorkspaceEntityBase).id)
