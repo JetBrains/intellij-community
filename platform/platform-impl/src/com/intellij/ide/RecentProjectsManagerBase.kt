@@ -471,7 +471,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
 
     logger<RecentProjectsManager>().runAndLogException {
       if (writLastProjectInfo) {
-        writeInfoFile(frameInfo, frame.frame)
+        writeInfoFile(frameInfo, frame.frame ?: return@runAndLogException)
       }
 
       if (workspaceId != null && Registry.`is`("ide.project.loading.show.last.state")) {
@@ -522,7 +522,7 @@ int32 "extendedState"
   }
 
   private fun takeASelfie(frameHelper: ProjectFrameHelper, workspaceId: String) {
-    val frame = frameHelper.frame
+    val frame = frameHelper.frame!!
     val width = frame.width
     val height = frame.height
     val image = UIUtil.createImage(frame, width, height, BufferedImage.TYPE_INT_ARGB)

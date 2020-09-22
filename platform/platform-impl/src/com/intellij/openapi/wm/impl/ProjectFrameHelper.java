@@ -435,12 +435,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
     return UIUtil.isClientPropertyTrue(frame == null ? null : frame.getRootPane(), ScreenUtil.DISPOSE_TEMPORARY);
   }
 
-  public @NotNull IdeFrameImpl getFrame() {
-    return myFrame;
-  }
-
-  @ApiStatus.Internal
-  public @Nullable IdeFrameImpl getFrameOrNullIfDisposed() {
+  public @Nullable IdeFrameImpl getFrame() {
     return myFrame;
   }
 

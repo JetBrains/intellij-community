@@ -157,7 +157,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
           }
 
           // let's check that it is a toolwindow who loses the focus
-          if (isInActiveToolWindow(event.source, activeEntry.toolWindow) && !isInActiveToolWindow(event.oppositeComponent, activeEntry.toolWindow)) {
+          if (isInActiveToolWindow(event.source, activeEntry.toolWindow) && !isInActiveToolWindow(event.oppositeComponent,
+                                                                                                  activeEntry.toolWindow)) {
             // a toolwindow lost focus
             val focusGoesToPopup = JBPopupFactory.getInstance().getParentBalloonFor(event.oppositeComponent) != null
             if (!focusGoesToPopup) {
@@ -607,7 +608,10 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }, project.disposed)
   }
 
-  private fun activateToolWindow(entry: ToolWindowEntry, info: WindowInfoImpl, autoFocusContents: Boolean = true, source: ToolWindowEventSource? = null) {
+  private fun activateToolWindow(entry: ToolWindowEntry,
+                                 info: WindowInfoImpl,
+                                 autoFocusContents: Boolean = true,
+                                 source: ToolWindowEventSource? = null) {
     LOG.debug { "activateToolWindow($entry)" }
 
     ToolWindowCollector.getInstance().recordActivation(entry.id, info, source)
@@ -655,7 +659,10 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     return info
   }
 
-  private fun doDeactivateToolWindow(info: WindowInfoImpl, entry: ToolWindowEntry, dirtyMode: Boolean = false, source: ToolWindowEventSource? = null) {
+  private fun doDeactivateToolWindow(info: WindowInfoImpl,
+                                     entry: ToolWindowEntry,
+                                     dirtyMode: Boolean = false,
+                                     source: ToolWindowEventSource? = null) {
     LOG.debug { "enter: deactivateToolWindowImpl(${info.id})" }
 
     setHiddenState(info, entry, source)
@@ -845,7 +852,11 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     }
   }
 
-  private fun doHide(entry: ToolWindowEntry, info: WindowInfoImpl, dirtyMode: Boolean, hideSide: Boolean = false, source: ToolWindowEventSource? = null) {
+  private fun doHide(entry: ToolWindowEntry,
+                     info: WindowInfoImpl,
+                     dirtyMode: Boolean,
+                     hideSide: Boolean = false,
+                     source: ToolWindowEventSource? = null) {
     // hide and deactivate
     doDeactivateToolWindow(info, entry, dirtyMode = dirtyMode, source = source)
 
@@ -897,7 +908,10 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   /**
    * @param dirtyMode if `true` then all UI operations are performed in dirty mode.
    */
-  private fun showToolWindowImpl(entry: ToolWindowEntry, toBeShownInfo: WindowInfoImpl, dirtyMode: Boolean, source: ToolWindowEventSource? = null): Boolean {
+  private fun showToolWindowImpl(entry: ToolWindowEntry,
+                                 toBeShownInfo: WindowInfoImpl,
+                                 dirtyMode: Boolean,
+                                 source: ToolWindowEventSource? = null): Boolean {
     if (!entry.toolWindow.isAvailable) {
       return false
     }
@@ -968,7 +982,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
   override fun registerToolWindow(task: RegisterToolWindowTask): ToolWindow {
     val entry = doRegisterToolWindow(task,
-      toolWindowPane = toolWindowPane ?: init((WindowManager.getInstance() as WindowManagerImpl).allocateFrame(project)))
+                                     toolWindowPane = toolWindowPane ?: init(
+                                       (WindowManager.getInstance() as WindowManagerImpl).allocateFrame(project)))
     project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowsRegistered(listOf(entry.id), this)
     val toolWindowPane = toolWindowPane!!
     toolWindowPane.getStripeFor(entry.toolWindow.anchor).revalidate()
@@ -1467,7 +1482,10 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     fireStateChanged()
   }
 
-  private fun hideIfNeededAndShowAfterTask(entry: ToolWindowEntry, info: WindowInfoImpl, source: ToolWindowEventSource? = null, task: () -> Unit) {
+  private fun hideIfNeededAndShowAfterTask(entry: ToolWindowEntry,
+                                           info: WindowInfoImpl,
+                                           source: ToolWindowEventSource? = null,
+                                           task: () -> Unit) {
     val wasVisible = entry.readOnlyWindowInfo.isVisible
     val wasFocused = entry.toolWindow.isActive
     if (wasVisible) {
@@ -1686,7 +1704,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
 
   private fun addFloatingDecorator(entry: ToolWindowEntry, info: WindowInfo) {
     val frame = frame!!.frame
-    val floatingDecorator = FloatingDecorator(frame, entry.toolWindow.getOrCreateDecoratorComponent() as InternalDecorator)
+    val floatingDecorator = FloatingDecorator(frame!!, entry.toolWindow.getOrCreateDecoratorComponent() as InternalDecorator)
     floatingDecorator.apply(info)
 
     entry.floatingDecorator = floatingDecorator
@@ -1785,7 +1803,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
               return@Runnable
             }
 
-            toolWindowManager.activateToolWindow(entry, toolWindowManager.getRegisteredMutableInfoOrLogError(entry.id), autoFocusContents = false)
+            toolWindowManager.activateToolWindow(entry, toolWindowManager.getRegisteredMutableInfoOrLogError(entry.id),
+                                                 autoFocusContents = false)
           }, ModalityState.defaultModalityState(), toolWindowManager.project.disposed)
         })
     }
@@ -1998,20 +2017,13 @@ private fun areAllModifiersPressed(@JdkConstants.InputEventMask modifiers: Int, 
 
 @JdkConstants.InputEventMask
 private fun keyCodeToInputMask(code: Int): Int {
-  var mask = 0
-  if (code == KeyEvent.VK_SHIFT) {
-    mask = InputEvent.SHIFT_MASK
+  return when (code) {
+    KeyEvent.VK_SHIFT -> Event.SHIFT_MASK
+    KeyEvent.VK_CONTROL -> Event.CTRL_MASK
+    KeyEvent.VK_META -> Event.META_MASK
+    KeyEvent.VK_ALT -> Event.ALT_MASK
+    else -> 0
   }
-  if (code == KeyEvent.VK_CONTROL) {
-    mask = InputEvent.CTRL_MASK
-  }
-  if (code == KeyEvent.VK_META) {
-    mask = InputEvent.META_MASK
-  }
-  if (code == KeyEvent.VK_ALT) {
-    mask = InputEvent.ALT_MASK
-  }
-  return mask
 }
 
 // We should filter out 'mixed' mask like InputEvent.META_MASK | InputEvent.META_DOWN_MASK
