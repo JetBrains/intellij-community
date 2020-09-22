@@ -3,9 +3,11 @@ package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.execution.actions.ChooseDebugConfigurationPopupAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -25,6 +27,14 @@ public class ResumeAction extends XDebuggerActionBase implements DumbAware {
     }
     // disable visual representation but leave the shortcut action enabled
     return e.getInputEvent() instanceof KeyEvent;
+  }
+
+  @Override
+  protected boolean isHidden(AnActionEvent event) {
+    if (!ApplicationManager.getApplication().isInternal() || !Registry.is("debugger.merge.pause.and.resume")) {
+      return super.isHidden(event);
+    }
+    return super.isHidden(event) || !isEnabled(event);
   }
 
   @Override
