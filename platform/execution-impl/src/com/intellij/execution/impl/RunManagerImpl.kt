@@ -580,9 +580,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
 
   internal fun selectConfigurationStoredInFile(file: VirtualFile) {
     val runConfigs = rcInArbitraryFileManager.getRunConfigsFromFiles(listOf(file.path))
-    if (!runConfigs.isEmpty()) {
-      selectedConfiguration = runConfigs.first()
-    }
+    runConfigs.find { idToSettings.containsKey(it.uniqueID) }?.let { selectedConfiguration = it }
   }
 
   fun requestSort() {
