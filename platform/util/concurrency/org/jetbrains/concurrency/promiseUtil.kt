@@ -28,10 +28,13 @@ fun <T> Promise<T>.asCompletableFuture(): CompletableFuture<T> =
       catch (e: Throwable) {
         CompletableFuture.failedFuture<T>(e)
       }
-    else -> CompletableFuture<T>().also { future ->
+    else -> CompletableFuture<T>().let { future ->
       onSuccess { future.complete(it) }
       onError { future.completeExceptionally(it) }
-      if (this is Future<*>) future.whenComplete { _, _ -> this.cancel(false) }
+      when (this) {
+        is Future<*> -> future.whenComplete { _, _ -> this.cancel(false) }
+        else -> future
+      }
     }
   }
 
