@@ -11,6 +11,7 @@ import com.intellij.execution.application.JavaApplicationRunConfigurationImporte
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.jar.JarApplicationRunConfigurationImporter;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
@@ -46,6 +47,8 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Created by Nikita.Skvortsov
@@ -747,5 +750,25 @@ public class GradleSettingsImportingTest extends GradleSettingsImportingTestCase
         .addPostfix("}")
         .generate());
     assertSourcePackagePrefix("project.main", "src/main/java", "prefix.package.other");
+  }
+
+
+  @Test
+  @Bombed(month = Calendar.NOVEMBER, day = 1, user="Nikita.Skvortsov", description = "Disabled until release of Gradle-Idea-Ext plugin v0.10")
+  public void testModuleTypesImport() throws Exception {
+    importProject(
+      new GradleBuildScriptBuilderEx()
+        .withGradleIdeaExtPluginIfCan(IDEA_EXT_PLUGIN_VERSION)
+        .withJavaPlugin()
+        .addPostfix(
+          "import org.jetbrains.gradle.ext.*",
+          "idea.module.settings {",
+          "    rootModuleType = 'EMPTY_MODULE'",
+          "    moduleType[sourceSets.main] = 'WEB_MODULE'",
+          "    }"
+        ).generate());
+    assertThat(getModule("project").getModuleTypeName()).isEqualTo("EMPTY_MODULE");
+    assertThat(getModule("project.main").getModuleTypeName()).isEqualTo("WEB_MODULE");
+    assertThat(getModule("project.test").getModuleTypeName()).isEqualTo("JAVA_MODULE");
   }
 }

@@ -79,6 +79,7 @@
         implementation="com.intellij.openapi.externalSystem.service.project.settings.InspectionsProfileConfigurationHandler"/>
     <externalSystemConfigurationHandler
         implementation="com.intellij.openapi.externalSystem.service.project.settings.DetectionExcludesConfigImporter"/>
+    <externalSystemConfigurationHandler implementation="com.intellij.openapi.externalSystem.service.project.settings.ModuleTypeHandler"/>
 
     <!--Tool window services-->
     <externalSystemViewContributor id="default" order="last"
