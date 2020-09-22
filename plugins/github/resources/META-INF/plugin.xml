@@ -68,6 +68,8 @@
 
     <diff.actions.ShowDiffAction.ExtensionProvider
       implementation="org.jetbrains.plugins.github.pullrequest.action.GHPRShowDiffActionProvider"/>
+
+    <iconProvider implementation="org.jetbrains.plugins.github.extensions.GithubYamlIconProvider"/>
   </extensions>
 
   <applicationListeners>
