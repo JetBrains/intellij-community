@@ -497,6 +497,13 @@
       <reference ref="SearchEverywhere"/>
     </group>
 
+    <action id="RunDebugControlAction" class="com.intellij.execution.newToolbar.RunDebugControlAction"/>
+
+    <group id="NewToolbarRunDebug">
+      <action class="com.intellij.execution.newToolbar.RunDebugLabelAction"/>
+      <action class="com.intellij.execution.newToolbar.RunDebugBarAction"/>
+    </group>
+
     <group id="RunDebugActionsBarGroup" popup="false">
       <reference ref="RunConfiguration"/>
       <group id="RunDebugConfigRunnerActions"/>

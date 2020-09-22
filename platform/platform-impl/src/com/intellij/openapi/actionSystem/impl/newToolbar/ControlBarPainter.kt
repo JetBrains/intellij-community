@@ -5,6 +5,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.actionSystem.ActionButtonComponent
 import com.intellij.openapi.rd.paint2DLine
+import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.util.ui.JBInsets
@@ -107,14 +108,26 @@ internal class ControlBarPainter {
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
                           if (MacUIUtil.USE_QUARTZ) RenderingHints.VALUE_STROKE_PURE else RenderingHints.VALUE_STROKE_NORMALIZE)
 
-      val borderColor = JBColor.border()
+
+      val paint = GradientPaint(bw, bw,
+                               JBColor.namedColor(
+                                 "Button.startBorderColor",
+                                 JBColor.namedColor("Button.darcula.outlineStartColor", 0xbfbfbf)),
+                               bw, component.height - (bw * 2),
+                               JBColor
+                                 .namedColor("Button.endBorderColor",
+                                             JBColor.namedColor(
+                                               "Button.darcula.outlineEndColor",
+                                               0xb8b8b8)))
+
+
       for(i in 0 until component.componentCount - 1) {
         val comp = component.getComponent(i)
         val bounds = comp.bounds
 
         g2.paint2DLine(bounds.maxX, bw.toDouble(), bounds.maxX, (component.height - (bw * 2)).toDouble(), LinePainter2D.StrokeType.INSIDE,
                        1.0,
-                       borderColor)
+                       JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground())
       }
 
       var arc = DarculaUIUtil.BUTTON_ARC.float
@@ -126,18 +139,34 @@ internal class ControlBarPainter {
       border.append(RoundRectangle2D.Float(bw + lw, bw + lw, component.width - ((bw + lw) * 2), component.height - ((bw + lw) * 2), arc,
                                            arc), false)
 
-      g2.paint = GradientPaint(bw, bw,
-                               JBColor.namedColor(
-                                  "Button.startBorderColor",
-                                   JBColor.namedColor("Button.darcula.outlineStartColor",0xbfbfbf)),
-                               bw, component.height - (bw * 2),
-                               JBColor
-                                 .namedColor("Button.endBorderColor",
-                                             JBColor.namedColor(
-                                               "Button.darcula.outlineEndColor",
-                                               0xb8b8b8)))
+      g2.paint = paint
       g2.fill(border)
 
+
+    }
+    finally {
+      g2.dispose()
+    }
+  }
+
+  fun paintActionBarBackground(component: JComponent, g: Graphics) {
+    val bw = DarculaUIUtil.BW.float
+
+    val g2 = g.create() as Graphics2D
+    try {
+
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
+                          if (MacUIUtil.USE_QUARTZ) RenderingHints.VALUE_STROKE_PURE else RenderingHints.VALUE_STROKE_NORMALIZE)
+
+
+      val arc = DarculaUIUtil.BUTTON_ARC.float
+
+      val border: Path2D = Path2D.Float(Path2D.WIND_EVEN_ODD)
+      border.append(RoundRectangle2D.Float(bw, bw, component.width - (bw * 2), component.height - (bw * 2), arc, arc), false)
+
+      g2.color = JBColor.namedColor("Panel.background", Gray.xCD)
+      g2.fill(border)
 
     }
     finally {
