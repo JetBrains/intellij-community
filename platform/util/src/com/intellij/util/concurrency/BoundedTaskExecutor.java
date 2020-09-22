@@ -227,16 +227,24 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
     }
   }
 
-  public void waitAllTasksExecuted(long timeout, @NotNull TimeUnit unit) throws ExecutionException, InterruptedException, TimeoutException {
+  public synchronized void waitAllTasksExecuted(long timeout, @NotNull TimeUnit unit) throws ExecutionException, InterruptedException, TimeoutException {
     CountDownLatch started = new CountDownLatch(myMaxThreads);
     CountDownLatch readyToFinish = new CountDownLatch(1);
-    Runnable runnable = () -> {
-      try {
-        started.countDown();
-        readyToFinish.await();
+    Runnable runnable = new Runnable() {
+      @Override
+      public void run() {
+        try {
+          started.countDown();
+          readyToFinish.await();
+        }
+        catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
       }
-      catch (InterruptedException e) {
-        throw new RuntimeException(e);
+
+      @Override
+      public String toString() {
+        return "LastTask to waitAllTasksExecuted for " + timeout + " " + unit + " (" + System.identityHashCode(this) + ")";
       }
     };
     // Submit 'myMaxTasks' runnables and wait for them all to start.
