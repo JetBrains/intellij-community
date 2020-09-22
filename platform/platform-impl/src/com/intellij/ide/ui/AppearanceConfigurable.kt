@@ -5,6 +5,7 @@ import com.intellij.application.options.editor.CheckboxDescriptor
 import com.intellij.application.options.editor.checkBox
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle.message
+import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -93,13 +94,17 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
       blockRow {
         fullRow {
           label(message("combobox.look.and.feel"))
-          comboBox(lafManager.lafComboBoxModel, { lafManager.lookAndFeelReference }, {},
+          val theme = comboBox(lafManager.lafComboBoxModel,
+                   { lafManager.lookAndFeelReference },
+                   { QuickChangeLookAndFeel.switchLafAndUpdateUI(lafManager, lafManager.findLaf(it), true) },
                    lafManager.lookAndFeelCellRenderer).shouldUpdateLaF()
 
           val syncCheckBox = checkBox(message("preferred.theme.autodetect.selector"),
-                                      { lafManager.autodetect }, { lafManager.autodetect = it }).withLargeLeftGap().shouldUpdateLaF()
+                                      { lafManager.autodetect },
+                                      { lafManager.autodetect = it }).withLargeLeftGap().shouldUpdateLaF()
 
           syncCheckBox.visible(lafManager.autodetectSupported)
+          theme.enableIf(syncCheckBox.selected.not())
 
           component(lafManager.settingsToolbar)
             .visibleIf(syncCheckBox.selected)
