@@ -10,6 +10,7 @@ import com.intellij.execution.ShortenCommandLine
 import com.intellij.execution.application.ApplicationConfiguration
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.configurations.JavaRunConfigurationModule
+import com.intellij.execution.configurations.RuntimeConfigurationError
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.runners.ExecutionEnvironment
@@ -30,7 +31,6 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiClass
@@ -60,7 +60,8 @@ class GradleApplicationEnvironmentProvider : GradleExecutionEnvironmentProvider 
     val mainClass = applicationConfiguration.mainClass ?: return null
 
     val virtualFile = mainClass.containingFile.virtualFile
-    val module = ProjectFileIndex.SERVICE.getInstance(project).getModuleForFile(virtualFile) ?: return null
+    val module: Module = applicationConfiguration.configurationModule.module ?:
+                 throw RuntimeConfigurationError(ExecutionBundle.message("module.not.specified.error.text"))
 
     val params = JavaParameters().apply {
       JavaParametersUtil.configureConfiguration(this, applicationConfiguration)
