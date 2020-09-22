@@ -218,7 +218,7 @@ public final class Main {
     }
     else {
       boolean studio = "AndroidStudio".equalsIgnoreCase(System.getProperty(PLATFORM_PREFIX_PROPERTY));
-      String bugReportLink = studio ? "https://code.google.com/p/android/issues" : "http://jb.gg/ide/critical-startup-errors";
+      String bugReportLink = studio ? "https://code.google.com/p/android/issues" : "https://jb.gg/ide/critical-startup-errors";
       message.append(BootstrapBundle.message("bootstrap.error.message.internal.error.please.refer.to.0", bugReportLink));
       message.append("\n\n");
     }
