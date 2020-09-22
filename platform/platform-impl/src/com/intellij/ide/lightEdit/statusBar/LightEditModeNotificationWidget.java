@@ -12,14 +12,17 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.JBPopupMenu;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.reference.SoftReference;
 import com.intellij.ui.TooltipWithClickableLinks;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.popup.util.PopupState;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBPoint;
 import com.intellij.util.ui.JBUI;
@@ -29,14 +32,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.lang.ref.WeakReference;
 import java.util.function.Supplier;
 
 public class LightEditModeNotificationWidget implements CustomStatusBarWidget {
 
   private final PopupState myPopupState = new PopupState();
+  private final MyPopupMenuListener myPopupMenuListener = new MyPopupMenuListener();
 
   public LightEditModeNotificationWidget() {
   }
@@ -86,16 +93,16 @@ public class LightEditModeNotificationWidget implements CustomStatusBarWidget {
     return actionLink;
   }
 
-  private static @NotNull IdeTooltip createTooltip(@NotNull JComponent component) {
-    HtmlChunk.Element link = HtmlChunk.link("https://www.jetbrains.com/help/idea/lightedit-mode.html",
-                                            ApplicationBundle.message("light.edit.status.bar.notification.tooltip.link.text"));
-    link = link.child(HtmlChunk.tag("icon").attr("src", "AllIcons.Ide.External_link_arrow"));
-    String tooltipText = ApplicationBundle.message("light.edit.status.bar.notification.tooltip") + "<p>" + link.toString();
-    tooltipText = tooltipText.replace("<p>", "<p style='padding: " + JBUI.scale(3) + "px 0 0 0;'>");
-    IdeTooltip tooltip = new TooltipWithClickableLinks.ForBrowser(component, tooltipText) {
+  private @NotNull IdeTooltip createTooltip(@NotNull JComponent component) {
+    IdeTooltip tooltip = new TooltipWithClickableLinks.ForBrowser(component, getTooltipHtml()) {
       @Override
       public boolean canBeDismissedOnTimeout() {
         return false;
+      }
+
+      @Override
+      protected boolean beforeShow() {
+        return !myPopupMenuListener.isShowing();
       }
     };
     tooltip.setToCenter(false);
@@ -103,6 +110,17 @@ public class LightEditModeNotificationWidget implements CustomStatusBarWidget {
     // Unable to get rid of the tooltip pointer. Let's position it between the label and the link.
     tooltip.setPoint(new JBPoint(-3, 11));
     return tooltip;
+  }
+
+  @NotNull
+  private static @Nls String getTooltipHtml() {
+    HtmlChunk.Element link = HtmlChunk.link("https://www.jetbrains.com/help/idea/lightedit-mode.html",
+                                            ApplicationBundle.message("light.edit.status.bar.notification.tooltip.link.text"));
+    link = link.child(HtmlChunk.tag("icon").attr("src", "AllIcons.Ide.External_link_arrow"));
+    @NlsSafe String pTag = "<p>";
+    String tooltipText = ApplicationBundle.message("light.edit.status.bar.notification.tooltip") + pTag + link.toString();
+    tooltipText = tooltipText.replace(pTag, HtmlChunk.tag("p").style("padding: " + JBUI.scale(3) + "px 0 0 0").toString());
+    return tooltipText;
   }
 
   private void showPopupMenu(@NotNull JComponent actionLink) {
@@ -118,6 +136,7 @@ public class LightEditModeNotificationWidget implements CustomStatusBarWidget {
       popupMenu.setTargetComponent(actionLink);
       JPopupMenu menu = popupMenu.getComponent();
       menu.addPopupMenuListener(myPopupState);
+      menu.addPopupMenuListener(myPopupMenuListener);
       JBPopupMenu.showAbove(actionLink, menu);
     }
   }
@@ -159,4 +178,27 @@ public class LightEditModeNotificationWidget implements CustomStatusBarWidget {
       }
     }
   }
+
+  private static class MyPopupMenuListener implements PopupMenuListener {
+    private WeakReference<JPopupMenu> myPopupMenuRef;
+
+    public boolean isShowing() {
+      JPopupMenu menu = SoftReference.dereference(myPopupMenuRef);
+      return menu != null && menu.isShowing();
+    }
+
+    @Override
+    public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+      myPopupMenuRef = new WeakReference<>(ObjectUtils.tryCast(e.getSource(), JPopupMenu.class));
+    }
+
+    @Override
+    public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+      myPopupMenuRef = null;
+    }
+
+    @Override
+    public void popupMenuCanceled(PopupMenuEvent e) {
+    }
+  } 
 }
