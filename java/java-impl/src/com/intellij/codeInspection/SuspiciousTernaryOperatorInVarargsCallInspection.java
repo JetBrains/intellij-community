@@ -4,12 +4,13 @@ package com.intellij.codeInspection;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.java.generate.psi.PsiAdapter;
 
 public class SuspiciousTernaryOperatorInVarargsCallInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
@@ -25,7 +26,7 @@ public class SuspiciousTernaryOperatorInVarargsCallInspection extends AbstractBa
         if (argumentList.isEmpty()) return;
 
         final PsiExpression[] args = argumentList.getExpressions();
-        PsiExpression varargsExpression = ArrayUtil.getLastElement(args);
+        PsiExpression varargsExpression = PsiUtil.skipParenthesizedExprDown(ArrayUtil.getLastElement(args));
         final PsiConditionalExpression conditional = ObjectUtils.tryCast(varargsExpression, PsiConditionalExpression.class);
         if (conditional == null) return;
 
@@ -45,14 +46,15 @@ public class SuspiciousTernaryOperatorInVarargsCallInspection extends AbstractBa
         if (isThenArray == elseType instanceof PsiArrayType) return;
 
         final PsiExpression nonArray = isThenArray ? elseExpression : thenExpression;
-        final PsiType nonArrayType = nonArray.getType();
+        final PsiExpression array = isThenArray ? thenExpression : elseExpression;
 
         PsiClassType varargsType = ObjectUtils.tryCast(varargsExpression.getType(), PsiClassType.class);
         if (varargsType == null) return;
 
         String typeName = varargsType.getName();
         final String replacementText = String.format("new %s[]{%s}", typeName, nonArray.getText());
-        final LocalQuickFix fix = ClassUtils.isPrimitive(nonArrayType) ? null : new WrapInArrayInitializerFix(replacementText, typeName);
+        final LocalQuickFix fix = PsiAdapter.isPrimitiveArrayType(array.getType()) ? null :
+                                  new WrapInArrayInitializerFix(replacementText, typeName);
 
         holder.registerProblem(nonArray,
                                JavaBundle.message("inspection.suspicious.ternary.in.varargs.description"),

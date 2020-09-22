@@ -3,15 +3,10 @@
 import java.io.Serializable;
 
 class Test {
-  public static void main(String[] args) {
+  static void bar(boolean flag) {
     Serializable[] a = {1, 2};
     Serializable b = "hello";
-    foo(0, a);
-    foo(0, b);
-    for (boolean flag : new boolean[]{true, false}) {
-      foo(0, flag ? a : b<caret>);
-      foo(0, 1, flag ? a : b);
-    }
+    foo(0, flag ? a : b<caret>);
   }
   static void foo(int x, Serializable... xs) {
   }
