@@ -27,6 +27,7 @@ import com.intellij.psi.templateLanguages.TemplateDataLanguagePatterns;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
@@ -68,6 +69,9 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     myFileTypePanel.myIgnorePanel.setBorder(
       IdeBorderFactory.createTitledBorder(FileTypesBundle.message("filetype.ignore.group"), false, TITLE_INSETS).setShowLine(false));
     myRecognizedFileType = new RecognizedFileTypes(myFileTypePanel.myRecognizedFileTypesPanel);
+    myFileTypePanel.myRightPanel.setPreferredSize(
+      new Dimension(JBUIScale.scale(300), myFileTypePanel.myRightPanel.getHeight())
+    );
     myPatterns = new PatternsPanel(myFileTypePanel.myPatternsPanel);
     myHashBangs = new HashBangPanel(myFileTypePanel.myHashBangPanel);
     myRecognizedFileType.myFileTypesList.addListSelectionListener(__ -> updateExtensionList());

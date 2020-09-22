@@ -17,4 +17,5 @@ class FileTypePanel {
   JBLabel myLightEditHintLabel;
   JButton myAssociateButton;
   JPanel myAssociatePanel;
+  JPanel myRightPanel;
 }
