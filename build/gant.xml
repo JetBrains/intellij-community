@@ -45,6 +45,7 @@
     <path id="gant.classpath">
       <pathelement path="${project.home}/platform/build-scripts/groovy"/>
       <pathelement path="${project.home}/build/groovy"/>
+      <pathelement path="${project.home}/build/dependencies/groovy"/>
       <fileset dir="${project.home}/build/dependencies/build/build-scripts-deps">
         <include name="*.jar"/>
       </fileset>
