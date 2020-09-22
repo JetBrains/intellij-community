@@ -6,6 +6,7 @@ import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.diagnostic.MessagePool;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.AboutPopup;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.widget.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
@@ -14,6 +15,9 @@ import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
@@ -41,6 +45,7 @@ import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
@@ -75,7 +80,10 @@ public class WelcomeScreenComponentFactory {
     JLabel appName = new JLabel(applicationName);
     appName.setForeground(JBColor.foreground());
     appName.setFont(appName.getFont().deriveFont(Font.PLAIN));
-    appName.setHorizontalAlignment(SwingConstants.CENTER);
+
+    ActionLink copyAbout = new ActionLink("", AllIcons.Actions.Copy, createCopyAboutAction());
+    copyAbout.setHoveringIcon(AllIcons.General.CopyHovered);
+    copyAbout.setToolTipText(IdeBundle.message("welcome.screen.copy.about.action.text"));
 
     String appVersion = appInfo.getFullVersion();
 
@@ -85,12 +93,12 @@ public class WelcomeScreenComponentFactory {
 
     JLabel version = new JLabel(appVersion);
     version.setFont(UIUtil.getLabelFont(SMALL));
-    version.setHorizontalAlignment(SwingConstants.CENTER);
     version.setForeground(Gray._128);
     NonOpaquePanel textPanel = new NonOpaquePanel();
-    textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
+    textPanel.setLayout(new VerticalFlowLayout(0, 0));
     textPanel.setBorder(JBUI.Borders.empty(28, 10, 25, 10));
-    textPanel.add(appName);
+    JPanel namePanel = JBUI.Panels.simplePanel(appName).addToRight(copyAbout);
+    textPanel.add(namePanel);
     textPanel.add(version);
     panel.add(textPanel, BorderLayout.CENTER);
     panel.setToolTipText(applicationName + " " + appVersion);
@@ -133,6 +141,12 @@ public class WelcomeScreenComponentFactory {
     panel.add(version, BorderLayout.SOUTH);
     panel.setBorder(JBUI.Borders.emptyBottom(20));
     return panel;
+  }
+
+  private static AnAction createCopyAboutAction() {
+    return DumbAwareAction.create(e -> {
+      CopyPasteManager.getInstance().setContents(new StringSelection(AboutPopup.getAboutText()));
+    });
   }
 
   static JComponent createRecentProjects(Disposable parentDisposable) {
