@@ -34,6 +34,7 @@ import javax.swing.border.AbstractBorder;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.UndoableEditListener;
 import javax.swing.plaf.ButtonUI;
 import javax.swing.plaf.ComboBoxUI;
@@ -100,7 +101,7 @@ public final class UIUtil {
   }
 
   public static void setCustomTitleBar(@NotNull Window window, @NotNull JRootPane rootPane, java.util.function.Consumer<? super Runnable> onDispose) {
-    if (!SystemInfo.isMac || !Registry.is("ide.mac.transparentTitleBarAppearance", false)) {
+    if (!SystemInfoRt.isMac || !Registry.is("ide.mac.transparentTitleBarAppearance", false)) {
       return;
     }
 
@@ -233,7 +234,7 @@ public final class UIUtil {
   }
 
   public static @NotNull Cursor getTextCursor(@NotNull Color backgroundColor) {
-    return SystemInfo.isMac && ColorUtil.isDark(backgroundColor) ?
+    return SystemInfoRt.isMac && ColorUtil.isDark(backgroundColor) ?
            MacUIUtil.getInvertedTextCursor() : Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR);
   }
 
@@ -359,7 +360,9 @@ public final class UIUtil {
   }
 
   public static void fixOSXEditorBackground(@NotNull JTable table) {
-    if (!SystemInfo.isMac) return;
+    if (!SystemInfoRt.isMac) {
+      return;
+    }
 
     if (table.isEditing()) {
       int column = table.getEditingColumn();
@@ -407,7 +410,7 @@ public final class UIUtil {
    */
   public static final Key<Boolean> TEXT_COPY_ROOT = Key.create("TEXT_COPY_ROOT");
 
-  private static final AbstractAction REDO_ACTION = new AbstractAction() {
+  private static final Action REDO_ACTION = new AbstractAction() {
     @Override
     public void actionPerformed(@NotNull ActionEvent e) {
       UndoManager manager = getClientProperty(e.getSource(), UNDO_MANAGER);
@@ -416,7 +419,7 @@ public final class UIUtil {
       }
     }
   };
-  private static final AbstractAction UNDO_ACTION = new AbstractAction() {
+  private static final Action UNDO_ACTION = new AbstractAction() {
     @Override
     public void actionPerformed(@NotNull ActionEvent e) {
       UndoManager manager = getClientProperty(e.getSource(), UNDO_MANAGER);
@@ -2075,7 +2078,7 @@ public final class UIUtil {
   }
 
   public static final class JBWordWrapHtmlEditorKit extends JBHtmlEditorKit {
-    private final HTMLFactory myFactory = new HTMLFactory() {
+    private final ViewFactory myFactory = new HTMLFactory() {
       @Override
       public View create(Element e) {
         View view = super.create(e);
@@ -2233,7 +2236,7 @@ public final class UIUtil {
    * @see #invokeAndWaitIfNeeded(ThrowableRunnable)
    */
   public static void invokeAndWaitIfNeeded(@NotNull Runnable runnable) {
-    EdtInvocationManager.getInstance().invokeAndWaitIfNeeded(runnable);
+    EdtInvocationManager.invokeAndWaitIfNeeded(runnable);
   }
 
   /**
@@ -2481,7 +2484,7 @@ public final class UIUtil {
   }
 
   public static @NotNull <T extends JComponent> List<T> findComponentsOfType(JComponent parent, @NotNull Class<? extends T> cls) {
-    final ArrayList<T> result = new ArrayList<>();
+    List<T> result = new ArrayList<>();
     findComponentsOfType(parent, cls, result);
     return result;
   }
@@ -2882,7 +2885,7 @@ public final class UIUtil {
     }
   }
 
-  private static final DocumentAdapter SET_TEXT_CHECKER = new DocumentAdapter() {
+  private static final DocumentListener SET_TEXT_CHECKER = new DocumentAdapter() {
     @Override
     protected void textChanged(@NotNull DocumentEvent e) {
       Document document = e.getDocument();
@@ -2908,14 +2911,15 @@ public final class UIUtil {
     if (textComponent.getClientProperty(UNDO_MANAGER) instanceof UndoManager) {
       return;
     }
+
     UndoManager undoManager = new UndoManager();
     textComponent.putClientProperty(UNDO_MANAGER, undoManager);
     textComponent.getDocument().addUndoableEditListener(undoManager);
     textComponent.getDocument().addDocumentListener(SET_TEXT_CHECKER);
-    textComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK), "undoKeystroke");
+    textComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, SystemInfoRt.isMac ? Event.META_MASK : Event.CTRL_MASK), "undoKeystroke");
     textComponent.getActionMap().put("undoKeystroke", UNDO_ACTION);
     textComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, (SystemInfo.isMac
-                                                                           ? InputEvent.META_MASK : InputEvent.CTRL_MASK) | InputEvent.SHIFT_MASK), "redoKeystroke");
+                                                                           ? Event.META_MASK : Event.CTRL_MASK) | Event.SHIFT_MASK), "redoKeystroke");
     textComponent.getActionMap().put("redoKeystroke", REDO_ACTION);
   }
 
