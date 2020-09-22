@@ -256,7 +256,7 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
         createSearchTemplateInfo(SSRBundle.message("predefined.template.html.attribute.value"), "<'_tag '_attribute='value />", getHtmlXml(), HtmlFileType.INSTANCE),
         createSearchTemplateInfo(SSRBundle.message("predefined.template.xml.html.tag.value"), "<table>'_content*</table>", getHtmlXml(), HtmlFileType.INSTANCE),
         createSearchTemplateInfo(SSRBundle.message("predefined.template.ul.or.ol"), "<'_tag:[regex( ul|ol )] />", getHtmlXml(), HtmlFileType.INSTANCE),
-        createSearchTemplateInfo(SSRBundle.message("predefined.template.li.not.contained.in.ul.or.ol"), "[!within( <ul> or <ol> )]<li />", getHtmlXml(), HtmlFileType.INSTANCE)
+        createSearchTemplateInfo(SSRBundle.message("predefined.template.li.not.contained.in.ul.or.ol"), "[!within( <ul> or <ol> (html search template) )]<li />", getHtmlXml(), HtmlFileType.INSTANCE)
       };
     }
 

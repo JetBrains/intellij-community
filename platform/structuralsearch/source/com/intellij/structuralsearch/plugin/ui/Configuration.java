@@ -82,8 +82,13 @@ public abstract class Configuration implements JDOMExternalizable {
     name = value;
   }
 
-  @NonNls
+  @NlsSafe
   public abstract String getTailText();
+
+  @NlsSafe
+  public String getNameWithTailText() {
+    return getName() + " " + getTailText();
+  }
 
   @NotNull
   public String getCategory() {

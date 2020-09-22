@@ -180,7 +180,7 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
    */
   public List<String> getAllConfigurationNames() {
     final Stream<Configuration> stream = Stream.concat(StructuralSearchUtil.getPredefinedTemplates().stream(), getConfigurations().stream());
-    return stream.map(c -> c.getName()).collect(Collectors.toList());
+    return stream.map(c -> c.getNameWithTailText()).collect(Collectors.toList());
   }
 
   public List<Configuration> getAllConfigurations() {
@@ -213,7 +213,7 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
 
   @Nullable
   private static Configuration findConfigurationByName(Collection<? extends Configuration> configurations, final String name) {
-    return ContainerUtil.find(configurations, config -> config.getName().equals(name));
+    return ContainerUtil.find(configurations, config -> config.getNameWithTailText().equals(name));
   }
 
   @Nullable
@@ -254,7 +254,7 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
                                                  @NotNull Predicate<? super String> nameExistsPredicate,
                                                  @NotNull Consumer<? super Configuration> namedConfigurationConsumer) {
     String name = showInputDialog(newConfiguration.getName(), project);
-    while (name != null && nameExistsPredicate.test(name)) {
+    while (name != null && nameExistsPredicate.test(name + " " + newConfiguration.getTailText())) {
       final int answer =
         Messages.showYesNoDialog(
           project,
@@ -316,7 +316,7 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
 
     public void add(Configuration configuration) {
       configuration.getMatchOptions().setScope(null);
-      configurations.put(configuration.getName(), configuration);
+      configurations.put(configuration.getNameWithTailText(), configuration);
     }
 
     public Configuration get(String name) {
@@ -346,7 +346,7 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
       for (Element child : state.getChildren()) {
         final Configuration configuration = readConfiguration(child);
         if (configuration != null) {
-          configurations.put(configuration.getName(), configuration);
+          configurations.put(configuration.getNameWithTailText(), configuration);
         }
       }
     }

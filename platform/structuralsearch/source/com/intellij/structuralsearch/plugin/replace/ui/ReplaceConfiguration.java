@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.replace.ui;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.NamedScriptableDefinition;
@@ -9,7 +10,6 @@ import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.util.ObjectUtils;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -42,7 +42,7 @@ public class ReplaceConfiguration extends Configuration {
   }
 
   @Override
-  public @NonNls String getTailText() {
+  public @NlsSafe String getTailText() {
     final String fileType = StringUtil.toLowerCase(getMatchOptions().getFileType().getName());
     return isPredefined() ? SSRBundle.message("predefined.configuration.replace.tail.text", fileType)
                           : SSRBundle.message("predefined.configuration.replace.tail.text.user.defined", fileType);
