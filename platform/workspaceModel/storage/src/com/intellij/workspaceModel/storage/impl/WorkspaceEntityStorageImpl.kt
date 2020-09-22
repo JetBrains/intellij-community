@@ -149,13 +149,18 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
     // Check for persistent id uniqueness
     if (beforePersistentId != null) {
-      val newPersistentId = copiedData.persistentId(this) ?: error("Persistent id expected")
-      val ids = indexes.persistentIdIndex.getIdsByEntry(newPersistentId)
-      if (beforePersistentId != newPersistentId && ids != null && ids.isNotEmpty()) {
-          // Restore previous value
-        (entitiesByType.entityFamilies[e.id.clazz] as MutableEntityFamily<T>).set(e.id.arrayId, backup)
-          throw PersistentIdAlreadyExistsException(newPersistentId)
-        }
+      val newPersistentId = copiedData.persistentId(this)
+      if (newPersistentId != null) {
+        val ids = indexes.persistentIdIndex.getIdsByEntry(newPersistentId)
+        if (beforePersistentId != newPersistentId && ids != null && ids.isNotEmpty()) {
+            // Restore previous value
+          (entitiesByType.entityFamilies[e.id.clazz] as MutableEntityFamily<T>).set(e.id.arrayId, backup)
+            throw PersistentIdAlreadyExistsException(newPersistentId)
+          }
+      }
+      else {
+        LOG.error("Persistent id expected for entity: $copiedData")
+      }
     }
 
     // Add an entry to changelog
@@ -974,9 +979,10 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     if (pids.isEmpty()) return null
     if (pids.size > 1) {
       val entities = pids.associateWith { this.entityDataById(it) }.entries.joinToString("\n") { (k, v) -> "$k : $v : EntitySource: ${v?.entitySource}" }
-      error("""Cannot resolve persistent id $id. The store contains ${pids.size} associated entities:
+      LOG.error("""Cannot resolve persistent id $id. The store contains ${pids.size} associated entities:
         |$entities
       """.trimMargin())
+      return entityDataById(pids.first())?.createEntity(this) as E?
     }
     val pid = pids.single()
     return entityDataById(pid)?.createEntity(this) as E?
