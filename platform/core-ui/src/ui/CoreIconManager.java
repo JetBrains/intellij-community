@@ -81,7 +81,7 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
   @NotNull
   @Override
   public <T> Icon createDeferredIcon(@Nullable Icon base, T param, @NotNull Function<? super T, ? extends Icon> f) {
-    return IconDeferrer.getInstance().defer(base, param, t -> f.apply(t));
+    return IconDeferrer.getInstance().defer(base, param, f);
   }
 
   @NotNull

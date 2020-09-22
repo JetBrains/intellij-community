@@ -157,7 +157,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       throw new IllegalArgumentException("Equality should be unique: passing " + equality[0] + " is likely to interfere with unrelated computations from different places");
     }
     return new NonBlockingReadActionImpl<>(myComputation, myModalityState, myUiThreadAction, myConstraints, myCancellationConditions, myDisposables,
-                                           Collections.singletonList(equality), myProgressIndicator);
+                                           new ArrayList<>(Arrays.asList(equality)), myProgressIndicator);
   }
 
   private static boolean isTooCommon(Object o) {

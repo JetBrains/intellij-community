@@ -36,13 +36,12 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.Alarm;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import org.jetbrains.annotations.Nls;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -103,7 +102,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
   private boolean myDisposed;
   private WeakReference<Balloon> myLastShownBalloon;
 
-  private final Set<InlineProgressIndicator> myDirtyIndicators = ContainerUtil.newIdentityTroveSet();
+  private final Set<InlineProgressIndicator> myDirtyIndicators = new ReferenceOpenHashSet<>();
   private final Update myUpdateIndicators = new Update("UpdateIndicators", false, 1) {
     @Override
     public void run() {

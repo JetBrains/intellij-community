@@ -21,7 +21,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.sql.Timestamp;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -431,16 +430,16 @@ public final class MVStoreTool {
         String tempName = fileName + ".tempFile";
         Files.delete(Paths.get(tempName));
         compact(fileName, tempName, compress);
-        try {
-            // todo
-            //Files.moveAtomicReplace(tempName, fileName);
-            //Files.move(Paths.get(tempName), Paths.get(newName), StandardCopyOption.REPLACE_EXISTING);
-        }
-        catch (UncheckedIOException e) {
-            String newName = fileName + ".newFile";
-            Files.move(Paths.get(tempName), Paths.get(newName), StandardCopyOption.REPLACE_EXISTING);
-            Files.move(Paths.get(newName), Paths.get(fileName), StandardCopyOption.REPLACE_EXISTING);
-        }
+        //try {
+        //    // todo
+        //    //Files.moveAtomicReplace(tempName, fileName);
+        //    //Files.move(Paths.get(tempName), Paths.get(newName), StandardCopyOption.REPLACE_EXISTING);
+        //}
+        //catch (UncheckedIOException e) {
+        //    String newName = fileName + ".newFile";
+        //    Files.move(Paths.get(tempName), Paths.get(newName), StandardCopyOption.REPLACE_EXISTING);
+        //    Files.move(Paths.get(newName), Paths.get(fileName), StandardCopyOption.REPLACE_EXISTING);
+        //}
     }
 
     /**

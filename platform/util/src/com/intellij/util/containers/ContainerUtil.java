@@ -392,7 +392,7 @@ public class ContainerUtil {
   }
 
   /**
-   * @deprecated Use {@link HashSet}
+   * @deprecated Use {@link Set#of(Object[])}
    */
   @SafeVarargs
   @Deprecated
