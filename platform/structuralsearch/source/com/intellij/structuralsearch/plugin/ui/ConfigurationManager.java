@@ -183,6 +183,11 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
     return stream.map(c -> c.getName()).collect(Collectors.toList());
   }
 
+  public List<Configuration> getAllConfigurations() {
+    final Stream<Configuration> stream = Stream.concat(StructuralSearchUtil.getPredefinedTemplates().stream(), getConfigurations().stream());
+    return stream.collect(Collectors.toList());
+  }
+
   @NotNull
   public Collection<Configuration> getConfigurations() {
     if (Registry.is("ssr.save.templates.to.ide.instead.of.project.workspace")) {
@@ -209,25 +214,6 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
   @Nullable
   private static Configuration findConfigurationByName(Collection<? extends Configuration> configurations, final String name) {
     return ContainerUtil.find(configurations, config -> config.getName().equals(name));
-  }
-
-  @NotNull
-  public Collection<Configuration> findConfigurationsByName(String name) {
-    Collection<Configuration> results = findConfigurationsByName(StructuralSearchUtil.getPredefinedTemplates(), name);
-    if (Registry.is("ssr.save.templates.to.ide.instead.of.project.workspace")) {
-      final Configuration ideConfiguration = myApplicationState.get(name);
-      if (ideConfiguration != null) results.add(ideConfiguration);
-    }
-    else {
-      final Configuration configuration = findConfigurationByName(configurations, name);
-      if (configuration != null) results.add(configuration);
-    }
-    return results;
-  }
-
-  @NotNull
-  private static Collection<Configuration> findConfigurationsByName(Collection<? extends Configuration> configurations, final String name) {
-    return ContainerUtil.findAll(configurations, config -> config.getName().equals(name));
   }
 
   @Nullable
