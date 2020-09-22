@@ -19,6 +19,10 @@ import com.intellij.lexer.Lexer;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @deprecated use {@link com.intellij.lexer.HtmlEmbeddedContentSupport#getScriptTagEmbedmentInfo()} API
+ */
+@Deprecated
 public interface HtmlScriptContentProvider {
   /**
    * @return instance of the {@link IElementType} to use in html script tag

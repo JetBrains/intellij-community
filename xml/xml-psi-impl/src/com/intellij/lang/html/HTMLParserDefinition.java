@@ -25,7 +25,7 @@ public class HTMLParserDefinition implements ParserDefinition {
   @Override
   @NotNull
   public Lexer createLexer(Project project) {
-    return new HtmlLexer();
+    return new HtmlLexer(project);
   }
 
   @Override

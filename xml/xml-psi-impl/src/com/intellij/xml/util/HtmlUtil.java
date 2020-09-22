@@ -65,6 +65,8 @@ public final class HtmlUtil {
   @NlsSafe public static final String SRC_ATTRIBUTE_NAME = "src";
   @NlsSafe public static final String ID_ATTRIBUTE_NAME = "id";
   @NlsSafe public static final String CLASS_ATTRIBUTE_NAME = "class";
+  @NlsSafe public static final String TYPE_ATTRIBUTE_NAME = "type";
+  @NlsSafe public static final String LANGUAGE_ATTRIBUTE_NAME = "language";
 
   @NonNls public static final String MATH_ML_NAMESPACE = "http://www.w3.org/1998/Math/MathML";
   @NonNls public static final String SVG_NAMESPACE = "http://www.w3.org/2000/svg";
