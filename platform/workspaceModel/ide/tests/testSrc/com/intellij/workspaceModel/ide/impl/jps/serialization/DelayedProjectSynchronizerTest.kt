@@ -22,6 +22,7 @@ import org.apache.commons.lang.RandomStringUtils
 import org.junit.*
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
+import org.junit.Assume.assumeTrue
 import java.io.File
 
 class DelayedProjectSynchronizerTest {
@@ -47,7 +48,7 @@ class DelayedProjectSynchronizerTest {
 
   @Test
   fun `test just loading with existing cache`() {
-    assertTrue(ProjectModelRule.isWorkspaceModelEnabled)
+    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     val projectFile = projectFile("moduleAdded/after")
     val projectData = copyAndLoadProject(projectFile, virtualFileManager)
     val storage = projectData.storage
@@ -67,7 +68,7 @@ class DelayedProjectSynchronizerTest {
 
   @Test
   fun `test module added`() {
-    assertTrue(ProjectModelRule.isWorkspaceModelEnabled)
+    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     val projectFile = projectFile("moduleAdded/before")
     val projectFileAfter = projectFile("moduleAdded/after")
     val projectData = copyAndLoadProject(projectFile, virtualFileManager)
