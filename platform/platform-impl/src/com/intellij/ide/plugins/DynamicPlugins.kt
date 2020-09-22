@@ -37,6 +37,7 @@ import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
@@ -44,7 +45,6 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.keymap.impl.BundledKeymapBean
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.PotemkinProgress
 import com.intellij.openapi.project.Project
@@ -61,6 +61,7 @@ import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.ComponentManagerImpl.DescriptorToLoad
+import com.intellij.ui.IconDeferrer
 import com.intellij.util.CachedValuesManagerImpl
 import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.SystemProperties
@@ -451,9 +452,9 @@ object DynamicPlugins {
         saveDocumentsAndProjectsAndApp(true)
       }
       TipDialog.hideForProject(null)
-      
+
       application.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginUnload(pluginDescriptor, options.isUpdate)
-      
+
       IdeEventQueue.getInstance().flushQueue()
 
       application.runWriteAction {
@@ -497,6 +498,8 @@ object DynamicPlugins {
           (NotificationsManager.getNotificationsManager() as NotificationsManagerImpl).expireAll()
           MessagePool.getInstance().clearErrors()
           DecodeDefaultsUtil.clearResourceCache()
+
+          serviceIfCreated<IconDeferrer>()?.clearCache()
 
           (ApplicationManager.getApplication().messageBus as MessageBusEx).clearPublisherCache()
           val projectManager = ProjectManagerEx.getInstanceExIfCreated()

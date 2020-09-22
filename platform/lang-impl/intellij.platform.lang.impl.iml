@@ -53,5 +53,6 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" exported="" />
+    <orderEntry type="library" name="caffeine" level="project" />
   </component>
 </module>
