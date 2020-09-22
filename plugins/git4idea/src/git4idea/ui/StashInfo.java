@@ -18,6 +18,7 @@ package git4idea.ui;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,13 +27,15 @@ import org.jetbrains.annotations.Nullable;
  * Information about one stash.
  */
 public class StashInfo {
+  @NotNull private final VirtualFile myRoot;
   @NotNull
   private final String myStash; // stash codename (stash@{1})
   private final String myBranch;
   private final String myMessage;
   private final @Nls String myText; // The formatted text representation
 
-  public StashInfo(@NotNull @NlsSafe String stash, @Nullable @NlsSafe String branch, @NlsSafe @Nls String message) {
+  public StashInfo(@NotNull VirtualFile root, @NotNull @NlsSafe String stash, @Nullable @NlsSafe String branch, @NlsSafe @Nls String message) {
+    myRoot = root;
     myStash = stash;
     myBranch = branch;
     myMessage = message;
@@ -44,6 +47,11 @@ public class StashInfo {
     }
     sb.append(message);
     myText = sb.wrapWithHtmlBody().toString();
+  }
+
+  @NotNull
+  public VirtualFile getRoot() {
+    return myRoot;
   }
 
   @Override

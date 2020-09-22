@@ -29,13 +29,13 @@ import javax.swing.event.HyperlinkEvent
 object GitStashOperations {
 
   @JvmStatic
-  fun dropStashWithConfirmation(project: Project, root: VirtualFile, parentComponent: Component?, stash: StashInfo): Boolean {
+  fun dropStashWithConfirmation(project: Project, parentComponent: Component?, stash: StashInfo): Boolean {
     val dialogBuilder = yesNo(GitBundle.message("git.unstash.drop.confirmation.title", stash.stash),
                               GitBundle.message("git.unstash.drop.confirmation.message", stash.stash, stash.message)).icon(Messages.getQuestionIcon())
     val confirmed = if (parentComponent != null) dialogBuilder.ask(parentComponent) else dialogBuilder.ask(project)
     if (!confirmed) return false
 
-    val h = GitLineHandler(project, root, GitCommand.STASH)
+    val h = GitLineHandler(project, stash.root, GitCommand.STASH)
     h.addParameters("drop", stash.stash)
     try {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(
@@ -77,16 +77,16 @@ object GitStashOperations {
   }
 
   @JvmStatic
-  fun viewStash(project: Project, root: VirtualFile, stash: StashInfo) {
+  fun viewStash(project: Project, stash: StashInfo) {
     val selectedStash = stash.stash
     try {
       val hash = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        ThrowableComputable<String, VcsException> { resolveHashOfStash(project, root, selectedStash) },
+        ThrowableComputable<String, VcsException> { resolveHashOfStash(project, stash.root, selectedStash) },
         GitBundle.message("unstash.dialog.stash.details.load.progress.indicator.title"),
         true,
         project
       )
-      GitUtil.showSubmittedFiles(project, hash, root, true, false)
+      GitUtil.showSubmittedFiles(project, hash, stash.root, true, false)
     }
     catch (ex: VcsException) {
       GitUIUtil.showOperationError(project, ex, GitBundle.message("operation.name.resolving.revision"))
@@ -104,15 +104,15 @@ object GitStashOperations {
   }
 
   @JvmStatic
-  fun unstash(project: Project, root: VirtualFile, stash: StashInfo, branch: String?, popStash: Boolean, reinstateIndex: Boolean): Boolean {
+  fun unstash(project: Project, stash: StashInfo, branch: String?, popStash: Boolean, reinstateIndex: Boolean): Boolean {
     val completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(
       {
         //better to use quick to keep consistent state with ui
-        val repository = GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(root)!!
+        val repository = GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(stash.root)!!
         val hash = Git.getInstance().resolveReference(repository, stash.stash)
-        unstash(project, mapOf(Pair(root, hash)),
-                { unstashHandler(project, root, stash, branch, popStash, reinstateIndex) },
-                UnstashConflictResolver(project, root, stash))
+        unstash(project, mapOf(Pair(stash.root, hash)),
+                { unstashHandler(project, stash, branch, popStash, reinstateIndex) },
+                UnstashConflictResolver(project, stash))
       },
       GitBundle.message("unstash.unstashing"),
       true,
@@ -126,12 +126,11 @@ object GitStashOperations {
   }
 
   private fun unstashHandler(project: Project,
-                             root: VirtualFile,
                              stash: StashInfo,
                              branch: String?,
                              popStash: Boolean,
                              reinstateIndex: Boolean): GitLineHandler {
-    val h = GitLineHandler(project, root, GitCommand.STASH)
+    val h = GitLineHandler(project, stash.root, GitCommand.STASH)
     if (branch.isNullOrBlank()) {
       h.addParameters(if (popStash) "pop" else "apply")
       if (reinstateIndex) {
@@ -147,9 +146,8 @@ object GitStashOperations {
 }
 
 private class UnstashConflictResolver(project: Project,
-                                      private val root: VirtualFile,
                                       private val stashInfo: StashInfo) :
-  GitConflictResolver(project, setOf(root), makeParams(project, stashInfo)) {
+  GitConflictResolver(project, setOf(stashInfo.root), makeParams(project, stashInfo)) {
 
   override fun notifyUnresolvedRemain() {
     VcsNotifier.getInstance(myProject).notifyImportantWarning("git.unstash.with.unresolved.conflicts",
@@ -158,7 +156,7 @@ private class UnstashConflictResolver(project: Project,
     ) { _, event ->
       if (event.eventType == HyperlinkEvent.EventType.ACTIVATED) {
         if (event.description == "resolve") {
-          UnstashConflictResolver(myProject, root, stashInfo).mergeNoProceed()
+          UnstashConflictResolver(myProject, stashInfo).mergeNoProceed()
         }
       }
     }

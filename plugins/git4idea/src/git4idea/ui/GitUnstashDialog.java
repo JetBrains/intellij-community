@@ -98,7 +98,7 @@ public class GitUnstashDialog extends DialogWrapper {
     myDropButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
-        boolean dropped = GitStashOperations.dropStashWithConfirmation(myProject, getGitRoot(), GitUnstashDialog.this.getContentPane(),
+        boolean dropped = GitStashOperations.dropStashWithConfirmation(myProject, GitUnstashDialog.this.getContentPane(),
                                                                        getSelectedStash());
         if (dropped) {
           refreshStashList();
@@ -109,7 +109,7 @@ public class GitUnstashDialog extends DialogWrapper {
     myViewButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
-        GitStashOperations.viewStash(project, getGitRoot(), getSelectedStash());
+        GitStashOperations.viewStash(project, getSelectedStash());
       }
     });
     init();
@@ -227,7 +227,7 @@ public class GitUnstashDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    boolean completed = GitStashOperations.unstash(myProject, getGitRoot(), getSelectedStash(), myBranchTextField.getText(),
+    boolean completed = GitStashOperations.unstash(myProject, getSelectedStash(), myBranchTextField.getText(),
                                                    myPopStashCheckBox.isSelected(), myReinstateIndexCheckBox.isSelected());
     if (completed) {
       super.doOKAction();

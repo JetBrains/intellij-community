@@ -117,10 +117,10 @@ fun loadStashStack(project: Project, root: VirtualFile): List<StashInfo> {
       logger<GitUtil>().error("Can't parse stash record: ${line}")
     }
     else if (parts.size == 2) {
-      result.add(StashInfo(parts[0], null, parts[1].trim()))
+      result.add(StashInfo(root, parts[0], null, parts[1].trim()))
     }
     else {
-      result.add(StashInfo(parts[0], parts[1].trim(), parts[2].trim()))
+      result.add(StashInfo(root, parts[0], parts[1].trim(), parts[2].trim()))
     }
   }
   return result
