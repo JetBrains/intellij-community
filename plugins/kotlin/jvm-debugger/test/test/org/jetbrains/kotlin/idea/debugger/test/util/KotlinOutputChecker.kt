@@ -37,6 +37,9 @@ internal class KotlinOutputChecker(
 
     private lateinit var myTestName: String
 
+    // True if the underlying test has already failed, but the failure was ignored.
+    var threwException = false
+
     override fun init(testName: String) {
         super.init(testName)
         this.myTestName = Character.toLowerCase(testName[0]) + testName.substring(1)

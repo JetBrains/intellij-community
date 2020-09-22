@@ -300,7 +300,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
         }
     }
 
-    private fun getExpectedOutputFile(): File {
+    protected fun getExpectedOutputFile(): File {
         if (useIrBackend()) {
             val irOut = File(getTestDataPath(), getTestName(true) + ".ir.out")
             if (irOut.exists()) return irOut
