@@ -21,12 +21,12 @@ import kotlin.coroutines.resumeWithException
 fun <T> Promise<T>.asCompletableFuture(): CompletableFuture<T> =
   when {
     this is AsyncPromise<T> -> this.f
-    this is Future<*> && isDone() -> // Fast path if already completed
+    this is Future<*> && isDone -> // Fast path if already completed
       try {
-        CompletableFuture.completedFuture<T>(this.getResultOrThrowError())
+        CompletableFuture.completedFuture(this.getResultOrThrowError())
       }
       catch (e: Throwable) {
-        CompletableFuture.failedFuture<T>(e)
+        CompletableFuture.failedFuture(e)
       }
     else -> CompletableFuture<T>().let { future ->
       onSuccess { future.complete(it) }
@@ -48,10 +48,13 @@ fun <T> Promise<T>.asCompletableFuture(): CompletableFuture<T> =
  * NOTE that `promise.asDeferred().await()` is different from `promise.await()` w.r.t. cancellation,
  * see the description of [await] for the details.
  */
+@Suppress("DeferredIsResult")
 fun <T> Promise<T>.asDeferred(): Deferred<T> = asDeferredInternal()
+
+@Suppress("DeferredIsResult")
 internal fun <T> Promise<T>.asDeferredInternal(): Deferred<T> =
   CompletableDeferred<T>().also { deferred ->
-    if (this is Future<*> && isDone()) { // Fast path if already completed
+    if (this is Future<*> && isDone) { // Fast path if already completed
       try {
         deferred.complete(this.getResultOrThrowError())
       }
@@ -79,7 +82,7 @@ internal fun <T> Promise<T>.asDeferredInternal(): Deferred<T> =
  */
 suspend fun <T> Promise<T>.await(): T = awaitInternal()
 internal suspend fun <T> Promise<T>.awaitInternal(): T =
-  if (this is Future<*> && isDone()) { // Fast path if already completed
+  if (this is Future<*> && isDone) { // Fast path if already completed
     this.getResultOrThrowError()
   }
   else { // slow path -- suspend
