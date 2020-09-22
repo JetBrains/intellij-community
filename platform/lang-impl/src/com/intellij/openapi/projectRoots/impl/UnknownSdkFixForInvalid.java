@@ -3,7 +3,9 @@ package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ui.configuration.SdkListPresenter;
+import com.intellij.openapi.roots.ui.configuration.UnknownSdk;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkDownloadableSdkFix;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkLocalSdkFix;
 import com.intellij.ui.EditorNotificationPanel;
@@ -15,16 +17,17 @@ import org.jetbrains.annotations.Nullable;
 final class UnknownSdkFixForInvalid extends UnknownSdkFix {
   private final @NotNull String mySdkName;
   private final @NotNull UnknownInvalidSdk mySdk;
-  private final @Nullable UnknownSdkLocalSdkFix myLocalFix;
   private final @Nullable DownloadFixAction myDownloadFixAction;
+  private final @Nullable LocalFixAction myLocalFixAction;
 
   UnknownSdkFixForInvalid(@NotNull Project project, @NotNull UnknownInvalidSdk invalidSdk) {
     super(project, invalidSdk.mySdkType);
     mySdkName = invalidSdk.getSdkName();
     mySdk = invalidSdk;
-    myLocalFix = mySdk.myLocalSdkFix;
+    UnknownSdkLocalSdkFix myLocalFix = mySdk.myLocalSdkFix;
     UnknownSdkDownloadableSdkFix downloadFix = mySdk.myDownloadableSdkFix;
     myDownloadFixAction = downloadFix != null ? new DownloadFixAction(downloadFix) : null;
+    myLocalFixAction = myLocalFix != null ? new LocalFixAction(myLocalFix) : null;
   }
 
   @Override
@@ -33,23 +36,46 @@ final class UnknownSdkFixForInvalid extends UnknownSdkFix {
   }
 
   @Override
+  public @Nullable SuggestedFixAction getSuggestedFixAction() {
+    if (myLocalFixAction != null) return myLocalFixAction;
+    return getDownloadAction();
+  }
+
+  @Override
   public @Nls @NotNull String getNotificationText() {
     String sdkTypeName = mySdkType.getPresentableName();
     return ProjectBundle.message("config.invalid.sdk.notification.text", sdkTypeName, mySdkName);
+  }
+
+  private class LocalFixAction implements SuggestedFixAction {
+    @NotNull final UnknownSdkLocalSdkFix myLocalFix;
+
+    private LocalFixAction(@NotNull UnknownSdkLocalSdkFix localSdkFix) {
+      myLocalFix = localSdkFix;
+    }
+
+    @Override
+    public @NotNull @Nls String getActionKindText() {
+      return ProjectBundle.message("config.unknown.sdk.local.verb");
+    }
+
+    @Override
+    public @NotNull @Nls String getActionText() {
+      String sdkTypeName = mySdkType.getPresentableName();
+      return ProjectBundle.message("config.unknown.sdk.local", sdkTypeName, myLocalFix.getPresentableVersionString());
+    }
   }
 
   @Override
   protected final @NotNull EditorNotificationPanel createNotificationPanelImpl(@NotNull Project project) {
     String sdkTypeName = mySdkType.getPresentableName();
     EditorNotificationPanel notification;
-    if (myLocalFix != null) {
-      String intentionActionText = ProjectBundle.message("config.unknown.sdk.local", sdkTypeName, myLocalFix.getPresentableVersionString());
-      String localTextTooltip = SdkListPresenter.presentDetectedSdkPath(myLocalFix.getExistingSdkHome(), 90, 40);
+    if (myLocalFixAction != null) {
+      String intentionActionText = myLocalFixAction.getActionText();
       notification = newNotificationPanel(intentionActionText);
-      HyperlinkLabel actionLabel = notification.createActionLabel(intentionActionText, () -> {
-        mySdk.applyLocalFix(project);
-      }, true);
-      actionLabel.setToolTipText(localTextTooltip);
+      notification
+        .createActionLabel(intentionActionText, () -> mySdk.applyLocalFix(project), true)
+        .setToolTipText(SdkListPresenter.presentDetectedSdkPath(myLocalFixAction.myLocalFix.getExistingSdkHome(), 90, 40));
     }
     else if (myDownloadFixAction != null)  {
       String intentionActionText = myDownloadFixAction.getActionText();
@@ -69,8 +95,8 @@ final class UnknownSdkFixForInvalid extends UnknownSdkFix {
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("InvalidSdkFixInfo { name: ").append(mySdkName);
-    if (mySdk.myLocalSdkFix != null) {
-      sb.append(", fix: ").append(mySdk.myLocalSdkFix.getExistingSdkHome());
+    if (myLocalFixAction != null) {
+      sb.append(", fix: ").append(myLocalFixAction.myLocalFix.getExistingSdkHome());
     }
     if (myDownloadFixAction != null) {
       sb.append(", fix: ").append(myDownloadFixAction.getFix().getDownloadDescription());

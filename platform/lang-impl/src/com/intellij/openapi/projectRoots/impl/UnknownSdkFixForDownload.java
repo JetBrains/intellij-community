@@ -32,6 +32,11 @@ class UnknownSdkFixForDownload extends UnknownSdkFix {
     return myDownloadFixAction;
   }
 
+  @Override
+  public @Nullable SuggestedFixAction getSuggestedFixAction() {
+    return getDownloadAction();
+  }
+
   private static class DownloadFixActionImpl extends DownloadFixAction {
     @NotNull final UnknownSdk mySdk;
 

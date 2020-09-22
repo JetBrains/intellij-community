@@ -64,17 +64,35 @@ public abstract class UnknownSdkFix {
   @NotNull
   public abstract String getNotificationText();
 
+  @Nullable
+  public abstract SuggestedFixAction getSuggestedFixAction();
+
   // TODO: in theory it could be a local fix action too, the default local fix action.
   @Nullable
   public abstract DownloadFixAction getDownloadAction();
 
-  public static class DownloadFixAction {
+  public interface SuggestedFixAction {
+    /**
+     * @return the common text for grouping and naming the action
+     */
+    @NotNull @Nls String getActionKindText();
+
+    @NotNull @Nls String getActionText();
+  }
+
+  public static class DownloadFixAction implements SuggestedFixAction {
     private final @NotNull UnknownSdkDownloadableSdkFix myFix;
 
     DownloadFixAction(@NotNull UnknownSdkDownloadableSdkFix fix) {
       myFix = fix;
     }
 
+    @Override
+    public @NotNull @Nls String getActionKindText() {
+      return ProjectBundle.message("config.unknown.sdk.download.verb");
+    }
+
+    @Override
     public @NotNull @Nls String getActionText() {
       return ProjectBundle.message("config.unknown.sdk.download", myFix.getDownloadDescription());
     }
