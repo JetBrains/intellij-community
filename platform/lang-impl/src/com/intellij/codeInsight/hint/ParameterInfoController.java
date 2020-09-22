@@ -3,10 +3,12 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupEvent;
+import com.intellij.codeInsight.lookup.LookupListener;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.injected.editor.EditorWindow;
@@ -17,16 +19,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon.Position;
 import com.intellij.openapi.util.*;
@@ -44,6 +43,8 @@ import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.Alarm;
+import com.intellij.util.indexing.DumbModeAccessType;
+import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.JBUI;
@@ -65,14 +66,9 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.function.Consumer;
 
 import static com.intellij.codeInsight.hint.ParameterInfoTaskRunnerUtil.runTask;
-import static com.intellij.ui.ScreenUtil.getScreenRectangle;
 
 public class ParameterInfoController extends UserDataHolderBase implements Disposable {
-  private static final Logger LOG = Logger.getInstance(ParameterInfoController.class);
   private static final String WHITESPACE = " \t";
-
-  private static final String LOADING_TAG = "loading";
-  private static final String COMPONENT_TAG = "component";
 
   private final Project myProject;
   @NotNull private final Editor myEditor;
@@ -222,6 +218,18 @@ public class ParameterInfoController extends UserDataHolderBase implements Dispo
     LookupManager.getInstance(project).addPropertyChangeListener(lookupChangeListener, this);
     EditorUtil.disposeWithEditor(myEditor, this);
 
+    myProject.getMessageBus().connect(this).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+      @Override
+      public void enteredDumbMode() {
+        updateComponent();
+      }
+
+      @Override
+      public void exitDumbMode() {
+        updateComponent();
+      }
+    });
+
     if (showHint) {
       showHint(requestFocus, mySingleParameterInfo);
     } else {
@@ -297,15 +305,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Dispo
 
   private void updateWhenAllCommitted() {
     if (!myDisposed && !myProject.isDisposed()) {
-      PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> {
-        try {
-          DumbService.getInstance(myProject).withAlternativeResolveEnabled(this::updateComponent);
-        }
-        catch (IndexNotReadyException e) {
-          LOG.info(e);
-          Disposer.dispose(this);
-        }
-      });
+      PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(this::updateComponent);
     }
   }
 
@@ -396,16 +396,10 @@ public class ParameterInfoController extends UserDataHolderBase implements Dispo
 
     runTask(myProject,
             ReadAction.nonBlocking(() -> {
-                try {
-                  myHandler.updateParameterInfo(elementForUpdating, context);
-                  return elementForUpdating;
-                }
-                catch (IndexNotReadyException e) {
-                  DumbService.getInstance(myProject)
-                    .showDumbModeNotification(CodeInsightBundle.message("parameter.info.indexing.mode.not.supported"));
-                }
-                return null;
-              })
+              FileBasedIndex.getInstance().ignoreDumbMode(
+                () -> myHandler.updateParameterInfo(elementForUpdating, context), DumbModeAccessType.RELIABLE_DATA_ONLY);
+              return elementForUpdating;
+            })
               .withDocumentsCommitted(myProject)
               .expireWhen(() -> !myKeepOnHintHidden && !myHint.isVisible() && !ApplicationManager.getApplication().isHeadlessEnvironment() ||
                                 getCurrentOffset() != context.getOffset() ||

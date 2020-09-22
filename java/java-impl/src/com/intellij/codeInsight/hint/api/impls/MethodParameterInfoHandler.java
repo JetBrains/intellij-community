@@ -685,7 +685,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           }
           if (context.isSingleParameterInfo()) buffer.append("<b>");
           appendModifierList(buffer, param);
-          String type = paramType.getPresentableText(true);
+          String type = paramType.getPresentableText(!DumbService.isDumb(param.getProject()));
           buffer.append(context.isSingleParameterInfo() ? StringUtil.escapeXmlEntities(type) : type);
           String name = param.getName();
           if (!context.isSingleParameterInfo()) {
@@ -754,9 +754,11 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   }
 
   private static void appendModifierList(@NotNull StringBuilder buffer, @NotNull PsiModifierListOwner owner) {
+    if (DumbService.isDumb(owner.getProject())) return;
+
     int lastSize = buffer.length();
     Set<String> shownAnnotations = new HashSet<>();
-    for (PsiAnnotation annotation : AnnotationUtil.getAllAnnotations(owner, false, null, !DumbService.isDumb(owner.getProject()))) {
+    for (PsiAnnotation annotation : AnnotationUtil.getAllAnnotations(owner, false, null, true)) {
       final PsiJavaCodeReferenceElement element = annotation.getNameReferenceElement();
       if (element != null) {
         final PsiElement resolved = element.resolve();
