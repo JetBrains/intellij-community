@@ -82,7 +82,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
       });
   }
 
-  private void notifyLoaded() {
+  protected void notifyLoaded() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
       for (Runnable loadingFinishedListener : myLoadingFinishedListeners) {
         loadingFinishedListener.run();
@@ -99,14 +99,14 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   @NotNull
   public T getCommitData(int hash, @NotNull Iterable<Integer> neighbourHashes) {
     assert EventQueue.isDispatchThread();
-    T details = getFromCache(hash);
+    T details = getCommitDataIfAvailable(hash);
     if (details != null) {
       return details;
     }
 
     runLoadCommitsData(neighbourHashes);
 
-    T result = myCache.getIfPresent(hash);
+    T result = getFromCache(hash);
     assert result != null; // now it is in the cache as "Loading Details" (runLoadCommitsData puts it there)
     return result;
   }
@@ -128,7 +128,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
     long taskNumber = myCurrentTaskIndex++;
 
     for (int id : commits.keys()) {
-      T details = getFromCache(id);
+      T details = getCommitDataIfAvailable(id);
       if (details == null || details instanceof LoadingDetails) {
         toLoad.add(id);
         cacheCommit(id, taskNumber);
@@ -200,23 +200,23 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   @Override
   @Nullable
   public T getCommitDataIfAvailable(int hash) {
-    return getFromCache(hash);
-  }
-
-  @Nullable
-  private T getFromCache(@NotNull Integer commitId) {
-    T details = myCache.getIfPresent(commitId);
+    T details = getFromCache(hash);
     if (details != null) {
       if (details instanceof LoadingDetails) {
         if (((LoadingDetails)details).getLoadingTaskIndex() <= myCurrentTaskIndex - MAX_LOADING_TASKS) {
           // don't let old "loading" requests stay in the cache forever
-          myCache.invalidate(commitId);
+          myCache.invalidate(hash);
           return null;
         }
       }
       return details;
     }
-    return getFromAdditionalCache(commitId);
+    return getFromAdditionalCache(hash);
+  }
+
+  @Nullable
+  protected T getFromCache(int hash) {
+    return myCache.getIfPresent(hash);
   }
 
   /**
@@ -242,7 +242,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   private void cacheCommit(final int commitId, long taskNumber) {
     // fill the cache with temporary "Loading" values to avoid producing queries for each commit that has not been cached yet,
     // even if it will be loaded within a previous query
-    if (myCache.getIfPresent(commitId) == null) {
+    if (getFromCache(commitId) == null) {
       IndexDataGetter dataGetter = myIndex.getDataGetter();
       if (dataGetter != null && Registry.is("vcs.log.use.indexed.details")) {
         myCache.put(commitId, (T)new IndexedDetails(dataGetter, myStorage, commitId, taskNumber));
