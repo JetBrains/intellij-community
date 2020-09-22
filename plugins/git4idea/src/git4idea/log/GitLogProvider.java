@@ -340,11 +340,10 @@ public class GitLogProvider implements VcsLogProvider, VcsIndexableLogProvider {
     return !repository.getInfo().isShallow();
   }
 
-  @NotNull
   @Override
-  public List<? extends VcsCommitMetadata> readMetadata(@NotNull final VirtualFile root, @NotNull List<String> hashes)
+  public void readMetadata(@NotNull VirtualFile root, @NotNull List<String> hashes, @NotNull Consumer<? super VcsCommitMetadata> consumer)
     throws VcsException {
-    return GitLogUtil.collectMetadata(myProject, myVcs, root, hashes);
+    GitLogUtil.collectMetadata(myProject, myVcs, root, hashes, consumer);
   }
 
   @NotNull

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log;
 
 import com.intellij.openapi.Disposable;
@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.CollectConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +50,9 @@ public interface VcsLogProvider {
   /**
    * Reads those details of the given commits, which are necessary to be shown in the log table and commit details.
    */
-  List<? extends VcsCommitMetadata> readMetadata(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException;
+  void readMetadata(@NotNull VirtualFile root,
+                    @NotNull List<String> hashes,
+                    @NotNull Consumer<? super VcsCommitMetadata> consumer) throws VcsException;
 
   /**
    * Reads full details for specified commits in the repository.
@@ -197,13 +200,15 @@ public interface VcsLogProvider {
   }
 
   /**
-   * @deprecated replaced by {@link VcsLogProvider#readMetadata(VirtualFile, List)}.
+   * @deprecated replaced by {@link VcsLogProvider#readMetadata(VirtualFile, List, Consumer)}.
    */
   @NotNull
   @Deprecated
   default List<? extends VcsShortCommitDetails> readShortDetails(@NotNull VirtualFile root, @NotNull List<String> hashes)
     throws VcsException {
-    return readMetadata(root, hashes);
+    CollectConsumer<VcsShortCommitDetails> collectConsumer = new CollectConsumer<>();
+    readMetadata(root, hashes, collectConsumer);
+    return new ArrayList<>(collectConsumer.getResult());
   }
 
   /**
