@@ -2214,13 +2214,7 @@ public final class UIUtil {
    * On AWT thread, invoked runnable immediately, otherwise do {@link SwingUtilities#invokeLater(Runnable)} on it.
    */
   public static void invokeLaterIfNeeded(@NotNull Runnable runnable) {
-    EdtInvocationManager edtInvocationManager = EdtInvocationManager.getInstance();
-    if (edtInvocationManager.isEventDispatchThread()) {
-      runnable.run();
-    }
-    else {
-      edtInvocationManager.invokeLater(runnable);
-    }
+    EdtInvocationManager.invokeLaterIfNeeded(runnable);
   }
 
   /**
