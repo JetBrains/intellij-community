@@ -12,9 +12,7 @@ import com.intellij.openapi.projectRoots.impl.UnknownSdkFix.SuggestedFixAction
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.Nls
-import java.awt.BorderLayout
 import javax.swing.Action
-import javax.swing.JPanel
 
 @Service
 class UnknownSdkModalNotification(
@@ -50,18 +48,14 @@ class UnknownSdkModalNotification(
         "".toString()
       }
 
-      val confirmActionText = when {
-        actionsWithFix.size == 1 -> actionsWithFix.values.single().actionText
-        else -> actionsWithFix.values.map { it.actionKindText }.distinct().sorted().joinToString(", ") //TODO: how to join?
-      }
-
       invokeAndWaitIfNeeded {
-        createConfirmSdkDownloadFixDialog(actionsWithFix, confirmActionText).showAndGet()
+        createConfirmSdkDownloadFixDialog(actionsWithFix, actionsWithoutFix).showAndGet()
       }
     }
 
-    private fun createConfirmSdkDownloadFixDialog(actions: Map<UnknownSdkFix, SuggestedFixAction>,
-                                                  @Nls confirmActionText : String
+    private fun createConfirmSdkDownloadFixDialog(
+      actions: Map<UnknownSdkFix, SuggestedFixAction>,
+      actionsWithoutFix: List<UnknownSdkFix>
     ) = object : DialogWrapper(project) {
       init {
         title = ProjectBundle.message("dialog.title.resolving.sdks")
@@ -74,15 +68,18 @@ class UnknownSdkModalNotification(
       override fun createCenterPanel() = panel {
         noteRow(errorMessage)
 
-        val mainMessages = actions.map { it.key.notificationText }.distinct().sorted()
-
-        for ((info, fix) in actions) {
-          val control = info.createNotificationPanel(project)
+        for ((_, fix) in actions) {
           row {
-            val wrap = JPanel(BorderLayout())
-            wrap.add(control, BorderLayout.CENTER)
-            wrap.minimumSize = control.preferredSize
-            wrap(CCFlags.grow)
+            checkBox(text = fix.checkboxActionText,
+                     isSelected = true,
+                     comment = fix.checkboxActionTooltip
+                     )
+          }
+        }
+
+        for (fix in actionsWithoutFix) {
+          row {
+            label(fix.notificationText)
           }
         }
       }

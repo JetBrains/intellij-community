@@ -28,14 +28,9 @@ final class UnknownSdkFixForInvalid extends UnknownSdkFix {
   }
 
   @Override
-  public @Nullable DownloadFixAction getDownloadAction() {
-    return myDownloadFixAction;
-  }
-
-  @Override
   public @Nullable SuggestedFixAction getSuggestedFixAction() {
     if (myLocalFixAction != null) return myLocalFixAction;
-    return getDownloadAction();
+    return myDownloadFixAction;
   }
 
   @Override
@@ -44,11 +39,39 @@ final class UnknownSdkFixForInvalid extends UnknownSdkFix {
     return ProjectBundle.message("config.invalid.sdk.notification.text", sdkTypeName, mySdkName);
   }
 
+  private class DownloadFixAction implements SuggestedFixAction {
+    @NotNull final UnknownSdkDownloadableSdkFix myFix;
+
+    private DownloadFixAction(@NotNull UnknownSdkDownloadableSdkFix fix) {
+      myFix = fix;
+    }
+
+    @Override
+    public @NotNull @Nls String getActionKindText() {
+      return ProjectBundle.message("config.unknown.sdk.download.verb");
+    }
+
+    @Override
+    public @NotNull @Nls String getActionText() {
+      return ProjectBundle.message("config.unknown.sdk.download", myFix.getDownloadDescription());
+    }
+
+    @Override
+    public @NotNull @Nls String getCheckboxActionText() {
+      String sdkTypeName = mySdkType.getPresentableName();
+      return ProjectBundle.message("checkbox.text.download.for.missing.sdk",
+                                   myFix.getDownloadDescription(),
+                                   sdkTypeName,
+                                   mySdkName
+      );
+    }
+  }
+
   private class LocalFixAction implements SuggestedFixAction {
-    @NotNull final UnknownSdkLocalSdkFix myLocalFix;
+    @NotNull final UnknownSdkLocalSdkFix myFix;
 
     private LocalFixAction(@NotNull UnknownSdkLocalSdkFix localSdkFix) {
-      myLocalFix = localSdkFix;
+      myFix = localSdkFix;
     }
 
     @Override
@@ -59,7 +82,22 @@ final class UnknownSdkFixForInvalid extends UnknownSdkFix {
     @Override
     public @NotNull @Nls String getActionText() {
       String sdkTypeName = mySdkType.getPresentableName();
-      return ProjectBundle.message("config.unknown.sdk.local", sdkTypeName, myLocalFix.getPresentableVersionString());
+      return ProjectBundle.message("config.unknown.sdk.local", sdkTypeName, myFix.getPresentableVersionString());
+    }
+
+    @Override
+    public @Nullable @Nls String getCheckboxActionTooltip() {
+      return SdkListPresenter.presentDetectedSdkPath(myFix.getExistingSdkHome(), 90, 40);
+    }
+
+    @Override
+    public @NotNull @Nls String getCheckboxActionText() {
+      String sdkTypeName = mySdkType.getPresentableName();
+      return ProjectBundle.message("checkbox.text.use.for.invalid.sdk",
+                                   sdkTypeName,
+                                   myFix.getPresentableVersionString(),
+                                   sdkTypeName,
+                                   mySdkName);
     }
   }
 
@@ -72,7 +110,7 @@ final class UnknownSdkFixForInvalid extends UnknownSdkFix {
       notification = newNotificationPanel(intentionActionText);
       notification
         .createActionLabel(intentionActionText, () -> mySdk.applyLocalFix(project), true)
-        .setToolTipText(SdkListPresenter.presentDetectedSdkPath(myLocalFixAction.myLocalFix.getExistingSdkHome(), 90, 40));
+        .setToolTipText(myLocalFixAction.getCheckboxActionTooltip());
     }
     else if (myDownloadFixAction != null)  {
       String intentionActionText = myDownloadFixAction.getActionText();
@@ -93,10 +131,10 @@ final class UnknownSdkFixForInvalid extends UnknownSdkFix {
     StringBuilder sb = new StringBuilder();
     sb.append("InvalidSdkFixInfo { name: ").append(mySdkName);
     if (myLocalFixAction != null) {
-      sb.append(", fix: ").append(myLocalFixAction.myLocalFix.getExistingSdkHome());
+      sb.append(", fix: ").append(myLocalFixAction.myFix.getExistingSdkHome());
     }
     if (myDownloadFixAction != null) {
-      sb.append(", fix: ").append(myDownloadFixAction.getFix().getDownloadDescription());
+      sb.append(", fix: ").append(myDownloadFixAction.myFix.getDownloadDescription());
     }
     sb.append("}");
     return sb.toString();

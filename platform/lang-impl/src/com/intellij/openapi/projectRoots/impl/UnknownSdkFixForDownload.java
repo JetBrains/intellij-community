@@ -28,22 +28,38 @@ class UnknownSdkFixForDownload extends UnknownSdkFix {
   }
 
   @Override
-  public @Nullable DownloadFixAction getDownloadAction() {
+  public @Nullable SuggestedFixAction getSuggestedFixAction() {
     return myDownloadFixAction;
   }
 
-  @Override
-  public @Nullable SuggestedFixAction getSuggestedFixAction() {
-    return getDownloadAction();
-  }
-
-  private static class DownloadFixActionImpl extends DownloadFixAction {
+  private class DownloadFixActionImpl implements SuggestedFixAction {
+    @NotNull final UnknownSdkDownloadableSdkFix myFix;
     @NotNull final UnknownSdk mySdk;
 
     private DownloadFixActionImpl(@NotNull UnknownSdkDownloadableSdkFix fix,
                                   @NotNull UnknownSdk sdk) {
-      super(fix);
+      myFix = fix;
       mySdk = sdk;
+    }
+
+    @Override
+    public @NotNull @Nls String getActionKindText() {
+      return ProjectBundle.message("config.unknown.sdk.download.verb");
+    }
+
+    @Override
+    public @NotNull @Nls String getActionText() {
+      return ProjectBundle.message("config.unknown.sdk.download", myFix.getDownloadDescription());
+    }
+
+    @Override
+    public @NotNull @Nls String getCheckboxActionText() {
+      String sdkTypeName = mySdkType.getPresentableName();
+      return ProjectBundle.message("checkbox.text.download.for.missing.sdk",
+                                   myFix.getDownloadDescription(),
+                                   sdkTypeName,
+                                   mySdkName
+                                   );
     }
   }
 
@@ -63,7 +79,7 @@ class UnknownSdkFixForDownload extends UnknownSdkFix {
       AtomicBoolean isRunning = new AtomicBoolean(false);
       notification.createActionLabel(actionText, () -> {
         if (isRunning.compareAndSet(false, true)) {
-          UnknownSdkTracker.getInstance(myProject).applyDownloadableFix(myDownloadFixAction.mySdk, myDownloadFixAction.getFix());
+          UnknownSdkTracker.getInstance(myProject).applyDownloadableFix(myDownloadFixAction.mySdk, myDownloadFixAction.myFix);
         }
       }, true);
     } else {
@@ -88,7 +104,7 @@ class UnknownSdkFixForDownload extends UnknownSdkFix {
     StringBuilder sb = new StringBuilder();
     sb.append("SdkFixInfo { name: ").append(mySdkName);
     if (myDownloadFixAction != null) {
-      sb.append(", fix: ").append(myDownloadFixAction.getFix().getDownloadDescription());
+      sb.append(", fix: ").append(myDownloadFixAction.myFix.getDownloadDescription());
     }
     sb.append("}");
     return sb.toString();
