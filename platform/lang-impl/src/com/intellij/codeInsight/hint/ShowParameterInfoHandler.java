@@ -15,7 +15,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.LightweightHint;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.ApiStatus;
@@ -104,11 +103,11 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
                 for (ParameterInfoHandler<PsiElement, Object> handler : handlers) {
                   PsiElement element = handler.findElementForParameterInfo(context);
                   if (element != null) {
-                    return (Runnable)() -> {
+                    return (Runnable)() -> FileBasedIndex.getInstance().ignoreDumbMode(() -> {
                       if (element.isValid()) {
                         handler.showParameterInfo(element, context);
                       }
-                    };
+                    }, DumbModeAccessType.RELIABLE_DATA_ONLY);
                   }
                 }
                 return null;
