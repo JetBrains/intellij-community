@@ -14,8 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 class UnknownSdkFixForDownload extends UnknownSdkFix {
   private final @NotNull String mySdkName;
-  private final @Nullable UnknownSdk mySdk;
-  private final @Nullable UnknownSdkDownloadableSdkFix myFix;
+  private final @Nullable DownloadFixActionImpl myDownloadFixAction;
 
   UnknownSdkFixForDownload(@NotNull Project project,
                            @NotNull String sdkName,
@@ -24,8 +23,22 @@ class UnknownSdkFixForDownload extends UnknownSdkFix {
                            @Nullable UnknownSdkDownloadableSdkFix fix) {
     super(project, sdkType);
     mySdkName = sdkName;
-    mySdk = sdk;
-    myFix = fix;
+    myDownloadFixAction = fix != null && sdk != null ? new DownloadFixActionImpl(fix, sdk) : null;
+  }
+
+  @Override
+  public @Nullable DownloadFixAction getDownloadAction() {
+    return myDownloadFixAction;
+  }
+
+  private static class DownloadFixActionImpl extends DownloadFixAction {
+    @NotNull final UnknownSdk mySdk;
+
+    private DownloadFixActionImpl(@NotNull UnknownSdkDownloadableSdkFix fix,
+                                  @NotNull UnknownSdk sdk) {
+      super(fix);
+      mySdk = sdk;
+    }
   }
 
   @Override
@@ -34,23 +47,24 @@ class UnknownSdkFixForDownload extends UnknownSdkFix {
     String notificationText = ProjectBundle.message("config.unknown.sdk.notification.text", sdkTypeName, mySdkName);
     String configureText = ProjectBundle.message("config.unknown.sdk.configure");
 
-    boolean hasDownload = myFix != null && mySdk != null;
-    String downloadText = hasDownload ? ProjectBundle.message("config.unknown.sdk.download", myFix.getDownloadDescription()) : "";
-    String intentionActionText =
-      hasDownload ? downloadText : ProjectBundle.message("config.unknown.sdk.configure.missing", sdkTypeName, mySdkName);
+    EditorNotificationPanel notification;
 
-    EditorNotificationPanel notification = newNotificationPanel(intentionActionText);
-    notification.setText(notificationText);
-
-    if (hasDownload) {
+    if (myDownloadFixAction != null) {
+      String actionText = myDownloadFixAction.getActionText();
+      notification = newNotificationPanel(actionText);
       AtomicBoolean isRunning = new AtomicBoolean(false);
-      notification.createActionLabel(downloadText, () -> {
+      notification.createActionLabel(actionText, () -> {
         if (isRunning.compareAndSet(false, true)) {
-          UnknownSdkTracker.getInstance(myProject).applyDownloadableFix(mySdk, myFix);
+          UnknownSdkTracker.getInstance(myProject).applyDownloadableFix(myDownloadFixAction.mySdk, myDownloadFixAction.getFix());
         }
       }, true);
+    } else {
+      String intentionActionText = ProjectBundle.message("config.unknown.sdk.configure.missing", sdkTypeName, mySdkName);
+
+      notification = newNotificationPanel(intentionActionText);
     }
 
+    notification.setText(notificationText);
     notification.createActionLabel(configureText,
                                    UnknownSdkTracker
                                      .getInstance(myProject)
@@ -65,8 +79,8 @@ class UnknownSdkFixForDownload extends UnknownSdkFix {
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("SdkFixInfo { name: ").append(mySdkName);
-    if (myFix != null) {
-      sb.append(", fix: ").append(myFix.getDownloadDescription());
+    if (myDownloadFixAction != null) {
+      sb.append(", fix: ").append(myDownloadFixAction.getFix().getDownloadDescription());
     }
     sb.append("}");
     return sb.toString();

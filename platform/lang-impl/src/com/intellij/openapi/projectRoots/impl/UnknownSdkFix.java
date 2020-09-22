@@ -6,9 +6,11 @@ import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.roots.ui.configuration.UnknownSdkDownloadableSdkFix;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,5 +58,25 @@ public abstract class UnknownSdkFix {
     panel.setProviderKey(EDITOR_NOTIFICATIONS_KEY);
 
     return panel;
+  }
+
+  @Nullable
+  public abstract DownloadFixAction getDownloadAction();
+
+  public static class DownloadFixAction {
+    private final @NotNull UnknownSdkDownloadableSdkFix myFix;
+
+    DownloadFixAction(@NotNull UnknownSdkDownloadableSdkFix fix) {
+      myFix = fix;
+    }
+
+    public @NotNull @Nls String getActionText() {
+      return ProjectBundle.message("config.unknown.sdk.download", myFix.getDownloadDescription());
+    }
+
+    @NotNull
+    public UnknownSdkDownloadableSdkFix getFix() {
+      return myFix;
+    }
   }
 }

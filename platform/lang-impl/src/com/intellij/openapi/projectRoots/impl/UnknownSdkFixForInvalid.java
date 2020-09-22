@@ -9,15 +9,26 @@ import com.intellij.openapi.roots.ui.configuration.UnknownSdkLocalSdkFix;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.HyperlinkLabel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 final class UnknownSdkFixForInvalid extends UnknownSdkFix {
   private final @NotNull String mySdkName;
   private final @NotNull UnknownInvalidSdk mySdk;
+  private final @Nullable UnknownSdkLocalSdkFix myLocalFix;
+  private final @Nullable DownloadFixAction myDownloadFixAction;
 
   UnknownSdkFixForInvalid(@NotNull Project project, @NotNull UnknownInvalidSdk invalidSdk) {
     super(project, invalidSdk.mySdkType);
     mySdkName = invalidSdk.getSdkName();
     mySdk = invalidSdk;
+    myLocalFix = mySdk.myLocalSdkFix;
+    UnknownSdkDownloadableSdkFix downloadFix = mySdk.myDownloadableSdkFix;
+    myDownloadFixAction = downloadFix != null ? new DownloadFixAction(downloadFix) : null;
+  }
+
+  @Override
+  public @Nullable DownloadFixAction getDownloadAction() {
+    return myDownloadFixAction;
   }
 
   @Override
@@ -25,34 +36,27 @@ final class UnknownSdkFixForInvalid extends UnknownSdkFix {
     String sdkTypeName = mySdkType.getPresentableName();
     String notificationText = ProjectBundle.message("config.invalid.sdk.notification.text", sdkTypeName, mySdkName);
     String configureText = ProjectBundle.message("config.invalid.sdk.configure");
-
-    UnknownSdkLocalSdkFix localFix = mySdk.myLocalSdkFix;
-    UnknownSdkDownloadableSdkFix downloadFix = mySdk.myDownloadableSdkFix;
-
     String intentionActionText = ProjectBundle.message("config.invalid.sdk.configure.missing", sdkTypeName, mySdkName);
 
     String localText = "";
     String localTextTooltip = "";
-    if (localFix != null) {
+    if (myLocalFix != null) {
       localText =
-      intentionActionText = ProjectBundle.message("config.unknown.sdk.local", sdkTypeName, localFix.getPresentableVersionString());
-      localTextTooltip = SdkListPresenter.presentDetectedSdkPath(localFix.getExistingSdkHome(), 90, 40);
+      intentionActionText = ProjectBundle.message("config.unknown.sdk.local", sdkTypeName, myLocalFix.getPresentableVersionString());
+      localTextTooltip = SdkListPresenter.presentDetectedSdkPath(myLocalFix.getExistingSdkHome(), 90, 40);
     }
 
-    String downloadText = downloadFix != null
-                          ? intentionActionText = ProjectBundle.message("config.unknown.sdk.download", downloadFix.getDownloadDescription())
-                          : "";
     EditorNotificationPanel notification = newNotificationPanel(intentionActionText);
     notification.setText(notificationText);
 
-    if (localFix != null) {
+    if (myLocalFix != null) {
       HyperlinkLabel actionLabel = notification.createActionLabel(localText, () -> {
         mySdk.applyLocalFix(project);
       }, true);
       actionLabel.setToolTipText(localTextTooltip);
     }
-    else if (downloadFix != null) {
-      notification.createActionLabel(downloadText, () -> mySdk.applyDownloadFix(myProject), true);
+    else if (myDownloadFixAction != null) {
+      notification.createActionLabel(myDownloadFixAction.getActionText(), () -> mySdk.applyDownloadFix(myProject), true);
     }
 
     notification.createActionLabel(configureText, mySdk.createSdkSelectionPopup(project), true);
