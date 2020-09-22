@@ -64,6 +64,10 @@ public abstract class UnknownSdkFix {
   @NotNull
   public abstract String getNotificationText();
 
+  @Nls
+  @Nullable
+  public abstract String getSdkTypeAndNameText();
+
   @Nullable
   public abstract SuggestedFixAction getSuggestedFixAction();
 

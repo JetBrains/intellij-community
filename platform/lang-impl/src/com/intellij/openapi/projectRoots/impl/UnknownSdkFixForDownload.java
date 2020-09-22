@@ -70,6 +70,12 @@ class UnknownSdkFixForDownload extends UnknownSdkFix {
   }
 
   @Override
+  public @Nls @NotNull String getSdkTypeAndNameText() {
+    String sdkTypeName = mySdkType.getPresentableName();
+    return ProjectBundle.message("dialog.text.resolving.sdks.item", sdkTypeName, mySdkName);
+  }
+
+  @Override
   protected final @NotNull EditorNotificationPanel createNotificationPanelImpl(@NotNull Project project) {
     EditorNotificationPanel notification;
 

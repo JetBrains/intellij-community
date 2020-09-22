@@ -39,6 +39,12 @@ final class UnknownSdkFixForInvalid extends UnknownSdkFix {
     return ProjectBundle.message("config.invalid.sdk.notification.text", sdkTypeName, mySdkName);
   }
 
+  @Override
+  public @Nls @NotNull String getSdkTypeAndNameText() {
+    String sdkTypeName = mySdkType.getPresentableName();
+    return ProjectBundle.message("dialog.text.resolving.sdks.item", sdkTypeName, mySdkName);
+  }
+
   private class DownloadFixAction implements SuggestedFixAction {
     @NotNull final UnknownSdkDownloadableSdkFix myFix;
 
