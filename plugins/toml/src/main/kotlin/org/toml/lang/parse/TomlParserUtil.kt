@@ -7,6 +7,7 @@ package org.toml.lang.parse
 
 import com.intellij.lang.PsiBuilder
 import com.intellij.lang.parser.GeneratedParserUtilBase
+import com.intellij.lang.parser.rawLookupText
 import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
 
@@ -51,10 +52,4 @@ object TomlParserUtil : GeneratedParserUtilBase() {
 private fun isNextAfterNewLine(b: PsiBuilder): Boolean {
     val prevToken = b.rawLookup(-1)
     return prevToken == null || prevToken == TokenType.WHITE_SPACE && b.rawLookupText(-1).contains("\n")
-}
-
-private fun PsiBuilder.rawLookupText(steps: Int): CharSequence {
-    val start = rawTokenTypeStart(steps)
-    val end = rawTokenTypeStart(steps + 1)
-    return if (start == -1 || end == -1) "" else originalText.subSequence(start, end)
 }
