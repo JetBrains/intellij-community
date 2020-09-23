@@ -8,7 +8,11 @@ import com.intellij.openapi.util.registry.Registry
 object EditorConfigRegistry {
   const val EDITORCONFIG_STOP_AT_PROJECT_ROOT_KEY = "editor.config.stop.at.project.root"
   const val EDITORCONFIG_BREADCRUMBS_SUPPORT_KEY = "editor.config.breadcrumbs.support"
-  const val EDITORCONFIG_CSHARP_SUPPORT_KEY = "editor.config.csharp.support"
+  const val EDITORCONFIG_DOTNET_SUPPORT_KEY = "editor.config.csharp.support"
+
+  @Deprecated("Calling this C# is too narrow. Use EDITORCONFIG_DOTNET_SUPPORT_KEY instead",
+              ReplaceWith("EDITORCONFIG_DOTNET_SUPPORT_KEY", "org.editorconfig.EditorConfigRegistry.EDITORCONFIG_DOTNET_SUPPORT_KEY"))
+  const val EDITORCONFIG_CSHARP_SUPPORT_KEY = EDITORCONFIG_DOTNET_SUPPORT_KEY
 
   @JvmStatic
   fun shouldStopAtProjectRoot() =
@@ -18,5 +22,10 @@ object EditorConfigRegistry {
   fun shouldSupportBreadCrumbs() = Registry.`is`(EDITORCONFIG_BREADCRUMBS_SUPPORT_KEY, false)
 
   @JvmStatic
-  fun shouldSupportCSharp() = Registry.`is`(EDITORCONFIG_CSHARP_SUPPORT_KEY, false)
+  @Deprecated("Calling this C# is too narrow. Use shouldSupportDotNet instead",
+              ReplaceWith("shouldSupportDotNet()", "org.editorconfig.EditorConfigRegistry.shouldSupportDotNet"))
+  fun shouldSupportCSharp() = shouldSupportDotNet()
+
+  @JvmStatic
+  fun shouldSupportDotNet() = Registry.`is`(EDITORCONFIG_DOTNET_SUPPORT_KEY, false)
 }
