@@ -1,4 +1,5 @@
 from typing import Any, Optional
+
 from Crypto.Hash import SHA as SHA1
 
 __revision__: str

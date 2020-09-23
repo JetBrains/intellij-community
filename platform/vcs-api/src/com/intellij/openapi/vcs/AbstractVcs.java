@@ -100,11 +100,22 @@ public abstract class AbstractVcs extends StartedActivated {
   }
 
   /**
-   * Allows to hide 'VCS' action group in 'Main Menu' for projects that have configured mappings for this VCS only.
+   * Allows to hide 'VCS' action group in 'Main Menu'.
+   * Takes effect for projects that have configured mappings for this VCS only.
    *
    * @return true if 'VCS' group should be hidden.
    */
   public boolean isWithCustomMenu() {
+    return false;
+  }
+
+  /**
+   * Allows to hide 'Local Changes' toolwindow tab, as well as disable changelists.
+   * Takes effect for projects that have configured mappings for this VCS only.
+   *
+   * @return true if 'Local Changes' tab should be hidden.
+   */
+  public boolean isWithCustomLocalChanges() {
     return false;
   }
 
@@ -117,7 +128,9 @@ public abstract class AbstractVcs extends StartedActivated {
     return null;
   }
 
-  public abstract Configurable getConfigurable();
+  public Configurable getConfigurable() {
+    return null;
+  }
 
   @Nullable
   public TransactionProvider getTransactionProvider() {

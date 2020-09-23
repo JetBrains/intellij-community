@@ -3,6 +3,7 @@ package com.intellij.jps.cache.client;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.intellij.jps.cache.JpsCacheBundle;
 import com.intellij.jps.cache.JpsCachesPluginUtil;
 import com.intellij.jps.cache.git.GitRepositoryUtil;
 import com.intellij.jps.cache.model.AffectedModule;
@@ -181,7 +182,8 @@ public final class TemporaryCacheServerClient implements JpsServerClient {
     catch (IOException e) {
       LOG.warn("Failed request to cache server", e);
       Notification notification = JpsLoaderNotifications.NONE_NOTIFICATION_GROUP
-        .createNotification("Compiler Caches Loader", "Failed request to cache server: " + e.getMessage(), NotificationType.ERROR, null);
+        .createNotification(JpsCacheBundle.message("notification.title.compiler.caches.loader"),
+                            JpsCacheBundle.message("notification.content.failed.request.to.cache.server", e.getMessage()), NotificationType.ERROR, null);
       Notifications.Bus.notify(notification, project);
     }
     return null;

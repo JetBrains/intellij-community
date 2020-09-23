@@ -14,7 +14,6 @@ import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
@@ -28,7 +27,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.ui.EditorNotifications;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -38,8 +36,7 @@ import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.io.File;
 import java.nio.file.Path;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.Objects;
 
 import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.CommandLine;
 
@@ -56,25 +53,27 @@ public final class LightEditUtil {
   private LightEditUtil() {
   }
 
-  public static boolean openFile(@NotNull Path path) {
+  @Nullable
+  public static Project openFile(@NotNull Path path) {
     VirtualFile virtualFile = VfsUtil.findFile(path, true);
     if (virtualFile != null) {
-      if (LightEdit.openFile(virtualFile)) {
+      Project project = LightEditService.getInstance().openFile(virtualFile, false);
+      if (project != null) {
         LightEditFeatureUsagesUtil.logFileOpen(CommandLine);
-        return true;
+        return project;
       }
     }
     else {
       return handleNonExisting(path);
     }
-    return false;
+    return null;
   }
 
-  private static boolean handleNonExisting(@NotNull Path path) {
+  private static @Nullable Project handleNonExisting(@NotNull Path path) {
     if (path.getFileName() == null) {
       LOG.error("No file name is given");
     }
-    if (path.getNameCount() > 0) {
+    if (isLightEditEnabled() && path.getNameCount() > 0) {
       String fileName = path.getFileName().toString();
       final Ref<String> creationMessage = Ref.create();
       if (path.getNameCount() > 1) {
@@ -83,25 +82,22 @@ public final class LightEditUtil {
           creationMessage.set(ApplicationBundle.message("light.edit.file.creation.failed.message", path.toString(), fileName));
         }
       }
+      final Project project = ((LightEditServiceImpl)LightEditService.getInstance()).getOrCreateProject();
       ApplicationManager.getApplication().invokeLater(() -> {
         LightEditorInfo editorInfo = LightEditService.getInstance().createNewDocument(path);
         if (creationMessage.get() != null) {
           editorInfo.getFile().putUserData(CREATION_MESSAGE, creationMessage.get());
-          EditorNotifications.getInstance(getProject()).updateNotifications(editorInfo.getFile());
+          EditorNotifications.getInstance(project).updateNotifications(editorInfo.getFile());
         }
       });
-      return true;
+      return project;
     }
-    return false;
+    return null;
   }
 
   public static boolean isOpenInExistingProject() {
     return ourForceOpenInExistingProjectFlag &&
            ProjectManager.getInstance().getOpenProjects().length > 0;
-  }
-
-  public static @NotNull Project getProject() {
-    return LightEditService.getInstance().getOrCreateProject();
   }
 
   @Nullable
@@ -113,7 +109,7 @@ public final class LightEditUtil {
                               @NotNull @NlsContexts.DialogTitle String title,
                               @NotNull LightEditSaveConfirmationHandler handler) {
     final String[] options = {getCloseSave(), getCloseDiscard(), getCloseCancel()};
-    int result = Messages.showDialog(getProject(), message, title, options, 0, Messages.getWarningIcon());
+    int result = Messages.showDialog(requireProject(), message, title, options, 0, Messages.getWarningIcon());
     if (result >= 0) {
       if (getCloseCancel().equals(options[result])) {
         return false;
@@ -131,26 +127,13 @@ public final class LightEditUtil {
     }
   }
 
-  @Nullable
-  static VirtualFile chooseTargetFile(@NotNull Component parent, @NotNull LightEditorInfo editorInfo) {
-    FileSaverDialog saver =
-      FileChooserFactory.getInstance()
-        .createSaveFileDialog(new FileSaverDescriptor(
-          IdeBundle.message("dialog.title.save.as"),
-          IdeBundle.message("label.choose.target.file"),
-          getKnownExtensions()),parent);
+  static @Nullable VirtualFile chooseTargetFile(@NotNull Component parent, @NotNull LightEditorInfo editorInfo) {
+    FileSaverDialog saver = FileChooserFactory.getInstance().createSaveFileDialog(new FileSaverDescriptor(
+      IdeBundle.message("dialog.title.save.as"),
+      IdeBundle.message("label.choose.target.file")
+    ), parent);
     VirtualFileWrapper fileWrapper = saver.save(VfsUtil.getUserHomeDir(), editorInfo.getFile().getPresentableName());
-    if (fileWrapper != null) {
-      return fileWrapper.getVirtualFile(true);
-    }
-    return null;
-  }
-
-  private static String[] getKnownExtensions() {
-    return
-      ArrayUtil.toStringArray(
-        Stream.of(FileTypeManager.getInstance().getRegisteredFileTypes())
-          .map(fileType -> fileType.getDefaultExtension()).sorted().distinct().collect(Collectors.toList()));
+    return fileWrapper != null ? fileWrapper.getVirtualFile(true) : null;
   }
 
   private static @NlsContexts.Button String getCloseSave() {
@@ -174,7 +157,7 @@ public final class LightEditUtil {
     }
   }
 
-  public static boolean isLightEditEnabled() {
+  static boolean isLightEditEnabled() {
     return Registry.is(ENABLED_FILE_OPEN_KEY) && !PlatformUtils.isDataGrip();
   }
 
@@ -192,7 +175,7 @@ public final class LightEditUtil {
                 && OPEN_FILE_IN_PROJECT_HREF.equals(e.getDescription())) {
               VirtualFile file = LightEditService.getInstance().getSelectedFile();
               if (file != null) {
-                LightEditOpenInProjectIntention.performOn(file);
+                LightEditOpenInProjectIntention.performOn(Objects.requireNonNull(editor.getProject()), file);
               }
             }
           });
@@ -221,5 +204,19 @@ public final class LightEditUtil {
       }
     }
     return null;
+  }
+
+  @NotNull
+  public static Project requireLightEditProject(@Nullable Project project) {
+    if (project == null || !LightEdit.owns(project)) {
+      LOG.error("LightEdit project is expected while " + (project != null ? project.getName() : "no project") + " is used instead");
+      throw new IllegalStateException("Missing LightEdit project");
+    }
+    return project;
+  }
+
+  @NotNull
+  static Project requireProject() {
+    return requireLightEditProject(LightEditService.getInstance().getProject());
   }
 }

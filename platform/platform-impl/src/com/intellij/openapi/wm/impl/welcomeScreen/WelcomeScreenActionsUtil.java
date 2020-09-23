@@ -17,6 +17,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.accessibility.AccessibleState;
 import javax.swing.*;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
@@ -39,7 +40,7 @@ public class WelcomeScreenActionsUtil {
     }
   }
 
-  static class ToolbarTextButtonWrapper extends AnActionButton.AnActionButtonWrapper implements CustomComponentAction {
+  public static class ToolbarTextButtonWrapper extends AnActionButton.AnActionButtonWrapper implements CustomComponentAction {
     final JButton myButton;
 
     ToolbarTextButtonWrapper(@NotNull AnAction action) {
@@ -118,6 +119,7 @@ public class WelcomeScreenActionsUtil {
       myPanel = new NonOpaquePanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, JBUI.scale(12), false, false));
       myPanel.add(iconWrapper);
       myPanel.add(myLabel);
+      myIconButton.getAccessibleContext().setAccessibleName(myLabel.getText());
     }
 
     void updateIconBackground(boolean selected) {
@@ -145,7 +147,7 @@ public class WelcomeScreenActionsUtil {
     }
   }
 
-  static Couple<DefaultActionGroup> splitAndWrapActions(@NotNull ActionGroup actionGroup,
+  public static Couple<DefaultActionGroup> splitAndWrapActions(@NotNull ActionGroup actionGroup,
                                                         @NotNull Function<? super AnAction, ? extends AnAction> wrapper,
                                                         int mainButtonsNum) {
     DefaultActionGroup group = new DefaultActionGroup();

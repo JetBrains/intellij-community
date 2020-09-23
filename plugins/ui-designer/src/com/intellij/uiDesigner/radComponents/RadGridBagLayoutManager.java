@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.radComponents;
 
@@ -19,7 +19,6 @@ import com.intellij.uiDesigner.propertyInspector.properties.AbstractIntProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.HorzAlignProperty;
 import com.intellij.uiDesigner.propertyInspector.properties.VertAlignProperty;
 import com.intellij.uiDesigner.propertyInspector.renderers.LabelPropertyRenderer;
-import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -270,14 +269,6 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
     // do nothing here - setting visible to false would cause exceptions
   }
 
-  @Override
-  public void createSnapshotLayout(final SnapshotContext context,
-                                   final JComponent parent,
-                                   final RadContainer container,
-                                   final LayoutManager layout) {
-    container.setLayout(new GridBagLayout());
-  }
-
   public static Dimension getGridBagSize(final JComponent parent) {
     GridBagLayout gridBag = (GridBagLayout)parent.getLayout();
     gridBag.layoutContainer(parent);
@@ -296,7 +287,6 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
     return new Dimension(colCount, rowCount);
   }
 
-  @Override
   public void addSnapshotComponent(final JComponent parent,
                                    final JComponent child,
                                    final RadContainer container,

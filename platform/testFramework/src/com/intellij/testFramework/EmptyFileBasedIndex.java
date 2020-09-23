@@ -12,7 +12,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.AbstractUpdateData;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
-import com.intellij.util.indexing.roots.IndexableFilesProvider;
 import com.intellij.util.indexing.snapshot.SnapshotSingleValueIndexStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +33,7 @@ public class EmptyFileBasedIndex extends FileBasedIndexEx {
   }
 
   @Override
-  public void registerIndexableSet(@NotNull IndexableFileSet set, @Nullable Project project) {
+  public void registerIndexableSet(@NotNull IndexableFileSet set, @NotNull Project project) {
 
   }
 
@@ -173,11 +172,6 @@ public class EmptyFileBasedIndex extends FileBasedIndexEx {
                                     @Nullable GlobalSearchScope filter,
                                     @Nullable VirtualFile restrictedFile) {
     return true;
-  }
-
-  @Override
-  public @NotNull List<IndexableFilesProvider> getOrderedIndexableFilesProviders(@NotNull Project project) {
-    return super.getOrderedIndexableFilesProviders(project);
   }
 
   @Override

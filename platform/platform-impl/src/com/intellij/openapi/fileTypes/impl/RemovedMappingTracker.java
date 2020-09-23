@@ -122,7 +122,7 @@ final class RemovedMappingTracker {
       .collect(Collectors.toList());
   }
 
-  void removeMatching(@NotNull BiPredicate<? super FileNameMatcher, ? super String> predicate) {
+  void removeIf(@NotNull BiPredicate<? super FileNameMatcher, ? super String> predicate) {
     myRemovedMappings.entrySet().removeIf(next -> predicate.test(next.getValue().myFileNameMatcher, next.getValue().myFileTypeName));
   }
 

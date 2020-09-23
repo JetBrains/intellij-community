@@ -79,6 +79,6 @@ public class SphinxRunConfiguration extends RestRunConfiguration {
 
   @Override
   public String suggestedName() {
-    return "sphinx task in " + getName();
+    return PythonRestBundle.message("python.rest.sphinx.run.cfg.default.name", getName());
   }
 }

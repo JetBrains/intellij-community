@@ -1,6 +1,6 @@
 # Stubs for cmd (Python 2/3)
 
-from typing import Any, Optional, Text, IO, List, Callable, Tuple
+from typing import IO, Any, Callable, List, Optional, Tuple
 
 class Cmd:
     prompt: str

@@ -133,7 +133,6 @@ class FileBasedIndexDataInitialization extends IndexInfrastructure.DataInitializ
         }
       }
 
-      myFileBasedIndex.registerIndexableSet(new AdditionalIndexableFileSet(), null);
       return state;
     }
     finally {

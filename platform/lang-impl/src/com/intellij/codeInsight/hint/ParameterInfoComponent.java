@@ -3,6 +3,7 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.icons.AllIcons;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
@@ -11,6 +12,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
@@ -21,6 +23,8 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Function;
+import com.intellij.util.indexing.DumbModeAccessType;
+import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -32,6 +36,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -44,6 +49,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.codeWithMe.ClientIdKt.isForeignClientOnServer;
 
+@VisibleForTesting
 public class ParameterInfoComponent extends JPanel {
   private Object[] myObjects;
   private int myCurrentParameterIndex;
@@ -55,6 +61,7 @@ public class ParameterInfoComponent extends JPanel {
   private final JPanel myMainPanel;
   private OneElementComponent[] myPanels;
   private JLabel myShortcutLabel;
+  private final JLabel myDumbLabel = new JLabel(CodeInsightBundle.message("parameter.info.incomplete"));
   private final boolean myAllowSwitchLabel;
 
   private final Font NORMAL_FONT;
@@ -78,28 +85,30 @@ public class ParameterInfoComponent extends JPanel {
     int endResult = Integer.compare(o2.getEndOffset(), o1.getEndOffset());
     return endResult == 0 ? Integer.compare(o1.getStartOffset(), o2.getStartOffset()) : endResult;
   };
+  private final Editor myEditor;
   private final boolean myRequestFocus;
 
   @TestOnly
-  public static ParameterInfoUIContextEx createContext(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler, int currentParameterIndex) {
+  public static ParameterInfoUIContextEx createContext(Object[] objects, @NotNull Editor editor, @NotNull ParameterInfoHandler handler, int currentParameterIndex) {
     return createContext(objects, editor, handler, currentParameterIndex, null);
   }
 
   @TestOnly
-  public static ParameterInfoUIContextEx createContext(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler, int currentParameterIndex, @Nullable PsiElement parameterOwner) {
+  public static ParameterInfoUIContextEx createContext(Object[] objects, @NotNull Editor editor, @NotNull ParameterInfoHandler handler, int currentParameterIndex, @Nullable PsiElement parameterOwner) {
     final ParameterInfoComponent infoComponent = new ParameterInfoComponent(objects, editor, handler);
     infoComponent.setCurrentParameterIndex(currentParameterIndex);
     infoComponent.setParameterOwner(parameterOwner);
     return infoComponent.new MyParameterContext(false);
   }
 
-  ParameterInfoComponent(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler) {
+  private ParameterInfoComponent(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler) {
     this(objects, editor, handler, false, false);
   }
 
   ParameterInfoComponent(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler,
                          boolean requestFocus, boolean allowSwitchLabel) {
     super(new BorderLayout());
+    myEditor = editor;
     myRequestFocus = requestFocus;
 
     if (!ApplicationManager.getApplication().isUnitTestMode()
@@ -128,6 +137,11 @@ public class ParameterInfoComponent extends JPanel {
     if (myRequestFocus) {
       AccessibleContextUtil.setName(this, "Parameter Info. Press TAB to navigate through each element. Press ESC to close.");
     }
+
+    myDumbLabel.setForeground(CONTEXT_HELP_FOREGROUND);
+    myDumbLabel.setIcon(AllIcons.General.Warning);
+    myDumbLabel.setBorder(new CompoundBorder(JBUI.Borders.customLine(SEPARATOR_COLOR, 0, 0, 1, 0), JBUI.Borders.empty(2, 10, 6, 10)));
+    add(myDumbLabel, BorderLayout.NORTH);
 
     final JScrollPane pane = ScrollPaneFactory.createScrollPane(myMainPanel, true);
     add(pane, BorderLayout.CENTER);
@@ -196,12 +210,8 @@ public class ParameterInfoComponent extends JPanel {
       .collect(Collectors.joining("\n"));
   }
 
-  public Object getHighlighted() {
+  Object getHighlighted() {
     return myHighlighted;
-  }
-
-  public boolean isRequestFocus() {
-    return myRequestFocus;
   }
 
   class MyParameterContext implements ParameterInfoUIContextEx {
@@ -318,7 +328,7 @@ public class ParameterInfoComponent extends JPanel {
     }
   }
 
-  public ParameterInfoController.Model update(boolean singleParameterInfo) {
+  ParameterInfoController.Model update(boolean singleParameterInfo) {
     MyParameterContext context = new MyParameterContext(singleParameterInfo);
 
     int highlightedComponentIdx = -1;
@@ -336,7 +346,7 @@ public class ParameterInfoComponent extends JPanel {
       else {
         setVisible(i, true);
         //noinspection unchecked
-        myHandler.updateUI(o, context);
+        FileBasedIndex.getInstance().ignoreDumbMode(() -> myHandler.updateUI(o, context), DumbModeAccessType.RELIABLE_DATA_ONLY);
 
         // ensure that highlighted element is visible
         if (context.isHighlighted()) {
@@ -352,10 +362,13 @@ public class ParameterInfoComponent extends JPanel {
       myMainPanel.scrollRectToVisible(myPanels[highlightedComponentIdx].getBounds());
     }
 
+    var project = myEditor.getProject();
+    myDumbLabel.setVisible(project != null && DumbService.isDumb(project));
+
     return context.result;
   }
 
-  public Object[] getObjects() {
+  Object[] getObjects() {
     return myObjects;
   }
 
@@ -371,23 +384,23 @@ public class ParameterInfoComponent extends JPanel {
     return myPanels[index].isEnabled();
   }
 
-  public void setCurrentParameterIndex(int currentParameterIndex) {
+  void setCurrentParameterIndex(int currentParameterIndex) {
     myCurrentParameterIndex = currentParameterIndex;
   }
 
-  public int getCurrentParameterIndex() {
+  int getCurrentParameterIndex() {
     return myCurrentParameterIndex;
   }
 
-  public void setParameterOwner(PsiElement element) {
+  void setParameterOwner(PsiElement element) {
     myParameterOwner = element;
   }
 
-  public PsiElement getParameterOwner() {
+  PsiElement getParameterOwner() {
     return myParameterOwner;
   }
 
-  public void setHighlightedParameter(Object element) {
+  void setHighlightedParameter(Object element) {
     myHighlighted = element;
   }
 

@@ -38,6 +38,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -518,9 +519,10 @@ public class JavaDocInfoGenerator {
     boolean generateLink = place == SignaturePlace.Javadoc;
     generateAnnotations(buffer, aClass, place, true);
     generateModifiers(buffer, aClass, false);
-    buffer.append(JavaBundle.message(aClass.isInterface() ? "java.terms.interface"
-                                                          : aClass.isEnum() ? "java.terms.enum"
-                                                                            : aClass.isRecord() ? "java.terms.record" : "java.terms.class"));
+    buffer.append(aClass.isInterface() ? PsiKeyword.INTERFACE :
+                  aClass.isEnum() ? PsiKeyword.ENUM :
+                  aClass.isRecord() ? PsiKeyword.RECORD :
+                  PsiKeyword.CLASS);
     buffer.append(' ');
     String refText = JavaDocUtil.getReferenceText(aClass.getProject(), aClass);
     if (refText == null) {
@@ -684,13 +686,13 @@ public class JavaDocInfoGenerator {
     enumConstantOrdinal(buffer, field, field.getContainingClass(), "\n");
   }
 
-  public static void enumConstantOrdinal(StringBuilder buffer, PsiField field, PsiClass parentClass, String newLine) {
+  public static void enumConstantOrdinal(@Nls StringBuilder buffer, PsiField field, PsiClass parentClass, String newLine) {
     if (parentClass != null && field instanceof PsiEnumConstant) {
       PsiField[] fields = parentClass.getFields();
       int idx = ArrayUtilRt.find(fields, field);
       if (idx >= 0) {
         buffer.append(newLine);
-        buffer.append("Enum constant ordinal: ").append(idx);
+        buffer.append(JavaBundle.message("enum.constant.ordinal")).append(idx);
       }
     }
   }

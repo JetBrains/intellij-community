@@ -15,6 +15,7 @@
  */
 package com.intellij.appengine.converter;
 
+import com.intellij.appengine.JavaGoogleAppEngineBundle;
 import com.intellij.appengine.facet.AppEngineFacet;
 import com.intellij.facet.ProjectFacetManager;
 import com.intellij.notification.Notification;
@@ -33,13 +34,9 @@ public class MigrateToCloudToolsNotification implements StartupActivity.DumbAwar
   public void runActivity(@NotNull Project project) {
     ProjectFacetManager facetManager = ProjectFacetManager.getInstance(project);
     if (facetManager.hasFacets(AppEngineFacet.ID) && isAppEngineSdkDeprecated()) {
-      String text = "<html><body><p>It looks like your project is using the App Engine SDK. While the App Engine SDK is still supported, Google " +
-                    "recommends that you migrate to the <a href=\"https://cloud.google.com/sdk/\">Google Cloud SDK</a>. The Cloud SDK provides new " +
-                    "features such as <a href=\"https://cloud.google.com/appengine/docs/flexible/\">App Engine Flexible</a> support and " +
-                    "<a href=\"https://cloud.google.com/debugger/\">Google Cloud Debugger</a> integration.</p>" +
-                    "<p><a href=\"https://cloud.google.com/tools/intellij/docs/migrate\">Learn more about migrating to the new Cloud tools</a>.</p>" +
-                    "</body></html>";
-      Notification notification = new Notification("Migrate to Google Cloud SDK", "App Engine SDK Detected",
+      String text = JavaGoogleAppEngineBundle.message("migrate.to.google.cloud.notification.text");
+      Notification notification = new Notification("Migrate to Google Cloud SDK",
+                                                   JavaGoogleAppEngineBundle.message("notification.title.app.engine.sdk.detected"),
                                                    text, NotificationType.WARNING, new NotificationListener.UrlOpeningListener(false));
       /*
       //currently Google Cloud Tools plugin doesn't provide seamless migration for all project, so we don't want to provide a direct link which installs it.

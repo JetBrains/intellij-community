@@ -695,7 +695,9 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
         if (relativePath.equals(".")) {
           return parentNode;
         }
-        parentsPath = myWorkingDir;
+        if (!relativePath.startsWith("../../")) {
+          parentsPath = myWorkingDir;
+        }
       }
 
       relativePath = isEmpty(parentsPath) ? filePath : getRelativePath(parentsPath, filePath);

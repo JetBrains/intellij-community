@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.junit2.configuration;
 
@@ -13,6 +13,7 @@ import com.intellij.execution.junit.TestClassFilter;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.*;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.PackageChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -41,7 +42,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.IconUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
@@ -137,6 +137,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myTestLocations[JUnitConfigurationModel.CATEGORY] = myCategory;
 
     myRepeatCb.setModel(new DefaultComboBoxModel<>(RepeatCount.REPEAT_TYPES));
+
+    //noinspection HardCodedStringLiteral
     myRepeatCb.setSelectedItem(RepeatCount.ONCE);
     myRepeatCb.addActionListener(new ActionListener() {
       @Override
@@ -145,11 +147,14 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       }
     });
 
+    myRepeatCb.setRenderer(SimpleListCellRenderer.create("", value -> JUnitConfigurationModel.getRepeatModeName(value)));
+    myForkCb.setRenderer(SimpleListCellRenderer.create("", value -> JUnitConfigurationModel.getForkModeName(value)));
+
     final JPanel panel = myPattern.getComponent();
     panel.setLayout(new BorderLayout());
     myPatternTextField = new TextFieldWithBrowseButton(new ExpandableTextField(text -> Arrays.asList(text.split("\\|\\|")),
                                                                                strings -> StringUtil.join(strings, "||")));
-    myPatternTextField.setButtonIcon(IconUtil.getAddIcon());
+    myPatternTextField.setButtonIcon(AllIcons.General.Add);
     panel.add(myPatternTextField, BorderLayout.CENTER);
     myTestLocations[JUnitConfigurationModel.PATTERN] = myPattern;
 
@@ -323,6 +328,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     final int count = configuration.getRepeatCount();
     myRepeatCountField.setText(String.valueOf(count));
     myRepeatCountField.setEnabled(count > 1);
+
+    //noinspection HardCodedStringLiteral
     myRepeatCb.setSelectedItem(configuration.getRepeatMode());
 
     myModel.reset(configuration);
@@ -346,6 +353,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     }
     myJrePathEditor
       .setPathOrName(configuration.getAlternativeJrePath(), configuration.isAlternativeJrePathEnabled());
+    //noinspection HardCodedStringLiteral
     myForkCb.setSelectedItem(configuration.getForkMode());
     myShortenClasspathModeCombo.getComponent().setSelectedItem(configuration.getShortenCommandLine());
     myUseModulePath.getComponent().setSelected(configuration.isUseModulePath());
@@ -362,7 +370,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myPattern.setVisible(selectedType == JUnitConfigurationModel.PATTERN);
     myDir.setVisible(selectedType == JUnitConfigurationModel.DIR);
     myClass.setVisible(selectedType == JUnitConfigurationModel.CLASS ||
-                       selectedType == JUnitConfigurationModel.METHOD || 
+                       selectedType == JUnitConfigurationModel.METHOD ||
                        selectedType == JUnitConfigurationModel.BY_SOURCE_POSITION);
     myMethod.setVisible(selectedType == JUnitConfigurationModel.PATTERN ||
                         selectedType == JUnitConfigurationModel.METHOD ||
@@ -637,7 +645,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
         final String moduleName = myModuleSelector.getModuleName();
         throw new NoFilterException(new MessagesEx.MessageInfo(
           project,
-          moduleName.isEmpty() ? "No module selected" : JUnitBundle.message("module.does.not.exists", moduleName, project.getName()),
+          moduleName.isEmpty() ? JUnitBundle.message("no.module.selected.error.message")
+                               : JUnitBundle.message("module.does.not.exists", moduleName, project.getName()),
           JUnitBundle.message("cannot.browse.test.inheritors.dialog.title")));
       }
       final ClassFilter.ClassFilterWithScope classFilter;
@@ -676,7 +685,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     private final EditorTextFieldWithBrowseButton myCategoryField;
 
     CategoryBrowser(Project project, ConfigurationModuleSelector moduleSelector, EditorTextFieldWithBrowseButton categoryField) {
-      super(project, "Category Interface");
+      super(project, JUnitBundle.message("category.interface.dialog.title"));
       myModuleSelector = moduleSelector;
       myCategoryField = categoryField;
     }

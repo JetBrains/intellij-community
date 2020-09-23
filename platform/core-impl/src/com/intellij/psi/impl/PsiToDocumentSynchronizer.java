@@ -326,18 +326,6 @@ public class PsiToDocumentSynchronizer {
       start += psiStart;
       end += psiStart;
 
-      //[mike] dirty hack for xml:
-      //make sure that deletion of <t> in: <tag><t/><tag> doesn't remove t/><
-      //which is perfectly valid but invalidates range markers
-      final CharSequence charsSequence = myPsiText;
-      while (start < charsSequence.length() && end < charsSequence.length() && start > 0 &&
-             charsSequence.subSequence(start, end).toString().endsWith("><") && charsSequence.charAt(start - 1) == '<') {
-        start--;
-        newStartInReplace--;
-        end--;
-        newEndInReplace--;
-      }
-
       updateFragments(start, end, replace.substring(newStartInReplace, newEndInReplace));
     }
 

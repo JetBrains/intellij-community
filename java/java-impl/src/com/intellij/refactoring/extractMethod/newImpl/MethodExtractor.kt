@@ -23,6 +23,7 @@ import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.extractMethod.ExtractMethodDialog
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.addSiblingAfter
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.guessMethodName
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.wrapWithCodeBlock
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.selectTargetClass
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.withFilteredAnnotations
@@ -43,6 +44,11 @@ class MethodExtractor {
   fun doExtract(file: PsiFile, range: TextRange, @NlsContexts.DialogTitle refactoringName: String, helpId: String) {
     val project = file.project
     val editor = PsiEditorUtil.findEditor(file) ?: return
+    val activeExtractor = InplaceMethodExtractor.getActiveExtractor(editor)
+    if (activeExtractor != null) {
+      activeExtractor.restartInDialog()
+      return
+    }
     try {
       if (!CommonRefactoringUtil.checkReadOnlyStatus(file.project, file)) return
       val statements = ExtractSelector().suggestElementsToExtract(file, range)
@@ -61,7 +67,7 @@ class MethodExtractor {
     }
     catch (e: ExtractException) {
       val message = JavaRefactoringBundle.message("extract.method.error.prefix") + " " + (e.message ?: "")
-      CommonRefactoringUtil.showErrorHint(project, editor, message, refactoringName, HelpID.EXTRACT_METHOD)
+      CommonRefactoringUtil.showErrorHint(project, editor, message, refactoringName, helpId)
       showError(editor, e.problems)
     }
   }
@@ -80,7 +86,11 @@ class MethodExtractor {
         staticPassFields = makeStaticAndPassFields
       )
 
-      InplaceMethodExtractor(editor, options, defaultPanel).performInplaceRefactoring(linkedSetOf())
+      val guessedMethodNames = guessMethodName(options).ifEmpty { listOf("extracted") }
+      val methodName = guessedMethodNames.first()
+      val suggestions = guessedMethodNames.drop(1)
+      InplaceMethodExtractor(editor, options.copy(methodName = methodName), defaultPanel)
+        .performInplaceRefactoring(LinkedHashSet(suggestions))
     }
   }
 

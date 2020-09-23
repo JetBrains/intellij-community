@@ -15,6 +15,7 @@
  */
 package com.intellij.designer.actions;
 
+import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.model.MetaModel;
@@ -57,7 +58,8 @@ public class WrapInAction extends AnAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    myDesigner.getToolProvider().execute(() -> myArea.select(myProvider.wrapIn(myParent, myComponents, myTarget)), "Run Wrap In action", true);
+    myDesigner.getToolProvider().execute(() -> myArea.select(myProvider.wrapIn(myParent, myComponents, myTarget)),
+                                         DesignerBundle.message("run.wrap.in.action"), true);
   }
 
   public static void fill(DesignerEditorPanel designer, DefaultActionGroup group, EditableArea area) {
@@ -89,7 +91,7 @@ public class WrapInAction extends AnAction {
       return;
     }
 
-    DefaultActionGroup wrapGroup = DefaultActionGroup.createPopupGroup(() -> "Wrap In");
+    DefaultActionGroup wrapGroup = DefaultActionGroup.createPopupGroup(() -> DesignerBundle.message("action.wrap.in.text"));
     for (MetaModel wrapModel : models) {
       wrapGroup.add(new WrapInAction(designer, area, provider, parent, selection, wrapModel));
     }

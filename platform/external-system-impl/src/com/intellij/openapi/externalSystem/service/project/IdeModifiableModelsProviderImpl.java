@@ -48,6 +48,7 @@ import java.util.Map;
 
 public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModelsProvider {
   private LibraryTable.ModifiableModel myLibrariesModel;
+  private WorkspaceEntityStorage initialStorage;
   private WorkspaceEntityStorageBuilder diff;
 
   public IdeModifiableModelsProviderImpl(Project project) {
@@ -93,7 +94,7 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
     return ReadAction.compute(() -> {
       ModuleRootManagerEx rootManager = ModuleRootManagerEx.getInstanceEx(module);
       if (WorkspaceModel.isEnabled()) {
-        return ((ModuleRootComponentBridge)rootManager).getModifiableModel(getActualStorageBuilder(), rootConfigurationAccessor);
+        return ((ModuleRootComponentBridge)rootManager).getModifiableModel(getActualStorageBuilder(), initialStorage, rootConfigurationAccessor);
       }
       return rootManager.getModifiableModel(rootConfigurationAccessor);
     });
@@ -174,7 +175,7 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
 
   private WorkspaceEntityStorageBuilder getActualStorageBuilder() {
     if (diff != null) return diff;
-    WorkspaceEntityStorage entityStorage = WorkspaceModel.getInstance(myProject).getEntityStorage().getCurrent();
-    return diff = WorkspaceEntityStorageBuilder.Companion.from(entityStorage);
+    initialStorage = WorkspaceModel.getInstance(myProject).getEntityStorage().getCurrent();
+    return diff = WorkspaceEntityStorageBuilder.Companion.from(initialStorage);
   }
 }

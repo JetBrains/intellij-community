@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.welcomeScreen
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.ide.ui.*
 import com.intellij.openapi.Disposable
@@ -67,6 +68,7 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
   private val supportedColorBlindness = getColorBlindness()
   private val propertyGraph = PropertyGraph()
   private val lafProperty = propertyGraph.graphProperty { laf.lookAndFeelReference }
+  private val syncThemeProperty = propertyGraph.graphProperty { laf.autodetect }
   private val ideFontProperty = propertyGraph.graphProperty { getIdeFont() }
   private val editorFontProperty = propertyGraph.graphProperty { getEditorFont() }
   private val keymapProperty = propertyGraph.graphProperty { keymapManager.activeKeymap }
@@ -74,7 +76,8 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
   private val adjustColorsProperty = propertyGraph.graphProperty { settings.colorBlindness != null }
 
   init {
-    lafProperty.afterChange({ laf.lookAndFeelReference = it }, parentDisposable)
+    lafProperty.afterChange({ QuickChangeLookAndFeel.switchLafAndUpdateUI(laf, laf.findLaf(it), true) }, parentDisposable)
+    syncThemeProperty.afterChange { laf.autodetect = it }
     ideFontProperty.afterChange({
                                   settings.overrideLafFonts = true
                                   settings.fontSize = it
@@ -133,11 +136,17 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
     return panel {
       blockRow {
         header(IdeBundle.message("welcome.screen.color.theme.header"))
-        row {
+        fullRow {
           val theme = comboBox(laf.lafComboBoxModel, lafProperty, laf.lookAndFeelCellRenderer)
-          component(laf.settingsToolbar)
-            .visibleIf(theme.component.selectedValueIs(LafManager.LafReference.SYNC_OS))
-            .withLeftGap()
+          val syncCheckBox = checkBox(IdeBundle.message("preferred.theme.autodetect.selector"), syncThemeProperty).
+                              withLargeLeftGap().
+                              apply {
+                                component.isOpaque = false
+                                component.isVisible = laf.autodetectSupported
+                              }
+
+          theme.enableIf(syncCheckBox.selected.not())
+          component(laf.settingsToolbar).visibleIf(syncCheckBox.selected).withLeftGap()
         }
       }.largeGapAfter()
       blockRow {

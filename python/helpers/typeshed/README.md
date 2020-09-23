@@ -107,7 +107,8 @@ Run:
 ```
 $ python3.6 -m venv .venv3
 $ source .venv3/bin/activate
-(.venv3)$ pip3 install -r requirements-tests-py3.txt
+(.venv3)$ pip install -U pip
+(.venv3)$ pip install -r requirements-tests-py3.txt
 ```
 This will install mypy (you need the latest master branch from GitHub),
 typed-ast, flake8 (and plugins), pytype, black and isort.
@@ -119,7 +120,7 @@ Run using:`(.venv3)$ python3 tests/mypy_test.py`
 
 This test is shallow — it verifies that all stubs can be
 imported but doesn't check whether stubs match their implementation
-(in the Python standard library or a third-party package). It has a blacklist of
+(in the Python standard library or a third-party package). It has an exclude list of
 modules that are not tested at all, which also lives in the tests directory.
 
 If you are in the typeshed repo that is submodule of the

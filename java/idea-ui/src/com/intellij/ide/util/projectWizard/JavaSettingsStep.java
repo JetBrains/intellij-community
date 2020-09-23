@@ -24,11 +24,11 @@ import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBCheckBox;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -104,7 +104,7 @@ public class JavaSettingsStep extends SdkSettingsStep {
   }
 
   @TestOnly
-  public void setSourcePath(@Nls String path) {
+  public void setSourcePath(@NlsSafe String path) {
     mySourcePath.setText(path);
   }
 }

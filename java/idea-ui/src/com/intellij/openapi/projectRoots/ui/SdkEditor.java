@@ -16,6 +16,8 @@ import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
+import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory;
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -31,6 +33,7 @@ import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -65,7 +68,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
   private JPanel myMainPanel;
   private TabbedPaneWrapper myTabbedPane;
   private final Project myProject;
-  private final SdkModel mySdkModel;
+  private final ProjectSdksModel mySdkModel;
   private JLabel myHomeFieldLabel;
   private String myVersionString;
 
@@ -82,7 +85,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
   };
 
   public SdkEditor(@NotNull Project project,
-                   @NotNull SdkModel sdkModel,
+                   @NotNull ProjectSdksModel sdkModel,
                    @NotNull History history,
                    @NotNull ProjectJdkImpl sdk) {
     myProject = project;
@@ -284,7 +287,35 @@ public class SdkEditor implements Configurable, Place.Navigator {
 
   private void doSelectHomePath() {
     final SdkType sdkType = (SdkType)mySdk.getSdkType();
-    SdkConfigurationUtil.selectSdkHome(sdkType, path -> doSetHomePath(path, sdkType));
+
+    //handle tests behaviour
+    if (SdkConfigurationUtil.selectSdkHomeForTests(sdkType, path -> doSetHomePath(path, sdkType))) {
+      return;
+    }
+
+    SdkPopupFactory
+      .newBuilder()
+      .withSdkType(sdkType)
+      .onSdkSelected(sdk -> {
+        SdkDownloadTracker tracker = SdkDownloadTracker.getInstance();
+        if (tracker.isDownloading(sdk)) {
+          //make sure the current SDK is registered as downloading one
+          tracker.registerEditableSdk(sdk, mySdk);
+
+          //we need to bind with the original Sdk too
+          var originalSdkEntry = ContainerUtil.find(mySdkModel.getProjectSdks().entrySet(), p -> p.getValue().equals(mySdk));
+          if (originalSdkEntry != null) {
+            tracker.registerEditableSdk(sdk, originalSdkEntry.getKey());
+          }
+
+          //reset the view to make it bind to the downloading JDK
+          reset();
+        } else {
+          doSetHomePath(sdk.getHomePath(), sdkType);
+        }
+      })
+      .buildPopup()
+      .showUnderneathToTheRightOf(myHomeComponent);
   }
 
   private void doSetHomePath(final String homePath, final SdkType sdkType) {
@@ -292,9 +323,6 @@ public class SdkEditor implements Configurable, Place.Navigator {
       return;
     }
     setHomePathValue(homePath.replace('/', File.separatorChar));
-
-    final String newSdkName = suggestSdkName(homePath);
-    ((ProjectJdkImpl)mySdk).setName(newSdkName);
 
     try {
       final Sdk dummySdk = (Sdk)mySdk.clone();
@@ -322,23 +350,6 @@ public class SdkEditor implements Configurable, Place.Navigator {
     catch (CloneNotSupportedException e) {
       LOG.error(e); // should not happen in normal program
     }
-  }
-
-  private String suggestSdkName(final String homePath) {
-    final String currentName = mySdk.getName();
-    final String suggestedName = ((SdkType)mySdk.getSdkType()).suggestSdkName(currentName, homePath);
-    if (Objects.equals(currentName, suggestedName)) return currentName;
-    String newSdkName = suggestedName;
-    final Set<String> allNames = new HashSet<>();
-    Sdk[] sdks = mySdkModel.getSdks();
-    for (Sdk sdk : sdks) {
-      allNames.add(sdk.getName());
-    }
-    int i = 0;
-    while (allNames.contains(newSdkName)) {
-      newSdkName = suggestedName + " (" + ++i + ")";
-    }
-    return newSdkName;
   }
 
   private void updateAdditionalDataComponent() {

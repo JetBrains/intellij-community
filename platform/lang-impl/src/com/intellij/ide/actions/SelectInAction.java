@@ -160,6 +160,7 @@ public final class SelectInAction extends AnAction implements DumbAware {
 
   private static final class NoTargetsAction extends AnAction {
     NoTargetsAction() {
+      //noinspection DialogTitleCapitalization
       super(IdeBundle.messagePointer("message.no.targets.available"));
     }
 

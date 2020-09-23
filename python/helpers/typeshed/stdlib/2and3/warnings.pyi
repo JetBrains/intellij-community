@@ -1,15 +1,21 @@
 import sys
 from types import ModuleType, TracebackType
-from typing import Any, List, NamedTuple, Optional, TextIO, Type, overload
-
+from typing import Any, List, Optional, TextIO, Type, Union, overload
 from typing_extensions import Literal
 
 from _warnings import warn as warn, warn_explicit as warn_explicit
 
 def showwarning(
-    message: str, category: Type[Warning], filename: str, lineno: int, file: Optional[TextIO] = ..., line: Optional[str] = ...
+    message: Union[Warning, str],
+    category: Type[Warning],
+    filename: str,
+    lineno: int,
+    file: Optional[TextIO] = ...,
+    line: Optional[str] = ...,
 ) -> None: ...
-def formatwarning(message: str, category: Type[Warning], filename: str, lineno: int, line: Optional[str] = ...) -> str: ...
+def formatwarning(
+    message: Union[Warning, str], category: Type[Warning], filename: str, lineno: int, line: Optional[str] = ...
+) -> str: ...
 def filterwarnings(
     action: str, message: str = ..., category: Type[Warning] = ..., module: str = ..., lineno: int = ..., append: bool = ...
 ) -> None: ...
@@ -19,7 +25,7 @@ def resetwarnings() -> None: ...
 class _OptionError(Exception): ...
 
 class WarningMessage:
-    message: Warning
+    message: Union[Warning, str]
     category: Type[Warning]
     filename: str
     lineno: int
@@ -29,7 +35,7 @@ class WarningMessage:
         source: Optional[Any]
         def __init__(
             self,
-            message: Warning,
+            message: Union[Warning, str],
             category: Type[Warning],
             filename: str,
             lineno: int,
@@ -40,7 +46,7 @@ class WarningMessage:
     else:
         def __init__(
             self,
-            message: Warning,
+            message: Union[Warning, str],
             category: Type[Warning],
             filename: str,
             lineno: int,

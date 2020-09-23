@@ -1,8 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
+import com.intellij.ide.IdeTooltip
+import com.intellij.ide.IdeTooltipManager
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
 import com.intellij.ui.CardLayoutPanel
@@ -10,31 +14,28 @@ import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.ActionLink
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
+import icons.DvcsImplIcons
 import icons.GithubIcons
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.util.GithubUIUtil
-import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObservable
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import java.util.function.Consumer
 import javax.swing.JComponent
 import javax.swing.JLabel
 
 internal class GHPRDirectionPanel : NonOpaquePanel() {
-  private val from = createLabel()
+  private val branchesTooltipFactory = GHPRBranchesTooltipFactory()
+  private val from = createLabel().also(branchesTooltipFactory::installTooltip)
   private val to = createLabel()
   private val branchActionsToolbar = BranchActionsToolbar()
-
-  var direction: Pair<String, String>?
-    by equalVetoingObservable<Pair<String, String>?>(null) {
-      from.text = "${it?.first} "
-      to.text = "${it?.second} "
-      this@GHPRDirectionPanel.isVisible = it != null
-    }
 
   init {
     layout = MigLayout(LC()
@@ -72,6 +73,28 @@ internal class GHPRDirectionPanel : NonOpaquePanel() {
     }
   }
 
+  fun updateBranchLabels(model: GHPRBranchesModel) {
+    val localRepository = model.localRepository
+    val localBranch = with(localRepository.branches) { model.localBranch?.run(::findLocalBranch) }
+    val remoteBranch = localBranch?.findTrackedBranch(localRepository)
+    val currentBranchCheckedOut = localRepository.currentBranchName == localBranch?.name
+
+    to.text = model.baseBranch
+    from.text = model.headBranch
+    from.icon = when {
+      currentBranchCheckedOut -> DvcsImplIcons.CurrentBranchFavoriteLabel
+      localBranch != null -> GithubIcons.LocalBranch
+      else -> GithubIcons.Branch
+    }
+
+    branchesTooltipFactory.apply {
+      isOnCurrentBranch = currentBranchCheckedOut
+      prBranchName = model.headBranch
+      localBranchName = localBranch?.name
+      remoteBranchName = remoteBranch?.name
+    }
+  }
+
   internal class BranchActionsToolbar : CardLayoutPanel<BranchActionsToolbar.State, BranchActionsToolbar.StateUi, JComponent>() {
 
     companion object {
@@ -105,7 +128,7 @@ internal class GHPRDirectionPanel : NonOpaquePanel() {
       object CheckoutActionUi : SingleActionUi("Github.PullRequest.Branch.Create", VcsBundle.message("vcs.command.name.checkout"))
       object UpdateActionUi : SingleActionUi("Github.PullRequest.Branch.Update", VcsBundle.message("vcs.command.name.update"))
 
-      abstract class SingleActionUi(private val actionId: String, private val actionName: String) : StateUi() {
+      abstract class SingleActionUi(private val actionId: String, @NlsContexts.LinkLabel private val actionName: String) : StateUi() {
         override fun createUi(): JComponent =
           ActionLink(actionName, null,
                      ActionManager.getInstance().getAction(actionId), null, BRANCH_ACTIONS_TOOLBAR)
@@ -144,6 +167,42 @@ internal class GHPRDirectionPanel : NonOpaquePanel() {
       }
 
     override fun create(ui: StateUi): JComponent = ui.createUi()
+  }
+
+  private inner class GHPRBranchesTooltipFactory(var isOnCurrentBranch: Boolean = false,
+                                                 var prBranchName: String = "",
+                                                 var localBranchName: String? = null,
+                                                 var remoteBranchName: String? = null) {
+    fun installTooltip(label: JBLabel) {
+      label.addMouseMotionListener(object : MouseAdapter() {
+        override fun mouseMoved(e: MouseEvent) {
+          branchesTooltipFactory.showTooltip(e)
+        }
+      })
+    }
+
+    private fun showTooltip(e: MouseEvent) {
+      val point = e.point
+      if (IdeTooltipManager.getInstance().hasCurrent()) {
+        IdeTooltipManager.getInstance().hideCurrent(e)
+      }
+
+      val tooltip =
+        IdeTooltip(e.component, point, Wrapper(branchesTooltipFactory.createTooltip())).setPreferredPosition(Balloon.Position.below)
+      IdeTooltipManager.getInstance().show(tooltip, false)
+    }
+
+    private fun createTooltip(): GHPRBranchesTooltip =
+      GHPRBranchesTooltip(arrayListOf<BranchTooltipDescriptor>().apply {
+        if (isOnCurrentBranch) add(BranchTooltipDescriptor.head())
+        if (localBranchName != null) add(BranchTooltipDescriptor.localBranch(localBranchName!!))
+        if (remoteBranchName != null) {
+          add(BranchTooltipDescriptor.remoteBranch(remoteBranchName!!))
+        }
+        else {
+          add(BranchTooltipDescriptor.prBranch(prBranchName))
+        }
+      })
   }
 
   companion object {

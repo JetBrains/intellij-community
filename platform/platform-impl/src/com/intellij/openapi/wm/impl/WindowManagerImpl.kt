@@ -295,7 +295,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     LOG.assertTrue(!projectToFrame.containsKey(project))
     projectToFrame.put(project, frameHelper)
     frameHelper.project = project
-    val frame = frameHelper.frame
+    val frame = frameHelper.frame!!
     frame.title = FrameTitleBuilder.getInstance().getProjectTitle(project)
     frame.addComponentListener(frameStateListener)
   }
@@ -332,24 +332,26 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
         }
         val bounds = frameInfo.bounds
         if (bounds != null) {
-          frame.frame.bounds = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(bounds)
+          frame.frame!!.bounds = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(bounds)
         }
       }
     }
     frame!!.project = project
     projectToFrame.put(project, frame)
     if (isNewFrame) {
+      val uiFrame = frame.frame!!
       if (frameInfo != null) {
-        frame.frame.extendedState = frameInfo.extendedState
+        uiFrame.extendedState = frameInfo.extendedState
       }
-      frame.frame.isVisible = true
+      uiFrame.isVisible = true
       if (isFullScreenSupportedInCurrentOs() && frameInfo != null && frameInfo.fullScreen) {
         frame.toggleFullScreen(true)
       }
     }
     if (isNewFrame) {
-      frame.frame.addComponentListener(frameStateListener)
-      IdeMenuBar.installAppMenuIfNeeded(frame.frame)
+      val uiFrame = frame.frame!!
+      uiFrame.addComponentListener(frameStateListener)
+      IdeMenuBar.installAppMenuIfNeeded(uiFrame)
     }
     eventDispatcher.multicaster.frameCreated(frame)
     return frame
@@ -357,7 +359,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
 
   override fun releaseFrame(frameHelper: ProjectFrameHelper) {
     eventDispatcher.multicaster.beforeFrameReleased(frameHelper)
-    val frame: JFrame = frameHelper.frame
+    val frame: JFrame = frameHelper.frame!!
     val project = frameHelper.project!!
     frameHelper.project = null
     frame.title = null

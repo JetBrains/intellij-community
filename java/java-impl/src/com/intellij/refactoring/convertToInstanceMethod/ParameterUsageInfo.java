@@ -15,13 +15,17 @@
  */
 package com.intellij.refactoring.convertToInstanceMethod;
 
+import com.intellij.model.BranchableUsageInfo;
+import com.intellij.model.ModelBranch;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.usageView.UsageInfo;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
  */
-class ParameterUsageInfo extends UsageInfo {
+final class ParameterUsageInfo extends UsageInfo implements BranchableUsageInfo {
   private final PsiReference myReferenceExpression;
 
   ParameterUsageInfo(PsiReference referenceElement) {
@@ -31,5 +35,11 @@ class ParameterUsageInfo extends UsageInfo {
 
   public PsiReference getReferenceExpression() {
     return myReferenceExpression;
+  }
+
+  @Override
+  public @NotNull UsageInfo obtainBranchCopy(@NotNull ModelBranch branch) {
+    PsiElement element = getReferenceExpression().getElement();
+    return new ParameterUsageInfo(branch.obtainPsiCopy(element).getReference());
   }
 }

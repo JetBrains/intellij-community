@@ -3,9 +3,7 @@ package git4idea.merge.dialog
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI
-import com.intellij.ide.ui.laf.darcula.ui.DarculaJBPopupComboPopup
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.ui.popup.list.ComboBoxPopup
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.JBInsets
@@ -18,7 +16,6 @@ import java.awt.Rectangle
 import java.awt.geom.Line2D
 import java.awt.geom.Rectangle2D
 import java.awt.geom.RectangularShape
-import java.util.function.Consumer
 import javax.swing.JButton
 import javax.swing.JComboBox
 import javax.swing.JComponent
@@ -77,15 +74,11 @@ internal class FlatComboBoxUI(var border: Insets = Insets(1, 1, 1, 1),
   override fun getBorderInsets(c: Component?) = outerInsets
 
   override fun createPopup(): ComboPopup {
-    val popup: ComboPopup = if (useJBPopup())
-      MyComboBoxPopup(comboBox, popupComponentProvider)
-    else
-      CustomComboPopup(comboBox)
-
-    return popup.apply { configureList(list) }
+    return MyComboBoxPopup(comboBox).apply {
+      configureList(list)
+      configurePopupComponent(popupComponentProvider)
+    }
   }
-
-  private fun useJBPopup() = comboBox.getClientProperty(DarculaJBPopupComboPopup.CLIENT_PROP) != null
 
   private fun configureList(list: JList<*>) {
     (list as? ComponentWithEmptyText)?.let {
@@ -93,17 +86,14 @@ internal class FlatComboBoxUI(var border: Insets = Insets(1, 1, 1, 1),
     }
   }
 
-  private class MyComboBoxPopup<T>(private val comboBox: JComboBox<T>,
-                                   private val popupComponentProvider: ((JComponent) -> JComponent)? = null)
-    : DarculaJBPopupComboPopup<T>(comboBox) {
+  private class MyComboBoxPopup(comboBox: JComboBox<*>) : CustomComboPopup(comboBox) {
 
-
-    override fun createPopup(selectedItem: T?) = object : ComboBoxPopup<T>(this,
-                                                                           selectedItem,
-                                                                           Consumer { value: T -> comboBox.setSelectedItem(value) }) {
-
-      override fun createPopupComponent(content: JComponent) = popupComponentProvider?.invoke(super.createPopupComponent(content))
-                                                                ?: super.createPopupComponent(content)
+    fun configurePopupComponent(popupComponentProvider: ((JComponent) -> JComponent)? = null) {
+      val popupComponent = popupComponentProvider?.invoke(scroller)
+      if (popupComponent != null) {
+        removeAll()
+        add(popupComponent)
+      }
     }
   }
 }

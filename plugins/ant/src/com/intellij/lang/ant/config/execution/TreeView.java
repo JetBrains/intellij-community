@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -22,6 +23,7 @@ import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -211,13 +213,13 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
   }
 
   @Override
-  public void addJavacMessage(AntMessage message, String url) {
-    final String builder = printMessage(message, url);
-    addJavacMessageImpl(message.withText(builder + message.getText()));
+  public void addJavacMessage(AntMessage message, @NlsSafe String url) {
+    final String messagePrefix = printMessage(message, url);
+    addJavacMessageImpl(message.withText(messagePrefix + message.getText()));
   }
 
   @NotNull
-  static String printMessage(@NotNull AntMessage message, String url) {
+  static @NlsSafe String printMessage(@NotNull AntMessage message, @NlsSafe String url) {
     final StringBuilder builder = new StringBuilder();
     final VirtualFile file = message.getFile();
     if (message.getLine() > 0) {
@@ -372,7 +374,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
 
   @Override
   @Nullable
-  public Object getData(@NotNull String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       MessageNode item = getSelectedItem();
       if (item == null) return null;
@@ -421,7 +423,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
   }
 
   @Override
-  public void finishBuild(String messageText) {
+  public void finishBuild(@Nls String messageText) {
     collapseTargets();
     DefaultMutableTreeNode root = (DefaultMutableTreeNode)myTreeModel.getRoot();
     myStatusNode = new DefaultMutableTreeNode(messageText);

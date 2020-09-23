@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.function.BooleanSupplier;
 
 public class TestShellSession {
 
@@ -44,5 +45,13 @@ public class TestShellSession {
 
   public void awaitScreenLinesAre(@NonNls List<String> expectedScreenLines, int timeoutMillis) {
     myWatcher.awaitScreenLinesAre(expectedScreenLines, timeoutMillis);
+  }
+
+  public void awaitBufferCondition(@NonNls BooleanSupplier condition, int timeoutMillis) {
+    myWatcher.awaitBuffer(condition, timeoutMillis);
+  }
+
+  public String getScreenLines() {
+    return myWatcher.getScreenLines();
   }
 }

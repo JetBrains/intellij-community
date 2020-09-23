@@ -12,6 +12,7 @@ import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.ListItem;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HyperlinkAdapter;
@@ -33,7 +34,7 @@ public class TemplateExpandShortcutPanel extends JPanel {
   private final JComboBox<String> myExpandByCombo;
   private final HyperlinkLabel myOpenKeymapLabel;
 
-  public TemplateExpandShortcutPanel(@NotNull String label) {
+  public TemplateExpandShortcutPanel(@NotNull @NlsContexts.Label String label) {
     super(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.weighty = 0;
@@ -66,11 +67,13 @@ public class TemplateExpandShortcutPanel extends JPanel {
     for (@ListItem String s : ContainerUtil.ar(getSpace(), getTab(), getEnter(), getCustom())) {
       myExpandByCombo.addItem(s);
     }
-    myExpandByCombo.setRenderer(SimpleListCellRenderer.create("", value -> {
+    myExpandByCombo.setRenderer(SimpleListCellRenderer.create("", (@ListItem String value) -> {
       if (value == getCustom()) {
         Shortcut[] shortcuts = getCurrentCustomShortcuts();
         String shortcutText = shortcuts.length == 0 ? "" : KeymapUtil.getShortcutsText(shortcuts);
-        return StringUtil.isEmpty(shortcutText) ? ApplicationBundle.message("custom.option") : "Custom (" + shortcutText + ")";
+        return StringUtil.isEmpty(shortcutText)
+               ? ApplicationBundle.message("custom.option")
+               : ApplicationBundle.message("custom.option.with.shortcut", shortcutText);
       }
       return value;
     }));

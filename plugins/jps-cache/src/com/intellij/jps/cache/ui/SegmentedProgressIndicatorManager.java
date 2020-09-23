@@ -2,13 +2,14 @@ package com.intellij.jps.cache.ui;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressWrapper;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class SegmentedProgressIndicatorManager {
-  private static final LinkedHashMap<SubTaskProgressIndicator, String> myText2Stack = new LinkedHashMap<>();
-  private static final LinkedHashMap<Object, String> myTextStack = new LinkedHashMap<>();
+  private static final LinkedHashMap<SubTaskProgressIndicator, @NlsContexts.ProgressDetails String> myText2Stack = new LinkedHashMap<>();
+  private static final LinkedHashMap<Object, @NlsContexts.ProgressText String> myTextStack = new LinkedHashMap<>();
   private static final Object myLock = new Object();
   private final ProgressIndicator myProgressIndicator;
   private final boolean myProgressWasIndeterminate;
@@ -41,7 +42,7 @@ public class SegmentedProgressIndicatorManager {
     }
   }
 
-  public void setText(@NotNull Object obj, @Nullable String text) {
+  public void setText(@NotNull Object obj, @Nullable @NlsContexts.ProgressText String text) {
     if (text != null) {
       synchronized (myLock) {
         myTextStack.put(obj, text);
@@ -60,7 +61,7 @@ public class SegmentedProgressIndicatorManager {
     }
   }
 
-  public void setText2(@NotNull SubTaskProgressIndicator subTask, @Nullable String text) {
+  public void setText2(@NotNull SubTaskProgressIndicator subTask, @Nullable @NlsContexts.ProgressDetails String text) {
     if (text != null) {
       synchronized (myLock) {
         myText2Stack.put(subTask, text);

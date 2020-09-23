@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.util.Consumer;
 import java.util.Objects;
 import javax.swing.JComponent;
@@ -67,7 +68,7 @@ public class SetTodoFilterAction extends AnAction implements CustomComponentActi
     group.addSeparator();
     group.add(
       new AnAction(IdeBundle.messagePointer("action.todo.edit.filters"),
-                   IdeBundle.messagePointer("action.todo.edit.filters"), AllIcons.General.Settings) {
+                   IdeBundle.messagePointer("action.todo.edit.filters.description"), AllIcons.General.Settings) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
@@ -90,8 +91,8 @@ public class SetTodoFilterAction extends AnAction implements CustomComponentActi
      * @param settings
      * @param todoFilterConsumer
      */
-    TodoFilterApplier(String text,
-                      String description,
+    TodoFilterApplier(@NlsActions.ActionText String text,
+                      @NlsActions.ActionDescription String description,
                       TodoFilter filter,
                       TodoPanelSettings settings,
                       Consumer<? super TodoFilter> todoFilterConsumer) {

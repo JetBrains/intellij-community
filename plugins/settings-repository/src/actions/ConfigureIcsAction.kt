@@ -30,7 +30,8 @@ internal class ConfigureIcsAction : DumbAwareAction() {
                                                      fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()).component
           }
 
-          noteRow(IcsBundle.message("message.see.help.pages.for.more.info"))
+          noteRow(IcsBundle.message("message.see.help.pages.for.more.info",
+                                    "https://www.jetbrains.com/help/idea/sharing-your-ide-settings.html#settings-repository"))
         }
         dialog(title = icsMessage("settings.panel.title"),
                panel = panel,

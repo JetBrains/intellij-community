@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -123,6 +124,8 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 @DirtyUI
 final class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener, DataProvider, Accessible {
+  private static final Logger LOG = Logger.getInstance(EditorGutterComponentImpl.class);
+
   private static final JBValueGroup JBVG = new JBValueGroup();
   private static final JBValue START_ICON_AREA_WIDTH = JBVG.value(17);
   private static final JBValue FREE_PAINTERS_LEFT_AREA_WIDTH = JBVG.value(8);
@@ -311,18 +314,18 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   @Override
   public void paintComponent(Graphics g_) {
     Rectangle clip = g_.getClipBounds();
-
     Graphics2D g = (Graphics2D)getComponentGraphics(g_);
-    AffineTransform old = setMirrorTransformIfNeeded(g, 0, getWidth());
-
-    EditorUIUtil.setupAntialiasing(g);
-    Color backgroundColor = getBackground();
 
     if (myEditor.isDisposed()) {
       g.setColor(myEditor.getDisposedBackground());
       g.fillRect(clip.x, clip.y, clip.width, clip.height);
       return;
     }
+
+    AffineTransform old = setMirrorTransformIfNeeded(g, 0, getWidth());
+
+    EditorUIUtil.setupAntialiasing(g);
+    Color backgroundColor = getBackground();
 
     int startVisualLine;
     int endVisualLine;
@@ -344,6 +347,12 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
       startVisualLine = myEditor.offsetToVisualLine(firstVisibleOffset);
       endVisualLine = myEditor.offsetToVisualLine(lastVisibleOffset);
+    }
+
+    if (firstVisibleOffset > lastVisibleOffset) {
+      LOG.error("Unexpected painting range: (" + firstVisibleOffset + ":" + lastVisibleOffset
+                + "), visual line range: (" + startVisualLine + ":" + endVisualLine
+                + "), clip: " + clip + ", focus range: " + focusModeRange);
     }
 
     // paint all backgrounds
@@ -471,13 +480,16 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
         VisualLinesIterator visLinesIterator = new VisualLinesIterator(myEditor, startVisualLine);
         while (!visLinesIterator.atEnd() && visLinesIterator.getVisualLine() <= endVisualLine) {
           int y = visLinesIterator.getY();
+          int bgLineHeight = lineHeight;
           boolean paintText = !visLinesIterator.startsWithSoftWrap() || y <= viewportStartY;
 
           if (y < viewportStartY && visLinesIterator.endsWithSoftWrap()) {  // "sticky" line annotation
             y = viewportStartY;
           }
           else if (viewportStartY < y && y < viewportStartY + lineHeight && visLinesIterator.startsWithSoftWrap()) {
-            y = viewportStartY + lineHeight;  // to avoid drawing bg over the "sticky" line above
+            // avoid drawing bg over the "sticky" line above, or over a possible gap in the gutter below (e.g. code vision)
+            bgLineHeight = y - viewportStartY;
+            y = viewportStartY + lineHeight;
           }
 
           if (paintText || logicalLine == -1) {
@@ -486,7 +498,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
           }
           if (bg != null) {
             g.setColor(bg);
-            g.fillRect(x, y, annotationSize, lineHeight + y - visLinesIterator.getY());
+            g.fillRect(x, y, annotationSize, bgLineHeight);
           }
           if (paintText) {
             paintAnnotationLine(g, gutterProvider, logicalLine, x, y);
@@ -1722,8 +1734,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     Balloon.Position relativePosition = pointInfo.renderersInLine > 1 && pointInfo.rendererPosition == 0 ? Balloon.Position.below
                                                                                                          : Balloon.Position.atRight;
     AtomicReference<String> tooltip = new AtomicReference<>();
-    ProgressManager.getInstance().runProcessWithProgressAsynchronously(new Task.Backgroundable(myEditor.getProject(),
-                                                                                               IdeBundle.message("progress.title.constructing.tooltip")) {
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(new Task.Backgroundable(myEditor.getProject(), IdeBundle.message("progress.title.constructing.tooltip")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         tooltip.set(ReadAction.compute(() -> renderer.getTooltipText()));

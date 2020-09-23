@@ -459,12 +459,17 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
       if (previousSelection == null) {
         previousSelection = myTabs.getToSelectOnRemoveOf(info);
       }
+      int dragStartIndex = myTabs.getIndexOf(info);
+      boolean isPinnedAtStart = info.isPinned();
       info.setHidden(true);
       if (previousSelection != null) {
         myTabs.select(previousSelection, true);
       }
 
       myFile = (VirtualFile)info.getObject();
+      myFile.putUserData(EditorWindow.DRAG_START_INDEX_KEY, dragStartIndex);
+      myFile.putUserData(EditorWindow.DRAG_START_LOCATION_HASH_KEY, System.identityHashCode(myTabs));
+      myFile.putUserData(EditorWindow.DRAG_START_PINNED_KEY, isPinnedAtStart);
       Presentation presentation = new Presentation(info.getText());
       presentation.setIcon(info.getIcon());
       mySession = getDockManager().createDragSession(mouseEvent, createDockableEditor(myProject, img, myFile, presentation, myWindow));

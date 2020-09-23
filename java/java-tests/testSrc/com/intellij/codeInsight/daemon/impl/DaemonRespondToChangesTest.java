@@ -101,7 +101,6 @@ import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ref.GCWatcher;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.CheckDtdReferencesInspection;
-import gnu.trove.THashSet;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import kotlin.Unit;
 import org.intellij.lang.annotations.Language;
@@ -1651,8 +1650,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
   public void testCodeFoldingInSplittedWindowAppliesToAllEditors() {
-    final Set<Editor> applied = new THashSet<>();
-    final Set<Editor> collected = new THashSet<>();
+    final Set<Editor> applied = new HashSet<>();
+    final Set<Editor> collected = new HashSet<>();
     registerFakePass(applied, collected);
 
     configureByText(PlainTextFileType.INSTANCE, "");
@@ -1696,8 +1695,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     executeWithReparseDelay(0, () -> {
       runHeavyProcessing = false;
       try {
-        final Set<Editor> applied = Collections.synchronizedSet(new THashSet<>());
-        final Set<Editor> collected = Collections.synchronizedSet(new THashSet<>());
+        final Set<Editor> applied = Collections.synchronizedSet(new HashSet<>());
+        final Set<Editor> collected = Collections.synchronizedSet(new HashSet<>());
         registerFakePass(applied, collected);
 
         configureByText(PlainTextFileType.INSTANCE, "");

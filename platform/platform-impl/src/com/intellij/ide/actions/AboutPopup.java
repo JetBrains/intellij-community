@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -802,5 +803,13 @@ public final class AboutPopup {
                                       ApplicationInfo.getInstance().getFullVersion()));
     dialog.setSize(JBUIScale.scale(750), JBUIScale.scale(650));
     dialog.show();
+  }
+
+  @NotNull
+  @NlsSafe
+  public static String getAboutText() {
+    ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
+    InfoSurface infoSurface = new InfoSurface(IconLoader.getIcon(appInfo.getAboutImageUrl()), false);
+    return infoSurface.getText();
   }
 }

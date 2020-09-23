@@ -120,13 +120,13 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
   }
 
   public static boolean addUnversionedFilesToVcs(@NotNull Project project,
-                                                 @NotNull LocalChangeList list,
+                                                 @Nullable LocalChangeList list,
                                                  @NotNull List<? extends VirtualFile> files) {
     return addUnversionedFilesToVcs(project, list, files, null, null);
   }
 
   public static boolean addUnversionedFilesToVcs(@NotNull Project project,
-                                                 @NotNull LocalChangeList list,
+                                                 @Nullable LocalChangeList list,
                                                  @NotNull List<? extends VirtualFile> files,
                                                  @Nullable Consumer<? super List<Change>> changesConsumer,
                                                  @Nullable PairConsumer<? super ProgressIndicator, ? super List<VcsException>> additionalTask) {
@@ -158,7 +158,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
     }
     VcsDirtyScopeManager.getInstance(project).filesDirty(allProcessedFiles, null);
 
-    boolean moveRequired = !list.isDefault() && !allProcessedFiles.isEmpty();
+    boolean moveRequired = list != null && !list.isDefault() && !allProcessedFiles.isEmpty() && changeListManager.areChangeListsEnabled();
     boolean syncUpdateRequired = changesConsumer != null;
 
     if (moveRequired || syncUpdateRequired) {

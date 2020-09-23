@@ -11,6 +11,7 @@ import com.intellij.ide.macro.MacrosDialog;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Computable;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -45,6 +46,7 @@ public abstract class JavaSettingsEditorBase<T extends JavaRunConfigurationBase>
     String group = ExecutionBundle.message("group.java.options");
     RawCommandLineEditor vmOptions = new RawCommandLineEditor();
     setMinimumWidth(vmOptions, 400);
+    CommonParameterFragments.setMonospaced(vmOptions.getTextField());
     String message = ExecutionBundle.message("run.configuration.java.vm.parameters.empty.text");
     vmOptions.getEditorField().getAccessibleContext().setAccessibleName(message);
     vmOptions.getEditorField().getEmptyText().setText(message);
@@ -57,6 +59,7 @@ public abstract class JavaSettingsEditorBase<T extends JavaRunConfigurationBase>
                                    (configuration, c) -> configuration.setVMParameters(c.isVisible() ? c.getText() : null),
                                    configuration -> isNotEmpty(configuration.getVMParameters()));
     vmParameters.setHint(ExecutionBundle.message("run.configuration.java.vm.parameters.hint"));
+    vmParameters.setActionHint(ExecutionBundle.message("specify.vm.options.for.running.the.application"));
     vmParameters.setEditorGetter(editor -> editor.getEditorField());
     fragments.add(vmParameters);
     fragments.add(moduleClasspath);
@@ -84,15 +87,34 @@ public abstract class JavaSettingsEditorBase<T extends JavaRunConfigurationBase>
     LabeledComponent<ShortenCommandLineModeCombo> component = LabeledComponent.create(combo,
                                                                                       ExecutionBundle.message("application.configuration.shorten.command.line.label"),
                                                                                       BorderLayout.WEST);
-    return new SettingsEditorFragment<>("shorten.command.line",
-                                        ExecutionBundle.message("application.configuration.shorten.command.line"),
-                                        ExecutionBundle.message("group.java.options"), component,
-                                        (t, c) -> c.getComponent().setItem(t.getShortenCommandLine()),
-                                        (t, c) -> t.setShortenCommandLine(c.isVisible() ? c.getComponent().getSelectedItem(): null),
-                                        configuration -> configuration.getShortenCommandLine() != null);
+    SettingsEditorFragment<T, LabeledComponent<ShortenCommandLineModeCombo>> fragment =
+      new SettingsEditorFragment<>("shorten.command.line",
+                                   ExecutionBundle.message("application.configuration.shorten.command.line"),
+                                   ExecutionBundle.message("group.java.options"),
+                                   component,
+                                   (t, c) -> c
+                                     .getComponent()
+                                     .setItem(t.getShortenCommandLine()),
+                                   (t, c) -> t.setShortenCommandLine(
+                                       c.isVisible()
+                                       ? c.getComponent().getSelectedItem()
+                                       : null),
+                                   configuration -> configuration.getShortenCommandLine() != null);
+    fragment.setActionHint(ExecutionBundle.message("select.a.method.to.shorten.the.command.if.it.exceeds.the.os.limit"));
+    return fragment;
   }
 
   protected abstract void customizeFragments(List<SettingsEditorFragment<T, ?>> fragments,
                                              ModuleClasspathCombo classpathCombo,
                                              CommonParameterFragments<T> commonParameterFragments);
+
+  @Override
+  public void targetChanged(String targetName) {
+    SettingsEditorFragment<T, ?> fragment = ContainerUtil.find(getFragments(), f -> CommonJavaFragments.JRE_PATH == f.getId());
+    if (fragment != null) {
+      if (((JrePathEditor)fragment.component()).updateModel(targetName)) {
+        fragment.resetFrom(getRunConfiguration());
+      }
+    }
+  }
 }

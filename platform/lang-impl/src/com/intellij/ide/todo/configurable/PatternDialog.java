@@ -80,7 +80,7 @@ class PatternDialog extends DialogWrapper {
     myColorAndFontDescriptionPanel = new ColorAndFontDescriptionPanel();
 
     TextAttributes attributes = myPattern.getAttributes().getCustomizedTextAttributes();
-    myColorAndFontDescription = new TextAttributesDescription("null", null, attributes, null,
+    myColorAndFontDescription = new TextAttributesDescription("null", null, attributes, null, //NON-NLS
                                                               EditorColorsManager.getInstance().getGlobalScheme(), null, null) {
       @Override
       public boolean isErrorStripeEnabled() {

@@ -32,6 +32,7 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandlerBean;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -45,12 +46,17 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.DefaultKeymap;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectType;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
@@ -857,13 +863,18 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  private void processReferenceNode(final Element element, final PluginId pluginId) {
+  private void processReferenceNode(final Element element,
+                                    final PluginId pluginId,
+                                    @Nullable ResourceBundle bundle) {
     final AnAction action = processReferenceElement(element, pluginId);
     if (action == null) return;
 
     for (Element child : element.getChildren()) {
       if (ADD_TO_GROUP_ELEMENT_NAME.equals(child.getName())) {
         processAddToGroupNode(action, child, pluginId, isSecondary(child));
+      }
+      else if (SYNONYM_ELEMENT_NAME.equals(child.getName())) {
+        processSynonymNode(action, child, pluginId, bundle);
       }
     }
   }
@@ -954,19 +965,19 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  private static void processSynonymNode(ActionStub stub, Element element, PluginId pluginId, @Nullable ResourceBundle bundle) {
+  private static void processSynonymNode(AnAction action, Element element, PluginId pluginId, @Nullable ResourceBundle bundle) {
     if (!SYNONYM_ELEMENT_NAME.equals(element.getName())) {
       reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
       return;
     }
     String text = element.getAttributeValue(TEXT_ATTR_NAME, "");
     if (!text.isEmpty()) {
-      stub.addSynonym(() -> text);
+      action.addSynonym(() -> text);
     }
     else {
       String key = element.getAttributeValue(KEY_ATTR_NAME);
       if (key != null && bundle != null) {
-        stub.addSynonym(() -> BundleBase.message(bundle, key));
+        action.addSynonym(() -> BundleBase.message(bundle, key));
       }
       else {
         reportActionError(pluginId, "Can't process synonym: neither text nor resource bundle key is specified");
@@ -1124,7 +1135,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         processSeparatorNode(null, child, plugin.getPluginId(), bundle);
         break;
       case REFERENCE_ELEMENT_NAME:
-        processReferenceNode(child, plugin.getPluginId());
+        processReferenceNode(child, plugin.getPluginId(), bundle);
         break;
       case UNREGISTER_ELEMENT_NAME:
         processUnregisterNode(child, plugin.getPluginId());
@@ -1454,6 +1465,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return myBaseActions.get(overridingAction);
   }
 
+  public Collection<String> getParentGroupIds(String actionId) {
+    return myId2GroupId.get(actionId);
+  }
+
   @Override
   public void addAnActionListener(AnActionListener listener) {
     myActionListeners.add(listener);
@@ -1477,15 +1492,25 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     final Language language = file != null ? file.getLanguage() : null;
     final List<EventPair> customData = new ArrayList<>();
     customData.add(EventFields.CurrentFile.with(language));
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    customData.add(EventFields.Language.with(getHostFileLanguage(dataContext, project)));
     if (action instanceof FusAwareAction) {
       List<EventPair> additionalUsageData = ((FusAwareAction)action).getAdditionalUsageData(event);
       customData.add(ActionsEventLogGroup.ADDITIONAL.with(new ObjectEventData(additionalUsageData.toArray(new EventPair[0]))));
     }
-    ActionsCollectorImpl.recordActionInvoked(CommonDataKeys.PROJECT.getData(dataContext), action, event, customData);
+    ActionsCollectorImpl.recordActionInvoked(project, action, event, customData);
     for (AnActionListener listener : myActionListeners) {
       listener.beforeActionPerformed(action, dataContext, event);
     }
     publisher().beforeActionPerformed(action, dataContext, event);
+  }
+
+  private static @Nullable Language getHostFileLanguage(@NotNull DataContext dataContext, @Nullable Project project) {
+    if (project == null) return null;
+    Editor editor = CommonDataKeys.HOST_EDITOR.getData(dataContext);
+    if (editor == null) return null;
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    return file != null ? file.getLanguage() : null;
   }
 
   @Override

@@ -160,6 +160,8 @@ class FilePartNode {
                          + "; compare(child) = " + StringUtil.compare(child.getName(), name, !isCaseSensitive()) + ";"
                          + " UrlPart.nameEquals: " + FileUtil.PATH_CHAR_SEQUENCE_HASHING_STRATEGY.equals(child.getName(), fromNameId(nameId))
                          + "; name.equals(child.getName())=" + child.getName().equals(name)
+                         + "; file="+file
+                         + "; this.isCaseSensitive()="+isCaseSensitive()
         ;
       Object fileOrUrl = file;
       if (fileOrUrl == null) {
@@ -338,6 +340,9 @@ class FilePartNode {
       FilePartNode child = children[i];
       if (changed) {
         child.update(thisNode, root, debugSource, debugInvalidationReason);
+        if (i >= thisNode.children.length) {
+          break;
+        }
         child = thisNode.children[i];
       }
       if (file == null) {

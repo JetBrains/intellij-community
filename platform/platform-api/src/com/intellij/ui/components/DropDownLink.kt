@@ -1,11 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components
 
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.ui.popup.JBPopup
-import com.intellij.ui.popup.util.PopupState
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.popup.PopupState
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -13,14 +12,15 @@ import java.awt.Component
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.event.ItemEvent
+import java.awt.event.KeyEvent
 import java.util.function.Consumer
 import javax.swing.DefaultListCellRenderer
 import javax.swing.JList
-import javax.swing.SwingConstants
+import javax.swing.KeyStroke.getKeyStroke
 
 open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) : ActionLink() {
 
-  val popupState = PopupState()
+  val popupState = PopupState.forPopup()
   var selectedItem: T = item
     set(newItem) {
       val oldItem = field
@@ -31,17 +31,18 @@ open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) 
     }
 
   init {
-    text = item.toString()
-    icon = AllIcons.General.LinkDropTriangle
-    iconTextGap = scale(1)
-    horizontalTextPosition = SwingConstants.LEADING
+    text = itemToString(item)
+    setDropDownLinkIcon()
     addActionListener {
       if (!popupState.isRecentlyHidden) {
         val popup = popupBuilder(this)
-        val showPoint = Point(0, height + scale(4))
-        popup.addListener(popupState)
-        popup.show(RelativePoint(this, showPoint))
+        popupState.prepareToShow(popup)
+        popup.show(RelativePoint(this, popupPoint()))
       }
+    }
+    getInputMap(WHEN_FOCUSED)?.run {
+      put(getKeyStroke(KeyEvent.VK_DOWN, 0, false), "pressed")
+      put(getKeyStroke(KeyEvent.VK_DOWN, 0, true), "released")
     }
   }
 
@@ -63,7 +64,7 @@ open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) 
         @Suppress("UNCHECKED_CAST")
         (event.item as? T)?.let {
           onSelect.accept(it)
-          if (updateText) text = it.toString()
+          if (updateText) text = itemToString(it)
         }
       }
     }
@@ -76,6 +77,10 @@ open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) 
   private fun fireItemStateChanged(item: T, state: Int) {
     itemListeners.forEach { it.itemStateChanged(ItemEvent(this, ItemEvent.ITEM_STATE_CHANGED, item, state)) }
   }
+
+  protected open fun itemToString(item: T) = item.toString()
+
+  protected open fun popupPoint() = Point(0, height + scale(4))
 }
 
 

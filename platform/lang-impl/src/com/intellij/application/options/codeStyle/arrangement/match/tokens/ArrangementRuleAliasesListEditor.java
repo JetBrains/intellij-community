@@ -106,7 +106,7 @@ public class ArrangementRuleAliasesListEditor extends NamedItemsListEditor<StdAr
 
   @Nullable
   @Override
-  public String askForProfileName(String title) {
+  public String askForProfileName(@NlsContexts.DialogTitle String title) {
     return Messages.showInputDialog(getNewLabelText(), title, Messages.getQuestionIcon(), "", new InputValidator() {
       @Override
       public boolean checkInput(String s) {

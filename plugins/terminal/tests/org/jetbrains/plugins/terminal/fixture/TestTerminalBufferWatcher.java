@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal.fixture;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.jediterm.terminal.Terminal;
 import com.jediterm.terminal.model.TerminalLine;
 import com.jediterm.terminal.model.TerminalModelListener;
@@ -16,6 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 
 public class TestTerminalBufferWatcher {
+  private static final Logger LOG = Logger.getInstance(TestTerminalBufferWatcher.class);
   private final TerminalTextBuffer myBuffer;
   private final Terminal myTerminal;
 
@@ -80,6 +82,7 @@ public class TestTerminalBufferWatcher {
       latch.await(timeoutMillis, TimeUnit.MILLISECONDS);
     }
     catch (InterruptedException e) {
+      LOG.debug("Could not get response in " + timeoutMillis + "ms. Terminal screen lines are: " + getScreenLines());
       throw new AssertionError(e);
     }
     finally {
@@ -93,5 +96,9 @@ public class TestTerminalBufferWatcher {
     if (actualLines.size() < expectedScreenLines.size()) return false;
     List<String> lastActualLines = actualLines.subList(actualLines.size() - expectedScreenLines.size(), actualLines.size());
     return expectedScreenLines.equals(lastActualLines);
+  }
+
+  public String getScreenLines() {
+    return myBuffer.getScreenLines();
   }
 }

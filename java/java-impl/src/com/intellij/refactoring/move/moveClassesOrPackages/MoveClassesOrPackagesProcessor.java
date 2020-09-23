@@ -479,11 +479,14 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
 
     for (UsageInfo usage : usages) {
       if (!(usage instanceof MoveRenameUsageInfo)) continue;
+      if (branch != null) {
+        usage = ((MoveRenameUsageInfo) usage).branched(branch);
+      }
 
       if (usage instanceof NonCodeUsageInfo) {
         nonCodeUsages.add((NonCodeUsageInfo) usage);
       } else {
-        codeUsages.add(branch == null ? (MoveRenameUsageInfo) usage : ((MoveRenameUsageInfo) usage).branched(branch));
+        codeUsages.add((MoveRenameUsageInfo)usage);
       }
     }
 
@@ -580,7 +583,11 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       }
 
       CommonMoveUtil.retargetUsages(codeUsages.toArray(UsageInfo.EMPTY_ARRAY), oldToNewElementsMapping);
-      myNonCodeUsages = nonCodeUsages.toArray(new NonCodeUsageInfo[0]);
+      if (branch == null) {
+        myNonCodeUsages = nonCodeUsages.toArray(new NonCodeUsageInfo[0]);
+      } else {
+        RenameUtil.renameNonCodeUsages(myProject, nonCodeUsages.toArray(new NonCodeUsageInfo[0]));
+      }
 
       for (PsiElement element : elementsToMove) {
         if (element instanceof PsiClass) {
@@ -616,6 +623,10 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       }
     }
 
+    if (branch != null) {
+      invokeMoveCallback();
+    }
+
     if (myOpenInEditor) {
       ApplicationManager.getApplication().invokeLater(() -> EditorHelper.openFilesInEditor(
         ContainerUtil.mapNotNull(movedElements, p -> getOriginalPsi(branch, p)).toArray(PsiElement.EMPTY_ARRAY)));
@@ -634,6 +645,10 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   @Override
     protected void performPsiSpoilingRefactoring() {
     RenameUtil.renameNonCodeUsages(myProject, myNonCodeUsages);
+    invokeMoveCallback();
+  }
+
+  private void invokeMoveCallback() {
     if (myMoveCallback != null) {
       if (myMoveCallback instanceof MoveClassesOrPackagesCallback) {
         ((MoveClassesOrPackagesCallback) myMoveCallback).classesOrPackagesMoved(myMoveDestination);

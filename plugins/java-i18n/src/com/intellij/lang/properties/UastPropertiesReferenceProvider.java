@@ -2,6 +2,7 @@
 package com.intellij.lang.properties;
 
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
+import com.intellij.codeInspection.i18n.NlsInfo;
 import com.intellij.lang.properties.references.PropertyReference;
 import com.intellij.lang.properties.references.PropertyReferenceBase;
 import com.intellij.openapi.util.Ref;
@@ -11,8 +12,10 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.UastInjectionHostReferenceProvider;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.uast.*;
-import org.jetbrains.uast.util.UastExpressionUtils;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UPolyadicExpression;
+import org.jetbrains.uast.UastBinaryOperator;
 
 class UastPropertiesReferenceProvider extends UastInjectionHostReferenceProvider {
 
@@ -32,7 +35,8 @@ class UastPropertiesReferenceProvider extends UastInjectionHostReferenceProvider
   public PsiReference @NotNull [] getReferencesForInjectionHost(@NotNull UExpression element,
                                                                 @NotNull PsiLanguageInjectionHost host,
                                                                 @NotNull ProcessingContext context) {
-    if (!canBePropertyKeyRef(element)) {
+    UExpression parent = NlsInfo.goUp(element, false);
+    if (!canBePropertyKeyRef(parent)) {
       return PsiReference.EMPTY_ARRAY;
     }
     Object value = element.evaluate();
@@ -67,21 +71,6 @@ class UastPropertiesReferenceProvider extends UastInjectionHostReferenceProvider
 
   private static boolean canBePropertyKeyRef(@NotNull UExpression element) {
     UElement parent = element.getUastParent();
-    if (parent instanceof UExpression) {
-      if (parent instanceof UIfExpression && ((UIfExpression)parent).isTernary()) {
-        UExpression elseExpr = ((UIfExpression)parent).getElseExpression();
-        UExpression thenExpr = ((UIfExpression)parent).getThenExpression();
-        PsiElement elseExprSrc = elseExpr == null ? null : elseExpr.getSourcePsi();
-        PsiElement thenExprSrc = thenExpr == null ? null : thenExpr.getSourcePsi();
-        PsiElement psi = element.getSourcePsi();
-        return (psi == thenExprSrc || psi == elseExprSrc) && canBePropertyKeyRef((UExpression)parent);
-      }
-      else {
-        return parent instanceof UCallExpression || parent instanceof UNamedExpression || UastExpressionUtils.isAssignment(parent);
-      }
-    }
-    else {
-      return true;
-    }
+    return !(parent instanceof UPolyadicExpression) || ((UPolyadicExpression)parent).getOperator() == UastBinaryOperator.ASSIGN;
   }
 }

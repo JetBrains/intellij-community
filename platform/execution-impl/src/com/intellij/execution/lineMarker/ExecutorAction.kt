@@ -5,7 +5,6 @@ import com.intellij.execution.Executor
 import com.intellij.execution.actions.BaseRunConfigurationAction
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
-import com.intellij.execution.configurations.LocatableConfiguration
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.util.Key
@@ -98,7 +97,7 @@ class ExecutorAction private constructor(val origin: AnAction,
       return null
     }
 
-    val configuration = list.get(if (order < list.size) order else 0).configuration as LocatableConfiguration
+    val configuration = list.get(if (order < list.size) order else 0).configuration
     return executor.getStartActionText(BaseRunConfigurationAction.suggestRunActionName(configuration))
   }
 

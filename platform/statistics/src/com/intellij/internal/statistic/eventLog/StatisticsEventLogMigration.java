@@ -2,7 +2,7 @@
 package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.concurrency.JobScheduler;
-import com.intellij.internal.statistic.eventLog.validator.persistence.BaseEventLogWhitelistPersistence;
+import com.intellij.internal.statistic.eventLog.validator.storage.persistence.BaseEventLogMetadataPersistence;
 import com.intellij.internal.statistic.service.fus.collectors.FUStatisticsPersistence;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
@@ -26,7 +26,7 @@ public final class StatisticsEventLogMigration {
   }
 
   private static void clearDeprecatedMetadataFolder() {
-    Path deprecated = BaseEventLogWhitelistPersistence.getDeprecatedMetadataDir();
+    Path deprecated = BaseEventLogMetadataPersistence.getDeprecatedMetadataDir();
     if (Files.exists(deprecated)) {
       deleteDir(deprecated);
     }

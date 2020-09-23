@@ -10,20 +10,17 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TemporaryDirectory
-import com.intellij.testFramework.createOrLoadProject
-import kotlinx.coroutines.runBlocking
+import com.intellij.testFramework.loadProjectAndCheckResults
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
-import java.nio.file.Path
 import java.nio.file.Paths
 
-class ReloadProjectTest : LoadProjectBase() {
+class ReloadProjectTest {
   companion object {
     @JvmField
     @ClassRule
@@ -32,12 +29,9 @@ class ReloadProjectTest : LoadProjectBase() {
 
   @JvmField
   @Rule
-  val myTempDirectory = TemporaryDirectory()
+  val tempDirectory = TemporaryDirectory()
 
-  override val tempDirectory: TemporaryDirectory
-    get() = myTempDirectory
-
-  override val testDataRoot
+  private val testDataRoot
     get() = Paths.get(PathManagerEx.getCommunityHomePath()).resolve("java/java-tests/testData/reloading")
 
   @Test
@@ -71,5 +65,9 @@ class ReloadProjectTest : LoadProjectBase() {
     FileUtil.copyDir(testDataRoot.resolve(relativePath).toFile(), base.toFile())
     VfsUtil.markDirtyAndRefresh(false, true, true, VfsUtil.findFile(base, true))
     StoreReloadManager.getInstance().reloadChangedStorageFiles()
+  }
+
+  private fun loadProjectAndCheckResults(testDataDirName: String, checkProject: suspend (Project) -> Unit) {
+    return loadProjectAndCheckResults(listOf(testDataRoot.resolve(testDataDirName)), tempDirectory, checkProject)
   }
 }

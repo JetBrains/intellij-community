@@ -304,7 +304,31 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup, ComboBoxPopup.Co
 
     @Override
     public AccessibleStateSet getAccessibleStateSet() {
-      return null;
+      AccessibleStateSet stateSet = new AccessibleStateSet();
+      if (DarculaJBPopupComboPopup.this.isVisible()) {
+        stateSet.add(AccessibleState.VISIBLE);
+      }
+      stateSet.add(AccessibleState.ENABLED);
+      AccessibleContext ac = myComboBox.getAccessibleContext();
+      if (ac != null) {
+        Accessible ap = ac.getAccessibleParent();
+        if (ap != null) {
+          AccessibleContext pac = ap.getAccessibleContext();
+          if (pac != null) {
+            AccessibleSelection as = pac.getAccessibleSelection();
+            if (as != null) {
+              stateSet.add(AccessibleState.SELECTABLE);
+              int i = ac.getAccessibleIndexInParent();
+              if (i >= 0) {
+                if (as.isAccessibleChildSelected(i)) {
+                  stateSet.add(AccessibleState.SELECTED);
+                }
+              }
+            }
+          }
+        }
+      }
+      return stateSet;
     }
 
     @Override

@@ -3,7 +3,6 @@ These instructions will help you build IntelliJ IDEA Community Edition from sour
 The following conventions will be used to refer to directories on your machine:
 * `<USER_HOME>` is your home directory.
 * `<IDEA_HOME>` is the root directory for the IntelliJ source code.
-* `<JDK_18_HOME>` is the root directory for the 1.8 JDK.
 
 ## Getting IntelliJ IDEA Community Edition Source Code
 IntelliJ IDEA Community Edition source code is available from `github.com/JetBrains/intellij-community` by either cloning or
@@ -46,8 +45,8 @@ Using IntelliJ IDEA **File | Open**, select the `<IDEA_HOME>` directory.
    "**MAVEN_REPOSITORY**" pointing to `<USER_HOME>/.m2/repository` directory.
 3. _**Speed Tip:**_ If you have enough RAM on your computer,
    [configure the compiler settings](https://www.jetbrains.com/help/idea/specifying-compilation-settings.html)
-   to enable the "Compile independent modules in parallel" option. Also, set the "User-local build process VM options" to `-Xmx2G`.
-   These changes will greatly reduce the compile time.
+   to enable the "Compile independent modules in parallel" option. Also, copy value from "Shared build process VM options" to 
+   "User-local build process VM options" and add `-Xmx2G` to it. These changes will greatly reduce compilation time.
 
 ### Building the IntelliJ Application Source Code
 To build IntelliJ IDEA Community Edition from source, choose **Build | Build Project** from the main menu.

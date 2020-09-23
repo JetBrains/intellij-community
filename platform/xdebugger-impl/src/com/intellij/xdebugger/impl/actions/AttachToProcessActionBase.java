@@ -415,7 +415,7 @@ public abstract class AttachToProcessActionBase extends AnAction {
     }
 
     @NotNull
-    XAttachPresentationGroup<T> getGroup() {
+    public XAttachPresentationGroup<T> getGroup() {
       return myGroup;
     }
 

@@ -42,6 +42,12 @@ public interface ValueKey<T> {
    */
   interface BeforeIf<T> {
     /**
+     * @return the name of the key
+     */
+    @NotNull
+    String getKeyName();
+
+    /**
      * Continues a matching chain: the subsequent then-branch will take effect if
      * the supplied "case" key equals to the selector key
      *

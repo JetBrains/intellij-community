@@ -8,15 +8,17 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.Function;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -291,23 +293,27 @@ public final class VfsImplUtil {
     return state;
   }
 
-  public static FileAttributes getAttributesWithCaseSensitivity(@NotNull NewVirtualFileSystem fs,
-                                                                @NotNull VirtualFile file) {
-    FileAttributes attributes = fs.getAttributes(file);
-    if (attributes != null && !attributes.hasCaseSensitivityInformation()) {
-      LOG.warn("File system " + fs + " returned file attributes without case sensitivity info: " +
-               attributes + " for path '" + file.getPath() + "'");
+  /**
+   * If the {@code parent} case-sensitivity flag is still not known, try to determine it via {@link FileSystemUtil#readParentCaseSensitivity(File)}.
+   * If this flag read successfully, prepare to fire the {@link VirtualFile#PROP_CHILDREN_CASE_SENSITIVITY} event
+   * (but only if this flag is different from the FS-default case-sensitivity to avoid too many unnecessary events: see {@link VirtualFileSystem#isCaseSensitive()}).
+   * Otherwise, return null.
+   */
+  public static VFileEvent generateCaseSensitivityChangedEvent(@NotNull VirtualFile parent, @NotNull String childName) {
+    if (((VirtualDirectoryImpl)parent).getChildrenCaseSensitivity() == FileAttributes.CaseSensitivity.UNKNOWN && FileSystemUtil.isCaseToggleable(childName)) {
+      FileAttributes.CaseSensitivity parentCaseSensitivity = FileSystemUtil.readParentCaseSensitivity(new File(parent.getPath(), childName));
+      if (parentCaseSensitivity != FileAttributes.CaseSensitivity.UNKNOWN) {
+        if (parent.getFileSystem().isCaseSensitive() != (parentCaseSensitivity == FileAttributes.CaseSensitivity.SENSITIVE)) {
+          // fire only when the new case sensitivity is different from the default FS sensitivity, because only in that case the file.isCaseSensitive() value could change
+          return new VFilePropertyChangeEvent(null, parent, VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY,
+                                              FileAttributes.CaseSensitivity.UNKNOWN, parentCaseSensitivity, true);
+        }
+        else {
+          PersistentFSImpl.executeChangeCaseSensitivity(parent, parentCaseSensitivity);
+        }
+      }
     }
-    return getAttributesWithCaseSensitivity(fs, attributes);
-  }
-
-  @Contract("_, null -> null")
-  public static FileAttributes getAttributesWithCaseSensitivity(@NotNull NewVirtualFileSystem fs,
-                                                                @Nullable FileAttributes attributes) {
-    if (attributes != null && !attributes.hasCaseSensitivityInformation()) {
-      return attributes.withCaseSensitivity(fs.isCaseSensitive());
-    }
-    return attributes;
+    return null;
   }
 
   private static class InvalidationState {

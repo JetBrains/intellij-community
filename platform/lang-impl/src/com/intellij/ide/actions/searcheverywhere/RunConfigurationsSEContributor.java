@@ -226,16 +226,16 @@ public class RunConfigurationsSEContributor implements SearchEverywhereContribut
       KeyStroke enterStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0);
       KeyStroke shiftEnterStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK);
       if (debugExecutor != null) {
-        executorInfo.append(debugExecutor.getId(), commandAttributes);
+        executorInfo.append(debugExecutor.getActionName(), commandAttributes);
         executorInfo.append("(" + KeymapUtil.getKeystrokeText(enterStroke) + ")", shortcutAttributes);
         if (runExecutor != null) {
-          executorInfo.append(" / " + runExecutor.getId(), commandAttributes);
+          executorInfo.append(" / " + runExecutor.getActionName(), commandAttributes);
           executorInfo.append("(" + KeymapUtil.getKeystrokeText(shiftEnterStroke) + ")", shortcutAttributes);
         }
       }
       else {
         if (runExecutor != null) {
-          executorInfo.append(runExecutor.getId(), commandAttributes);
+          executorInfo.append(runExecutor.getActionName(), commandAttributes);
           executorInfo.append("(" + KeymapUtil.getKeystrokeText(enterStroke) + ")", shortcutAttributes);
         }
       }
@@ -246,7 +246,7 @@ public class RunConfigurationsSEContributor implements SearchEverywhereContribut
       Optional.ofNullable(ObjectUtils.tryCast(wrapper.getValue(), RunnerAndConfigurationSettings.class))
         .map(settings -> findExecutor(settings, mode))
         .ifPresent(executor -> {
-          executorInfo.append(executor.getId(), attributes);
+          executorInfo.append(executor.getActionName(), attributes);
           executorInfo.setIcon(executor.getToolWindowIcon());
         });
     }

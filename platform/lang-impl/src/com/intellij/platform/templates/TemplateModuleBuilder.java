@@ -267,7 +267,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
             Messages.showErrorDialog(dialogMessage, LangBundle.message("dialog.title.decoding.template"));
           }
 
-          StringBuilder reportBuilder = new StringBuilder();
+          @NonNls StringBuilder reportBuilder = new StringBuilder();
           for (Trinity<String, String, VelocityException> failure : myFailures) {
             reportBuilder.append("File: ").append(failure.getFirst()).append("\n");
             reportBuilder.append("Exception:\n").append(ExceptionUtil.getThrowableText(failure.getThird())).append("\n");

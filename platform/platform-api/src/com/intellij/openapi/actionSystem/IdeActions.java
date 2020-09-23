@@ -231,6 +231,7 @@ public interface IdeActions {
   @NonNls String GROUP_EDITOR_BIDI_TEXT_DIRECTION = "EditorBidiTextDirection";
 
   @NonNls String ACTION_TOGGLE_LINE_BREAKPOINT = "ToggleLineBreakpoint";
+  @NonNls String ACTION_RUN_TO_CURSOR = "RunToCursor";
 
   @NonNls String ACTION_REFRESH = "Refresh";
 
@@ -245,14 +246,12 @@ public interface IdeActions {
 
   @NonNls String GROUP_RUN = "RunMenu";
   @NonNls String GROUP_RUNNER_ACTIONS = "RunnerActions";
+  @NonNls String RUN_DEBUG_CONFIG_GROUP = "RunDebugConfigRunnerActions";
   @NonNls String ACTION_DEFAULT_RUNNER = "Run";
   @NonNls String ACTION_DEFAULT_DEBUGGER = "Debug";
   @NonNls String ACTION_EDIT_RUN_CONFIGURATIONS = "editRunConfigurations";
   @NonNls String ACTION_RERUN = "Rerun";
 
-  @NonNls String ACTION_VCS_EDIT_SOURCE = "Vcs.EditSourceAction";
-  @NonNls String ACTION_INCLUDE = "Vcs.IncludeAction";
-  @NonNls String ACTION_EXCLUDE = "Vcs.ExcludeAction";
   @NonNls String ACTION_STOP_PROGRAM = "Stop";
   @NonNls String ACTION_NEW_ELEMENT = "NewElement";
 

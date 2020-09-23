@@ -35,12 +35,9 @@ public class DependencyScopeNode extends AbstractDependencyNode {
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    if (!super.equals(o)) return false;
-
-    DependencyScopeNode node = (DependencyScopeNode)o;
+  public boolean match(AbstractDependencyNode dependencyNode) {
+    if (dependencyNode == null || getClass() != dependencyNode.getClass()) return false;
+    DependencyScopeNode node = (DependencyScopeNode)dependencyNode;
     if (!scope.equals(node.scope)) return false;
     if (!displayName.equals(node.displayName)) return false;
     if (description != null ? !description.equals(node.description) : node.description != null) return false;

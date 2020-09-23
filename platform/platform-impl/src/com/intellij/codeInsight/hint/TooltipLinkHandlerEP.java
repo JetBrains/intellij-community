@@ -3,6 +3,7 @@ package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.highlighting.TooltipLinkHandler;
 import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.serviceContainer.BaseKeyedLazyInstance;
@@ -58,7 +59,7 @@ public final class TooltipLinkHandlerEP extends BaseKeyedLazyInstance<TooltipLin
         String refSuffix = ref.substring(ep.prefix.length());
         return ep.getInstance().getDescriptionTitle(refSuffix, editor);
       }
-      return TooltipLinkHandler.INSPECTION_INFO;
+      return IdeBundle.message("inspection.message.inspection.info");
     }));
   }
 }

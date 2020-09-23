@@ -4,6 +4,7 @@ package com.intellij.sh.highlighting;
 import com.intellij.codeInsight.editorActions.SelectWordUtil;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CollectConsumer;
@@ -59,7 +60,7 @@ public final class ShTextOccurrencesUtil {
     });
   }
 
-  private static boolean isWordExpandableOutside(@NotNull CharSequence documentText, @NotNull TextRange textRange) {
+  private static boolean isWordExpandableOutside(@NotNull CharSequence documentText, @NotNull Segment textRange) {
     if (textRange.getStartOffset() > 0) {
       char ch = documentText.charAt(textRange.getStartOffset() - 1);
       if (isWordPartCondition(ch)) {

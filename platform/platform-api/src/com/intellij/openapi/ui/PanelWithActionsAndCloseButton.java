@@ -16,7 +16,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-
 public abstract class PanelWithActionsAndCloseButton extends JPanel implements DataProvider, Disposable {
   protected final ContentManager myContentManager;
   private final @NonNls String myHelpId;
@@ -46,7 +45,6 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
         }
       });
     }
-
   }
 
   public @NonNls String getHelpId() {
@@ -71,17 +69,16 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
     add(centerPanel, BorderLayout.CENTER);
     if (myVerticalToolbar) {
       add(toolbar.getComponent(), BorderLayout.WEST);
-    } else {
+    }
+    else {
       add(toolbar.getComponent(), BorderLayout.NORTH);
     }
   }
 
   @Override
+  @SuppressWarnings("HardCodedStringLiteral")
   public Object getData(@NotNull String dataId) {
-    if (PlatformDataKeys.HELP_ID.is(dataId)){
-      return myHelpId;
-    }
-    return null;
+    return PlatformDataKeys.HELP_ID.is(dataId) ? myHelpId : null;
   }
 
   protected abstract JComponent createCenterPanel();

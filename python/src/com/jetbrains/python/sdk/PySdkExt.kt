@@ -43,6 +43,7 @@ import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
@@ -100,7 +101,8 @@ fun detectVirtualEnvs(module: Module?, existingSdks: List<Sdk>, context: UserDat
   filterSuggestedPaths(VirtualEnvSdkFlavor.getInstance().suggestHomePaths(module, context), existingSdks, module)
 
 fun detectCondaEnvs(module: Module?, existingSdks: List<Sdk>, context: UserDataHolder): List<PyDetectedSdk> =
-  filterSuggestedPaths(CondaEnvSdkFlavor.getInstance().suggestHomePaths(module, context), existingSdks, module)
+  filterSuggestedPaths(CondaEnvSdkFlavor.getInstance().suggestHomePaths(module, context), existingSdks, module,
+                       !PyCondaSdkCustomizer.instance.disableEnvsSorting)
 
 fun findExistingAssociatedSdk(module: Module, existingSdks: List<Sdk>): Sdk? {
   return existingSdks
@@ -319,16 +321,22 @@ fun Sdk.getOrCreateAdditionalData(): PythonSdkAdditionalData {
 
 private fun filterSuggestedPaths(suggestedPaths: MutableCollection<String>,
                                  existingSdks: List<Sdk>,
-                                 module: Module?): List<PyDetectedSdk> {
+                                 module: Module?,
+                                 sortByModule: Boolean = true): List<PyDetectedSdk> {
   val existingPaths = existingSdks.map { it.homePath }.toSet()
-  return suggestedPaths
+  val paths = suggestedPaths
     .asSequence()
     .filterNot { it in existingPaths }
     .distinct()
     .map { PyDetectedSdk(it) }
-    .sortedWith(compareBy({ !it.isAssociatedWithModule(module) },
-                          { it.homePath }))
     .toList()
+  return if (sortByModule) {
+    paths.sortedWith(compareBy({ !it.isAssociatedWithModule(module) },
+                               { it.homePath }))
+  }
+  else {
+    paths
+  }
 }
 
 val ACTIVE_PYTHON_SDK_TOPIC: Topic<ActiveSdkListener> = Topic("Active SDK changed", ActiveSdkListener::class.java)

@@ -126,15 +126,7 @@ public final class PyABCUtil {
       }
     }
     if (type instanceof PyUnionType) {
-      final PyUnionType unionType = (PyUnionType)type;
-      for (PyType m : unionType.getMembers()) {
-        if (m != null) {
-          if (isSubtype(m, superClassName, context)) {
-            return true;
-          }
-        }
-      }
-      return false;
+      return PyTypeUtil.toStream(type).nonNull().anyMatch(it -> isSubtype(it, superClassName, context));
     }
     return false;
   }

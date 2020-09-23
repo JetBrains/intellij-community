@@ -39,8 +39,8 @@ public class TableLayout extends TabLayout {
     data.requiredRows = 1;
     for (TabInfo eachInfo : data.myVisibleInfos) {
       final TabLabel eachLabel = myTabs.myInfo2Label.get(eachInfo);
-      final Dimension size = eachLabel.getPreferredSize();
-      if (eachX + size.width >= data.toFitRec.getMaxX()) {
+      final Dimension size = eachLabel.getNotStrictPreferredSize();
+      if (eachX + size.width >= data.toFitRec.getMaxX() || eachLabel.isNextToLastPinned()) {
         data.requiredRows++;
         eachX = data.toFitRec.x;
       }
@@ -68,7 +68,7 @@ public class TableLayout extends TabLayout {
     for (TabInfo eachInfo : data.myVisibleInfos) {
       final TabLabel eachLabel = myTabs.myInfo2Label.get(eachInfo);
       final Dimension size = eachLabel.getPreferredSize();
-      if (eachX + size.width <= data.rowToFitMaxX) {
+      if (eachX + size.width <= data.rowToFitMaxX && !eachLabel.isNextToLastPinned()) {
         eachTableRow.add(eachInfo);
         if (myTabs.getSelectedInfo() == eachInfo) {
           selectedRow = eachRow;
@@ -142,7 +142,10 @@ public class TableLayout extends TabLayout {
           label.putClientProperty(JBTabsImpl.STRETCHED_BY_WIDTH, Boolean.valueOf(toAjust));
 
           int width;
-          if (i < eachRow.myColumns.size() - 1 || !toAjust) {
+          if (label.isPinned()) {
+            width = label.getNotStrictPreferredSize().width;
+          }
+          else if (i < eachRow.myColumns.size() - 1 || !toAjust) {
             width = label.getPreferredSize().width + deltaToFit;
           }
           else {

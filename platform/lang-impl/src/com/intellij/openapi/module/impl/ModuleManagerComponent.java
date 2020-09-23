@@ -74,7 +74,7 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
   }
 
   @Override
-  protected void unloadNewlyAddedModulesIfPossible(@NotNull Set<ModulePath> modulesToLoad, @NotNull List<UnloadedModuleDescriptionImpl> modulesToUnload) {
+  public void unloadNewlyAddedModulesIfPossible(@NotNull Set<ModulePath> modulesToLoad, @NotNull List<UnloadedModuleDescriptionImpl> modulesToUnload) {
     UnloadedModulesListChange change = AutomaticModuleUnloader.getInstance(myProject).processNewModules(modulesToLoad, modulesToUnload);
     modulesToLoad.removeAll(change.getToUnload());
     modulesToUnload.addAll(change.getToUnloadDescriptions());

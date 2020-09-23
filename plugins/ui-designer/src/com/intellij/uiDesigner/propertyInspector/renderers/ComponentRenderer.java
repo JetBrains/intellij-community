@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.renderers;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.uiDesigner.FormEditingUtil;
@@ -57,8 +58,8 @@ public class ComponentRenderer extends ColoredListCellRenderer implements Proper
         append(componentTitle, baseAttributes);
       }
       else {
-        append(target.getComponentClass().getSimpleName(),
-               selected ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        @NlsSafe String name = target.getComponentClass().getSimpleName();
+        append(name, selected ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
     }
   }

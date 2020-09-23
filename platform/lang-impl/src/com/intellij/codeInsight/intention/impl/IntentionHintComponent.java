@@ -48,7 +48,6 @@ import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.EmptyIcon;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -170,7 +169,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
   private static final Logger LOG = Logger.getInstance(IntentionHintComponent.class);
 
-  private static final Icon ourInactiveArrowIcon = EmptyIcon.create(AllIcons.General.ArrowDown);
+  private static final Icon ourInactiveArrowIcon = IconManager.getInstance().createEmptyIcon(AllIcons.General.ArrowDown);
 
   private static final int NORMAL_BORDER_SIZE = 6;
   private static final int SMALL_BORDER_SIZE = 4;

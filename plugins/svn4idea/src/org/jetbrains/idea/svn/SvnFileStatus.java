@@ -3,6 +3,8 @@
 
 package org.jetbrains.idea.svn;
 
+import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusFactory;
 
@@ -12,12 +14,14 @@ public final class SvnFileStatus {
   private SvnFileStatus() {
   }
 
+  private static final PluginId OUR_PLUGIN_ID = PluginManagerCore.getPluginByClassName(SvnFileStatus.class.getName());
+
   public static final FileStatus EXTERNAL = FileStatusFactory.getInstance()
-    .createFileStatus("IDEA_SVN_FILESTATUS_EXTERNAL", SvnBundle.messagePointer("file.status.external"), new Color(0x72A038));
+    .createFileStatus("IDEA_SVN_FILESTATUS_EXTERNAL", SvnBundle.messagePointer("file.status.external"), new Color(0x72A038), OUR_PLUGIN_ID);
 
   public static final FileStatus OBSTRUCTED = FileStatusFactory.getInstance()
-    .createFileStatus("IDEA_SVN_FILESTATUS_OBSTRUCTED", SvnBundle.messagePointer("file.status.obstructed"), new Color(0x727238));
+    .createFileStatus("IDEA_SVN_FILESTATUS_OBSTRUCTED", SvnBundle.messagePointer("file.status.obstructed"), new Color(0x727238), OUR_PLUGIN_ID);
 
   public static final FileStatus REPLACED = FileStatusFactory.getInstance()
-    .createFileStatus("IDEA_SVN_REPLACED", SvnBundle.messagePointer("file.status.replaced"), FileStatus.ADDED.getColor());
+    .createFileStatus("IDEA_SVN_REPLACED", SvnBundle.messagePointer("file.status.replaced"), FileStatus.ADDED.getColor(), OUR_PLUGIN_ID);
 }

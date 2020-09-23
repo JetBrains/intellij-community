@@ -27,6 +27,7 @@ import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -236,9 +237,10 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     return item == null ? null : item.getDisplayName();
   }
 
-  public @Nullable @Nls String getSelectedScopeId() {
+  public @Nullable @NonNls String getSelectedScopeId() {
     ScopeDescriptor item = (ScopeDescriptor)getComboBox().getSelectedItem();
-    return item == null ? null : ScopePresentableNameToSerializationIdMapper.getScopeSerializationId(item.getDisplayName());
+    String scopeName = item != null ? item.getDisplayName() : null;
+    return scopeName != null ? ScopePresentableNameToSerializationIdMapper.getScopeSerializationId(scopeName) : null;
   }
 
   private static class ScopeSeparator extends ScopeDescriptor {

@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
@@ -105,7 +106,7 @@ public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> ext
   }
 
   @Override
-  public final void showMessage(@Nullable String message, @NotNull MessageType messageType) {
+  public final void showMessage(@Nullable @NlsContexts.Label String message, @NotNull MessageType messageType) {
     showMessage(message, messageType, myWarningLabel);
     myLayout.show(myInfoComponent, ERROR_CARD);
   }

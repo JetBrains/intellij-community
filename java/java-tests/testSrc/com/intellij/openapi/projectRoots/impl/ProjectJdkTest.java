@@ -74,7 +74,7 @@ public class ProjectJdkTest extends HeavyPlatformTestCase {
 
       assertNotEmpty(annotations);
 
-      VirtualFile internalAnnotationsPath = JavaSdkImpl.internalJdkAnnotationsPath(new ArrayList<>());
+      VirtualFile internalAnnotationsPath = JavaSdkImpl.internalJdkAnnotationsPath(new ArrayList<>(), false);
       assertContainsElements(annotations, internalAnnotationsPath);
     }
     finally {

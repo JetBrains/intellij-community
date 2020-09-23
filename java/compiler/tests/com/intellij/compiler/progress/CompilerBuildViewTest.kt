@@ -71,8 +71,8 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
     buildViewTestFixture.assertBuildViewSelectedNode("rebuild finished", false) { output: String? ->
       assertThat(output).startsWith("Clearing build system data...\n" +
                                     "Executing pre-compile tasks...\n" +
-                                    "Loading Ant Configuration...\n" +
-                                    "Running Ant Tasks...\n" +
+                                    "Loading Ant configuration...\n" +
+                                    "Running Ant tasks...\n" +
                                     "Cleaning output directories...\n" +
                                     "Running 'before' tasks\n" +
                                     "Checking sources\n" +
@@ -85,8 +85,8 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
                                     "Running 'after' tasks\n")
       assertThat(output).contains("Finished, saving caches...\n" +
                                   "Executing post-compile tasks...\n" +
-                                  "Loading Ant Configuration...\n" +
-                                  "Running Ant Tasks...\n" +
+                                  "Loading Ant configuration...\n" +
+                                  "Running Ant tasks...\n" +
                                   "Synchronizing output directories...")
     }
 
@@ -94,8 +94,8 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
     buildViewTestFixture.assertBuildViewTreeEquals("-\n recompile finished")
     buildViewTestFixture.assertBuildViewSelectedNode("recompile finished", false) { output: String? ->
       assertThat(output).startsWith("Executing pre-compile tasks...\n" +
-                                    "Loading Ant Configuration...\n" +
-                                    "Running Ant Tasks...\n" +
+                                    "Loading Ant configuration...\n" +
+                                    "Running Ant tasks...\n" +
                                     "Cleaning output directories...\n" +
                                     "Running 'before' tasks\n" +
                                     "Checking sources\n" +
@@ -108,8 +108,8 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
                                     "Running 'after' tasks")
       assertThat(output).contains("Finished, saving caches...\n" +
                                   "Executing post-compile tasks...\n" +
-                                  "Loading Ant Configuration...\n" +
-                                  "Running Ant Tasks...\n" +
+                                  "Loading Ant configuration...\n" +
+                                  "Running Ant tasks...\n" +
                                   "Synchronizing output directories...")
     }
   }

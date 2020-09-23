@@ -57,7 +57,8 @@ internal fun copyProjectFiles(originalProjectFile: File): Pair<File, File> {
 
 internal fun   loadProject(configLocation: JpsProjectConfigLocation, originalBuilder: WorkspaceEntityStorageBuilder, virtualFileManager: VirtualFileUrlManager): JpsProjectSerializers {
   val cacheDirUrl = configLocation.baseDirectoryUrl.append("cache")
-  return JpsProjectEntitiesLoader.loadProject(configLocation, originalBuilder, File(VfsUtil.urlToPath(cacheDirUrl.url)).toPath(), virtualFileManager)
+  return JpsProjectEntitiesLoader.loadProject(configLocation, originalBuilder, File(VfsUtil.urlToPath(cacheDirUrl.url)).toPath(),
+                                              TestErrorReporter, virtualFileManager)
 }
 
 internal fun JpsProjectSerializersImpl.saveAllEntities(storage: WorkspaceEntityStorage, projectDir: File) {
@@ -232,5 +233,11 @@ internal class JpsFileContentWriterImpl : JpsFileContentWriter {
 
   override fun saveComponent(fileUrl: String, componentName: String, componentTag: Element?) {
     urlToComponents.computeIfAbsent(fileUrl) { LinkedHashMap() }[componentName] = componentTag
+  }
+}
+
+internal object TestErrorReporter : ErrorReporter {
+  override fun reportError(message: String, file: VirtualFileUrl) {
+    throw AssertionFailedError("Failed to load ${file.url}: $message")
   }
 }

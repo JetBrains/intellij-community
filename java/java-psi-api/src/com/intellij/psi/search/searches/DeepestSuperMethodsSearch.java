@@ -7,8 +7,8 @@ import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
 
 public final class DeepestSuperMethodsSearch extends ExtensibleQueryFactory<PsiMethod, PsiMethod> {
-  public static final ExtensionPointName<QueryExecutor<PsiMethod, PsiMethod>> EP_NAME = ExtensionPointName.create("com.intellij.deepestSuperMethodsSearch");
-  public static final DeepestSuperMethodsSearch DEEPEST_SUPER_METHODS_SEARCH_INSTANCE = new DeepestSuperMethodsSearch();
+  public static final ExtensionPointName<QueryExecutor<PsiMethod, PsiMethod>> EP_NAME = new ExtensionPointName<>("com.intellij.deepestSuperMethodsSearch");
+  private static final DeepestSuperMethodsSearch DEEPEST_SUPER_METHODS_SEARCH_INSTANCE = new DeepestSuperMethodsSearch();
 
   private DeepestSuperMethodsSearch() {
     super(EP_NAME);

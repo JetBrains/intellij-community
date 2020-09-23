@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.openapi.options.ConfigurationException;
@@ -25,9 +11,6 @@ import org.jetbrains.idea.maven.project.MavenProjectBundle;
 
 import javax.swing.*;
 
-/**
- * @author Sergey Evdokimov
- */
 public class MavenRunnerSettingsEditor extends SettingsEditor<MavenRunConfiguration> {
 
   private final MavenRunnerPanel myPanel;
@@ -40,7 +23,13 @@ public class MavenRunnerSettingsEditor extends SettingsEditor<MavenRunConfigurat
 
   @Override
   protected void resetEditorFrom(@NotNull MavenRunConfiguration runConfiguration) {
-    myUseProjectSettings.setSelected(runConfiguration.getRunnerSettings() == null);
+    boolean localTarget = MavenRunConfiguration.getTargetName(this) == null;
+    if (localTarget) {
+      myUseProjectSettings.setSelected(runConfiguration.getRunnerSettings() == null);
+    }
+    else {
+      myUseProjectSettings.setSelected(false);
+    }
 
     if (runConfiguration.getRunnerSettings() == null) {
       MavenRunnerSettings settings = MavenRunner.getInstance(myPanel.getProject()).getSettings();
@@ -53,12 +42,21 @@ public class MavenRunnerSettingsEditor extends SettingsEditor<MavenRunConfigurat
 
   @Override
   protected void applyEditorTo(@NotNull MavenRunConfiguration runConfiguration) throws ConfigurationException {
+    String targetName = MavenRunConfiguration.getTargetName(this);
+    boolean localTarget = targetName == null;
+    myUseProjectSettings.setEnabled(localTarget);
+    if (!localTarget) {
+      myUseProjectSettings.setSelected(false);
+    }
+
     if (myUseProjectSettings.isSelected()) {
       runConfiguration.setRunnerSettings(null);
     }
     else {
-      if (runConfiguration.getRunnerSettings() != null) {
-        myPanel.setData(runConfiguration.getRunnerSettings());
+      MavenRunnerSettings runnerSettings = runConfiguration.getRunnerSettings();
+      myPanel.applyTargetEnvironmentConfiguration(targetName);
+      if (runnerSettings != null) {
+        myPanel.setData(runnerSettings);
       }
       else {
         MavenRunnerSettings settings = MavenRunner.getInstance(myPanel.getProject()).getSettings().clone();

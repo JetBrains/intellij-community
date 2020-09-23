@@ -19,10 +19,12 @@ import com.intellij.psi.JavaCodeFragmentFactory;
 import com.intellij.psi.PsiExpressionCodeFragment;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.NeedsIndex;
 import com.intellij.testFramework.fixtures.EditorMouseFixture;
 
 import java.util.LinkedHashMap;
 
+@NeedsIndex.SmartMode(reason = "Hints shouldn't work in dumb mode")
 public class CompletionHintsTest extends AbstractParameterInfoTestCase {
   private boolean myStoredSettingValue;
 

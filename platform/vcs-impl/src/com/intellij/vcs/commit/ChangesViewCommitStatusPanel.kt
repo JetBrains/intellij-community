@@ -1,35 +1,30 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
+import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.InclusionListener
-import com.intellij.openapi.vcs.changes.ui.ChangeInfoCalculator
-import com.intellij.openapi.vcs.changes.ui.ChangesTree
-import com.intellij.openapi.vcs.changes.ui.CommitLegendPanel
-import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
-import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.Companion.getBranchPresentationBackground
-import com.intellij.ui.JBColor
-import com.intellij.ui.components.JBPanel
-import com.intellij.ui.components.panels.HorizontalLayout
+import com.intellij.openapi.vcs.changes.ui.*
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
+import com.intellij.ui.content.Content
 import com.intellij.util.ui.JBUI.Borders.empty
+import com.intellij.util.ui.JBUI.Borders.emptyRight
 import com.intellij.util.ui.JBUI.emptyInsets
-import com.intellij.util.ui.JBUI.emptySize
-import java.awt.Dimension
+import com.intellij.util.ui.components.BorderLayoutPanel
 
 private val isCompactCommitLegend get() = Registry.get("vcs.non.modal.commit.legend.compact")
 
-internal class ChangesViewCommitStatusPanel(tree: ChangesTree, private val commitWorkflowUi: CommitWorkflowUi, bgColor: JBColor) :
-  JBPanel<ChangesViewCommitStatusPanel>(HorizontalLayout(10)),
-  InclusionListener {
+private fun Project.getLocalChangesTab(): Content? =
+  ChangesViewContentManager.getInstance(this).findContents { it.tabName == LOCAL_CHANGES }.firstOrNull()
 
-  private val branchComponent = CurrentBranchComponent(tree.project, tree, commitWorkflowUi).apply {
-    icon = null
-    isOpaque = true
-    background = JBColor { getBranchPresentationBackground(bgColor) }
-    border = empty(0, 4)
-  }
+internal class ChangesViewCommitStatusPanel(tree: ChangesTree, private val commitWorkflowUi: CommitWorkflowUi) :
+  BorderLayoutPanel(), ChangesViewContentManagerListener, InclusionListener {
+
+  private val branchComponent = CurrentBranchComponent(tree.project, tree, commitWorkflowUi)
 
   private val commitLegendCalculator = ChangeInfoCalculator()
   private val commitLegend = CommitLegendPanel(commitLegendCalculator).apply {
@@ -37,19 +32,41 @@ internal class ChangesViewCommitStatusPanel(tree: ChangesTree, private val commi
     component.ipad = emptyInsets()
   }
 
+  private val project get() = branchComponent.project
+
   init {
     setupLegend()
 
-    add(branchComponent)
-    add(commitLegend.component)
-    border = empty(6)
-    background = bgColor
+    addToRight(commitLegend.component)
+    border = emptyRight(6)
+    background = tree.background
 
     commitWorkflowUi.addInclusionListener(this, commitWorkflowUi)
+    setupTabUpdater()
   }
 
-  override fun getPreferredSize(): Dimension? =
-    if (branchComponent.isVisible || commitLegend.component.isVisible) super.getPreferredSize() else emptySize()
+  private fun setupTabUpdater() {
+    branchComponent.addChangeListener(this::updateTab, commitWorkflowUi)
+    project.messageBus.connect(commitWorkflowUi).subscribe(ChangesViewContentManagerListener.TOPIC, this)
+
+    Disposer.register(commitWorkflowUi) {
+      val tab = project.getLocalChangesTab() ?: return@register
+
+      tab.displayName = message("local.changes.tab")
+      tab.description = null
+    }
+  }
+
+  override fun toolWindowMappingChanged() = updateTab()
+
+  private fun updateTab() {
+    if (!project.isCommitToolWindow) return
+    val tab = project.getLocalChangesTab() ?: return
+
+    val branch = branchComponent.text
+    tab.displayName = if (branch?.isBlank() == true) message("tab.title.commit") else message("tab.title.commit.to.branch", branch)
+    tab.description = branchComponent.toolTipText
+  }
 
   override fun inclusionChanged() = updateLegend()
 

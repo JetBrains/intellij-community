@@ -1,33 +1,35 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.WelcomeScreenCustomization;
 import com.intellij.openapi.wm.WelcomeScreenTab;
 import com.intellij.openapi.wm.WelcomeTabFactory;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.CardLayoutPanel;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
-import java.util.List;
 
-import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.createActionLink;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.createSmallLogo;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getMainTabListBackground;
+import static com.intellij.ui.UIBundle.*;
 
 public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
 
@@ -41,6 +43,7 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
 
     JBList<WelcomeScreenTab> tabList = createListWithTabs(mainListModel);
     tabList.addListSelectionListener(e -> centralPanel.select(tabList.getSelectedValue(), true));
+    tabList.getAccessibleContext().setAccessibleName(message("welcome.screen.welcome.screen.categories.accessible.name"));
 
     JComponent logoComponent = createSmallLogo();
     logoComponent.setFocusable(false);
@@ -50,10 +53,9 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     leftPanel.add(logoComponent, BorderLayout.NORTH);
     leftPanel.add(tabList, BorderLayout.CENTER);
 
-    JComponent helpLink =
-      createActionLink(this, IdeBundle.message("action.help"), IdeActions.GROUP_WELCOME_SCREEN_HELP, null, centralPanel);
-    leftPanel.add(JBUI.Panels.simplePanel().andTransparent().addToLeft(helpLink).withBorder(JBUI.Borders.empty(5, 10)), BorderLayout.SOUTH);
-
+    JComponent quickAccessPanel = createQuickAccessPanel(this);
+    quickAccessPanel.setBorder(JBUI.Borders.empty(5, 10));
+    leftPanel.add(quickAccessPanel, BorderLayout.SOUTH);
     leftPanel.setPreferredSize(new Dimension(JBUI.scale(196), leftPanel.getPreferredSize().height));
 
     add(leftPanel, BorderLayout.WEST);
@@ -66,14 +68,6 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
       UiNotifyConnector.doWhenFirstShown(firstShownPanel, () -> IdeFocusManager.getGlobalInstance()
         .requestFocus(IdeFocusTraversalPolicy.getPreferredFocusedComponent(firstShownPanel), true));
     }
-    setFocusTraversalPolicyProvider(true);
-    setFocusTraversalPolicy(new ComponentsListFocusTraversalPolicy() {
-
-      @Override
-      protected @NotNull List<Component> getOrderedComponents() {
-        return Arrays.asList(helpLink, tabList, centralPanel);
-      }
-    });
   }
 
   @NotNull
@@ -89,6 +83,15 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     tabList.setBorder(JBUI.Borders.emptyLeft(16));
     tabList.setCellRenderer(new MyCellRenderer());
     return tabList;
+  }
+
+  private static JComponent createQuickAccessPanel(@NotNull Disposable parentDisposable) {
+    JPanel quickAccessPanel = new NonOpaquePanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+    StreamEx.of(WelcomeScreenCustomization.WELCOME_SCREEN_CUSTOMIZATION.getExtensionsIfPointIsRegistered())
+      .map(c -> c.createQuickAccessComponent(parentDisposable))
+      .nonNull()
+      .forEach(quickAccessPanel::add);
+    return quickAccessPanel;
   }
 
   @NotNull
@@ -127,17 +130,22 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
       JPanel wrappedPanel = JBUI.Panels.simplePanel(keyComponent);
       UIUtil.setBackgroundRecursively(wrappedPanel, isSelected ? UIUtil.getListSelectionBackground(cellHasFocus): getMainTabListBackground());
       UIUtil.setForegroundRecursively(wrappedPanel, UIUtil.getListForeground(isSelected, cellHasFocus));
+      if (value instanceof Accessible) {
+        wrappedPanel.getAccessibleContext().setAccessibleName(((Accessible)value).getAccessibleContext().getAccessibleName());
+      }
       return wrappedPanel;
     }
   }
 
-  public abstract static class DefaultWelcomeScreenTab implements WelcomeScreenTab {
+  public abstract static class DefaultWelcomeScreenTab implements WelcomeScreenTab, Accessible {
 
     private final JComponent myKeyComponent;
     private JComponent myAssociatedComponent;
+    private final JBLabel myLabel;
 
     public DefaultWelcomeScreenTab(@NotNull @Nls String tabName) {
-      myKeyComponent = JBUI.Panels.simplePanel().addToLeft(new JBLabel(tabName)).withBackground(getMainTabListBackground())
+      myLabel = new JBLabel(tabName);
+      myKeyComponent = JBUI.Panels.simplePanel().addToLeft(myLabel).withBackground(getMainTabListBackground())
         .withBorder(JBUI.Borders.empty(8, 0));
     }
 
@@ -154,6 +162,11 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
         myAssociatedComponent = buildComponent();
       }
       return myAssociatedComponent;
+    }
+
+    @Override
+    public AccessibleContext getAccessibleContext() {
+      return myLabel.getAccessibleContext();
     }
 
     protected abstract JComponent buildComponent();

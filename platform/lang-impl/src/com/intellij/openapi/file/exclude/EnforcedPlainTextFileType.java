@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.file.exclude;
 
 import com.intellij.icons.AllIcons;
@@ -15,29 +15,24 @@ import javax.swing.*;
 public final class EnforcedPlainTextFileType implements FileType {
   public static final FileType INSTANCE = new EnforcedPlainTextFileType();
 
-  private static final Icon ICON = IconLoader
-    .createLazy(() -> new LayeredIcon(AllIcons.FileTypes.Text, PlatformIcons.EXCLUDED_FROM_COMPILE_ICON));
-
+  private static final Icon ICON = IconLoader.createLazy(() -> new LayeredIcon(AllIcons.FileTypes.Text, PlatformIcons.EXCLUDED_FROM_COMPILE_ICON));
 
   private EnforcedPlainTextFileType() {
     EnforcedPlainTextFileTypeManager.getInstance();
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return "Enforced Plain Text";
   }
 
-  @NotNull
   @Override
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return LangBundle.message("file.type.enforced.plain.text");
   }
 
-  @NotNull
   @Override
-  public String getDefaultExtension() {
+  public @NotNull String getDefaultExtension() {
     return "fakeTxt";
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.application
 
 import com.intellij.configurationStore.Property
@@ -17,9 +17,6 @@ open class JvmMainMethodRunConfigurationOptions : JvmConfigurationOptions() {
 
   @get:OptionTag("INCLUDE_PROVIDED_SCOPE")
   var isIncludeProvidedScope by property(false)
-
-  @get:OptionTag("ENABLE_SWING_INSPECTOR")
-  var isSwingInspectorEnabled by property(false)
 
   @get:OptionTag("PASS_PARENT_ENVS")
   var isPassParentEnv by property(true)

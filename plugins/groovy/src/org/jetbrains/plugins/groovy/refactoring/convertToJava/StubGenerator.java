@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
@@ -11,8 +11,6 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -37,8 +35,8 @@ import java.util.*;
 /**
  * @author Maxim.Medvedev
  */
-public class StubGenerator implements ClassItemGenerator {
-  public static final String[] STUB_MODIFIERS = {
+public final class StubGenerator implements ClassItemGenerator {
+  private static final String[] STUB_MODIFIERS = {
     PsiModifier.PUBLIC,
     PsiModifier.PROTECTED,
     PsiModifier.PRIVATE,
@@ -190,7 +188,7 @@ public class StubGenerator implements ClassItemGenerator {
       return Collections.emptySet();
     }
 
-    final Set<String> result = ContainerUtil.newTroveSet(ArrayUtilRt.EMPTY_STRING_ARRAY);
+    final Set<String> result = new HashSet<>();
     for (PsiClassType type : chainedConstructor.getThrowsList().getReferencedTypes()) {
       StringBuilder builder = new StringBuilder();
       TypeWriter.writeType(builder, substitutor.substitute(type), constructor, classNameProvider);

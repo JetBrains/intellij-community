@@ -23,7 +23,7 @@ public abstract class IconPathPatcher {
    * @param classLoader ClassLoader of the icon is requested from
    * @return patched path or {@code null}
    */
-  public @Nullable String patchPath(@NotNull String path, ClassLoader classLoader) {
+  public @Nullable String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
     return null;
   }
 

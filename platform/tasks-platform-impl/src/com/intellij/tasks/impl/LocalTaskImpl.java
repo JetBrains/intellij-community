@@ -5,6 +5,7 @@ package com.intellij.tasks.impl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.*;
 import com.intellij.tasks.timeTracking.model.WorkItem;
@@ -37,7 +38,7 @@ public class LocalTaskImpl extends LocalTask {
   private Date myCreated;
   private Date myUpdated;
   private TaskType myType = TaskType.OTHER;
-  private String myPresentableName;
+  private @NlsContexts.Label String myPresentableName;
   private String myCustomIcon = null;
 
   private String myProject = null;

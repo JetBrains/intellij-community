@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.editor.impl.Interval;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.TestFileType;
 import org.jetbrains.annotations.NotNull;
@@ -200,9 +201,10 @@ public class JavaDocRenderTest extends AbstractEditorTest {
     assertNotNull(inlayBounds);
     assertFalse(inlayBounds.isEmpty());
 
-    Interval yRange = EditorUtil.logicalLineToYRange(getEditor(), 2);
-    assertEquals(inlayBounds.y, yRange.intervalStart());
-    assertEquals(inlayBounds.y + inlayBounds.height, yRange.intervalEnd());
+    @NotNull Pair<@NotNull Interval, @Nullable Interval> p = EditorUtil.logicalLineToYRange(getEditor(), 2);
+    assertEquals(inlayBounds.y, p.first.intervalStart());
+    assertEquals(inlayBounds.y + inlayBounds.height, p.first.intervalEnd());
+    assertNull(p.second);
 
     Interval lineRange = EditorUtil.yToLogicalLineRange(getEditor(), inlayBounds.y + inlayBounds.height / 2);
     assertEquals(1, lineRange.intervalStart());

@@ -23,16 +23,22 @@ public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends 
 
   public static <S extends RunConfigurationBase<?>> List<SettingsEditorFragment<S, ?>> createGroup() {
     List<SettingsEditorFragment<S, ?>> list = new ArrayList<>();
-    list.add(RunConfigurationEditorFragment.createSettingsTag("before.launch.openToolWindow",
-                                                              ExecutionBundle.message("run.configuration.before.run.open.tool.window"),
-                                                              ExecutionBundle.message("run.configuration.before.run.group"),
-                                                              settings -> settings.isActivateToolWindowBeforeRun(),
-                                                              (settings, value) -> settings.setActivateToolWindowBeforeRun(value), 100));
-    list.add(RunConfigurationEditorFragment.createSettingsTag("before.launch.editSettings",
-                                                              ExecutionBundle.message("run.configuration.before.run.edit.settings"),
-                                                              ExecutionBundle.message("run.configuration.before.run.group"),
-                                                              settings -> settings.isEditBeforeRun(),
-                                                              (settings, value) -> settings.setEditBeforeRun(value), 100));
+    SettingsEditorFragment<S, ?> tag =
+      RunConfigurationEditorFragment.createSettingsTag("before.launch.openToolWindow",
+                                                       ExecutionBundle.message("run.configuration.before.run.open.tool.window"),
+                                                       ExecutionBundle.message("run.configuration.before.run.group"),
+                                                       settings -> settings.isActivateToolWindowBeforeRun(),
+                                                       (settings, value) -> settings.setActivateToolWindowBeforeRun(value), 100);
+    tag.setActionHint(ExecutionBundle.message("open.the.run.debug.tool.window.when.the.application.is.started"));
+    list.add(tag);
+    SettingsEditorFragment<S, ?> tag1 =
+      RunConfigurationEditorFragment.createSettingsTag("before.launch.editSettings",
+                                                       ExecutionBundle.message("run.configuration.before.run.edit.settings"),
+                                                       ExecutionBundle.message("run.configuration.before.run.group"),
+                                                       settings -> settings.isEditBeforeRun(),
+                                                       (settings, value) -> settings.setEditBeforeRun(value), 100);
+    tag1.setActionHint(ExecutionBundle.message("open.the.settings.for.this.run.debug.configuration.each.time.it.is.run"));
+    list.add(tag1);
     return list;
   }
 
@@ -46,6 +52,7 @@ public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends 
     myComponent = component;
     myKey = key;
     component.myChangeListener = () -> fireEditorStateChanged();
+    setActionHint(ExecutionBundle.message("specify.tasks.to.be.performed.before.starting.the.application"));
   }
 
   @Override

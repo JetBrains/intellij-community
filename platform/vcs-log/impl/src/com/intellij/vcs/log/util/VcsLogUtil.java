@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.util;
 
+import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -26,6 +27,7 @@ import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
 import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -377,5 +379,12 @@ public final class VcsLogUtil {
         }
       }
     });
+  }
+
+  public static void jumpToRow(@NotNull VcsLogUiEx vcsLogUi, int row, boolean silently) {
+    vcsLogUi.jumpTo(row, (model, r) -> {
+      if (model.getRowCount() <= r) return -1;
+      return r;
+    }, SettableFuture.create(), silently);
   }
 }

@@ -1,4 +1,3 @@
-from typing import Any
 from werkzeug.wrappers import Response
 
 class ContentAccessors:

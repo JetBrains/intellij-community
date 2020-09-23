@@ -1,15 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.diagnostic
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
+import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePath
+import com.intellij.util.indexing.diagnostic.dump.paths.PortableFilePaths
 
 /**
  * Accumulates indexing statistics for a set of indexable files.
  *
  * This class is not thread-safe. It must be synchronized by the clients.
  */
-class IndexingJobStatistics(val fileSetName: String) {
+class IndexingJobStatistics(private val project: Project, val fileSetName: String) {
 
   var totalIndexingTime: TimeNano = 0
 
@@ -23,11 +25,12 @@ class IndexingJobStatistics(val fileSetName: String) {
 
   val tooLargeForIndexingFiles: LimitedPriorityQueue<TooLargeForIndexingFile> = LimitedPriorityQueue(5, compareBy { it.fileSize })
 
-  val indexedFiles = arrayListOf<String /* File short path */>()
+  val indexedFiles = arrayListOf<PortableFilePath>()
 
   data class StatsPerIndexer(
     val indexingTime: TimeStats,
     var numberOfFiles: Int,
+    var numberOfFilesIndexedByExtensions: Int,
     var totalBytes: BytesNumber
   )
 
@@ -47,10 +50,13 @@ class IndexingJobStatistics(val fileSetName: String) {
     numberOfIndexedFiles++
     fileStatistics.perIndexerTimes.forEach { (indexId, time) ->
       val stats = statsPerIndexer.getOrPut(indexId.name) {
-        StatsPerIndexer(TimeStats(), 0, 0)
+        StatsPerIndexer(TimeStats(), 0, 0, 0)
       }
       stats.indexingTime.addTime(time)
       stats.numberOfFiles++
+      if (indexId in fileStatistics.indexesProvidedByExtensions) {
+        stats.numberOfFilesIndexedByExtensions++
+      }
       stats.totalBytes += fileSize
     }
     val fileTypeName = fileStatistics.fileType.name
@@ -62,7 +68,7 @@ class IndexingJobStatistics(val fileSetName: String) {
     stats.totalBytes += fileSize
     stats.numberOfFiles++
     if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
-      indexedFiles += getFilePath(file)
+      indexedFiles += getIndexedFilePath(file)
     }
   }
 
@@ -74,18 +80,15 @@ class IndexingJobStatistics(val fileSetName: String) {
     numberOfTooLargeForIndexingFiles++
     tooLargeForIndexingFiles.addElement(tooLargeForIndexingFile)
     if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
-      indexedFiles += getFilePath(file)
+      indexedFiles += getIndexedFilePath(file)
     }
   }
 
-  private fun getFilePath(file: VirtualFile): String {
-    val fileSystem = file.fileSystem
-    if (fileSystem is ArchiveFileSystem) {
-      val localArchiveFile = fileSystem.getLocalByEntry(file)
-      if (localArchiveFile != null) {
-        return localArchiveFile.name + ":" + file.name
-      }
-    }
-    return file.name
+  private fun getIndexedFilePath(file: VirtualFile): PortableFilePath = try {
+    PortableFilePaths.getPortableFilePath(file, project)
   }
+  catch (e: Exception) {
+    PortableFilePath.AbsolutePath(file.url)
+  }
+
 }

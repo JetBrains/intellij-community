@@ -219,7 +219,7 @@ public class RadPropertyTable extends PropertyTable implements DataProvider, Com
       CopyPasteManager.getInstance().setContents(transferable);
     }
     catch (Throwable e) {
-      myDesigner.showError("Copy property error", e);
+      myDesigner.showError(DesignerBundle.message("designer.copy.property.error"), e);
     }
   }
 }

@@ -16,8 +16,8 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.hash.EqualityPolicy;
 import com.intellij.util.containers.hash.LinkedHashMap;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -133,13 +133,12 @@ public final class PsiSuperMethodImplUtil {
           return false;
         }
       });
-    final Map<MethodSignature, List<PsiMethod>> sameParameterErasureMethods =
-      new THashMap<>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
+    final Map<MethodSignature, List<PsiMethod>> sameParameterErasureMethods = new Object2ObjectOpenCustomHashMap<>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
 
     Map<MethodSignature, HierarchicalMethodSignatureImpl> map = new LinkedHashMap<>(new EqualityPolicy<MethodSignature>() {
       @Override
       public int getHashCode(MethodSignature signature) {
-        return MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY.computeHashCode(signature);
+        return MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY.hashCode(signature);
       }
 
       @Override

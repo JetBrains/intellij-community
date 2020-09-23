@@ -73,14 +73,14 @@ class ProjectLibraryBridgeTest {
     assertNull(projectLibraryTable.getLibraryByName(libraryName))
     assertNotNull(projectLibraryTable.getLibraryByName(newLibraryName))
     assertSame(library, projectLibraryTable.getLibraryByName(newLibraryName))
-    assertEquals(3, events.size)
+    assertEquals(events.toString(), 3, events.size)
     checkLibraryReplacedEvent(events[2], libraryName, newLibraryName)
 
     renameProjectLibrary(newLibraryName, libraryName)
     assertNull(projectLibraryTable.getLibraryByName(newLibraryName))
     assertNotNull(projectLibraryTable.getLibraryByName(libraryName))
     assertSame(library, projectLibraryTable.getLibraryByName(libraryName))
-    assertEquals(4, events.size)
+    assertEquals(events.toString(),4, events.size)
     checkLibraryReplacedEvent(events[3], newLibraryName, libraryName)
   }
 

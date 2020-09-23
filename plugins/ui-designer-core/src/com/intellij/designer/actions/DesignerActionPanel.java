@@ -15,6 +15,7 @@
  */
 package com.intellij.designer.actions;
 
+import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.DesignerToolWindowManager;
 import com.intellij.designer.designSurface.ComponentSelectionListener;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
@@ -101,7 +102,7 @@ public class DesignerActionPanel implements DataProvider {
 
   @NotNull
   private ActionGroup createSelectActionGroup(DesignerEditorPanel designer) {
-    final DefaultActionGroup group = DefaultActionGroup.createPopupGroup(() -> "_Select");
+    final DefaultActionGroup group = DefaultActionGroup.createPopupGroup(() -> DesignerBundle.message("action.select.text"));
 
     AnAction selectParent = new AnAction(UIBundle.messagePointer("action.DesignerActionPanel.Anonymous.text.select.parent"),
                                          UIBundle.messagePointer("action.DesignerActionPanel.Anonymous.description.select.parent"), null) {

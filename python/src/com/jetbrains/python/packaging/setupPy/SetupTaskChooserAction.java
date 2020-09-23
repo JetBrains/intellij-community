@@ -40,8 +40,9 @@ public class SetupTaskChooserAction extends AnAction {
     final Module module = e.getData(LangDataKeys.MODULE);
     if (module == null) return;
     final Project project = module.getProject();
-    final ListChooseByNameModel<SetupTask> model = new ListChooseByNameModel<>(project, "Enter setup.py task name",
-                                                                               "No tasks found",
+    final ListChooseByNameModel<SetupTask> model = new ListChooseByNameModel<>(project,
+                                                                               PyBundle.message("python.packaging.enter.setup.py.task"),
+                                                                               PyBundle.message("python.packaging.no.tasks.found"),
                                                                                SetupTaskIntrospector.getTaskList(module));
     final ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, model, GotoActionBase.getPsiContext(e));
     popup.setShowListForEmptyPattern(true);

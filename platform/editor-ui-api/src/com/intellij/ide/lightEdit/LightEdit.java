@@ -22,7 +22,7 @@ public final class LightEdit {
   }
 
   public static boolean openFile(@NotNull VirtualFile file) {
-    return LightEditService.getInstance().openFile(file);
+    return LightEditService.getInstance().openFile(file, false) != null;
   }
 
   public static boolean isActionCompatible(@NotNull AnAction action) {

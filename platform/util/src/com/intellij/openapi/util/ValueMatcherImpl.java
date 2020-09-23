@@ -20,6 +20,11 @@ final class ValueMatcherImpl<T, T1> implements ValueKey.BeforeIf<T>, ValueKey.Be
     myKey = key;
   }
 
+  @Override
+  public @NotNull String getKeyName() {
+    return myKey;
+  }
+
   @NotNull
   @Override
   public <TT> ValueKey.BeforeThen<T, TT> ifEq(@NotNull ValueKey<TT> key) {

@@ -7,7 +7,7 @@
   <description><![CDATA[Predicts next file which will be open in IDE to start long running analysis and pre-load caches.]]></description>
 
   <depends optional="true" config-file="file-prediction-java.xml">com.intellij.java</depends>
-  <depends optional="true" config-file="file-prediction-vcs.xml">com.jetbrains.changeReminder</depends>
+  <depends optional="true" config-file="file-prediction-vcs.xml">Git4Idea</depends>
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.filePrediction.candidateProvider" interface="com.intellij.filePrediction.candidates.FilePredictionCandidateProvider" dynamic="true"/>
@@ -19,7 +19,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <notificationGroup id="NextFilePrediction" displayType="BALLOON" bundle="messages.FilePredictionBundle" key="file.prediction.notification.group"/>
     <registryKey key="filePrediction.calculate.features" defaultValue="true" description="Record opened files features to predict which file will be opened next and pre-load caches."/>
-    <registryKey key="filePrediction.calculate.candidates.percent" defaultValue="0.2" description="Defines percentage of opened files for which next candidates will be calculated."/>
+    <registryKey key="filePrediction.calculate.candidates.percent" defaultValue="1.0" description="Defines percentage of opened files for which next candidates will be calculated."/>
     <registryKey key="filePrediction.action.use.all.candidates" defaultValue="false" description="If true, 'Show Next File Candidates' action will use all available providers."/>
     <registryKey key="filePrediction.action.calculate.candidates" defaultValue="50" description="Number of candidates used to predict next file in 'Show Next File Candidates' action."/>
     <registryKey key="filePrediction.action.show.candidates" defaultValue="10" description="Number of next file candidates to show in 'Show Next File Candidates' action."/>

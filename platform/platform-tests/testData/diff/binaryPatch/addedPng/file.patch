@@ -1,4 +1,4 @@
-diff --git data.bin data.bin
+diff --git a/data.bin b/data.bin
 new file mode 100644
 index 0000000000000000000000000000000000000000..12a40d7b1aa4ddfbd6ae09916e76dad11de9f181
 GIT binary patch

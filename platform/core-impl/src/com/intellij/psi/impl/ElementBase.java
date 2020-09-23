@@ -19,11 +19,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.ui.CoreAwareIconManager;
 import com.intellij.ui.IconManager;
-import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.icons.RowIcon;
-import com.intellij.util.*;
-import org.jetbrains.annotations.ApiStatus;
+import com.intellij.util.AstLoadingFilter;
+import com.intellij.util.BitUtil;
+import com.intellij.util.PlatformIcons;
+import com.intellij.util.PsiIconUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -151,16 +153,6 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
   }
 
   @NotNull
-  public static Icon overlayIcons(Icon @NotNull ... icons) {
-    final LayeredIcon icon = new LayeredIcon(icons.length);
-    int i = 0;
-    for (Icon ic : icons) {
-      icon.setIcon(ic, i++);
-    }
-    return icon;
-  }
-
-  @NotNull
   public static RowIcon buildRowIcon(Icon baseIcon, Icon visibilityIcon) {
     return IconManager.getInstance().createRowIcon(baseIcon, visibilityIcon);
   }
@@ -199,10 +191,11 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     }
   }
 
-  @Nullable
-  protected Icon getElementIcon(@Iconable.IconFlags int flags) {
+  protected @Nullable Icon getElementIcon(@Iconable.IconFlags int flags) {
     PsiElement element = (PsiElement)this;
-    if (!element.isValid()) return null;
+    if (!element.isValid()) {
+      return null;
+    }
 
     boolean isLocked = BitUtil.isSet(flags, ICON_FLAG_READ_STATUS) && !element.isWritable();
     int elementFlags = isLocked ? FLAGS_LOCKED : 0;
@@ -217,19 +210,23 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     if (element instanceof PsiFile) {
       PsiFile psiFile = (PsiFile)element;
       VirtualFile vFile = psiFile.getVirtualFile();
-      Icon baseIcon = vFile != null ? IconUtil.getIcon(vFile, flags & ~ICON_FLAG_READ_STATUS, psiFile.getProject())
-                                    : psiFile.getFileType().getIcon();
+      Icon baseIcon;
+      if (vFile == null) {
+        baseIcon = psiFile.getFileType().getIcon();
+      }
+      else {
+        IconManager iconManager = IconManager.getInstance();
+        if (iconManager instanceof CoreAwareIconManager) {
+          baseIcon = ((CoreAwareIconManager)iconManager).getIcon(vFile, flags & ~ICON_FLAG_READ_STATUS, psiFile.getProject());
+        }
+        else {
+          return null;
+        }
+      }
       return IconManager.getInstance().createLayeredIcon(this, baseIcon, elementFlags);
     }
 
     return null;
-  }
-
-  @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static com.intellij.ui.RowIcon createLayeredIcon(@NotNull Iconable instance, Icon icon, int flags) {
-    return (com.intellij.ui.RowIcon)IconManager.getInstance().createLayeredIcon(instance, icon, flags);
   }
 
   public static int transformFlags(PsiElement element, @IconFlags int _flags) {
@@ -237,13 +234,5 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     final boolean isLocked = BitUtil.isSet(_flags, ICON_FLAG_READ_STATUS) && !element.isWritable();
     if (isLocked) flags |= FLAGS_LOCKED;
     return flags;
-  }
-
-  /**
-   * @deprecated use {@link IconManager#registerIconLayer(int, Icon)}
-   */
-  @Deprecated
-  public static void registerIconLayer(int flagMask, @NotNull Icon icon) {
-    IconManager.getInstance().registerIconLayer(flagMask, icon);
   }
 }

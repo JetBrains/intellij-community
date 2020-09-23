@@ -13,6 +13,7 @@ interface ChangesViewCommitWorkflowUi : CommitWorkflowUi {
   val isActive: Boolean
   fun deactivate(isRestoreState: Boolean)
 
+  val commitProgressUi: CommitProgressUi
   fun endExecution()
 
   var isDefaultCommitActionEnabled: Boolean
@@ -32,6 +33,11 @@ interface ChangesViewCommitWorkflowUi : CommitWorkflowUi {
   fun showCommitOptions(options: CommitOptions, actionName: String, isFromToolbar: Boolean, dataContext: DataContext)
 
   fun setCompletionContext(changeLists: List<LocalChangeList>)
+}
+
+interface CommitProgressUi {
+  var isEmptyMessage: Boolean
+  var isEmptyChanges: Boolean
 }
 
 interface CommitAuthorListener : EventListener {

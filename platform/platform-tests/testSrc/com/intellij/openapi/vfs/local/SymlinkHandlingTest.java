@@ -355,12 +355,12 @@ public class SymlinkHandlingTest extends BareTestFixtureTestCase {
   }
 
   @Nullable
-  static VirtualFile refreshAndFind(File root, File ioFile) {
+  static VirtualFile refreshAndFind(@NotNull File root, @NotNull File ioFile) {
     refresh(root);
     return LocalFileSystem.getInstance().findFileByPath(ioFile.getPath());
   }
 
-  private static void refresh(File root) {
+  private static void refresh(@NotNull File root) {
     VirtualFile tempDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(root);
     assertNotNull(root.getPath(), tempDir);
 

@@ -38,9 +38,9 @@ public class TestFailedState extends AbstractState implements Disposable{
   @Override
   public void printOn(final Printer printer) {
     printer.print(CompositePrintable.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
-    printer.mark();
     String compoundMessage = buildErrorPresentationText(myErrorMsgPresentation, myStacktracePresentation);
     if (compoundMessage != null) {
+      printer.mark();
       printer.printWithAnsiColoring(compoundMessage, ProcessOutputTypes.STDERR);
     }
   }

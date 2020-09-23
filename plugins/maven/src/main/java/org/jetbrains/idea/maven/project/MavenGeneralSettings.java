@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -144,8 +145,15 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   public void setMavenHome(@NotNull final String mavenHome) {
-    if (!Objects.equals(this.mavenHome, mavenHome)) {
-      this.mavenHome = mavenHome;
+    final File mavenHomeDirectory = MavenUtil.resolveMavenHomeDirectory(mavenHome);
+    final File bundledMavenHomeDirectory = MavenUtil.resolveMavenHomeDirectory(MavenServerManager.BUNDLED_MAVEN_3);
+
+    String mavenHomeToSet = mavenHome;
+    if (FileUtil.filesEqual(mavenHomeDirectory, bundledMavenHomeDirectory)) {
+      mavenHomeToSet = MavenServerManager.BUNDLED_MAVEN_3;
+    }
+    if (!Objects.equals(this.mavenHome, mavenHomeToSet)) {
+      this.mavenHome = mavenHomeToSet;
       myDefaultPluginsCache = null;
       changed();
     }

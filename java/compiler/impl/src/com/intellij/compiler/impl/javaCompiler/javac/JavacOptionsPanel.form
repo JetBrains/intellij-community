@@ -65,7 +65,7 @@
         </constraints>
         <properties>
           <text resource-bundle="messages/JavaCompilerBundle" key="settings.recommended.in.paths"/>
-          <toolTipText value="'/' recommended in paths for cross-platform configurations"/>
+          <toolTipText resource-bundle="messages/JavaCompilerBundle" key="settings.recommended.in.paths"/>
         </properties>
       </component>
       <component id="479c2" class="com.intellij.ui.RawCommandLineEditor" binding="myAdditionalOptionsField">

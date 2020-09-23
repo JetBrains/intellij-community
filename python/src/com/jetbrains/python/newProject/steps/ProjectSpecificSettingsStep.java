@@ -13,7 +13,9 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.ui.DocumentAdapter;
@@ -30,8 +32,10 @@ import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.sdk.*;
+import com.jetbrains.python.sdk.add.PyAddExistingCondaEnvPanel;
 import com.jetbrains.python.sdk.add.PyAddSdkGroupPanel;
 import com.jetbrains.python.sdk.add.PyAddSdkPanel;
+import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -99,6 +103,10 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     }
     else if (panel instanceof PyAddExistingSdkPanel) {
       return panel.getSdk();
+    }
+    else if (panel instanceof PyAddExistingCondaEnvPanel) {
+      final PyAddExistingCondaEnvPanel condaEnv = (PyAddExistingCondaEnvPanel)panel;
+      return new PyLazySdk("Uninitialized environment", condaEnv::getOrCreateSdk);
     }
     else {
       return null;
@@ -177,7 +185,10 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
       return false;
     }
     else if (!validationWarnings.isEmpty()) {
-      setWarningText(StringUtil.join(validationWarnings, "<br/>"));
+      setWarningText(StreamEx.of(validationWarnings)
+                       .map(HtmlChunk::raw)
+                       .collect(HtmlChunk.toFragment(HtmlChunk.br()))
+                       .toString());
     }
 
     final PythonProjectGenerator generator = ObjectUtils.tryCast(myProjectGenerator, PythonProjectGenerator.class);
@@ -222,7 +233,10 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     }
 
     if (!warnings.isEmpty()) {
-      setWarningText(StringUtil.join(warnings, "<br/>"));
+      setWarningText(StreamEx.of(warnings)
+                       .map(HtmlChunk::raw)
+                       .collect(HtmlChunk.toFragment(HtmlChunk.br()))
+                       .toString());
     }
     return true;
   }
@@ -240,15 +254,15 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     boolean installFramework = false;
     if (!generator.isFrameworkInstalled(sdk)) {
       final String frameworkName = generator.getFrameworkTitle();
-      String messageId = "python.package.installation.notification.message";
+      String message = PyBundle.message("python.package.installation.notification.message", frameworkName);
       if (PyPackageUtil.packageManagementEnabled(sdk)) {
         installFramework = true;
         final List<PyPackage> packages = PyPackageUtil.refreshAndGetPackagesModally(sdk);
         if (!PyPackageUtil.hasManagement(packages)) {
-          messageId = "python.package.and.packaging.tools.installation.notification.message";
+          message = PyBundle.message("python.package.and.packaging.tools.installation.notification.message", frameworkName);
         }
       }
-      warnings.add(PyBundle.message(messageId, frameworkName));
+      warnings.add(message);
     }
     return Pair.create(installFramework, warnings);
   }
@@ -289,12 +303,23 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     final PyAddNewEnvironmentPanel newEnvironmentPanel = new PyAddNewEnvironmentPanel(existingSdks, newProjectPath, preferredEnvironment);
     final PyAddExistingSdkPanel existingSdkPanel = new PyAddExistingSdkPanel(null, null, existingSdks, newProjectPath, preferredSdk);
 
-    final PyAddSdkPanel defaultPanel = PySdkSettings.getInstance().getUseNewEnvironmentForNewProject() ?
-                                       newEnvironmentPanel : existingSdkPanel;
+    PyAddSdkPanel defaultPanel = PySdkSettings.getInstance().getUseNewEnvironmentForNewProject() ?
+                                 newEnvironmentPanel : existingSdkPanel;
+    List<PyAddSdkPanel> panels;
+    if (PyCondaSdkCustomizer.Companion.getInstance().getPreferExistingEnvironments()) {
+      PyAddExistingCondaEnvPanel existingConda =
+        new PyAddExistingCondaEnvPanel(null, null, existingSdks, newProjectPath, new UserDataHolderBase(), this::checkValid);
+      panels = Arrays.asList(existingSdkPanel, existingConda, newEnvironmentPanel);
+      if (existingSdks.isEmpty()) {
+        defaultPanel = existingConda;
+      }
+    }
+    else {
+      panels = Arrays.asList(newEnvironmentPanel, existingSdkPanel);
+    }
     myInterpretersDecorator = new HideableDecorator(decoratorPanel, getProjectInterpreterTitle(defaultPanel), false);
     myInterpretersDecorator.setContentComponent(container);
 
-    final List<PyAddSdkPanel> panels = Arrays.asList(newEnvironmentPanel, existingSdkPanel);
     myInterpreterPanel = new PyAddSdkGroupPanel(PyBundle.messagePointer("python.add.sdk.panel.name.new.project.interpreter"),
                                                 getIcon(), panels, defaultPanel);
     myInterpreterPanel.addChangeListener(() -> {

@@ -389,7 +389,9 @@ public class GitRebaseProcess {
   protected void notifySuccess() {
     String rebasedBranch = getCommonCurrentBranchNameIfAllTheSame(myRebaseSpec.getAllRepositories());
     GitRebaseParams params = myRebaseSpec.getParams();
-    String baseBranch = params == null ? null : notNull(params.getNewBase(), params.getUpstream());
+    String baseBranch = params == null ? null
+                                       : params.getUpstream() != null ? notNull(params.getNewBase(), params.getUpstream())
+                                                                      : params.getNewBase();
     if (HEAD.equals(baseBranch)) {
       baseBranch = getItemIfAllTheSame(myRebaseSpec.getInitialBranchNames().values(), baseBranch);
     }
@@ -537,11 +539,11 @@ public class GitRebaseProcess {
   }
 
   private boolean isRebasingPublishedCommit(@NotNull GitRepository repository,
-                                            @NotNull String baseBranch,
+                                            @Nullable String baseBranch,
                                             @NotNull String rebasingBranch) {
     try {
-      List<? extends TimedVcsCommit> commits = GitHistoryUtils.collectTimedCommits(myProject, repository.getRoot(),
-                                                                                   baseBranch + ".." + rebasingBranch);
+      String range = GitRebaseUtils.getCommitsRangeToRebase(baseBranch, rebasingBranch);
+      List<? extends TimedVcsCommit> commits = GitHistoryUtils.collectTimedCommits(myProject, repository.getRoot(), range);
       return exists(commits, commit -> GitProtectedBranchesKt.isCommitPublished(repository, commit.getId()));
     }
     catch (VcsException e) {

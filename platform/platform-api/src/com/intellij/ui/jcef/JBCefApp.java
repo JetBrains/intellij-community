@@ -2,10 +2,19 @@
 package com.intellij.ui.jcef;
 
 import com.intellij.application.options.RegistryManager;
+import com.intellij.execution.Platform;
+import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.IdeBundle;
+import com.intellij.notification.*;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ComponentManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
@@ -20,6 +29,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -37,6 +49,11 @@ import java.util.function.Function;
  */
 public final class JBCefApp {
   private static final Logger LOG = Logger.getInstance(JBCefApp.class);
+
+  static final NotificationGroup NOTIFICATION_GROUP =
+    new NotificationGroup("JCEF errors", NotificationDisplayType.BALLOON, true);
+
+  private static final String MISSING_LIBS_SUPPORT_URL = "https://intellij-support.jetbrains.com/hc/en-us/articles/360016421559";
 
   // [tav] todo: retrieve the version at compile time from the "jcef" maven lib
   private static final int MIN_SUPPORTED_CEF_MAJOR_VERSION = 77;
@@ -60,18 +77,81 @@ public final class JBCefApp {
   //fixme use addCefCustomSchemeHandlerFactory method if possible
   private static final JBCefSourceSchemeHandlerFactory ourSourceSchemeHandlerFactory = new JBCefSourceSchemeHandlerFactory();
 
-  private JBCefApp(@NotNull JCefAppConfig config) {
-    CefApp.startup(ArrayUtil.EMPTY_STRING_ARRAY);
+  private JBCefApp(@NotNull JCefAppConfig config) throws IllegalStateException {
+    boolean started = false;
+    try {
+      started = CefApp.startup(ArrayUtil.EMPTY_STRING_ARRAY);
+    } catch (UnsatisfiedLinkError e) {
+      LOG.error(e.getMessage());
+    }
+    if (!started) {
+      if (SystemInfoRt.isLinux) {
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+          try {
+            Process proc = Runtime.getRuntime().exec("ldd " + System.getProperty("java.home") + "/lib/libjcef.so");
+            StringBuilder missingLibs = new StringBuilder();
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(proc.getInputStream(), StandardCharsets.UTF_8))) {
+              String line;
+              String delim = " => ";
+              String prevLib = null;
+              while ((line = reader.readLine()) != null) {
+                if (line.contains("not found") && !line.contains("libjvm")) {
+                  String[] split = line.split(delim);
+                  if (split.length != 2) continue;
+                  String lib = split[0];
+                  if (lib.equals(prevLib)) continue;
+                  if (missingLibs.length() > 0) missingLibs.append(", ");
+                  missingLibs.append(lib);
+                  prevLib = lib;
+                }
+              }
+            }
+            if (proc.waitFor() == 0 && missingLibs.length() > 0) {
+              String msg = IdeBundle.message("notification.content.jcef.missingLibs", missingLibs);
+              Notification notification = NOTIFICATION_GROUP.
+                createNotification(IdeBundle.message("notification.title.jcef.startFailure"), msg, NotificationType.ERROR, null);
+              //noinspection DialogTitleCapitalization
+              notification.addAction(new AnAction(IdeBundle.message("action.jcef.followInstructions")) {
+                @Override
+                public void actionPerformed(@NotNull AnActionEvent e) {
+                  BrowserUtil.open(MISSING_LIBS_SUPPORT_URL);
+                }
+              });
+              notification.notify(null);
+            }
+          }
+          catch (Throwable t) {
+            LOG.error("failed to identify JCEF missing libs", t);
+          }
+        });
+      }
+      throw new IllegalStateException("CefApp failed to start");
+    }
     CefSettings settings = config.getCefSettings();
     settings.windowless_rendering_enabled = false;
     settings.log_severity = getLogLevel();
+    settings.log_file = System.getProperty("ide.browser.jcef.log.path",
+      System.getProperty("user.home") + Platform.current().fileSeparator + "jcef_" + ProcessHandle.current().pid() + ".log");
     Color bg = JBColor.background();
     settings.background_color = settings.new ColorType(bg.getAlpha(), bg.getRed(), bg.getGreen(), bg.getBlue());
     int port = Registry.intValue("ide.browser.jcef.debug.port");
     if (ApplicationManager.getApplication().isInternal() && port > 0) {
       settings.remote_debugging_port = port;
     }
-    CefApp.addAppHandler(new MyCefAppHandler(config.getAppArgs()));
+
+    String[] argsFromProviders = JBCefAppRequiredArgumentsProvider
+      .getProviders()
+      .stream()
+      .flatMap(p -> {
+        LOG.debug("got options: [" + p.getOptions().toString() + "] from:" + p.getClass().getName());
+        return p.getOptions().stream();
+      })
+      .distinct()
+      .toArray(String[]::new);
+
+    String[] args = ArrayUtil.mergeArrays(config.getAppArgs(), argsFromProviders);
+
+    CefApp.addAppHandler(new MyCefAppHandler(args));
     myCefApp = CefApp.getInstance(settings);
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
   }
@@ -130,7 +210,14 @@ public final class JBCefApp {
           LOG.error(e);
         }
       }
-      INSTANCE = config != null ? new JBCefApp(config) : null;
+      JBCefApp app = null;
+      if (config != null) {
+        try {
+          app = new JBCefApp(config);
+        } catch (IllegalStateException ignore) {
+        }
+      }
+      INSTANCE = app;
     }
   }
 

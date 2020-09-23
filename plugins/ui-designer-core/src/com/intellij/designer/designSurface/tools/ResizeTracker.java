@@ -22,6 +22,7 @@ import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.utils.Cursors;
 import com.intellij.designer.utils.Position;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -35,12 +36,12 @@ import java.util.List;
  */
 public class ResizeTracker extends InputTool {
   private final int myDirection;
-  private final String myDescription;
+  private final @Nls String myDescription;
   private OperationContext myContext;
   private List<EditOperation> myOperations;
   private boolean myShowFeedback;
 
-  public ResizeTracker(int direction, Object type, @Nullable String description) {
+  public ResizeTracker(int direction, Object type, @Nullable @Nls String description) {
     myDirection = direction;
     myDescription = description;
     myContext = new OperationContext(type);

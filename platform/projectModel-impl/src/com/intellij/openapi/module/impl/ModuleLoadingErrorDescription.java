@@ -3,16 +3,25 @@ package com.intellij.openapi.module.impl;
 
 import com.intellij.openapi.module.ConfigurationErrorDescription;
 import com.intellij.openapi.module.ConfigurationErrorType;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.projectModel.ProjectModelBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public final class ModuleLoadingErrorDescription extends ConfigurationErrorDescription {
+  private static final ConfigurationErrorType MODULE_ERROR = new ConfigurationErrorType(false) {
+    @Override
+    public @Nls @NotNull String getErrorText(int errorCount, @NlsSafe String firstElementName) {
+      return ProjectModelBundle.message("module.configuration.problem.text", errorCount, firstElementName);
+    }
+  };
+
   private final ModulePath myModulePath;
   private final ModuleManagerImpl myModuleManager;
 
-  ModuleLoadingErrorDescription(String description, @NotNull ModulePath modulePath, @NotNull ModuleManagerImpl moduleManager) {
-    super(modulePath.getModuleName(), description, new ConfigurationErrorType(ProjectModelBundle.message("element.kind.name.module"), false));
-
+  ModuleLoadingErrorDescription(@NlsContexts.DetailedDescription String description, @NotNull ModulePath modulePath, @NotNull ModuleManagerImpl moduleManager) {
+    super(modulePath.getModuleName(), description, MODULE_ERROR);
     myModulePath = modulePath;
     myModuleManager = moduleManager;
   }
@@ -28,7 +37,7 @@ public final class ModuleLoadingErrorDescription extends ConfigurationErrorDescr
   }
 
   @Override
-  public String getIgnoreConfirmationMessage() {
+  public @NotNull String getIgnoreConfirmationMessage() {
     return ProjectModelBundle.message("module.remove.from.project.confirmation", getElementName());
   }
 }

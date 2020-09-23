@@ -17,6 +17,7 @@ package com.intellij.testFramework.propertyBased;
 
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.lang.LanguageWordCompletion;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.paths.WebReference;
 import com.intellij.psi.*;
@@ -80,6 +81,10 @@ public class CompletionPolicy {
     }
     else {
       if (!SyntaxTraverser.psiTraverser(file).filter(PsiErrorElement.class).isEmpty()) {
+        return null;
+      }
+      if (LanguageWordCompletion.INSTANCE.isEnabledIn(leafType)) {
+        // Looks like plain text. And the word under caret is excluded from word completion anyway.
         return null;
       }
       if (!shouldSuggestNonReferenceLeafText(leaf)) return null;

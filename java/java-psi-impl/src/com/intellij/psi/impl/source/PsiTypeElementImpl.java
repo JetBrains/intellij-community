@@ -50,34 +50,19 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
 
   @Override
   public @NotNull PsiType getType() {
-    return getTypeInfo().myType;
+    return CachedValuesManager.getProjectPsiDependentCache(this, __ -> calculateType());
   }
 
-  private static final class TypeInfo {
-    private final PsiType myType;
-    private final boolean myInferred;
-
-    private TypeInfo(PsiType type, boolean inferred) {
-      myType = type;
-      myInferred = inferred;
-    }
-  }
-
-  private TypeInfo getTypeInfo() {
-    return CachedValuesManager.getProjectPsiDependentCache(this, __ -> calculateTypeInfo());
-  }
-
-  private @NotNull TypeInfo calculateTypeInfo() {
+  private @NotNull PsiType calculateType() {
     PsiType inferredType = PsiAugmentProvider.getInferredType(this);
     if (inferredType != null) {
-      return new TypeInfo(inferredType, true);
+      return inferredType;
     }
 
     PsiType type = null;
-    boolean inferred = false;
     boolean ellipsis = false;
     List<PsiAnnotation> annotations = new SmartList<>();
-    List<TypeAnnotationProvider> providers = new SmartList<>();
+    List<TypeAnnotationProvider> arrayComponentAnnotations = new SmartList<>();
 
     PsiElement parent = getParent();
     for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
@@ -104,7 +89,6 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       else if (PsiUtil.isJavaToken(child, JavaTokenType.VAR_KEYWORD)) {
         assert type == null : this;
         type = inferVarType(parent);
-        inferred = true;
       }
       else if (child instanceof PsiJavaCodeReferenceElement) {
         assert type == null : this;
@@ -112,12 +96,12 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       }
       else if (PsiUtil.isJavaToken(child, JavaTokenType.LBRACKET)) {
         assert type != null : this;
-        providers.add(createProvider(annotations));
+        arrayComponentAnnotations.add(createProvider(annotations));
         annotations = new SmartList<>();
       }
       else if (PsiUtil.isJavaToken(child, JavaTokenType.ELLIPSIS)) {
         assert type != null : this;
-        providers.add(createProvider(annotations));
+        arrayComponentAnnotations.add(createProvider(annotations));
         annotations = new SmartList<>();
         ellipsis = true;
       }
@@ -155,15 +139,17 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       }
     }
 
-    if (type == null) return new TypeInfo(PsiType.NULL, inferred);
+    if (type == null) return PsiType.NULL;
 
-    type = createArray(type, providers, ellipsis);
+    if (!arrayComponentAnnotations.isEmpty()) {
+      type = createArray(type, arrayComponentAnnotations, ellipsis);
+    }
 
     if (parent instanceof PsiModifierListOwner) {
       type = JavaSharedImplUtil.applyAnnotations(type, ((PsiModifierListOwner)parent).getModifierList());
     }
 
-    return new TypeInfo(type, inferred);
+    return type;
   }
   
   private static PsiType createArray(PsiType elementType, List<TypeAnnotationProvider> providers, boolean ellipsis) {
@@ -208,7 +194,8 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
 
   @Override
   public boolean isInferredType() {
-    return PsiUtil.isJavaToken(getFirstChild(), JavaTokenType.VAR_KEYWORD) || getTypeInfo().myInferred;
+    return PsiUtil.isJavaToken(getFirstChild(), JavaTokenType.VAR_KEYWORD) ||
+            PsiAugmentProvider.isInferredType(this);
   }
 
   private static @NotNull ClassReferencePointer getReferenceComputable(@NotNull PsiJavaCodeReferenceElement ref) {

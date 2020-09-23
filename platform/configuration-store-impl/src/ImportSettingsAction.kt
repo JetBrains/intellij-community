@@ -46,7 +46,7 @@ open class ImportSettingsAction : AnAction(), DumbAware {
         }
         catch (e1: ZipException) {
           Messages.showErrorDialog(
-              ConfigurationStoreBundle.message("error.reading.settings.file", saveFile, e1.message, promptLocationMessage()),
+              ConfigurationStoreBundle.message("error.reading.settings.file", saveFile, e1.message),
               ConfigurationStoreBundle.message("title.invalid.file"))
         }
         catch (e1: IOException) {
@@ -81,7 +81,7 @@ open class ImportSettingsAction : AnAction(), DumbAware {
     val relativePaths = getPaths(saveFile.inputStream())
     if (!relativePaths.contains(ImportSettingsFilenameFilter.SETTINGS_JAR_MARKER)) {
       Messages.showErrorDialog(
-          IdeBundle.message("error.file.contains.no.settings.to.import", saveFile, promptLocationMessage()),
+          ConfigurationStoreBundle.message("error.no.settings.to.import", saveFile),
           ConfigurationStoreBundle.message("title.invalid.file"))
       return
     }
@@ -148,8 +148,6 @@ open class ImportSettingsAction : AnAction(), DumbAware {
     result.add(PluginManager.INSTALLED_TXT)
     return result
   }
-
-  private fun promptLocationMessage() = IdeBundle.message("message.please.ensure.correct.settings")
 }
 
 fun getPaths(input: InputStream): Set<String> {

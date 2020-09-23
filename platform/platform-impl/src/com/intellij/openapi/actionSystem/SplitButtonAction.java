@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.scale.JBUIScale;
@@ -186,7 +187,7 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
       HelpTooltip.hide(this);
 
       if (mousePressType == MousePressType.Popup) {
-        showPopupMenu(event, myActionGroup);
+        showGroupInPopupMenu(event, myActionGroup);
       }
       else if (selectedActionEnabled()) {
         AnActionEvent newEvent = AnActionEvent.createFromInputEvent(event.getInputEvent(), myPlace, event.getPresentation(), getDataContext());
@@ -195,7 +196,7 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
     }
 
     @Override
-    protected void showPopupMenu(AnActionEvent event, ActionGroup actionGroup) {
+    protected void showGroupInPopupMenu(AnActionEvent event, ActionGroup actionGroup) {
       if (myPopupState.isRecentlyHidden()) return; // do not show new popup
       ActionManagerImpl am = (ActionManagerImpl) ActionManager.getInstance();
       ActionPopupMenu popupMenu = am.createActionPopupMenu(event.getPlace(), actionGroup, new MenuItemPresentationFactory() {
@@ -213,12 +214,12 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
       popupMenu.setTargetComponent(this);
 
       JPopupMenu menu = popupMenu.getComponent();
-      menu.addPopupMenuListener(myPopupState);
+      myPopupState.prepareToShow(menu);
       if (event.isFromActionToolbar()) {
         menu.show(this, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width + getInsets().left, getHeight());
       }
       else {
-        menu.show(this, getWidth(), 0);
+        JBPopupMenu.showAtRight(this, menu);
       }
 
       HelpTooltip.setMasterPopupOpenCondition(this, () -> !menu.isVisible());

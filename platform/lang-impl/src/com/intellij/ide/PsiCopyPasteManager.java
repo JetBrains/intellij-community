@@ -232,7 +232,7 @@ public final class PsiCopyPasteManager {
       else if (flavor.equals(LinuxDragAndDropSupport.gnomeFileListFlavor)) {
         final List<File> files = getDataAsFileList();
         if (files == null) return null;
-        final String string = (myDataProxy.isCopied() ? "copy\n" : "cut\n") + LinuxDragAndDropSupport.toUriList(files);
+        final String string = (myDataProxy.isCopied() ? "copy\n" : "cut\n") + LinuxDragAndDropSupport.toUriList(files); //NON-NLS
         return new ByteArrayInputStream(string.getBytes(StandardCharsets.UTF_8));
       }
       else if (flavor.equals(LinuxDragAndDropSupport.kdeCutMarkFlavor) && !myDataProxy.isCopied()) {

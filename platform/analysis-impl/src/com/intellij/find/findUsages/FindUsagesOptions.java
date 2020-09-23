@@ -10,10 +10,7 @@ import com.intellij.psi.search.PredefinedSearchScopeProvider;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.SearchRequestCollector;
 import com.intellij.psi.search.SearchScope;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.List;
 
@@ -94,7 +91,7 @@ public class FindUsagesOptions implements Cloneable {
   }
 
   @NotNull
-  public String generateUsagesString() {
+  public @Nls String generateUsagesString() {
     return AnalysisBundle.message("find.usages.panel.title.usages");
   }
 }

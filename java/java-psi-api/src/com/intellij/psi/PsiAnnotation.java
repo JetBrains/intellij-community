@@ -96,7 +96,7 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, JvmAnnotation {
   <T extends PsiAnnotationMemberValue> T setDeclaredAttributeValue(@Nullable @NonNls String attributeName, @Nullable T value);
 
   /**
-   * Returns an owner of the annotation - usually a parent, but for type annotations the owner might be a type element.
+   * Returns an owner of the annotation - usually a parent, but for type annotations the owner might be a PsiType or PsiTypeElement.
    *
    * @return annotation owner
    */

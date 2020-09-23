@@ -67,6 +67,8 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
         return Collections.emptyList();
       }
       GrLightMethodBuilder mapConstructor = new GrLightMethodBuilder(typeDefinition);
+      Visibility visibility = getVisibility(mapConstructorAnno, mapConstructor, Visibility.PUBLIC);
+      mapConstructor.addModifier(visibility.toString());
       var specialParamHandling = GrAnnotationUtil.inferBooleanAttribute(mapConstructorAnno, "specialNamedArgHandling");
       String parameterRepresentation;
       if (Boolean.TRUE.equals(specialParamHandling)) {
@@ -136,11 +138,11 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
       boolean optional = !immutable && PsiUtil.getAnnoAttributeValue(tupleConstructor, TupleConstructorAttributes.DEFAULTS, true);
       Visibility visibility = getVisibility(tupleConstructor, fieldsConstructor, Visibility.PUBLIC);
       fieldsConstructor.addModifier(visibility.toString());
-      AffectedMembersCache cache = new AffectedMembersCache(tupleConstructor);
+      AffectedMembersCache cache = GrGeneratedConstructorUtils.getAffectedMembersCache(tupleConstructor);
       for (PsiNamedElement element : cache.getAffectedMembers()) {
         GrLightParameter parameter;
         if (element instanceof PsiField) {
-          String name = element.getName();
+          String name = AffectedMembersCache.getExternalName(element);
           parameter = new GrLightParameter(name == null ? "arg" : name, ((PsiField)element).getType(), fieldsConstructor);
         } else if (element instanceof GrMethod) {
           String name = PropertyUtilBase.getPropertyName((PsiMember)element);

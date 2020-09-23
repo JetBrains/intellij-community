@@ -90,7 +90,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod, signatureInferenceC
    * Visits every parameter of [lowerType] (which is probably parameterized with type parameters) and sets restrictions found in [upperType]
    * We need to distinguish containing and subtyping relations, so this is why there are [UPPER] and [EQUAL] bounds
    */
-  private fun processRequiredParameters(lowerType: PsiType, upperType: PsiType) = with(builder.signatureInferenceContext) {
+  private fun processRequiredParameters(lowerType: PsiType, upperType: PsiType): Unit = with(builder.signatureInferenceContext) {
     val (unwrappedLowerType, unwrappedUpperType) = coherentDeepComponentType(lowerType, upperType)
     var currentLowerType = unwrappedLowerType as? PsiClassType ?: return
     var firstVisit = true
@@ -170,6 +170,7 @@ internal class RecursiveMethodAnalyzer(val method: GrMethod, signatureInferenceC
         primitiveType.getBoxedType(context)?.accept(this)
       }
     })
+    return
   }
 
   private tailrec fun coherentDeepComponentType(lowerType: PsiType, upperType: PsiType) : Pair<PsiType, PsiType> =

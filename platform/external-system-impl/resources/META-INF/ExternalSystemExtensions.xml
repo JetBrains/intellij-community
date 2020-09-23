@@ -79,6 +79,7 @@
         implementation="com.intellij.openapi.externalSystem.service.project.settings.InspectionsProfileConfigurationHandler"/>
     <externalSystemConfigurationHandler
         implementation="com.intellij.openapi.externalSystem.service.project.settings.DetectionExcludesConfigImporter"/>
+    <externalSystemConfigurationHandler implementation="com.intellij.openapi.externalSystem.service.project.settings.ModuleTypeHandler"/>
 
     <!--Tool window services-->
     <externalSystemViewContributor id="default" order="last"
@@ -90,7 +91,7 @@
     <streamProviderFactory implementation="com.intellij.openapi.externalSystem.configurationStore.ExternalSystemStreamProviderFactory"/>
 
     <moduleService serviceInterface="com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager"
-                   serviceImplementation="com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManagerImpl"/>
+                   serviceImplementation="com.intellij.openapi.externalSystem.service.project.ExternalSystemModulePropertyManagerImpl"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.ExternalProjectSystemRegistry"
                         serviceImplementation="com.intellij.openapi.externalSystem.ExternalProjectSystemRegistryImpl" overrides="true"/>

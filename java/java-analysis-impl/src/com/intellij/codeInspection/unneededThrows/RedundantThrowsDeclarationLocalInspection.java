@@ -19,17 +19,19 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.PsiSearchHelper;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.JavaOverridingMethodUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -112,6 +114,7 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
       getRedundantThrowsCandidates(method, myIgnoreEntryPoints)
         .filter(throwRefType -> !throwRefType.isThrownIn(method))
         .filter(throwRefType -> !throwRefType.isInOverridenOf(method))
+        .filter(throwRefType -> !throwRefType.isCaught(method))
         .forEach(throwRefType -> {
           final PsiElement reference = throwRefType.myReference;
           final PsiClassType exceptionType = throwRefType.myType;
@@ -307,6 +310,28 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
       return ContainerUtil.exists(method.getThrowsList().getReferencedTypes(), myType::isAssignableFrom);
     }
 
+    public boolean isCaught(@NotNull final PsiMethod method) {
+      if (method.getUseScope() instanceof GlobalSearchScope) {
+        final PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(method.getProject());
+        final PsiSearchHelper.SearchCostResult search = searchHelper.isCheapEnoughToSearch(method.getName(),
+                                                                                           (GlobalSearchScope)method.getUseScope(),
+                                                                                           null,
+                                                                                           null);
+        if (search == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) return false;
+        if (search == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES) return true;
+      }
+
+      final Collection<PsiReference> references = ReferencesSearch.search(method).findAll();
+      for (PsiReference reference : references) {
+        if (!(reference instanceof PsiElement)) continue;
+        final PsiElement element = (PsiElement)reference;
+        final PsiClass clazz = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+        final boolean catchSectionAbsent = PsiTreeUtil.treeWalkUp(element, clazz, new TryBlockCatchTypeProcessor(myType));
+        if (!catchSectionAbsent) return true;
+      }
+      return false;
+    }
+
     @Contract(pure = true)
     private static boolean isMethodPossiblyOverriden(@NotNull final PsiMethod method) {
       final PsiClass containingClass = method.getContainingClass();
@@ -328,6 +353,28 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
 
     @NotNull PsiClassType getType() {
       return myType;
+    }
+
+    private static class TryBlockCatchTypeProcessor implements PairProcessor<PsiElement, PsiElement> {
+
+      private final @NotNull PsiClassType myType;
+
+      private TryBlockCatchTypeProcessor(@NotNull PsiClassType type) {
+        myType = type;
+      }
+
+      @Override
+      public boolean process(PsiElement curr, PsiElement prev) {
+        if (!(curr instanceof PsiTryStatement)) return true;
+
+        final PsiTryStatement tryStatement = (PsiTryStatement)curr;
+
+        return Arrays.stream(tryStatement.getCatchSections())
+          .map(PsiCatchSection::getCatchType)
+          .filter(Objects::nonNull)
+          .filter(e -> ! ExceptionUtil.isGeneralExceptionType(e))
+          .noneMatch(e -> e.isAssignableFrom(myType));
+      }
     }
   }
 }

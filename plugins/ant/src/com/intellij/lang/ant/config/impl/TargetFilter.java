@@ -3,21 +3,23 @@ package com.intellij.lang.ant.config.impl;
 
 import com.intellij.lang.ant.config.AntBuildTarget;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.config.Externalizer;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public final class TargetFilter implements JDOMExternalizable, Externalizer.SkippableValue {
   @NonNls private static final String FILTER_TARGET_NAME = "targetName";
   @NonNls private static final String FILTER_IS_VISIBLE = "isVisible";
-  private String myTargetName;
+  private @NlsSafe String myTargetName;
   private boolean myVisible;
-  private String myDescription = "";
+  private @Nls String myDescription = "";
 
   public TargetFilter() {}
 
-  public TargetFilter(String targetName, boolean isVisible) {
+  public TargetFilter(@Nls String targetName, boolean isVisible) {
     myTargetName = targetName;
     myVisible = isVisible;
   }

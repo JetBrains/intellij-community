@@ -308,7 +308,7 @@ public final class Strings {
   }
 
   @Contract(pure = true)
-  public static boolean endsWithIgnoreCase(@NotNull String str, @NotNull String suffix) {
+  public static boolean endsWithIgnoreCase(@NotNull CharSequence str, @NotNull String suffix) {
     return StringUtilRt.endsWithIgnoreCase(str, suffix);
   }
 

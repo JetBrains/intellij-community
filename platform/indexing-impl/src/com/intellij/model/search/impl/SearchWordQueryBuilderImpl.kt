@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.search.impl
 
 import com.intellij.lang.Language
@@ -56,6 +56,8 @@ internal data class SearchWordQueryBuilderImpl(
     return copy(mySearchContexts = contexts)
   }
 
+  override fun includeInjections(): SearchWordQueryBuilder = copy(myInjection = InjectionInfo.IncludeInjections)
+
   override fun inInjections(): SearchWordQueryBuilder = copy(myInjection = InjectionInfo.InInjection(LanguageInfo.NoLanguage))
 
   override fun inInjections(language: Language): SearchWordQueryBuilder = copy(
@@ -91,6 +93,8 @@ internal data class SearchWordQueryBuilderImpl(
   )
 
   override fun buildOccurrenceQuery(): Query<out TextOccurrence> = buildQuery(TextOccurrenceWalker)
+
+  override fun buildLeafOccurrenceQuery(): Query<out TextOccurrence> = buildQuery(IdLeafOccurenceMapper)
 
   internal data class Parameters(
     val project: Project,

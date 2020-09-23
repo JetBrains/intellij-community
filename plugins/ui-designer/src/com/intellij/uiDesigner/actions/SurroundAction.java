@@ -5,6 +5,7 @@ package com.intellij.uiDesigner.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
@@ -30,7 +31,7 @@ public class SurroundAction extends AbstractGuiEditorAction {
 
   private final String myComponentClass;
 
-  public SurroundAction(String componentClass) {
+  public SurroundAction(@NlsSafe String componentClass) {
     final String className = componentClass.substring(componentClass.lastIndexOf('.') + 1);
     getTemplatePresentation().setText(className);
     myComponentClass = componentClass;

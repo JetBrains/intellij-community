@@ -69,13 +69,19 @@ public class GitUncommitAction extends GitSingleCommitEditingAction {
   public void actionPerformedAfterChecks(@NotNull SingleCommitEditingData commitEditingData) {
     Project project = commitEditingData.getProject();
     VcsShortCommitDetails commit = commitEditingData.getSelectedCommit();
-    ChangeListChooser chooser = new ChangeListChooser(project, ChangeListManager.getInstance(project).getChangeListsCopy(),
-                                                      null, GitBundle.message("git.undo.action.select.target.changelist.title"), commit.getSubject());
-    chooser.show();
-    LocalChangeList selectedList = chooser.getSelectedList();
-    if (selectedList != null) {
-      resetInBackground(commitEditingData.getLogData(), commitEditingData.getRepository(), commit, selectedList);
+    LocalChangeList targetList;
+    if (ChangeListManager.getInstance(project).areChangeListsEnabled()) {
+      ChangeListChooser chooser = new ChangeListChooser(project, null, null,
+                                                        GitBundle.message("git.undo.action.select.target.changelist.title"),
+                                                        commit.getSubject());
+      if (!chooser.showAndGet()) return;
+
+      targetList = chooser.getSelectedList();
     }
+    else {
+      targetList = null;
+    }
+    resetInBackground(commitEditingData.getLogData(), commitEditingData.getRepository(), commit, targetList);
   }
 
   @NotNull
@@ -87,7 +93,7 @@ public class GitUncommitAction extends GitSingleCommitEditingAction {
   private static void resetInBackground(@NotNull VcsLogData data,
                                         @NotNull GitRepository repository,
                                         @NotNull VcsShortCommitDetails commit,
-                                        @NotNull LocalChangeList changeList) {
+                                        @Nullable LocalChangeList targetChangeList) {
     Project project = repository.getProject();
     new Task.Backgroundable(project, GitBundle.message("git.undo.action.undoing.last.commit.process"), true) {
       @Override
@@ -108,11 +114,16 @@ public class GitUncommitAction extends GitSingleCommitEditingAction {
         // TODO change notification title
         new GitResetOperation(project, singletonMap(repository, commit.getParents().get(0)), SOFT, indicator).execute();
 
-        ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-        changeListManager.invokeAfterUpdate(() -> {
-          Collection<Change> changes = GitUtil.findCorrespondentLocalChanges(changeListManager, changesInCommit);
-          changeListManager.moveChangesTo(changeList, changes.toArray(new Change[0]));
-        }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, GitBundle.message("git.undo.action.refreshing.changes.process"), ModalityState.defaultModalityState());
+        if (targetChangeList != null) {
+          ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+          changeListManager.invokeAfterUpdate(
+            () -> {
+              Collection<Change> changes = GitUtil.findCorrespondentLocalChanges(changeListManager, changesInCommit);
+              changeListManager.moveChangesTo(targetChangeList, changes.toArray(new Change[0]));
+            }, InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE, GitBundle.message("git.undo.action.refreshing.changes.process"),
+            ModalityState.defaultModalityState()
+          );
+        }
       }
     }.queue();
   }

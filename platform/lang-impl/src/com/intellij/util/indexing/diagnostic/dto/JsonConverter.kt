@@ -65,6 +65,8 @@ private fun IndexingJobStatistics.aggregateStatsPerIndexer(): List<JsonFileProvi
     .mapNotNull { (indexId, stats) ->
       JsonFileProviderIndexStatistics.JsonStatsPerIndexer(
         indexId,
+        stats.numberOfFiles,
+        stats.numberOfFilesIndexedByExtensions,
         calculatePercentages(stats.indexingTime.sumTime, totalIndexingTimePerIndexer)
       )
     }
@@ -72,14 +74,14 @@ private fun IndexingJobStatistics.aggregateStatsPerIndexer(): List<JsonFileProvi
 
 fun ProjectIndexingHistory.IndexingTimes.toJson() =
   JsonProjectIndexingHistoryTimes(
-    nullableJsonDuration(indexingStart, indexingEnd),
-    nullableJsonDuration(scanFilesStart, scanFilesEnd),
-    nullableJsonDuration(pushPropertiesStart, pushPropertiesEnd),
-    nullableJsonDuration(indexExtensionsStart, indexExtensionsEnd),
-    JsonDateTime(indexingStart!!),
-    JsonDateTime(indexingEnd!!),
-    suspendedDuration?.let { JsonDuration(it.toNanos()) },
-    wasInterrupted
+    indexingTime = nullableJsonDuration(indexingStart, indexingEnd),
+    scanFilesTime = nullableJsonDuration(scanFilesStart, scanFilesEnd),
+    pushPropertiesTime = nullableJsonDuration(pushPropertiesStart, pushPropertiesEnd),
+    indexExtensionsTime = nullableJsonDuration(indexExtensionsStart, indexExtensionsEnd),
+    indexingStart = JsonDateTime(indexingStart!!),
+    indexingEnd = JsonDateTime(indexingEnd!!),
+    totalSuspendedTime = suspendedDuration?.let { JsonDuration(it.toNanos()) },
+    wasInterrupted = wasInterrupted
   )
 
 private fun nullableJsonDuration(from: Instant?, to: Instant?): JsonDuration? {
@@ -168,6 +170,7 @@ private fun ProjectIndexingHistory.aggregateStatsPerIndexer(): List<JsonProjectI
       indexId,
       indexIdToIndexingTimePart.getValue(indexId),
       stats.totalNumberOfFiles,
+      stats.totalNumberOfFilesIndexedByExtensions,
       JsonFileSize(stats.totalBytes),
       indexIdToProcessingSpeed.getValue(indexId)
     )

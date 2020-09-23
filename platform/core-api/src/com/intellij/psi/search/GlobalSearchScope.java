@@ -65,7 +65,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
   }
 
   @Override
-  public final boolean accept(VirtualFile file) {
+  public final boolean accept(@NotNull VirtualFile file) {
     return contains(file);
   }
 

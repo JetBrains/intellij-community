@@ -12,12 +12,14 @@ import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettin
 import com.intellij.codeInsight.template.postfix.templates.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.NeedsIndex;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 
+@NeedsIndex.SmartMode(reason = "AutoPopup shouldn't work in dumb mode")
 public class TemplatesCompletionTest extends JavaCompletionAutoPopupTestCase {
   @Override
   public void setUp() throws Exception {

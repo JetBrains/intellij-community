@@ -11,8 +11,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static com.intellij.openapi.externalSystem.util.IteratorUtils.match;
-
 public abstract class AbstractDependencyNode implements DependencyNode, Serializable {
   private final long id;
   private final List<DependencyNode> dependencies;
@@ -45,14 +43,15 @@ public abstract class AbstractDependencyNode implements DependencyNode, Serializ
   }
 
   @Override
-  public boolean equals(Object o) {
+  public final boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
     AbstractDependencyNode node = (AbstractDependencyNode)o;
     if (id != node.id) return false;
     if (resolutionState != null ? !resolutionState.equals(node.resolutionState) : node.resolutionState != null) return false;
-    if (!equal(dependencies, node.dependencies)) return false;
+    if (!match(node)) return false;
+    if (!match(dependencies, node.dependencies)) return false;
     return true;
   }
 
@@ -64,26 +63,29 @@ public abstract class AbstractDependencyNode implements DependencyNode, Serializ
     return result;
   }
 
-  private static boolean equal(@NotNull Collection<DependencyNode> dependencies1,
+  protected abstract boolean match(AbstractDependencyNode o);
+
+  private static boolean match(@NotNull Collection<DependencyNode> dependencies1,
                                @NotNull Collection<DependencyNode> dependencies2) {
-    return match(new DependenciesIterator(dependencies1), new DependenciesIterator(dependencies2),
-                 new BooleanBiFunction<DependencyNode, DependencyNode>() {
-                   @Override
-                   public Boolean fun(DependencyNode o1, DependencyNode o2) {
-                     if (o1 instanceof AbstractDependencyNode && o2 instanceof AbstractDependencyNode) {
-                       AbstractDependencyNode o11 = (AbstractDependencyNode)o1;
-                       AbstractDependencyNode o21 = (AbstractDependencyNode)o2;
-                       if (o11.id != o21.id) return false;
-                       if (o11.resolutionState != null ? !o11.resolutionState.equals(o21.resolutionState) : o21.resolutionState != null) {
-                         return false;
-                       }
-                       return true;
-                     }
-                     else {
-                       return o1 == null ? o2 == null : o1.equals(o2);
-                     }
-                   }
-                 });
+    return IteratorUtils.match(
+      new DependenciesIterator(dependencies1), new DependenciesIterator(dependencies2),
+      new BooleanBiFunction<DependencyNode, DependencyNode>() {
+        @Override
+        public Boolean fun(DependencyNode o1, DependencyNode o2) {
+          if (o1 instanceof AbstractDependencyNode && o2 instanceof AbstractDependencyNode) {
+            AbstractDependencyNode o11 = (AbstractDependencyNode)o1;
+            AbstractDependencyNode o21 = (AbstractDependencyNode)o2;
+            if (o11.id != o21.id) return false;
+            if (o11.resolutionState != null ? !o11.resolutionState.equals(o21.resolutionState) : o21.resolutionState != null) {
+              return false;
+            }
+            return o11.match(o21);
+          }
+          else {
+            return o1 == null ? o2 == null : o1.equals(o2);
+          }
+        }
+      });
   }
 
   private static final class DependenciesIterator extends IteratorUtils.AbstractObjectGraphIterator<DependencyNode> {

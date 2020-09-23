@@ -5,7 +5,7 @@ import com.intellij.DynamicBundle
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 
-private const val BUNDLE: String = "messages.IcsBundle"
+internal const val BUNDLE: String = "messages.IcsBundle"
 
 object IcsBundle : DynamicBundle(BUNDLE) {
   @Nls

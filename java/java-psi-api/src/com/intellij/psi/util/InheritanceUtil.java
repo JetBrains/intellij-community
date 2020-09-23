@@ -4,7 +4,6 @@ package com.intellij.psi.util;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.util.Processor;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +34,7 @@ public final class InheritanceUtil {
 
     if (includeSelf && !superProcessor.process(aClass)) return false;
 
-    return processSupers(aClass, superProcessor, new THashSet<>());
+    return processSupers(aClass, superProcessor, new HashSet<>());
   }
 
   private static boolean processSupers(@NotNull PsiClass aClass, @NotNull Processor<? super PsiClass> superProcessor, @NotNull Set<? super PsiClass> visited) {
@@ -93,7 +92,7 @@ public final class InheritanceUtil {
    * @param includeNonProject
    */
   public static void getSuperClasses(@NotNull PsiClass aClass, @NotNull Set<? super PsiClass> results, boolean includeNonProject) {
-    getSuperClassesOfList(aClass.getSuperTypes(), results, includeNonProject, new THashSet<>(), aClass.getManager());
+    getSuperClassesOfList(aClass.getSuperTypes(), results, includeNonProject, new HashSet<>(), aClass.getManager());
   }
 
   public static LinkedHashSet<PsiClass> getSuperClasses(@NotNull PsiClass aClass) {

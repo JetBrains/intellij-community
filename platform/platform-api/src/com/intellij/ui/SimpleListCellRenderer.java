@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -22,10 +22,9 @@ import java.awt.*;
  * @author gregsh
  */
 public abstract class SimpleListCellRenderer<T> extends JBLabel implements ListCellRenderer<T> {
-
-  @NotNull
-  public static <T> SimpleListCellRenderer<T> create(@NotNull @NlsContexts.Label String nullValue, @NotNull Function<? super T, @NlsContexts.Label String> getText) {
-    return new SimpleListCellRenderer<T>() {
+  public static @NotNull <T> SimpleListCellRenderer<T> create(@NotNull @NlsContexts.Label String nullValue,
+                                                              @NotNull Function<? super T, @NlsContexts.Label String> getText) {
+    return new SimpleListCellRenderer<>() {
       @Override
       public void customize(@NotNull JList<? extends T> list, T value, int index, boolean selected, boolean hasFocus) {
         setText(value == null ? nullValue : getText.fun(value));
@@ -33,9 +32,8 @@ public abstract class SimpleListCellRenderer<T> extends JBLabel implements ListC
     };
   }
 
-  @NotNull
-  public static <T> SimpleListCellRenderer<T> create(@NotNull Customizer<? super T> customizer) {
-    return new SimpleListCellRenderer<T>() {
+  public static @NotNull <T> SimpleListCellRenderer<T> create(@NotNull Customizer<? super T> customizer) {
+    return new SimpleListCellRenderer<>() {
       @Override
       public void customize(@NotNull JList<? extends T> list, T value, int index, boolean selected, boolean hasFocus) {
         customizer.customize(this, value, index);

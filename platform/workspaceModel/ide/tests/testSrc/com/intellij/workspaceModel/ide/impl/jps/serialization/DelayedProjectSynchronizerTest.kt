@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
@@ -21,6 +22,7 @@ import org.apache.commons.lang.RandomStringUtils
 import org.junit.*
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
+import org.junit.Assume.assumeTrue
 import java.io.File
 
 class DelayedProjectSynchronizerTest {
@@ -35,7 +37,7 @@ class DelayedProjectSynchronizerTest {
   fun setUp() {
     WorkspaceModelImpl.forceEnableCaching = true
     virtualFileManager = VirtualFileUrlManagerImpl()
-    serializer = EntityStorageSerializerImpl(WorkspaceModelCacheImpl.PluginAwareEntityTypesResolver, virtualFileManager)
+    serializer = EntityStorageSerializerImpl(WorkspaceModelCacheImpl.PluginAwareEntityTypesResolver, virtualFileManager, true)
   }
 
   @After
@@ -46,6 +48,7 @@ class DelayedProjectSynchronizerTest {
 
   @Test
   fun `test just loading with existing cache`() {
+    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     val projectFile = projectFile("moduleAdded/after")
     val projectData = copyAndLoadProject(projectFile, virtualFileManager)
     val storage = projectData.storage
@@ -65,6 +68,7 @@ class DelayedProjectSynchronizerTest {
 
   @Test
   fun `test module added`() {
+    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     val projectFile = projectFile("moduleAdded/before")
     val projectFileAfter = projectFile("moduleAdded/after")
     val projectData = copyAndLoadProject(projectFile, virtualFileManager)

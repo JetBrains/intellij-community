@@ -90,6 +90,7 @@ public class TreeTableModelAdapter extends AbstractTableModel {
         delayedFireTableDataChanged();
       }
     });
+
   }
 
   // Wrappers, implementing TableModel interface.
@@ -161,4 +162,5 @@ public class TreeTableModelAdapter extends AbstractTableModel {
       }
     }
   }
+
 }

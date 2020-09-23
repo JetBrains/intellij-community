@@ -15,6 +15,7 @@
  */
 package com.intellij.designer.propertyTable;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -24,10 +25,10 @@ import javax.swing.*;
  */
 public final class PropertyTableTab {
   private final String myKey;
-  private final String myDescription;
+  private final @Nls String myDescription;
   private final Icon myIcon;
 
-  public PropertyTableTab(@NotNull String key, @NotNull String description, @NotNull Icon icon) {
+  public PropertyTableTab(@NotNull String key, @NotNull @Nls String description, @NotNull Icon icon) {
     myKey = key;
     myDescription = description;
     myIcon = icon;
@@ -39,7 +40,7 @@ public final class PropertyTableTab {
   }
 
   @NotNull
-  public String getDescription() {
+  public @Nls String getDescription() {
     return myDescription;
   }
 

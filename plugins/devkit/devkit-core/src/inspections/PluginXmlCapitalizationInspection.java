@@ -66,6 +66,8 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
   private static void checkOverrideText(OverrideText overrideText, DomElementAnnotationHolder holder) {
     if (checkCapitalization(holder, overrideText.getText(), Nls.Capitalization.Title)) return;
 
+    if (DomUtil.hasXml(overrideText.getUseTextOfPlace())) return;
+
     Action action = overrideText.getParentOfType(Action.class, true);
     assert action != null;
     final String resourceKey = "action." + action.getId().getStringValue() + "." + overrideText.getPlace().getStringValue() + ".text";

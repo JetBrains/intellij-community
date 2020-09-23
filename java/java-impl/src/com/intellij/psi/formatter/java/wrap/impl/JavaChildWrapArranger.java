@@ -71,7 +71,9 @@ public class JavaChildWrapArranger {
     IElementType nodeType = parent.getElementType();
     IElementType childType = child.getElementType();
 
-    if (childType == JavaElementType.EXTENDS_LIST || childType == JavaElementType.IMPLEMENTS_LIST) {
+    if (childType == JavaElementType.EXTENDS_LIST ||
+        childType == JavaElementType.IMPLEMENTS_LIST ||
+        childType == JavaElementType.PERMITS_LIST) {
       return Wrap.createWrap(settings.EXTENDS_KEYWORD_WRAP, true);
     }
 
@@ -81,6 +83,7 @@ public class JavaChildWrapArranger {
 
     else if (nodeType == JavaElementType.EXTENDS_LIST ||
              nodeType == JavaElementType.IMPLEMENTS_LIST ||
+             nodeType == JavaElementType.PERMITS_LIST ||
              nodeType == JavaElementType.THROWS_LIST) {
       return role == ChildRole.REFERENCE_IN_LIST ? suggestedWrap : null;
     }

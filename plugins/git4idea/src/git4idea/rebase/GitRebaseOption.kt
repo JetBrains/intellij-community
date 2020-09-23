@@ -14,17 +14,18 @@ enum class GitRebaseOption(@NonNls private val option: String,
 
   ONTO("--onto", GitBundle.message("rebase.option.onto")),
   INTERACTIVE("--interactive", GitBundle.message("rebase.option.interactive")),
-  REBASE_MERGES("--rebase-merges", GitBundle.message("rebase.option.rebase.merges")) {
-    override fun getOption(gitVersion: GitVersion): String {
-      return if (REBASE_MERGES_REPLACES_PRESERVE_MERGES.existsIn(gitVersion))
-        "--rebase-merges"
-      else
-        "--preserve-merges"
-    }
-  },
-  KEEP_EMPTY("--keep-empty", GitBundle.message("rebase.option.keep.empty"));
+  REBASE_MERGES("--rebase-merges", GitBundle.message("rebase.option.rebase.merges")),
+  KEEP_EMPTY("--keep-empty", GitBundle.message("rebase.option.keep.empty")),
+  ROOT("--root", GitBundle.message("rebase.option.root"));
 
-  open fun getOption(gitVersion: GitVersion) = option
+  fun getOption(gitVersion: GitVersion): String {
+    if (this != REBASE_MERGES) return option
+
+    return if (REBASE_MERGES_REPLACES_PRESERVE_MERGES.existsIn(gitVersion))
+      "--rebase-merges"
+    else
+      "--preserve-merges"
+  }
 }
 
 /**
@@ -32,4 +33,5 @@ enum class GitRebaseOption(@NonNls private val option: String,
  */
 val REBASE_FLAGS = setOf(GitRebaseOption.INTERACTIVE,
                          GitRebaseOption.REBASE_MERGES,
-                         GitRebaseOption.KEEP_EMPTY)
+                         GitRebaseOption.KEEP_EMPTY,
+                         GitRebaseOption.ROOT)

@@ -54,7 +54,16 @@ public final class Utils {
                                                  PresentationFactory presentationFactory,
                                                  @NotNull DataContext context,
                                                  String place, ActionGroupVisitor visitor) {
-    return new ActionUpdater(isInModalContext, presentationFactory, context, place, false, false, false, visitor)
+    return expandActionGroup(isInModalContext, group, presentationFactory, context, place, visitor, false);
+  }
+
+  public static List<AnAction> expandActionGroup(boolean isInModalContext,
+                                                 @NotNull ActionGroup group,
+                                                 PresentationFactory presentationFactory,
+                                                 @NotNull DataContext context,
+                                                 String place, ActionGroupVisitor visitor,
+                                                 boolean isContextMenuAction) {
+    return new ActionUpdater(isInModalContext, presentationFactory, context, place, isContextMenuAction, false, false, visitor)
       .expandActionGroup(group, group instanceof CompactActionGroup);
   }
 

@@ -8,16 +8,14 @@ EditorConfig file
       PsiElement(EditorConfigTokenType.R_BRACKET)(']')
     PsiWhiteSpace('\n')
     key=
-another_key=
       key
         PsiElement(EditorConfigTokenType.IDENTIFIER)('key')
       PsiElement(EditorConfigTokenType.SEPARATOR)('=')
-      PsiWhiteSpace('\n')
+    PsiWhiteSpace('\n')
+    another_key=value
       another_key
         PsiElement(EditorConfigTokenType.IDENTIFIER)('another_key')
-      PsiErrorElement:EditorConfigTokenType.COLON or EditorConfigTokenType.COMMA expected, got '='
-        PsiElement(EditorConfigTokenType.SEPARATOR)('=')
-    value
+      PsiElement(EditorConfigTokenType.SEPARATOR)('=')
       value
         PsiElement(EditorConfigTokenType.IDENTIFIER)('value')
     PsiWhiteSpace('\n')

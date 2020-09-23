@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.appengine.converter;
 
+import com.intellij.appengine.JavaGoogleAppEngineBundle;
 import com.intellij.appengine.facet.AppEngineFacetType;
 import com.intellij.conversion.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,7 +31,7 @@ final class AppEngineFacetConverterProvider extends ConverterProvider {
   @NotNull
   @Override
   public String getConversionDescription() {
-    return "Google App Engine facets will be decoupled from Web facets";
+    return JavaGoogleAppEngineBundle.message("dialog.message.google.app.engine.description");
   }
 
   private static class GoogleAppEngineFacetConversionProcessor extends ConversionProcessor<ModuleSettings> {

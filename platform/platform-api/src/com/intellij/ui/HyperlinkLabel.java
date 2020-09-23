@@ -13,10 +13,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.accessibility.AccessibleAction;
 import javax.accessibility.AccessibleContext;
@@ -211,7 +208,7 @@ public class HyperlinkLabel extends HighlightableComponent {
     updateOnTextChange();
   }
 
-  public void setHyperlinkTarget(@Nls @Nullable final String url) {
+  public void setHyperlinkTarget(@NonNls @Nullable final String url) {
     if (myHyperlinkListener != null) {
       removeHyperlinkListener(myHyperlinkListener);
     }

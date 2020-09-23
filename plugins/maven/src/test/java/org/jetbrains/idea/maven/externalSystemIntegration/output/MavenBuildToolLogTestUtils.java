@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.externalSystemIntegration.output;
 
 import com.intellij.build.DefaultBuildDescriptor;
@@ -206,9 +206,7 @@ public abstract class MavenBuildToolLogTestUtils extends UsefulTestCase {
 
     private List<BuildEvent> collect() {
       CollectConsumer collectConsumer = new CollectConsumer();
-      MavenLogOutputParser parser =
-        new MavenLogOutputParser(myTaskId, myParsers);
-
+      MavenLogOutputParser parser = new MavenLogOutputParser(myTaskId, myParsers);
 
       collectConsumer.accept(new StartBuildEventImpl(
         new DefaultBuildDescriptor(myTaskId, "Maven Run", System.getProperty("user.dir"), System.currentTimeMillis()), "Maven Run"));

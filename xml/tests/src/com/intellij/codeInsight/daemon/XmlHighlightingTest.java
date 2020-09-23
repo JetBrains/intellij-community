@@ -54,7 +54,6 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.actions.validate.ValidateXmlActionHandler;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.*;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1263,7 +1262,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     List<VirtualFile> files = new ArrayList<>(6);
     files.add(findVirtualFile(BASE_PATH + getTestName(false) + ".xml"));
 
-    final Set<VirtualFile> usedFiles = new THashSet<>();
+    final Set<VirtualFile> usedFiles = new HashSet<>();
     final String base = BASE_PATH + getTestName(false) + "Schemas/";
 
     for(String[] pair:urls) {

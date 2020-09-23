@@ -42,7 +42,7 @@ public final class ParamsGroup implements Cloneable {
     myParamList.addAt(index, parameter);
   }
 
-  public void addParameters(String @NotNull ... parameters) {
+  public void addParameters(@NotNull String @NotNull ... parameters) {
     for (String parameter : parameters) {
       addParameter(parameter);
     }

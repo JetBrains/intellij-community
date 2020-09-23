@@ -12,6 +12,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ErrorLabel;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -119,7 +120,7 @@ public abstract class NamedConfigurable<T> implements Configurable {
   private void $$$setupUI$$$() {
   }
 
-  protected void checkName(@NotNull String name) throws ConfigurationException {
+  protected void checkName(@NonNls @NotNull String name) throws ConfigurationException {
     if (name.isEmpty()) {
       throw new ConfigurationException(IdeBundle.message("error.name.cannot.be.empty"));
     }

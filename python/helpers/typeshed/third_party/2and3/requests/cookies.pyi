@@ -2,8 +2,6 @@
 
 import sys
 from typing import Any, MutableMapping
-import collections
-from . import compat
 
 if sys.version_info < (3, 0):
     from cookielib import CookieJar

@@ -11,6 +11,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * Any OK-action in the push dialog must inherit from this base class.
  */
@@ -21,11 +23,15 @@ public abstract class PushActionBase extends DumbAwareAction {
   }
 
   /**
-   * A marker interface indicating an action which should be treated as default in the push dialog, instead of the plain push action.
+   * A marker interface indicating an action which should be treated as default in the push dialog, instead of {@link VcsPushDialog.SimplePushAction}.
    * Can be implemented by plugins to override the default behavior.
    */
   @ApiStatus.Internal
-  interface DefaultPushAction {}
+  public interface DefaultPushAction {
+    default void customize(@NotNull List<PushActionBase> pushActions) {
+      pushActions.add(0, (PushActionBase) this);
+    }
+  }
 
   protected PushActionBase() {
     setEnabledInModalContext(true);

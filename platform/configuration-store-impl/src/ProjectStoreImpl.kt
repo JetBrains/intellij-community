@@ -20,6 +20,10 @@ import com.intellij.util.SmartList
 import com.intellij.util.io.delete
 import com.intellij.util.io.isDirectory
 import com.intellij.util.io.write
+import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.configLocation
+import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentReaderWithCache
+import com.intellij.workspaceModel.ide.impl.jps.serialization.ProjectStoreWithJpsContentReader
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
@@ -34,12 +38,7 @@ internal val IProjectStore.nameFile: Path
 @ApiStatus.Internal
 open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
   private var lastSavedProjectName: String? = null
-
-  /**
-   * This property is temporary added to support saving of modules for workspace model; it can be removed when we move workspaceModel module
-   * near projectModel in the dependency graph and will be able to use it directly from this class
-   */
-  var moduleSavingCustomizer: ModuleSavingCustomizer? = null
+  protected val moduleSavingCustomizer: ModuleSavingCustomizer? = if (WorkspaceModel.isEnabled) ProjectStoreBridge(project) else null
 
   init {
     assert(!project.isDefault)
@@ -166,7 +165,7 @@ interface ModuleSavingCustomizer {
 }
 
 @ApiStatus.Internal
-open class ProjectWithModulesStoreImpl(project: Project) : ProjectStoreImpl(project) {
+open class ProjectWithModulesStoreImpl(project: Project) : ProjectStoreImpl(project), ProjectStoreWithJpsContentReader {
   final override suspend fun saveModules(errors: MutableList<Throwable>,
                                          isForceSavingAllSettings: Boolean,
                                          projectSaveSessionManager: SaveSessionProducerManager): List<SaveSession> {
@@ -189,6 +188,10 @@ open class ProjectWithModulesStoreImpl(project: Project) : ProjectStoreImpl(proj
       }
       saveSessions
     }
+  }
+
+  override fun createContentReader(): JpsFileContentReaderWithCache {
+    return StorageJpsConfigurationReader(project, project.configLocation!!.baseDirectoryUrlString)
   }
 
   private fun commitModuleComponents(moduleStore: ComponentStoreImpl, moduleSaveSessionManager: SaveSessionProducerManager,

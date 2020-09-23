@@ -1,6 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 {
-  parserClass="org.editorconfig.language.parser.EditorConfigParser"
+  parserClass="org.editorconfig.language.parser.EditorConfigParserBase"
   parserUtilClass="org.editorconfig.language.parser.EditorConfigParserUtil"
   extends="com.intellij.extapi.psi.ASTWrapperPsiElement"
 
@@ -135,7 +135,7 @@ option ::= option_key (SEPARATOR option_value?)? {
 // and treat it as qualified key with only one part
 private option_key ::= qualified_option_key | flat_option_key
 
-private option_value ::= option_value_pair | option_value_list | option_value_identifier
+private option_value ::= option_value_pair | option_value_standalone_list | option_value_standalone_identifier
 
 // ---- ---- Key ---- ----
 
@@ -161,7 +161,7 @@ flat_option_key ::= IDENTIFIER {
 
 // ---- ---- Value ---- ----
 
-option_value_pair ::= (option_value_list | option_value_identifier) COLON (option_value_list | option_value_identifier) {
+option_value_pair ::= (option_value_list | option_value_identifier) COLON (option_value_list | option_value_identifier) <<followedByNewLineOrEndOfFile>> {
   pin=2
   mixin="org.editorconfig.language.psi.base.EditorConfigDescribableElementBase"
   implements="org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement"
@@ -173,6 +173,8 @@ option_value_pair ::= (option_value_list | option_value_identifier) COLON (optio
   ]
 }
 
+private option_value_standalone_list ::= option_value_list <<followedByNewLineOrEndOfFile>>
+
 option_value_list ::= COMMA* option_value_identifier (COMMA option_value_identifier !(DOT | SEPARATOR) | COMMA)+ {
   mixin="org.editorconfig.language.psi.base.EditorConfigDescribableElementBase"
   implements="org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement"
@@ -180,6 +182,8 @@ option_value_list ::= COMMA* option_value_identifier (COMMA option_value_identif
     getDescriptor
   ]
 }
+
+private option_value_standalone_identifier ::= option_value_identifier <<followedByNewLineOrEndOfFile>>
 
 option_value_identifier ::= IDENTIFIER {
   mixin="org.editorconfig.language.psi.base.EditorConfigOptionValueIdentifierBase"

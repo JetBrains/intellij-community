@@ -68,12 +68,9 @@ internal object GHPRDetailsComponent {
       add(timelineLink)
     }
 
-    detailsModel.addAndInvokeDetailsChangedListener {
-      directionPanel.direction = branchesModel.headBranch to branchesModel.baseBranch
-    }
-
     branchesModel.addAndInvokeChangeListener {
       directionPanel.updateBranchActionsToolbar(branchesModel)
+      directionPanel.updateBranchLabels(branchesModel)
     }
 
     return panel

@@ -458,10 +458,6 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
       throw InvalidDataException("unknown element: $keymapElement")
     }
 
-    if (keymapElement.getAttributeValue(VERSION_ATTRIBUTE) == null) {
-      Converter01.convert(keymapElement)
-    }
-
     name = keymapElement.getAttributeValue(NAME_ATTRIBUTE)
 
     unknownParentName = null
@@ -745,6 +741,7 @@ private val xcodeKeymap = "com.intellij.plugins.xcodekeymap"
 private val visualAssistKeymap = "com.intellij.plugins.visualassistkeymap"
 private val riderKeymap = "com.intellij.plugins.riderkeymap"
 private val vsCodeKeymap = "com.intellij.plugins.vscodekeymap"
+private val vsForMacKeymap = "com.intellij.plugins.vsformackeymap"
 
 internal fun notifyAboutMissingKeymap(keymapName: String, @NlsContexts.NotificationContent message: String, isParent: Boolean) {
   val connection = ApplicationManager.getApplication().messageBus.connect()
@@ -778,6 +775,7 @@ internal fun notifyAboutMissingKeymap(keymapName: String, @NlsContexts.Notificat
             "Visual Assist",
             "Visual Assist OSX" -> visualAssistKeymap
             "Xcode" -> xcodeKeymap
+            "Visual Studio for Mac" -> vsForMacKeymap
             "Rider",
             "Rider OSX"-> riderKeymap
             "VSCode",
@@ -827,6 +825,7 @@ internal fun notifyAboutMissingKeymap(keymapName: String, @NlsContexts.Notificat
                   kdeKeymap -> toPluginIds(kdeKeymap, xwinKeymap)
                   resharperKeymap -> toPluginIds(resharperKeymap, visualStudioKeymap)
                   xcodeKeymap -> toPluginIds(xcodeKeymap, macOSKeymap)
+                  vsForMacKeymap -> toPluginIds(vsForMacKeymap, macOSKeymap)
                   else -> toPluginIds(pluginId)
                 }
               }

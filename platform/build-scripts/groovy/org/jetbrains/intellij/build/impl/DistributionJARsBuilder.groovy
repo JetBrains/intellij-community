@@ -632,7 +632,6 @@ class DistributionJARsBuilder {
 
     processOrderFiles(layoutBuilder)
     addSearchableOptions(layoutBuilder)
-    SVGPreBuilder.addGeneratedResources(buildContext, layoutBuilder)
 
     def applicationInfoFile = FileUtil.toSystemIndependentName(patchedApplicationInfo.absolutePath)
     def applicationInfoDir = "$buildContext.paths.temp/applicationInfo"
@@ -644,13 +643,15 @@ class DistributionJARsBuilder {
       layoutBuilder.patchModuleOutput("intellij.platform.resources", FileUtil.toSystemIndependentName(patchedKeyMapDir.absolutePath))
     }
     if (buildContext.proprietaryBuildTools.featureUsageStatisticsProperties != null) {
-      try {
-        def metadata = StatisticsRecorderBundledMetadataProvider.downloadMetadata(buildContext)
-        layoutBuilder.patchModuleOutput('intellij.platform.ide.impl', metadata.absolutePath)
-      }
-      catch (Exception e) {
-        buildContext.messages.warning('Failed to bundle default version of feature usage statistics metadata')
-        e.printStackTrace()
+      buildContext.executeStep("Bundling a default version of feature usage statistics", BuildOptions.FUS_METADATA_BUNDLE_STEP) {
+        try {
+          def metadata = StatisticsRecorderBundledMetadataProvider.downloadMetadata(buildContext)
+          layoutBuilder.patchModuleOutput('intellij.platform.ide.impl', metadata.absolutePath)
+        }
+        catch (Exception e) {
+          buildContext.messages.warning('Failed to bundle default version of feature usage statistics metadata')
+          e.printStackTrace()
+        }
       }
     }
 

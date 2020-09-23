@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.execution.test.runner;
 import com.intellij.build.BuildViewSettingsProvider;
 import com.intellij.execution.Platform;
 import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsListener;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
@@ -20,10 +21,16 @@ import java.util.Map;
 public class GradleTestsExecutionConsole extends SMTRunnerConsoleView implements BuildViewSettingsProvider {
   private final Map<String, SMTestProxy> testsMap = new HashMap<>();
   private final StringBuilder myBuffer = new StringBuilder();
+  private final SMTRunnerEventsListener myEventPublisher;
   private boolean lastMessageWasEmptyLine;
 
   public GradleTestsExecutionConsole(TestConsoleProperties consoleProperties, @Nullable String splitterProperty) {
     super(consoleProperties, splitterProperty);
+    myEventPublisher = consoleProperties.getProject().getMessageBus().syncPublisher(SMTRunnerEventsListener.TEST_STATUS);
+  }
+
+  public SMTRunnerEventsListener getEventPublisher() {
+    return myEventPublisher;
   }
 
   public Map<String, SMTestProxy> getTestsMap() {

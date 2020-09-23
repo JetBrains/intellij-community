@@ -2,6 +2,7 @@
 package org.jetbrains.jps.uiDesigner.compiler;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
@@ -34,11 +35,13 @@ import java.util.*;
  * @author Eugene Zhuravlev
  */
 public final class FormsBindingManager extends FormsBuilder {
+  private static final @NlsSafe String BUILDER_NAME = "form-bindings";
   private static final String JAVA_EXTENSION = ".java";
   private static final Key<Boolean> FORCE_FORMS_REBUILD_FLAG = Key.create("_forms_rebuild_flag_");
   private static final Key<Boolean> FORMS_REBUILD_FORCED = Key.create("_forms_rebuild_forced_flag_");
+
   public FormsBindingManager() {
-    super(BuilderCategory.SOURCE_PROCESSOR, "form-bindings");
+    super(BuilderCategory.SOURCE_PROCESSOR, BUILDER_NAME);
   }
 
   @Override

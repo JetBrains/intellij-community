@@ -14,6 +14,7 @@ import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 import java.nio.file.Path
 
 object JpsProjectEntitiesLoader {
@@ -33,26 +34,28 @@ object JpsProjectEntitiesLoader {
 
   @TestOnly
   fun loadProject(configLocation: JpsProjectConfigLocation, builder: WorkspaceEntityStorageBuilder,
-                  externalStoragePath: Path, virtualFileManager: VirtualFileUrlManager): JpsProjectSerializers {
+                  externalStoragePath: Path, errorReporter: ErrorReporter, virtualFileManager: VirtualFileUrlManager): JpsProjectSerializers {
     val reader = CachingJpsFileContentReader(configLocation.baseDirectoryUrlString)
     val data = createProjectEntitiesSerializers(configLocation, reader, externalStoragePath, true, virtualFileManager)
-    data.loadAll(reader, builder)
+    data.loadAll(reader, builder, errorReporter)
     return data
   }
 
-  fun loadModule(moduleFile: Path, configLocation: JpsProjectConfigLocation, builder: WorkspaceEntityStorageBuilder, virtualFileManager: VirtualFileUrlManager) {
+  fun loadModule(moduleFile: Path, configLocation: JpsProjectConfigLocation, builder: WorkspaceEntityStorageBuilder,
+                 errorReporter: ErrorReporter, virtualFileManager: VirtualFileUrlManager) {
     val source = JpsFileEntitySource.FileInDirectory(moduleFile.parent.toVirtualFileUrl(virtualFileManager), configLocation)
-    loadModule(moduleFile, source, configLocation, builder, virtualFileManager)
+    loadModule(moduleFile, source, configLocation, builder, errorReporter, virtualFileManager)
   }
 
   internal fun loadModule(moduleFile: Path,
                           source: JpsFileEntitySource.FileInDirectory,
                           configLocation: JpsProjectConfigLocation,
                           builder: WorkspaceEntityStorageBuilder,
+                          errorReporter: ErrorReporter,
                           virtualFileManager: VirtualFileUrlManager) {
     val reader = CachingJpsFileContentReader(configLocation.baseDirectoryUrlString)
     val serializer = ModuleListSerializerImpl.createModuleEntitiesSerializer(moduleFile.toVirtualFileUrl(virtualFileManager), null, source)
-    serializer.loadEntities(builder, reader, virtualFileManager)
+    serializer.loadEntities(builder, reader, errorReporter, virtualFileManager)
   }
 
   private fun createProjectEntitiesSerializers(configLocation: JpsProjectConfigLocation,
@@ -167,4 +170,10 @@ internal fun loadStorageFile(xmlFile: Path, pathMacroManager: PathMacroManager):
     rootElement.addContent(optionElement)
   }
   return FileStorageCoreUtil.load(rootElement, pathMacroManager, true)
+}
+
+fun levelToLibraryTableId(level: String) = when (level) {
+  JpsLibraryTableSerializer.MODULE_LEVEL -> error("this method isn't supposed to be used for module-level libraries")
+  JpsLibraryTableSerializer.PROJECT_LEVEL -> LibraryTableId.ProjectLibraryTableId
+  else -> LibraryTableId.GlobalLibraryTableId(level)
 }

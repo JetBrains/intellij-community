@@ -105,6 +105,8 @@
 
     <applicationService serviceInterface="com.intellij.openapi.roots.impl.PushedFilePropertiesRetriever"
                         serviceImplementation="com.intellij.openapi.roots.impl.PushedFilePropertiesRetrieverImpl"/>
+    <applicationService serviceInterface="com.intellij.psi.impl.source.tree.injected.EditorWindowTracker"
+                        serviceImplementation="com.intellij.psi.impl.source.tree.injected.EditorWindowTrackerImpl"/>
   </extensions>
 
   <xi:include href="/META-INF/lvcs.xml" xpointer="xpointer(/idea-plugin/*)">

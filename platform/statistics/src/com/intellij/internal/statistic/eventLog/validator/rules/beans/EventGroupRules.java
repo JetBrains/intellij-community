@@ -7,8 +7,9 @@ import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.EnumValidationRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.utils.ValidationSimpleRuleFactory;
-import com.intellij.internal.statistic.eventLog.whitelist.GlobalRulesHolder;
-import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
+import com.intellij.internal.statistic.eventLog.validator.storage.GlobalRulesHolder;
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors.EventGroupRemoteDescriptor;
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors.GroupRemoteRule;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SortedList;
 import org.jetbrains.annotations.NotNull;
@@ -137,9 +138,9 @@ public final class EventGroupRules {
     return prevResult != null ? prevResult : REJECTED;
   }
 
-  public static @NotNull EventGroupRules create(@NotNull FUStatisticsWhiteListGroupsService.WLGroup group,
+  public static @NotNull EventGroupRules create(@NotNull EventGroupRemoteDescriptor group,
                                                 @NotNull GlobalRulesHolder globalRulesHolder) {
-    FUStatisticsWhiteListGroupsService.WLRule rules = group.rules;
+    GroupRemoteRule rules = group.rules;
     return rules == null
            ? EMPTY
            : new EventGroupRules(rules.event_id, rules.event_data,

@@ -28,7 +28,6 @@ import com.intellij.ui.BalloonLayout
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.FrameState
 import com.intellij.util.SystemProperties
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NonNls
@@ -48,7 +47,7 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
                                                   @NlsContexts.DialogTitle var title: String = "",
                                                   open var component: JComponent? = null) : Disposable, DataProvider {
   open var preferredFocusedComponent: JComponent? = null
-  private var images: List<Image>? = null
+  private var images: List<Image> = emptyList()
   private var isCloseOnEsc = false
   private var onCloseHandler: BooleanGetter? = null
   private var frame: Window? = null
@@ -152,17 +151,16 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     else {
       (frame as JDialog).title = title
     }
-    if (images == null) {
+
+    if (images.isEmpty()) {
       AppUIUtil.updateWindowIcon(frame)
     }
     else {
       // unwrap the image before setting as frame's icon
-      frame.setIconImages(ContainerUtil.map(images!!) { image: Image? ->
-        ImageUtil.toBufferedImage((image)!!)
-      })
+      frame.setIconImages(images.map { ImageUtil.toBufferedImage(it) })
     }
 
-    val state = dimensionKey?.let { dimensionKey -> getWindowStateService(project).getState(dimensionKey, frame) }
+    val state = dimensionKey?.let { getWindowStateService(project).getState(it, frame) }
     if (restoreBounds) {
       loadFrameState(state)
     }
@@ -206,7 +204,7 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     }
     focusWatcher = null
     component = null
-    images = null
+    images = emptyList()
     isDisposed = true
 
     if (statusBar != null) {
@@ -277,7 +275,7 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
   }
 
   fun setImages(value: List<Image>?) {
-    images = value
+    images = value ?: emptyList()
   }
 
   fun setOnCloseHandler(value: BooleanGetter?) {

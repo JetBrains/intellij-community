@@ -76,6 +76,7 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhan
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability;
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorResult;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
 import org.jetbrains.plugins.groovy.lang.resolve.impl.AccessibilityKt;
 import org.jetbrains.plugins.groovy.lang.resolve.impl.ArgumentsKt;
@@ -85,7 +86,7 @@ import org.jetbrains.plugins.groovy.util.dynamicMembers.DynamicMemberUtils;
 
 import java.util.*;
 
-import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
+import static com.intellij.psi.CommonClassNames.*;
 import static com.intellij.psi.GenericsUtil.isTypeArgumentsApplicable;
 import static java.util.Collections.singletonList;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.*;
@@ -298,7 +299,7 @@ public final class PsiUtil {
 
   @Nullable
   public static PsiClass getJavaLangClass(PsiElement resolved, GlobalSearchScope scope) {
-    return JavaPsiFacade.getInstance(resolved.getProject()).findClass(CommonClassNames.JAVA_LANG_CLASS, scope);
+    return JavaPsiFacade.getInstance(resolved.getProject()).findClass(JAVA_LANG_CLASS, scope);
   }
 
   public static boolean isValidReferenceName(@NotNull String text) {
@@ -544,12 +545,12 @@ public final class PsiUtil {
     final PsiType qualifierType = qualifier.getType();
     if (qualifierType instanceof PsiClassType) {
 
-      if (InheritanceUtil.isInheritor(qualifierType, CommonClassNames.JAVA_UTIL_LIST)) {
+      if (InheritanceUtil.isInheritor(qualifierType, JAVA_UTIL_LIST)) {
         return com.intellij.psi.util.PsiUtil.extractIterableTypeParameter(qualifierType, false) == null;
       }
 
-      if (InheritanceUtil.isInheritor(qualifierType, CommonClassNames.JAVA_UTIL_MAP)) {
-        return com.intellij.psi.util.PsiUtil.substituteTypeParameter(qualifierType, CommonClassNames.JAVA_UTIL_MAP, 1, false) == null;
+      if (InheritanceUtil.isInheritor(qualifierType, JAVA_UTIL_MAP)) {
+        return com.intellij.psi.util.PsiUtil.substituteTypeParameter(qualifierType, JAVA_UTIL_MAP, 1, false) == null;
       }
       PsiClassType classType = (PsiClassType)qualifierType;
       final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
@@ -1104,7 +1105,7 @@ public final class PsiUtil {
         PsiElement resolved = ((GrReferenceExpression)parent).resolve();
         if (resolved instanceof PsiMember) {
           PsiClass containingClass = ((PsiMember)resolved).getContainingClass();
-          return containingClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(containingClass.getQualifiedName());
+          return containingClass != null && JAVA_LANG_CLASS.equals(containingClass.getQualifiedName());
         }
       }
       return true;
@@ -1231,6 +1232,30 @@ public final class PsiUtil {
       }
       List<PsiClass> selectedClasses = GrAnnotationUtil.getClassArrayValue(anno, "value", true);
       if (selectedClasses.stream().anyMatch(clazz -> referenceName.equals(clazz.getName()))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Map constructor is trusted if it behaves in a certainly defined way, e.g. no-arg and @MapConstructor-generated constructors are trusted.
+   *
+   * These constructors directly work with properties and fields,
+   * so it's safe to assume that named argument labels correspond to class properties.
+   */
+  public static boolean isTrustedMapConstructorResult(@NotNull GroovyResolveResult result) {
+    if (result instanceof GroovyConstructorResult && ((GroovyConstructorResult)result).isMapConstructor()) return true;
+    if (!(result instanceof GroovyConstructorResult) && result.getElement() instanceof PsiMethod && !((PsiMethod)result.getElement()).hasParameters()) return true;
+    PsiElement method = result.getElement();
+    if (method instanceof PsiMethod) {
+      PsiParameter[] parameters = ((PsiMethod)method).getParameterList().getParameters();
+      PsiClass containingClass = ((PsiMethod)method).getContainingClass();
+      if (containingClass == null) return false;
+      GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(method.getProject());
+      if (parameters.length == 1 &&
+          containingClass.hasAnnotation(GROOVY_TRANSFORM_MAP_CONSTRUCTOR) &&
+          TypesUtil.isAssignableByMethodCallConversion(parameters[0].getType(), factory.createTypeByFQClassName(JAVA_UTIL_MAP), method)) {
         return true;
       }
     }

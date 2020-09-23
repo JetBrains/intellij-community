@@ -123,7 +123,7 @@ public class AutoSvnUpdater extends AbstractCommonUpdateAction {
 
     @Override
     public String getScopeName(VcsContext dataContext, ActionInfo actionInfo) {
-      return "Subversion";
+      return SvnVcs.VCS_DISPLAY_NAME;
     }
 
     @Override

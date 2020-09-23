@@ -115,7 +115,7 @@ public class PluginManagerConfigurable
   private final JLabel myUpdateCounter = new CountComponent();
   private final CountIcon myCountIcon = new CountIcon();
 
-  private final MyPluginModel myPluginModel = new MyPluginModel();
+  private final MyPluginModel myPluginModel;
 
   private PluginUpdatesService myPluginUpdatesService;
 
@@ -132,7 +132,12 @@ public class PluginManagerConfigurable
 
   private Collection<IdeaPluginDescriptor> myInitUpdates;
 
+  public PluginManagerConfigurable(@Nullable Project project) {
+    myPluginModel = new MyPluginModel(project);
+  }
+
   public PluginManagerConfigurable() {
+    this((Project)null);
   }
 
   /**
@@ -140,6 +145,7 @@ public class PluginManagerConfigurable
    */
   @Deprecated
   public PluginManagerConfigurable(PluginManagerUISettings uiSettings) {
+    this();
   }
 
   @NotNull
@@ -711,13 +717,14 @@ public class PluginManagerConfigurable
                 ContainerUtil.removeDuplicates(result.descriptors);
 
                 if (!result.descriptors.isEmpty()) {
-                  String title = "Sort By";
+                  String title = IdeBundle.message("plugin.manager.action.label.sort.by.1");
 
                   for (AnAction action : myMarketplaceSortByGroup.getChildren(null)) {
                     MarketplaceSortByAction sortByAction = (MarketplaceSortByAction)action;
                     sortByAction.setState(parser);
                     if (sortByAction.myState) {
-                      title = "Sort By: " + sortByAction.myOption.name();
+                      title = IdeBundle.message("plugin.manager.action.label.sort.by",
+                                                sortByAction.myOption.myPresentableNameSupplier.get());
                     }
                   }
 
@@ -865,9 +872,15 @@ public class PluginManagerConfigurable
             };
             group.descriptors.addAll(entry.getValue());
             group.sortByName();
-            group.rightAction = new LinkLabel<>("", null, (__, ___) -> myPluginModel
-              .changeEnableDisable(ContainerUtil.toArray(group.descriptors, IdeaPluginDescriptor[]::new),
-                                   group.rightAction.getText().startsWith("Enable")));
+            group.rightAction = new LinkLabel<>(
+              "",
+              null,
+              (__, ___) -> UIUtilsKt.changeEnableDisable(
+                myPluginModel,
+                Set.copyOf(group.descriptors),
+                group.rightAction.getText().startsWith("Enable")
+              )
+            );
             group.titleWithEnabled(myPluginModel);
             groups.add(group);
           }
@@ -1390,12 +1403,12 @@ public class PluginManagerConfigurable
   }
 
   public static void showPluginConfigurable(@Nullable Project project, IdeaPluginDescriptor @NotNull ... descriptors) {
-    PluginManagerConfigurable configurable = new PluginManagerConfigurable();
+    PluginManagerConfigurable configurable = new PluginManagerConfigurable(project);
     ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> configurable.select(descriptors));
   }
 
   public static void showPluginConfigurable(@Nullable Project project, @NotNull Collection<IdeaPluginDescriptor> updates) {
-    PluginManagerConfigurable configurable = new PluginManagerConfigurable();
+    PluginManagerConfigurable configurable = new PluginManagerConfigurable(project);
     configurable.setInitUpdates(updates);
     ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
   }
@@ -1543,29 +1556,34 @@ public class PluginManagerConfigurable
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      IdeaPluginDescriptor[] descriptors;
+      Set<IdeaPluginDescriptor> descriptors = new HashSet<>();
       PluginsGroup group = myPluginModel.getDownloadedGroup();
 
       if (group == null || group.ui == null) {
         ApplicationInfoImpl appInfo = (ApplicationInfoImpl)ApplicationInfo.getInstance();
-        List<IdeaPluginDescriptor> descriptorList = new ArrayList<>();
 
         for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
           if (!appInfo.isEssentialPlugin(descriptor.getPluginId()) &&
               !descriptor.isBundled() && descriptor.isEnabled() != myEnable) {
-            descriptorList.add(descriptor);
+            descriptors.add(descriptor);
           }
         }
-
-        descriptors = descriptorList.toArray(new IdeaPluginDescriptor[0]);
       }
       else {
-        descriptors = group.ui.plugins.stream().filter(component -> myPluginModel.isEnabled(component.myPlugin) != myEnable)
-          .map(component -> component.myPlugin).toArray(IdeaPluginDescriptor[]::new);
+        for (ListPluginComponent component : group.ui.plugins) {
+          IdeaPluginDescriptor plugin = component.myPlugin;
+          if (myPluginModel.isEnabled(plugin) != myEnable) {
+            descriptors.add(plugin);
+          }
+        }
       }
 
-      if (descriptors.length > 0) {
-        myPluginModel.changeEnableDisable(descriptors, myEnable);
+      if (!descriptors.isEmpty()) {
+        UIUtilsKt.changeEnableDisable(
+          myPluginModel,
+          descriptors,
+          myEnable
+        );
       }
     }
   }

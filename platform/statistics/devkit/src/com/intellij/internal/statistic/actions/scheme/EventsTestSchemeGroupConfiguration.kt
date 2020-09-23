@@ -13,10 +13,10 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.actions.TestParseEventsSchemeDialog
-import com.intellij.internal.statistic.eventLog.whitelist.LocalWhitelistGroup
-import com.intellij.internal.statistic.eventLog.whitelist.LocalWhitelistGroup.Companion.EMPTY_RULES
-import com.intellij.internal.statistic.eventLog.whitelist.WhitelistBuilder
-import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService
+import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule
+import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule.Companion.EMPTY_RULES
+import com.intellij.internal.statistic.eventLog.events.EventsSchemeBuilder
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupRemoteDescriptors
 import com.intellij.json.JsonLanguage
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteAction
@@ -50,15 +50,15 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 
 class EventsTestSchemeGroupConfiguration(private val project: Project,
-                                         productionGroups: FUStatisticsWhiteListGroupsService.WLGroups,
-                                         initialGroup: LocalWhitelistGroup,
-                                         generatedScheme: List<WhitelistBuilder.WhitelistGroup>,
-                                         groupIdChangeListener: ((LocalWhitelistGroup) -> Unit)? = null) : Disposable {
+                                         productionGroups: EventGroupRemoteDescriptors,
+                                         initialGroup: GroupValidationTestRule,
+                                         generatedScheme: List<EventsSchemeBuilder.GroupDescriptor>,
+                                         groupIdChangeListener: ((GroupValidationTestRule) -> Unit)? = null) : Disposable {
 
   val panel: JPanel
   val groupIdTextField: TextFieldWithCompletion
   private val log = logger<EventsTestSchemeGroupConfiguration>()
-  private var currentGroup: LocalWhitelistGroup = initialGroup
+  private var currentGroup: GroupValidationTestRule = initialGroup
   private lateinit var allowAllEventsRadioButton: JBRadioButton
   private lateinit var customRulesRadioButton: JBRadioButton
   private lateinit var generateSchemeButton: JComponent
@@ -148,7 +148,7 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
     }
   }
 
-  private fun createCompletionProvider(productionGroups: FUStatisticsWhiteListGroupsService.WLGroups): TextFieldCompletionProviderDumbAware {
+  private fun createCompletionProvider(productionGroups: EventGroupRemoteDescriptors): TextFieldCompletionProviderDumbAware {
     return object : TextFieldCompletionProviderDumbAware() {
       override fun addCompletionVariants(text: String, offset: Int, prefix: String, result: CompletionResultSet) {
         val generatedSchemeVariants = eventsScheme.keys.map {
@@ -198,7 +198,7 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
     return editor
   }
 
-  fun updatePanel(newGroup: LocalWhitelistGroup?) {
+  fun updatePanel(newGroup: GroupValidationTestRule?) {
     if (newGroup == null) return
     currentGroup = newGroup
     groupIdTextField.text = newGroup.groupId
@@ -243,7 +243,7 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
     return validateTestSchemeGroup(project, currentGroup, groupIdTextField, tempFile)
   }
 
-  private fun createEventsScheme(generatedScheme: List<WhitelistBuilder.WhitelistGroup>): HashMap<String, String> {
+  private fun createEventsScheme(generatedScheme: List<EventsSchemeBuilder.GroupDescriptor>): HashMap<String, String> {
     val eventsScheme = HashMap<String, String>()
     val gson = GsonBuilder().setPrettyPrinting().create()
     for (group in generatedScheme) {
@@ -255,7 +255,7 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
     return eventsScheme
   }
 
-  private fun createValidationRules(group: WhitelistBuilder.WhitelistGroup): FUStatisticsWhiteListGroupsService.WLRule? {
+  private fun createValidationRules(group: EventsSchemeBuilder.GroupDescriptor): EventGroupRemoteDescriptors.GroupRemoteRule? {
     val eventIds = hashSetOf<String>()
     val eventData = hashMapOf<String, MutableSet<String>>()
     val events = group.schema
@@ -275,7 +275,7 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
 
     if (eventIds.isEmpty() && eventData.isEmpty()) return null
 
-    val rules = FUStatisticsWhiteListGroupsService.WLRule()
+    val rules = EventGroupRemoteDescriptors.GroupRemoteRule()
     rules.event_id = eventIds
     rules.event_data = eventData
     return rules
@@ -285,13 +285,13 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
     internal val FUS_TEST_SCHEME_COMMON_RULES_KEY = Key.create<ProductionRules>("statistics.test.scheme.validation.rules.file")
 
     fun validateTestSchemeGroup(project: Project,
-                                testSchemeGroup: LocalWhitelistGroup,
+                                testSchemeGroup: GroupValidationTestRule,
                                 groupIdTextField: JComponent): List<ValidationInfo> {
       return validateTestSchemeGroup(project, testSchemeGroup, groupIdTextField, null)
     }
 
     private fun validateTestSchemeGroup(project: Project,
-                                        testSchemeGroup: LocalWhitelistGroup,
+                                        testSchemeGroup: GroupValidationTestRule,
                                         groupIdTextField: JComponent,
                                         customRulesFile: PsiFile?): List<ValidationInfo> {
       val groupId: String = testSchemeGroup.groupId
@@ -342,7 +342,7 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
   }
 
   internal class ProductionRules(val regexps: Set<String>, val enums: Set<String>) {
-    constructor(rules: FUStatisticsWhiteListGroupsService.WLRule?) : this(rules?.regexps?.keys ?: emptySet(),
+    constructor(rules: EventGroupRemoteDescriptors.GroupRemoteRule?) : this(rules?.regexps?.keys ?: emptySet(),
                                                                           rules?.enums?.keys ?: emptySet())
   }
 

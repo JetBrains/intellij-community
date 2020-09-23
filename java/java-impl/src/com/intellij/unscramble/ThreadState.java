@@ -40,11 +40,11 @@ public class ThreadState {
     return myName;
   }
 
-  public String getState() {
+  public @NlsSafe String getState() {
     return myState;
   }
 
-  public String getStackTrace() {
+  public @NlsSafe String getStackTrace() {
     return myStackTrace;
   }
 
@@ -83,7 +83,7 @@ public class ThreadState {
     return myJavaThreadState;
   }
 
-  public String getThreadStateDetail() {
+  public @NlsSafe String getThreadStateDetail() {
     if (myOperation != null) {
       return myOperation.toString();
     }

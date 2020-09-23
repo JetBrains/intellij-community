@@ -21,11 +21,13 @@ import com.intellij.util.ui.EDT;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.function.Consumer;
 
 public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   private static final Logger LOG = Logger.getInstance(RefreshQueueImpl.class);
@@ -182,5 +184,12 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
         session.cancel();
       }
     }
+  }
+
+  @TestOnly
+  public static void setTestListener(@Nullable Consumer<? super VirtualFile> testListener) {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    RefreshWorker.ourTestListener = testListener;
+    LocalFileSystemRefreshWorker.setTestListener(testListener);
   }
 }

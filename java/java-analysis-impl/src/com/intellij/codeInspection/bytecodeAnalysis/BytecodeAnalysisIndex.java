@@ -198,13 +198,13 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
         int directionKey = DataInputOutputUtil.readINT(in);
         Direction direction = Direction.fromInt(directionKey);
         if (direction == Direction.Pure || direction == Direction.Volatile) {
-          Set<EffectQuantum> effects = new HashSet<>();
+          List<EffectQuantum> effects = new ArrayList<>();
           int effectsSize = DataInputOutputUtil.readINT(in);
           for (int i = 0; i < effectsSize; i++) {
             effects.add(readEffect(in));
           }
           DataValue returnValue = readDataValue(in);
-          results.add(new DirectionResultPair(directionKey, new Effects(returnValue, effects)));
+          results.add(new DirectionResultPair(directionKey, new Effects(returnValue, Set.copyOf(effects))));
         }
         else {
           boolean isFinal = in.readBoolean(); // flag

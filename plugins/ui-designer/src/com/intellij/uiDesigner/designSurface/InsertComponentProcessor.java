@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -31,6 +32,7 @@ import com.intellij.uiDesigner.palette.ComponentItemDialog;
 import com.intellij.uiDesigner.palette.Palette;
 import com.intellij.uiDesigner.quickFixes.CreateFieldFix;
 import com.intellij.uiDesigner.radComponents.*;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -415,7 +417,7 @@ public final class InsertComponentProcessor extends EventProcessor {
   }
 
   @Nullable
-  public static ComponentItem replaceAnyComponentItem(GuiEditor editor, ComponentItem item, final String title) {
+  public static ComponentItem replaceAnyComponentItem(GuiEditor editor, ComponentItem item, final @Nls String title) {
     if (item.isAnyComponent()) {
       ComponentItem newItem = item.clone();
       ComponentItemDialog dlg = new ComponentItemDialog(editor.getProject(), editor, newItem, true);
@@ -481,7 +483,7 @@ public final class InsertComponentProcessor extends EventProcessor {
           );
         }
         catch (final Exception exc) {
-          String errorDescription = Utils.validateJComponentClass(loader, item.getClassName(), true);
+          @NlsSafe String errorDescription = Utils.validateJComponentClass(loader, item.getClassName(), true);
           if (errorDescription == null) {
             errorDescription = UIDesignerBundle.message("error.class.cannot.be.instantiated", item.getClassName());
             final String message = FormEditingUtil.getExceptionMessage(exc);

@@ -7,6 +7,7 @@ import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.module.impl.ModulePath
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.Function
 import com.intellij.util.PathUtil
@@ -17,7 +18,6 @@ import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
-import com.intellij.workspaceModel.ide.impl.legacyBridge.project.isExternalModuleFile
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
@@ -26,11 +26,13 @@ import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import org.jetbrains.jps.util.JpsPathUtil
-import java.io.File
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Future
+import kotlin.streams.toList
 
 class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectoryEntitiesSerializerFactory<*>>,
                                 moduleListSerializers: List<JpsModuleListSerializer>,
@@ -79,17 +81,30 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   }
 
   private fun createDirectorySerializers(factory: JpsDirectoryEntitiesSerializerFactory<*>): List<JpsFileEntitiesSerializer<*>> {
-    val files = JpsPathUtil.urlToFile(factory.directoryUrl).listFiles { file: File -> file.extension == "xml" && file.isFile }
-                ?: return emptyList()
+    val osPath = JpsPathUtil.urlToOsPath(factory.directoryUrl)
+    val libPath = Paths.get(osPath)
+    val files = when {
+      Files.exists(libPath) -> Files.list(libPath).use { stream ->
+        stream.filter { path: Path -> PathUtil.getFileExtension(path.toString()) == "xml" && Files.isRegularFile(path) }
+          .toList()
+      }
+      else -> emptyList()
+    }
     return files.map {
-      factory.createSerializer("${factory.directoryUrl}/${it.name}",
-                               createFileInDirectorySource(virtualFileManager.fromUrl(factory.directoryUrl), it.name),
+      val fileName = it.fileName
+      factory.createSerializer("${factory.directoryUrl}/$fileName",
+                               createFileInDirectorySource(virtualFileManager.fromUrl(factory.directoryUrl), fileName.toString()),
                                virtualFileManager)
     }
   }
 
+  fun findModuleSerializer(modulePath: ModulePath): JpsFileEntitiesSerializer<*>? {
+    return fileSerializersByUrl.getValues(VfsUtilCore.pathToUrl(modulePath.path)).first()
+  }
+
   override fun reloadFromChangedFiles(change: JpsConfigurationFilesChange,
-                                      reader: JpsFileContentReader): Pair<Set<EntitySource>, WorkspaceEntityStorageBuilder> {
+                                      reader: JpsFileContentReader,
+                                      errorReporter: ErrorReporter): Pair<Set<EntitySource>, WorkspaceEntityStorageBuilder> {
     val obsoleteSerializers = ArrayList<JpsFileEntitiesSerializer<*>>()
     val newFileSerializers = ArrayList<JpsFileEntitiesSerializer<*>>()
 
@@ -163,31 +178,52 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
 
     val builder = WorkspaceEntityStorageBuilder.create()
     affectedFileLoaders.forEach {
-      it.loadEntities(builder, reader, virtualFileManager)
+      it.loadEntities(builder, reader, errorReporter, virtualFileManager)
     }
     return Pair(changedSources, builder)
   }
 
-  private val lock = Any()
-
-  override fun loadAll(reader: JpsFileContentReader, builder: WorkspaceEntityStorageBuilder) {
+  override fun loadAll(reader: JpsFileContentReader, builder: WorkspaceEntityStorageBuilder, errorReporter: ErrorReporter) {
     val service = AppExecutorUtil.createBoundedApplicationPoolExecutor("ModuleManager Loader", 1)
     try {
       val tasks = fileSerializersByUrl.values.map { serializer ->
         Callable {
           val myBuilder = WorkspaceEntityStorageBuilder.create()
-          serializer.loadEntities(myBuilder, reader, virtualFileManager)
-          synchronized(lock) {
-            builder.addDiff(myBuilder)
-          }
+          serializer.loadEntities(myBuilder, reader, errorReporter, virtualFileManager)
+          myBuilder
         }
       }
 
-      ConcurrencyUtil.invokeAll(tasks, service)
+      val res = ConcurrencyUtil.invokeAll(tasks, service)
+      val squashedBuilder = squash(res)
+      builder.addDiff(squashedBuilder)
     }
     finally {
       service.shutdown()
     }
+  }
+
+  // This fancy logic allows to reduce the time spared by addDiff. This can be removed if addDiff won't do toStorage at the start of the method
+  private fun squash(builders: List<Future<WorkspaceEntityStorageBuilder>>): WorkspaceEntityStorageBuilder {
+    val builder = byPairs(builders.map { it.get() })
+    return builder.singleOrNull() ?: WorkspaceEntityStorageBuilder.create()
+  }
+
+  private tailrec fun byPairs(builders: List<WorkspaceEntityStorageBuilder>): List<WorkspaceEntityStorageBuilder> {
+    if (builders.isEmpty() || builders.size == 1) return builders
+    val resBuilder = ArrayList<WorkspaceEntityStorageBuilder>()
+    var i = 0
+    while (i < builders.size - 1) {
+      val left = builders[i]
+      left.addDiff(builders[i+1])
+      resBuilder += left
+      i += 2
+    }
+    if (i == builders.lastIndex) {
+      resBuilder += builders.last()
+    }
+
+    return byPairs(resBuilder)
   }
 
   @TestOnly
@@ -417,7 +453,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   }
 }
 
-internal class CachingJpsFileContentReader(projectBaseDirUrl: String) : JpsFileContentReader {
+class CachingJpsFileContentReader(projectBaseDirUrl: String) : JpsFileContentReader {
   private val projectPathMacroManager = ProjectPathMacroManagerBridge(JpsPathUtil.urlToPath(projectBaseDirUrl))
   private val fileContentCache = ConcurrentHashMap<String, Map<String, Element>>()
 
@@ -479,3 +515,9 @@ internal class CachingJpsFileContentReader(projectBaseDirUrl: String) : JpsFileC
 // TODO Add more diagnostics: file path, line etc
 internal fun Element.getAttributeValueStrict(name: String): String =
   getAttributeValue(name) ?: error("Expected attribute $name under ${this.name} element")
+
+fun isExternalModuleFile(filePath: String): Boolean {
+  val parentPath = PathUtil.getParentPath(filePath)
+  return FileUtil.extensionEquals(filePath, "xml") && PathUtil.getFileName(parentPath) == "modules"
+         && PathUtil.getFileName(PathUtil.getParentPath(parentPath)) != ".idea"
+}

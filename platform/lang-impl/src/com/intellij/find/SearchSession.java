@@ -4,16 +4,20 @@ package com.intellij.find;
 import com.intellij.openapi.actionSystem.DataKey;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.PropertyKey;
 
 public interface SearchSession {
   DataKey<SearchSession> KEY = DataKey.create("search.replace.session");
-  @Nls String INCORRECT_REGEX_MESSAGE = FindBundle.message("find.incorrect.regexp");
 
-  @NotNull
-  FindModel getFindModel();
+  @PropertyKey(resourceBundle = FindBundle.BUNDLE) String INCORRECT_REGEXP_MESSAGE_KEY = "find.incorrect.regexp";
 
-  @NotNull
-  SearchReplaceComponent getComponent();
+  /** @deprecated please use {@link FindBundle#message} with {@link #INCORRECT_REGEXP_MESSAGE_KEY} instead */
+  @Deprecated
+  @Nls String INCORRECT_REGEX_MESSAGE = FindBundle.message(INCORRECT_REGEXP_MESSAGE_KEY);
+
+  @NotNull FindModel getFindModel();
+
+  @NotNull SearchReplaceComponent getComponent();
 
   boolean hasMatches();
 

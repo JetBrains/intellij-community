@@ -85,13 +85,13 @@ class PersistentThreeComponentSplitter(
     }
   }
 
+  @Suppress("DuplicatedCode")
   private fun invokeLaterWhen(condition: () -> Boolean, timestamp: Long, count: Int = 0, action: () -> Unit) {
     if (addNotifyTimestamp != timestamp) return
 
     SwingUtilities.invokeLater {
       when {
         Disposer.isDisposed(disposable) -> return@invokeLater
-
         condition() -> action()
         count > maxRetryCount -> {
           logger.error("Could not restore proportions in $maxRetryCount times. ${dump()}")
@@ -134,9 +134,8 @@ class PersistentThreeComponentSplitter(
     lastSize = (lastProportion * (totalSize - 2 * dividerWidth)).roundToInt()
   }
 
-  private fun dump(): String {
-    return "totalMinSize=$totalMinSize, totalSize=$totalSize, firstSize=($firstSize, visible=${firstVisible()}), lastSize=($lastSize, visible=${lastVisible()})"
-  }
+  @NonNls private fun dump() =
+    "totalMinSize=$totalMinSize, totalSize=$totalSize, firstSize=($firstSize, visible=${firstVisible()}), lastSize=($lastSize, visible=${lastVisible()})"
 
   private fun checkSize(): Boolean {
     return totalMinSize < totalSize && (firstSize > 0 || !firstVisible()) && (lastSize > 0 || !lastVisible())

@@ -9,6 +9,7 @@ import org.editorconfig.language.schema.parser.EditorConfigJsonSchemaConstants
 import org.editorconfig.language.schema.parser.EditorConfigJsonSchemaConstants.DOCUMENTATION
 import org.editorconfig.language.schema.parser.EditorConfigJsonSchemaConstants.NUMBER
 import org.editorconfig.language.schema.parser.EditorConfigJsonSchemaConstants.STRING
+import org.editorconfig.language.schema.parser.EditorConfigJsonSchemaConstants.TEXT
 import org.editorconfig.language.schema.parser.EditorConfigJsonSchemaConstants.TYPE
 import org.editorconfig.language.schema.parser.EditorConfigJsonSchemaException
 import org.editorconfig.language.schema.parser.EditorConfigJsonSchemaParser
@@ -23,6 +24,7 @@ class EditorConfigStandardTypeDescriptorParseHandler : EditorConfigDescriptorPar
     return when (jsonObject[TYPE].asString) {
       NUMBER -> EditorConfigNumberDescriptor(documentation, deprecation)
       STRING -> EditorConfigStringDescriptor(documentation, deprecation)
+      TEXT -> EditorConfigStringDescriptor(documentation, deprecation, ".*")
       else -> throw EditorConfigJsonSchemaException(jsonObject)
     }
   }

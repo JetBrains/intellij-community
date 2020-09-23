@@ -10,6 +10,7 @@ import com.intellij.ui.AnimatedIcon
 import com.intellij.util.ui.SingleComponentCenteringLayout
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
@@ -40,7 +41,7 @@ internal class GHPRTimelineFileEditor(private val project: Project,
 
   val repository = dataContext.parsedRepositoryCoordinates
 
-  override fun getName() = "Pull Request Timeline"
+  override fun getName() = GithubBundle.message("pull.request.editor.timeline")
 
   private val content by lazy(LazyThreadSafetyMode.NONE, ::createContent)
 

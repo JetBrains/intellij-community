@@ -483,7 +483,7 @@ public class PythonSdkUpdater implements StartupActivity.Background {
    * You may invoke it from any threads. Blocks until the commit is done in the AWT thread.
    */
   private static void changeSdkModificator(@NotNull Sdk sdk, @Nullable SdkModificator sdkModificator,
-                                           @NotNull Processor<SdkModificator> processor) {
+                                           @NotNull Processor<? super SdkModificator> processor) {
     final String key = PythonSdkType.getSdkKey(sdk);
     TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
     ApplicationManager.getApplication().invokeAndWait(() -> {

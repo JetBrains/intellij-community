@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.icons;
 
 import com.intellij.openapi.util.ScalableIcon;
@@ -77,15 +77,13 @@ public abstract class LazyImageIcon extends ScaleContextSupport /* do not modify
   }
 
   @ApiStatus.Internal
-  @NotNull
-  public final ImageIcon getRealIcon() {
+  public final @NotNull ImageIcon getRealIcon() {
     return getRealIcon(null);
   }
 
-  @NotNull
-  protected abstract ImageIcon getRealIcon(@Nullable ScaleContext ctx);
+  protected abstract @NotNull ImageIcon getRealIcon(@Nullable ScaleContext context);
 
-  protected ImageIcon getRealIconForSelection(@Nullable ScaleContext ctx) {
-    return getRealIcon(ctx);
+  protected ImageIcon getRealIconForSelection(@Nullable ScaleContext context) {
+    return getRealIcon(context);
   }
 }

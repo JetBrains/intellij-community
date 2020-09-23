@@ -187,7 +187,7 @@ final class PackagePrefixFileSystemItemImpl extends PsiElementBase implements Ps
   }
 
   @Override
-  public boolean processChildren(@NotNull final PsiElementProcessor<PsiFileSystemItem> processor) {
+  public boolean processChildren(final @NotNull PsiElementProcessor<? super PsiFileSystemItem> processor) {
     if (myIndex == myPackages.length - 1) {
       return myDirectory.processChildren(processor);
     }

@@ -28,6 +28,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.RGBImageFilter;
 import java.lang.ref.WeakReference;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
@@ -62,14 +63,17 @@ public class IconUtil {
       return icon;
     }
 
-    Image image = toImage(icon);
-    if (image == null) return icon;
+    Image image = IconLoader.toImage(icon, null);
+    if (image == null) {
+      return icon;
+    }
 
     double scale = 1f;
     if (image instanceof JBHiDPIScaledImage) {
       scale = ((JBHiDPIScaledImage)image).getScale();
       image = ((JBHiDPIScaledImage)image).getDelegate();
     }
+
     BufferedImage bi = ImageUtil.toBufferedImage(image);
     final Graphics2D g = bi.createGraphics();
 
@@ -132,8 +136,9 @@ public class IconUtil {
     };
   }
 
-  private static final NullableFunction<FileIconKey, Icon> ICON_NULLABLE_FUNCTION = key ->
-    computeFileIcon(key.getFile(), key.getFlags(), key.getProject());
+  private static final Function<FileIconKey, Icon> ICON_NULLABLE_FUNCTION = key -> {
+    return computeFileIcon(key.getFile(), key.getFlags(), key.getProject());
+  };
 
   /**
    * @return a deferred icon for the file, taking into account {@link FileIconProvider} and {@link FileIconPatcher} extensions.
@@ -185,10 +190,10 @@ public class IconUtil {
    * @return a deferred icon for the file, taking into account {@link FileIconProvider} and {@link FileIconPatcher} extensions.
    * Use {@link #computeFileIcon} where possible (e.g. in background threads) to get a non-deferred icon.
    */
-  public static Icon getIcon(@NotNull VirtualFile file, @Iconable.IconFlags int flags, @Nullable Project project) {
+  public static @NotNull Icon getIcon(@NotNull VirtualFile file, @Iconable.IconFlags int flags, @Nullable Project project) {
     Icon lastIcon = Iconable.LastComputedIcon.get(file, flags);
     Icon base = lastIcon != null ? lastIcon : computeBaseFileIcon(file);
-    return IconDeferrer.getInstance().defer(base, new FileIconKey(file, project, flags), ICON_NULLABLE_FUNCTION);
+    return IconManager.getInstance().createDeferredIcon(base, new FileIconKey(file, project, flags), ICON_NULLABLE_FUNCTION);
   }
 
   /**
@@ -204,7 +209,7 @@ public class IconUtil {
     }
     FileType fileType = vFile.getFileType();
     if (vFile.isDirectory() && !(fileType instanceof DirectoryFileType)) {
-      return IconWithToolTip.tooltipOnlyIfComposite(PlatformIcons.FOLDER_ICON);
+      return IconManager.getInstance().tooltipOnlyIfComposite(PlatformIcons.FOLDER_ICON);
     }
     icon = fileType.getIcon();
     return icon != null ? icon : getEmptyIcon(false);
@@ -221,7 +226,7 @@ public class IconUtil {
 
   @NotNull
   public static Icon getEmptyIcon(boolean showVisibility) {
-    RowIcon baseIcon = new RowIcon(2);
+    com.intellij.ui.icons.RowIcon baseIcon = new RowIcon(2);
     baseIcon.setIcon(EmptyIcon.create(PlatformIcons.CLASS_ICON), 0);
     if (showVisibility) {
       baseIcon.setIcon(EmptyIcon.create(PlatformIcons.PUBLIC_ICON), 1);

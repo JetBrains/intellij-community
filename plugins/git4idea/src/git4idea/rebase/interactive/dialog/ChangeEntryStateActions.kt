@@ -150,13 +150,34 @@ internal class FixupAction(table: GitRebaseCommitsTableView) : ChangeEntryStateS
 }
 
 // squash = reword + fixup
-internal class SquashAction(table: GitRebaseCommitsTableView) : ChangeEntryStateSimpleAction(GitRebaseEntry.Action.SQUASH, null, table) {
+internal class SquashAction(private val table: GitRebaseCommitsTableView) :
+  ChangeEntryStateSimpleAction(GitRebaseEntry.Action.SQUASH, null, table) {
+
   override fun isEntryActionEnabled(selection: List<Int>, rebaseTodoModel: GitRebaseTodoModel<*>) =
     getIndicesToUnite(selection, rebaseTodoModel) != null
 
   override fun performEntryAction(selection: List<Int>, rebaseTodoModel: GitRebaseTodoModel<out GitRebaseEntryWithDetails>) {
-    val root = rebaseTodoModel.unite(getIndicesToUnite(selection, rebaseTodoModel)!!)
-    if (root.type !is GitRebaseTodoModel.Type.NonUnite.KeepCommit.Reword) {
+    val indicesToUnite = getIndicesToUnite(selection, rebaseTodoModel)!!
+    val currentRoot = indicesToUnite.firstOrNull()?.let { rebaseTodoModel.elements[it] }?.let { element ->
+      when (element) {
+        is GitRebaseTodoModel.Element.UniteRoot -> element
+        is GitRebaseTodoModel.Element.UniteChild -> element.root
+        is GitRebaseTodoModel.Element.Simple -> null
+      }
+    }
+    val currentChildrenCount = currentRoot?.children?.size
+
+    val root = rebaseTodoModel.unite(indicesToUnite)
+    if (currentRoot != null) {
+      // added commits to already squashed
+      val newChildren = root.children.drop(currentChildrenCount!!)
+      val model = table.model
+      rebaseTodoModel.reword(
+        root.index,
+        (listOf(root) + newChildren).joinToString("\n".repeat(3)) { model.getCommitMessage(it.index) }
+      )
+    }
+    else {
       rebaseTodoModel.reword(root.index, root.getUnitedCommitMessage { it.commitDetails.fullMessage })
     }
     reword(root.index)

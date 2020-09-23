@@ -6,7 +6,6 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.asConfigLocation
 import com.intellij.workspaceModel.ide.impl.jps.serialization.loadProject
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.*
-import junit.framework.Assert.assertEquals
 import junit.framework.Assert.assertTrue
 import org.junit.Before
 import org.junit.ClassRule

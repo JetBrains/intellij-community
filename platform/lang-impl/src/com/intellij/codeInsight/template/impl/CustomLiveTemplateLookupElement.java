@@ -5,6 +5,8 @@ import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.template.CustomLiveTemplateBase;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,9 +18,9 @@ public class CustomLiveTemplateLookupElement extends LiveTemplateLookupElement {
   @NotNull private final String myItemText;
 
   public CustomLiveTemplateLookupElement(@NotNull CustomLiveTemplateBase customLiveTemplate,
-                                         @NotNull String templateKey,
-                                         @NotNull String itemText,
-                                         @Nullable String description,
+                                         @NotNull @NlsSafe String templateKey,
+                                         @NotNull @NlsSafe String itemText,
+                                         @Nullable @NlsContexts.DetailedDescription String description,
                                          boolean sudden,
                                          boolean worthShowingInAutoPopup) {
     super(templateKey, description, sudden, worthShowingInAutoPopup);

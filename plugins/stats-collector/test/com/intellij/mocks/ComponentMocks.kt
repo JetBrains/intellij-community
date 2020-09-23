@@ -42,7 +42,9 @@ internal class TestExperimentStatus : ExperimentStatus {
     override fun forLanguage(language: Language): ExperimentInfo =
       ExperimentInfo(inExperiment, VERSION, shouldRank, shouldShowArrows, shouldCalculateFeatures)
 
-    override fun experimentChanged(language: Language): Boolean = false
+    override fun disable() = Unit
+
+    override fun isDisabled(): Boolean = false
 
     fun updateExperimentSettings(inExperiment: Boolean, shouldRank: Boolean, shouldShowArrows: Boolean, shouldCalculateFeatures: Boolean) {
         this.inExperiment = inExperiment

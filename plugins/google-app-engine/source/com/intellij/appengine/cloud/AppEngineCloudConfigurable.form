@@ -14,7 +14,7 @@
         </constraints>
         <properties>
           <labelFor value="ad0b0"/>
-          <text value="&amp;Email:"/>
+          <text resource-bundle="messages/JavaGoogleAppEngineBundle" key="cloud.config.form.email.label.text"/>
         </properties>
       </component>
       <component id="c19df" class="javax.swing.JTextField" binding="myEmailField">
@@ -33,7 +33,7 @@
         </constraints>
         <properties>
           <labelFor value="eebf6"/>
-          <text value="&amp;Password:"/>
+          <text resource-bundle="messages/JavaGoogleAppEngineBundle" key="cloud.config.form.password.label.text"/>
         </properties>
       </component>
       <component id="6bca0" class="com.intellij.ui.components.JBPasswordField" binding="myPasswordField">
@@ -42,13 +42,14 @@
             <preferred-size width="150" height="-1"/>
           </grid>
         </constraints>
+        <properties/>
       </component>
       <component id="dad3a" class="com.intellij.ui.components.JBRadioButton" binding="myPasswordLoginButton">
         <constraints>
           <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="&amp;Log in with email and password"/>
+          <text resource-bundle="messages/JavaGoogleAppEngineBundle" key="cloud.config.form.email.and.password.radio.text"/>
         </properties>
       </component>
       <component id="a079" class="com.intellij.ui.components.JBRadioButton" binding="myOAuthLoginButton">
@@ -57,7 +58,7 @@
         </constraints>
         <properties>
           <selected value="true"/>
-          <text value="&amp;Use passwordless login via OAuth2"/>
+          <text resource-bundle="messages/JavaGoogleAppEngineBundle" key="cloud.config.form.oauth2.radio.text"/>
         </properties>
       </component>
       <vspacer id="d3a86">
@@ -70,7 +71,7 @@
           <grid row="4" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="1" use-parent-layout="false"/>
         </constraints>
         <properties>
-          <text value="&amp;Remember password"/>
+          <text resource-bundle="messages/JavaGoogleAppEngineBundle" key="cloud.config.form.remember.password.checkbox.text"/>
           <visible value="true"/>
         </properties>
       </component>

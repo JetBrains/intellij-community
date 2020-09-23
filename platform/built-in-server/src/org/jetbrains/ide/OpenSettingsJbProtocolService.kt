@@ -12,6 +12,7 @@ import io.netty.handler.codec.http.QueryStringDecoder
 
 private const val SERVICE_NAME = "settings"
 
+@Suppress("HardCodedStringLiteral")
 internal class OpenSettingsService : RestService() {
   override fun getServiceName() = SERVICE_NAME
 

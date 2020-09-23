@@ -32,6 +32,7 @@ import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.builtInWebServer.isSignedRequest
 import org.jetbrains.io.addCommonHeaders
 import org.jetbrains.io.addNoCache
@@ -56,6 +57,7 @@ import java.util.concurrent.atomic.AtomicInteger
  *
  * @see [Best Practices for Designing a Pragmatic REST API](http://www.vinaysahni.com/best-practices-for-a-pragmatic-restful-api).
  */
+@Suppress("HardCodedStringLiteral")
 abstract class RestService : HttpRequestHandler() {
   companion object {
     @JvmField
@@ -289,6 +291,7 @@ abstract class RestService : HttpRequestHandler() {
    * Return error or send response using [sendOk], [send]
    */
   @Throws(IOException::class)
+  @NonNls
   abstract fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String?
 }
 

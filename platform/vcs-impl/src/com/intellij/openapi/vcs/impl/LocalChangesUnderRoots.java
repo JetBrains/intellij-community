@@ -8,7 +8,6 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,15 +24,6 @@ import java.util.Map;
  * @author Kirill Likhodedov
  */
 public final class LocalChangesUnderRoots {
-  public static @NotNull Map<String, Map<VirtualFile, Collection<Change>>> getChangesByLists(@NotNull Collection<? extends VirtualFile> rootsToSave, @NotNull Project project) {
-    Map<String, Map<VirtualFile, Collection<Change>>> result = new HashMap<>();
-    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-    for (LocalChangeList list : ChangeListManager.getInstance(project).getChangeLists()) {
-      result.put(list.getName(), groupChanges(rootsToSave, list.getChanges(), vcsManager));
-    }
-    return result;
-  }
-
   /**
    * Sort all changes registered in the {@link ChangeListManager} by VCS roots,
    * filtering out any roots except the specified ones.

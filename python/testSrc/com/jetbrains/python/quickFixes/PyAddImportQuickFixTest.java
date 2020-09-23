@@ -257,7 +257,7 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
     doMultiFileAutoImportTest(hintPrefix, null);
   }
 
-  private void doMultiFileAutoImportTest(@NotNull String hintPrefix, @Nullable Processor<AutoImportQuickFix> checkQuickfix) {
+  private void doMultiFileAutoImportTest(@NotNull String hintPrefix, @Nullable Processor<? super AutoImportQuickFix> checkQuickfix) {
     configureMultiFileProject();
 
     final PsiElement hostUnderCaret = myFixture.getFile().findElementAt(myFixture.getCaretOffset());

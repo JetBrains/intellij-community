@@ -2,6 +2,7 @@
 
 package com.intellij.lang.ant.config.actions;
 
+import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.AntDisposable;
 import com.intellij.lang.ant.config.AntConfiguration;
 import com.intellij.lang.ant.config.AntConfigurationListener;
@@ -24,7 +25,7 @@ public class TargetActionStub extends AnAction implements Disposable {
   private final AtomicBoolean myActionInvoked = new AtomicBoolean(false);
 
   public TargetActionStub(String actionId, Project project) {
-    super("ant target action stub");
+    super(AntBundle.message("action.ant.target.action.stub.text"));
     myActionId = actionId;
     myProject = project;
     Disposer.register(AntDisposable.getInstance(project), this);

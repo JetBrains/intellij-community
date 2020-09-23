@@ -4,8 +4,8 @@ package com.intellij.openapi.vcs.configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.VcsShowOptionsSettingImpl;
 import com.intellij.openapi.vcs.changes.RemoteRevisionsCache;
+import com.intellij.openapi.vcs.impl.projectlevelman.PersistentVcsShowSettingOption;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -18,7 +18,7 @@ public class VcsBackgroundOperationsConfigurationPanel {
   private JPanel myPanel;
 
   private final Project myProject;
-  Map<VcsShowOptionsSettingImpl, JCheckBox> myPromptOptions = new LinkedHashMap<>();
+  Map<PersistentVcsShowSettingOption, JCheckBox> myPromptOptions = new LinkedHashMap<>();
   private JCheckBox myCbUpdateInBackground;
   private JCheckBox myCbCommitInBackground;
   private JCheckBox myCbEditInBackground;
@@ -61,7 +61,7 @@ public class VcsBackgroundOperationsConfigurationPanel {
       settings.CHANGED_ON_SERVER_INTERVAL = ((Number) myChangedOnServerInterval.getValue()).intValue();
     }
 
-    for (VcsShowOptionsSettingImpl setting : myPromptOptions.keySet()) {
+    for (PersistentVcsShowSettingOption setting : myPromptOptions.keySet()) {
       setting.setValue(myPromptOptions.get(setting).isSelected());
     }
     // will check if should + was started -> inside
@@ -110,7 +110,7 @@ public class VcsBackgroundOperationsConfigurationPanel {
     myCbEditInBackground.setSelected(settings.PERFORM_EDIT_IN_BACKGROUND);
     myCbAddRemoveInBackground.setSelected(settings.PERFORM_ADD_REMOVE_IN_BACKGROUND);
     myPerformRevertInBackgroundCheckBox.setSelected(settings.PERFORM_ROLLBACK_IN_BACKGROUND);
-    for (VcsShowOptionsSettingImpl setting : myPromptOptions.keySet()) {
+    for (PersistentVcsShowSettingOption setting : myPromptOptions.keySet()) {
       myPromptOptions.get(setting).setSelected(setting.getValue());
     }
 

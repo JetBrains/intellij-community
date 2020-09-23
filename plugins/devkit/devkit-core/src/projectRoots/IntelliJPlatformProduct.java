@@ -20,6 +20,7 @@ public enum IntelliJPlatformProduct {
   WEBSTORM("WS", "WebStorm", PlatformUtils.WEB_PREFIX),
   APPCODE("OC", "AppCode", PlatformUtils.APPCODE_PREFIX),
   CLION("CL", "CLion", PlatformUtils.CLION_PREFIX),
+  MOBILE_IDE("MI", "Mobile IDE", PlatformUtils.MOBILE_IDE_PREFIX),
   DBE("DB", "DataGrip", PlatformUtils.DBE_PREFIX),
   RIDER("RD", "Rider", PlatformUtils.RIDER_PREFIX),
   GOIDE("GO", "GoLand", PlatformUtils.GOIDE_PREFIX),

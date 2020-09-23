@@ -414,6 +414,16 @@ public abstract class HtmlChunk {
   }
 
   /**
+   * Creates an html entity (e.g. `&ndash;`)
+   * @param htmlEntity entity
+   * @return the HtmlChunk that represents the html entity
+   */
+  @Contract(pure = true)
+  public static @NotNull HtmlChunk htmlEntity(@NotNull @NlsSafe String htmlEntity) {
+    return raw(htmlEntity);
+  }
+
+  /**
    * @return true if this chunk is empty (doesn't produce any text) 
    */
   @Contract(pure = true)

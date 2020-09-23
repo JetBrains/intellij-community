@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.util;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -42,7 +43,7 @@ public final class JpsPathUtil {
   }
 
   @Contract("null -> null; !null -> !null")
-  public static String urlToPath(@Nullable String url) {
+  public static @NlsSafe String urlToPath(@Nullable String url) {
     if (url == null) {
       return null;
     }

@@ -12,6 +12,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.PairFunction;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogFilterCollection;
+import com.intellij.vcs.log.VcsLogHighlighter;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
@@ -22,6 +23,7 @@ import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
 import com.intellij.vcs.log.ui.frame.MainFrame;
 import com.intellij.vcs.log.ui.frame.VcsLogEditorDiffPreview;
+import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.ui.table.column.Date;
@@ -36,7 +38,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
   @NonNls private static final String HELP_ID = "reference.changesToolWindow.log";
@@ -45,6 +49,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
   @NotNull private final MainFrame myMainFrame;
   @NotNull private final MyVcsLogUiPropertiesListener myPropertiesListener;
   @NotNull private final History myHistory;
+  @NotNull private final LinkedHashMap<String, VcsLogHighlighter> myHighlighters = new LinkedHashMap<>();
 
   public VcsLogUiImpl(@NotNull String id,
                       @NotNull VcsLogData logData,
@@ -58,7 +63,8 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
     VcsLogFilterUiEx filterUi = createFilterUi(filters -> applyFiltersAndUpdateUi(filters), initialFilters, this);
     myMainFrame = createMainFrame(logData, uiProperties, filterUi);
 
-    VcsLogUiUtil.installHighlighters(this, f -> true);
+    LOG_HIGHLIGHTER_FACTORY_EP.addChangeListener(this::updateHighlighters, this);
+    updateHighlighters();
 
     myPropertiesListener = new MyVcsLogUiPropertiesListener();
     myUiProperties.addChangeListener(myPropertiesListener);
@@ -199,6 +205,21 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
     super.dispose();
   }
 
+  private void updateHighlighters() {
+    myHighlighters.forEach((s, highlighter) -> getTable().removeHighlighter(highlighter));
+    myHighlighters.clear();
+
+    for (VcsLogHighlighterFactory factory : LOG_HIGHLIGHTER_FACTORY_EP.getExtensionList()) {
+      VcsLogHighlighter highlighter = factory.createHighlighter(myLogData, this);
+      myHighlighters.put(factory.getId(), highlighter);
+      if (isHighlighterEnabled(factory.getId())) {
+        getTable().addHighlighter(highlighter);
+      }
+    }
+
+    getTable().repaint();
+  }
+
   private class MyVcsLogUiPropertiesListener implements VcsLogUiProperties.PropertiesChangeListener {
 
     @Override
@@ -228,6 +249,12 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
         getTable().onColumnOrderSettingChanged();
       }
       else if (property instanceof VcsLogHighlighterProperty) {
+        VcsLogHighlighter highlighter = myHighlighters.get(((VcsLogHighlighterProperty)property).getId());
+        if ((boolean)myUiProperties.get(property)) {
+          getTable().addHighlighter(highlighter);
+        } else {
+          getTable().removeHighlighter(highlighter);
+        }
         getTable().repaint();
       }
       else if (property instanceof TableColumnWidthProperty) {

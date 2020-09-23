@@ -28,6 +28,8 @@ import com.intellij.openapi.ui.panel.PanelGridBuilder;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.NavigatableAdapter;
@@ -84,6 +86,10 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
 
   @NonNls
   private static final String PLUGIN_ICON_SVG_FILENAME = "pluginIcon.svg";
+
+  @NonNls
+  public static final String DEPENDENCIES_DOC_URL =
+    "https://jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_dependencies.html";
 
   public List<String> myRegistrationCheckIgnoreClassList = new ExternalizableStringSet();
 
@@ -188,11 +194,17 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
       else if (element instanceof Extensions) {
         annotateExtensions((Extensions)element, holder);
       }
+      else if (element instanceof Extensions.UnresolvedExtension) {
+        annotateUnresolvedExtension((Extensions.UnresolvedExtension)element, holder);
+      }
       else if (element instanceof AddToGroup) {
         annotateAddToGroup((AddToGroup)element, holder);
       }
       else if (element instanceof Action) {
         annotateAction((Action)element, holder, componentModuleRegistrationChecker);
+      }
+      else if (element instanceof Synonym) {
+        annotateSynonym((Synonym)element, holder);
       }
       else if (element instanceof Group) {
         annotateGroup((Group)element, holder);
@@ -615,6 +627,20 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     }
   }
 
+  private static void annotateUnresolvedExtension(Extensions.UnresolvedExtension unresolvedExtension, DomElementAnnotationHolder holder) {
+    final Extensions extensions = DomUtil.getParentOfType(unresolvedExtension, Extensions.class, true);
+    assert extensions != null;
+
+    String qualifiedExtensionId = extensions.getEpPrefix() + unresolvedExtension.getXmlElementName();
+    String message = new HtmlBuilder()
+      .append(DevKitBundle.message("error.cannot.resolve.extension.point", qualifiedExtensionId))
+      .nbsp()
+      .append(HtmlChunk.link(DEPENDENCIES_DOC_URL, DevKitBundle.message("error.cannot.resolve.plugin.reference.link.title")))
+      .wrapWith(HtmlChunk.html()).toString();
+
+    holder.createProblem(unresolvedExtension, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, message, null);
+  }
+
   private static void annotateIdeaVersion(IdeaVersion ideaVersion, DomElementAnnotationHolder holder) {
     //noinspection deprecation
     highlightAttributeNotUsedAnymore(ideaVersion.getMin(), holder);
@@ -901,6 +927,22 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     Module module = action.getModule();
     if (componentModuleRegistrationChecker.isIdeaPlatformModule(module)) {
       componentModuleRegistrationChecker.checkProperXmlFileForClass(action, action.getClazz().getValue());
+    }
+  }
+
+  private static void annotateSynonym(Synonym synonym, DomElementAnnotationHolder holder) {
+    boolean hasKey = DomUtil.hasXml(synonym.getKey());
+    boolean hasText = DomUtil.hasXml(synonym.getText());
+
+    if (!hasKey && !hasText) {
+      holder.createProblem(synonym, ProblemHighlightType.GENERIC_ERROR,
+                           DevKitBundle.message("inspections.plugin.xml.synonym.missing.key.and.text"), null,
+                           new AddDomElementQuickFix<>(synonym.getKey()),
+                           new AddDomElementQuickFix<>(synonym.getText()));
+    }
+    else if (hasKey && hasText) {
+      holder.createProblem(synonym, ProblemHighlightType.GENERIC_ERROR,
+                           DevKitBundle.message("inspections.plugin.xml.synonym.both.key.and.text"), null);
     }
   }
 

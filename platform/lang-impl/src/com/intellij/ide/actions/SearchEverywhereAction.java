@@ -74,7 +74,7 @@ public class SearchEverywhereAction extends SearchEverywhereBaseAction implement
   private static String getShortcut() {
     Shortcut[] shortcuts = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE).getShortcuts();
     if (shortcuts.length == 0) {
-      return "Double" + (SystemInfo.isMac ? FontUtil.thinSpace() + MacKeymapUtil.SHIFT : " Shift");
+      return "Double" + (SystemInfo.isMac ? FontUtil.thinSpace() + MacKeymapUtil.SHIFT : " Shift"); //NON-NLS
     }
     return KeymapUtil.getShortcutsText(shortcuts);
   }

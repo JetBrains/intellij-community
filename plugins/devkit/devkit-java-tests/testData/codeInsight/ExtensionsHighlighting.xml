@@ -46,10 +46,14 @@
                    forClass="<error descr="Cannot resolve symbol 'INVALID_VALUE'">INVALID_VALUE</error>"
         />
 
+        <myService serviceImplementation="foo.MyRunnable"
+                   canBeEmptyString=""/>
+
         <myPlugin.foo.bar implementation="java.util.ArrayList" os="<error descr="Unknown enum value 'INVALID_VALUE'">INVALID_VALUE</error>"/>
         <completion.contributor/>
         <custom.custom/>
         <indirect.indirect/>
-        <<error descr="Element custom.error is not allowed here">custom.error</error>/>
+        <<error descr="Cannot resolve extension point 'com.intellij.custom.error' in dependencies&nbsp;(Reference: Plugin Dependencies)">custom.error</error>
+                <error descr="Attribute customAttribute is not allowed here">customAttribute</error>=""/>
     </extensions>
 </idea-plugin>

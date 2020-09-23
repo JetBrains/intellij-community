@@ -99,6 +99,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import gnu.trove.Equality;
 import gnu.trove.TIntFunction;
+import icons.PlatformDiffImplIcons;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -122,15 +123,16 @@ public final class DiffUtil {
   @NotNull @NonNls public static final String DIFF_CONFIG = "diff.xml";
   public static final int TITLE_GAP = JBUIScale.scale(2);
 
-  public static final class Lazy {
-    public static final List<Image> DIFF_FRAME_ICONS = loadDiffFrameImages();
-  }
+  public static final NotNullLazyValue<List<Image>> DIFF_FRAME_ICONS = NotNullLazyValue.createValue(() -> {
+    return Arrays.asList(
+      iconToImage(PlatformDiffImplIcons.Diff_frame32),
+      iconToImage(PlatformDiffImplIcons.Diff_frame64),
+      iconToImage(PlatformDiffImplIcons.Diff_frame128)
+    );
+  });
 
-  @NotNull
-  private static List<Image> loadDiffFrameImages() {
-    return Arrays.asList(ImageLoader.loadFromResource("/vcs/diff_frame32.png"),
-                         ImageLoader.loadFromResource("/vcs/diff_frame64.png"),
-                         ImageLoader.loadFromResource("/vcs/diff_frame128.png"));
+  private static Image iconToImage(@NotNull Icon icon) {
+    return ((IconLoader.CachedImageIcon)icon).getRealIcon().getImage();
   }
 
   //

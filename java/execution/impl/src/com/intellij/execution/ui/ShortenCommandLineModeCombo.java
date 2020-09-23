@@ -4,6 +4,7 @@ package com.intellij.execution.ui;
 import com.intellij.application.options.ModuleDescriptionsComboBox;
 import com.intellij.execution.ShortenCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -43,7 +44,7 @@ public class ShortenCommandLineModeCombo extends ComboBox<ShortenCommandLine> {
                                            boolean hasFocus) {
         if (value == null) {
           ShortenCommandLine defaultMode = ShortenCommandLine.getDefaultMethod(myProject, getJdkRoot(pathEditor, component.compute()));
-          append("user-local default: " + defaultMode.getPresentableName())
+          append(JavaBundle.message("user.local.default.shorten.command.line.option", defaultMode.getPresentableName()))
             .append(" - " + defaultMode.getDescription(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
         else {

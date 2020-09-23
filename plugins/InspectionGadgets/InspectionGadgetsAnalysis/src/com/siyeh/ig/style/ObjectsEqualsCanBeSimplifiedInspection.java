@@ -6,6 +6,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -53,7 +54,8 @@ public class ObjectsEqualsCanBeSimplifiedInspection extends AbstractBaseJavaLoca
               return;
             }
           }
-          holder.registerProblem(nameElement, JavaAnalysisBundle.message("inspection.can.be.replaced.with.message", "equals()"),
+          @NlsSafe final String message = JavaAnalysisBundle.message("inspection.can.be.replaced.with.message", "equals()");
+          holder.registerProblem(nameElement, message,
                                  new ReplaceWithEqualsFix(false));
         }
       }

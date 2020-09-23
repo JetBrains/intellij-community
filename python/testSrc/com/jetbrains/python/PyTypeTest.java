@@ -3904,6 +3904,47 @@ public class PyTypeTest extends PyTestCase {
            "expr = Base.__subclasses__()");
   }
 
+  // PY-37876
+  public void testCallableParameterTypeVarMatching() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTest("int",
+                   "from typing import Callable, TypeVar, Any\n" +
+                   "\n" +
+                   "T = TypeVar('T')\n" +
+                   "def func(x: Callable[[T], Any]) -> T:\n" +
+                   "    pass\n" +
+                   "\n" +
+                   "def callback(x: int) -> Any:\n" +
+                   "    pass\n" +
+                   "\n" +
+                   "\n" +
+                   "expr = func(callback)")
+    );
+  }
+
+  // PY-37876
+  public void testCallableParameterGenericTypeParameterMatching() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTest("int",
+                   "from typing import Callable, TypeVar, Any, List\n" +
+                   "\n" +
+                   "T = TypeVar('T')\n" +
+                   "\n" +
+                   "\n" +
+                   "def func(f: Callable[[List[T]], Any]) -> T:\n" +
+                   "    pass\n" +
+                   "\n" +
+                   "\n" +
+                   "def accepts_list_of_int(x: List[int]) -> Any:\n" +
+                   "    pass\n" +
+                   "\n" +
+                   "\n" +
+                   "expr = func(accepts_list_of_int)\n")
+    );
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

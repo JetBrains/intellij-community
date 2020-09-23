@@ -7,6 +7,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.Nls;
@@ -33,6 +34,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   private final Predicate<? super Settings> myInitialSelection;
   private @Nullable @Nls String myHint;
   private @Nullable JComponent myHintComponent;
+  private @Nullable @Nls String myActionHint;
   private @Nullable Function<? super C, ? extends JComponent> myEditorGetter;
   private boolean myRemovable = true;
 
@@ -156,6 +158,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   public void toggle(boolean selected) {
     setSelected(selected);
     if (selected) {
+      myComponent.scrollRectToVisible(new Rectangle(new Point(0, 50), myComponent.getPreferredSize()));
       IdeFocusManager.getGlobalInstance().requestFocus(getEditorComponent(), false);
     }
   }
@@ -205,6 +208,14 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
 
   public @Nullable @Nls String getChildrenGroupName() {
     return null;
+  }
+
+  public @Nullable @NlsActions.ActionDescription String getActionHint() {
+    return myActionHint;
+  }
+
+  public void setActionHint(@Nullable @Nls String hint) {
+    myActionHint = hint;
   }
 
   public @Nullable String getHint(@Nullable JComponent component) {

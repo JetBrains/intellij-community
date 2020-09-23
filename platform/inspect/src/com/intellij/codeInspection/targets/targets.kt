@@ -9,6 +9,7 @@ import com.intellij.codeInspection.ex.GlobalInspectionContextEx
 import com.intellij.codeInspection.ex.GlobalInspectionContextUtil
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.StaticAnalysisReportConverter
+import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -52,6 +53,7 @@ class TargetsRunner(val application: InspectionApplication,
   val inspectionCounter = mutableMapOf<TargetDefinition, AtomicInteger>()
   var currentTarget: TargetDefinition? = null
   val converter = StaticAnalysisReportConverter()
+  val macroManager = PathMacroManager.getInstance(project)
 
   fun run() {
     val targetsFile = Paths.get(application.myTargets)
@@ -93,6 +95,7 @@ class TargetsRunner(val application: InspectionApplication,
         if (target.isAboveThreshold(count)) {
           progressIndicator.cancel()
         }
+        macroManager.collapsePathsRecursively(element)
         super.consume(element)
       }
     }

@@ -14,6 +14,7 @@ import com.intellij.execution.testframework.sm.runner.states.*;
 import com.intellij.execution.testframework.sm.runner.ui.TestsPresentationUtil;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.nls.NlsMessages;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
@@ -417,7 +418,7 @@ public class SMTestProxy extends AbstractTestProxy {
   }
   private String getDurationPaddedString() {
     final Long duration = getDuration();
-    return duration != null ? StringUtil.formatDurationPadded(duration.longValue(), "\u2009") : null;
+    return duration != null ? NlsMessages.formatDurationPadded(duration.longValue()) : null;
   }
 
   @Override
@@ -1006,6 +1007,10 @@ public class SMTestProxy extends AbstractTestProxy {
         myExecutionId = result = executionEnvironment != null ? executionEnvironment.getExecutionId() : 0;
       }
       return result;
+    }
+
+    public void setExecutionId(long id) {
+      myExecutionId = id;
     }
 
     @Override

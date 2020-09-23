@@ -14,7 +14,6 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -199,13 +198,12 @@ public class GitMergeUpdater extends GitUpdater {
 
   private Collection<Change> getLocalChangesFilteredByFiles(List<FilePath> paths) {
     final Collection<Change> changes = new HashSet<>();
-    for(LocalChangeList list : myChangeListManager.getChangeLists()) {
-      for (Change change : list.getChanges()) {
-        final ContentRevision afterRevision = change.getAfterRevision();
-        final ContentRevision beforeRevision = change.getBeforeRevision();
-        if ((afterRevision != null && paths.contains(afterRevision.getFile())) || (beforeRevision != null && paths.contains(beforeRevision.getFile()))) {
-          changes.add(change);
-        }
+    for (Change change : myChangeListManager.getAllChanges()) {
+      final ContentRevision afterRevision = change.getAfterRevision();
+      final ContentRevision beforeRevision = change.getBeforeRevision();
+      if ((afterRevision != null && paths.contains(afterRevision.getFile())) ||
+          (beforeRevision != null && paths.contains(beforeRevision.getFile()))) {
+        changes.add(change);
       }
     }
     return changes;

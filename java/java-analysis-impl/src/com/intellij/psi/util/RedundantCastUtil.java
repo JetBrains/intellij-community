@@ -874,7 +874,8 @@ public final class RedundantCastUtil {
         if (!PsiUtil.isLanguageLevel5OrHigher(typeCast)) {
           return;
         }
-        if (!PsiPolyExpressionUtil.isPolyExpression(parent)) {    //branches need to be of the same type
+        if (!PsiPolyExpressionUtil.isInAssignmentOrInvocationContext(parent) || 
+            PsiPolyExpressionUtil.sameBooleanOrNumeric(operand, oppositeOperand)) {    //branches need to be of the same type
           if (oppositeOperand == null || !Comparing.equal(conditionalType, oppositeOperand.getType())) return;
         }
       }
@@ -974,9 +975,10 @@ public final class RedundantCastUtil {
       if (opType instanceof PsiClassType && ((PsiClassType)opType).isRaw()) return true;
     }
 
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(typeCast.getParent());
     final PsiExpression stripParenthesisOperand = PsiUtil.skipParenthesizedExprDown(operand);
     if (stripParenthesisOperand instanceof PsiFunctionalExpression) {
-      if (isCastToSerializable(castType)) return true;
+      if (isCastToSerializable(castType) && !isCastToSerializable(PsiTypesUtil.getExpectedTypeByParent(typeCast))) return true;
     }
     else if (stripParenthesisOperand instanceof PsiConditionalExpression) {
       if (PsiUtil.skipParenthesizedExprDown(((PsiConditionalExpression)stripParenthesisOperand).getThenExpression()) instanceof PsiFunctionalExpression ||
@@ -984,8 +986,6 @@ public final class RedundantCastUtil {
         return true;
       }
     }
-
-    PsiElement parent = PsiUtil.skipParenthesizedExprUp(typeCast.getParent());
 
     if (parent instanceof PsiBinaryExpression) {
       PsiBinaryExpression expression = (PsiBinaryExpression)parent;

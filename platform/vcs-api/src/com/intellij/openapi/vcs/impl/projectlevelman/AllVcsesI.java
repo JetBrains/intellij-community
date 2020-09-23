@@ -20,6 +20,8 @@ public interface AllVcsesI {
 
   VcsDescriptor[] getAll();
 
+  AbstractVcs[] getSupportedVcses();
+
   boolean isEmpty();
 
   static AllVcsesI getInstance(@NotNull Project project) {

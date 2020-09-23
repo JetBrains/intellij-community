@@ -103,7 +103,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myDetailsPanel = new VcsLogCommitDetailsListPanel(logData, logUi.getColorManager(), this) {
       @Override
       protected void navigate(@NotNull CommitId commit) {
-        logUi.jumpToCommit(commit.getHash(), commit.getRoot());
+        logUi.getVcsLog().jumpToCommit(commit.getHash(), commit.getRoot());
       }
     };
 

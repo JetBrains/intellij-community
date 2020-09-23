@@ -30,6 +30,7 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
@@ -48,6 +49,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+import static com.intellij.openapi.util.text.StringUtil.ELLIPSIS;
+import static com.intellij.openapi.util.text.StringUtil.join;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.*;
 
@@ -609,28 +612,20 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
 
     // will be used, for instance, while copying (to clipboard) data from table
     @Override
-    public String toString() {
+    public @Nls @NotNull String toString() {
       return toString(revision);
     }
 
-    private static String toString(@Nullable VcsFileRevision value) {
-      if (!(value instanceof SvnFileRevision)) return "";
-      final SvnFileRevision revision = (SvnFileRevision)value;
-      final List<SvnFileRevision> mergeSources = revision.getMergeSources();
-      if (mergeSources.isEmpty()) {
-        return "";
-      }
-      final StringBuilder sb = new StringBuilder();
-      for (SvnFileRevision source : mergeSources) {
-        if (sb.length() != 0) {
-          sb.append(", ");
-        }
-        sb.append(source.getRevisionNumber().asString());
-        if (!source.getMergeSources().isEmpty()) {
-          sb.append("*");
-        }
-      }
-      return sb.toString();
+    private static @Nls @NotNull String toString(@Nullable VcsFileRevision revision) {
+      if (!(revision instanceof SvnFileRevision)) return "";
+      return join(((SvnFileRevision)revision).getMergeSources(), it -> getRevisionNumberWithMergeMark(it), ", ");
+    }
+
+    private static @Nls @NotNull String getRevisionNumberWithMergeMark(@NotNull SvnFileRevision revision) {
+      String revisionNumber = revision.getRevisionNumber().asString();
+      String mergeSuffix = !revision.getMergeSources().isEmpty() ? "*" : "";
+
+      return revisionNumber + mergeSuffix;
     }
   }
 
@@ -742,10 +737,13 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
         myListener = new MergeSourceDetailsLinkListener(MERGE_SOURCE_DETAILS_TAG, myFile);
         myListener.installOn(table);
       }
-      appendMergeSourceText(table, row, column, value instanceof RevisionMergeSourceInfo ? value.toString() : null);
+      appendMergeSourceText(
+        table, row, column,
+        value instanceof RevisionMergeSourceInfo ? ((RevisionMergeSourceInfo)value).toString() : null
+      );
     }
 
-    private void appendMergeSourceText(JTable table, int row, int column, @Nullable String text) {
+    private void appendMergeSourceText(JTable table, int row, int column, @Nls @Nullable String text) {
       if (StringUtil.isEmpty(text)) {
         append("", SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
@@ -755,22 +753,19 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       }
     }
 
-    private String cutString(final String text, final double value) {
-      final FontMetrics m = getFontMetrics(getFont());
-      final Graphics g = getGraphics();
+    private @Nls @NotNull String cutString(@Nls @NotNull String text, double maxWidth) {
+      FontMetrics m = getFontMetrics(getFont());
+      Graphics g = getGraphics();
+      String suffix = ELLIPSIS;
 
-      if (m.getStringBounds(text, g).getWidth() < value) return text;
+      if (m.getStringBounds(text, g).getWidth() < maxWidth) return text;
 
-      final String dots = "...";
-      final double dotsWidth = m.getStringBounds(dots, g).getWidth();
-      if (dotsWidth >= value) {
-        return dots;
-      }
+      double suffixWidth = m.getStringBounds(suffix, g).getWidth();
+      if (suffixWidth >= maxWidth) return suffix;
 
       for (int i = 1; i < text.length(); i++) {
-        if ((m.getStringBounds(text, 0, i, g).getWidth() + dotsWidth) >= value) {
-          if (i < 2) return dots;
-          return text.substring(0, i - 1) + dots;
+        if ((m.getStringBounds(text, 0, i, g).getWidth() + suffixWidth) >= maxWidth) {
+          return text.substring(0, i - 1) + suffix;
         }
       }
       return text;

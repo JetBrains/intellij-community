@@ -482,7 +482,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     return font;
   }
 
-  private TextRenderer getTextRenderer(@NotNull ColoredFragment fragment, Font font) {
+  private FontRenderContext getFontRenderContext(Font font) {
     FontRenderContext frc = getFontMetrics(font).getFontRenderContext();
     Font baseFont = getBaseFont();
     if (!baseFont.equals(myLayoutFont) || !frc.equals(myLayoutFRC)) {
@@ -490,31 +490,38 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       myLayoutFont = baseFont;
       myLayoutFRC = frc;
     }
-    return fragment.getAndCacheRenderer(font, frc);
+    return frc;
   }
 
   private void doDrawString(Graphics2D g, @NotNull ColoredFragment fragment, float x, float y) {
     String text = fragment.text;
     if (StringUtil.isEmpty(text)) return;
-    getTextRenderer(fragment, g.getFont()).draw(g, x, y);
+    Font font = g.getFont();
+    FontRenderContext frc = getFontRenderContext(font);
+    fragment.getAndCacheRenderer(font, frc).draw(g, x, y);
   }
 
   private float computeStringWidth(@NotNull ColoredFragment fragment, Font font) {
     if (StringUtil.isEmpty(fragment.text)) return 0;
     int index = myFragments.indexOf(fragment);
     ColoredFragment nextFragment = index != -1 && index < myFragments.size() - 1 ? myFragments.get(index + 1) : null;
+    FontRenderContext frc = getFontRenderContext(font);
     if (!SystemInfo.isMacOSCatalina
         || !fragment.attributes.isSearchMatch()
         || nextFragment == null
         || fragment.attributes.getFontStyle() != nextFragment.attributes.getFontStyle()) {
-      return getTextRenderer(fragment, font).getWidth();
+      return getFragmentWidth(fragment, font, frc);
     }
-    float first = getTextRenderer(fragment, font).getWidth();
-    float second = getTextRenderer(nextFragment, font).getWidth();
-    float compound = getTextRenderer(new ColoredFragment(fragment.text + nextFragment.text, fragment.attributes), font).getWidth();
+    float first = getFragmentWidth(fragment, font, frc);
+    float second = getFragmentWidth(nextFragment, font, frc);
+    float compound = getFragmentWidth(new ColoredFragment(fragment.text + nextFragment.text, fragment.attributes), font, frc);
     //return Math.min(w1, w3 - w2);
     //return (w1 + (w3 - w2)) / 2;
     return (first + 2 * (compound - second)) / 3;
+  }
+
+  private static float getFragmentWidth(@NotNull ColoredFragment fragment, Font font, FontRenderContext frc) {
+    return fragment.getAndCacheRenderer(font, frc).getWidth();
   }
 
   @NotNull
@@ -1099,6 +1106,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   @NotNull
+  @NlsSafe
   public CharSequence getCharSequence(boolean mainOnly) {
     synchronized (myFragments) {
       int count = myFragments.size();

@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.language.services.impl
 
 import com.intellij.psi.PsiElement
-import com.intellij.util.text.CaseInsensitiveStringHashingStrategy
-import gnu.trove.THashMap
+import com.intellij.util.containers.CollectionFactory
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigOptionDescriptor
 import org.editorconfig.language.util.EditorConfigDescriptorUtil
 
@@ -14,7 +13,7 @@ class EditorConfigOptionDescriptorStorage(source: Iterable<EditorConfigOptionDes
 
   init {
     val allDescriptors = mutableListOf<EditorConfigOptionDescriptor>()
-    val descriptors = THashMap<String, MutableList<EditorConfigOptionDescriptor>>(CaseInsensitiveStringHashingStrategy())
+    val descriptors = CollectionFactory.createCaseInsensitiveStringMap<MutableList<EditorConfigOptionDescriptor>>()
     val badDescriptors = mutableListOf<EditorConfigOptionDescriptor>()
     for (optionDescriptor in source) {
       allDescriptors.add(optionDescriptor)

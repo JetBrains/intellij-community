@@ -6,7 +6,6 @@ import com.intellij.application.options.editor.checkBox
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.PathChooserDialog
-import com.intellij.openapi.options.BoundCompositeConfigurable
 import com.intellij.openapi.options.BoundCompositeSearchableConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
@@ -19,7 +18,7 @@ import com.intellij.util.PlatformUtils
 private val model = GeneralSettings.getInstance()
 private val myChkReopenLastProject                get() = CheckboxDescriptor(IdeUICustomization.getInstance().projectMessage("checkbox.reopen.last.project.on.startup"), PropertyBinding(model::isReopenLastProject, model::setReopenLastProject))
 private val myConfirmExit                         get() = CheckboxDescriptor(IdeBundle.message("checkbox.confirm.application.exit"), PropertyBinding(model::isConfirmExit, model::setConfirmExit))
-private val myShowWelcomeScreen                   get() = CheckboxDescriptor(IdeBundle.message("checkbox.show.welcome.screen"), PropertyBinding(model::isShowWelcomeScreen, model::setShowWelcomeScreen))
+private val mySkipWelcomeScreen                   get() = CheckboxDescriptor(IdeBundle.message("checkbox.skip.welcome.screen"), PropertyBinding({ !model.isShowWelcomeScreen }, { model.isShowWelcomeScreen = !it }))
 private val myChkSyncOnFrameActivation            get() = CheckboxDescriptor(IdeBundle.message("checkbox.synchronize.files.on.frame.activation"), PropertyBinding(model::isSyncOnFrameActivation, model::setSyncOnFrameActivation))
 private val myChkSaveOnFrameDeactivation          get() = CheckboxDescriptor(IdeBundle.message("checkbox.save.files.on.frame.deactivation"), PropertyBinding(model::isSaveOnFrameDeactivation, model::setSaveOnFrameDeactivation))
 private val myChkAutoSaveIfInactive               get() = CheckboxDescriptor(IdeBundle.message("checkbox.save.files.automatically"), PropertyBinding(model::isAutoSaveIfInactive, model::setAutoSaveIfInactive))
@@ -83,7 +82,7 @@ class GeneralSettingsConfigurable: BoundCompositeSearchableConfigurable<Searchab
 
         if (PlatformUtils.isDataGrip()) {
           row {
-            checkBox(myShowWelcomeScreen)
+            checkBox(mySkipWelcomeScreen)
           }
         }
         row {

@@ -1,6 +1,3 @@
-from cryptography.hazmat.backends.interfaces import HMACBackend
-from cryptography.hazmat.primitives.hashes import HashAlgorithm
-
 class Poly1305(object):
     def __init__(self, key: bytes) -> None: ...
     def finalize(self) -> bytes: ...

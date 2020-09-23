@@ -8,10 +8,13 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.notification.impl.NotificationCollector;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +30,9 @@ public final class NotificationsUtil {
   private static final Logger LOG = Logger.getInstance(NotificationsUtil.class);
   private static final int TITLE_LIMIT = 1000;
   private static final int CONTENT_LIMIT = 10000;
+
+  private static final @NlsSafe String P_TAG = "<p/>";
+  private static final @NlsSafe String BR_TAG = "<br>";
 
   @NotNull
   public static String buildHtml(@NotNull final Notification notification, @Nullable String style) {
@@ -44,6 +50,7 @@ public final class NotificationsUtil {
   }
 
   @NotNull
+  @Nls
   public static String buildHtml(@NotNull final Notification notification,
                                  @Nullable String style,
                                  boolean isContent,
@@ -63,16 +70,17 @@ public final class NotificationsUtil {
       content = StringUtil.trimLog(content, CONTENT_LIMIT);
     }
     if (isContent) {
-      content = StringUtil.replace(content, "<p/>", "<br>");
+      content = StringUtil.replace(content, P_TAG, BR_TAG);
     }
     String colorText = color == null ? null : "#" + ColorUtil.toHex(color);
     return buildHtml(title, subtitle, content, style, isContent ? null : colorText, isContent ? colorText : null, contentStyle);
   }
 
   @NotNull
-  public static String buildHtml(@Nullable String title,
-                                 @Nullable String subtitle,
-                                 @Nullable String content,
+  @Nls
+  public static String buildHtml(@Nullable @Nls String title,
+                                 @Nullable @Nls String subtitle,
+                                 @Nullable @Nls String content,
                                  @Nullable String style,
                                  @Nullable String titleColor,
                                  @Nullable String contentColor,
@@ -85,25 +93,38 @@ public final class NotificationsUtil {
       title += ":";
     }
 
-    StringBuilder result = new StringBuilder();
-    if (style != null) {
-      result.append("<div style=\"").append(style).append("\">");
+    HtmlBuilder htmlBuilder = new HtmlBuilder();
+    if (StringUtil.isNotEmpty(title)) {
+      HtmlChunk.Element titleChunk = HtmlChunk.raw(title).bold();
+      if (StringUtil.isNotEmpty(titleColor)) {
+        titleChunk = titleChunk.attr("color", titleColor);
+      }
+
+      htmlBuilder.append(titleChunk);
     }
-    if (!StringUtil.isEmpty(title)) {
-      result.append("<b").append(titleColor == null ? ">" : " color=\"" + titleColor + "\">").append(title).append("</b>");
+
+    if (StringUtil.isNotEmpty(subtitle)) {
+      htmlBuilder.nbsp().append(StringUtil.isNotEmpty(titleColor) ?
+                                HtmlChunk.span().attr("color", titleColor).addText(subtitle) :
+                                HtmlChunk.raw(subtitle));
     }
-    if (!StringUtil.isEmpty(subtitle)) {
-      result.append("&nbsp;").append(titleColor == null ? "" : "<span color=\"" + titleColor + "\">").append(subtitle)
-        .append(titleColor == null ? "" : "</span>");
+
+    if (StringUtil.isNotEmpty(content)) {
+      HtmlChunk.Element contentChunk = HtmlChunk.raw(content).wrapWith(HtmlChunk.div());
+      if (StringUtil.isNotEmpty(contentStyle)) {
+        contentChunk = contentChunk.style(contentStyle);
+      }
+
+      if (StringUtil.isNotEmpty(contentColor)) {
+        contentChunk = contentChunk.attr("color", contentColor);
+      }
+
+      htmlBuilder.append(contentChunk);
     }
-    if (!StringUtil.isEmpty(content)) {
-      result.append("<div").append(contentStyle == null ? "" : " style=\"" + contentStyle + "\"")
-        .append(contentColor == null ? ">" : " color=\"" + contentColor + "\">").append(content).append("</div>");
-    }
-    if (style != null) {
-      result.append("</div>");
-    }
-    return XmlStringUtil.wrapInHtml(result.toString());
+
+    return StringUtil.isNotEmpty(style) ?
+           htmlBuilder.wrapWith(HtmlChunk.div(style)).wrapWith(HtmlChunk.html()).toString() :
+           htmlBuilder.wrapWithHtmlBody().toString();
   }
 
   @Nullable

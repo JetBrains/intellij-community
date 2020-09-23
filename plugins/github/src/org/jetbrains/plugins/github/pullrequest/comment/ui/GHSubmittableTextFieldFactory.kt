@@ -16,6 +16,7 @@ import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsActions
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.ListFocusTraversalPolicy
@@ -24,12 +25,13 @@ import com.intellij.util.ui.*
 import com.intellij.util.ui.codereview.InlineIconButton
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
-import icons.GithubIcons
+import icons.VcsCodeReviewIcons
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHUser
+import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
 import java.awt.Dimension
 import java.awt.event.*
@@ -47,7 +49,7 @@ class GHSubmittableTextFieldFactory(private val model: GHSubmittableTextFieldMod
     private val CANCEL_SHORTCUT_SET = CommonShortcuts.ESCAPE
   }
 
-  fun create(@Nls(capitalization = Nls.Capitalization.Title) actionName: String = "Comment",
+  fun create(@NlsActions.ActionText actionName: String = GithubBundle.message("action.comment.text"),
              onCancel: (() -> Unit)? = null): JComponent {
 
     val textField = createTextField(actionName)
@@ -58,7 +60,7 @@ class GHSubmittableTextFieldFactory(private val model: GHSubmittableTextFieldMod
   }
 
   fun create(avatarIconsProvider: GHAvatarIconsProvider, author: GHUser,
-             @Nls(capitalization = Nls.Capitalization.Title) actionName: String = "Comment",
+             @NlsActions.ActionText actionName: String = GithubBundle.message("action.comment.text"),
              onCancel: (() -> Unit)? = null): JComponent {
 
     val textField = createTextField(actionName)
@@ -132,7 +134,7 @@ class GHSubmittableTextFieldFactory(private val model: GHSubmittableTextFieldMod
     }
   }
 
-  private fun createTextField(placeHolder: String): EditorTextField {
+  private fun createTextField(@Nls placeHolder: String): EditorTextField {
 
     return object : EditorTextField(model.document, null, FileTypes.PLAIN_TEXT) {
       //always paint pretty border
@@ -163,8 +165,11 @@ class GHSubmittableTextFieldFactory(private val model: GHSubmittableTextFieldMod
   }
 
   private fun createSubmitButton(actionName: String) =
-    InlineIconButton(GithubIcons.Send, GithubIcons.SendHovered, tooltip = actionName,
-                                                                        shortcut = SUBMIT_SHORTCUT_SET).apply {
+    InlineIconButton(
+      VcsCodeReviewIcons.Send, VcsCodeReviewIcons.SendHovered,
+      tooltip = actionName,
+      shortcut = SUBMIT_SHORTCUT_SET
+    ).apply {
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     }
 

@@ -7,7 +7,7 @@ import com.intellij.openapi.wm.IdeGlassPane.TopComponent;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.RegionPainter;
-import com.intellij.util.ui.TouchScrollUtil;
+import com.intellij.ui.scroll.TouchScrollUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;

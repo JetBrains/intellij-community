@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
@@ -498,7 +499,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     private final int myMinValue;
     private final int myMaxValue;
     private final int myDefaultValue;
-    @Nullable private final Function<? super Integer, String> myDefaultValueRenderer;
+    @Nullable private final Function<? super Integer, @Nls String> myDefaultValueRenderer;
 
     IntOption(Class<? extends CustomCodeStyleSettings> clazz,
                      @NotNull String fieldName,
@@ -509,7 +510,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
                      int minValue,
                      int maxValue,
                      int defaultValue,
-                     @Nullable Function<? super Integer, String> defaultValueRenderer) {
+                     @Nullable Function<? super Integer, @Nls String> defaultValueRenderer) {
       super(clazz, fieldName, title, groupName, anchor, anchorFiledName);
       myMinValue = minValue;
       myMaxValue = maxValue;
@@ -559,6 +560,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     }
 
     @Nullable
+    @Nls
     public String getDefaultValueText() {
       return myDefaultValueRenderer != null ? myDefaultValueRenderer.apply(myDefaultValue) : null;
     }
@@ -727,7 +729,8 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
           myIntLabel.setText(((IntOption)key).getDefaultValueText());
         }
         else {
-          myIntLabel.setText(value.toString());
+          @NlsSafe String text = value.toString();
+          myIntLabel.setText(text);
         }
         return myIntLabel;
       }

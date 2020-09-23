@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.impl.FileTypeRenderer;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -16,15 +17,16 @@ import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.ScrollingUtil;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -37,6 +39,8 @@ public final class FileTypeChooser extends DialogWrapper {
   private JPanel myPanel;
   private JRadioButton myOpenInIdea;
   private JRadioButton myOpenAsNative;
+  private JRadioButton myDetectFileType;
+  private JBLabel myContextHelpLabel;
   private final String myFileName;
 
   private FileTypeChooser(@NotNull List<String> patterns, @NotNull String fileName) {
@@ -44,22 +48,45 @@ public final class FileTypeChooser extends DialogWrapper {
 
     myFileName = fileName;
     myOpenInIdea.setText(FileTypesBundle.message("filetype.chooser.association", ApplicationNamesInfo.getInstance().getFullProductName()));
+    myDetectFileType.setText(FileTypesBundle.message("filetype.chooser.autodetect"));
+    ActionListener actionListener = e -> {
+      myList.setEnabled(myOpenInIdea.isSelected());
+      updateContextHelp();
+    };
+    myDetectFileType.addActionListener(actionListener);
+    myOpenInIdea.addActionListener(actionListener);
+    myOpenAsNative.addActionListener(actionListener);
+
+    if (fileName.indexOf('.') < 0) {
+      myDetectFileType.setSelected(true);
+      myList.setEnabled(false);
+    }
 
     FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
     Arrays.sort(fileTypes, (ft1, ft2) -> ft1 == null ? 1 : ft2 == null ? -1 : ft1.getDescription().compareToIgnoreCase(ft2.getDescription()));
 
     final DefaultListModel<FileType> model = new DefaultListModel<>();
     for (FileType type : fileTypes) {
-      if (!type.isReadOnly() && type != FileTypes.UNKNOWN && !(type instanceof NativeFileType)) {
+      if (!type.isReadOnly() && type != FileTypes.UNKNOWN && !(type instanceof NativeFileType) && type != DetectedByContentFileType.INSTANCE) {
         model.addElement(type);
       }
     }
     myList.setModel(model);
+    myList.addListSelectionListener(e -> updateContextHelp());
     myPattern.setModel(new CollectionComboBoxModel<>(ContainerUtil.map(patterns, FunctionUtil.id()), patterns.get(0)));
     new ListSpeedSearch(myList, (Function<Object, String>)o -> ((FileType)o).getDescription());
 
+    myContextHelpLabel.setForeground(UIUtil.getContextHelpForeground());
+    updateContextHelp();
     setTitle(FileTypesBundle.message("filetype.chooser.title"));
     init();
+  }
+
+  private void updateContextHelp() {
+    FileType selectedType = getSelectedType();
+    String fileTypeString = selectedType == null ? "" : (" | " + selectedType.getDescription());
+    myContextHelpLabel.setText(FileTypesBundle.message("label.help.change.association", ShowSettingsUtil.getSettingsMenuName(),
+                                                       fileTypeString));
   }
 
   @Override
@@ -70,7 +97,16 @@ public final class FileTypeChooser extends DialogWrapper {
                          FileTypesBundle.message("filetype.chooser.change.prompt", myFileName, fileType.getName()));
 
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    myList.setCellRenderer(new FileTypeRenderer());
+    myList.setCellRenderer(new FileTypeRenderer() {
+      @Override
+      public void customize(@NotNull JList<? extends FileType> list, FileType value, int index, boolean selected, boolean hasFocus) {
+        super.customize(list, value, index, selected, hasFocus);
+        if (!myOpenInIdea.isSelected()) {
+          setForeground(selected ? UIUtil.getListSelectionForeground(hasFocus) : UIUtil.getComboBoxDisabledForeground());
+          setBackground(selected ? UIUtil.getListSelectionBackground(hasFocus) : UIUtil.getComboBoxDisabledBackground());
+        }
+      }
+    });
 
     new DoubleClickListener() {
       @Override
@@ -80,13 +116,7 @@ public final class FileTypeChooser extends DialogWrapper {
       }
     }.installOn(myList);
 
-    myList.getSelectionModel().addListSelectionListener(
-      new ListSelectionListener() {
-        @Override
-        public void valueChanged(ListSelectionEvent e) {
-          updateButtonsState();
-        }
-      }
+    myList.getSelectionModel().addListSelectionListener(__ -> updateButtonsState()
     );
 
     ScrollingUtil.selectItem(myList, FileTypes.PLAIN_TEXT);
@@ -100,7 +130,7 @@ public final class FileTypeChooser extends DialogWrapper {
   }
 
   private void updateButtonsState() {
-    setOKActionEnabled(myList.getSelectedIndex() != -1 || myOpenAsNative.isSelected());
+    setOKActionEnabled(myList.getSelectedIndex() != -1 || myOpenAsNative.isSelected() || myDetectFileType.isSelected());
   }
 
   @Override
@@ -109,6 +139,7 @@ public final class FileTypeChooser extends DialogWrapper {
   }
 
   public FileType getSelectedType() {
+    if (myDetectFileType.isSelected()) return DetectedByContentFileType.INSTANCE;
     return myOpenAsNative.isSelected() ? NativeFileType.INSTANCE : myList.getSelectedValue();
   }
 
@@ -156,9 +187,13 @@ public final class FileTypeChooser extends DialogWrapper {
     final FileType type = chooser.getSelectedType();
     if (type == FileTypes.UNKNOWN || type == null) return null;
 
-    ApplicationManager.getApplication().runWriteAction(() -> FileTypeManagerEx.getInstanceEx().associatePattern(type, (String)chooser.myPattern.getSelectedItem()));
+    ApplicationManager.getApplication().runWriteAction(() -> FileTypeManagerEx.getInstanceEx().associatePattern(type, chooser.getSelectedPattern()));
 
     return type;
+  }
+
+  private String getSelectedPattern() {
+    return (String)myPattern.getSelectedItem();
   }
 
   @NotNull

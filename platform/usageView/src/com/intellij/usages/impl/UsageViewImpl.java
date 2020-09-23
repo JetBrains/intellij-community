@@ -1738,7 +1738,7 @@ public class UsageViewImpl implements UsageViewEx {
 
   @Override
   public void addPerformOperationAction(@NotNull Runnable processRunnable,
-                                        @NotNull @NlsContexts.Command String commandName,
+                                        @Nullable @NlsContexts.Command String commandName,
                                         @NotNull @NlsContexts.DialogMessage String cannotMakeString,
                                         @NotNull @NlsContexts.Button String shortDescription) {
     addPerformOperationAction(processRunnable, commandName, cannotMakeString, shortDescription, true);
@@ -1746,7 +1746,7 @@ public class UsageViewImpl implements UsageViewEx {
 
   @Override
   public void addPerformOperationAction(@NotNull Runnable processRunnable,
-                                        @NotNull @NlsContexts.Command String commandName,
+                                        @Nullable @NlsContexts.Command String commandName,
                                         @NotNull @NlsContexts.DialogMessage String cannotMakeString,
                                         @NotNull @NlsContexts.Button String shortDescription,
                                         boolean checkReadOnlyStatus) {
@@ -2256,7 +2256,7 @@ public class UsageViewImpl implements UsageViewEx {
     private final boolean myCheckReadOnlyStatus;
 
     private MyPerformOperationRunnable(@NotNull Runnable processRunnable,
-                                       @NotNull @NlsContexts.Command String commandName,
+                                       @Nullable @NlsContexts.Command String commandName,
                                        @NlsContexts.DialogMessage String cannotMakeString,
                                        boolean checkReadOnlyStatus) {
       myCannotMakeString = cannotMakeString;
@@ -2279,6 +2279,7 @@ public class UsageViewImpl implements UsageViewEx {
             Messages.showYesNoCancelDialog(myProject, message, title, options[0], options[1], options[2], Messages.getErrorIcon());
           if (answer == Messages.YES) {
             refreshUsages();
+            return;
           }
           else if (answer == Messages.CANCEL) {
             return;
@@ -2296,11 +2297,16 @@ public class UsageViewImpl implements UsageViewEx {
       close();
 
       try {
-        CommandProcessor.getInstance().executeCommand(
-          myProject, myProcessRunnable,
-          myCommandName,
-          null
-        );
+        if (myCommandName == null) {
+          myProcessRunnable.run();
+        }
+        else {
+          CommandProcessor.getInstance().executeCommand(
+            myProject, myProcessRunnable,
+            myCommandName,
+            null
+          );
+        }
       }
       finally {
         disposeSmartPointers();

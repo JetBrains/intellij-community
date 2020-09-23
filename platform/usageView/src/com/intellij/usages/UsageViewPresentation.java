@@ -24,7 +24,7 @@ public class UsageViewPresentation {
   private String myScopeText = ""; // Default value. to be overwritten in most cases.
   private @NlsSafe String myUsagesString;
   private @NlsSafe String mySearchString;
-  private String myTargetsNodeText = UsageViewBundle.message("node.targets"); // Default value. to be overwritten in most cases.
+  private @NlsContexts.ListItem String myTargetsNodeText = UsageViewBundle.message("node.targets"); // Default value. to be overwritten in most cases.
   private @NlsContexts.ListItem String myNonCodeUsagesString = UsageViewBundle.message("node.non.code.usages");
   private @NlsContexts.ListItem String myCodeUsagesString = UsageViewBundle.message("node.found.usages");
   private @NlsContexts.ListItem String myUsagesInGeneratedCodeString = UsageViewBundle.message("node.usages.in.generated.code");
@@ -105,12 +105,13 @@ public class UsageViewPresentation {
     mySearchString = searchString;
   }
 
+  @NlsContexts.ListItem
   @Nullable("null means the targets node must not be visible")
   public String getTargetsNodeText() {
     return myTargetsNodeText;
   }
 
-  public void setTargetsNodeText(String targetsNodeText) {
+  public void setTargetsNodeText(@NlsContexts.ListItem String targetsNodeText) {
     myTargetsNodeText = targetsNodeText;
   }
 

@@ -15,20 +15,30 @@
  */
 package org.jetbrains.jps.appengine.model;
 
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.jps.appengine.build.JavaGoogleAppEngineJpsBundle;
+
+import java.util.function.Supplier;
+
 public enum PersistenceApi {
-  JDO("JDO 2", "JDO", 1), JDO3("JDO 3", "JDO", 2), JPA("JPA 1", "JPA", 1), JPA2("JPA 2", "JPA", 2);
-  private final String myDisplayName;
+  JDO(JavaGoogleAppEngineJpsBundle.messagePointer("persistence.api.item.name.jdo"), "JDO", 1),
+  JDO3(JavaGoogleAppEngineJpsBundle.messagePointer("persistence.api.item.name.jdo3"), "JDO", 2),
+  JPA(JavaGoogleAppEngineJpsBundle.messagePointer("persistence.api.item.name.jpa"), "JPA", 1),
+  JPA2(JavaGoogleAppEngineJpsBundle.messagePointer("persistence.api.item.name.jpa2"), "JPA", 2);
+
+  private final Supplier<@Nls String> myDisplayNameSupplier;
   private final String myEnhancerApiName;
   private final int myEnhancerVersion;
 
-  PersistenceApi(String displayName, String enhancerApiName, int enhancerVersion) {
-    myDisplayName = displayName;
+  PersistenceApi(Supplier<@Nls String> displayNameSupplier, String enhancerApiName, int enhancerVersion) {
+    myDisplayNameSupplier = displayNameSupplier;
     myEnhancerApiName = enhancerApiName;
     myEnhancerVersion = enhancerVersion;
   }
 
+  @Nls
   public String getDisplayName() {
-    return myDisplayName;
+    return myDisplayNameSupplier.get();
   }
 
   public String getEnhancerApiName() {

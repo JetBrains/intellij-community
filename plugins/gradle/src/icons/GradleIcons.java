@@ -11,13 +11,13 @@ import javax.swing.*;
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
 public final class GradleIcons {
-  private static @NotNull Icon load(@NotNull String path) {
-    return IconManager.getInstance().getIcon(path, GradleIcons.class);
+  private static @NotNull Icon load(@NotNull String path, long cacheKey) {
+    return IconManager.getInstance().loadRasterizedIcon(path, GradleIcons.class, cacheKey);
   }
 
-  /** 16x16 */ public static final @NotNull Icon Gradle = load("/icons/gradle.svg");
-  /** 16x16 */ public static final @NotNull Icon GradleFile = load("/icons/gradleFile.svg");
-  /** 16x16 */ public static final @NotNull Icon GradleLoadChanges = load("/icons/gradleLoadChanges.svg");
-  /** 16x16 */ public static final @NotNull Icon GradleNavigate = load("/icons/gradleNavigate.svg");
-  /** 13x13 */ public static final @NotNull Icon ToolWindowGradle = load("/icons/toolWindowGradle.svg");
+  /** 16x16 */ public static final @NotNull Icon Gradle = load("/icons/gradle.svg", -6832372171461853488L);
+  /** 16x16 */ public static final @NotNull Icon GradleFile = load("/icons/gradleFile.svg", 6688805559595326899L);
+  /** 16x16 */ public static final @NotNull Icon GradleLoadChanges = load("/icons/gradleLoadChanges.svg", -6986905070379593137L);
+  /** 16x16 */ public static final @NotNull Icon GradleNavigate = load("/icons/gradleNavigate.svg", 5385409671386034341L);
+  /** 13x13 */ public static final @NotNull Icon ToolWindowGradle = load("/icons/toolWindowGradle.svg", 6941442561395563288L);
 }

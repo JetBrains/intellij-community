@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vcs.VcsDataKeys
+import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
 
 class ShelveSilentlyAction : DumbAwareAction() {
@@ -12,7 +13,8 @@ class ShelveSilentlyAction : DumbAwareAction() {
     val project = e.project
     val changes = e.getData(VcsDataKeys.CHANGES)
 
-    e.presentation.isEnabled = project != null && !changes.isNullOrEmpty()
+    e.presentation.isEnabled = project != null && !changes.isNullOrEmpty() &&
+                               ChangeListManager.getInstance(project).areChangeListsEnabled()
   }
 
   override fun actionPerformed(e: AnActionEvent) {

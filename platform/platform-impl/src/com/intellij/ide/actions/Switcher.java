@@ -43,6 +43,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.ToolWindowEventSource;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.*;
@@ -1024,7 +1025,7 @@ public final class Switcher extends AnAction implements DumbAware {
         else if (value instanceof ToolWindow) {
           final ToolWindow toolWindow = (ToolWindow)value;
           if (toolWindowManager instanceof ToolWindowManagerImpl) {
-            ((ToolWindowManagerImpl)toolWindowManager).hideToolWindow(toolWindow.getId(), false, false);
+            ((ToolWindowManagerImpl)toolWindowManager).hideToolWindow(toolWindow.getId(), false, false, ToolWindowEventSource.CloseFromSwitcher);
           }
           else {
             toolWindow.hide(null);
@@ -1146,8 +1147,12 @@ public final class Switcher extends AnAction implements DumbAware {
 
       } else if (values.get(0) instanceof ToolWindow) {
         ToolWindow toolWindow = (ToolWindow)values.get(0);
-        IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> toolWindow.activate(null, true, true),
-                                                                    ModalityState.current());
+        IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(
+          () -> {
+            ToolWindowEventSource source = mySpeedSearch != null && mySpeedSearch.isPopupActive() ? ToolWindowEventSource.SwitcherSearch : ToolWindowEventSource.Switcher;
+            ((ToolWindowManagerImpl) toolWindowManager).activateToolWindow(toolWindow.getId(), null, true, source);
+          },
+          ModalityState.current());
       }
       else {
         IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> {

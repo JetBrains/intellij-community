@@ -11,6 +11,7 @@ import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.impl.source.PsiExtensibleClass;
 import com.intellij.psi.util.AccessModifier;
 import com.intellij.psi.util.JavaPsiRecordUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -112,7 +113,13 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
     if (hasForbiddenType(component)) return null;
     String typeText = getTypeText(component);
     if (typeText == null) return null;
-    return factory.createFieldFromText("private final " + typeText + " " + name + ";", component.getContainingClass());
+    try {
+      return factory.createFieldFromText("private final " + typeText + " " + name + ";", component.getContainingClass());
+    }
+    catch (IncorrectOperationException e) {
+      // typeText could be unparseable, like '@int'
+      return null;
+    }
   }
 
   @Nullable
@@ -122,7 +129,13 @@ public class RecordAugmentProvider extends PsiAugmentProvider {
     if (hasForbiddenType(component)) return null;
     String typeText = getTypeText(component);
     if (typeText == null) return null;
-    return factory.createMethodFromText("public " + typeText + " " + name + "(){ return " + name + "; }", component.getContainingClass());
+    try {
+      return factory.createMethodFromText("public " + typeText + " " + name + "(){ return " + name + "; }", component.getContainingClass());
+    }
+    catch (IncorrectOperationException e) {
+      // typeText could be unparseable, like '@int'
+      return null;
+    }
   }
 
   private static boolean hasForbiddenType(@NotNull PsiRecordComponent component) {

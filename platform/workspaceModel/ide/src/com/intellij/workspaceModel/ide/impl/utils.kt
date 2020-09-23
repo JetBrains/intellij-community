@@ -1,15 +1,13 @@
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.workspaceModel.storage.VirtualFileUrl
 import com.intellij.workspaceModel.storage.VirtualFileUrlManager
-import kotlin.concurrent.getOrSet
 
 // TODO Drop? Use standard function? Review usages.
-internal fun executeOrQueueOnDispatchThread(block: () -> Unit) {
+fun executeOrQueueOnDispatchThread(block: () -> Unit) {
   val application = ApplicationManager.getApplication()
   if (application.isDispatchThread) {
     block()

@@ -6,9 +6,9 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.StatisticsDevKitUtil
 import com.intellij.internal.statistic.StatisticsDevKitUtil.showNotification
-import com.intellij.internal.statistic.eventLog.validator.persistence.BaseEventLogWhitelistPersistence
-import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistPersistence.EVENTS_SCHEME_FILE
-import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistSettingsPersistence
+import com.intellij.internal.statistic.eventLog.validator.storage.persistence.BaseEventLogMetadataPersistence
+import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataPersistence.EVENTS_SCHEME_FILE
+import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataSettingsPersistence
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -37,12 +37,12 @@ class OpenEventsSchemeFileAction(private val myRecorderId: String = StatisticsDe
     }
 
     fun getEventsSchemeFile(recorderId: String): File {
-      val settings = EventLogWhitelistSettingsPersistence.getInstance().getPathSettings(recorderId)
+      val settings = EventLogMetadataSettingsPersistence.getInstance().getPathSettings(recorderId)
       return if (settings != null && settings.isUseCustomPath) {
         File(settings.customPath)
       }
       else {
-        BaseEventLogWhitelistPersistence.getDefaultMetadataFile(recorderId, EVENTS_SCHEME_FILE, null)
+        BaseEventLogMetadataPersistence.getDefaultMetadataFile(recorderId, EVENTS_SCHEME_FILE, null)
       }
     }
   }

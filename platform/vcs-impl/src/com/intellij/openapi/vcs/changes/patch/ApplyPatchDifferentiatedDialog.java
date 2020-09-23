@@ -101,7 +101,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private final AtomicReference<FilePresentationModel> myRecentPathFileChange;
   private final ApplyPatchDifferentiatedDialog.MyUpdater myUpdater;
   private final Runnable myReset;
-  private final ChangeListChooserPanel myChangeListChooser;
+  @Nullable private final ChangeListChooserPanel myChangeListChooser;
   private final ChangesLegendCalculator myInfoCalculator;
   private final CommitLegendPanel myCommitLegendPanel;
   private final ApplyPatchExecutor myCallback;
@@ -204,22 +204,28 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     myCanChangePatchFile = applyPatchMode.isCanChangePatchFile();
     myReset = myCanChangePatchFile ? this::reset : EmptyRunnable.getInstance();
 
-    myChangeListChooser = new ChangeListChooserPanel(project, new NullableConsumer<String>() {
-      @Override public void consume(@Nullable String errorMessage) {
-        setOKActionEnabled(errorMessage == null && isChangeTreeEnabled());
-        setErrorText(errorMessage, myChangeListChooser);
-      }
-    });
-
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-    myChangeListChooser.setChangeLists(changeListManager.getChangeListsCopy());
-    if (defaultList != null) {
-      myChangeListChooser.setDefaultSelection(defaultList);
+    if (changeListManager.areChangeListsEnabled()) {
+      myChangeListChooser = new ChangeListChooserPanel(project, new NullableConsumer<String>() {
+        @Override
+        public void consume(@Nullable String errorMessage) {
+          setOKActionEnabled(errorMessage == null && isChangeTreeEnabled());
+          setErrorText(errorMessage, myChangeListChooser);
+        }
+      });
+
+      myChangeListChooser.setChangeLists(changeListManager.getChangeListsCopy());
+      if (defaultList != null) {
+        myChangeListChooser.setDefaultSelection(defaultList);
+      }
+      else if (externalCommitMessage != null) {
+        myChangeListChooser.setSuggestedName(externalCommitMessage);
+      }
+      myChangeListChooser.init();
     }
-    else if (externalCommitMessage != null) {
-      myChangeListChooser.setSuggestedName(externalCommitMessage);
+    else {
+      myChangeListChooser = null;
     }
-    myChangeListChooser.init();
 
     myInfoCalculator = new ChangesLegendCalculator();
     myCommitLegendPanel = new CommitLegendPanel(myInfoCalculator) {
@@ -268,7 +274,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     boolean changeTreeEnabled = isChangeTreeEnabled();
     setOKActionEnabled(changeTreeEnabled);
     if (changeTreeEnabled) {
-      myChangeListChooser.updateEnabled();
+      if (myChangeListChooser != null) myChangeListChooser.updateEnabled();
     }
   }
 
@@ -333,10 +339,10 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     for (AbstractFilePatchInProgress<?> patchInProgress : included) {
       patchGroups.putValue(patchInProgress.getBase(), patchInProgress);
     }
-    LocalChangeList selected = getSelectedChangeList();
+    LocalChangeList targetChangelist = getSelectedChangeList();
     FilePresentationModel presentation = myRecentPathFileChange.get();
     VirtualFile vf = presentation != null ? presentation.getVf() : null;
-    executor.apply(getOriginalRemaining(), patchGroups, selected, vf == null ? null : vf.getName(),
+    executor.apply(getOriginalRemaining(), patchGroups, targetChangelist, vf == null ? null : vf.getName(),
                    myReader == null ? null : myReader.getAdditionalInfo(ApplyPatchDefaultExecutor.pathsFromGroups(patchGroups)));
   }
 
@@ -365,7 +371,8 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   @Nullable
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myChangeListChooser.getPreferredFocusedComponent();
+    if (myChangeListChooser != null) return myChangeListChooser.getPreferredFocusedComponent();
+    return myChangesTreeList;
   }
 
   private void setPathFileChangeDefault() {
@@ -395,7 +402,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       final PatchFileHeaderInfo patchFileInfo = myReader != null ? myReader.getPatchFileInfo() : null;
       final String messageFromPatch = patchFileInfo != null ? patchFileInfo.getMessage() : null;
       VcsUser author = patchFileInfo != null ? patchFileInfo.getAuthor() : null;
-      if (author != null) {
+      if (author != null && myChangeListChooser != null) {
         myChangeListChooser.setData(new ChangeListData(author));
       }
       List<FilePatch> filePatches = new ArrayList<>();
@@ -408,7 +415,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       List<AbstractFilePatchInProgress<?>> matchedPatches = new MatchPatchPaths(myProject).execute(filePatches, myUseProjectRootAsPredefinedBase);
 
       ApplicationManager.getApplication().invokeLater(() -> {
-        if (myShouldUpdateChangeListName) {
+        if (myShouldUpdateChangeListName && myChangeListChooser != null) {
           myChangeListChooser.setSuggestedName(
             chooseNotNull(getSubjectFromMessage(messageFromPatch), file.getNameWithoutExtension().replace('_', ' ').trim()),
             messageFromPatch);
@@ -581,13 +588,18 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       treePanel.add(myCommitLegendPanel.getComponent(), gb);
 
       ++gb.gridy;
-      Splitter splitter = new Splitter(true, 0.7f);
-      splitter.setFirstComponent(treePanel);
-      splitter.setSecondComponent(myChangeListChooser);
       ++centralGb.gridy;
       centralGb.weighty = 1;
       centralGb.fill = GridBagConstraints.BOTH;
-      myCenterPanel.add(splitter, centralGb);
+      if (myChangeListChooser != null) {
+        Splitter splitter = new Splitter(true, 0.7f);
+        splitter.setFirstComponent(treePanel);
+        splitter.setSecondComponent(myChangeListChooser);
+        myCenterPanel.add(splitter, centralGb);
+      }
+      else {
+        myCenterPanel.add(treePanel, centralGb);
+      }
     }
     return myCenterPanel;
   }
@@ -1042,7 +1054,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
   @Nullable
   private LocalChangeList getSelectedChangeList() {
-    return myChangeListChooser.getSelectedList(myProject);
+    return myChangeListChooser != null ? myChangeListChooser.getSelectedList(myProject) : null;
   }
 
   @Override

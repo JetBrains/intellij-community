@@ -19,7 +19,8 @@
     <orderEntry type="module" module-name="intellij.platform.util.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.diff.impl" />
-    <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="library" name="assertJ" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="library" name="fastutil-min" level="project" />
   </component>
 </module>

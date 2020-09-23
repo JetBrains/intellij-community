@@ -24,6 +24,7 @@ import gnu.trove.TObjectHashingStrategy;
 import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -1502,7 +1503,8 @@ public final class MavenProjectsTree {
     }
   }
 
-  private static class MavenCoordinateHashCodeStrategy implements TObjectHashingStrategy<MavenCoordinate> {
+  @ApiStatus.Internal
+  public static class MavenCoordinateHashCodeStrategy implements TObjectHashingStrategy<MavenCoordinate> {
     @Override
     public int computeHashCode(MavenCoordinate object) {
       String artifactId = object.getArtifactId();

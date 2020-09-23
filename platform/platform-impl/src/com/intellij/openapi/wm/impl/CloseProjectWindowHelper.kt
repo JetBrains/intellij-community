@@ -3,7 +3,6 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.ide.AppLifecycleListener
-import com.intellij.ide.GeneralSettings
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
@@ -17,18 +16,12 @@ open class CloseProjectWindowHelper {
   protected open val isMacSystemMenu: Boolean
     get() = SystemProperties.getBooleanProperty("idea.test.isMacSystemMenu", SystemInfo.isMacSystemMenu)
 
-  private val isShowWelcomeScreen: Boolean
-    get() = isMacSystemMenu && isShowWelcomeScreenFromSettings
-
-  protected open val isShowWelcomeScreenFromSettings
-    get() = GeneralSettings.getInstance().isShowWelcomeScreen
-
   open fun windowClosing(project: Project?) {
     val numberOfOpenedProjects = getNumberOfOpenedProjects()
     // Exit on Linux and Windows if the only opened project frame is closed.
     // On macOS behaviour is different - to exit app, quit action should be used, otherwise welcome frame is shown.
     // If welcome screen is disabled, behaviour on all OS is the same.
-    if (numberOfOpenedProjects > 1 || (numberOfOpenedProjects == 1 && isShowWelcomeScreen)) {
+    if (numberOfOpenedProjects > 1 || (numberOfOpenedProjects == 1 && isMacSystemMenu)) {
       closeProjectAndShowWelcomeFrameIfNoProjectOpened(project)
     }
     else {

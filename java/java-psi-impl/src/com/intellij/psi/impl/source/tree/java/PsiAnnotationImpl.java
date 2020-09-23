@@ -124,9 +124,11 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
     PsiElement parent = getParent();
 
     if (parent instanceof PsiTypeElementImpl) {
-      PsiType type = ((PsiTypeElementImpl)parent).getType();
+      PsiType type = ((PsiTypeElement)parent).getType();
       if (type instanceof PsiClassType) {
-        PsiJavaCodeReferenceElement origRef = ((PsiTypeElementImpl)parent).getInnermostComponentReferenceElement();
+        // If we have a type element like @Anno Outer.Inner then the annotation belongs to the Outer type
+        // which doesn't have a corresponding type element at all. We create this type here.
+        PsiJavaCodeReferenceElement origRef = ((PsiTypeElement)parent).getInnermostComponentReferenceElement();
         PsiJavaCodeReferenceElement ref = origRef;
         while(ref != null && ref.isQualified()) {
           ref = ObjectUtils.tryCast(ref.getQualifier(), PsiJavaCodeReferenceElement.class);

@@ -293,7 +293,7 @@ public final class PatchReader {
         addPatchAndResetSettings(GitPatchParser.parse(start, iterator, mySaveHunks));
       }
       else {
-        addPatchAndResetSettings(readTextPatch(start, iterator, false));
+        addPatchAndResetSettings(readTextPatch(start, iterator));
       }
     }
 
@@ -308,9 +308,9 @@ public final class PatchReader {
       return myPatches;
     }
 
-    TextFilePatch readTextPatch(String curLine, ListIterator<String> iterator, boolean isGitStylePatch) throws PatchSyntaxException {
+    TextFilePatch readTextPatch(String curLine, ListIterator<String> iterator) throws PatchSyntaxException {
       final TextFilePatch curPatch = mySaveHunks ? new TextFilePatch(null) : new EmptyTextFilePatch();
-      extractFileName(curLine, curPatch, true, isGitStylePatch);
+      extractFileName(curLine, curPatch, true);
 
       if (!iterator.hasNext()) throw new PatchSyntaxException(iterator.previousIndex(),
                                                               VcsBundle.message("patch.second.file.name.expected"));
@@ -319,7 +319,7 @@ public final class PatchReader {
       if (! curLine.startsWith(secondNamePrefix)) {
         throw new PatchSyntaxException(iterator.previousIndex(), VcsBundle.message("patch.second.file.name.expected"));
       }
-      extractFileName(curLine, curPatch, false, isGitStylePatch);
+      extractFileName(curLine, curPatch, false);
 
       while (iterator.hasNext()) {
         PatchHunk hunk;
@@ -564,7 +564,7 @@ public final class PatchReader {
       return result;
     }
 
-    private static void extractFileName(final String curLine, final FilePatch patch, final boolean before, final boolean gitPatch) {
+    private static void extractFileName(final String curLine, final FilePatch patch, final boolean before) {
       String fileName = curLine.substring(4);
       int pos = fileName.indexOf('\t');
       if (pos < 0) {
@@ -582,8 +582,8 @@ public final class PatchReader {
           }
         }
       }
-      if (gitPatch) fileName = VcsFileUtil.unescapeGitPath(fileName);
-      String newFileName = stripPatchNameIfNeeded(fileName, gitPatch, before);
+      fileName = VcsFileUtil.unescapeGitPath(fileName);
+      String newFileName = stripPatchNameIfNeeded(fileName, before);
       if (newFileName == null) return;
       if (before) {
         patch.setBeforeName(newFileName);
@@ -594,11 +594,10 @@ public final class PatchReader {
     }
 
     @Nullable
-    static String stripPatchNameIfNeeded(@NotNull String fileName, boolean p1Patch, boolean before) {
-      if ("/dev/null".equals(fileName)) return null; //NON-NLS
-      String prefix = before ? "a/" : "b/"; //NON-NLS
-      if (p1Patch && fileName.startsWith(prefix)) return fileName.substring(prefix.length());
-      return fileName;
+    static String stripPatchNameIfNeeded(@NotNull String fileName, boolean before) {
+      if (UnifiedDiffWriter.DEV_NULL.equals(fileName)) return null;
+      String prefix = before ? UnifiedDiffWriter.A_PREFIX : UnifiedDiffWriter.B_PREFIX;
+      return StringUtil.trimStart(fileName, prefix);
     }
   }
 

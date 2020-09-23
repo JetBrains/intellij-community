@@ -1,2 +1,1 @@
-os._AddedDllDirectory.__init__  # Parameters mismatch
 importlib.metadata.DistributionFinder.Context.pattern

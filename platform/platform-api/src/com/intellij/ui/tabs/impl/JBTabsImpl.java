@@ -1886,7 +1886,7 @@ public class JBTabsImpl extends JComponent
     int firstNotPinned = -1;
     for (int i = 0; i < infos.size(); i++) {
       TabInfo info = infos.get(i);
-      if (UIUtil.isClientPropertyTrue(info.getComponent(), PINNED)) {
+      if (info.isPinned()) {
         if (firstNotPinned != -1) {
           TabInfo tabInfo = infos.remove(firstNotPinned);
           infos.add(firstNotPinned, info);

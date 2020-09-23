@@ -51,6 +51,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -741,6 +742,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private boolean isModeConsistent(boolean isCustomMessage) {
     // check that we are in consistent mode
     return isCustomMessage != (myCurrentCustomProgressCategory == null);
+  }
+
+  @ApiStatus.Internal
+  public void setIncompleteIndexUsed() {
+    myStatusLine.setWarning(SmRunnerBundle.message("suffix.incomplete.index.was.used"));
   }
 
   private static class MySaveHistoryTask extends Task.Backgroundable {

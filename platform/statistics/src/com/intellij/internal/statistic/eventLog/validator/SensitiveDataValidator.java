@@ -6,8 +6,8 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.*;
-import com.intellij.internal.statistic.eventLog.whitelist.WhitelistGroupRulesStorage;
-import com.intellij.internal.statistic.eventLog.whitelist.WhitelistStorageProvider;
+import com.intellij.internal.statistic.eventLog.validator.storage.ValidationRulesStorage;
+import com.intellij.internal.statistic.eventLog.validator.storage.ValidationRulesStorageProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,7 +98,7 @@ import static com.intellij.internal.statistic.utils.StatisticsUtilKt.addPluginIn
  */
 public class SensitiveDataValidator {
   private static final ConcurrentMap<String, SensitiveDataValidator> ourInstances = new ConcurrentHashMap<>();
-  protected final @NotNull WhitelistGroupRulesStorage myWhiteListStorage;
+  protected final @NotNull ValidationRulesStorage myRulesStorage;
 
   static {
     CustomValidationRule.EP_NAME.addChangeListener(ourInstances::clear, null);
@@ -109,10 +109,10 @@ public class SensitiveDataValidator {
     return ourInstances.computeIfAbsent(
       recorderId,
       id -> {
-        WhitelistGroupRulesStorage whitelistStorage = WhitelistStorageProvider.newStorage(recorderId);
+        ValidationRulesStorage storage = ValidationRulesStorageProvider.newStorage(recorderId);
         return ApplicationManager.getApplication().isUnitTestMode()
-               ? new BlindSensitiveDataValidator(whitelistStorage)
-               : new SensitiveDataValidator(whitelistStorage);
+               ? new BlindSensitiveDataValidator(storage)
+               : new SensitiveDataValidator(storage);
       }
     );
   }
@@ -121,17 +121,17 @@ public class SensitiveDataValidator {
     return ourInstances.get(recorderId);
   }
 
-  protected SensitiveDataValidator(@NotNull WhitelistGroupRulesStorage storage) {
-    myWhiteListStorage = storage;
+  protected SensitiveDataValidator(@NotNull ValidationRulesStorage storage) {
+    myRulesStorage = storage;
   }
 
-  public WhitelistGroupRulesStorage getWhiteListStorage() {
-    return myWhiteListStorage;
+  public ValidationRulesStorage getValidationRulesStorage() {
+    return myRulesStorage;
   }
 
   public String guaranteeCorrectEventId(@NotNull EventLogGroup group,
                                         @NotNull EventContext context) {
-    if (myWhiteListStorage.isUnreachableWhitelist()) return UNREACHABLE_METADATA.getDescription();
+    if (myRulesStorage.isUnreachable()) return UNREACHABLE_METADATA.getDescription();
     if (SYSTEM_EVENTS.contains(context.eventId)) return context.eventId;
 
     ValidationResultType validationResultType = validateEvent(group, context);
@@ -139,7 +139,7 @@ public class SensitiveDataValidator {
   }
 
   public Map<String, Object> guaranteeCorrectEventData(@NotNull EventLogGroup group, @NotNull EventContext context) {
-    EventGroupRules groupRules = myWhiteListStorage.getGroupRules(group.getId());
+    EventGroupRules groupRules = myRulesStorage.getGroupRules(group.getId());
     if (isTestModeEnabled(groupRules)) {
       return context.eventData;
     }
@@ -168,7 +168,7 @@ public class SensitiveDataValidator {
   }
 
   public ValidationResultType validateEvent(@NotNull EventLogGroup group, @NotNull EventContext context) {
-    EventGroupRules groupRules = myWhiteListStorage.getGroupRules(group.getId());
+    EventGroupRules groupRules = myRulesStorage.getGroupRules(group.getId());
     if (groupRules == null || !groupRules.areEventIdRulesDefined()) {
       return UNDEFINED_RULE; // there are no rules (eventId and eventData) to validate
     }
@@ -180,22 +180,22 @@ public class SensitiveDataValidator {
                                    @Nullable EventGroupRules groupRules,
                                    @NotNull String key,
                                    @NotNull Object entryValue) {
-    if (myWhiteListStorage.isUnreachableWhitelist()) return UNREACHABLE_METADATA;
+    if (myRulesStorage.isUnreachable()) return UNREACHABLE_METADATA;
     if (groupRules == null) return UNDEFINED_RULE;
     return groupRules.validateEventData(key, entryValue, context);
   }
 
   public void update() {
-    myWhiteListStorage.update();
+    myRulesStorage.update();
   }
 
   public void reload() {
-    myWhiteListStorage.reload();
+    myRulesStorage.reload();
   }
 
   private static class BlindSensitiveDataValidator extends SensitiveDataValidator {
-    protected BlindSensitiveDataValidator(@NotNull WhitelistGroupRulesStorage whiteListStorage) {
-      super(whiteListStorage);
+    protected BlindSensitiveDataValidator(@NotNull ValidationRulesStorage storage) {
+      super(storage);
     }
 
     @Override

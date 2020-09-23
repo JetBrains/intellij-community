@@ -17,6 +17,7 @@ _posixsubprocess
 asyncio.unix_events
 crypt
 dbm.gnu
+dbm.ndbm
 fcntl
 grp
 nis

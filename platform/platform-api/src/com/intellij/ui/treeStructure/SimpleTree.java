@@ -5,10 +5,9 @@ import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ide.util.treeView.TreeVisitor;
 import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.TreeUIHelper;
 import com.intellij.util.ui.EmptyIcon;
@@ -405,10 +404,7 @@ public class SimpleTree extends Tree implements CellEditorListener {
   }
 
   protected void invokeContextMenu(final MouseEvent e) {
-    SwingUtilities.invokeLater(() -> {
-      final ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(myPlace, myPopupGroup);
-      menu.getComponent().show(e.getComponent(), e.getPoint().x, e.getPoint().y);
-    });
+    SwingUtilities.invokeLater(() -> JBPopupMenu.showByEvent(e, myPlace, myPopupGroup));
   }
 
   private class MyMouseListener extends MouseAdapter {

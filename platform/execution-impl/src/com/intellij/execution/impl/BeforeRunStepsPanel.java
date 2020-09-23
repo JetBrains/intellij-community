@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.scale.JBUIScale;
@@ -313,7 +314,7 @@ public final class BeforeRunStepsPanel extends JPanel {
   public interface StepsBeforeRunListener {
     void fireStepsBeforeRunChanged();
 
-    void titleChanged(@NotNull String title);
+    void titleChanged(@NotNull @NlsContexts.Separator String title);
   }
 
   private final class MyListCellRenderer extends JBList.StripedListCellRenderer {

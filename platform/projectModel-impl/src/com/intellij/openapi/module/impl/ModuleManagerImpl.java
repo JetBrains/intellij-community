@@ -224,7 +224,8 @@ public abstract class ModuleManagerImpl extends ModuleManagerEx implements Dispo
     myModulePathsToLoad.clear();
   }
 
-  protected void unloadNewlyAddedModulesIfPossible(@NotNull Set<ModulePath> modulesToLoad, @NotNull List<UnloadedModuleDescriptionImpl> modulesToUnload) {
+  @Override
+  public void unloadNewlyAddedModulesIfPossible(@NotNull Set<ModulePath> modulesToLoad, @NotNull List<UnloadedModuleDescriptionImpl> modulesToUnload) {
   }
 
   @NotNull

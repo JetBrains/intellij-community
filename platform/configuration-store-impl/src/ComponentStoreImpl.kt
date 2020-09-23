@@ -86,6 +86,13 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   internal fun getComponents(): Map<String, ComponentInfo> = components
 
+  override fun clearCaches() {
+    components.values.forEach {
+      it.updateModificationCount(-1)
+    }
+    (storageManager as? StateStorageManagerImpl)?.clearStorages()
+  }
+
   override fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId?) {
     var componentName = ""
     try {
@@ -398,6 +405,11 @@ abstract class ComponentStoreImpl : IComponentStore {
 
     val stateSpec = info.stateSpec!!
     val name = stateSpec.name
+
+    // KT-39968: PathMacrosImpl could increase modCount on loadState and the change has to be persisted
+    // all other components follow general rule: initial modCount is calculated after loadState phase
+    val postLoadStateUpdateModificationCount = name != "PathMacrosImpl"
+
     val defaultState = if (stateSpec.defaultStateAsResource) getDefaultState(component, name, stateClass) else null
     if (loadPolicy == StateLoadPolicy.LOAD || info.stateSpec?.allowLoadInTests == true) {
       val storageChooser = component as? StateStorageChooserEx
@@ -427,6 +439,9 @@ abstract class ComponentStoreImpl : IComponentStore {
           }
         }
 
+        if (!postLoadStateUpdateModificationCount) {
+          info.updateModificationCount(info.currentModificationCount)
+        }
         component.loadState(state)
         val stateAfterLoad = stateGetter.archiveState()
         if (isReportStatisticAllowed(stateSpec)) {
@@ -435,7 +450,9 @@ abstract class ComponentStoreImpl : IComponentStore {
           }
         }
 
-        info.updateModificationCount(info.currentModificationCount)
+        if (postLoadStateUpdateModificationCount) {
+          info.updateModificationCount(info.currentModificationCount)
+        }
         return true
       }
     }
@@ -445,8 +462,13 @@ abstract class ComponentStoreImpl : IComponentStore {
       component.noStateLoaded()
     }
     else {
+      if (!postLoadStateUpdateModificationCount) {
+        info.updateModificationCount(info.currentModificationCount)
+      }
       component.loadState(defaultState)
-      info.updateModificationCount(info.currentModificationCount)
+      if (postLoadStateUpdateModificationCount) {
+        info.updateModificationCount(info.currentModificationCount)
+      }
     }
     return true
   }

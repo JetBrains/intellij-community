@@ -17,7 +17,7 @@ public final class PsiSymbolReferenceProviderBean extends CustomLoadingExtension
    * The references will be provided for the specified language and its {@linkplain Language#getBaseLanguage() base languages}.
    */
   @Attribute
-  @RequiredElement
+  @RequiredElement(allowEmpty = true)
   public String hostLanguage;
 
   /**

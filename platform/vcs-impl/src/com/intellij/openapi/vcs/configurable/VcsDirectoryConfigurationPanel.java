@@ -15,17 +15,14 @@ import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
-import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import com.intellij.openapi.vcs.roots.VcsRootErrorsFinder;
 import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ColoredTableCellRenderer;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
@@ -62,13 +59,13 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   private final @Nls String myProjectMessage;
   private final ProjectLevelVcsManager myVcsManager;
   private final TableView<MapInfo> myDirectoryMappingTable;
-  private final ComboBox<VcsDescriptor> myVcsComboBox = new ComboBox<>();
+  private final ComboBox<AbstractVcs> myVcsComboBox;
   private final List<ModuleVcsListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private final MyDirectoryRenderer myDirectoryRenderer;
   private final ColumnInfo<MapInfo, MapInfo> DIRECTORY;
   private ListTableModel<MapInfo> myModel;
-  private final Map<String, VcsDescriptor> myAllVcss;
+  private final List<AbstractVcs> myAllVcss;
   private VcsContentAnnotationConfigurable myRecentlyChangedConfigurable;
   private final boolean myIsDisabled;
   private final VcsConfiguration myVcsConfiguration;
@@ -227,11 +224,11 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
 
             final String vcsName = info.mapping.getVcs();
             String text;
-            if (vcsName.length() == 0) {
+            if (vcsName.isEmpty()) {
               text = VcsBundle.message("none.vcs.presentation");
             }
             else {
-              final VcsDescriptor vcs = myAllVcss.get(vcsName);
+              AbstractVcs vcs = ContainerUtil.find(myAllVcss, it -> vcsName.equals(it.getName()));
               if (vcs != null) {
                 text = vcs.getDisplayName();
               }
@@ -249,14 +246,13 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
         return new AbstractTableCellEditor() {
           @Override
           public Object getCellEditorValue() {
-            final VcsDescriptor selectedVcs = (VcsDescriptor)myVcsComboBox.getSelectedItem();
-            return ((selectedVcs == null) || selectedVcs.isNone()) ? "" : selectedVcs.getName();
+            AbstractVcs selectedVcs = myVcsComboBox.getItem();
+            return selectedVcs == null ? "" : selectedVcs.getName(); //NON-NLS handled by custom renderer
           }
 
           @Override
           public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-            String vcsName = (String)value;
-            myVcsComboBox.setSelectedItem(myAllVcss.get(vcsName));
+            myVcsComboBox.setSelectedItem(value);
             return myVcsComboBox;
           }
         };
@@ -266,7 +262,8 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
       @Override
       public String getMaxStringValue() {
         String maxString = null;
-        for (String name : myAllVcss.keySet()) {
+        for (AbstractVcs vcs : myAllVcss) {
+          String name = vcs.getDisplayName();
           if (maxString == null || maxString.length() < name.length()) {
             maxString = name;
           }
@@ -290,11 +287,8 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
       .wrapWithHtmlBody().toString();
     myIsDisabled = myProject.isDefault();
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
-    final VcsDescriptor[] vcsDescriptors = myVcsManager.getAllVcss();
-    myAllVcss = new HashMap<>();
-    for (VcsDescriptor vcsDescriptor : vcsDescriptors) {
-      myAllVcss.put(vcsDescriptor.getName(), vcsDescriptor);
-    }
+
+    myAllVcss = asList(myVcsManager.getAllSupportedVcss());
 
     myDirectoryMappingTable = new TableView<>();
     myDirectoryMappingTable.setIntercellSpacing(JBUI.emptySize());
@@ -309,7 +303,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     add(createMainComponent());
 
     myDirectoryRenderer = new MyDirectoryRenderer(myProject);
-    DIRECTORY = new ColumnInfo<MapInfo, MapInfo>(VcsBundle.message("column.info.configure.vcses.directory")) {
+    DIRECTORY = new ColumnInfo<>(VcsBundle.message("column.info.configure.vcses.directory")) {
       @Override
       public MapInfo valueOf(final MapInfo mapping) {
         return mapping;
@@ -322,7 +316,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     };
     initializeModel();
 
-    myVcsComboBox.setModel(buildVcsWrappersModel(myProject));
+    myVcsComboBox = buildVcsesComboBox(myProject);
     myVcsComboBox.addItemListener(e -> {
       if (myDirectoryMappingTable.isEditing()) {
         myDirectoryMappingTable.stopEditing();
@@ -390,12 +384,11 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   }
 
   @NotNull
-  public static DefaultComboBoxModel<VcsDescriptor> buildVcsWrappersModel(@NotNull Project project) {
-    final VcsDescriptor[] vcsDescriptors = ProjectLevelVcsManager.getInstance(project).getAllVcss();
-    final VcsDescriptor[] result = new VcsDescriptor[vcsDescriptors.length + 1];
-    result[0] = VcsDescriptor.createFictive();
-    System.arraycopy(vcsDescriptors, 0, result, 1, vcsDescriptors.length);
-    return new DefaultComboBoxModel<>(result);
+  public static ComboBox<AbstractVcs> buildVcsesComboBox(@NotNull Project project) {
+    AbstractVcs[] allVcses = ProjectLevelVcsManager.getInstance(project).getAllSupportedVcss();
+    ComboBox<AbstractVcs> comboBox = new ComboBox<>(ArrayUtil.append(allVcses, null));
+    comboBox.setRenderer(SimpleListCellRenderer.create(VcsBundle.message("none.vcs.presentation"), AbstractVcs::getDisplayName));
+    return comboBox;
   }
 
   private void addMapping() {

@@ -2,6 +2,8 @@
 package com.intellij.diagnostic.tracing;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
@@ -12,7 +14,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 
 public class MethodTracer {
-    private final String myId;
+    private final @NotNull TracerId myId;
     private final String myClassName;
     private final String myMethodName;
 
@@ -30,7 +32,7 @@ public class MethodTracer {
     private final ThreadLocal<Long>    currentCalculationStart = ThreadLocal.withInitial(() -> null);
     private final ThreadLocal<Integer> currentRecursionDepth   = ThreadLocal.withInitial(() -> 0);
 
-    private MethodTracer(@NonNls String id, @NonNls String className, @NonNls String methodName) {
+    private MethodTracer(@NotNull TracerId id, @NonNls String className, @NonNls String methodName) {
         myId = id;
         myClassName = className;
         myMethodName = methodName;
@@ -86,10 +88,30 @@ public class MethodTracer {
         return TimeUnit.NANOSECONDS.toMillis(time);
     }
 
-    private static final MyConcurrentMap<String, MethodTracer> tracersMap = new MyConcurrentMap<>();
+    private static final MyConcurrentMap<TracerId, MethodTracer> tracersMap = new MyConcurrentMap<>();
 
-    public static MethodTracer getInstance(String id, String className, String methodName) {
-        return isEnabled() ? tracersMap.putIfAbsent(id, new MethodTracer(id, className, methodName)) : empty;
+    /**
+     * @deprecated Used in 2020.2 performancePlugin
+     */
+    @Deprecated
+    public static MethodTracer getInstance(@NotNull String tracerId,
+                                           @NotNull String simpleClassName,
+                                           @NotNull String presentableMethodName) {
+        TracerId id = new TracerId(tracerId, "", null, "");
+        return isEnabled() ? tracersMap.putIfAbsent(id, new MethodTracer(id, simpleClassName, presentableMethodName)) : empty;
+    }
+
+    public static MethodTracer getInstance(@NotNull String className,
+                                           @NotNull String simpleClassName,
+                                           @NotNull String methodName,
+                                           @Nullable String methodNameSuffix,
+                                           @NotNull String desc) {
+        TracerId id = new TracerId(className, methodName, methodNameSuffix, desc);
+        String presentableMethodName = methodName;
+        if (methodNameSuffix != null) {
+            presentableMethodName = methodName + "-" + methodNameSuffix;
+        }
+        return isEnabled() ? tracersMap.putIfAbsent(id, new MethodTracer(id, simpleClassName, presentableMethodName)) : empty;
     }
 
     private static boolean enabled = true;
@@ -110,7 +132,7 @@ public class MethodTracer {
         return tracersMap.map((k, v) -> v.getCurrentData());
     }
 
-    private static final MethodTracer empty = new MethodTracer("$$emptyTracer$$", "", "") {
+    private static final MethodTracer empty = new MethodTracer(TracerId.EMPTY, "", "") {
 
         @Override
         public void onMethodEnter() {}
@@ -167,4 +189,40 @@ public class MethodTracer {
         }
     }
 
+    public static final class TracerId {
+
+        public static final TracerId EMPTY = new TracerId("", "", "", "");
+
+        private final String myClassName;
+        private final String myMethodName;
+        private final String mySuffix;
+        private final String myDescription;
+
+        public TracerId(@NotNull @NonNls String className,
+                        @NotNull @NonNls String methodName,
+                        @Nullable @NonNls String suffix,
+                        @NotNull @NonNls String description) {
+
+            myClassName = className;
+            myMethodName = methodName;
+            mySuffix = suffix;
+            myDescription = description;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            TracerId id = (TracerId)o;
+            return myClassName.equals(id.myClassName) &&
+                   myMethodName.equals(id.myMethodName) &&
+                   Objects.equals(mySuffix, id.mySuffix) &&
+                   myDescription.equals(id.myDescription);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(myClassName, myMethodName, mySuffix, myDescription);
+        }
+    }
 }

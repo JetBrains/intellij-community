@@ -42,7 +42,7 @@ class ResourceTextDescriptor implements TextDescriptor {
     if (stream == null) {
       throw new IOException("Resource not found: " + myResourcePath);
     }
-    return ResourceUtil.loadText(stream);
+    return ResourceUtil.loadText(stream); //NON-NLS
   }
 
   @NotNull

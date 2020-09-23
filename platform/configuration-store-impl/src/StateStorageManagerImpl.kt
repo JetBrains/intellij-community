@@ -313,14 +313,18 @@ open class StateStorageManagerImpl(@NonNls private val rootTagName: String,
     storageLock.write {
       try {
         if (virtualFileTracker != null) {
-          for (collapsedPath in storages.keys) {
-            virtualFileTracker.remove(expandMacro(collapsedPath).systemIndependentPath)
-          }
+          clearVirtualFileTracker(virtualFileTracker)
         }
       }
       finally {
         storages.clear()
       }
+    }
+  }
+
+  protected open fun clearVirtualFileTracker(virtualFileTracker: StorageVirtualFileTracker) {
+    for (collapsedPath in storages.keys) {
+      virtualFileTracker.remove(expandMacro(collapsedPath).systemIndependentPath)
     }
   }
 

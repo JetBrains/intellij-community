@@ -188,7 +188,7 @@ public final class IndexDataGetter {
   }
 
   @NotNull
-  private IntSet filterMessages(@NotNull VcsLogTextFilter filter, @Nullable IntIterable candidates) {
+  private IntSet filterMessages(@NotNull VcsLogTextFilter filter, @Nullable IntSet candidates) {
     if (!filter.isRegex() || filter instanceof VcsLogMultiplePatternsTextFilter) {
       IntSet resultByTrigrams = executeAndCatch(() -> {
         List<String> trigramSources = filter instanceof VcsLogMultiplePatternsTextFilter ?
@@ -197,21 +197,8 @@ public final class IndexDataGetter {
         IntCollection commitsForSearch = new IntOpenHashSet();
         for (String string : trigramSources) {
           IntSet commits = myIndexStorage.trigrams.getCommitsForSubstring(string);
-          if (commits == null) {
-            return null;
-          }
-
-          if (candidates == null) {
-            commitsForSearch.addAll(commits);
-          }
-          else {
-            for (IntIterator iterator = candidates.iterator(); iterator.hasNext(); ) {
-              int v = iterator.nextInt();
-              if (commits.contains(v)) {
-                commitsForSearch.add(v);
-              }
-            }
-          }
+          if (commits == null) return null;
+          commitsForSearch.addAll(TroveUtil.intersect(candidates, commits));
         }
         IntSet result = new IntOpenHashSet();
         for (IntIterator iterator = commitsForSearch.iterator(); iterator.hasNext(); ) {

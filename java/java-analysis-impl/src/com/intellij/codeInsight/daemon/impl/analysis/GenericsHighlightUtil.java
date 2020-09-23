@@ -33,8 +33,8 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -391,9 +391,9 @@ public final class GenericsHighlightUtil {
     final Collection<HierarchicalMethodSignature> signaturesWithSupers = aClass.getVisibleSignatures();
     PsiManager manager = aClass.getManager();
     Map<MethodSignature, MethodSignatureBackedByPsiMethod> sameErasureMethods =
-      new THashMap<>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
+      new Object2ObjectOpenCustomHashMap<>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
 
-    final Set<MethodSignature> foundProblems = new THashSet<>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
+    final Set<MethodSignature> foundProblems = new ObjectOpenCustomHashSet<>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
     for (HierarchicalMethodSignature signature : signaturesWithSupers) {
       HighlightInfo info = checkSameErasureNotSubSignatureInner(signature, manager, aClass, sameErasureMethods);
       if (info != null && foundProblems.add(signature)) {
@@ -547,7 +547,7 @@ public final class GenericsHighlightUtil {
     final PsiClass superClass = psiClass.getSuperClass();
     if (superClass != null && superClass.hasTypeParameters()) {
       final Collection<HierarchicalMethodSignature> visibleSignatures = superClass.getVisibleSignatures();
-      final Map<MethodSignature, PsiMethod> overrideEquivalent = new THashMap<>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
+      final Map<MethodSignature, PsiMethod> overrideEquivalent = new Object2ObjectOpenCustomHashMap<>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
       for (HierarchicalMethodSignature hms : visibleSignatures) {
         final PsiMethod method = hms.getMethod();
         if (method.isConstructor()) continue;
@@ -1428,7 +1428,7 @@ public final class GenericsHighlightUtil {
     }
   }
 
-  static HighlightInfo checkInferredIntersections(@NotNull PsiSubstitutor substitutor, @NotNull TextRange ref) {
+  static HighlightInfo checkInferredIntersections(@NotNull PsiSubstitutor substitutor, @NotNull PsiMethodCallExpression call) {
     for (Map.Entry<PsiTypeParameter, PsiType> typeEntry : substitutor.getSubstitutionMap().entrySet()) {
       final String parameterName = typeEntry.getKey().getName();
       final PsiType type = typeEntry.getValue();
@@ -1438,7 +1438,7 @@ public final class GenericsHighlightUtil {
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
             .descriptionAndTooltip(
               JavaErrorBundle.message("type.parameter.has.incompatible.upper.bounds", parameterName, conflictingConjunctsMessage))
-            .range(ref).create();
+            .range(HighlightMethodUtil.getFixRange(call)).create();
         }
       }
     }
@@ -1446,17 +1446,18 @@ public final class GenericsHighlightUtil {
   }
 
   static HighlightInfo checkClassSupersAccessibility(@NotNull PsiClass aClass) {
-    return checkClassSupersAccessibility(aClass, aClass.getResolveScope(), HighlightNamesUtil.getClassDeclarationTextRange(aClass), true);
+    HighlightInfo.Builder builder = checkClassSupersAccessibility(aClass, aClass.getResolveScope(), true);
+    return builder == null ? null : builder.range(HighlightNamesUtil.getClassDeclarationTextRange(aClass)).create();
   }
 
-  static HighlightInfo checkClassSupersAccessibility(@NotNull PsiClass aClass, @NotNull PsiElement ref) {
-    return checkClassSupersAccessibility(aClass, ref.getResolveScope(), ref.getTextRange(), false);
+  static HighlightInfo checkClassSupersAccessibility(@NotNull PsiClass aClass, @NotNull PsiElement ref, @NotNull GlobalSearchScope scope) {
+    HighlightInfo.Builder builder = checkClassSupersAccessibility(aClass, scope, false);
+    return builder == null ? null : builder.range(ref.getTextRange()).create();
   }
 
-  private static HighlightInfo checkClassSupersAccessibility(@NotNull PsiClass aClass,
-                                                             @NotNull GlobalSearchScope resolveScope,
-                                                             @NotNull TextRange range,
-                                                             boolean checkParameters) {
+  private static HighlightInfo.Builder checkClassSupersAccessibility(@NotNull PsiClass aClass,
+                                                                     @NotNull GlobalSearchScope resolveScope,
+                                                                     boolean checkParameters) {
     final JavaPsiFacade factory = JavaPsiFacade.getInstance(aClass.getProject());
     for (PsiClassType superType : aClass.getSuperTypes()) {
       HashSet<PsiClass> checked = new HashSet<>();
@@ -1464,9 +1465,7 @@ public final class GenericsHighlightUtil {
       final String notAccessibleErrorMessage = isTypeAccessible(superType, checked, checkParameters, resolveScope, factory);
       if (notAccessibleErrorMessage != null) {
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-          .descriptionAndTooltip(notAccessibleErrorMessage)
-          .range(range)
-          .create();
+          .descriptionAndTooltip(notAccessibleErrorMessage);
       }
     }
     return null;

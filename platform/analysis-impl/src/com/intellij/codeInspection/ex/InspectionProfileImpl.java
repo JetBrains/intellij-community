@@ -58,7 +58,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   protected final InspectionProfileImpl myBaseProfile;
   private volatile String myToolShortName;
   private String[] myScopesOrder;
-  private String myDescription;
+  private @NlsContexts.DetailedDescription String myDescription;
 
   private SchemeDataHolder<? super InspectionProfileImpl> myDataHolder;
 
@@ -707,11 +707,12 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   @Tag
+  @NlsContexts.DetailedDescription
   public String getDescription() {
     return myDescription;
   }
 
-  public void setDescription(@Nullable String description) {
+  public void setDescription(@NlsContexts.DetailedDescription @Nullable String description) {
     myDescription = StringUtil.nullize(description);
     schemeState = SchemeState.POSSIBLY_CHANGED;
   }

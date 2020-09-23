@@ -9,6 +9,7 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.lang.UrlClassLoader;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,12 +27,12 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 public final class BootstrapClassLoaderUtil {
-  public static final String CLASSPATH_ORDER_FILE = "classpath-order.txt";
+  public static final @NonNls String CLASSPATH_ORDER_FILE = "classpath-order.txt";
 
   private static final String PROPERTY_IGNORE_CLASSPATH = "ignore.classpath";
   private static final String PROPERTY_ALLOW_BOOTSTRAP_RESOURCES = "idea.allow.bootstrap.resources";
   private static final String PROPERTY_ADDITIONAL_CLASSPATH = "idea.additional.classpath";
-  private static final String MARKETPLACE_PLUGIN_DIR = "marketplace";
+  private static final @NonNls String MARKETPLACE_PLUGIN_DIR = "marketplace";
 
   private BootstrapClassLoaderUtil() { }
 
@@ -85,7 +86,7 @@ public final class BootstrapClassLoaderUtil {
         // at this point logging is not initialized yet, so reporting the error directly
         String path = new File(PathManager.getPluginsPath(), MARKETPLACE_PLUGIN_DIR).getAbsolutePath();
         String message = "As a workaround, you may uninstall or update JetBrains Marketplace Support plugin at " + path;
-        Main.showMessage("JetBrains Marketplace boot failure", new Exception(message, e));
+        Main.showMessage(BootstrapBundle.message("bootstrap.error.title.jetbrains.marketplace.boot.failure"), new Exception(message, e));
       }
     }
 

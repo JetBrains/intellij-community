@@ -124,9 +124,15 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   @NotNull protected abstract String getForkMode();
 
   @NotNull
-  protected OSProcessHandler createHandler(Executor executor) throws ExecutionException {
+  private OSProcessHandler createHandler(Executor executor, SMTestRunnerResultsForm viewer) throws ExecutionException {
     appendForkInfo(executor);
     appendRepeatMode();
+
+    SearchForTestsTask searchForTestsTask = createSearchingForTestsTask();
+    if (searchForTestsTask != null) {
+      searchForTestsTask.arrangeForIndexAccess();
+      searchForTestsTask.setIncompleteIndexUsageCallback(() -> viewer.setIncompleteIndexUsed());
+    }
 
     EmptyProgressIndicator targetIndicator = new EmptyProgressIndicator();
     TargetEnvironment remoteEnvironment = getEnvironment().getPreparedTargetEnvironment(this, targetIndicator);
@@ -140,7 +146,6 @@ public abstract class JavaTestFrameworkRunnableState<T extends
                                                                                targetedCommandLineBuilder.getFilesToDeleteOnTermination());
 
     ProcessTerminatedListener.attach(processHandler);
-    final SearchForTestsTask searchForTestsTask = createSearchingForTestsTask();
     if (searchForTestsTask != null) {
       searchForTestsTask.attachTaskToProcess(processHandler);
     }
@@ -189,7 +194,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     final SMTestRunnerResultsForm viewer = ((SMTRunnerConsoleView)consoleView).getResultsViewer();
     Disposer.register(getConfiguration().getProject(), consoleView);
 
-    final OSProcessHandler handler = createHandler(executor);
+    OSProcessHandler handler = createHandler(executor, viewer);
 
     for (ArgumentFileFilter filter : myArgumentFileFilters) {
       consoleView.addMessageFilter(filter);

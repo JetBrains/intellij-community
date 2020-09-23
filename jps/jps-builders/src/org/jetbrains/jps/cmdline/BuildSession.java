@@ -176,6 +176,7 @@ final class BuildSession implements Runnable, CanceledStatus {
             if (buildMessage instanceof ProgressMessage) {
               done = ((ProgressMessage)buildMessage).getDone();
             }
+            //noinspection HardCodedStringLiteral
             response = CmdlineProtoUtil.createCompileProgressMessageResponse(buildMessage.getMessageText(), done);
           }
           else {

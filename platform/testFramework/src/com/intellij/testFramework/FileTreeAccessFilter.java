@@ -31,7 +31,7 @@ public class FileTreeAccessFilter implements VirtualFileFilter {
   private boolean myTreeAccessAllowed;
 
   @Override
-  public boolean accept(VirtualFile file) {
+  public boolean accept(@NotNull VirtualFile file) {
     if (file instanceof VirtualFileWindow) return false;
 
     if (myAddedClasses.contains(file) || myTreeAccessAllowed) return false;

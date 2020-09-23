@@ -5,6 +5,7 @@ object EditorConfigJsonSchemaConstants {
   // Std types
   const val NUMBER = "number"
   const val STRING = "string"
+  const val TEXT = "text"
 
   // Simple types
   const val CONST = "constant"

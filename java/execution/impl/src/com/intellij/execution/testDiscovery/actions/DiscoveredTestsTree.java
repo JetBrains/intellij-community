@@ -77,7 +77,7 @@ class DiscoveredTestsTree extends Tree implements DataProvider, Disposable {
               append(FontUtil.spaceAndThinSpace() + packageName, SimpleTextAttributes.GRAYED_ATTRIBUTES);
             }
             int testMethodCount = myModel.getChildren(value).size();
-            append(" / " + (testMethodCount != 1 ? (testMethodCount + " tests") : "1 test"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+            append(JavaCompilerBundle.message("affected.tests.counts", testMethodCount, testMethodCount == 1 ? 0 : 1), SimpleTextAttributes.GRAYED_ATTRIBUTES);
           }
           else if (node instanceof DiscoveredTestsTreeModel.Node.Method) {
             boolean isParametrized = !((DiscoveredTestsTreeModel.Node.Method)node).getParameters().isEmpty();

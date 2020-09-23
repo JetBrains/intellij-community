@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ExperimentalFeature;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.project.Project;
@@ -106,8 +107,8 @@ public class ExperimentsDialog extends DialogWrapper {
       @Override
       public String getColumnName(int column) {
         switch (column) {
-          case 0: return "Name";
-          case 1: return "Enabled";
+          case 0: return ApplicationBundle.message("column.name");
+          case 1: return IdeBundle.message("column.enabled");
           default: throw new IllegalArgumentException("Wrong column number");
         }
       }

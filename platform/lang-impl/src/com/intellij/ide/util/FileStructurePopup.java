@@ -25,7 +25,6 @@ import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.navigation.LocationPresentation;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -266,7 +265,6 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
   public void show() {
     JComponent panel = createCenterPanel();
-    MnemonicHelper.init(panel);
     myTree.addTreeSelectionListener(__ -> {
       if (myPopup.isVisible()) {
         PopupUpdateProcessor updateProcessor = myPopup.getUserData(PopupUpdateProcessor.class);

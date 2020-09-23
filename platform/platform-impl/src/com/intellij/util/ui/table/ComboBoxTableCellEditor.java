@@ -16,6 +16,7 @@
 package com.intellij.util.ui.table;
 
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.PopupMenuListenerAdapter;
@@ -57,7 +58,8 @@ public class ComboBoxTableCellEditor extends DefaultCellEditor {
 
     comboBox.setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
       label.setIcon(value instanceof Iconable ? ((Iconable)value).getIcon(Iconable.ICON_FLAG_VISIBILITY) : null);
-      label.setText(value == null ? "" : value.toString());
+      @NlsSafe String text = value == null ? "" : value.toString();
+      label.setText(text);
     }));
   }
 

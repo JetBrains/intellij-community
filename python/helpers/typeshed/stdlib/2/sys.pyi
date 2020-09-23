@@ -1,10 +1,7 @@
 """Stubs for the 'sys' module."""
 
-from typing import (
-    IO, NoReturn, Union, List, Sequence, Any, Dict, Tuple, BinaryIO, Optional,
-    Callable, overload, Text, Type,
-)
-from types import FrameType, ModuleType, TracebackType, ClassType
+from types import ClassType, FrameType, ModuleType, TracebackType
+from typing import IO, Any, BinaryIO, Callable, Dict, List, NoReturn, Optional, Sequence, Text, Tuple, Type, Union, overload
 
 # The following type alias are stub-only and do not exist during runtime
 _ExcInfo = Tuple[Type[BaseException], BaseException, TracebackType]
@@ -107,7 +104,6 @@ class _WindowsVersionType:
     product_type: Any
 
 def getwindowsversion() -> _WindowsVersionType: ...
-
 def _clear_type_cache() -> None: ...
 def _current_frames() -> Dict[int, FrameType]: ...
 def _getframe(depth: int = ...) -> FrameType: ...

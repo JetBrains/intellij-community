@@ -18,6 +18,7 @@ package com.theoryinpractice.testng.model;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.testframework.SourceScope;
+import com.intellij.execution.testframework.TestRunnerBundle;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Comparing;
@@ -61,7 +62,7 @@ public class TestNGTestPackage extends TestNGTestObject {
   @Override
   public String getGeneratedName() {
     final String packageName = myConfig.getPersistantData().getPackageName();
-    return packageName.length() == 0 ? "<default>" : packageName;
+    return packageName.length() == 0 ? TestRunnerBundle.message("default.package.presentable.name") : packageName;
   }
 
   @Override
@@ -69,10 +70,10 @@ public class TestNGTestPackage extends TestNGTestObject {
     String s = myConfig.getName();
     if (!myConfig.isGeneratedName()) return '\"' + s + '\"';
     if (myConfig.getPersistantData().getPackageName().trim().length() > 0) {
-      return "Tests in \"" + myConfig.getPersistantData().getPackageName() + '\"';
+      return TestngBundle.message("action.text.tests.in.package", myConfig.getPersistantData().getPackageName());
     }
     else {
-      return "All Tests";
+      return TestRunnerBundle.message("all.tests.scope.presentable.text");
     }
   }
 

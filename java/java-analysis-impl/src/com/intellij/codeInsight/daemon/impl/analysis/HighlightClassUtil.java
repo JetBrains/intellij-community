@@ -282,6 +282,12 @@ public final class HighlightClassUtil {
   public static boolean isJavaHashBangScript(@Nullable PsiFile containingFile) {
     if (!(containingFile instanceof PsiJavaFile)) return false;
     PsiElement firstChild = containingFile.getFirstChild();
+    if (firstChild instanceof PsiImportList && firstChild.getTextLength() == 0) {
+      PsiElement sibling = firstChild.getNextSibling();
+      if (sibling instanceof PsiClass) {
+        firstChild = sibling.getFirstChild();
+      }
+    }
     return firstChild instanceof PsiComment && 
            ((PsiComment)firstChild).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT && 
            firstChild.getText().startsWith("#!");
@@ -1108,12 +1114,15 @@ public final class HighlightClassUtil {
         if (resolve instanceof PsiClass) {
           PsiClass inheritorClass = (PsiClass)resolve;
           if (Arrays.stream(inheritorClass.getSuperTypes()).noneMatch(type -> aClass.equals(type.resolve()))) {
-            holder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(permitted)
-                         .descriptionAndTooltip(JavaErrorBundle.message("invalid.permits.clause.direct.implementation",
-                                                                        inheritorClass.getName(),
-                                                                        inheritorClass.isInterface() == aClass.isInterface() ? 1 : 2,
-                                                                        aClass.getName()))
-                         .create());
+            HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(permitted)
+              .descriptionAndTooltip(JavaErrorBundle.message("invalid.permits.clause.direct.implementation",
+                                                             inheritorClass.getName(),
+                                                             inheritorClass.isInterface() == aClass.isInterface() ? 1 : 2,
+                                                             aClass.getName()))
+              .create();
+            QuickFixAction.registerQuickFixActions(info, null,
+                                                   QUICK_FIX_FACTORY.createExtendSealedClassFixes(permitted, aClass, inheritorClass));
+            holder.add(info);
           }
           else {
             if (currentModule == null && !psiFacade.arePackagesTheSame(aClass, inheritorClass)) {

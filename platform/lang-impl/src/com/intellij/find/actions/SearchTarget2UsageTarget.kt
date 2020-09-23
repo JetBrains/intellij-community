@@ -3,12 +3,11 @@
 
 package com.intellij.find.actions
 
-import com.intellij.find.usages.SearchTarget
-import com.intellij.find.usages.UsageHandler
+import com.intellij.find.usages.api.SearchTarget
+import com.intellij.find.usages.api.UsageHandler
 import com.intellij.find.usages.impl.AllSearchOptions
 import com.intellij.model.Pointer
 import com.intellij.navigation.ItemPresentation
-import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.KeyboardShortcut
@@ -16,11 +15,7 @@ import com.intellij.openapi.actionSystem.TypeSafeDataProvider
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.pom.Navigatable
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewBundle
 import com.intellij.usages.ConfigurableUsageTarget
 import com.intellij.usages.UsageTarget
@@ -62,21 +57,10 @@ internal class SearchTarget2UsageTarget<O>(
   // ----- Navigatable & NavigationItem -----
   // TODO Symbol navigation
 
-  private val psi: PsiElement? get() = myPointer.dereference()?.let(::targetPsi)
-
-  override fun getName(): String? = (psi as? NavigationItem)?.name
-
-  override fun navigate(requestFocus: Boolean) {
-    (psi as? Navigatable)?.let { navigatable ->
-      if (navigatable.canNavigate()) {
-        navigatable.navigate(requestFocus)
-      }
-    }
-  }
-
-  override fun canNavigate(): Boolean = (psi as? Navigatable)?.canNavigate() == true
-
-  override fun canNavigateToSource(): Boolean = (psi as? Navigatable)?.canNavigateToSource() == true
+  override fun canNavigate(): Boolean = false
+  override fun canNavigateToSource(): Boolean = false
+  override fun getName(): String? = null
+  override fun navigate(requestFocus: Boolean) = Unit
 
   // ----- actions -----
 
@@ -95,7 +79,7 @@ internal class SearchTarget2UsageTarget<O>(
   override fun showSettings() {
     val target = myPointer.dereference() ?: return
     @Suppress("UNCHECKED_CAST") val usageHandler = target.usageHandler as UsageHandler<O>
-    val dialog = UsageOptionsDialog(project, target.displayString, usageHandler, allOptions, true)
+    val dialog = UsageOptionsDialog(project, target.displayString, usageHandler, allOptions, target.showScopeChooser(), true)
     if (!dialog.showAndGet()) {
       return
     }
@@ -109,16 +93,8 @@ internal class SearchTarget2UsageTarget<O>(
 
   // ----- data context -----
 
-  override fun getFiles(): Array<VirtualFile?>? = psi?.containingFile?.virtualFile?.let { arrayOf(it) }
-
   override fun calcData(key: DataKey<*>, sink: DataSink) {
-    if (key === UsageView.USAGE_INFO_KEY) {
-      val element = psi
-      if (element != null && element.textRange != null) {
-        sink.put(UsageView.USAGE_INFO_KEY, UsageInfo(element))
-      }
-    }
-    else if (key === UsageView.USAGE_SCOPE) {
+    if (key === UsageView.USAGE_SCOPE) {
       sink.put(UsageView.USAGE_SCOPE, allOptions.options.searchScope)
     }
   }

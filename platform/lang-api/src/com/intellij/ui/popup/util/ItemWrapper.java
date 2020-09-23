@@ -18,6 +18,7 @@ package com.intellij.ui.popup.util;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ColoredTreeCellRenderer;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -32,6 +33,7 @@ public abstract class ItemWrapper {
   public abstract String speedSearchText();
 
   @Nullable
+  @Nls
   public abstract String footerText();
 
   public void updateDetailView(DetailView panel) {

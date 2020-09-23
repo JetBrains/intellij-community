@@ -7,7 +7,7 @@ import com.intellij.util.ArrayUtilRt;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
-import org.testng.ISuite;
+import org.testng.*;
 import org.testng.internal.TestResult;
 import org.testng.xml.XmlClass;
 import org.testng.xml.XmlInclude;
@@ -20,6 +20,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class TestNGTreeHierarchyTest {
 
@@ -413,10 +414,172 @@ public class TestNGTreeHierarchyTest {
     }
   }
 
-  public static class MyTestTestResult extends TestResult {
+  public static class MyTestTestResult implements ITestResult {
+    private final TestResult empty = TestResult.newEmptyTestResult();
+
+    @Override
+    public void setEndMillis(long millis) {
+      empty.setEndMillis(millis);
+    }
+
+    @Override
+    public String getTestName() {
+      return empty.getTestName();
+    }
+
     @Override
     public String getName() {
       return "testName";
+    }
+
+    @Override
+    public ITestNGMethod getMethod() {
+      return empty.getMethod();
+    }
+
+    public void setMethod(ITestNGMethod method) {
+      empty.setMethod(method);
+    }
+
+    @Override
+    public int getStatus() {
+      return empty.getStatus();
+    }
+
+    @Override
+    public void setStatus(int status) {
+      empty.setStatus(status);
+    }
+
+    @Override
+    public boolean isSuccess() {
+      return empty.isSuccess();
+    }
+
+    @Override
+    public IClass getTestClass() {
+      return empty.getTestClass();
+    }
+
+    @Override
+    public Throwable getThrowable() {
+      return empty.getThrowable();
+    }
+
+    @Override
+    public void setThrowable(Throwable throwable) {
+      empty.setThrowable(throwable);
+    }
+
+    @Override
+    public long getEndMillis() {
+      return empty.getEndMillis();
+    }
+
+    @Override
+    public long getStartMillis() {
+      return empty.getStartMillis();
+    }
+
+    @Override
+    public String toString() {
+      return empty.toString();
+    }
+
+    @Override
+    public String getHost() {
+      return empty.getHost();
+    }
+
+    public void setHost(String host) {
+      empty.setHost(host);
+    }
+
+    @Override
+    public Object[] getParameters() {
+      return empty.getParameters();
+    }
+
+    @Override
+    public void setParameters(Object[] parameters) {
+      empty.setParameters(parameters);
+    }
+
+    @Override
+    public Object getInstance() {
+      return empty.getInstance();
+    }
+
+    @Override
+    public Object[] getFactoryParameters() {
+      return empty.getFactoryParameters();
+    }
+
+    @Override
+    public Object getAttribute(String name) {
+      return empty.getAttribute(name);
+    }
+
+    @Override
+    public void setAttribute(String name, Object value) {
+      empty.setAttribute(name, value);
+    }
+
+    @Override
+    public Set<String> getAttributeNames() {
+      return empty.getAttributeNames();
+    }
+
+    @Override
+    public Object removeAttribute(String name) {
+      return empty.removeAttribute(name);
+    }
+
+    @Override
+    public ITestContext getTestContext() {
+      return empty.getTestContext();
+    }
+
+    public void setContext(ITestContext context) {
+      empty.setContext(context);
+    }
+
+    @Override
+    public int compareTo(ITestResult comparison) {
+      return empty.compareTo(comparison);
+    }
+
+    @Override
+    public String getInstanceName() {
+      return empty.getInstanceName();
+    }
+
+    @Override
+    public void setTestName(String name) {
+      empty.setTestName(name);
+    }
+
+    public int getParameterIndex() {
+      return empty.getParameterIndex();
+    }
+
+    @Override
+    public boolean wasRetried() {
+      return empty.wasRetried();
+    }
+
+    @Override
+    public void setWasRetried(boolean wasRetried) {
+      empty.setWasRetried(wasRetried);
+    }
+
+    @Override
+    public List<ITestNGMethod> getSkipCausedBy() {
+      return empty.getSkipCausedBy();
+    }
+
+    public static boolean wasFailureDueToTimeout(ITestResult result) {
+      return ITestResult.wasFailureDueToTimeout(result);
     }
   }
 }

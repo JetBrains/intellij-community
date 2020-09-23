@@ -1,13 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("HardCodedStringLiteral")
+
 package org.jetbrains.builtInWebServer
 
-import com.google.common.cache.CacheBuilder
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.google.common.net.InetAddresses
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationType
 import com.intellij.notification.SingletonNotificationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.ide.SpecialConfigFiles.USER_WEB_TOKEN
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
@@ -49,9 +52,6 @@ import java.util.concurrent.TimeUnit
 import javax.swing.SwingUtilities
 
 internal val LOG = logger<BuiltInWebServer>()
-
-// name is duplicated in the ConfigImportHelper
-private const val IDE_TOKEN_FILE = "user.web.token"
 
 private val notificationManager by lazy {
   SingletonNotificationManager(BuiltInServerManagerImpl.NOTIFICATION_GROUP.value, NotificationType.INFORMATION, null)
@@ -100,7 +100,7 @@ const val TOKEN_HEADER_NAME = "x-ijt"
 private val STANDARD_COOKIE by lazy {
   val productName = ApplicationNamesInfo.getInstance().lowercaseProductName
   val configPath = PathManager.getConfigPath()
-  val file = Paths.get(configPath, IDE_TOKEN_FILE)
+  val file = Paths.get(configPath, USER_WEB_TOKEN)
   var token: String? = null
   if (file.exists()) {
     try {
@@ -127,7 +127,7 @@ private val STANDARD_COOKIE by lazy {
 }
 
 // expire after access because we reuse tokens
-private val tokens = CacheBuilder.newBuilder().expireAfterAccess(1, TimeUnit.MINUTES).build<String, Boolean>()
+private val tokens = Caffeine.newBuilder().expireAfterAccess(1, TimeUnit.MINUTES).build<String, Boolean>()
 
 fun acquireToken(): String {
   var token = tokens.asMap().keys.firstOrNull()

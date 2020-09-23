@@ -15,10 +15,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiConcatenationUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ArrayUtil;
-import gnu.trove.THashSet;
+import com.intellij.util.ObjectUtils;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,84 +54,40 @@ public final class JavaI18nUtil extends I18nUtil {
   }
 
   public static boolean mustBePropertyKey(@NotNull PsiExpression expression, @Nullable Ref<? super PsiAnnotationMemberValue> resourceBundleRef) {
-    PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-    if (parent instanceof PsiVariable) {
-      final PsiAnnotation annotation = AnnotationUtil.findAnnotation((PsiVariable)parent, AnnotationUtil.PROPERTY_KEY);
-      if (annotation != null) {
-        processAnnotationAttributes(resourceBundleRef, annotation);
-        return true;
+    UExpression uExpression = UastContextKt.toUElement(expression, UExpression.class);
+    if (uExpression == null) return false;
+    Ref<UExpression> resourceBundleURef = resourceBundleRef == null ? null : Ref.create();
+    if (!mustBePropertyKey(uExpression, resourceBundleURef)) return false;
+    if (resourceBundleURef != null) {
+      UExpression value = resourceBundleURef.get();
+      if (value != null) {
+        resourceBundleRef.set(ObjectUtils.tryCast(value.getSourcePsi(), PsiAnnotationMemberValue.class));
       }
     }
-    return isPassedToResourceParam(expression, resourceBundleRef);
+    return true;
   }
 
   public static boolean mustBePropertyKey(@NotNull UExpression expression, @Nullable Ref<? super UExpression> resourceBundleRef) {
-    while (expression.getUastParent() instanceof UParenthesizedExpression) {
-      expression = (UParenthesizedExpression)expression.getUastParent();
-    }
-    final UElement parent = expression.getUastParent();
-    if (parent instanceof UVariable) {
-      UAnnotation annotation = ((UVariable)parent).findAnnotation(AnnotationUtil.PROPERTY_KEY);
+    expression = NlsInfo.goUp(expression, false);
+    AnnotationContext context = AnnotationContext.fromExpression(expression);
+    return context.allItems().anyMatch(owner -> {
+      PsiAnnotation annotation = owner.findAnnotation(AnnotationUtil.PROPERTY_KEY);
       if (annotation != null) {
-        processAnnotationAttributes(resourceBundleRef, annotation);
-        return true;
+        UAnnotation uAnnotation = UastContextKt.toUElement(annotation, UAnnotation.class);
+        if (uAnnotation != null) {
+          if (resourceBundleRef != null) {
+            for (UNamedExpression attribute : uAnnotation.getAttributeValues()) {
+              final String name = attribute.getName();
+              if (AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER.equals(name)) {
+                resourceBundleRef.set(attribute.getExpression());
+              }
+            }
+          }
+          return true;
+        }
       }
-    }
-
-    UCallExpression callExpression = UastUtils.getUCallExpression(expression);
-    if (callExpression == null) return false;
-    PsiMethod psiMethod = callExpression.resolve();
-    if (psiMethod == null) return false;
-    PsiParameter parameter = UastUtils.getParameterForArgument(callExpression, expression);
-    if (parameter == null) return false;
-    int paramIndex = ArrayUtil.indexOf(psiMethod.getParameterList().getParameters(), parameter);
-    if (paramIndex == -1) return false;
-    if (resourceBundleRef == null) {
-      return isPropertyKeyParameter(psiMethod, paramIndex, null, null);
-    }
-    @Nullable Ref<PsiAnnotationMemberValue> ref = new Ref<>();
-    boolean isAnnotated = isPropertyKeyParameter(psiMethod, paramIndex, null, ref);
-    PsiAnnotationMemberValue memberValue = ref.get();
-    if (memberValue != null) {
-      resourceBundleRef.set(UastContextKt.toUElementOfExpectedTypes(memberValue, UExpression.class));
-    }
-    return isAnnotated;
-  }
-
-  private static boolean isPassedToResourceParam(@NotNull PsiExpression expression,
-                                                 @Nullable Ref<? super PsiAnnotationMemberValue> resourceBundleRef) {
-    expression = getTopLevelExpression(expression);
-    final PsiElement parent = expression.getParent();
-    if (!(parent instanceof PsiExpressionList)) return false;
-    int idx = ArrayUtil.indexOf(((PsiExpressionList)parent).getExpressions(), expression);
-    if (idx == -1) return false;
-
-    PsiElement grParent = parent.getParent();
-
-    if (grParent instanceof PsiAnonymousClass) {
-      grParent = grParent.getParent();
-    }
-
-    if (grParent instanceof PsiCall) {
-      PsiMethod method = ((PsiCall)grParent).resolveMethod();
-      return method != null && isPropertyKeyParameter(method, idx, null, resourceBundleRef);
-    }
-
-    return false;
-  }
-
-  @NotNull
-  private static PsiExpression getTopLevelExpression(@NotNull PsiExpression expression) {
-    while (expression.getParent() instanceof PsiExpression) {
-      final PsiExpression parent = (PsiExpression)expression.getParent();
-      if (parent instanceof PsiConditionalExpression &&
-          ((PsiConditionalExpression)parent).getCondition() == expression) {
-        break;
-      }
-      expression = parent;
-      if (expression instanceof PsiAssignmentExpression) break;
-    }
-    return expression;
+      return false;
+    });
   }
 
   @NotNull
@@ -160,68 +114,6 @@ public final class JavaI18nUtil extends I18nUtil {
       }
     }
     return expression;
-  }
-
-  private static boolean isPropertyKeyParameter(@NotNull PsiMethod method,
-                                                final int idx,
-                                                @Nullable Collection<? super PsiMethod> processed,
-                                                @Nullable Ref<? super PsiAnnotationMemberValue> resourceBundleRef) {
-    if (processed != null) {
-      if (processed.contains(method)) return false;
-    }
-    else {
-      processed = new THashSet<>();
-    }
-    processed.add(method);
-
-    final PsiParameter[] params = method.getParameterList().getParameters();
-    PsiParameter param;
-    if (idx >= params.length) {
-      PsiParameter lastParam = ArrayUtil.getLastElement(params);
-      if (lastParam == null || !lastParam.isVarArgs()) return false;
-      param = lastParam;
-    }
-    else {
-      param = params[idx];
-    }
-    final PsiAnnotation annotation = AnnotationUtil.findAnnotation(param, AnnotationUtil.PROPERTY_KEY);
-    if (annotation != null) {
-      processAnnotationAttributes(resourceBundleRef, annotation);
-      return true;
-    }
-
-    final PsiMethod[] superMethods = method.findSuperMethods();
-    for (PsiMethod superMethod : superMethods) {
-      if (isPropertyKeyParameter(superMethod, idx, processed, resourceBundleRef)) return true;
-    }
-
-    return false;
-  }
-
-  private static void processAnnotationAttributes(@Nullable Ref<? super PsiAnnotationMemberValue> resourceBundleRef,
-                                                  @NotNull PsiAnnotation annotation) {
-    if (resourceBundleRef != null) {
-      final PsiAnnotationParameterList parameterList = annotation.getParameterList();
-      final PsiNameValuePair[] attributes = parameterList.getAttributes();
-      for (PsiNameValuePair attribute : attributes) {
-        final String name = attribute.getName();
-        if (AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER.equals(name)) {
-          resourceBundleRef.set(attribute.getValue());
-        }
-      }
-    }
-  }
-
-  private static void processAnnotationAttributes(@Nullable Ref<? super UExpression> resourceBundleRef,
-                                                  @NotNull UAnnotation annotation) {
-    if (resourceBundleRef != null) {
-      for (UNamedExpression attribute : annotation.getAttributeValues()) {
-        final String name = attribute.getName();
-        if (AnnotationUtil.PROPERTY_KEY_RESOURCE_BUNDLE_PARAMETER.equals(name)) {
-          resourceBundleRef.set(attribute.getExpression());
-        }
-      }
-    }
   }
 
   static boolean isValidPropertyReference(@NotNull Project project,

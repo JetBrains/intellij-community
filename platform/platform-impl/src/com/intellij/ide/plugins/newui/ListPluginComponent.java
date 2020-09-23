@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -32,10 +31,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.plaf.ButtonUI;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Set;
 
 /**
  * @author Alexander Lobas
@@ -43,7 +44,7 @@ import java.util.ListIterator;
 public class ListPluginComponent extends JPanel {
   public static final Color DisabledColor = JBColor.namedColor("Plugins.disabledForeground", new JBColor(0xB1B1B1, 0x696969));
   public static final Color GRAY_COLOR = JBColor.namedColor("Label.infoForeground", new JBColor(Gray._120, Gray._135));
-  public static final Color HOVER_COLOR = JBColor.namedColor("Plugins.lightSelectionBackground", new JBColor(0xF5F9FF, 0x36393B));
+  public static final Color HOVER_COLOR = JBColor.namedColor("Plugins.lightSelectionBackground", new JBColor(0xEDF6FE, 0x464A4D));
 
   private final MyPluginModel myPluginModel;
   private final LinkListener<Object> mySearchListener;
@@ -180,8 +181,14 @@ public class ListPluginComponent extends JPanel {
         else {
           myLayout.addButtonComponent(myEnableDisableButton = enableDisableButton);
           myEnableDisableButton.setOpaque(false);
-          myEnableDisableButton.setSelected(isEnabledState());
-          myEnableDisableButton.addActionListener(e -> myPluginModel.changeEnableDisable(myPlugin));
+          myEnableDisableButton.addActionListener(e -> {
+            UIUtilsKt.changeEnableDisable(
+              myPluginModel,
+              Set.of(myPlugin),
+              !myPluginModel.isEnabled(myPlugin)
+            );
+          });
+          updateEnabledStateUI();
         }
       }
 
@@ -414,12 +421,13 @@ public class ListPluginComponent extends JPanel {
       }
     }
     if (calcColor && !myMarketplace) {
-      boolean enabled = !myUninstalled && (MyPluginModel.isInstallingOrUpdate(myPlugin) || myPluginModel.isEnabled(myPlugin));
+      boolean enabled = !myUninstalled && (MyPluginModel.isInstallingOrUpdate(myPlugin) || isEnabledState());
       if (!enabled) {
         nameForeground = otherForeground = DisabledColor;
       }
     }
 
+    myNameComponent.setHorizontalTextPosition(SwingConstants.LEFT);
     myNameComponent.setForeground(nameForeground);
 
     if (myRating != null) {
@@ -440,7 +448,7 @@ public class ListPluginComponent extends JPanel {
     Ref<@Nls String> enableAction = new Ref<>();
     String message = myPluginModel.getErrorMessage(myPlugin, enableAction);
     boolean errors = message != null;
-    updateIcon(errors, myUninstalled || !myPluginModel.isEnabled(myPlugin));
+    updateIcon(errors, myUninstalled || !isEnabledState());
 
     if (myAlignButton != null) {
       myAlignButton.setVisible(myRestartButton != null);
@@ -542,11 +550,21 @@ public class ListPluginComponent extends JPanel {
   }
 
   public void updateEnabledState() {
-    if (!myUninstalled && myEnableDisableButton != null) {
-      myEnableDisableButton.setSelected(isEnabledState());
+    if (!myUninstalled) {
+      updateEnabledStateUI();
     }
+
     updateErrors();
     setSelection(mySelection, false);
+  }
+
+  private void updateEnabledStateUI() {
+    PluginEnabledState state = myPluginModel.getState(myPlugin);
+
+    if (myEnableDisableButton != null) {
+      myEnableDisableButton.setSelected(state.isEnabled());
+    }
+    myNameComponent.setIcon(UIUtilsKt.perProjectIcon(state));
   }
 
   public void updateAfterUninstall(boolean needRestartForUninstall) {
@@ -563,7 +581,7 @@ public class ListPluginComponent extends JPanel {
     }
   }
 
-  protected boolean isEnabledState() {
+  private boolean isEnabledState() {
     return myPluginModel.isEnabled(myPlugin);
   }
 
@@ -591,7 +609,8 @@ public class ListPluginComponent extends JPanel {
     myPluginModel.removeComponent(this);
   }
 
-  public void createPopupMenu(@NotNull DefaultActionGroup group, @NotNull List<? extends ListPluginComponent> selection) {
+  public void createPopupMenu(@NotNull DefaultActionGroup group,
+                              @NotNull List<ListPluginComponent> selection) {
     for (ListPluginComponent component : selection) {
       if (MyPluginModel.isInstallingOrUpdate(component.myPlugin)) {
         return;
@@ -649,41 +668,17 @@ public class ListPluginComponent extends JPanel {
       return;
     }
 
-    Pair<Boolean, IdeaPluginDescriptor[]> result = getSelectionNewState(selection);
-    group.add(new MyAnAction(
-      result.first ? IdeBundle.message("plugins.configurable.enable.button") : IdeBundle.message("plugins.configurable.disable.button"),
-      null, KeyEvent.VK_SPACE) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        myPluginModel.changeEnableDisable(result.second, result.first);
-      }
-    });
-
-    for (ListPluginComponent component : selection) {
-      if (component.myUninstalled || component.myPlugin.isBundled()) {
-        return;
-      }
-    }
+    group.add(createAction(selection, KeyEvent.VK_SPACE));
+    group.add(createAction(selection, KeyEvent.VK_SPACE, InputEvent.SHIFT_DOWN_MASK));
 
     if (group.getChildrenCount() > 0) {
       group.addSeparator();
     }
-
-    group.add(new MyAnAction(IdeBundle.message("plugins.configurable.uninstall.button"), IdeActions.ACTION_EDITOR_DELETE,
-                             EventHandler.DELETE_CODE) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        if (!MyPluginModel.showUninstallDialog(ListPluginComponent.this, selection)) {
-          return;
-        }
-        for (ListPluginComponent component : selection) {
-          myPluginModel.uninstallAndUpdateUi(component, component.myPlugin);
-        }
-      }
-    });
+    group.add(createAction(selection, EventHandler.DELETE_CODE));
   }
 
-  public void handleKeyAction(int keyCode, @NotNull List<? extends ListPluginComponent> selection) {
+  public void handleKeyAction(@NotNull KeyEvent event,
+                              @NotNull List<ListPluginComponent> selection) {
     for (ListPluginComponent component : selection) {
       if (MyPluginModel.isInstallingOrUpdate(component.myPlugin)) {
         return;
@@ -698,6 +693,7 @@ public class ListPluginComponent extends JPanel {
       }
     }
 
+    int keyCode = event.getKeyCode();
     if (myMarketplace) {
       if (keyCode == KeyEvent.VK_ENTER) {
         if (restart) {
@@ -736,32 +732,18 @@ public class ListPluginComponent extends JPanel {
         }
       }
     }
-    else if (!restart && !update) {
-      if (myOnlyUpdateMode) {
-        return;
-      }
-      if (keyCode == KeyEvent.VK_SPACE) {
-        if (selection.size() == 1) {
-          myPluginModel.changeEnableDisable(selection.get(0).myPlugin);
-        }
-        else {
-          Pair<Boolean, IdeaPluginDescriptor[]> result = getSelectionNewState(selection);
-          myPluginModel.changeEnableDisable(result.second, result.first);
-        }
-      }
-      else if (keyCode == EventHandler.DELETE_CODE) {
-        for (ListPluginComponent component : selection) {
-          if (component.myUninstalled || component.myPlugin.isBundled()) {
-            return;
-          }
-        }
-        if (!MyPluginModel.showUninstallDialog(this, selection)) {
-          return;
-        }
-        for (ListPluginComponent component : selection) {
-          myPluginModel.uninstallAndUpdateUi(this, component.myPlugin);
-        }
-      }
+    else if (!restart && !update && !myOnlyUpdateMode) {
+      DumbAwareAction action = createAction(
+        selection,
+        KeyStroke.getKeyStrokeForEvent(event)
+      );
+      ActionManager.getInstance().tryToExecute(
+        action,
+        event,
+        this,
+        ActionPlaces.UNKNOWN,
+        true
+      );
     }
   }
 
@@ -777,25 +759,94 @@ public class ListPluginComponent extends JPanel {
     return myPlugin;
   }
 
-  @NotNull
-  private static Pair<Boolean, IdeaPluginDescriptor[]> getSelectionNewState(@NotNull List<? extends ListPluginComponent> selection) {
-    boolean state = selection.get(0).isEnabledState();
-    boolean setTrue = false;
+  private @NotNull SelectionBasedPluginModelAction<ListPluginComponent> createAction(@NotNull List<ListPluginComponent> selection,
+                                                                                     int keyCode) {
+    return createAction(selection, keyCode, 0);
+  }
 
-    for (ListIterator<? extends ListPluginComponent> I = selection.listIterator(1); I.hasNext(); ) {
-      if (state != I.next().isEnabledState()) {
-        setTrue = true;
-        break;
+  private @NotNull SelectionBasedPluginModelAction<ListPluginComponent> createAction(@NotNull List<ListPluginComponent> selection,
+                                                                                     int keyCode,
+                                                                                     int modifiers) {
+    return createAction(selection, KeyStroke.getKeyStroke(keyCode, modifiers));
+  }
+
+  private @NotNull SelectionBasedPluginModelAction<ListPluginComponent> createAction(@NotNull List<ListPluginComponent> selection,
+                                                                                     @NotNull KeyStroke keyStroke) {
+    int keyCode = keyStroke.getKeyCode();
+    if (keyCode == KeyEvent.VK_SPACE) {
+      boolean firstEnabled = selection.get(0).isEnabledState();
+      boolean setTrue = false;
+
+      for (ListIterator<ListPluginComponent> iterator = selection.listIterator(1); iterator.hasNext(); ) {
+        if (firstEnabled != iterator.next().isEnabledState()) {
+          setTrue = true;
+          break;
+        }
       }
+
+      PluginEnabledState newState = PluginEnabledState.getState(
+        setTrue || !firstEnabled,
+        (keyStroke.getModifiers() & InputEvent.SHIFT_DOWN_MASK) == InputEvent.SHIFT_DOWN_MASK
+      );
+
+      return new EnableDisableAction(
+        myPluginModel,
+        selection,
+        keyStroke,
+        newState
+      );
+    }
+    else if (keyCode == EventHandler.DELETE_CODE) {
+      return new UninstallAction(selection, keyStroke);
+    }
+    else {
+      throw new IllegalArgumentException();
+    }
+  }
+
+  private static final class EnableDisableAction extends SelectionBasedPluginModelAction.EnableDisableAction<ListPluginComponent> {
+
+    private EnableDisableAction(@NotNull MyPluginModel pluginModel,
+                                @NotNull List<ListPluginComponent> selection,
+                                @NotNull KeyStroke keyStroke,
+                                @NotNull PluginEnabledState newState) {
+      super(pluginModel, selection, newState);
+      setShortcutSet(new CustomShortcutSet(keyStroke));
     }
 
-    int size = selection.size();
-    IdeaPluginDescriptor[] plugins = new IdeaPluginDescriptor[size];
-    for (int i = 0; i < size; i++) {
-      plugins[i] = selection.get(i).myPlugin;
+    @Override
+    protected @Nullable IdeaPluginDescriptor getPluginDescriptor(@NotNull ListPluginComponent component) {
+      return component.myPlugin;
+    }
+  }
+
+  private class UninstallAction extends SelectionBasedPluginModelAction.UninstallAction<ListPluginComponent> {
+
+    UninstallAction(@NotNull List<ListPluginComponent> selection,
+                    @NotNull KeyStroke keyStroke) {
+      super(
+        ListPluginComponent.this.myPluginModel,
+        ListPluginComponent.this,
+        selection
+      );
+
+      ShortcutSet deleteShortcutSet = EventHandler.getShortcuts(IdeActions.ACTION_EDITOR_DELETE);
+      ShortcutSet shortcutSet = deleteShortcutSet != null ?
+                                deleteShortcutSet :
+                                new CustomShortcutSet(keyStroke);
+      setShortcutSet(shortcutSet);
     }
 
-    return Pair.create(setTrue || !state, plugins);
+    @Override
+    protected @Nullable IdeaPluginDescriptor getPluginDescriptor(@NotNull ListPluginComponent component) {
+      return component.myPlugin;
+    }
+
+    @Override
+    protected boolean isBundled(@NotNull ListPluginComponent component) {
+      return component.myUninstalled ||
+             super.isBundled(component);
+    }
   }
 
   @NotNull
@@ -834,20 +885,6 @@ public class ListPluginComponent extends JPanel {
       for (JButton button : myButtons) {
         button.doClick();
       }
-    }
-  }
-
-  public abstract static class MyAnAction extends DumbAwareAction {
-    MyAnAction(@Nls @Nullable String text, @Nullable String actionId, int keyCode) {
-      super(text);
-      ShortcutSet shortcutSet = null;
-      if (actionId != null) {
-        shortcutSet = EventHandler.getShortcuts(actionId);
-      }
-      if (shortcutSet == null) {
-        shortcutSet = new CustomShortcutSet(KeyStroke.getKeyStroke(keyCode, 0));
-      }
-      setShortcutSet(shortcutSet);
     }
   }
 

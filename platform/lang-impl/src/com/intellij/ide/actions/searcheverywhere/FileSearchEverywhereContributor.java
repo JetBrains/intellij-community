@@ -9,6 +9,7 @@ import com.intellij.ide.util.gotoByName.GotoFileModel;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -42,6 +43,7 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
     return IdeBundle.message("search.everywhere.group.name.files");
   }
 
+  @NlsContexts.Checkbox
   public String includeNonProjectItemsText() {
     return IdeUICustomization.getInstance().projectMessage("checkbox.include.non.project.files");
   }

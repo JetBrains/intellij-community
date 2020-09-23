@@ -97,7 +97,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   @NotNull private final Map<VcsLogColumn<?>, TableColumn> myTableColumns = new HashMap<>();
   @NotNull private final Set<VcsLogColumn<?>> myInitializedColumns = new HashSet<>();
 
-  @NotNull private final Collection<VcsLogHighlighter> myHighlighters = new ArrayList<>();
+  @NotNull private final Collection<VcsLogHighlighter> myHighlighters = new LinkedHashSet<>();
 
   @Nullable private Selection mySelection = null;
 
@@ -558,6 +558,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   public void addHighlighter(@NotNull VcsLogHighlighter highlighter) {
     myHighlighters.add(highlighter);
+    highlighter.update(getModel().getVisiblePack(), true);
   }
 
   public void removeHighlighter(@NotNull VcsLogHighlighter highlighter) {

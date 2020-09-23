@@ -17,6 +17,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -207,8 +208,8 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
 
   final class LibraryModel implements ModifiableModel, JDOMExternalizable, Listener, Disposable {
     private final List<Library> myLibraries = new ArrayList<>();
-    private final Set<Library> myAddedLibraries = ContainerUtil.newIdentityTroveSet();
-    private final Set<Library> myRemovedLibraries = ContainerUtil.newIdentityTroveSet();
+    private final Set<Library> myAddedLibraries = new ReferenceOpenHashSet<>();
+    private final Set<Library> myRemovedLibraries = new ReferenceOpenHashSet<>();
     private volatile Map<String, Library> myLibraryByNameCache;
     private boolean myWritable;
 

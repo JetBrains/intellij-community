@@ -19,6 +19,7 @@ import com.intellij.designer.designSurface.tools.InputTool;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataKey;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,7 +71,7 @@ public interface EditableArea {
 
   void setCursor(@Nullable Cursor cursor);
 
-  void setDescription(@Nullable String text);
+  void setDescription(@Nullable @Nls String text);
 
   @NotNull
   JComponent getNativeComponent();

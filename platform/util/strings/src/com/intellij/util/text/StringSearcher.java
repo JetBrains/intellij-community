@@ -3,11 +3,11 @@ package com.intellij.util.text;
 
 import com.intellij.openapi.util.text.Strings;
 import gnu.trove.TIntArrayList;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.function.IntPredicate;
 
 public class StringSearcher {
   private final String myPattern;
@@ -95,14 +95,17 @@ public class StringSearcher {
   }
 
 
-  public boolean processOccurrences(@NotNull CharSequence text, @NotNull TIntProcedure consumer) {
+  public boolean processOccurrences(@NotNull CharSequence text, @NotNull IntPredicate consumer) {
     int end = text.length();
-
     for (int index = 0; index < end; index++) {
       //noinspection AssignmentToForLoopParameter
       index = scan(text, index, end);
-      if (index < 0) break;
-      if (!consumer.execute(index)) return false;
+      if (index < 0) {
+        break;
+      }
+      if (!consumer.test(index)) {
+        return false;
+      }
     }
     return true;
   }

@@ -64,6 +64,9 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     else if (element instanceof Separator) {
       highlightSeparator(holder, (Separator)element);
     }
+    else if (element instanceof OverrideText) {
+      highlightOverrideText(holder, (OverrideText)element);
+    }
     else if (element instanceof Extension) {
       ExtensionPoint extensionPoint = ((Extension)element).getExtensionPoint();
       if (extensionPoint != null) {
@@ -73,8 +76,12 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
   }
 
   private static void highlightExtension(DomElementAnnotationHolder holder, Extension extension, ExtensionPoint extensionPoint) {
+    final PsiClass beanClass = extensionPoint.getBeanClass().getValue();
+    if (beanClass == null) return;
+
     String epName = extensionPoint.getEffectiveQualifiedName();
-    if (LocalInspectionEP.LOCAL_INSPECTION.getName().equals(epName) || InspectionEP.GLOBAL_INSPECTION.getName().equals(epName)) {
+    if (LocalInspectionEP.LOCAL_INSPECTION.getName().equals(epName) ||
+        InspectionEP.GLOBAL_INSPECTION.getName().equals(epName)) {
       if (isInternal(extension)) {
         return;
       }
@@ -86,7 +93,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       checkNonLocalizableAttribute(holder, extension, "groupName", null);
       //checkNonLocalizableAttribute(holder, element, "groupPath", null);
     }
-    else if (InheritanceUtil.isInheritor(extensionPoint.getEffectiveClass(), ConfigurableEP.class.getName())) {
+    else if (InheritanceUtil.isInheritor(beanClass, ConfigurableEP.class.getName())) {
       checkNonLocalizableAttribute(holder, extension, "displayName", null);
 
       // ConfigurableEP#children
@@ -94,7 +101,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
         checkNonLocalizableAttribute(holder, nestedConfigurable, "displayName", null);
       }
     }
-    else if (InheritanceUtil.isInheritor(extensionPoint.getEffectiveClass(), SchemeConvertorEPBase.class.getName())) {
+    else if (InheritanceUtil.isInheritor(beanClass, SchemeConvertorEPBase.class.getName())) {
       checkNonLocalizableAttribute(holder, extension, "name", null);
     }
   }
@@ -120,6 +127,12 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
                            DevKitBundle.message("inspections.plugin.xml.i18n.key"),
                            null, new SeparatorKeyI18nQuickFix());
     }
+  }
+
+  private static void highlightOverrideText(DomElementAnnotationHolder holder, OverrideText overrideText) {
+    if (!DomUtil.hasXml(overrideText.getText())) return;
+
+    holder.createProblem(overrideText.getText(), DevKitBundle.message("inspections.plugin.xml.i18n.key"));
   }
 
   private static void highlightAction(@NotNull DomElementAnnotationHolder holder, @NotNull ActionOrGroup action) {

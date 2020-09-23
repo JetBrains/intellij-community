@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.TextFieldWithHistory;
@@ -380,7 +381,7 @@ public class SwingHelper {
     }
     String longest = StringUtil.notNullize(prototypeDisplayValueStr);
     boolean updated = false;
-    for (String s : variants) {
+    for (@NlsSafe String s : variants) {
       if (longest.length() < s.length()) {
         longest = s;
         updated = true;
@@ -516,7 +517,7 @@ public class SwingHelper {
         }
 
         @Override
-        public void setText(String t) {
+        public void setText(@NlsSafe String t) {
           if (myDisabledHtml != null) {
             if (myEnabled) {
               myEnabledHtml = t;
@@ -617,7 +618,7 @@ public class SwingHelper {
   }
 
   public static void setHtml(@NotNull JEditorPane editorPane,
-                             @NotNull String bodyInnerHtml,
+                             @NotNull @Nls String bodyInnerHtml,
                              @Nullable Color foregroundColor) {
     editorPane.setText(buildHtml(
       UIUtil.getCssFontDeclaration(editorPane.getFont(), foregroundColor, JBUI.CurrentTheme.Link.linkColor(), null),
@@ -626,8 +627,11 @@ public class SwingHelper {
   }
 
   @NotNull
-  public static String buildHtml(@NotNull String headInnerHtml, @NotNull String bodyInnedHtml) {
-    return "<html><head>" + headInnerHtml + "</head><body>" + bodyInnedHtml + "</body></html>";
+  public static @Nls String buildHtml(@NotNull @Nls String headInnerHtml, @NotNull @Nls String bodyInnerHtml) {
+    return HtmlChunk.html().children(
+      HtmlChunk.head().addRaw(headInnerHtml),
+      HtmlChunk.body().addRaw(bodyInnerHtml)
+    ).toString();
   }
 
   @NotNull
@@ -742,7 +746,7 @@ public class SwingHelper {
     }
   }
 
-  public static JEditorPane createHtmlLabel(@NotNull final String innerHtml, @Nullable String disabledHtml,
+  public static JEditorPane createHtmlLabel(@NotNull @Nls final String innerHtml, @Nullable @Nls String disabledHtml,
                                             @Nullable final Consumer<? super String> hyperlinkListener) {
     disabledHtml = disabledHtml == null ? innerHtml : disabledHtml;
     final Font font = UIUtil.getLabelFont();

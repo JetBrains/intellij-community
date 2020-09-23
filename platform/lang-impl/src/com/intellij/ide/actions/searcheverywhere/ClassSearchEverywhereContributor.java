@@ -20,6 +20,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -28,6 +29,7 @@ import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.IdeUICustomization;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,6 +55,7 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
 
   @NotNull
   @Override
+  @Nls
   public String getGroupName() {
     return GotoClassPresentationUpdater.getTabTitlePluralized();
   }
@@ -64,6 +67,7 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
   }
 
   @NotNull
+  @NlsContexts.Checkbox
   public String includeNonProjectItemsText() {
     return IdeUICustomization.getInstance().projectMessage("checkbox.include.non.project.items");
   }

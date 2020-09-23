@@ -14,5 +14,6 @@
     <orderEntry type="library" scope="TEST" name="testcontainers" level="project" />
     <orderEntry type="module" module-name="intellij.java.execution.impl" />
     <orderEntry type="module" module-name="intellij.java.testFramework" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
   </component>
 </module>

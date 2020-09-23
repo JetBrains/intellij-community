@@ -7,11 +7,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer
-import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.VirtualFileUrl
-import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
 
 data class FileContainerDescription(
   val urls: List<VirtualFileUrl>,
@@ -20,7 +16,7 @@ data class FileContainerDescription(
 
 data class JarDirectoryDescription(val directoryUrl: VirtualFileUrl, val recursive: Boolean)
 
-internal interface FilePointerProvider {
+interface FilePointerProvider {
   fun getAndCacheSourceRoot(url: VirtualFileUrl): VirtualFilePointer
   fun getAndCacheContentRoot(url: VirtualFileUrl): VirtualFilePointer
   fun getAndCacheExcludedRoot(url: VirtualFileUrl): VirtualFilePointer
@@ -38,5 +34,5 @@ internal interface FilePointerProvider {
   }
 }
 
-internal fun FileContainerDescription.getAndCacheVirtualFilePointerContainer(provider: FilePointerProvider, scope: Disposable) =
+fun FileContainerDescription.getAndCacheVirtualFilePointerContainer(provider: FilePointerProvider, scope: Disposable) =
   provider.getAndCacheFileContainer(this, scope)

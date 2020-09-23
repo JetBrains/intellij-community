@@ -44,7 +44,10 @@ public class MultiSelectionEventHandler extends EventHandler {
     myMouseHandler = new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent event) {
-        if (SwingUtilities.isLeftMouseButton(event)) {
+        boolean isLeftMouseButton = SwingUtilities.isLeftMouseButton(event);
+        boolean isControlDown = event.isControlDown();
+
+        if (!isControlDown && isLeftMouseButton) {
           ListPluginComponent component = get(event);
           int index = getIndex(component);
 
@@ -68,7 +71,8 @@ public class MultiSelectionEventHandler extends EventHandler {
             singleSelection(component, index);
           }
         }
-        else if (SwingUtilities.isRightMouseButton(event)) {
+        else if (SwingUtilities.isRightMouseButton(event) ||
+                 isControlDown && isLeftMouseButton) {
           ListPluginComponent component = get(event);
 
           if (myAllSelected || myMixSelection) {
@@ -126,8 +130,11 @@ public class MultiSelectionEventHandler extends EventHandler {
       @Override
       public void keyPressed(KeyEvent event) {
         int code = event.getKeyCode();
-        int modifiers = event.getModifiers();
-        KeyboardShortcut shortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(code, modifiers), null);
+        int modifiers = event.getModifiersEx();
+        KeyboardShortcut shortcut = new KeyboardShortcut(
+          KeyStroke.getKeyStroke(code, modifiers),
+          null
+        );
 
         if (check(shortcut, mySelectAllKeys)) {
           event.consume();
@@ -176,7 +183,7 @@ public class MultiSelectionEventHandler extends EventHandler {
           if (component.getSelection() != SelectionType.SELECTION) {
             component.setSelection(SelectionType.SELECTION);
           }
-          component.handleKeyAction(code, getSelection());
+          component.handleKeyAction(event, getSelection());
         }
       }
     };

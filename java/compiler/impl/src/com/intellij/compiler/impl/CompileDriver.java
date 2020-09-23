@@ -8,6 +8,7 @@ import com.intellij.compiler.progress.CompilerMessagesService;
 import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.DefaultMessageHandler;
+import com.intellij.ide.nls.NlsMessages;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -558,7 +559,7 @@ public final class CompileDriver {
       message = JavaCompilerBundle.message("status.all.up.to.date");
     }
     else  {
-      String durationString = StringUtil.formatDurationApproximate(duration);
+      String durationString = NlsMessages.formatDurationApproximate(duration);
       if (status == ExitStatus.SUCCESS) {
         message = warningCount > 0
                ? JavaCompilerBundle.message("status.compilation.completed.successfully.with.warnings", warningCount, durationString)
@@ -621,7 +622,7 @@ public final class CompileDriver {
           }
           catch (Throwable t) {
             LOG.error("Error executing task", t);
-            context.addMessage(CompilerMessageCategory.INFORMATION, "Task "  + task.toString()  + " failed, please see idea.log for details", null, -1, -1);
+            context.addMessage(CompilerMessageCategory.INFORMATION, JavaCompilerBundle.message("error.task.0.execution.failed", task.toString()), null, -1, -1);
           }
 
         }
@@ -682,8 +683,7 @@ public final class CompileDriver {
         }
       }
       if (!modulesWithoutJdkAssigned.isEmpty()) {
-        showNotSpecifiedError("error.jdk.not.specified", projectSdkNotSpecified, modulesWithoutJdkAssigned, JavaCompilerBundle
-          .message("modules.classpath.title"));
+        showNotSpecifiedError("error.jdk.not.specified", projectSdkNotSpecified, modulesWithoutJdkAssigned, JavaCompilerBundle.message("modules.classpath.title"));
         return false;
       }
 

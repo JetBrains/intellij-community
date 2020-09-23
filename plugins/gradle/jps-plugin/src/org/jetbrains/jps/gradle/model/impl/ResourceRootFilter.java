@@ -19,6 +19,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,6 +35,7 @@ import java.util.regex.Pattern;
 public class ResourceRootFilter {
   @Tag("filterType")
   @NotNull
+  @NlsSafe
   public String filterType;
   @Tag("properties")
   @NotNull

@@ -20,10 +20,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileTypes.*;
-import com.intellij.openapi.fileTypes.ex.ExternalizableFileType;
-import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
-import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
-import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
+import com.intellij.openapi.fileTypes.ex.*;
 import com.intellij.openapi.options.NonLazySchemeProcessor;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeManagerFactory;
@@ -31,10 +28,7 @@ import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserExtensionsStateService;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -634,7 +628,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
 
     FileType fileType = getFileTypeByFileName(file.getNameSequence());
-    if (fileType == UnknownFileType.INSTANCE) {
+    if (fileType == UnknownFileType.INSTANCE || fileType == DetectedByContentFileType.INSTANCE) {
       fileType = null;
     }
     if (toLog()) {
@@ -1168,7 +1162,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @NotNull
   private FileType loadFileType(@NotNull Element typeElement, boolean isDefault) {
     String fileTypeName = typeElement.getAttributeValue(ATTRIBUTE_NAME);
-    String fileTypeDescr = typeElement.getAttributeValue(ATTRIBUTE_DESCRIPTION);
+    @NlsSafe String fileTypeDescr = typeElement.getAttributeValue(ATTRIBUTE_DESCRIPTION);
     String iconPath = typeElement.getAttributeValue("icon");
 
     String extensionsStr = StringUtil.nullize(typeElement.getAttributeValue("extensions"));
@@ -1280,7 +1274,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     myPatternsTable = assocTable.copy();
     fireFileTypesChanged();
 
-    myRemovedMappingTracker.removeMatching((matcher, fileTypeName) -> {
+    myRemovedMappingTracker.removeIf((matcher, fileTypeName) -> {
       FileType fileType = getFileTypeByName(fileTypeName);
       return fileType != null && assocTable.isAssociatedWith(fileType, matcher);
     });

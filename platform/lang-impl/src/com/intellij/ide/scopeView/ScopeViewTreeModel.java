@@ -30,6 +30,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -502,8 +503,7 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
       return newChildren;
     }
 
-    @Nullable
-    String getLocation() {
+    @Nullable @NlsSafe String getLocation() {
       return null;
     }
 
@@ -561,9 +561,8 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
       decorate(presentation);
     }
 
-    @Nullable
     @Override
-    String getLocation() {
+    @Nullable @NlsSafe String getLocation() {
       Project project = getProject();
       return project == null || project.isDisposed() ? null : FileUtil.getLocationRelativeToUserHome(project.getPresentableUrl());
     }
@@ -846,6 +845,7 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
     }
 
     @NotNull
+    @NlsSafe
     private String getLocation(boolean allowEmpty) {
       VirtualFile dir = ProjectFileNode.findBaseDir(getProject());
       String location = dir == null ? null : VfsUtilCore.getRelativePath(getVirtualFile(), dir);
@@ -880,8 +880,8 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
 
 
   private static final class GroupNode extends Node implements NavigatableWithText {
-    private final String prefix;
-    private final String name;
+    private final @NlsSafe String prefix;
+    private final @NlsSafe String name;
     private Group group;
 
     GroupNode(@NotNull Node parent, @NotNull Object value) {
@@ -933,9 +933,8 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
       decorate(presentation);
     }
 
-    @Nullable
     @Override
-    String getLocation() {
+    @Nullable @NlsSafe String getLocation() {
       RootNode node = getSingleRoot();
       return node == null ? null : node.getTitle();
     }

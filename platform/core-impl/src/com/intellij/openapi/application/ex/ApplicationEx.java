@@ -25,15 +25,9 @@ public interface ApplicationEx extends Application {
   int ELEVATE = 0x08;
 
   /**
-   * Loads the application configuration from the specified path
-   *
-   * @param configPath Path to /config folder
+   * Loads the application configuration.
    */
-  void load(@Nullable Path configPath);
-
-  default void load() {
-    load(null);
-  }
+  void load();
 
   /**
    * @return true if this thread is inside read action.

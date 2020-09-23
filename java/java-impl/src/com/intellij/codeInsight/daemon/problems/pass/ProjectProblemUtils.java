@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -69,7 +70,7 @@ public final class ProjectProblemUtils {
     popupMenu.add(item);
 
     InlayPresentation withSettings = factory.onClick(problemsPresentation, MouseButton.Right, (e, __) -> {
-      popupMenu.show(e.getComponent(), e.getX(), e.getY());
+      JBPopupMenu.showByEvent(e, popupMenu);
       return Unit.INSTANCE;
     });
 

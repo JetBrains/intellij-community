@@ -3,6 +3,7 @@ package com.intellij.build;
 
 import com.intellij.build.events.*;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.nls.NlsMessages;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.lang.LangBundle;
@@ -15,6 +16,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -152,17 +154,17 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
 
   // Note: invoked from the EDT.
   @Nullable
-  public String getDuration() {
+  public @Nls String getDuration() {
     if (startTime == endTime) return null;
     if (isRunning()) {
       long duration = startTime == 0 ? 0 : System.currentTimeMillis() - startTime;
       if (duration > 1000) {
         duration -= duration % 1000;
       }
-      return StringUtil.formatDurationApproximate(duration);
+      return NlsMessages.formatDurationApproximate(duration);
     }
     else {
-      return isSkipped(myResult) ? null : StringUtil.formatDuration(endTime - startTime);
+      return isSkipped(myResult) ? null : NlsMessages.formatDuration(endTime - startTime);
     }
   }
 

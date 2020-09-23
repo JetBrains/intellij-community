@@ -1,7 +1,7 @@
 import sys
-from typing import Any, Iterable, Iterator, List, Mapping, Optional, Protocol, Tuple
 from _typeshed import SupportsWrite
 from _typeshed.wsgi import StartResponse, WSGIApplication, WSGIEnvironment
+from typing import Any, Iterable, Iterator, List, Mapping, Optional, Protocol, Tuple
 
 from ..datastructures import Headers
 
@@ -55,10 +55,7 @@ class LintMiddleware(object):
     def __init__(self, app: WSGIApplication) -> None: ...
     def check_environ(self, environ: WSGIEnvironment) -> None: ...
     def check_start_response(
-        self,
-        status: str,
-        headers: List[Tuple[str, str]],
-        exc_info: Optional[Tuple[Any, ...]],
+        self, status: str, headers: List[Tuple[str, str]], exc_info: Optional[Tuple[Any, ...]]
     ) -> Tuple[int, Headers]: ...
     def check_headers(self, headers: Mapping[str, str]) -> None: ...
     def check_iterator(self, app_iter: Iterable[bytes]) -> None: ...

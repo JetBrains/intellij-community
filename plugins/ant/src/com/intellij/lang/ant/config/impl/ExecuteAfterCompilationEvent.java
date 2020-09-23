@@ -17,6 +17,7 @@ package com.intellij.lang.ant.config.impl;
 
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.ExecutionEvent;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 
 public final class ExecuteAfterCompilationEvent extends ExecutionEvent {
@@ -32,12 +33,12 @@ public final class ExecuteAfterCompilationEvent extends ExecutionEvent {
   }
 
   @Override
-  public String getTypeId() {
+  public @NonNls String getTypeId() {
     return TYPE_ID;
   }
 
   @Override
-  public String getPresentableName() {
+  public @Nls String getPresentableName() {
     return AntBundle.message("ant.event.after.compilation.presentable.name");
   }
 }

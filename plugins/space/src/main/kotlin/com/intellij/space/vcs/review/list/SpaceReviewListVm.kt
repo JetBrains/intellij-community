@@ -8,13 +8,14 @@ import circlet.code.api.ReviewSorting
 import circlet.platform.api.ADate
 import circlet.platform.client.XPagedListOnFlux
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.vcs.SpaceProjectInfo
 import libraries.coroutines.extra.Lifetimed
 import org.jetbrains.annotations.PropertyKey
 import runtime.reactive.MutableProperty
 import runtime.reactive.Property
 
 interface SpaceReviewsListVm : Lifetimed {
-  val spaceProjectKey: ProjectKey
+  val spaceProjectInfo: SpaceProjectInfo
 
   val sorting: MutableProperty<ReviewSorting>
 

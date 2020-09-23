@@ -333,7 +333,6 @@ public final class PsiImplUtil {
    */
   @Deprecated
   public static PsiType normalizeWildcardTypeByPosition(@NotNull PsiType type, @NotNull PsiExpression expression) {
-    PsiUtilCore.ensureValid(expression);
     PsiUtil.ensureValidType(type);
 
     PsiExpression topLevel = expression;
@@ -772,6 +771,11 @@ public final class PsiImplUtil {
       return JavaResolveResult.EMPTY_ARRAY;
     }
     PsiFile psiFile = SharedImplUtil.getContainingFile(fileElement);
+    return multiResolveImpl(element, psiFile, incompleteCode, resolver);
+  }
+
+  public static <T extends PsiJavaCodeReferenceElement> @NotNull JavaResolveResult @NotNull [] multiResolveImpl(
+    @NotNull T element, PsiFile psiFile, boolean incompleteCode, ResolveCache.@NotNull PolyVariantContextResolver<? super T> resolver) {
     PsiManager manager = psiFile == null ? null : psiFile.getManager();
     if (manager == null) {
       PsiUtilCore.ensureValid(element);

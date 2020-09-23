@@ -395,10 +395,11 @@ public class FileUtil extends FileUtilRt {
   private static void performCopy(@NotNull File fromFile, @NotNull File toFile, final boolean syncTimestamp) throws IOException {
     if (filesEqual(fromFile, toFile)) return;
 
-    try (FileOutputStream fos = openOutputStream(toFile)) {
-      try (FileInputStream fis = new FileInputStream(fromFile)) {
-        copy(fis, fos);
-      }
+    try (FileOutputStream fos = openOutputStream(toFile); FileInputStream fis = new FileInputStream(fromFile)) {
+      copy(fis, fos);
+    }
+    catch (IOException e) {
+      throw new IOException(String.format("Couldn't copy [%s] to [%s]", fromFile, toFile), e);
     }
 
     if (syncTimestamp) {
@@ -538,7 +539,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   @NotNull
-  public static File findSequentNonexistentFile(@NotNull File parentFolder, @NotNull  String filePrefix, @NotNull String extension) {
+  public static File findSequentNonexistentFile(@NotNull File parentFolder, @NotNull @NonNls String filePrefix, @NotNull String extension) {
     return findSequentFile(parentFolder, filePrefix, extension, file -> !file.exists());
   }
 

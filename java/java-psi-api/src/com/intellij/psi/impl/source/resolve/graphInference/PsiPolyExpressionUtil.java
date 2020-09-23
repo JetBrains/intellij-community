@@ -73,7 +73,7 @@ public final class PsiPolyExpressionUtil {
     return false;
   }
 
-  private static boolean isInAssignmentOrInvocationContext(PsiExpression expr) {
+  public static boolean isInAssignmentOrInvocationContext(PsiExpression expr) {
     final PsiElement context = PsiUtil.skipParenthesizedExprUp(expr.getParent());
     return context instanceof PsiExpressionList ||
            context instanceof PsiArrayInitializerExpression ||
@@ -143,6 +143,14 @@ public final class PsiPolyExpressionUtil {
 
   private enum ConditionalKind {
     BOOLEAN, NUMERIC, NULL
+  }
+  
+  public static boolean sameBooleanOrNumeric(PsiExpression thenExpression, PsiExpression elseExpression) {
+    final ConditionalKind thenKind = isBooleanOrNumeric(thenExpression);
+    final ConditionalKind elseKind = isBooleanOrNumeric(elseExpression);
+    if (thenKind == elseKind || elseKind == ConditionalKind.NULL) return thenKind != null;
+    if (thenKind == ConditionalKind.NULL) return elseKind != null;
+    return false;
   }
 
   private static ConditionalKind isBooleanOrNumeric(PsiExpression expr) {

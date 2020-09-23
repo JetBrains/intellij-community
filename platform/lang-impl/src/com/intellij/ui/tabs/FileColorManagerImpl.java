@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -11,12 +12,15 @@ import com.intellij.ui.FileColorManager;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StartupUiUtil;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public final class FileColorManagerImpl extends FileColorManager {
   public static final String FC_ENABLED = "FileColorsEnabled";
@@ -89,16 +93,31 @@ public final class FileColorManagerImpl extends FileColorManager {
 
   @Override
   @Nullable
-  public Color getColor(@NotNull String name) {
-    Color color = ourDefaultColors.get(name);
-    return color == null ? ColorUtil.fromHex(name, null) : color;
+  public Color getColor(@NotNull @NonNls String id) {
+    Color color = ourDefaultColors.get(id);
+    return color == null ? ColorUtil.fromHex(id, null) : color;
   }
 
   @Override
-  public Collection<String> getColorNames() {
+  public @NotNull @Nls String getColorName(@NotNull @NonNls String id) {
+    return ourDefaultColors.containsKey(id) ?
+           IdeBundle.message("color.name." + id.toLowerCase(Locale.ENGLISH)) :
+           IdeBundle.message("settings.file.color.custom.name");
+  }
+
+  @Override
+  public Collection<@NonNls String> getColorIDs() {
     List<String> sorted = new ArrayList<>(ourDefaultColors.keySet());
     Collections.sort(sorted);
     return sorted;
+  }
+
+  @Override
+  public Collection<@Nls String> getColorNames() {
+    return ourDefaultColors.keySet().stream().
+      map(key -> IdeBundle.message("color.name." + key.toLowerCase(Locale.ENGLISH))).
+      sorted().
+      collect(Collectors.toList());
   }
 
   @Nullable
@@ -177,7 +196,8 @@ public final class FileColorManagerImpl extends FileColorManager {
   }
 
   @Nullable
-  public static String getColorName(@NotNull Color color) {
+  @NonNls
+  public static String getColorID(@NotNull Color color) {
     for (String name : ourDefaultColors.keySet()) {
       if (color.equals(ourDefaultColors.get(name))) {
         return name;
@@ -186,7 +206,9 @@ public final class FileColorManagerImpl extends FileColorManager {
     return null;
   }
 
-  static String getAlias(String text) {
-    return StartupUiUtil.isUnderDarcula() && text.equals("Yellow") ? "Brown" : text;
+  @Nls
+  static String getAlias(@Nls String text) {
+    return StartupUiUtil.isUnderDarcula() && text.equals(IdeBundle.message("color.name.yellow")) ?
+           IdeBundle.message("color.name.brown") : text;
   }
 }

@@ -46,17 +46,18 @@ import static com.intellij.util.ui.JBUI.insets;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnBundle.messagePointer;
 import static org.jetbrains.idea.svn.SvnUtil.append;
-import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class CopyOptionsDialog extends DialogWrapper {
 
   private final Url myURL;
+  private Url myTargetUrl;
+
   private CommitMessage myCommitMessage;
   private final Project myProject;
   private JTextField myNameField;
   private JBLabel myURLLabel;
   private RepositoryBrowserComponent myBrowser;
-  private JBLabel myTargetURL;
+  private JBLabel myTargetURLLabel;
   private BorderLayoutPanel myMainPanel;
 
   public CopyOptionsDialog(Project project, RepositoryTreeNode root, RepositoryTreeNode node, boolean copy) {
@@ -65,7 +66,7 @@ public class CopyOptionsDialog extends DialogWrapper {
     myURL = node.getURL();
     createUI();
 
-    myTargetURL.setForeground(copy ? FileStatus.ADDED.getColor() : FileStatus.MODIFIED.getColor());
+    myTargetURLLabel.setForeground(copy ? FileStatus.ADDED.getColor() : FileStatus.MODIFIED.getColor());
     setOKButtonText(copy ? message("button.copy") : message("button.move"));
     myURLLabel.setText(myURL.toDecodedString());
 
@@ -200,9 +201,9 @@ public class CopyOptionsDialog extends DialogWrapper {
     wrapper.add(new JBLabel(message("label.target.url")), gridBag);
 
     gridBag.next().fillCellHorizontally();
-    myTargetURL = new JBLabel();
-    myTargetURL.setFont(myTargetURL.getFont().deriveFont(Font.BOLD));
-    wrapper.add(myTargetURL, gridBag);
+    myTargetURLLabel = new JBLabel();
+    myTargetURLLabel.setFont(myTargetURLLabel.getFont().deriveFont(Font.BOLD));
+    wrapper.add(myTargetURLLabel, gridBag);
     return wrapper;
   }
 
@@ -226,14 +227,7 @@ public class CopyOptionsDialog extends DialogWrapper {
 
   @Nullable
   public Url getTargetURL() {
-    if (getOKAction().isEnabled()) {
-      try {
-        return createUrl(myTargetURL.getText());
-      }
-      catch (SvnBindException ignored) {
-      }
-    }
-    return null;
+    return myTargetUrl;
   }
 
   @Nullable
@@ -248,29 +242,27 @@ public class CopyOptionsDialog extends DialogWrapper {
   }
 
   private void update() {
-    RepositoryTreeNode baseNode = myBrowser.getSelectedNode();
-    if (baseNode == null) {
-      myTargetURL.setText("");
-      getOKAction().setEnabled(false);
-      return;
-    }
-    Url baseURL = baseNode.getURL();
-    String name = myNameField.getText();
-    if (isEmpty(name)) {
-      getOKAction().setEnabled(false);
-      return;
-    }
-    try {
-      baseURL = append(baseURL, myNameField.getText());
-    }
-    catch (SvnBindException e) {
-      getOKAction().setEnabled(false);
-      return;
-    }
-    myTargetURL.setText(baseURL.toString());
-    getOKAction().setEnabled(!myURL.toString().equals(myTargetURL.getText()));
+    myTargetUrl = buildTargetUrl();
+
+    myTargetURLLabel.setText(myTargetUrl != null ? myTargetUrl.toDecodedString() : "");
+    getOKAction().setEnabled(myTargetUrl != null && !myURL.equals(myTargetUrl));
   }
 
+  private @Nullable Url buildTargetUrl() {
+    RepositoryTreeNode locationNode = myBrowser.getSelectedNode();
+    if (locationNode == null) return null;
+
+    Url location = locationNode.getURL();
+    String name = myNameField.getText();
+    if (isEmpty(name)) return null;
+
+    try {
+      return append(location, name);
+    }
+    catch (SvnBindException e) {
+      return null;
+    }
+  }
 
   @Override
   public JComponent getPreferredFocusedComponent() {

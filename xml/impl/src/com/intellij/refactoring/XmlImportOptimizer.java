@@ -30,6 +30,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,7 +106,7 @@ public class XmlImportOptimizer implements ImportOptimizer {
       @Override
       public String getUserNotificationInfo() {
         return myRemovedNameSpaces > 0
-               ? "Removed " + myRemovedNameSpaces + " namespace" + (myRemovedNameSpaces > 1 ? "s" : "")
+               ? XmlBundle.message("hint.text.removed.namespace", myRemovedNameSpaces, myRemovedNameSpaces > 1 ? 0 : 1)
                : null;
       }
     };

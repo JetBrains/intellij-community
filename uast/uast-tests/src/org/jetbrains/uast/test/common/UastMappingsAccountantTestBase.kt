@@ -153,7 +153,7 @@ class UastMappingsAccountantTest(
       }
       // renders everything except locations
       .let { (byPsi, byUast) ->
-        Pair(
+        Pair<MutableMap3<String, List<String>, String, MutableSet<PairWithFirstIdentity<String?, Location>>>, MutableMap3<String, Iterable<String>, String, MutableSet<PairWithFirstIdentity<String?, Location>>>>(
           byPsi.transformMap3(
             psiClassPrinter,
             { psiContext -> psiContext.map { psiClassPrinter(it) } },

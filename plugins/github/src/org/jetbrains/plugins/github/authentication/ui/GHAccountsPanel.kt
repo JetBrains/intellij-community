@@ -10,6 +10,7 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.SimpleTextAttributes
@@ -115,7 +116,7 @@ internal class GHAccountsPanel(
     val popup = actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group)
 
     popup.setTargetComponent(this)
-    popup.component.show(point.component, point.point.x, point.point.y)
+    JBPopupMenu.showAt(point, popup.component)
   }
 
   private fun editAccount(decorator: GithubAccountDecorator) {
@@ -159,7 +160,7 @@ internal class GHAccountsPanel(
       return
     }
     val executor = executorFactory.create(token)
-    progressManager.run(object : Task.Backgroundable(project, "Not Visible") {
+    progressManager.run(object : Task.Backgroundable(project, GithubBundle.message("progress.title.not.visible")) {
       lateinit var loadedDetails: GithubAuthenticatedUser
       var correctScopes: Boolean = true
 

@@ -41,3 +41,10 @@ object PortableFilePaths {
     virtualFile.isInLocalFileSystem || virtualFile.fileSystem is ArchiveFileSystem
 
 }
+
+fun PortableFilePath.hasPresentablePathMatching(pattern: String): Boolean =
+  when {
+    pattern.startsWith("*") -> presentablePath.endsWith(pattern.substring(1))
+    pattern.endsWith("*") -> presentablePath.startsWith(pattern.dropLast(1))
+    else -> presentablePath == pattern
+  }

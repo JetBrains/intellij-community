@@ -4,10 +4,10 @@ package com.intellij.ide.util;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public final class PsiLambdaNameHelper {
@@ -25,7 +25,7 @@ public final class PsiLambdaNameHelper {
         new ParameterizedCachedValueProvider<Map<PsiLambdaExpression, String>, PsiClass>() {
           @Override
           public CachedValueProvider.Result<Map<PsiLambdaExpression, String>> compute(final PsiClass upper) {
-            final Map<PsiLambdaExpression, String> map = new THashMap<>();
+            final Map<PsiLambdaExpression, String> map = new HashMap<>();
             upper.accept(new JavaRecursiveElementWalkingVisitor() {
               int index;
 

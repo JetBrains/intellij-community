@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.ReentrantLock;
 
 @ApiStatus.Internal
-public class StorageLock {
+public final class StorageLock {
   private static final Logger LOG = Logger.getInstance(StorageLock.class);
 
   static final int MAX_PAGES_COUNT = 0xFFFF;

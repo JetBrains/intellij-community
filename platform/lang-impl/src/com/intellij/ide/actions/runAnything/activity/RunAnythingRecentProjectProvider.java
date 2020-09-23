@@ -9,6 +9,7 @@ import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
 import com.intellij.ide.actions.runAnything.items.RunAnythingItemBase;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
@@ -77,7 +78,7 @@ public class RunAnythingRecentProjectProvider extends RunAnythingAnActionProvide
     @Nullable
     @Override
     public String getDescription() {
-      return myValue.getProjectPath();
+      return FileUtil.toSystemDependentName(myValue.getProjectPath());
     }
   }
 

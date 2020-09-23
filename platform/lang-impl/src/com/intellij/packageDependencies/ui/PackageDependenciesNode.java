@@ -170,7 +170,7 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
   }
 
   @Nullable
-  public String getComment() {
+  public @NlsSafe String getComment() {
     return null;
   }
 

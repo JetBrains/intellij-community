@@ -66,7 +66,6 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.net.URL;
 import java.util.List;
 import java.util.*;
 import java.util.function.BooleanSupplier;
@@ -360,6 +359,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   @Override
   public void noStateLoaded() {
     myCurrentLaf = getDefaultLaf();
+    myPreferredLightLaf = myDefaultLightLaf;
+    myPreferredDarkLaf = myDefaultDarkLaf;
   }
 
   @Override
@@ -419,9 +420,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       result.add(createLafReference(info));
 
       if (Objects.equals(lafNameOrder.get(info.getName()), maxNameOrder)) {
-        if (lafDetector.getDetectionSupported()) {
-          result.add(LafReference.SYNC_OS);
-        }
         addSeparator = true;
       }
     }
@@ -435,7 +433,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   private void selectComboboxModel() {
     if (myLafComboBoxModel.isInitialized()) {
-      myLafComboBoxModel.getValue().setSelectedItem(autodetect ? LafReference.SYNC_OS : createLafReference(myCurrentLaf));
+      myLafComboBoxModel.getValue().setSelectedItem(createLafReference(myCurrentLaf));
     }
   }
 
@@ -461,20 +459,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   @Override
   public LafReference getLookAndFeelReference() {
-    return autodetect ? LafReference.SYNC_OS : createLafReference(getCurrentLookAndFeel());
-  }
-
-  @Override
-  public void setLookAndFeelReference(LafReference reference) {
-    if (reference != LafManager.LafReference.SYNC_OS) {
-      autodetect = false;
-      QuickChangeLookAndFeel.switchLafAndUpdateUI(this, findLaf(reference), true);
-    }
-    else {
-      autodetect = true;
-      selectComboboxModel();
-      detectAndSyncLaf();
-    }
+    return createLafReference(getCurrentLookAndFeel());
   }
 
   @Override
@@ -674,20 +659,40 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       map.put("#5e5e5e", "#5778ad");
       map.put("#c75450", "#a95768");
       map.put("#6e6e6e", "#afb1b3");
-      map.put("#f26522", "#b76554");
-      map.put("#f2652299", "#ac818b");
+      //map.put("#f26522", "#b76554"); //red
+      map.put("#f26522b3", "#bc6b43"); //red 70%
+      map.put("#f2652299", "#bc6b43"); //red 60% (same as 70%)
+      map.put("#62b54399", "#579b41"); //green 60%
+      map.put("#f98b9e99", "#ba7481"); //pink 60%
+      map.put("#f4af3d99", "#aa823f"); //yellow 60%
+      map.put("#b99bf899", "#977fca"); //purple 60%
+      map.put("#9aa7b0cc", "#97acc6"); //noun gray 80%
+      map.put("#9aa7b099", "#97acc6"); //noun gray 60% (same as 80%)
     } else {
       map.put("#6e6e6e", "#afb1b3");
       map.put("#db5860", "#b75e73");
-      map.put("#f26522", "#b56a51");
-      map.put("#f2652299", "#a88786");
+      //map.put("#f26522", "#b56a51"); //red
+      map.put("#f26522b3", "#d38369"); //red 70%
+      map.put("#f2652299", "#d38369"); //red 60% (same as 70%)
+      map.put("#40b6e099", "#5eb6d4"); //blue 60%
+      map.put("#62b54399", "#7ebe65"); //green 60%
+      map.put("#f98b9e99", "#f1a4b2"); //pink 60%
+      map.put("#f4af3d99", "#ecc27d"); //yellow 60%
+      map.put("#b99bf899", "#b49ee2"); //purple 60%
+      map.put("#9aa7b0cc", "#aebdc6"); //noun gray 80%
+      map.put("#9aa7b099", "#aebdc6"); //noun gray 60% (same as 80%)
+      map.put("#40b6e0b3", "#5eb6d4"); //blue 70%
+      map.put("#62b543b3", "#7ebe65"); //green 70%
+      map.put("#f98b9eb3", "#f1a4b2"); //pink 70%
+      map.put("#f4af3db3", "#ecc27d"); //yellow 70%
+      map.put("#b99bf8b3", "#b49ee2"); //purple 70%
     }
     HashMap<String, Integer> alpha = new HashMap<>();
     map.forEach((key, value) -> alpha.put(value, 255));
 
      SVGLoader.setColorPatcherForSelection(new SVGLoader.SvgElementColorPatcherProvider() {
        @Override
-       public SVGLoader.@Nullable SvgElementColorPatcher forURL(@Nullable URL url) {
+       public SVGLoader.@Nullable SvgElementColorPatcher forPath(@Nullable String path) {
          return SVGLoader.newPatcher(null, map, alpha);
        }
      });
@@ -1044,8 +1049,21 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   @Override
-  public boolean isAutoDetect() {
+  public boolean getAutodetect() {
     return autodetect;
+  }
+
+  @Override
+  public void setAutodetect(boolean value) {
+    autodetect = value;
+    if (autodetect) {
+      detectAndSyncLaf();
+    }
+  }
+
+  @Override
+  public boolean getAutodetectSupported() {
+    return lafDetector.getDetectionSupported();
   }
 
   private static void repaintUI(Window window) {
@@ -1253,7 +1271,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       updateLafComboboxModel();
 
       // When updating a theme plugin that doesn't provide the current theme, don't select any of its themes as current
-      if (!myUpdatingPlugin || newTheme.getTheme().getId().equals(myThemeIdBeforePluginUpdate)) {
+      if (!autodetect && (!myUpdatingPlugin || newTheme.getTheme().getId().equals(myThemeIdBeforePluginUpdate))) {
         setLookAndFeelImpl(newTheme, false, false);
         JBColor.setDark(newTheme.getTheme().isDark());
         updateUI();
@@ -1386,7 +1404,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       List<AnAction> result = new ArrayList<>();
       if (!lafs.isEmpty()) {
         result.add(Separator.create(separatorText));
-        lafs.stream().map(l -> new LafToggleAction(l, isDark)).forEach(a -> result.add(a));
+        lafs.stream().map(l -> {
+          @NlsSafe String name = l.getName();
+          return new LafToggleAction(name, l, isDark);
+        }).forEach(a -> result.add(a));
       }
       return result;
     }
@@ -1396,8 +1417,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     private final UIManager.LookAndFeelInfo lafInfo;
     private final boolean isDark;
 
-    private LafToggleAction(UIManager.LookAndFeelInfo lafInfo, boolean isDark) {
-      super(lafInfo.getName());
+    private LafToggleAction(@Nls String name, UIManager.LookAndFeelInfo lafInfo, boolean isDark) {
+      super(name);
       this.lafInfo = lafInfo;
       this.isDark = isDark;
     }

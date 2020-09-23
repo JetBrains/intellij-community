@@ -66,11 +66,10 @@ public final class VcsRootScanner implements Disposable {
     List<VcsRootChecker> checkers = VcsRootChecker.EXTENSION_POINT_NAME.getExtensionList();
     if (checkers.isEmpty()) return;
 
-    ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
     for (VFileEvent event : events) {
       VirtualFile file = event.getFile();
       if (file != null && file.isDirectory()) {
-        visitDirsRecursivelyWithoutExcluded(myProject, projectRootManager, file, dir -> {
+        visitDirsRecursivelyWithoutExcluded(myProject, file, true, dir -> {
           if (isVcsDir(checkers, dir.getName())) {
             scheduleScan();
             return skipTo(file);
@@ -82,14 +81,14 @@ public final class VcsRootScanner implements Disposable {
   }
 
   static void visitDirsRecursivelyWithoutExcluded(@NotNull Project project,
-                                                  @NotNull ProjectRootManager projectRootManager,
                                                   @NotNull VirtualFile root,
-                                                  @NotNull Function<? super VirtualFile, Result> dirFound) {
-    ProjectFileIndex fileIndex = projectRootManager.getFileIndex();
+                                                  boolean visitIgnoredFoldersThemselves,
+                                                  @NotNull Function<? super VirtualFile, Result> processor) {
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     Option depthLimit = limit(Registry.intValue("vcs.root.detector.folder.depth"));
     Pattern ignorePattern = parseDirIgnorePattern();
 
-    if (isUnderIgnoredDirectory(project, ignorePattern, root)) return;
+    if (isUnderIgnoredDirectory(project, ignorePattern, visitIgnoredFoldersThemselves ? root.getParent() : root)) return;
 
     VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor<Void>(NO_FOLLOW_SYMLINKS, depthLimit) {
       @NotNull
@@ -97,6 +96,13 @@ public final class VcsRootScanner implements Disposable {
       public VirtualFileVisitor.Result visitFileEx(@NotNull VirtualFile file) {
         if (!file.isDirectory()) {
           return CONTINUE;
+        }
+
+        if (visitIgnoredFoldersThemselves) {
+          Result apply = processor.apply(file);
+          if (apply != CONTINUE) {
+            return apply;
+          }
         }
 
         if (isIgnoredDirectory(project, ignorePattern, file)) {
@@ -107,7 +113,14 @@ public final class VcsRootScanner implements Disposable {
           return SKIP_CHILDREN;
         }
 
-        return dirFound.apply(file);
+        if (!visitIgnoredFoldersThemselves) {
+          Result apply = processor.apply(file);
+          if (apply != CONTINUE) {
+            return apply;
+          }
+        }
+
+        return CONTINUE;
       }
     });
   }
@@ -127,7 +140,7 @@ public final class VcsRootScanner implements Disposable {
   }
 
 
-  static boolean isUnderIgnoredDirectory(@NotNull Project project, @Nullable Pattern ignorePattern, @NotNull VirtualFile dir) {
+  static boolean isUnderIgnoredDirectory(@NotNull Project project, @Nullable Pattern ignorePattern, @Nullable VirtualFile dir) {
     VirtualFile parent = dir;
     while (parent != null) {
       if (isIgnoredDirectory(project, ignorePattern, parent)) return true;

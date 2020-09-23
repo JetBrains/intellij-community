@@ -75,8 +75,8 @@ class FilePredictionSimilarityFeatures : FilePredictionFeatureProvider {
     }
 
     if (prevFile != null) {
-      val newFileName = unify(newFile.name)
-      val prevFileName = unify(prevFile.name)
+      val newFileName = FileUtil.getNameWithoutExtension(newFile.name)
+      val prevFileName = FileUtil.getNameWithoutExtension(prevFile.name)
       addNameSimilarity(newFileName, prevFileName, result)
 
       addPathSimilarity(newFile, prevFile, null, "", result)

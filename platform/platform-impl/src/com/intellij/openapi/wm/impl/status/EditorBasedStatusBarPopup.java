@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
@@ -30,7 +31,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.popup.util.PopupState;
+import com.intellij.ui.popup.PopupState;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -47,7 +48,7 @@ import java.lang.ref.WeakReference;
 import static com.intellij.openapi.util.NlsContexts.StatusBarText;
 
 public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implements StatusBarWidget.Multiframe, CustomStatusBarWidget {
-  private final PopupState myPopupState = new PopupState();
+  private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
   private final JPanel myComponent;
   private final boolean myWriteableFileRequired;
   private boolean actionEnabled;
@@ -184,7 +185,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
     if (popup != null) {
       Dimension dimension = popup.getContent().getPreferredSize();
       Point at = new Point(0, -dimension.height);
-      popup.addListener(myPopupState);
+      myPopupState.prepareToShow(popup);
       popup.show(new RelativePoint(e.getComponent(), at));
       Disposer.register(this, popup); // destroy popup on unexpected project close
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.file.exclude.ui;
 
 import com.intellij.idea.ActionsBundle;
@@ -41,17 +41,15 @@ public class MarkAsOriginalTypeAction extends DumbAwareAction {
       JBIterable.of(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY))
         .filter(file -> isApplicableFor(file) && typeManager.isMarkedAsPlainText(file));
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    boolean enabled = e.getProject() != null && !selectedFiles.isEmpty();
     Set<FileType> fileTypes = selectedFiles.map(file -> fileTypeManager.getFileTypeByFileName(file.getNameSequence())).toSet();
-
     if (fileTypes.size() == 1) {
       FileType original = fileTypes.iterator().next();
       String originalName = StringUtil.defaultIfEmpty(original.getDescription(), original.getName());
-      String text = ActionsBundle.actionText("MarkAsOriginalTypeAction").replace("Original File Type", originalName);
+      String text = ActionsBundle.message("action.mark.as.file.type.action", originalName);
       e.getPresentation().setText(text);
       e.getPresentation().setIcon(original.getIcon());
     }
-    e.getPresentation().setEnabledAndVisible(enabled);
+
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null && !selectedFiles.isEmpty());
   }
-    
 }

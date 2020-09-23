@@ -34,6 +34,7 @@ import javax.swing.border.AbstractBorder;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.UndoableEditListener;
 import javax.swing.plaf.ButtonUI;
 import javax.swing.plaf.ComboBoxUI;
@@ -66,7 +67,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -81,7 +81,7 @@ public final class UIUtil {
     LoadingState.LAF_INITIALIZED.checkOccurred();
   }
 
-  public static final @NonNls String BORDER_LINE = "<hr size=1 noshade>";
+  public static final @NlsSafe String BORDER_LINE = "<hr size=1 noshade>";
   @NlsSafe public static final String BR = "<br/>";
   @NlsSafe public static final String HR = "<hr/>";
   @NlsSafe public static final String LINE_SEPARATOR = "\n";
@@ -101,7 +101,7 @@ public final class UIUtil {
   }
 
   public static void setCustomTitleBar(@NotNull Window window, @NotNull JRootPane rootPane, java.util.function.Consumer<? super Runnable> onDispose) {
-    if (!SystemInfo.isMac || !Registry.is("ide.mac.transparentTitleBarAppearance", false)) {
+    if (!SystemInfoRt.isMac || !Registry.is("ide.mac.transparentTitleBarAppearance", false)) {
       return;
     }
 
@@ -234,7 +234,7 @@ public final class UIUtil {
   }
 
   public static @NotNull Cursor getTextCursor(@NotNull Color backgroundColor) {
-    return SystemInfo.isMac && ColorUtil.isDark(backgroundColor) ?
+    return SystemInfoRt.isMac && ColorUtil.isDark(backgroundColor) ?
            MacUIUtil.getInvertedTextCursor() : Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR);
   }
 
@@ -360,7 +360,9 @@ public final class UIUtil {
   }
 
   public static void fixOSXEditorBackground(@NotNull JTable table) {
-    if (!SystemInfo.isMac) return;
+    if (!SystemInfoRt.isMac) {
+      return;
+    }
 
     if (table.isEditing()) {
       int column = table.getEditingColumn();
@@ -408,7 +410,7 @@ public final class UIUtil {
    */
   public static final Key<Boolean> TEXT_COPY_ROOT = Key.create("TEXT_COPY_ROOT");
 
-  private static final AbstractAction REDO_ACTION = new AbstractAction() {
+  private static final Action REDO_ACTION = new AbstractAction() {
     @Override
     public void actionPerformed(@NotNull ActionEvent e) {
       UndoManager manager = getClientProperty(e.getSource(), UNDO_MANAGER);
@@ -417,7 +419,7 @@ public final class UIUtil {
       }
     }
   };
-  private static final AbstractAction UNDO_ACTION = new AbstractAction() {
+  private static final Action UNDO_ACTION = new AbstractAction() {
     @Override
     public void actionPerformed(@NotNull ActionEvent e) {
       UndoManager manager = getClientProperty(e.getSource(), UNDO_MANAGER);
@@ -1723,8 +1725,6 @@ public final class UIUtil {
     g.setComposite(X_RENDER_ACTIVE.getValue() ? AlphaComposite.SrcOver : AlphaComposite.Src);
   }
 
-  private static final Method dispatchEventMethod =
-    Objects.requireNonNull(ReflectionUtil.getDeclaredMethod(EventQueue.class, "dispatchEvent", AWTEvent.class));
   /**
    * Dispatch all pending invocation events (if any) in the {@link com.intellij.ide.IdeEventQueue}, ignores and removes all other events from the queue.
    * In tests, consider using {@link com.intellij.testFramework.PlatformTestUtil#dispatchAllInvocationEventsInIdeEventQueue()}
@@ -1732,41 +1732,7 @@ public final class UIUtil {
    */
   @TestOnly
   public static void dispatchAllInvocationEvents() {
-    assert EdtInvocationManager.getInstance().isEventDispatchThread() : Thread.currentThread() + "; EDT: "+getEventQueueThread();
-    EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
-    for (int i = 1; ; i++) {
-      AWTEvent event = eventQueue.peekEvent();
-      if (event == null) break;
-      try {
-        event = eventQueue.getNextEvent();
-        if (event instanceof InvocationEvent) {
-          dispatchEventMethod.invoke(eventQueue, event);
-        }
-      }
-      catch (InvocationTargetException e) {
-        ExceptionUtil.rethrowAllAsUnchecked(e.getCause());
-      }
-      catch (Exception e) {
-        ExceptionUtil.rethrow(e);
-      }
-
-      if (i % 10000 == 0) {
-        //noinspection UseOfSystemOutOrSystemErr
-        System.out.println("Suspiciously many (" + i + ") AWT events, last dispatched " + event);
-      }
-    }
-  }
-
-  private static @NotNull Thread getEventQueueThread() {
-    EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
-    try {
-      Method method = ReflectionUtil.getDeclaredMethod(EventQueue.class, "getDispatchThread");
-      //noinspection ConstantConditions
-      return (Thread)method.invoke(eventQueue);
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    EdtInvocationManager.dispatchAllInvocationEvents();
   }
 
   public static void addAwtListener(final @NotNull AWTEventListener listener, long mask, @NotNull Disposable parent) {
@@ -2112,7 +2078,7 @@ public final class UIUtil {
   }
 
   public static final class JBWordWrapHtmlEditorKit extends JBHtmlEditorKit {
-    private final HTMLFactory myFactory = new HTMLFactory() {
+    private final ViewFactory myFactory = new HTMLFactory() {
       @Override
       public View create(Element e) {
         View view = super.create(e);
@@ -2248,13 +2214,7 @@ public final class UIUtil {
    * On AWT thread, invoked runnable immediately, otherwise do {@link SwingUtilities#invokeLater(Runnable)} on it.
    */
   public static void invokeLaterIfNeeded(@NotNull Runnable runnable) {
-    EdtInvocationManager edtInvocationManager = EdtInvocationManager.getInstance();
-    if (edtInvocationManager.isEventDispatchThread()) {
-      runnable.run();
-    }
-    else {
-      edtInvocationManager.invokeLater(runnable);
-    }
+    EdtInvocationManager.invokeLaterIfNeeded(runnable);
   }
 
   /**
@@ -2270,7 +2230,7 @@ public final class UIUtil {
    * @see #invokeAndWaitIfNeeded(ThrowableRunnable)
    */
   public static void invokeAndWaitIfNeeded(@NotNull Runnable runnable) {
-    EdtInvocationManager.getInstance().invokeAndWaitIfNeeded(runnable);
+    EdtInvocationManager.invokeAndWaitIfNeeded(runnable);
   }
 
   /**
@@ -2518,7 +2478,7 @@ public final class UIUtil {
   }
 
   public static @NotNull <T extends JComponent> List<T> findComponentsOfType(JComponent parent, @NotNull Class<? extends T> cls) {
-    final ArrayList<T> result = new ArrayList<>();
+    List<T> result = new ArrayList<>();
     findComponentsOfType(parent, cls, result);
     return result;
   }
@@ -2919,7 +2879,7 @@ public final class UIUtil {
     }
   }
 
-  private static final DocumentAdapter SET_TEXT_CHECKER = new DocumentAdapter() {
+  private static final DocumentListener SET_TEXT_CHECKER = new DocumentAdapter() {
     @Override
     protected void textChanged(@NotNull DocumentEvent e) {
       Document document = e.getDocument();
@@ -2945,14 +2905,15 @@ public final class UIUtil {
     if (textComponent.getClientProperty(UNDO_MANAGER) instanceof UndoManager) {
       return;
     }
+
     UndoManager undoManager = new UndoManager();
     textComponent.putClientProperty(UNDO_MANAGER, undoManager);
     textComponent.getDocument().addUndoableEditListener(undoManager);
     textComponent.getDocument().addDocumentListener(SET_TEXT_CHECKER);
-    textComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK), "undoKeystroke");
+    textComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, SystemInfoRt.isMac ? Event.META_MASK : Event.CTRL_MASK), "undoKeystroke");
     textComponent.getActionMap().put("undoKeystroke", UNDO_ACTION);
     textComponent.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_Z, (SystemInfo.isMac
-                                                                           ? InputEvent.META_MASK : InputEvent.CTRL_MASK) | InputEvent.SHIFT_MASK), "redoKeystroke");
+                                                                           ? Event.META_MASK : Event.CTRL_MASK) | Event.SHIFT_MASK), "redoKeystroke");
     textComponent.getActionMap().put("redoKeystroke", REDO_ACTION);
   }
 

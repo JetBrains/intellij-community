@@ -87,6 +87,7 @@
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.maven.model" exported="" />
     <orderEntry type="library" name="commons-cli" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
   </component>
   <component name="copyright">
     <Base>

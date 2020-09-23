@@ -6,8 +6,6 @@ import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
@@ -38,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.Comparator;
 import java.util.function.Supplier;
@@ -51,7 +50,6 @@ import static com.intellij.util.OpenSourceUtil.navigate;
 import static javax.swing.tree.TreeSelectionModel.SINGLE_TREE_SELECTION;
 
 class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProvider {
-  private static final Logger LOG = Logger.getInstance(ProblemsViewPanel.class);
   private final Project myProject;
   private final ProblemsViewState myState;
   private final Supplier<@NlsContexts.TabTitle String> myName;
@@ -63,9 +61,8 @@ class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProv
   private final Tree myTree;
   private final TreeExpander myTreeExpander;
   private final SingleAlarm mySelectionAlarm = new SingleAlarm(() -> {
-    OpenFileDescriptor descriptor = getSelectedDescriptor();
-    updateAutoscroll(descriptor);
-    updatePreview(descriptor);
+    updateAutoscroll();
+    updatePreview();
   }, 50, stateForComponent(this), this);
   private final SingleAlarm myUpdateAlarm = new SingleAlarm(() -> {
     ToolWindow window = ProblemsView.getToolWindow(getProject());
@@ -91,14 +88,14 @@ class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProv
     @Override
     public void setSelected(boolean selected) {
       myState.setAutoscrollToSource(selected);
-      if (selected) updateAutoscroll(getSelectedDescriptor());
+      if (selected) updateAutoscroll();
     }
   };
   private final Option myShowPreview = new Option() {
     @Override
     public boolean isEnabled() {
-      OpenFileDescriptor descriptor = getSelectedDescriptor();
-      return descriptor != null && null != ProblemsView.getDocument(getProject(), descriptor.getFile());
+      VirtualFile file = getSelectedFile();
+      return file != null && null != ProblemsView.getDocument(getProject(), file);
     }
 
     @Override
@@ -114,7 +111,7 @@ class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProv
     @Override
     public void setSelected(boolean selected) {
       myState.setShowPreview(selected);
-      updatePreview(getSelectedDescriptor());
+      updatePreview();
     }
   };
   @SuppressWarnings("unused")
@@ -189,7 +186,7 @@ class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProv
 
   @Override
   public void dispose() {
-    myPreview.preview(null, false);
+    myPreview.preview(false);
   }
 
   @Override
@@ -201,12 +198,18 @@ class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProv
       VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(this);
       return file == null ? null : getPreview().findFileEditor(file, getProject());
     }
-    OpenFileDescriptor descriptor = getSelectedDescriptor();
-    if (descriptor != null) {
-      if (CommonDataKeys.NAVIGATABLE.is(dataId)) return descriptor;
-      if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) return descriptor.getFile();
-      if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) return new Navigatable[]{descriptor};
-      if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) return new VirtualFile[]{descriptor.getFile()};
+    Node node = getSelectedNode();
+    if (node != null) {
+      if (CommonDataKeys.NAVIGATABLE.is(dataId)) return node.getNavigatable();
+      if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) return node.getVirtualFile();
+      if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+        Navigatable navigatable = node.getNavigatable();
+        return navigatable == null ? null : new Navigatable[]{navigatable};
+      }
+      if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+        VirtualFile file = node.getVirtualFile();
+        return file == null ? null : new VirtualFile[]{file};
+      }
     }
     return null;
   }
@@ -268,13 +271,13 @@ class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProv
     myToolbarInsets.right = !vertical ? scale(1) : 0;
     myToolbarInsets.bottom = vertical ? scale(1) : 0;
     myPanel.add(vertical ? BorderLayout.NORTH : BorderLayout.WEST, myToolbar.getComponent());
-    updatePreview(getSelectedDescriptor());
+    updatePreview();
   }
 
   void selectionChangedTo(boolean selected) {
     if (selected) {
       myTreeModel.setComparator(createComparator());
-      updatePreview(getSelectedDescriptor());
+      updatePreview();
 
       ToolWindow window = ProblemsView.getToolWindow(getProject());
       if (window instanceof ToolWindowEx) {
@@ -284,43 +287,41 @@ class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProv
     }
   }
 
-  private @Nullable OpenFileDescriptor getSelectedDescriptor() {
-    Object object = TreeUtil.getLastUserObject(getTree().getSelectionPath());
-    if (object instanceof FileNode) return getDescriptor((FileNode)object);
-    if (object instanceof ProblemNode) return getDescriptor((ProblemNode)object);
-    return null;
+  private static @Nullable Node getNode(@Nullable TreePath path) {
+    return TreeUtil.getLastUserObject(Node.class, path);
   }
 
-  private @Nullable OpenFileDescriptor getDescriptor(@NotNull FileNode node) {
-    return getDescriptor(node.getFile(), -1);
+  private @Nullable Node getSelectedNode() {
+    return getNode(getTree().getSelectionPath());
   }
 
-  private @Nullable OpenFileDescriptor getDescriptor(@NotNull ProblemNode node) {
-    return getDescriptor(node.getFile(), node.getOffset());
+  @Nullable VirtualFile getSelectedFile() {
+    Node node = getSelectedNode();
+    return node == null ? null : node.getVirtualFile();
   }
 
-  private @Nullable OpenFileDescriptor getDescriptor(@NotNull VirtualFile file, int offset) {
-    Document document = ProblemsView.getDocument(getProject(), file);
-    if (document == null) return null;
-    if (offset < 0) return new OpenFileDescriptor(getProject(), file);
-    int length = document.getTextLength();
-    if (offset <= length) return new OpenFileDescriptor(getProject(), file, offset);
-    LOG.warn("offset is bigger then document length: " + file);
-    return new OpenFileDescriptor(getProject(), file, length);
-  }
-
-  private void updateAutoscroll(@Nullable OpenFileDescriptor descriptor) {
-    if (descriptor != null && UIUtil.isFocusAncestor(this) && isNotNullAndSelected(getAutoscrollToSource())) {
-      invokeLater(() -> navigate(false, descriptor));
+  private void updateAutoscroll() {
+    if (UIUtil.isFocusAncestor(this) && isNotNullAndSelected(getAutoscrollToSource())) {
+      invokeLater(() -> {
+        Node node = getSelectedNode();
+        Navigatable navigatable = node == null ? null : node.getNavigatable();
+        if (navigatable != null && navigatable.canNavigateToSource()) {
+          navigate(false, navigatable);
+        }
+      });
     }
   }
 
-  private void updatePreview(@Nullable OpenFileDescriptor descriptor) {
-    Editor editor = myPreview.preview(descriptor, isNotNullAndSelected(getShowPreview()));
-    if (editor != null && descriptor != null) {
+  private void updatePreview() {
+    Editor editor = myPreview.preview(isNotNullAndSelected(getShowPreview()));
+    if (editor != null) {
       invokeLater(() -> {
         if (editor.getComponent().isShowing()) {
-          descriptor.navigateIn(editor);
+          Node node = getSelectedNode();
+          OpenFileDescriptor descriptor = node == null ? null : node.getDescriptor();
+          if (descriptor != null) {
+            descriptor.navigateIn(editor);
+          }
         }
       });
     }

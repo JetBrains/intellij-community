@@ -3,6 +3,7 @@ package com.intellij.ui.tabs;
 
 import com.intellij.notification.impl.ui.StickyButton;
 import com.intellij.notification.impl.ui.StickyButtonUI;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.StartupUiUtil;
@@ -18,7 +19,7 @@ import java.awt.event.ActionListener;
 public abstract class ColorButtonBase extends StickyButton {
   @Nullable protected Color myColor;
 
-  protected ColorButtonBase(@NotNull final String text, @NotNull final Color color) {
+  protected ColorButtonBase(@NotNull @NlsContexts.Button String text, @NotNull Color color) {
     super(FileColorManagerImpl.getAlias(text));
     myColor = color;
     setUI(createUI());

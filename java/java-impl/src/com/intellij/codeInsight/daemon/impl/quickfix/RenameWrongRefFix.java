@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
@@ -213,7 +214,8 @@ public class RenameWrongRefFix implements IntentionAction, HintAction {
                                                         boolean cellHasFocus) {
             Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
             if (value instanceof LookupElement) {
-              setText(((LookupElement)value).getLookupString());
+              @NlsSafe String refSuggestion = ((LookupElement)value).getLookupString();
+              setText(refSuggestion);
             }
             return component;
           }

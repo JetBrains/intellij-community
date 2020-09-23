@@ -14,7 +14,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -138,7 +137,7 @@ public class OptimizeImportsAction extends AnAction {
             String info = collector.getOptimizeImportsNotification();
             if (!editor.isDisposed() && EditorActivityManager.getInstance().isVisible(editor)) {
               String message = info != null ? info : CodeInsightBundle.message("hint.text.no.unused.imports.found");
-              FileInEditorProcessor.showHint(editor, StringUtil.capitalize(message), null);
+              FileInEditorProcessor.showHint(editor, message, null);
             }
           }
         });

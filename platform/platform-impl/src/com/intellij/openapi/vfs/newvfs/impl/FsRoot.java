@@ -23,15 +23,15 @@ public final class FsRoot extends VirtualDirectoryImpl {
       throw new IllegalArgumentException("path must be canonical but got: '" + pathBeforeSlash + "'");
     }
     myPathWithOneSlash = pathBeforeSlash + '/';
-    VfsData.initFile(id, getSegment(), nameId, myData);
-    if (!attributes.hasCaseSensitivityInformation()) {
-      throw new IllegalArgumentException("Must supply case sensitivity information but got: "+attributes);
-    }
-    getSegment().setFlag(id, IS_CASE_SENSITIVE, attributes.isCaseSensitive() == FileAttributes.CaseSensitivity.SENSITIVE);
+    VfsData.Segment segment = getSegment();
+    VfsData.initFile(id, segment, nameId, myData);
+    // assume root has FS-default case-sensitivity
+    segment.setFlag(id, VfsDataFlags.CHILDREN_CASE_SENSITIVE, attributes.areChildrenCaseSensitive() == FileAttributes.CaseSensitivity.SENSITIVE);
+    segment.setFlag(id, VfsDataFlags.CHILDREN_CASE_SENSITIVITY_CACHED, true);
   }
 
   @Override
-  protected char @NotNull [] appendPathOnFileSystem(int pathLength, int[] position) {
+  protected char @NotNull [] appendPathOnFileSystem(int pathLength, int @NotNull [] position) {
     int myLength = myPathWithOneSlash.length() - 1;
     char[] chars = new char[pathLength + myLength];
     CharArrayUtil.getChars(myPathWithOneSlash, chars, 0, position[0], myLength);

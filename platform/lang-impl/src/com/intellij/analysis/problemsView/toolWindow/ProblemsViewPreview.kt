@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.colors.EditorColorsUtil.getGlobalOrDefaultCol
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -34,9 +33,9 @@ internal class ProblemsViewPreview(private val panel: ProblemsViewPanel)
     return editor
   }
 
-  fun preview(descriptor: OpenFileDescriptor?, show: Boolean): Editor? {
+  fun preview(show: Boolean): Editor? {
     if (!show) return update(null, null)
-    val file = descriptor?.file ?: return update(null, null)
+    val file = panel.selectedFile ?: return update(null, null)
     val document = ProblemsView.getDocument(panel.project, file) ?: return update(null, null)
     if (preview?.document === document) return preview // nothing is changed
 

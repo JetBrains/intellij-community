@@ -351,8 +351,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         }
       }
       else if (returnType instanceof PyUnionType) {
-        final Collection<PyType> members = ((PyUnionType)returnType).getMembers();
-        return PyUnionType.union(ContainerUtil.map(members, type -> replaceSelf(type, receiver, context, true)));
+        return ((PyUnionType)returnType).map(type -> replaceSelf(type, receiver, context, true));
       }
     }
     return returnType;

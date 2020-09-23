@@ -4,6 +4,7 @@ package com.intellij.lang.ant.config.impl;
 import com.intellij.execution.CantRunException;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.config.Externalizer;
 import org.jdom.Element;
@@ -109,7 +110,7 @@ public abstract class AntReference {
     }
   };
 
-  public abstract String getName();
+  public abstract @NlsSafe String getName();
 
   public abstract AntInstallation find(GlobalAntConfiguration antConfiguration);
 

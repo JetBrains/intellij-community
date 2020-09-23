@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.util.indexing.FileIndexingState;
 import com.intellij.util.indexing.IndexInfrastructure;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
@@ -59,12 +60,28 @@ class CompositeBinaryBuilderMap {
     }
   }
 
-  boolean isUpToDateState(int fileId, @NotNull VirtualFile file) throws IOException {
-    DataInputStream stream = FSRecords.readAttributeWithLock(fileId, VERSION_STAMP);
-    int indexedVersion = stream != null ? DataInputOutputUtil.readINT(stream) : 0;
-    if (indexedVersion == 0) return false;
+  void resetPersistedState(int fileId) throws IOException {
+    boolean hasWrittenAttribute;
+    try (DataInputStream stream = FSRecords.readAttributeWithLock(fileId, VERSION_STAMP)) {
+      hasWrittenAttribute = stream != null;
+    }
+    if (hasWrittenAttribute) {
+      try (DataOutputStream stream = FSRecords.writeAttribute(fileId, VERSION_STAMP)) {
+        DataInputOutputUtil.writeINT(stream, 0);
+      }
+    }
+  }
+
+  FileIndexingState isUpToDateState(int fileId, @NotNull VirtualFile file) throws IOException {
+    int indexedVersion = 0;
+    try (DataInputStream stream = FSRecords.readAttributeWithLock(fileId, VERSION_STAMP)) {
+      if (stream != null) {
+        indexedVersion = DataInputOutputUtil.readINT(stream);
+      }
+    }
+    if (indexedVersion == 0) return FileIndexingState.NOT_INDEXED;
     int actualVersion = getBuilderCumulativeVersion(file);
-    return actualVersion == indexedVersion;
+    return actualVersion == indexedVersion ? FileIndexingState.UP_TO_DATE : FileIndexingState.OUT_DATED;
   }
 
   private int getBuilderCumulativeVersion(@NotNull VirtualFile file) {

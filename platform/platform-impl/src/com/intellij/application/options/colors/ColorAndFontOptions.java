@@ -834,7 +834,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
         fallbackColor = scheme.getColor(fallbackKey);
         myBaseAttributeDescriptor = ColorSettingsPages.getInstance().getColorDescriptor(fallbackKey);
         if (myBaseAttributeDescriptor == null) {
-          myBaseAttributeDescriptor = Pair.create(null, new ColorDescriptor(fallbackKey.getExternalName(), fallbackKey, myKind));
+          @NlsSafe String fallbackKeyExternalName = fallbackKey.getExternalName();
+          myBaseAttributeDescriptor = Pair.create(null, new ColorDescriptor(fallbackKeyExternalName, fallbackKey, myKind));
         }
         myFallbackAttributes = new TextAttributes(myKind == ColorDescriptor.Kind.FOREGROUND ? fallbackColor : null,
                                                   myKind == ColorDescriptor.Kind.BACKGROUND ? fallbackColor : null,

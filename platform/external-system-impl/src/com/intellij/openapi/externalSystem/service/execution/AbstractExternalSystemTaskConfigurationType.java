@@ -16,9 +16,11 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DeprecatedMethodException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -119,29 +121,29 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
   }
 
   @NotNull
-  public static String generateName(@NotNull Project project, @NotNull ExternalSystemTaskExecutionSettings settings) {
+  public static @NlsActions.ActionText String generateName(@NotNull Project project, @NotNull ExternalSystemTaskExecutionSettings settings) {
     return generateName(
       project, settings.getExternalSystemId(), settings.getExternalProjectPath(), settings.getTaskNames(), settings.getExecutionName()
     );
   }
 
   @NotNull
-  public static String generateName(@NotNull Project project,
-                                    @NotNull ProjectSystemId externalSystemId,
-                                    @Nullable String externalProjectPath,
-                                    @NotNull List<String> taskNames,
-                                    @Nullable String executionName) {
+  public static @NlsActions.ActionText String generateName(@NotNull Project project,
+                                                           @NotNull ProjectSystemId externalSystemId,
+                                                           @Nullable String externalProjectPath,
+                                                           @NotNull List<String> taskNames,
+                                                           @Nullable @Nls String executionName) {
     return generateName(project, externalSystemId, externalProjectPath, taskNames, executionName, " [", "]");
   }
 
   @NotNull
-  public static String generateName(@NotNull Project project,
-                                    @NotNull ProjectSystemId externalSystemId,
-                                    @Nullable String externalProjectPath,
-                                    @NotNull List<String> taskNames,
-                                    @Nullable String executionName,
-                                    @NotNull String tasksPrefix,
-                                    @NotNull String tasksPostfix) {
+  public static @NlsActions.ActionText String generateName(@NotNull Project project,
+                                                           @NotNull ProjectSystemId externalSystemId,
+                                                           @Nullable String externalProjectPath,
+                                                           @NotNull List<String> taskNames,
+                                                           @Nullable @Nls String executionName,
+                                                           @NotNull String tasksPrefix,
+                                                           @NotNull String tasksPostfix) {
     if (!StringUtil.isEmpty(executionName)) {
       return executionName;
     }
@@ -154,7 +156,7 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
       }
     }
 
-    StringBuilder buffer = new StringBuilder();
+    @Nls StringBuilder buffer = new StringBuilder();
     final String projectName;
     if (rootProjectPath == null) {
       projectName = null;

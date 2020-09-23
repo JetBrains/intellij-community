@@ -24,7 +24,7 @@ public final class ProjectSystemId implements Serializable {
 
   public static final @NotNull ProjectSystemId IDE = new ProjectSystemId("IDE");
 
-  private final @NotNull String id;
+  private final @NotNull @NonNls String id;
   private final @NotNull @Nls String readableName;
 
   public ProjectSystemId(@NotNull String id) {

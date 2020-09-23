@@ -166,7 +166,7 @@ static void PrintRemapForSubstDrives(PrintBuffer *buffer) {
 
 static void PrintChangeInfo(const char *rootPath, FILE_NOTIFY_INFORMATION *info) {
     const char *event;
-    if (info->Action == FILE_ACTION_ADDED || info->Action == FILE_ACTION_RENAMED_OLD_NAME) {
+    if (info->Action == FILE_ACTION_ADDED || info->Action == FILE_ACTION_RENAMED_NEW_NAME) {
         event = "CREATE";
     } else if (info->Action == FILE_ACTION_REMOVED || info->Action == FILE_ACTION_RENAMED_OLD_NAME) {
         event = "DELETE";
@@ -251,13 +251,15 @@ static DWORD WINAPI WatcherThread(void *param) {
                 PrintEverythingChangedUnderRoot(rootPath);
             } else {
                 FILE_NOTIFY_INFORMATION *info = (FILE_NOTIFY_INFORMATION *)buffer;
+                bool hasNext = false;
                 do {
                     PrintChangeInfo(rootPath, info);
+                    hasNext = (info->NextEntryOffset != 0);
                     info = (FILE_NOTIFY_INFORMATION *)((char *)info + info->NextEntryOffset);
 #ifdef __PRINT_STATS
                     nEvents++;
 #endif
-                } while (info->NextEntryOffset != 0);
+                } while (hasNext);
             }
 
 #ifdef __PRINT_STATS

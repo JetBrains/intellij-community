@@ -2,6 +2,7 @@
 package com.intellij.util
 
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.reference.SoftReference
 import com.intellij.util.io.outputStream
@@ -57,7 +58,7 @@ fun loadElement(path: Path): Element = JDOMUtil.load(path)
 
 fun Element?.isEmpty() = this == null || JDOMUtil.isEmpty(this)
 
-fun Element.getOrCreate(name: String): Element {
+fun Element.getOrCreate(@NonNls name: String): Element {
   var element = getChild(name)
   if (element == null) {
     element = Element(name)

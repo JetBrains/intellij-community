@@ -15,10 +15,7 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.GraphicsConfig;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.NlsActions;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
@@ -514,7 +511,7 @@ public final class ActionsTree {
       final boolean showIcons = UISettings.getInstance().getShowIconsInMenus();
       Icon icon = null;
       String text;
-      String actionId = null;
+      @NlsSafe String actionId = null;
       boolean bound = false;
       setToolTipText(null);
 
@@ -607,13 +604,13 @@ public final class ActionsTree {
           Color background = UIUtil.getTreeBackground(selected, true);
           SearchUtil.appendFragments(myFilter, text, SimpleTextAttributes.STYLE_PLAIN, foreground, background, this);
           if (actionId != null && UISettings.getInstance().getShowInplaceCommentsInternal()) {
-            String pluginName = myPluginNames.get(actionId);
+            @NlsSafe String pluginName = myPluginNames.get(actionId);
             if (pluginName != null) {
               Group parentGroup = (Group)((DefaultMutableTreeNode)node.getParent()).getUserObject();
               if (pluginName.equals(parentGroup.getName())) pluginName = null;
             }
             append("   ");
-            append(pluginName != null ? actionId +" (" + pluginName + ")" : actionId, SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES);
+            append(pluginName != null ? actionId + " (" + pluginName + ")" : actionId, SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES);
           }
         }
       }

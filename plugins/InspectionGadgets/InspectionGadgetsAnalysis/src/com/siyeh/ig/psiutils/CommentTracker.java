@@ -289,7 +289,7 @@ public final class CommentTracker {
    * @param text    replacement text
    * @return the element which was actually inserted in the tree
    */
-  public @NotNull PsiElement replace(@NotNull PsiElement element, @NotNull String text) {
+  public @NotNull PsiElement replace(@NotNull PsiElement element, @NotNull @NlsSafe String text) {
     PsiElement replacement = createElement(element, text);
     return replace(element, replacement);
   }

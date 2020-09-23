@@ -3,10 +3,11 @@ package com.intellij.space.vcs.review
 import circlet.platform.client.KCircletClient
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.project.Project
+import com.intellij.space.vcs.SpaceProjectInfo
 import com.intellij.space.vcs.SpaceRepoInfo
 import com.intellij.space.vcs.review.details.SpaceReviewDetails
-import com.intellij.space.vcs.review.list.SpaceReviewListFiltersPanel
 import com.intellij.space.vcs.review.list.SpaceReviewListFactory
+import com.intellij.space.vcs.review.list.SpaceReviewListFiltersPanel
 import com.intellij.space.vcs.review.list.SpaceReviewsListVm
 import com.intellij.ui.components.panels.Wrapper
 import libraries.coroutines.extra.Lifetime
@@ -16,6 +17,7 @@ import javax.swing.JPanel
 
 internal class SpaceReviewComponent(project: Project,
                                     lifetime: Lifetime,
+                                    spaceProjectInfo: SpaceProjectInfo,
                                     repoInfo: Set<SpaceRepoInfo>,
                                     client: KCircletClient,
                                     listVm: SpaceReviewsListVm,
@@ -25,6 +27,7 @@ internal class SpaceReviewComponent(project: Project,
     project,
     lifetime,
     client,
+    spaceProjectInfo,
     repoInfo,
     selectedReviewVm.selectedReview
   )

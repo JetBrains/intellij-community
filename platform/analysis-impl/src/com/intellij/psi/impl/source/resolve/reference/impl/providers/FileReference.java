@@ -32,6 +32,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IndexingBundle;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -212,7 +213,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
         else {
           processVariants(context, new PsiFileSystemItemProcessor() {
             @Override
-            public boolean acceptItem(String name, boolean isDirectory) {
+            public boolean acceptItem(@NotNull String name, boolean isDirectory) {
               return caseSensitive ? decoded.equals(name) : decoded.compareToIgnoreCase(name) == 0;
             }
 
@@ -543,7 +544,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
 
   @NotNull
   @Override
-  public String getUnresolvedMessagePattern() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) String getUnresolvedMessagePattern() {
     return AnalysisBundle.message("error.cannot.resolve.file.or.dir",
                                   IndexingBundle.message(isLast() ? "terms.file" : "terms.directory"),
                                   StringUtil.escapePattern(decode(getCanonicalText())));

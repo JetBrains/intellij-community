@@ -5,6 +5,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.CatchingConsumer;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -152,8 +153,7 @@ public abstract class PackageManagementService {
    * @return identifier of this service for reported usage data (sent for JetBrains implementations only).
    *         Return null to avoid reporting any usage data.
    */
-  @Nullable
-  public String getID() {
+  public @Nullable @NonNls String getID() {
     return null;
   }
 

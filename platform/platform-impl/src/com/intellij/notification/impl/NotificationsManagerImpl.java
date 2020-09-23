@@ -7,6 +7,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.FrameStateListener;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter;
@@ -47,6 +48,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -780,7 +782,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     for (AnAction action : actions) {
       Presentation presentation = action.getTemplatePresentation();
       actionPanel.addActionLink(
-        new LinkLabel<>(presentation.getText(), presentation.getIcon(), new LinkListener<AnAction>() {
+        new LinkLabel<>(presentation.getText(), presentation.getIcon(), new LinkListener<>() {
           @Override
           public void linkSelected(LinkLabel<AnAction> aSource, AnAction action) {
             NotificationCollector.getInstance()
@@ -959,13 +961,17 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   }
 
   private static void createMergeAction(@NotNull BalloonLayoutData layoutData, @NotNull JPanel panel) {
-    StringBuilder title = new StringBuilder().append(layoutData.mergeData.count).append(" more");
+    @Nls StringBuilder title = new StringBuilder().
+      append(layoutData.mergeData.count).
+      append(" ").
+      append(IdeBundle.message("notification.manager.merge.more"));
+
     String shortTitle = NotificationParentGroup.getShortTitle(layoutData.groupId);
     if (shortTitle != null) {
-      title.append(" from ").append(shortTitle);
+      title.append(" ").append(IdeBundle.message("notification.manager.merge.from")).append(" ").append(shortTitle);
     }
 
-    LinkLabel<BalloonLayoutData> action = new LinkLabel<BalloonLayoutData>(
+    LinkLabel<BalloonLayoutData> action = new LinkLabel<>(
       title.toString(), null,
       new LinkListener<BalloonLayoutData>() {
         @Override
@@ -1022,11 +1028,13 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   }
 
   public static int calculateContentHeight(int lines) {
+    String word = IdeBundle.message("notification.manager.content.height.word");
+    String lineBreak = IdeBundle.message("notification.manager.content.height.linebreak");
+    String content = word + StringUtil.repeat(lineBreak + word, lines - 1);
+
     JEditorPane text = new JEditorPane();
     text.setEditorKit(UIUtil.getHTMLEditorKit());
-    text
-      .setText(NotificationsUtil.buildHtml(null, null, "Content" + StringUtil.repeat("<br>\nContent", lines - 1), null, null, null,
-                                           NotificationsUtil.getFontStyle()));
+    text.setText(NotificationsUtil.buildHtml(null, null, content, null, null, null, NotificationsUtil.getFontStyle()));
     text.setEditable(false);
     text.setOpaque(false);
     text.setBorder(null);

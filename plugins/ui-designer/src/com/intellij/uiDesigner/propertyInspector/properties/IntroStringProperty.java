@@ -14,7 +14,6 @@ import com.intellij.uiDesigner.propertyInspector.editors.string.StringEditor;
 import com.intellij.uiDesigner.propertyInspector.renderers.StringRenderer;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
-import com.intellij.uiDesigner.snapShooter.SnapshotContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -275,17 +274,5 @@ public final class IntroStringProperty extends IntrospectedProperty<StringDescri
                                  UIFormXmlConstants.ATTRIBUTE_VALUE,
                                  UIFormXmlConstants.ATTRIBUTE_RESOURCE_BUNDLE,
                                  UIFormXmlConstants.ATTRIBUTE_KEY);
-  }
-
-  @Override public void importSnapshotValue(final SnapshotContext context, final JComponent component, final RadComponent radComponent) {
-    try {
-      Object value = myReadMethod.invoke(component, EMPTY_OBJECT_ARRAY);
-      if (value != null) {
-        setValue(radComponent, stringDescriptorFromValue(null, component));
-      }
-    }
-    catch (Exception e) {
-      // ignore
-    }
   }
 }

@@ -8,8 +8,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.function.Supplier;
 
-public class ScalableIconWrapperWithToolTip extends IconWrapperWithToolTip implements ScalableIcon {
-  public ScalableIconWrapperWithToolTip(@NotNull ScalableIcon icon, @NotNull Supplier<@NlsContexts.Tooltip String> toolTip) {
+final class ScalableIconWrapperWithToolTip extends IconWrapperWithToolTip implements ScalableIcon {
+  ScalableIconWrapperWithToolTip(@SuppressWarnings("TypeMayBeWeakened") @NotNull ScalableIcon icon, @NotNull Supplier<@NlsContexts.Tooltip String> toolTip) {
     super(icon, toolTip);
   }
 

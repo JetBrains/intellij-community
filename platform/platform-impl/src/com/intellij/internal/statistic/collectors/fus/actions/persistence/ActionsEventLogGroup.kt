@@ -36,7 +36,7 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
     val ADDITIONAL = EventFields.createAdditionalDataField(GROUP.id, ACTION_INVOKED_EVENT_ID)
 
     @JvmField
-    val ACTION_INVOKED = registerActionInvokedEvent(GROUP, ACTION_INVOKED_EVENT_ID, ADDITIONAL)
+    val ACTION_INVOKED = registerActionInvokedEvent(GROUP, ACTION_INVOKED_EVENT_ID, ADDITIONAL, EventFields.Language)
 
     @JvmStatic
     fun registerActionInvokedEvent(group: EventLogGroup, eventId: String, vararg extraFields: EventField<*>): VarargEventId {

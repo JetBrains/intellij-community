@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.ui
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.layout.*
@@ -15,7 +16,7 @@ import javax.swing.JTextArea
 class GithubCreateGistDialog(project: Project,
                              accounts: Set<GithubAccount>,
                              defaultAccount: GithubAccount?,
-                             fileName: String?,
+                             @NlsSafe fileName: String?,
                              secret: Boolean,
                              openInBrowser: Boolean,
                              copyLink: Boolean) : DialogWrapper(project, true) {

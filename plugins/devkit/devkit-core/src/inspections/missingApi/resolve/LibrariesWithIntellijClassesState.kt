@@ -71,6 +71,7 @@ private fun getMavenCoordinatesOfProduct(product: IntelliJPlatformProduct): Pair
   IntelliJPlatformProduct.PHPSTORM,
   IntelliJPlatformProduct.WEBSTORM,
   IntelliJPlatformProduct.APPCODE,
+  IntelliJPlatformProduct.MOBILE_IDE,
   IntelliJPlatformProduct.DBE,
   IntelliJPlatformProduct.GOIDE,
   IntelliJPlatformProduct.ANDROID_STUDIO,

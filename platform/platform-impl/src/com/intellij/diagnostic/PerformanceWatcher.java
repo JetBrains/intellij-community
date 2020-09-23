@@ -5,22 +5,29 @@ import com.intellij.application.options.RegistryManager;
 import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
@@ -174,8 +181,20 @@ public final class PerformanceWatcher implements Disposable {
               String content = FileUtil.loadFile(file);
               Attachment attachment = new Attachment("crash.txt", content);
               attachment.setIncluded(true);
+              Attachment[] attachments = new Attachment[]{attachment};
+
+              // look for extended crash logs
+              if (SystemInfo.isMac) {
+                File extraLog = new File("jbr_err_pid" + pid + ".log");
+                if (extraLog.isFile() && extraLog.lastModified() > appInfoFile.lastModified()) {
+                  Attachment extraAttachment = new Attachment("jbr_err.txt", FileUtil.loadFile(extraLog));
+                  extraAttachment.setIncluded(true);
+                  attachments = ArrayUtil.append(attachments, extraAttachment);
+                }
+              }
+
               String message = StringUtil.substringBefore(content, "---------------  P R O C E S S  ---------------");
-              IdeaLoggingEvent event = LogMessage.createEvent(new JBRCrash(), message, attachment);
+              IdeaLoggingEvent event = LogMessage.createEvent(new JBRCrash(), message, attachments);
               IdeaFreezeReporter.setAppInfo(event, FileUtil.loadFile(appInfoFile));
               IdeaFreezeReporter.report(event);
               break;
@@ -298,9 +317,18 @@ public final class PerformanceWatcher implements Disposable {
 
   private void notifyJitDisabled() {
     if (myJitProblemReported.compareAndSet(false, true)) {
-      NOTIFICATION_GROUP.createNotification(
-        IdeBundle.message("notification.content.jit.compiler.disabled"),
-        MessageType.ERROR).notify(null);
+      ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+      String action = IdeBundle.message(app.isRestartCapable() ? "ide.restart.action" : "ide.shutdown.action");
+      Notification notification = NOTIFICATION_GROUP.createNotification(
+        IdeBundle.message("notification.content.jit.compiler.disabled"), MessageType.ERROR)
+        .addAction(new NotificationAction(action) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+          notification.expire();
+          app.restart(true);
+        }
+      });
+      notification.notify(null);
     }
   }
 

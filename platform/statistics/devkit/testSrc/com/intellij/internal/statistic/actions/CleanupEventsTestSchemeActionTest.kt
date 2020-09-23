@@ -2,8 +2,8 @@
 package com.intellij.internal.statistic.actions
 
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
-import com.intellij.internal.statistic.eventLog.whitelist.LocalWhitelistGroup
-import com.intellij.internal.statistic.eventLog.whitelist.WhitelistTestGroupStorage
+import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule
+import com.intellij.internal.statistic.eventLog.validator.storage.ValidationTestRulesPersistedStorage
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
@@ -20,13 +20,13 @@ class CleanupEventsTestSchemeActionTest : BasePlatformTestCase() {
     val recorderId = "FUS"
 
     SensitiveDataValidator.getInstance(recorderId)
-    WhitelistTestGroupStorage.getTestStorage(recorderId)!!.addTestGroup(LocalWhitelistGroup("groupId", false))
+    ValidationTestRulesPersistedStorage.getTestStorage(recorderId)!!.addTestGroup(GroupValidationTestRule("groupId", false))
     val dataContext = getProjectContext(myFixture.project)
     val e = AnActionEvent(null, dataContext, "test", Presentation(), ActionManager.getInstance(), 0)
     CleanupEventsTestSchemeAction(recorderId).actionPerformed(e)
 
     TestCase.assertNull(
-      WhitelistTestGroupStorage.getTestStorage(recorderId)!!.getGroupRules(groupId)
+      ValidationTestRulesPersistedStorage.getTestStorage(recorderId)!!.getGroupRules(groupId)
     )
   }
 }

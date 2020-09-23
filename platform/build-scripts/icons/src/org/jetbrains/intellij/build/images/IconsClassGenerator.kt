@@ -3,19 +3,25 @@ package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.svg.SvgCacheManager
 import com.intellij.util.LineSeparator
+import com.intellij.util.SVGLoader
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.diff.Diff
-import com.intellij.util.io.exists
+import net.jpountz.xxhash.XXHashFactory
 import org.jetbrains.jps.model.JpsSimpleElement
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
+import org.xml.sax.InputSource
+import java.awt.image.BufferedImage
 import java.io.File
 import java.nio.file.*
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
+import javax.imageio.ImageIO
+import kotlin.collections.HashMap
 
 data class ModifiedClass(val module: JpsModule, val file: Path, val result: CharSequence)
 
@@ -25,7 +31,9 @@ internal data class IconsClassInfo(val customLoad: Boolean,
                                    val outFile: Path,
                                    val images: List<ImagePaths>)
 
-internal open class IconsClassGenerator(private val projectHome: File, val modules: List<JpsModule>, private val writeChangesToDisk: Boolean = true) {
+internal open class IconsClassGenerator(private val projectHome: File,
+                                        val modules: List<JpsModule>,
+                                        private val writeChangesToDisk: Boolean = true) {
   private val util: JpsModule by lazy {
     modules.find { it.name == "intellij.platform.util" } ?: error("Can't load module 'util'")
   }
@@ -36,7 +44,7 @@ internal open class IconsClassGenerator(private val projectHome: File, val modul
   private val modifiedClasses = ContainerUtil.createConcurrentList<ModifiedClass>()
   private val obsoleteClasses = ContainerUtil.createConcurrentList<Path>()
 
-  internal open fun getIconsClassInfo(module: JpsModule) : List<IconsClassInfo> {
+  internal open fun getIconsClassInfo(module: JpsModule): List<IconsClassInfo> {
     val packageName: String
     val className: String
     val outFile: Path
@@ -100,7 +108,7 @@ internal open class IconsClassGenerator(private val projectHome: File, val modul
         outFile = targetRoot.resolve("$className.java")
       }
     }
-    return listOf(IconsClassInfo(true, packageName, className, outFile, images(module, className)))
+    return listOf(IconsClassInfo(true, packageName, className, outFile, images(module)))
   }
 
   fun processModule(module: JpsModule) {
@@ -112,7 +120,7 @@ internal open class IconsClassGenerator(private val projectHome: File, val modul
       catch (ignored: NoSuchFileException) {
         null
       }
-      val newText = writeClass(getCopyrightComment(oldText), iconsClassInfo)
+      val newText = writeClass(getCopyrightComment(oldText), iconsClassInfo, module.name)
       if (newText.isNullOrEmpty()) {
         if (Files.exists(outFile)) {
           obsoleteClasses.add(outFile)
@@ -155,15 +163,18 @@ internal open class IconsClassGenerator(private val projectHome: File, val modul
 
   fun printStats() {
     println()
-    println("Generated classes: ${processedClasses.get()}. Processed icons: ${processedIcons.get()}. Phantom icons: ${processedPhantom.get()}")
+    println(
+      "Generated classes: ${processedClasses.get()}. Processed icons: ${processedIcons.get()}. Phantom icons: ${processedPhantom.get()}")
     if (obsoleteClasses.isNotEmpty()) {
       println("\nObsolete classes:")
       println(obsoleteClasses.joinToString("\n"))
       println("\nObsolete class it is class for icons that cannot be found anymore. Possible reasons:")
-      println("1. Icons not located under resources root.\n   Solution - move icons to resources root or fix existing root type (must be \"resources\")")
+      println(
+        "1. Icons not located under resources root.\n   Solution - move icons to resources root or fix existing root type (must be \"resources\")")
       println("2. Icons were removed but not class.\n   Solution - remove class.")
-      println("3. Icons located under resources root named \"compatibilityResources\". \"compatibilityResources\" for icons that not used externally as icon class fields, " +
-              "but maybe referenced directly by path.\n   Solution - remove class or move icons to another resources root")
+      println(
+        "3. Icons located under resources root named \"compatibilityResources\". \"compatibilityResources\" for icons that not used externally as icon class fields, " +
+        "but maybe referenced directly by path.\n   Solution - remove class or move icons to another resources root")
     }
   }
 
@@ -195,14 +206,14 @@ internal open class IconsClassGenerator(private val projectHome: File, val modul
     return StringUtil.detectSeparators(text) ?: LineSeparator.LF
   }
 
-  private fun images(module: JpsModule, className: String) : List<ImagePaths> {
+  private fun images(module: JpsModule): List<ImagePaths> {
     val imageCollector = ImageCollector(projectHome.toPath(), iconsOnly = true)
     val images = imageCollector.collect(module, includePhantom = true)
     imageCollector.printUsedIconRobots()
     return images
   }
 
-  private fun writeClass(copyrightComment: String, info: IconsClassInfo): CharSequence? {
+  private fun writeClass(copyrightComment: String, info: IconsClassInfo, moduleName: String): CharSequence? {
     val images = info.images
     if (images.isEmpty()) return null
     val answer = StringBuilder()
@@ -232,8 +243,8 @@ internal open class IconsClassGenerator(private val projectHome: File, val modul
     }
     answer.append(" class ").append(info.className).append(" {\n")
     if (info.customLoad) {
-      append(answer, "private static @NotNull Icon load(@NotNull String path) {", 1)
-      append(answer, "return $iconLoaderCode.getIcon(path, ${info.className}.class);", 2)
+      append(answer, "private static @NotNull Icon load(@NotNull String path, long cacheKey) {", 1)
+      append(answer, "return $iconLoaderCode.loadRasterizedIcon(path, ${info.className}.class, cacheKey);", 2)
       append(answer, "}", 1)
       append(answer, "", 0)
 
@@ -247,30 +258,32 @@ internal open class IconsClassGenerator(private val projectHome: File, val modul
     }
 
     val inners = StringBuilder()
-    processIcons(images, inners, info.customLoad, 0)
-    if (inners.isEmpty()) return null
+    processIcons(images, inners, info.customLoad, 0, moduleName.toByteArray())
+    if (inners.isEmpty()) {
+      return null
+    }
 
     answer.append(inners)
     append(answer, "}", 0)
     return answer
   }
 
-  private fun processIcons(images: List<ImagePaths>, answer: StringBuilder, customLoad: Boolean, depth: Int) {
+  private fun processIcons(images: List<ImagePaths>, answer: StringBuilder, customLoad: Boolean, depth: Int, keyGroupId: ByteArray) {
     val level = depth + 1
 
-    val (nodes, leafs) = images.partition { getImageId(it, depth).contains('/') }
+    val (nodes, leaves) = images.partition { getImageId(it, depth).contains('/') }
     val nodeMap = nodes.groupBy { getImageId(it, depth).substringBefore('/') }
-    val leafMap = ContainerUtil.newMapFromValues(leafs.iterator()) { getImageId(it, depth) }
+    val leafMap: MutableMap<String, ImagePaths> = HashMap(leaves.size)
+    for (leaf in leaves) {
+      leafMap.put(getImageId(leaf, depth), leaf)
+    }
 
     fun getWeight(key: String): Int {
-      val image = leafMap[key]
-      if (image == null) {
-        return 0
-      }
+      val image = leafMap.get(key) ?: return 0
       return if (image.deprecated) 1 else 0
     }
 
-    val sortedKeys = (nodeMap.keys + leafMap.keys)
+    val sortedKeys = (nodeMap.keys.asSequence().plus(leafMap.keys.asSequence()))
       .sortedWith(NAME_COMPARATOR)
       .sortedWith(kotlin.Comparator(function = { o1, o2 ->
         getWeight(o1) - getWeight(o2)
@@ -281,10 +294,12 @@ internal open class IconsClassGenerator(private val projectHome: File, val modul
       val image = leafMap[key]
       if (group != null) {
         val inners = StringBuilder()
-        processIcons(group, inners, customLoad, depth + 1)
+        val className = className(key)
+
+        processIcons(group, inners, customLoad, depth + 1, keyGroupId)
 
         if (inners.isNotEmpty()) {
-          appendInnerClass(className(key), answer, inners.toString(), level)
+          appendInnerClass(className, answer, inners.toString(), level)
         }
       }
 
@@ -296,17 +311,15 @@ internal open class IconsClassGenerator(private val projectHome: File, val modul
 
   internal open fun appendInnerClass(className: String,
                                      answer: StringBuilder,
-                                     body: String, level: Int) {
-      append(answer, "", level)
-      append(answer, "public final static class $className {", level)
-      append(answer, body, 0)
-      append(answer, "}", level)
+                                     body: String,
+                                     level: Int) {
+    append(answer, "", level)
+    append(answer, "public final static class $className {", level)
+    append(answer, body, 0)
+    append(answer, "}", level)
   }
 
-  private fun appendImage(image: ImagePaths,
-                          answer: StringBuilder,
-                          level: Int,
-                          customLoad: Boolean) {
+  private fun appendImage(image: ImagePaths, answer: StringBuilder, level: Int, customLoad: Boolean) {
     val file = image.file ?: return
     if (!image.phantom && !isIcon(file)) {
       return
@@ -369,15 +382,35 @@ internal open class IconsClassGenerator(private val projectHome: File, val modul
       }
     }
 
-    val size = if (imageFile.exists()) imageSize(imageFile) else null
-    val javaDoc = when {
-      size != null -> "/** ${size.width}x${size.height} */ "
-      !image.phantom -> error("Can't get icon size: $imageFile")
-      else -> ""
+    var javaDoc: String
+    var key: Long
+    try {
+      val loadedImage: BufferedImage
+      if (file.toString().endsWith(".svg")) {
+        // don't mask any exception for svg file
+        val data = loadAndNormalizeSvgFile(imageFile)
+        loadedImage = SVGLoader.loadWithoutCache(null, InputSource(data.reader()), 1.0, null)
+        key = getImageKey(data.toByteArray())
+      }
+      else {
+        loadedImage = Files.newInputStream(file).buffered().use { ImageIO.read(it) }
+        key = 0
+      }
+
+      javaDoc = "/** ${loadedImage.getWidth()}x${loadedImage.getHeight()} */ "
     }
+    catch (e: NoSuchFileException) {
+      if (!image.phantom) {
+        throw e
+      }
+
+      javaDoc = ""
+      key = 0
+    }
+
     val method = if (customLoad) "load" else "$iconLoaderCode.getIcon"
     val relativePath = rootPrefix + FileUtilRt.toSystemIndependentName(sourceRootFile.relativize(imageFile).toString())
-    append(answer, "${javaDoc}public static final @NotNull Icon $iconName = $method(\"$relativePath\");", level)
+    append(answer, "${javaDoc}public static final @NotNull Icon $iconName = $method(\"$relativePath\", ${key}L);", level)
   }
 
   protected fun append(answer: StringBuilder, text: String, level: Int) {
@@ -466,3 +499,39 @@ internal open class IconsClassGenerator(private val projectHome: File, val modul
 }
 
 private const val iconLoaderCode = "IconManager.getInstance()"
+private val hashFactory: XXHashFactory = XXHashFactory.fastestJavaInstance()
+
+internal fun getImageKey(fileData: ByteArray): Long {
+  return hashFactory.hash64().hash(fileData, 0, fileData.size, SvgCacheManager.HASH_SEED)
+}
+
+// remove line separators to unify line separators (\n vs \r\n), trim lines
+// normalization is required because cache key is based on content
+internal fun loadAndNormalizeSvgFile(svgFile: Path): String {
+  val builder = StringBuilder()
+  Files.lines(svgFile).use { lines ->
+    for (line in lines) {
+      for (start in line.indices) {
+        if (line[start].isWhitespace()) {
+          continue
+        }
+
+        var end = line.length
+        for (j in (line.length - 1) downTo (start + 1)) {
+          if (!line[j].isWhitespace()) {
+            end = j + 1
+            break
+          }
+        }
+
+        builder.append(line, start, end)
+        // if tag is not closed, space must be added to ensure that code on next line is separated from previous line of code
+        if (builder[end - 1] != '>') {
+          builder.append(' ')
+        }
+        break
+      }
+    }
+  }
+  return builder.toString()
+}

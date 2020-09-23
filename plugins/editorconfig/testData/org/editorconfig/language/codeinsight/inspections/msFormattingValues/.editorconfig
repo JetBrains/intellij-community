@@ -1,0 +1,4 @@
+[*.cs]
+csharp_space_before_dot=false
+csharp_space_around_binary_operators=<error>false</error>
+csharp_space_around_binary_operators=before_and_after

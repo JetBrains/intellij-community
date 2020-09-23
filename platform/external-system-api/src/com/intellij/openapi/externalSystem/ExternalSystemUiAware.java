@@ -17,6 +17,7 @@ package com.intellij.openapi.externalSystem;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,10 +29,10 @@ import javax.swing.*;
 public interface ExternalSystemUiAware {
 
   @NotNull
-  String getProjectRepresentationName(@NotNull String targetProjectPath, @Nullable String rootProjectPath);
+  @Nls String getProjectRepresentationName(@NotNull String targetProjectPath, @Nullable String rootProjectPath);
 
   @NotNull
-  default String getProjectRepresentationName(@NotNull Project project, @NotNull String targetProjectPath, @Nullable String rootProjectPath){
+  default @Nls String getProjectRepresentationName(@NotNull Project project, @NotNull String targetProjectPath, @Nullable String rootProjectPath){
     return getProjectRepresentationName(targetProjectPath, rootProjectPath);
   }
 

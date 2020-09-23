@@ -29,11 +29,9 @@ public class ProjectDependencyNodeImpl extends AbstractDependencyNode implements
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    if (!super.equals(o)) return false;
-    ProjectDependencyNodeImpl node = (ProjectDependencyNodeImpl)o;
+  public boolean match(AbstractDependencyNode dependencyNode) {
+    if (dependencyNode == null || getClass() != dependencyNode.getClass()) return false;
+    ProjectDependencyNodeImpl node = (ProjectDependencyNodeImpl)dependencyNode;
     if (!projectName.equals(node.projectName)) return false;
     return true;
   }
