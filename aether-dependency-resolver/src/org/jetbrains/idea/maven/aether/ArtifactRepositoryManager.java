@@ -57,10 +57,10 @@ public final class ArtifactRepositoryManager {
   private final RepositorySystemSessionFactory sessionFactory;
 
   private static final RemoteRepository MAVEN_CENTRAL_REPOSITORY = createRemoteRepository(
-    "central", "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/"
+    "central", "https://repo1.maven.org/maven2/"
   );
   private static final RemoteRepository JBOSS_COMMUNITY_REPOSITORY = createRemoteRepository(
-    "jboss.community", "https://cache-redirector.jetbrains.com/repository.jboss.org/nexus/content/repositories/public/"
+    "jboss.community", "https://repository.jboss.org/nexus/content/repositories/public/"
   );
 
   private static final RepositorySystem ourSystem;
