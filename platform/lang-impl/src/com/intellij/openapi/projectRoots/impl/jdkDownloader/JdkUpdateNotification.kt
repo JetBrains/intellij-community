@@ -1,0 +1,190 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.openapi.projectRoots.impl.jdkDownloader
+
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectBundle
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.SdkType
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.util.io.systemIndependentPath
+import org.jetbrains.annotations.Nls
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
+
+private val LOG = logger<JdkUpdateNotification>()
+
+/**
+ * There are the following possibilities for a given JDK:
+ *  - we have no notification (this object must be tracked)
+ *  - we show update suggestion
+ *  - the JDK update is running
+ *  - a error notification is shown
+ *
+ *  This class keeps track of all such possibilities
+ *
+ *  The [whenComplete] callback is executed when we reach the final state, which is:
+ *    - the error notification is dismissed
+ *    - the update notification is dismissed (or rejected)
+ *    - the JDK update is completed
+ */
+internal class JdkUpdateNotification(val jdk: Sdk,
+                                     val actualItem: JdkItem,
+                                     val newItem: JdkItem,
+                                     val whenComplete: (JdkUpdateNotification) -> Unit
+) {
+  private val lock = ReentrantLock()
+
+  private var myIsTerminated = false
+  private var myIsUpdateRunning = false
+
+  /**
+   * Can be either suggestion or error notification
+   */
+  private var myPendingNotification : Notification? = null
+
+  private fun Notification.bindNextNotificationAndShow() {
+    bindNextNotification(this)
+    notify(null)
+  }
+
+  private fun bindNextNotification(notification: Notification) {
+    lock.withLock {
+      myPendingNotification?.expire()
+
+      notification.whenExpired {
+        lock.withLock {
+          if (myPendingNotification === notification) {
+            myPendingNotification = null
+          }
+        }
+      }
+
+      myPendingNotification = notification
+    }
+  }
+
+  /**
+   * The state-machine reached it's end
+   */
+  private fun reachTerminalState(): Unit = lock.withLock {
+    if (myIsTerminated) return
+    myIsTerminated = true
+    whenComplete(this)
+  }
+
+  private fun updateJdkAction(@Nls message: String) = object : NotificationAction(message) {
+    override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+      lock.withLock {
+        if (myIsUpdateRunning) return
+        myIsUpdateRunning = true
+      }
+      updateJdk(e.project, jdk, newItem)
+      notification.expire()
+    }
+  }
+
+  private fun rejectJdkAction() = object : NotificationAction(ProjectBundle.message("notification.link.jdk.update.skip")) {
+    override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+      service<JdkUpdaterState>().blockVersion(jdk, newItem)
+      notification.expire()
+      reachTerminalState()
+    }
+  }
+
+  fun showNotificationIfAbsent() : Unit = lock.withLock {
+    if (myPendingNotification != null || myIsUpdateRunning || myIsTerminated) return
+
+    val title = ProjectBundle.message("notification.title.jdk.update.found")
+    val message = ProjectBundle.message("notification.text.jdk.update.found",
+                                        jdk.name,
+                                        newItem.fullPresentationText,
+                                        actualItem.fullPresentationText)
+
+    NotificationGroupManager.getInstance().getNotificationGroup("JDK Update")
+      .createNotification(title, message, NotificationType.INFORMATION)
+      .setImportant(true)
+      .addAction(updateJdkAction(ProjectBundle.message("notification.link.jdk.update.apply")))
+      .addAction(rejectJdkAction())
+      .bindNextNotificationAndShow()
+  }
+
+  private fun showUpdateErrorNotification(feedItem: JdkItem) : Unit = lock.withLock {
+    NotificationGroupManager.getInstance().getNotificationGroup("JDK Update Error")
+      .createNotification(type = NotificationType.ERROR)
+      .setTitle(ProjectBundle.message("progress.title.updating.jdk.0.to.1", jdk.name, feedItem.fullPresentationText))
+      .setContent(ProjectBundle.message("progress.title.updating.jdk.failed", feedItem.fullPresentationText))
+      .addAction(updateJdkAction(ProjectBundle.message("notification.link.jdk.update.retry")))
+      .addAction(rejectJdkAction())
+      .bindNextNotificationAndShow()
+  }
+
+  private fun updateJdk(project: Project?, jdk: Sdk, feedItem: JdkItem) {
+    val title = ProjectBundle.message("progress.title.updating.jdk.0.to.1", jdk.name, feedItem.fullPresentationText)
+    ProgressManager.getInstance().run(
+      object : Task.Backgroundable(project, title, true, ALWAYS_BACKGROUND) {
+        override fun run(indicator: ProgressIndicator) {
+          val installer = JdkInstaller.getInstance()
+
+          val newJdkHome = try {
+            val newJdkHome =
+              //Optimization: try to check if a given JDK is already installed
+              installer.findLocallyInstalledJdk(feedItem) ?: run {
+                val prepare = installer.prepareJdkInstallation(feedItem, installer.defaultInstallDir(feedItem))
+                installer.installJdk(prepare, indicator, project)
+                prepare.javaHome
+              }
+
+            indicator.text = ProjectBundle.message("progress.text.updating.jdk.setting.up")
+
+            //make sure VFS sees the files and sets up the JDK correctly
+            VfsUtil.markDirtyAndRefresh(false, true, true, newJdkHome.toFile())
+
+            newJdkHome
+          }
+          catch (t: Throwable) {
+            if (t is ControlFlowException) throw t
+
+            LOG.warn("Failed to update $jdk to $feedItem. ${t.message}", t)
+            showUpdateErrorNotification(feedItem)
+            lock.withLock { myIsUpdateRunning = false }
+            return
+          }
+
+          invokeLater {
+            try {
+              runWriteAction {
+                jdk.sdkModificator.apply {
+                  removeAllRoots()
+                  homePath = newJdkHome.systemIndependentPath
+                  versionString = feedItem.versionString
+                }.commitChanges()
+
+                (jdk.sdkType as? SdkType)?.setupSdkPaths(jdk)
+                reachTerminalState()
+              }
+            }
+            catch (t: Throwable) {
+              if (t is ControlFlowException) throw t
+              LOG.warn("Failed to apply downloaded JDK update for $jdk from $feedItem at $newJdkHome. ${t.message}", t)
+              showUpdateErrorNotification(feedItem)
+              lock.withLock { myIsUpdateRunning = false }
+            }
+          }
+        }
+      }
+    )
+  }
+}
