@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -25,7 +24,7 @@ public class VcsShelveChangesSaver {
   private final Project project;
   private final @Nls String myStashMessage;
   private final ProgressIndicator myProgressIndicator;
-  @Nullable private Map<String, ShelvedChangeList> myShelvedLists; // LocalChangeList.id -> shelved changes
+  private final Map<String, ShelvedChangeList> myShelvedLists = new HashMap<>(); // LocalChangeList.id -> shelved changes
 
   public VcsShelveChangesSaver(@NotNull Project project,
                                @NotNull ProgressIndicator indicator,
@@ -35,9 +34,9 @@ public class VcsShelveChangesSaver {
     myStashMessage = stashMessage;
   }
 
-  @Nullable
+  @NotNull
   public List<ShelvedChangeList> getShelvedLists() {
-    return myShelvedLists != null ? new ArrayList<>(myShelvedLists.values()) : null;
+    return new ArrayList<>(myShelvedLists.values());
   }
 
   public void save(@NotNull Collection<? extends VirtualFile> rootsToSave) throws VcsException {
@@ -47,7 +46,6 @@ public class VcsShelveChangesSaver {
     myProgressIndicator.setText(VcsBundle.getString("vcs.shelving.changes"));
 
     Set<VirtualFile> rootsSet = new HashSet<>(rootsToSave);
-    Map<String, ShelvedChangeList> shelvedLists = new HashMap<>();
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     if (changeListManager.areChangeListsEnabled()) {
       for (LocalChangeList list : changeListManager.getChangeLists()) {
@@ -55,7 +53,7 @@ public class VcsShelveChangesSaver {
         if (!changes.isEmpty()) {
           String name = createSystemShelvedChangeListName(myStashMessage, list.getName());
           ShelvedChangeList shelved = VcsShelveUtils.shelveChanges(project, changes, name, false, true);
-          shelvedLists.put(list.getId(), shelved);
+          myShelvedLists.put(list.getId(), shelved);
         }
       }
     }
@@ -63,30 +61,27 @@ public class VcsShelveChangesSaver {
       Collection<Change> changes = filterChangesByRoots(changeListManager.getAllChanges(), rootsSet);
       if (!changes.isEmpty()) {
         ShelvedChangeList shelved = VcsShelveUtils.shelveChanges(project, changes, myStashMessage, false, true);
-        shelvedLists.put(null, shelved);
+        myShelvedLists.put(null, shelved);
       }
     }
 
-    myShelvedLists = shelvedLists;
     doRollback(rootsToSave);
 
     myProgressIndicator.setText(oldProgressTitle);
   }
 
   public void load() {
-    if (myShelvedLists != null) {
-      LOG.info("load ");
-      String oldProgressTitle = myProgressIndicator.getText();
-      myProgressIndicator.setText(VcsBundle.getString("vcs.unshelving.changes"));
-      for (Map.Entry<String, ShelvedChangeList> listEntry : myShelvedLists.entrySet()) {
-        VcsShelveUtils.doSystemUnshelve(project, listEntry.getValue(),
-                                        ChangeListManager.getInstance(project).getChangeList(listEntry.getKey()),
-                                        ShelveChangesManager.getInstance(project),
-                                        VcsBundle.getString("vcs.unshelving.conflict.left"),
-                                        VcsBundle.getString("vcs.unshelving.conflict.right"));
-      }
-      myProgressIndicator.setText(oldProgressTitle);
+    LOG.info("load");
+    String oldProgressTitle = myProgressIndicator.getText();
+    myProgressIndicator.setText(VcsBundle.getString("vcs.unshelving.changes"));
+    for (Map.Entry<String, ShelvedChangeList> listEntry : myShelvedLists.entrySet()) {
+      VcsShelveUtils.doSystemUnshelve(project, listEntry.getValue(),
+                                      ChangeListManager.getInstance(project).getChangeList(listEntry.getKey()),
+                                      ShelveChangesManager.getInstance(project),
+                                      VcsBundle.getString("vcs.unshelving.conflict.left"),
+                                      VcsBundle.getString("vcs.unshelving.conflict.right"));
     }
+    myProgressIndicator.setText(oldProgressTitle);
   }
 
   protected void doRollback(@NotNull Collection<? extends VirtualFile> rootsToSave) {

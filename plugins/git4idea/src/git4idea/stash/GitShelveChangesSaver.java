@@ -53,13 +53,13 @@ public final class GitShelveChangesSaver extends GitChangesSaver {
   @Override
   public boolean wereChangesSaved() {
     List<ShelvedChangeList> shelvedLists = myVcsShelveChangesSaver.getShelvedLists();
-    return shelvedLists != null && !shelvedLists.isEmpty();
+    return !shelvedLists.isEmpty();
   }
 
   @Override
   public void showSavedChanges() {
     List<ShelvedChangeList> shelvedLists = myVcsShelveChangesSaver.getShelvedLists();
-    if (shelvedLists != null && !shelvedLists.isEmpty()) {
+    if (!shelvedLists.isEmpty()) {
       Comparator<ShelvedChangeList> nameComparator = Comparator.comparing(it -> it.getDisplayName(), String.CASE_INSENSITIVE_ORDER);
       List<ShelvedChangeList> sorted = ContainerUtil.sorted(shelvedLists, nameComparator);
       ShelvedChangesViewManager.getInstance(myProject).activateView(sorted.get(0));

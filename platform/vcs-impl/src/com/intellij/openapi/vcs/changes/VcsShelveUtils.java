@@ -103,14 +103,9 @@ public final class VcsShelveUtils {
   }
 
   /**
-   * Shelve changes
-   *
-   *
    * @param project       the context project
-   * @param shelveManager the shelve manager
    * @param changes       the changes to process
    * @param description   the description of for the shelve
-   * @param rollback
    * @return created shelved change list or null in case failure
    */
   @Nullable
