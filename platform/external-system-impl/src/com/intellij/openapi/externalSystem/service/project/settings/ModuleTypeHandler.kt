@@ -22,9 +22,5 @@ class ModuleTypeHandler: ConfigurationHandler {
         modelsProvider.findIdeModule(module.name + ".$key")?.setModuleType(value)
       }
     }
-
-    (moduleTypes[""] as? String)?.let {
-      module.setModuleType(it)
-    }
   }
 }
