@@ -1,0 +1,27 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+syntax = "proto3";
+
+package elevation.rpc;
+
+option java_multiple_files = true;
+option java_package = "com.intellij.execution.process.elevation.rpc";
+option java_outer_classname = "ElevatorProto";
+
+service Elevator {
+  rpc Spawn (SpawnRequest) returns (SpawnReply) {}
+}
+
+message SpawnRequest {
+  CommandLine command_line = 1;
+}
+
+message SpawnReply {
+  string message = 1;
+  uint32 pid = 2;
+}
+
+message CommandLine {
+  string exe_path = 1;
+  repeated string arguments = 2;
+}
+
