@@ -12,6 +12,7 @@ import com.intellij.util.xml.ResolvingConverter;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection;
 
 abstract class IdeaPluginConverterBase extends ResolvingConverter<IdeaPlugin> {
 
@@ -37,8 +38,7 @@ abstract class IdeaPluginConverterBase extends ResolvingConverter<IdeaPlugin> {
     return new HtmlBuilder()
       .append(DevKitBundle.message("error.cannot.resolve.plugin", s))
       .nbsp()
-      .append(HtmlChunk.link("https://jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_dependencies.html",
-                             DevKitBundle.message("error.cannot.resolve.plugin.reference.link.title")))
+      .append(HtmlChunk.link(PluginXmlDomInspection.DEPENDENCIES_DOC_URL, DevKitBundle.message("error.cannot.resolve.plugin.reference.link.title")))
       .wrapWith(HtmlChunk.html()).toString();
   }
 }
