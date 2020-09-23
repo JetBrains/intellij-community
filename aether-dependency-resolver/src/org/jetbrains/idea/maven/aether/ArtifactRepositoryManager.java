@@ -54,7 +54,7 @@ public class ArtifactRepositoryManager {
   private static final VersionScheme ourVersioning = new GenericVersionScheme();
   private static final JreProxySelector ourProxySelector = new JreProxySelector();
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactRepositoryManager.class);
-  private final RepositorySystemSessionFactory sessionFactory;
+  private final RepositorySystemSessionFactory mySessionFactory;
 
   private static final RemoteRepository MAVEN_CENTRAL_REPOSITORY = createRemoteRepository(
     "central", "https://repo1.maven.org/maven2/"
@@ -97,7 +97,7 @@ public class ArtifactRepositoryManager {
 
   public ArtifactRepositoryManager(@NotNull File localRepositoryPath, List<RemoteRepository> remoteRepositories, @NotNull final ProgressConsumer progressConsumer, boolean offline) {
     myRemoteRepositories.addAll(remoteRepositories);
-    sessionFactory = new RepositorySystemSessionFactory(localRepositoryPath, progressConsumer, offline);
+    mySessionFactory = new RepositorySystemSessionFactory(localRepositoryPath, progressConsumer, offline);
   }
 
   private static class RepositorySystemSessionFactory {
@@ -154,11 +154,11 @@ public class ArtifactRepositoryManager {
       this.defaultSession = session;
     }
 
-    RepositorySystemSession session() {
-      return session(Collections.emptyList());
+    RepositorySystemSession getDefaultSession() {
+      return defaultSession;
     }
 
-    RepositorySystemSession session(@NotNull List<String> excludedDependencies) {
+    RepositorySystemSession createSession(@NotNull List<String> excludedDependencies) {
       if (excludedDependencies.isEmpty()) {
         return defaultSession;
       }
@@ -234,7 +234,7 @@ public class ArtifactRepositoryManager {
     Set<VersionConstraint> constraints = Collections.singleton(asVersionConstraint(versionConstraint));
     CollectRequest collectRequest = createCollectRequest(groupId, artifactId, constraints, EnumSet.of(ArtifactKind.ARTIFACT));
     ArtifactDependencyTreeBuilder builder = new ArtifactDependencyTreeBuilder();
-    DependencyNode root = ourSystem.collectDependencies(sessionFactory.session(), collectRequest).getRoot();
+    DependencyNode root = ourSystem.collectDependencies(mySessionFactory.getDefaultSession(), collectRequest).getRoot();
     if (root.getArtifact() == null && root.getChildren().size() == 1) {
       root = root.getChildren().get(0);
     }
@@ -261,7 +261,7 @@ public class ArtifactRepositoryManager {
         }
         RepositorySystemSession session;
         if (includeTransitiveDependencies) {
-          session = sessionFactory.session(excludedDependencies);
+          session = mySessionFactory.createSession(excludedDependencies);
           final CollectResult collectResult = ourSystem.collectDependencies(
             session, createCollectRequest(groupId, artifactId, constraints, EnumSet.of(kind))
           );
@@ -274,7 +274,7 @@ public class ArtifactRepositoryManager {
           requests = builder.getRequests();
         }
         else {
-          session = sessionFactory.session();
+          session = mySessionFactory.getDefaultSession();
           requests = new ArrayList<>();
           for (Artifact artifact : toArtifacts(groupId, artifactId, constraints, Collections.singleton(kind))) {
             if (ourVersioning.parseVersionConstraint(artifact.getVersion()).getRange() != null) {
@@ -381,7 +381,7 @@ public class ArtifactRepositoryManager {
   @NotNull
   public List<Version> getAvailableVersions(String groupId, String artifactId, String versionConstraint, final ArtifactKind artifactKind) throws Exception {
     final VersionRangeResult result = ourSystem.resolveVersionRange(
-      sessionFactory.session(), createVersionRangeRequest(groupId, artifactId, asVersionConstraint(versionConstraint), artifactKind)
+      mySessionFactory.getDefaultSession(), createVersionRangeRequest(groupId, artifactId, asVersionConstraint(versionConstraint), artifactKind)
     );
     return result.getVersions();
   }
