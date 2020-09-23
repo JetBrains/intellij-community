@@ -41,9 +41,9 @@ private val LOG = logger<JdkUpdateNotification>()
  *    - the JDK update is completed
  */
 internal class JdkUpdateNotification(val jdk: Sdk,
-                                     val actualItem: JdkItem,
+                                     private val actualItem: JdkItem,
                                      val newItem: JdkItem,
-                                     val whenComplete: (JdkUpdateNotification) -> Unit
+                                     private val whenComplete: (JdkUpdateNotification) -> Unit
 ) {
   private val lock = ReentrantLock()
 
@@ -134,7 +134,7 @@ internal class JdkUpdateNotification(val jdk: Sdk,
   private fun updateJdk(project: Project?, jdk: Sdk, feedItem: JdkItem) {
     val title = ProjectBundle.message("progress.title.updating.jdk.0.to.1", jdk.name, feedItem.fullPresentationText)
     ProgressManager.getInstance().run(
-      object : Task.Backgroundable(project, title, true, ALWAYS_BACKGROUND) {
+      object : Task.Backgroundable(null /*progress should be global*/, title, true, ALWAYS_BACKGROUND) {
         override fun run(indicator: ProgressIndicator) {
           val installer = JdkInstaller.getInstance()
 
@@ -155,7 +155,10 @@ internal class JdkUpdateNotification(val jdk: Sdk,
             newJdkHome
           }
           catch (t: Throwable) {
-            if (t is ControlFlowException) throw t
+            if (t is ControlFlowException) {
+              reachTerminalState()
+              throw t
+            }
 
             LOG.warn("Failed to update $jdk to $feedItem. ${t.message}", t)
             showUpdateErrorNotification(feedItem)
@@ -177,7 +180,11 @@ internal class JdkUpdateNotification(val jdk: Sdk,
               }
             }
             catch (t: Throwable) {
-              if (t is ControlFlowException) throw t
+              if (t is ControlFlowException) {
+                reachTerminalState()
+                throw t
+              }
+
               LOG.warn("Failed to apply downloaded JDK update for $jdk from $feedItem at $newJdkHome. ${t.message}", t)
               showUpdateErrorNotification(feedItem)
               lock.withLock { myIsUpdateRunning = false }
