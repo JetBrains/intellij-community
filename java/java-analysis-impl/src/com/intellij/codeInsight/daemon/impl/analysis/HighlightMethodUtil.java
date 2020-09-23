@@ -381,9 +381,7 @@ public final class HighlightMethodUtil {
 
     final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
     if (resolved instanceof PsiMethod && resolveResult.isValidResult()) {
-      PsiElement nameElement = referenceToMethod.getReferenceNameElement();
-      TextRange fixRange = getFixRange(methodCall);
-      highlightInfo = HighlightUtil.checkUnhandledExceptions(methodCall, nameElement != null ? nameElement.getTextRange() : fixRange);
+      highlightInfo = HighlightUtil.checkUnhandledExceptions(methodCall);
 
       if (highlightInfo == null && ((PsiMethod)resolved).hasModifierProperty(PsiModifier.STATIC)) {
         PsiClass containingClass = ((PsiMethod)resolved).getContainingClass();
@@ -391,14 +389,13 @@ public final class HighlightMethodUtil {
           PsiElement element = ObjectUtils.notNull(referenceToMethod.getReferenceNameElement(), referenceToMethod);
           highlightInfo = HighlightUtil.checkFeature(element, HighlightingFeature.STATIC_INTERFACE_CALLS, languageLevel, file);
           if (highlightInfo == null) {
-            highlightInfo =
-              checkStaticInterfaceCallQualifier(referenceToMethod, resolveResult, fixRange, containingClass);
+            highlightInfo = checkStaticInterfaceCallQualifier(referenceToMethod, resolveResult, methodCall, containingClass);
           }
         }
       }
 
       if (highlightInfo == null) {
-        highlightInfo = GenericsHighlightUtil.checkInferredIntersections(substitutor, fixRange);
+        highlightInfo = GenericsHighlightUtil.checkInferredIntersections(substitutor, methodCall);
       }
 
       if (highlightInfo == null) {
@@ -406,7 +403,7 @@ public final class HighlightMethodUtil {
       }
 
       if (highlightInfo == null) {
-        highlightInfo = createIncompatibleTypeHighlightInfo(methodCall, resolveHelper, (MethodCandidateInfo)resolveResult, fixRange);
+        highlightInfo = createIncompatibleTypeHighlightInfo(methodCall, resolveHelper, (MethodCandidateInfo)resolveResult, methodCall);
       }
     }
     else {
@@ -560,13 +557,14 @@ public final class HighlightMethodUtil {
   static HighlightInfo createIncompatibleTypeHighlightInfo(@NotNull PsiCallExpression methodCall,
                                                            @NotNull PsiResolveHelper resolveHelper,
                                                            @NotNull MethodCandidateInfo resolveResult,
-                                                           TextRange fixRange) {
+                                                           @NotNull PsiElement elementToHighlight) {
     String errorMessage = resolveResult.getInferenceErrorMessage();
     if (errorMessage == null) return null;
     PsiMethod method = resolveResult.getElement();
     HighlightInfo highlightInfo;
     PsiType expectedTypeByParent = InferenceSession.getTargetTypeByParent(methodCall);
     PsiType actualType = resolveResult.getSubstitutor(false).substitute(method.getReturnType());
+    TextRange fixRange = getFixRange(elementToHighlight);
     if (expectedTypeByParent != null && actualType != null && !expectedTypeByParent.isAssignableFrom(actualType)) {
       highlightInfo = HighlightUtil
         .createIncompatibleTypeHighlightInfo(expectedTypeByParent, actualType, fixRange, 0, XmlStringUtil.escapeString(errorMessage));
@@ -631,11 +629,12 @@ public final class HighlightMethodUtil {
 
   static HighlightInfo checkStaticInterfaceCallQualifier(@NotNull PsiReferenceExpression referenceToMethod,
                                                          @NotNull JavaResolveResult resolveResult,
-                                                         @NotNull TextRange fixRange,
+                                                         @NotNull PsiElement elementToHighlight,
                                                          @NotNull PsiClass containingClass) {
     String message = checkStaticInterfaceMethodCallQualifier(referenceToMethod, resolveResult.getCurrentFileResolveScope(), containingClass);
     if (message != null) {
-      HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(fixRange).create();
+      HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message)
+        .range(getFixRange(elementToHighlight)).create();
       QuickFixAction
         .registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createAccessStaticViaInstanceFix(referenceToMethod, resolveResult));
       return highlightInfo;
@@ -760,7 +759,7 @@ public final class HighlightMethodUtil {
         if (containingClass != null && containingClass.isInterface()) {
           HighlightInfo info = HighlightUtil.checkFeature(elementToHighlight, HighlightingFeature.STATIC_INTERFACE_CALLS, languageLevel, file);
           if (info != null) return info;
-          info = checkStaticInterfaceCallQualifier(referenceToMethod, resolveResult, elementToHighlight.getTextRange(), containingClass);
+          info = checkStaticInterfaceCallQualifier(referenceToMethod, resolveResult, elementToHighlight, containingClass);
           if (info != null) return info;
         }
       }
