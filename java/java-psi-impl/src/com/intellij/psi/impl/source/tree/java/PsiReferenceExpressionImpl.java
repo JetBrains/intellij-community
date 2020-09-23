@@ -374,27 +374,16 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
         return null;
       }
 
+      if (!(resolve instanceof PsiVariable)) return null;
+      PsiType type = ((PsiVariable)resolve).getType();
+      PsiType ret = type instanceof PsiEllipsisType ? ((PsiEllipsisType)type).toArrayType() : type;
+      if (!ret.isValid()) {
+        PsiUtil.ensureValidType(ret, "invalid type of " + resolve + " of class " + resolve.getClass() + ", valid=" + resolve.isValid());
+      }
       PsiTypeParameterListOwner owner = null;
-      PsiType ret = null;
-      if (resolve instanceof PsiVariable) {
-        PsiType type = ((PsiVariable)resolve).getType();
-        ret = type instanceof PsiEllipsisType ? ((PsiEllipsisType)type).toArrayType() : type;
-        if (!ret.isValid()) {
-          PsiUtil.ensureValidType(ret, "invalid type of " + resolve + " of class " + resolve.getClass() + ", valid=" + resolve.isValid());
-        }
-        if (resolve instanceof PsiField && !((PsiField)resolve).hasModifierProperty(PsiModifier.STATIC)) {
-          owner = ((PsiField)resolve).getContainingClass();
-        }
+      if (resolve instanceof PsiField && !((PsiField)resolve).hasModifierProperty(PsiModifier.STATIC)) {
+        owner = ((PsiField)resolve).getContainingClass();
       }
-      else if (resolve instanceof PsiMethod) {
-        PsiMethod method = (PsiMethod)resolve;
-        ret = method.getReturnType();
-        if (ret != null) {
-          PsiUtil.ensureValidType(ret, method);
-        }
-        owner = method;
-      }
-      if (ret == null) return null;
 
       LanguageLevel languageLevel = PsiUtil.getLanguageLevel(file);
       if (ret instanceof PsiClassType) {
@@ -418,6 +407,10 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
 
   @Override
   public PsiType getType() {
+    PsiElement parent = getParent();
+    if (parent instanceof PsiMethodCallExpression) {
+      return ((PsiMethodCallExpression)parent).getType();
+    }
     return JavaResolveCache.getInstance(getProject()).getType(this, TYPE_EVALUATOR);
   }
 
