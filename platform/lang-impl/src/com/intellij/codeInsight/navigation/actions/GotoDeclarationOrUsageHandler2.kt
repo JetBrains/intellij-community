@@ -60,11 +60,11 @@ object GotoDeclarationOrUsageHandler2 : CodeInsightActionHandler {
     when (actionResult) {
       null -> notifyNowhereToGo(project, editor, file, offset)
       is GTDUActionResult.GTD -> {
-        GTDUCollector.recordPerformed(GotoDeclarationAction.getCurrentEventData(), GTDUCollector.GTDUChoice.GTD)
+        GTDUCollector.recordPerformed(GTDUCollector.GTDUChoice.GTD)
         gotoDeclaration(editor, file, actionResult.gtdActionResult)
       }
       is GTDUActionResult.SU -> {
-        GTDUCollector.recordPerformed(GotoDeclarationAction.getCurrentEventData(), GTDUCollector.GTDUChoice.SU)
+        GTDUCollector.recordPerformed(GTDUCollector.GTDUChoice.SU)
         showUsages(project, editor, file, actionResult.targetVariants)
       }
     }
