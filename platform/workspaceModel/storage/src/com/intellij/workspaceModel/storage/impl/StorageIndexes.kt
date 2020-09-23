@@ -2,9 +2,11 @@
 package com.intellij.workspaceModel.storage.impl
 
 import com.google.common.collect.HashBiMap
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.assert
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntityData
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
@@ -29,8 +31,10 @@ internal open class StorageIndexes(
   ) : this(softLinks, virtualFileIndex, entitySourceIndex, persistentIdIndex, emptyMap())
 
   companion object {
-    val EMPTY = StorageIndexes(MultimapStorageIndex(), VirtualFileIndex(), EntityStorageInternalIndex(false), EntityStorageInternalIndex(true),
-                               HashMap())
+    val EMPTY = StorageIndexes(MultimapStorageIndex(), VirtualFileIndex(), EntityStorageInternalIndex(false),
+                               EntityStorageInternalIndex(true), HashMap())
+
+    private val LOG = logger<StorageIndexes>()
   }
 
   fun toMutable(): MutableStorageIndexes {
@@ -53,7 +57,7 @@ internal open class StorageIndexes(
     // Assert external mappings
     for ((_, mappings) in externalMappings) {
       for ((id, obj) in mappings.index) {
-        assert(storage.entityDataById(id) != null) { "Missing entity by id: $id" }
+        LOG.assert(storage.entityDataById(id) != null) { "Missing entity by id: $id" }
       }
     }
   }
@@ -75,8 +79,8 @@ internal open class StorageIndexes(
         }
         else {
           val actualLinks = (data as SoftLinkable).getLinks()
-          assert(expectedLinks.size == actualLinks.size) { "Different sizes: $expectedLinks, $actualLinks" }
-          assert(expectedLinks.all { it in actualLinks }) { "Different sets: $expectedLinks, $actualLinks" }
+          LOG.assert(expectedLinks.size == actualLinks.size) { "Different sizes: $expectedLinks, $actualLinks" }
+          LOG.assert(expectedLinks.all { it in actualLinks }) { "Different sets: $expectedLinks, $actualLinks" }
         }
       }
     }
@@ -88,17 +92,17 @@ internal open class StorageIndexes(
     entityData.dependencies.forEach { dependency ->
       when (dependency) {
         is ModuleDependencyItem.Exportable.ModuleDependency -> {
-          assert(dependency.module in expectedLinks)
+          LOG.assertTrue(dependency.module in expectedLinks)
           actualRefs += dependency.module
         }
         is ModuleDependencyItem.Exportable.LibraryDependency -> {
-          assert(dependency.library in expectedLinks)
+          LOG.assertTrue(dependency.library in expectedLinks)
           actualRefs += dependency.library
         }
         else -> Unit
       }
     }
-    assert(actualRefs.size == expectedLinks.size)
+    LOG.assertTrue(actualRefs.size == expectedLinks.size)
   }
 
   private fun assertPersistentIdIndex(storage: AbstractEntityStorage) {
@@ -112,12 +116,12 @@ internal open class StorageIndexes(
         if (data == null) return@forEach
         mutableId = mutableId.copy(arrayId = data.id)
         val expectedPersistentId = persistentIdIndex.getEntryById(mutableId)
-        assert(expectedPersistentId == data.persistentId(storage)) { "Entity $data isn't found in persistent id index. PersistentId: ${data.persistentId(storage)}, Id: $mutableId. Expected entity source: $expectedPersistentId" }
+        LOG.assert(expectedPersistentId == data.persistentId(storage)) { "Entity $data isn't found in persistent id index. PersistentId: ${data.persistentId(storage)}, Id: $mutableId. Expected entity source: $expectedPersistentId" }
         expectedSize++
       }
     }
 
-    assert(expectedSize == persistentIdIndex.index.size) { "Incorrect size of persistent id index. Expected: $expectedSize, actual: ${persistentIdIndex.index.size}" }
+    LOG.assert(expectedSize == persistentIdIndex.index.size) { "Incorrect size of persistent id index. Expected: $expectedSize, actual: ${persistentIdIndex.index.size}" }
   }
 
   private fun assertEntitySourceIndex(storage: AbstractEntityStorage) {
@@ -131,12 +135,12 @@ internal open class StorageIndexes(
         if (data == null) return@forEach
         mutableId = mutableId.copy(arrayId = data.id)
         val expectedEntitySource = entitySourceIndex.getEntryById(mutableId)
-        assert(expectedEntitySource == data.entitySource) { "Entity $data isn't found in entity source index. Entity source: ${data.entitySource}, Id: $mutableId. Expected entity source: $expectedEntitySource" }
+        LOG.assert(expectedEntitySource == data.entitySource) { "Entity $data isn't found in entity source index. Entity source: ${data.entitySource}, Id: $mutableId. Expected entity source: $expectedEntitySource" }
         expectedSize++
       }
     }
 
-    assert(expectedSize == entitySourceIndex.index.size) { "Incorrect size of entity source index. Expected: $expectedSize, actual: ${entitySourceIndex.index.size}" }
+    LOG.assert(expectedSize == entitySourceIndex.index.size) { "Incorrect size of entity source index. Expected: $expectedSize, actual: ${entitySourceIndex.index.size}" }
   }
 }
 
