@@ -55,7 +55,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
   }
 
   /**
-   * This method should be available in the next IntelliJ 202 Release
+   * This method should be available in the next IntelliJ 203 Release
    */
   //  @Override
   public boolean canInferType(@NotNull PsiTypeElement typeElement) {
