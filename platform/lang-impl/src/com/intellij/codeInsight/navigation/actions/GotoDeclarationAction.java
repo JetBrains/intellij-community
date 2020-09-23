@@ -60,40 +60,40 @@ import static com.intellij.codeInsight.navigation.actions.UiKt.notifyNowhereToGo
 public class GotoDeclarationAction extends BaseCodeInsightAction implements CodeInsightActionHandler, DumbAware, CtrlMouseAction {
 
   private static final Logger LOG = Logger.getInstance(GotoDeclarationAction.class);
-  private static List<EventPair<?>> ourCurrentActionData = null; // accessed from EDT only
+  private static List<EventPair<?>> ourCurrentEventData = null; // accessed from EDT only
 
   @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     Language language = file != null ? file.getLanguage() : null;
-    List<EventPair<?>> currentActionData = ContainerUtil.append(
+    List<EventPair<?>> currentEventData = ContainerUtil.append(
       ActionsCollectorImpl.actionEventData(e),
       EventFields.CurrentFile.with(language)
     );
-    List<EventPair<?>> savedActionData = ourCurrentActionData;
-    ourCurrentActionData = currentActionData;
+    List<EventPair<?>> savedEventData = ourCurrentEventData;
+    ourCurrentEventData = currentEventData;
     try {
       super.actionPerformed(e);
     }
     finally {
-      ourCurrentActionData = savedActionData;
+      ourCurrentEventData = savedEventData;
     }
   }
 
   static void recordGTD() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    GTDUCollector.recordPerformed(ourCurrentActionData, GTDUCollector.GTDUChoice.GTD);
+    GTDUCollector.recordPerformed(ourCurrentEventData, GTDUCollector.GTDUChoice.GTD);
   }
 
   static void recordSU() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    GTDUCollector.recordPerformed(ourCurrentActionData, GTDUCollector.GTDUChoice.SU);
+    GTDUCollector.recordPerformed(ourCurrentEventData, GTDUCollector.GTDUChoice.SU);
   }
 
   static void recordGTDNavigation(@NotNull Class<?> navigationProviderClass) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    GTDUCollector.recordNavigated(ourCurrentActionData, navigationProviderClass);
+    GTDUCollector.recordNavigated(ourCurrentEventData, navigationProviderClass);
   }
 
   @NotNull
