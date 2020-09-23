@@ -223,9 +223,6 @@ class CommunityLibraryLicenses {
                        licenseUrl: "https://github.com/dart-lang/vm_service_drivers/blob/master/LICENSE",
                        url: "https://github.com/dart-lang/vm_service_drivers"),
     new LibraryLicense(name: "dbus-java", libraryName: "dbus-java", license: "LGPL", url: "https://mvnrepository.com/artifact/com.github.hypfvieh/dbus-java"),
-    new LibraryLicense(name: "debugger-memory-agent", libraryName: "debugger-memory-agent", license: "Apache 2.0",
-                       url: "https://github.com/JetBrains/debugger-memory-agent",
-                       licenseUrl: "https://github.com/JetBrains/debugger-memory-agent/blob/master/LICENSE"),
     new LibraryLicense(name: "delight-rhino-sandbox", libraryName: "delight-rhino-sandbox", license: "Apache 2.0",
                        url: "https://github.com/javadelight/delight-rhino-sandbox",
                        licenseUrl: "https://github.com/javadelight/delight-rhino-sandbox/blob/master/LICENSE.TXT"),
@@ -662,6 +659,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "Zstd-JNI", libraryName: "com.github.luben:zstd", license: "BSD",
                        url: "https://raw.githubusercontent.com/luben/zstd-jni/master/LICENSE"),
 
+    jetbrainsLibrary("debugger-memory-agent"),
     jetbrainsLibrary("change-reminder-prediction-model"),
     jetbrainsLibrary("completion-log-events"),
     jetbrainsLibrary("completion-ranking-java"),
