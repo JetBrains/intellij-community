@@ -1,7 +1,10 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.completion;
 
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.InsertHandler;
+import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.navigation.ItemPresentation;
@@ -128,7 +131,7 @@ public class PyClassNameCompletionContributor extends PyExtendedCompletionContri
               .withTailText(" " + itemPresentation.getLocationString(), true)
               .withInsertHandler(insertHandler);
 
-            uniqueResults.put(itemPresentation.getPresentableText() + itemPresentation.getLocationString(), builder);
+            uniqueResults.put(name + itemPresentation.getLocationString(), builder);
           }
         }
       }

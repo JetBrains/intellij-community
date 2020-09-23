@@ -17,6 +17,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -153,6 +154,17 @@ public class PyClassNameCompletionTest extends PyTestCase {
   // PY-20976
   public void testOrderingUnderscoreInName() {
     doTestCompletionOrder("c.foo", "b._foo", "a.__foo__");
+  }
+
+  // PY-44586
+  public void testNoDuplicatesForStubsAndOverrides() {
+    final String path = "/completion/className/" + getTestName(true);
+    myFixture.copyDirectoryToProject(path, "");
+    myFixture.configureFromTempProjectFile(getTestName(true) + ".py");
+    myFixture.complete(CompletionType.BASIC, 2);
+    List<String> allVariants = myFixture.getLookupElementStrings();
+    assertNotNull(allVariants);
+    assertEquals(1, Collections.frequency(allVariants, "my_func"));
   }
 
   private void doTest() {
