@@ -23,8 +23,8 @@ class JdkDownloaderStoreTest : LightPlatformTestCase() {
     Assert.assertTrue(service.findInstallations(item2).isEmpty())
   }
 
-  private val service get() = service<JdkDownloaderStore>()
-  private val newState get() = JdkDownloaderState()
+  private val service get() = service<JdkInstallerStore>()
+  private val newState get() = JdkInstallerState()
 
   private fun resetState() {
     service.loadState(newState)

@@ -51,7 +51,7 @@ internal fun jdkItemForTest(url: String,
 class JdkDownloaderTest : LightPlatformTestCase() {
   override fun setUp() {
     super.setUp()
-    service<JdkDownloaderStore>().loadState(JdkDownloaderState())
+    service<JdkInstallerStore>().loadState(JdkInstallerState())
   }
 
   private val mockTarGZ = jdkItemForTest(packageType = JdkPackageType.TAR_GZ,

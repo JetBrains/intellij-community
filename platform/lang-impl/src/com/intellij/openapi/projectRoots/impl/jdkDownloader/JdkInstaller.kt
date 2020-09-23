@@ -198,7 +198,7 @@ class JdkInstaller {
         decompressor.extract(targetDir)
 
         runCatching { writeMarkerFile(request) }
-        runCatching { service<JdkDownloaderStore>().registerInstall(item, targetDir) }
+        runCatching { service<JdkInstallerStore>().registerInstall(item, targetDir) }
       }
       catch (t: Throwable) {
         if (t is ControlFlowException) throw t
@@ -316,7 +316,7 @@ class JdkInstaller {
     try {
       //TODO: we may track install locations nad use the data to scan more paths
       Files.list(defaultInstallDir()).use { list ->
-        for (installDir in Stream.concat(list, service<JdkDownloaderStore>().findInstallations(feedItem).stream())) {
+        for (installDir in Stream.concat(list, service<JdkInstallerStore>().findInstallations(feedItem).stream())) {
           if (!installDir.isDirectory()) continue
           val item = findJdkItemForInstalledJdk(installDir) ?: continue
           if (item != feedItem) continue
@@ -426,7 +426,7 @@ private data class LocallyFoundJdk(
 
 
 @Tag("installed-jdk")
-class JdkDownloaderStateEntry : BaseState() {
+class JdkInstallerStateEntry : BaseState() {
   var fullText by string()
   var versionText by string()
   var url by string()
@@ -452,22 +452,22 @@ class JdkDownloaderStateEntry : BaseState() {
   }
 }
 
-class JdkDownloaderState : BaseState() {
+class JdkInstallerState : BaseState() {
   @get:XCollection
-  var installedItems by list<JdkDownloaderStateEntry>()
+  var installedItems by list<JdkInstallerStateEntry>()
 }
 
-@State(name = "JdkDownloaderHistory", storages = [Storage(StoragePathMacros.NON_ROAMABLE_FILE)], allowLoadInTests = true)
-class JdkDownloaderStore : SimplePersistentStateComponent<JdkDownloaderState>(JdkDownloaderState()) {
+@State(name = "JdkInstallerHistory", storages = [Storage(StoragePathMacros.NON_ROAMABLE_FILE)], allowLoadInTests = true)
+class JdkInstallerStore : SimplePersistentStateComponent<JdkInstallerState>(JdkInstallerState()) {
   private val lock = ReentrantLock()
 
-  override fun loadState(state: JdkDownloaderState) = lock.withLock {
+  override fun loadState(state: JdkInstallerState) = lock.withLock {
     super.loadState(state)
   }
 
   fun registerInstall(jdkItem: JdkItem, targetPath: Path) = lock.withLock {
     state.installedItems.removeIf { it.installPath?.isDirectory() != null || it.matches(jdkItem) }
-    state.installedItems.add(JdkDownloaderStateEntry().apply { copyForm(jdkItem, targetPath) })
+    state.installedItems.add(JdkInstallerStateEntry().apply { copyForm(jdkItem, targetPath) })
     state.intIncrementModificationCount()
   }
 
