@@ -3,7 +3,6 @@ package de.plushnikov.intellij.plugin.action.delombok;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -273,7 +272,7 @@ public class DelombokHandler {
       .map(PsiAnnotation::getQualifiedName)
       .collect(Collectors.toSet());
     for (PsiAnnotation originalAnnotation : fromModifierList.getAnnotations()) {
-      final String qualifiedName = Strings.notNullize(originalAnnotation.getQualifiedName());
+      final String qualifiedName = StringUtil.notNullize(originalAnnotation.getQualifiedName());
       if (!existedAnnotation.contains(qualifiedName)) {
         final PsiAnnotation annotation = toModifierList.addAnnotation(qualifiedName);
         for (PsiNameValuePair nameValuePair : originalAnnotation.getParameterList().getAttributes()) {
