@@ -21,7 +21,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.popup.util.PopupState;
+import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
@@ -57,7 +57,7 @@ class InspectionPopupManager {
   private final Map<String, JProgressBar> myProgressBarMap = new HashMap<>();
   private final AncestorListener myAncestorListener;
   private final JBPopupListener myPopupListener;
-  private final PopupState myPopupState = new PopupState();
+  private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
   private final Alarm popupAlarm = new Alarm();
   private final List<DropDownLink<?>> levelLinks = new ArrayList<>();
 
@@ -142,7 +142,7 @@ class InspectionPopupManager {
 
     myPopup = myPopupBuilder.createPopup();
     myPopup.addListener(myPopupListener);
-    myPopup.addListener(myPopupState);
+    myPopupState.prepareToShow(myPopup);
     myEditor.getComponent().addAncestorListener(myAncestorListener);
 
     JComponent owner = (JComponent)event.getComponent();

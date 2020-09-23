@@ -6,7 +6,7 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.content.TabbedContent;
-import com.intellij.ui.popup.util.PopupState;
+import com.intellij.ui.popup.PopupState;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,7 +19,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public final class TabbedContentTabLabel extends ContentTabLabel {
-  private final PopupState myPopupState = new PopupState();
+  private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
   private final TabbedContent myContent;
   private Reference<JBPopup> myPopupReference = null;
 
@@ -42,7 +42,7 @@ public final class TabbedContentTabLabel extends ContentTabLabel {
       final SelectContentTabStep step = new SelectContentTabStep(getContent());
       final ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
       myPopupReference = new WeakReference<>(popup);
-      popup.addListener(myPopupState);
+      myPopupState.prepareToShow(popup);
       popup.showUnderneathOf(this);
       popup.addListener(new JBPopupListener() {
         @Override

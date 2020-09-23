@@ -36,7 +36,7 @@ open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) 
     addActionListener {
       if (!popupState.isRecentlyHidden) {
         val popup = popupBuilder(this)
-        popupState.preparePopupToShow(popup)
+        popupState.prepareToShow(popup)
         popup.show(RelativePoint(this, popupPoint()))
       }
     }

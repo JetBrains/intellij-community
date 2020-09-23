@@ -214,7 +214,7 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
       popupMenu.setTargetComponent(this);
 
       JPopupMenu menu = popupMenu.getComponent();
-      menu.addPopupMenuListener(myPopupState);
+      myPopupState.prepareToShow(menu);
       if (event.isFromActionToolbar()) {
         menu.show(this, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width + getInsets().left, getHeight());
       }

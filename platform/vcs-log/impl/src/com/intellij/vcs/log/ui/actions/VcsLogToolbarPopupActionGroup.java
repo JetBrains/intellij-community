@@ -4,9 +4,10 @@ package com.intellij.vcs.log.ui.actions;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.AutoPopupSupportingListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.ui.popup.util.PopupState;
+import com.intellij.ui.popup.PopupState;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
@@ -16,7 +17,7 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 
 public class VcsLogToolbarPopupActionGroup extends DefaultActionGroup {
-  private final PopupState myPopupState = new PopupState();
+  private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
 
   @Override
   public boolean isDumbAware() {
@@ -34,7 +35,7 @@ public class VcsLogToolbarPopupActionGroup extends DefaultActionGroup {
     ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(null, this, e.getDataContext(),
                                                                           JBPopupFactory.ActionSelectionAid.MNEMONICS, true,
                                                                           VcsLogActionPlaces.VCS_LOG_TOOLBAR_POPUP_PLACE);
-    popup.addListener(myPopupState);
+    myPopupState.prepareToShow(popup);
     AutoPopupSupportingListener.installOn(popup);
     InputEvent inputEvent = e.getInputEvent();
     if (inputEvent == null) {

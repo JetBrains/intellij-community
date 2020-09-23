@@ -23,7 +23,7 @@ import static com.intellij.openapi.util.registry.Registry.intValue;
 @ApiStatus.Experimental
 public abstract class PopupState<Popup> {
   private WeakReference<Popup> reference;
-  private boolean readyToShow;
+  private boolean hiddenLongEnough = true;
   private long timeHiddenAt;
 
 
@@ -40,16 +40,15 @@ public abstract class PopupState<Popup> {
   }
 
 
-  public void preparePopupToShow(@NotNull Popup popup) {
+  public void prepareToShow(@NotNull Popup popup) {
     hidePopup();
     addListener(popup);
     reference = new WeakReference<>(popup);
-    readyToShow = true;
   }
 
   public boolean isRecentlyHidden() {
-    if (readyToShow) return false;
-    readyToShow = true;
+    if (hiddenLongEnough) return false;
+    hiddenLongEnough = true;
     return (System.currentTimeMillis() - timeHiddenAt) < intValue("ide.popup.hide.show.threshold", 200);
   }
 
@@ -86,7 +85,7 @@ public abstract class PopupState<Popup> {
     Popup popup = getPopup();
     if (popup != null) removeListener(popup);
     reference = null;
-    readyToShow = false;
+    hiddenLongEnough = false;
     timeHiddenAt = System.currentTimeMillis();
   }
 

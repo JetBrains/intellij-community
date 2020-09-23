@@ -11,8 +11,8 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.*;
@@ -25,6 +25,7 @@ import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.content.tabs.TabbedContentAction;
 import com.intellij.ui.layout.migLayout.MigLayoutUtilKt;
 import com.intellij.ui.layout.migLayout.patched.MigLayout;
+import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.tabs.impl.MorePopupAware;
 import com.intellij.util.Alarm;
 import com.intellij.util.ContentUtilEx;
@@ -602,7 +603,9 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     toggleContentPopup(content, contentManager, null);
   }
 
-  static void toggleContentPopup(@NotNull ToolWindowContentUi content, @NotNull ContentManager contentManager, JBPopupListener listener) {
+  static void toggleContentPopup(@NotNull ToolWindowContentUi content,
+                                 @NotNull ContentManager contentManager,
+                                 @Nullable PopupState<JBPopup> popupState) {
     SelectContentStep step = new SelectContentStep(contentManager.getContents());
     Content selectedContent = contentManager.getSelectedContent();
     if (selectedContent != null) {
@@ -610,7 +613,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     }
 
     ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
-    if (listener != null) popup.addListener(listener);
+    if (popupState != null) popupState.prepareToShow(popup);
     content.getCurrentLayout().showContentPopup(popup);
 
     if (selectedContent instanceof TabbedContent) {

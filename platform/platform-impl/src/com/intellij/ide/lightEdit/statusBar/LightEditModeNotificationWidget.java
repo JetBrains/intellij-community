@@ -20,7 +20,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.ui.TooltipWithClickableLinks;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.popup.util.PopupState;
+import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.GridBag;
@@ -42,7 +42,7 @@ import java.util.function.Supplier;
 
 public class LightEditModeNotificationWidget implements CustomStatusBarWidget {
 
-  private final PopupState myPopupState = new PopupState();
+  private final PopupState<JPopupMenu> myPopupState = PopupState.forPopupMenu();
   private final MyPopupMenuListener myPopupMenuListener = new MyPopupMenuListener();
 
   public LightEditModeNotificationWidget() {
@@ -135,7 +135,7 @@ public class LightEditModeNotificationWidget implements CustomStatusBarWidget {
                                                                                     createAccessFullIdeActionGroup());
       popupMenu.setTargetComponent(actionLink);
       JPopupMenu menu = popupMenu.getComponent();
-      menu.addPopupMenuListener(myPopupState);
+      myPopupState.prepareToShow(menu);
       menu.addPopupMenuListener(myPopupMenuListener);
       JBPopupMenu.showAbove(actionLink, menu);
     }
