@@ -213,7 +213,10 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     }
 
     if ("sa".equals(myOutputFormat)) {
-      addRootChangesListener(parentDisposable);
+      InspectionsReportConverter reportConverter = ReportConverterUtil.getReportConverter(myOutputFormat);
+      if (reportConverter != null) {
+        addRootChangesListener(parentDisposable, reportConverter);
+      }
     }
 
     Project project = ProjectUtil.openOrImport(projectPath);
@@ -287,29 +290,29 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     }
   }
 
-  private void addRootChangesListener(Disposable parentDisposable) {
+  private void addRootChangesListener(Disposable parentDisposable, InspectionsReportConverter reportConverter) {
     MessageBusConnection applicationBus = ApplicationManager.getApplication().getMessageBus().connect(parentDisposable);
     applicationBus.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(@NotNull Project project) {
-        subscribeToRootChanges(project);
+        subscribeToRootChanges(project, reportConverter);
       }
     });
   }
 
-  private void subscribeToRootChanges(Project project) {
-    Path rootLogDir = Paths.get(myOutPath).resolve("projectStructureLog");
+  private void subscribeToRootChanges(Project project, InspectionsReportConverter reportConverter) {
+    Path rootLogDir = Paths.get(myOutPath).resolve("log/projectStructureChanges");
     rootLogDir.toFile().mkdirs();
     AtomicInteger counter = new AtomicInteger(0);
-    ProjectDescriptionUtilKt.writeProjectDescription(rootLogDir.resolve("projectStructure0.json"), project);
+    reportConverter.projectData(project, rootLogDir.resolve("state0"));
 
     MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
         int i = counter.incrementAndGet();
+        reportConverter.projectData(project, rootLogDir.resolve("state" + i));
         LOG.info("Project structure update written. Change number " + i);
-        ProjectDescriptionUtilKt.writeProjectDescription(rootLogDir.resolve("projectStructure" + i + ".json"), project);
       }
     });
   }
@@ -430,7 +433,9 @@ public final class InspectionApplication implements CommandLineInspectionProgres
       try {
         reportConverter.convert(resultsDataPath.toString(), myOutPath, context.getTools(),
                                 ContainerUtil.map2List(inspectionsResults, path -> path.toFile()));
-        reportConverter.projectData(project, myOutPath);
+        if (myOutPath != null) {
+          reportConverter.projectData(project, Paths.get(myOutPath).resolve("projectStructure"));
+        }
       }
       catch (InspectionsReportConverter.ConversionException e) {
         reportError("\n" + e.getMessage());
