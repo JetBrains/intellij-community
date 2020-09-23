@@ -432,6 +432,7 @@ class JdkInstallerStateEntry : BaseState() {
   var url by string()
   var sha256 by string()
   var installDir by string()
+  var javaHomeDir by string()
 
   fun copyForm(item: JdkItem, targetPath: Path) {
     fullText = item.fullPresentationText
@@ -439,9 +440,11 @@ class JdkInstallerStateEntry : BaseState() {
     url = item.url
     sha256 = item.sha256
     installDir = targetPath.toAbsolutePath().toString()
+    javaHomeDir = item.resolveJavaHome(targetPath).toAbsolutePath().toString()
   }
 
   val installPath get() = installDir?.let { Paths.get(it) }
+  val javaHomePath get() = javaHomeDir?.let { Paths.get(it) }
 
   fun matches(item: JdkItem) : Boolean {
     if (fullText != item.fullPresentationText) return false
@@ -473,5 +476,14 @@ class JdkInstallerStore : SimplePersistentStateComponent<JdkInstallerState>(JdkI
 
   fun findInstallations(jdkItem: JdkItem) : List<Path> = lock.withLock {
     state.installedItems.filter { it.matches(jdkItem) }.mapNotNull { it.installPath }.filter { it.isDirectory() }
+  }
+
+  fun listJdkInstallHomes() : List<Path> = lock.withLock {
+    state.installedItems.mapNotNull { it.javaHomePath }
+  }
+
+  companion object {
+    @JvmStatic
+    fun getInstance() = service<JdkInstallerStore>()
   }
 }
