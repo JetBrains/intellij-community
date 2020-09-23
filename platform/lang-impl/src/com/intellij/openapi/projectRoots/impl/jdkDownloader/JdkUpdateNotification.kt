@@ -91,7 +91,7 @@ internal class JdkUpdateNotification(val jdk: Sdk,
         if (myIsUpdateRunning) return
         myIsUpdateRunning = true
       }
-      updateJdk(e.project, jdk, newItem)
+      updateJdk(e.project)
       notification.expire()
     }
   }
@@ -131,8 +131,8 @@ internal class JdkUpdateNotification(val jdk: Sdk,
       .bindNextNotificationAndShow()
   }
 
-  private fun updateJdk(project: Project?, jdk: Sdk, feedItem: JdkItem) {
-    val title = ProjectBundle.message("progress.title.updating.jdk.0.to.1", jdk.name, feedItem.fullPresentationText)
+  private fun updateJdk(project: Project?) {
+    val title = ProjectBundle.message("progress.title.updating.jdk.0.to.1", jdk.name, newItem.fullPresentationText)
     ProgressManager.getInstance().run(
       object : Task.Backgroundable(null /*progress should be global*/, title, true, ALWAYS_BACKGROUND) {
         override fun run(indicator: ProgressIndicator) {
@@ -141,8 +141,8 @@ internal class JdkUpdateNotification(val jdk: Sdk,
           val newJdkHome = try {
             val newJdkHome =
               //Optimization: try to check if a given JDK is already installed
-              installer.findLocallyInstalledJdk(feedItem) ?: run {
-                val prepare = installer.prepareJdkInstallation(feedItem, installer.defaultInstallDir(feedItem))
+              installer.findLocallyInstalledJdk(newItem) ?: run {
+                val prepare = installer.prepareJdkInstallation(newItem, installer.defaultInstallDir(newItem))
                 installer.installJdk(prepare, indicator, project)
                 prepare.javaHome
               }
@@ -160,8 +160,8 @@ internal class JdkUpdateNotification(val jdk: Sdk,
               throw t
             }
 
-            LOG.warn("Failed to update $jdk to $feedItem. ${t.message}", t)
-            showUpdateErrorNotification(feedItem)
+            LOG.warn("Failed to update $jdk to $newItem. ${t.message}", t)
+            showUpdateErrorNotification(newItem)
             lock.withLock { myIsUpdateRunning = false }
             return
           }
@@ -172,7 +172,7 @@ internal class JdkUpdateNotification(val jdk: Sdk,
                 jdk.sdkModificator.apply {
                   removeAllRoots()
                   homePath = newJdkHome.systemIndependentPath
-                  versionString = feedItem.versionString
+                  versionString = newItem.versionString
                 }.commitChanges()
 
                 (jdk.sdkType as? SdkType)?.setupSdkPaths(jdk)
@@ -185,8 +185,8 @@ internal class JdkUpdateNotification(val jdk: Sdk,
                 throw t
               }
 
-              LOG.warn("Failed to apply downloaded JDK update for $jdk from $feedItem at $newJdkHome. ${t.message}", t)
-              showUpdateErrorNotification(feedItem)
+              LOG.warn("Failed to apply downloaded JDK update for $jdk from $newItem at $newJdkHome. ${t.message}", t)
+              showUpdateErrorNotification(newItem)
               lock.withLock { myIsUpdateRunning = false }
             }
           }
