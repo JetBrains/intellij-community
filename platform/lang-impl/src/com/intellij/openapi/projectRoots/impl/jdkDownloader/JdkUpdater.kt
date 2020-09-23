@@ -42,13 +42,14 @@ import kotlin.concurrent.withLock
  * JDK update
  */
 private val EP_NAME = ExtensionPointName.create<JdkUpdateCheckContributor>("com.intellij.jdkUpdateCheckContributor")
+
 interface JdkUpdateCheckContributor {
   /**
    * Executed from any thread (possibly without read-lock) to
    * collect SDKs, which should be considered for
    * JDK Update check
    */
-  fun contributeJdks(project: Project) : List<Sdk>
+  fun contributeJdks(project: Project): List<Sdk>
 }
 
 class JdkUpdaterStateData : BaseState() {
@@ -168,7 +169,10 @@ internal class JdkUpdater(
       if (VersionComparatorUtil.compare(feedItem.jdkVersion, actualItem.jdkVersion) <= 0) continue
 
       val title = ProjectBundle.message("notification.title.jdk.update.found")
-      val message = ProjectBundle.message("notification.text.jdk.update.found", jdk.name, feedItem.fullPresentationText, actualItem.fullPresentationText)
+      val message = ProjectBundle.message("notification.text.jdk.update.found",
+                                          jdk.name,
+                                          feedItem.fullPresentationText,
+                                          actualItem.fullPresentationText)
 
       NotificationGroupManager.getInstance().getNotificationGroup("Update JDK")
         .createNotification(title, message, NotificationType.INFORMATION, null)
@@ -186,36 +190,72 @@ internal class JdkUpdater(
   }
 
   private fun updateJdk(project: Project, jdk: Sdk, feedItem: JdkItem) {
+    val title = ProjectBundle.message("progress.title.updating.jdk.0.to.1", jdk.name, feedItem.fullPresentationText)
     ProgressManager.getInstance().run(
-      object : Task.Backgroundable(project, ProjectBundle.message("progress.title.updating.jdk.0.to.1", jdk.name, feedItem.fullPresentationText), true, ALWAYS_BACKGROUND) {
+      object : Task.Backgroundable(project, title, true, ALWAYS_BACKGROUND) {
 
         override fun run(indicator: ProgressIndicator) {
           val installer = JdkInstaller.getInstance()
 
-          val newJdkHome =
-            //Optimization: try to check if a given JDK is already installed
-            installer.findLocallyInstalledJdk(feedItem) ?: run {
-              val prepare = installer.prepareJdkInstallation(feedItem, installer.defaultInstallDir(feedItem))
-              installer.installJdk(prepare, indicator, project)
-              prepare.javaHome
-            }
+          val newJdkHome = try {
+            val newJdkHome =
+              //Optimization: try to check if a given JDK is already installed
+              installer.findLocallyInstalledJdk(feedItem) ?: run {
+                val prepare = installer.prepareJdkInstallation(feedItem, installer.defaultInstallDir(feedItem))
+                installer.installJdk(prepare, indicator, project)
+                prepare.javaHome
+              }
 
-          indicator.text = ProjectBundle.message("progress.text.updating.jdk.setting.up")
+            indicator.text = ProjectBundle.message("progress.text.updating.jdk.setting.up")
 
-          //make sure VFS sees the files and sets up the JDK correctly
-          VfsUtil.markDirtyAndRefresh(false, true, true, newJdkHome.toFile())
+            //make sure VFS sees the files and sets up the JDK correctly
+            VfsUtil.markDirtyAndRefresh(false, true, true, newJdkHome.toFile())
+
+            newJdkHome
+          }
+          catch (t: Throwable) {
+            if (t is ControlFlowException) throw t
+
+            LOG.warn("Failed to update $jdk to $feedItem. ${t.message}", t)
+            showUpdateErrorNotification(feedItem)
+            return
+          }
 
           invokeLater {
             runWriteAction {
-              jdk.sdkModificator.apply {
-                removeAllRoots()
-                homePath = newJdkHome.systemIndependentPath
-                versionString = feedItem.versionString
-              }.commitChanges()
+              try {
+                jdk.sdkModificator.apply {
+                  removeAllRoots()
+                  homePath = newJdkHome.systemIndependentPath
+                  versionString = feedItem.versionString
+                }.commitChanges()
 
-              (jdk.sdkType as? SdkType)?.setupSdkPaths(jdk)
+                (jdk.sdkType as? SdkType)?.setupSdkPaths(jdk)
+              }
+              catch (t: Throwable) {
+                if (t is ControlFlowException) throw t
+                LOG.warn("Failed to apply downloaded JDK update for $jdk from $feedItem at $newJdkHome. ${t.message}", t)
+                showUpdateErrorNotification(feedItem)
+              }
             }
           }
+        }
+
+        private fun showUpdateErrorNotification(feedItem: JdkItem) {
+          val message = ProjectBundle.message("progress.title.updating.jdk.failed", feedItem.fullPresentationText)
+          NotificationGroupManager.getInstance().getNotificationGroup("JDK Update")
+            .createNotification(type = NotificationType.ERROR)
+            .setTitle(title)
+            .setContent(message)
+            .addAction(NotificationAction.createSimple(
+              ProjectBundle.message("notification.link.jdk.update.retry"),
+              Runnable { updateJdk(project, jdk, feedItem) }))
+            .addAction(NotificationAction.createSimple(
+              ProjectBundle.message("notification.link.jdk.update.skip"),
+              Runnable {
+                service<JdkUpdaterState>().blockVersion(jdk, feedItem)
+              }))
+            .notify(project)
         }
       }
     )

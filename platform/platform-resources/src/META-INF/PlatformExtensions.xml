@@ -826,6 +826,7 @@
     <notificationGroup id="Update JDK" displayType="BALLOON"/>
     <backgroundPostStartupActivity implementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkUpdaterStartup" />
     <applicationService serviceImplementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkUpdaterState"/>
+    <notificationGroup id="JDK Update" displayType="STICKY_BALLOON" />
 
     <registryKey key="jdk.auto.setup" defaultValue="true" description="Attempt to use local or downloadable SDK to configure project"/>
     <registryKey key="jdk.updater" defaultValue="true" description="Check for JDK updates and suggest actions in notifications"/>
