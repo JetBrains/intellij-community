@@ -4,7 +4,7 @@ package com.intellij.ui.components
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.popup.util.PopupState
+import com.intellij.ui.popup.PopupState
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -20,7 +20,7 @@ import javax.swing.KeyStroke.getKeyStroke
 
 open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) : ActionLink() {
 
-  val popupState = PopupState()
+  val popupState = PopupState.forPopup()
   var selectedItem: T = item
     set(newItem) {
       val oldItem = field
@@ -36,7 +36,7 @@ open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) 
     addActionListener {
       if (!popupState.isRecentlyHidden) {
         val popup = popupBuilder(this)
-        popup.addListener(popupState)
+        popupState.preparePopupToShow(popup)
         popup.show(RelativePoint(this, popupPoint()))
       }
     }
