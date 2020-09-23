@@ -2,6 +2,8 @@
 package com.intellij.ui.jcef;
 
 import com.intellij.application.options.RegistryManager;
+import com.intellij.execution.Platform;
+import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.notification.*;
@@ -127,6 +129,9 @@ public final class JBCefApp {
     CefSettings settings = config.getCefSettings();
     settings.windowless_rendering_enabled = false;
     settings.log_severity = getLogLevel();
+    settings.log_file = System.getProperty("ide.browser.jcef.log.path",
+                                           System.getProperty("user.home") + Platform.current().fileSeparator +
+                                           "jcef_" + OSProcessUtil.getCurrentProcessId() + ".log");
     Color bg = JBColor.background();
     settings.background_color = settings.new ColorType(bg.getAlpha(), bg.getRed(), bg.getGreen(), bg.getBlue());
     int port = Registry.intValue("ide.browser.jcef.debug.port");
