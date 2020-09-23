@@ -10,6 +10,7 @@ import com.intellij.psi.util.MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUAL
 import com.intellij.util.containers.FactoryMap
 import com.intellij.util.containers.toArray
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.getAnnotation
@@ -44,6 +45,7 @@ internal class TransformationContextImpl(private val myCodeClass: GrTypeDefiniti
   private val myExtendsTypes: MutableList<PsiClassType> by lazy(LazyThreadSafetyMode.NONE) {
     getReferenceListTypes(myCodeClass.extendsClause).toMutableList()
   }
+  private val myModifiers: MutableMap<GrModifierList, MutableList<String>> = mutableMapOf()
   private val mySignaturesCache: Map<String, MutableSet<MethodSignature>> = FactoryMap.create { name ->
     val result = ObjectOpenCustomHashSet(METHOD_PARAMETERS_ERASURE_EQUALITY)
     for (existingMethod in myMethods) {
@@ -103,6 +105,8 @@ internal class TransformationContextImpl(private val myCodeClass: GrTypeDefiniti
   override fun getImplementsTypes(): List<PsiClassType> = myImplementsTypes
 
   override fun getExtendsTypes(): List<PsiClassType> = myExtendsTypes
+
+  override fun getModifiers(list: GrModifierList): List<String> = myModifiers.getOrDefault(list, emptyList())
 
   override fun getClassName(): String? = myCodeClass.name
 
@@ -215,13 +219,18 @@ internal class TransformationContextImpl(private val myCodeClass: GrTypeDefiniti
     myHierarchyView = null
   }
 
+  override fun addModifier(modifierList: GrModifierList, modifier: String) {
+    myModifiers.computeIfAbsent(modifierList) { mutableListOf() }.add(modifier)
+  }
+
   internal val transformationResult: TransformationResult
     get() = TransformationResult(
       (methods + enumMethods()).toArray(PsiMethod.EMPTY_ARRAY),
       fields.toArray(GrField.EMPTY_ARRAY),
       innerClasses.toArray(PsiClass.EMPTY_ARRAY),
       implementsTypes.toArray(PsiClassType.EMPTY_ARRAY),
-      extendsTypes.toArray(PsiClassType.EMPTY_ARRAY)
+      extendsTypes.toArray(PsiClassType.EMPTY_ARRAY),
+      myModifiers
     )
 
   private fun enumMethods() : List<PsiMethod> {

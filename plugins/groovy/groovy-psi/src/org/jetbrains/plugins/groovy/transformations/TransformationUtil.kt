@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.transformations
 
 import com.intellij.openapi.Disposable
@@ -9,16 +9,17 @@ import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiMethod
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
-import kotlin.reflect.jvm.javaField
 
 class TransformationResult(
   val methods: Array<PsiMethod>,
   val fields: Array<GrField>,
   val innerClasses: Array<PsiClass>,
   val implementsTypes: Array<PsiClassType>,
-  val extendsTypes: Array<PsiClassType>
+  val extendsTypes: Array<PsiClassType>,
+  val modifiers: Map<GrModifierList, List<String>>
 )
 
 private val emptyTransformationResult = TransformationResult(
@@ -26,7 +27,8 @@ private val emptyTransformationResult = TransformationResult(
   GrField.EMPTY_ARRAY,
   PsiClass.EMPTY_ARRAY,
   PsiClassType.EMPTY_ARRAY,
-  PsiClassType.EMPTY_ARRAY
+  PsiClassType.EMPTY_ARRAY,
+  emptyMap()
 )
 
 private val LOG: Logger = Logger.getInstance("#org.jetbrains.plugins.groovy.transformations.TransformationUtilKt")

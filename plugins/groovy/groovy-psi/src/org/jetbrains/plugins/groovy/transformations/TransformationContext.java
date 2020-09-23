@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.transformations;
 
 import com.intellij.openapi.project.Project;
@@ -7,6 +7,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier.GrModifierConstant;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.transformations.dsl.MemberBuilder;
@@ -51,6 +53,9 @@ public interface TransformationContext {
 
   @NotNull
   List<PsiClassType> getExtendsTypes();
+
+  @NotNull
+  List<@NotNull String> getModifiers(@NotNull GrModifierList list);
 
   @NotNull
   default List<PsiClassType> getSuperTypes() {
@@ -104,6 +109,8 @@ public interface TransformationContext {
   void addInterface(@NotNull String fqn);
 
   void addInterface(@NotNull PsiClassType type);
+
+  void addModifier(@NotNull GrModifierList modifierList, @GrModifierConstant @NotNull String modifier);
 
   @NotNull
   MemberBuilder getMemberBuilder();
