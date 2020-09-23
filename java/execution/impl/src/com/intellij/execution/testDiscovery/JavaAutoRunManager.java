@@ -75,7 +75,8 @@ public class JavaAutoRunManager extends AbstractAutoTestManager implements Dispo
           @Override
           public void finished(ProjectTaskManager.@NotNull Result result) {
             if (result.anyTaskMatches((task, state) -> task instanceof ModuleBuildTask)) {
-              if (result.getContext().getGeneratedFilesRoots().isEmpty()) return;
+              if (result.getContext().getGeneratedFilesRoots().isEmpty() && 
+                  result.getContext().getDirtyOutputPaths().isEmpty()) return;
               myHasErrors = result.hasErrors() || result.isAborted();
               if (!result.hasErrors() && !result.isAborted()) {
                 restartAllAutoTests(0);
