@@ -149,7 +149,11 @@ internal class JdkUpdatesCollector(
     }
 
     val notifications = service<JdkUpdaterNotifications>()
-    for (jdk in notifications.filterNotPendingSdks(knownSdks)) {
+
+    val jdksToTest = notifications.filterNotPendingSdks(knownSdks)
+    val noUpdatesFor = HashSet<Sdk>(jdksToTest)
+
+    for (jdk in jdksToTest) {
       val actualItem = JdkInstaller.getInstance().findJdkItemForInstalledJdk(jdk.homePath) ?: continue
       val feedItem = jdkFeed[actualItem.suggestedSdkName] ?: continue
 
@@ -157,7 +161,14 @@ internal class JdkUpdatesCollector(
 
       //internal versions are not considered here (JBRs?)
       if (VersionComparatorUtil.compare(feedItem.jdkVersion, actualItem.jdkVersion) <= 0) continue
+
       notifications.showNotification(jdk, actualItem, feedItem)
+      noUpdatesFor -= jdk
+    }
+
+    //handle the case, when a JDK is no longer requires an update
+    for (jdk in noUpdatesFor) {
+      notifications.hideNotification(jdk)
     }
   }
 }
@@ -176,8 +187,6 @@ internal class JdkUpdaterNotifications : Disposable {
   }
 
   fun showNotification(jdk: Sdk, actualItem: JdkItem, newItem: JdkItem) : Unit = lock.withLock {
-    if (pendingNotifications.containsKey(jdk)) return
-
     val newNotification = JdkUpdateNotification(
       jdk = jdk,
       actualItem = actualItem,
@@ -188,7 +197,16 @@ internal class JdkUpdaterNotifications : Disposable {
         }
       }
     )
-    pendingNotifications[jdk] = newNotification
+
+    val currentNotification = pendingNotifications[jdk]
+    if (currentNotification == null || currentNotification.tryReplaceWithNewerNotification(newNotification)) {
+      pendingNotifications[jdk] = newNotification
+    }
+
     newNotification
   }.showNotificationIfAbsent()
+
+  fun hideNotification(jdk: Sdk) = lock.withLock {
+    pendingNotifications[jdk]?.tryReplaceWithNewerNotification()
+  }
 }

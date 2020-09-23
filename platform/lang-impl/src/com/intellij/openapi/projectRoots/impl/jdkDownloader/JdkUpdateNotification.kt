@@ -16,6 +16,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.vfs.VfsUtil
@@ -47,6 +48,10 @@ internal class JdkUpdateNotification(val jdk: Sdk,
 ) {
   private val lock = ReentrantLock()
 
+  private val jdkVersion = jdk.versionString
+  private val jdkHome = jdk.homePath
+  private val openProjectsSnapshot = ProjectManager.getInstance().openProjects.map { it.locationHash }.toSortedSet()
+
   private var myIsTerminated = false
   private var myIsUpdateRunning = false
 
@@ -74,6 +79,29 @@ internal class JdkUpdateNotification(val jdk: Sdk,
 
       myPendingNotification = notification
     }
+  }
+
+  fun tryReplaceWithNewerNotification(other: JdkUpdateNotification? = null): Boolean = lock.withLock {
+    //nothing to do if update is already running
+    if (myIsUpdateRunning) return false
+
+    //the pending notification is the same as before
+    if (other != null && isSameNotification(other)) return false
+
+    myPendingNotification?.expire()
+    myPendingNotification = null
+    reachTerminalState()
+
+    return true
+  }
+
+  private fun isSameNotification(other: JdkUpdateNotification): Boolean {
+    if (this.jdkVersion != other.jdkVersion) return false
+    if (this.jdkHome != other.jdkHome) return false
+    if (this.newItem != other.newItem) return false
+    //a new open project may also have a update notification, that is not shown there
+    if (!this.openProjectsSnapshot.containsAll(other.openProjectsSnapshot)) return false
+    return true
   }
 
   /**
