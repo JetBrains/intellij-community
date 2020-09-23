@@ -7,6 +7,8 @@ import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.templates.ArchivedProjectTemplate;
@@ -71,18 +73,21 @@ public class ProjectTemplateList extends JPanel {
   }
 
   private void updateSelection() {
-    myDescriptionPane.setText("");
-    ProjectTemplate template = getSelectedTemplate();
-    if (template != null) {
-      String description = template.getDescription();
-      if (StringUtil.isNotEmpty(description)) {
-        description = "<html><body><font " + //NON-NLS
-                      (SystemInfo.isMac ? "" : "face=\"Verdana\" size=\"-1\"") + '>' + // NON-NLS
-                      description +
-                      "</font></body></html>"; //NON-NLS
-        myDescriptionPane.setText(description);
-      }
+    final ProjectTemplate template = getSelectedTemplate();
+    if (template == null || StringUtil.isEmpty(template.getDescription())) {
+      myDescriptionPane.setText("");
+      return;
     }
+
+    final String description = template.getDescription();
+
+    HtmlChunk.Element fontTag = HtmlChunk.tag("font").addText(description);
+    if (!SystemInfo.isMac) {
+      fontTag = fontTag.attr("face", "Verdana")
+        .attr("size","-1");
+    }
+    final HtmlChunk.Element descriptionHtml = new HtmlBuilder().append(fontTag).wrapWithHtmlBody();
+    myDescriptionPane.setText(descriptionHtml.toString());
   }
 
   public void setTemplates(List<? extends ProjectTemplate> list, boolean preserveSelection) {
