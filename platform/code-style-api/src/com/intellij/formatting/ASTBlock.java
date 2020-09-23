@@ -4,7 +4,6 @@ package com.intellij.formatting;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,8 +29,8 @@ public interface ASTBlock extends Block {
   @Contract("null -> null")
   @Nullable
   static IElementType getElementType(@Nullable Block block) {
-    ASTNode obj = getNode(block);
-    return obj == null ? null : PsiUtilCore.getElementType(obj);
+    ASTNode node = getNode(block);
+    return node == null ? null : node.getElementType();
   }
 
   /**
