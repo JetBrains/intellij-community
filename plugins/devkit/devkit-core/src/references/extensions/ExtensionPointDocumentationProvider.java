@@ -75,12 +75,12 @@ public class ExtensionPointDocumentationProvider implements DocumentationProvide
 
       new ExtensionPointBinding(beanClass).visit(new ExtensionPointBinding.BindingVisitor() {
         @Override
-        public void visitAttribute(@NotNull PsiField field, @NotNull String attributeName, boolean required) {
+        public void visitAttribute(@NotNull PsiField field, @NotNull String attributeName, RequiredFlag required) {
           appendFieldBindingText(field, attributeName, required);
         }
 
         @Override
-        public void visitTagOrProperty(@NotNull PsiField field, @NotNull String tagName, boolean required) {
+        public void visitTagOrProperty(@NotNull PsiField field, @NotNull String tagName, RequiredFlag required) {
           visitAttribute(field, "<" + tagName + ">", required);
         }
 
@@ -88,15 +88,21 @@ public class ExtensionPointDocumentationProvider implements DocumentationProvide
         public void visitXCollection(@NotNull PsiField field,
                                      @Nullable String tagName,
                                      @NotNull PsiAnnotation collectionAnnotation,
-                                     boolean required) {
+                                     RequiredFlag required) {
           visitAttribute(field, "<" + tagName + ">...", required);
         }
 
-        private void appendFieldBindingText(@NotNull PsiField field, @NotNull @NlsSafe String displayName, boolean required) {
+        private void appendFieldBindingText(@NotNull PsiField field, @NotNull @NlsSafe String displayName, RequiredFlag required) {
           HtmlChunk hyperLink = createLink(JavaDocUtil.getReferenceText(field.getProject(), field), displayName);
 
           final String typeText = field.getType().getPresentableText();
-          final String requiredText = required ? " " + DevKitBundle.message("extension.point.documentation.field.required.suffix") : "";
+          String requiredText = "";
+          if (required == RequiredFlag.REQUIRED) {
+            requiredText = " " + DevKitBundle.message("extension.point.documentation.field.required.suffix");
+          }
+          else if (required == RequiredFlag.REQUIRED_ALLOW_EMPTY) {
+            requiredText = " " + DevKitBundle.message("extension.point.documentation.field.required.can.be.empty.suffix");
+          }
           final String initializer = field.getInitializer() != null ? " = " + field.getInitializer().getText() : "";
           bindingRows.append(createSectionRow(hyperLink, typeText + requiredText + initializer));
         }

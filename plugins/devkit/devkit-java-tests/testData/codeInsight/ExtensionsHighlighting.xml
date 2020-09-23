@@ -46,6 +46,9 @@
                    forClass="<error descr="Cannot resolve symbol 'INVALID_VALUE'">INVALID_VALUE</error>"
         />
 
+        <myService serviceImplementation="foo.MyRunnable"
+                   canBeEmptyString=""/>
+
         <myPlugin.foo.bar implementation="java.util.ArrayList" os="<error descr="Unknown enum value 'INVALID_VALUE'">INVALID_VALUE</error>"/>
         <completion.contributor/>
         <custom.custom/>
