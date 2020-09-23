@@ -14,6 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierL
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.getAnnotation
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.hasModifierProperty
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createType
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrEnumTypeDefinitionImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField
@@ -27,7 +28,7 @@ internal class TransformationContextImpl(private val myCodeClass: GrTypeDefiniti
   private val myPsiManager: PsiManager = myCodeClass.manager
   private val myPsiFacade: JavaPsiFacade = JavaPsiFacade.getInstance(myProject)
   private var myHierarchyView: PsiClass? = null
-  private val myClassType: PsiClassType = myPsiFacade.elementFactory.createType(codeClass)
+  private val myClassType: PsiClassType = myPsiFacade.elementFactory.createType(codeClass, PsiSubstitutor.EMPTY)
   private val myMemberBuilder = MemberBuilder(this)
 
   private val myMethods: LinkedList<PsiMethod> by lazy(LazyThreadSafetyMode.NONE) {
@@ -106,7 +107,8 @@ internal class TransformationContextImpl(private val myCodeClass: GrTypeDefiniti
 
   override fun getExtendsTypes(): List<PsiClassType> = myExtendsTypes
 
-  override fun getModifiers(list: GrModifierList): List<String> = myModifiers.getOrDefault(list, emptyList())
+  override fun hasModifierProperty(list: GrModifierList, name: String): Boolean =
+    hasModifierProperty(list, name, false) || myModifiers.getOrDefault(list, emptyList()).contains(name)
 
   override fun getClassName(): String? = myCodeClass.name
 

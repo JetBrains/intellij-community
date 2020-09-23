@@ -54,8 +54,7 @@ public interface TransformationContext {
   @NotNull
   List<PsiClassType> getExtendsTypes();
 
-  @NotNull
-  List<@NotNull String> getModifiers(@NotNull GrModifierList list);
+  boolean hasModifierProperty(@NotNull GrModifierList list, @GrModifierConstant @NotNull String name);
 
   @NotNull
   default List<PsiClassType> getSuperTypes() {

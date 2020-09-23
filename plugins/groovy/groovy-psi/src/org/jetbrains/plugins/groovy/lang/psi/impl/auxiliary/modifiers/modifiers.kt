@@ -43,8 +43,11 @@ internal fun hasExplicitModifier(modifierList: GrModifierList, @GrModifierConsta
   return modifierList.modifierFlags.hasMaskModifier(name)
 }
 
-internal fun hasModifierProperty(modifierList: GrModifierList, @GrModifierConstant @NonNls name: String): Boolean {
-  return hasExplicitModifier(modifierList, name) || hasImplicitModifier(modifierList, name) || hasGeneratedModifier(modifierList, name)
+@JvmOverloads
+internal fun hasModifierProperty(modifierList: GrModifierList, @GrModifierConstant @NonNls name: String, includeSynthetic: Boolean = true): Boolean {
+  return hasExplicitModifier(modifierList, name) ||
+         hasImplicitModifier(modifierList, name) ||
+         (includeSynthetic && hasSyntheticModifier(modifierList, name))
 }
 
 private fun hasImplicitModifier(modifierList: GrModifierList, @GrModifierConstant @NonNls name: String): Boolean {
@@ -56,7 +59,7 @@ private fun hasImplicitModifier(modifierList: GrModifierList, @GrModifierConstan
   }
 }
 
-private fun hasGeneratedModifier(modifierList: GrModifierList, name: String) : Boolean {
+private fun hasSyntheticModifier(modifierList: GrModifierList, name: String) : Boolean {
   val containingTypeDefinition = modifierList.parentOfType<GrTypeDefinition>() as? GrTypeDefinitionImpl ?: return false
   return containingTypeDefinition.getSyntheticModifiers(modifierList).contains(name)
 }
