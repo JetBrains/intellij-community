@@ -49,6 +49,8 @@ interface GitHistoryTraverser {
   /**
    * Load basic commit details like message, hash, commit time, author time, etc.
    * This method can be slow due to Git command execution, so it is better to use this method with commit batches.
+   *
+   * Result commits order may be different from [ids] if [ids] contains commits from different roots.
    */
   fun loadMetadata(ids: List<TraverseCommitId>): List<VcsCommitMetadata>
 
@@ -57,6 +59,8 @@ interface GitHistoryTraverser {
    * If commit contains huge amount of changes, this method can be slow, so use it only if you need changes.
    *
    * Also, this method can be slow due to Git command execution, so it is better to use this method with commit batches.
+   *
+   * [fullDetailsHandler] calling order may be different from [ids] if [ids] contains commits from different roots.
    */
   fun loadFullDetails(
     ids: List<TraverseCommitId>,
