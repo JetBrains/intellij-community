@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.data;
 
-import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * The DataGetter realizes the following pattern of getting some data (parametrized by {@code T}) from the VCS:
@@ -55,7 +55,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
 
   @NotNull protected final VcsLogStorage myStorage;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
-  @NotNull private final Cache<Integer, T> myCache;
+  @NotNull private final ConcurrentMap<Integer, T> myCache;
   @NotNull private final SequentialLimitedLifoExecutor<TaskDescriptor> myLoader;
 
   /**
@@ -72,7 +72,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
                      @NotNull Disposable parentDisposable) {
     myStorage = storage;
     myLogProviders = logProviders;
-    myCache = CacheBuilder.newBuilder().maximumSize(10_000).build();
+    myCache = CacheBuilder.newBuilder().maximumSize(10_000).<Integer, T>build().asMap();
     myIndex = index;
     Disposer.register(parentDisposable, this);
     myLoader =
@@ -205,7 +205,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
       if (details instanceof LoadingDetails) {
         if (((LoadingDetails)details).getLoadingTaskIndex() <= myCurrentTaskIndex - MAX_LOADING_TASKS) {
           // don't let old "loading" requests stay in the cache forever
-          myCache.invalidate(hash);
+          myCache.remove(hash, details);
           return null;
         }
       }
@@ -216,7 +216,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
 
   @Nullable
   protected T getFromCache(int hash) {
-    return myCache.getIfPresent(hash);
+    return myCache.get(hash);
   }
 
   /**
@@ -294,12 +294,12 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
                                       @NotNull Consumer<? super T> consumer) throws VcsException;
 
   protected void saveInCache(int index, @NotNull T details) {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> myCache.put(index, details));
+    myCache.put(index, details);
   }
 
   protected void clear() {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-      Iterator<Map.Entry<Integer, T>> iterator = myCache.asMap().entrySet().iterator();
+      Iterator<Map.Entry<Integer, T>> iterator = myCache.entrySet().iterator();
       while (iterator.hasNext()) {
         if (!(iterator.next().getValue() instanceof LoadingDetails)) iterator.remove();
       }
