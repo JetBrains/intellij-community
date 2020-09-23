@@ -50,7 +50,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
   }
 
   private fun doTestAllFilesWithMemberNameReported(env: ImperativeCommand.Environment) {
-    val changedFiles = mutableSetOf<VirtualFile>()
+    val changedFiles = mutableMapOf<VirtualFile, Set<VirtualFile>>()
 
     MadTestingUtil.changeAndRevert(myProject) {
       val nFilesToChange = env.generateValue(Generator.integers(1, 3), "Files to change: %s")
@@ -72,7 +72,7 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
         val actual = changeSelectedFile(env, members, fileToChange)
         if (actual == null) break
 
-        changedFiles.add(fileToChange.virtualFile)
+        changedFiles[fileToChange.virtualFile] = relatedFiles
 
         val expected = findFilesWithProblems(relatedFiles, members)
         assertContainsElements(actual, expected)
@@ -83,18 +83,20 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
 
     // check that all problems disappeared after revert
     val psiManager = PsiManager.getInstance(myProject)
-    for (changedFile in changedFiles) {
+    for ((changedFile, relatedFiles) in changedFiles) {
       val psiFile = psiManager.findFile(changedFile)!!
       val editor = openEditor(changedFile)
       rehighlight(psiFile, editor)
-      val problems: Map<PsiMember, Set<Problem>> = ProjectProblemUtils.getReportedProblems(
-        editor)
+      val problems: Map<PsiMember, Set<Problem>> = ProjectProblemUtils.getReportedProblems(editor)
       if (problems.isNotEmpty()) {
-        TestCase.fail("""
+        val relatedProblems = findRelatedProblems(problems, relatedFiles)
+        if (relatedProblems.isNotEmpty()) {
+          TestCase.fail("""
           Problems are still reported even after the fix.
           File: ${changedFile.name}, 
-          ${problems.map { (member, memberProblems) -> extractMemberProblems(member, memberProblems) }}
-        """.trimIndent())
+          ${relatedProblems.map { (member, memberProblems) -> extractMemberProblems(member, memberProblems) }}
+          """.trimIndent())
+        }
       }
     }
   }
@@ -252,6 +254,19 @@ class ProjectProblemsViewPropertyTest : BaseUnivocityTest() {
   }
 
   private fun inScope(psiFile: PsiFile, scope: SearchScope): Boolean = scope.contains(psiFile.virtualFile)
+
+  private fun findRelatedProblems(problems: Map<PsiMember, Set<Problem>>, relatedFiles: Set<VirtualFile>): Map<PsiMember, Set<Problem>> {
+    val relatedProblems = mutableMapOf<PsiMember, Set<Problem>>()
+    for ((member, memberProblems) in problems) {
+      val memberRelatedProblems = mutableSetOf<Problem>()
+      for (memberProblem in memberProblems) {
+        val problemFile = memberProblem.reportedElement.containingFile
+        if (problemFile.virtualFile in relatedFiles) memberRelatedProblems.add(memberProblem)
+      }
+      if (memberRelatedProblems.isNotEmpty()) relatedProblems[member] = memberRelatedProblems
+    }
+    return relatedProblems
+  }
 
   private fun extractMemberProblems(member: PsiMember, memberProblems: Set<Problem>): String {
     data class ProblemData(val fileName: String, val offset: Int, val reportedElement: String,
