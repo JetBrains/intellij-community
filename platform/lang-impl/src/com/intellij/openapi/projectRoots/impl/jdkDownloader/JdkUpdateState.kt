@@ -13,7 +13,7 @@ class JdkUpdaterStateData : BaseState() {
 }
 
 @State(name = "jdk-update-state", storages = [Storage(StoragePathMacros.CACHE_FILE)], allowLoadInTests = true)
-internal class JdkUpdaterState : SimplePersistentStateComponent<JdkUpdaterStateData>(JdkUpdaterStateData()) {
+class JdkUpdaterState : SimplePersistentStateComponent<JdkUpdaterStateData>(JdkUpdaterStateData()) {
   private val lock = ReentrantLock()
 
   override fun loadState(state: JdkUpdaterStateData) = lock.withLock {

@@ -81,6 +81,11 @@ class JdkInstaller {
   private operator fun File.div(path: String) = File(this, path).absoluteFile
 
   fun defaultInstallDir() : Path {
+    val explicitHome = System.getProperty("jdk.downloader.home")
+    if (explicitHome != null) {
+      return Paths.get(explicitHome)
+    }
+
     val home = Paths.get(FileUtil.toCanonicalPath(System.getProperty("user.home") ?: "."))
     return when {
       SystemInfo.isLinux   -> home.resolve(".jdks")

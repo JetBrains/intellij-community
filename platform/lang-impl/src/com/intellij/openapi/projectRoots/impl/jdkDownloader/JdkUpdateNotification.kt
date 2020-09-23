@@ -41,10 +41,10 @@ private val LOG = logger<JdkUpdateNotification>()
  *    - the update notification is dismissed (or rejected)
  *    - the JDK update is completed
  */
-internal class JdkUpdateNotification(val jdk: Sdk,
-                                     private val actualItem: JdkItem,
-                                     val newItem: JdkItem,
-                                     private val whenComplete: (JdkUpdateNotification) -> Unit
+class JdkUpdateNotification(val jdk: Sdk,
+                            val oldItem: JdkItem,
+                            val newItem: JdkItem,
+                            private val whenComplete: (JdkUpdateNotification) -> Unit
 ) {
   private val lock = ReentrantLock()
 
@@ -113,7 +113,11 @@ internal class JdkUpdateNotification(val jdk: Sdk,
     whenComplete(this)
   }
 
-  private fun updateJdkAction(@Nls message: String) = object : NotificationAction(message) {
+  fun isTerminated() = lock.withLock { myIsTerminated }
+
+  private fun updateJdkAction(@Nls message: String) =InstallUpdateNotification(message)
+
+  inner class InstallUpdateNotification(message: String) : NotificationAction(message) {
     override fun actionPerformed(e: AnActionEvent, notification: Notification) {
       lock.withLock {
         if (myIsUpdateRunning) return
@@ -124,7 +128,9 @@ internal class JdkUpdateNotification(val jdk: Sdk,
     }
   }
 
-  private fun rejectJdkAction() = object : NotificationAction(ProjectBundle.message("notification.link.jdk.update.skip")) {
+  private fun rejectJdkAction() = RejectUpdateNotification()
+
+  inner class RejectUpdateNotification : NotificationAction(ProjectBundle.message("notification.link.jdk.update.skip")) {
     override fun actionPerformed(e: AnActionEvent, notification: Notification) {
       service<JdkUpdaterState>().blockVersion(jdk, newItem)
       notification.expire()
@@ -139,7 +145,7 @@ internal class JdkUpdateNotification(val jdk: Sdk,
     val message = ProjectBundle.message("notification.text.jdk.update.found",
                                         jdk.name,
                                         newItem.fullPresentationText,
-                                        actualItem.fullPresentationText)
+                                        oldItem.fullPresentationText)
 
     NotificationGroupManager.getInstance().getNotificationGroup("JDK Update")
       .createNotification(title, message, NotificationType.INFORMATION)

@@ -2,7 +2,6 @@
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.ProjectTopics
-import com.intellij.application.subscribe
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
@@ -15,22 +14,18 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.JavaSdkType
-import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.DependentSdkType
 import com.intellij.openapi.projectRoots.impl.UnknownSdkCollector
 import com.intellij.openapi.projectRoots.impl.UnknownSdkContributor
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.UnknownSdk
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.text.VersionComparatorUtil
-import com.intellij.util.xmlb.annotations.OptionTag
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -174,7 +169,7 @@ internal class JdkUpdatesCollector(
 }
 
 @Service //Application service
-internal class JdkUpdaterNotifications : Disposable {
+class JdkUpdaterNotifications : Disposable {
   private val lock = ReentrantLock()
   private val pendingNotifications = HashMap<Sdk, JdkUpdateNotification>()
 
@@ -190,7 +185,7 @@ internal class JdkUpdaterNotifications : Disposable {
   fun showNotification(jdk: Sdk, actualItem: JdkItem, newItem: JdkItem) : Unit = lock.withLock {
     val newNotification = JdkUpdateNotification(
       jdk = jdk,
-      actualItem = actualItem,
+      oldItem = actualItem,
       newItem = newItem,
       whenComplete = {
         lock.withLock {
@@ -200,10 +195,8 @@ internal class JdkUpdaterNotifications : Disposable {
     )
 
     val currentNotification = pendingNotifications[jdk]
-    if (currentNotification == null || currentNotification.tryReplaceWithNewerNotification(newNotification)) {
-      pendingNotifications[jdk] = newNotification
-    }
-
+    if (currentNotification != null && !currentNotification.tryReplaceWithNewerNotification(newNotification)) return
+    pendingNotifications[jdk] = newNotification
     newNotification
   }.showNotificationIfAbsent()
 
