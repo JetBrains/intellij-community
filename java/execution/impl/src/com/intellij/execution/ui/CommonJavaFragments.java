@@ -29,6 +29,8 @@ import static com.intellij.util.containers.ContainerUtil.exists;
 
 public final class CommonJavaFragments {
 
+  public static final String JRE_PATH = "jrePath";
+
   public static <S extends RunConfigurationBase<?>> SettingsEditorFragment<S, JLabel> createBuildBeforeRun(BeforeRunComponent beforeRunComponent) {
     String buildAndRun = ExecutionBundle.message("application.configuration.title.build.and.run");
     String run = ExecutionBundle.message("application.configuration.title.run");
@@ -133,7 +135,6 @@ public final class CommonJavaFragments {
   public static <T extends CommonJavaRunConfigurationParameters> SettingsEditorFragment<T, JrePathEditor> createJrePath(DefaultJreSelector defaultJreSelector) {
     JrePathEditor jrePathEditor = new JrePathEditor(false);
     jrePathEditor.setDefaultJreSelector(defaultJreSelector);
-    //noinspection unchecked
     ComboBox<JrePathEditor.JreComboBoxItem> comboBox = jrePathEditor.getComponent();
     comboBox.setRenderer(new ColoredListCellRenderer<>() {
       @Override
@@ -196,7 +197,7 @@ public final class CommonJavaFragments {
     jrePathEditor.getLabel().setVisible(false);
     jrePathEditor.getComponent().getAccessibleContext().setAccessibleName(jrePathEditor.getLabel().getText());
     SettingsEditorFragment<T, JrePathEditor> jrePath =
-      new SettingsEditorFragment<>("jrePath", ExecutionBundle.message("run.configuration.jre.name"), null, jrePathEditor, 5,
+      new SettingsEditorFragment<>(JRE_PATH, ExecutionBundle.message("run.configuration.jre.name"), null, jrePathEditor, 5,
                                    (configuration, editor) -> editor.setPathOrName(configuration.getAlternativeJrePath(),
                                                                                    configuration.isAlternativeJrePathEnabled()),
                                    (configuration, editor) -> {

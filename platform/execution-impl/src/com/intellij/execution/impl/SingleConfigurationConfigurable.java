@@ -11,6 +11,7 @@ import com.intellij.execution.target.LanguageRuntimeType;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentsConfigurable;
 import com.intellij.execution.target.TargetEnvironmentsManager;
+import com.intellij.execution.ui.RunnerAndConfigurationSettingsEditor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataKey;
@@ -428,7 +429,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         String chosenTarget = ((RunOnTargetComboBox)myRunOnComboBox).getSelectedTargetName();
         if (!StringUtil.equals(myDefaultTargetName, chosenTarget)) {
           setModified(true);
-          myDefaultTargetName = chosenTarget;
+          setTargetName(chosenTarget);
         }
       });
     }
@@ -449,7 +450,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
         LanguageRuntimeType<?> defaultRuntime = ((TargetEnvironmentAwareRunProfile)configuration).getDefaultLanguageRuntimeType();
         ((RunOnTargetComboBox)myRunOnComboBox).setDefaultLanguageRuntimeTime(defaultRuntime);
         resetRunOnComboBox(defaultTargetName);
-        myDefaultTargetName = defaultTargetName;
+        setTargetName(defaultTargetName);
       }
 
       myIsAllowRunningInParallel = configuration.isAllowRunningInParallel();
@@ -526,6 +527,14 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
           }
         });
       myJBScrollPane = wrapWithScrollPane(null);
+    }
+  }
+
+  private void setTargetName(String chosenTarget) {
+    myDefaultTargetName = chosenTarget;
+    SettingsEditor<RunnerAndConfigurationSettings> editor = getEditor();
+    if (editor instanceof RunnerAndConfigurationSettingsEditor) {
+      ((RunnerAndConfigurationSettingsEditor)editor).targetChanged(chosenTarget);
     }
   }
 }

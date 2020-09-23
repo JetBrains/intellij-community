@@ -32,7 +32,7 @@ public interface TargetEnvironmentAwareRunProfile extends RunProfile {
   LanguageRuntimeType<?> getDefaultLanguageRuntimeType();
 
   /**
-   * @return display name of target environment to run on
+   * @return display name of target environment to run on, or null if local machine target is chosen
    * @see TargetEnvironmentConfiguration#getDisplayName()
    */
   @Nullable

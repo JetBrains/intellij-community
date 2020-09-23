@@ -156,7 +156,9 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
 
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
-    JavaParametersUtil.checkAlternativeJRE(this);
+    if (getDefaultTargetName() == null) {
+      JavaParametersUtil.checkAlternativeJRE(this);
+    }
     final JavaRunConfigurationModule configurationModule = getConfigurationModule();
     final PsiClass psiClass =
       configurationModule.checkModuleAndClassName(getMainClassName(), ExecutionBundle.message("no.main.class.specified.error.text"));

@@ -36,6 +36,10 @@ public class RunnerAndConfigurationSettingsEditor extends SettingsEditor<RunnerA
                     : null;
   }
 
+  public void targetChanged(String targetName) {
+    myConfigurationEditor.targetChanged(targetName);
+  }
+
   @Override
   protected void resetEditorFrom(@NotNull RunnerAndConfigurationSettings s) {
     myConfigurationEditor.resetEditorFrom((RunnerAndConfigurationSettingsImpl)s);
