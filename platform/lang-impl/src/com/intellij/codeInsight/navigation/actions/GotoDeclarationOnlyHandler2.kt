@@ -6,6 +6,7 @@ import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.navigation.CtrlMouseInfo
 import com.intellij.codeInsight.navigation.impl.*
 import com.intellij.featureStatistics.FeatureUsageTracker
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.navigation.chooseTargetPopup
 import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
 import com.intellij.openapi.editor.Editor
@@ -60,23 +61,35 @@ internal object GotoDeclarationOnlyHandler2 : CodeInsightActionHandler {
   internal fun gotoDeclaration(editor: Editor, file: PsiFile, actionResult: GTDActionResult) {
     when (actionResult) {
       is GTDActionResult.SingleTarget -> {
-        recordAndNavigate(editor, file, actionResult.navigatable, actionResult.navigationProvider)
+        recordAndNavigate(
+          editor, file, actionResult.navigatable,
+          GotoDeclarationAction.getCurrentEventData(), actionResult.navigationProvider
+        )
       }
       is GTDActionResult.MultipleTargets -> {
+        // obtain event data before showing the popup,
+        // because showing the popup will finish the GotoDeclarationAction#actionPerformed and clear the data
+        val eventData: List<EventPair<*>> = GotoDeclarationAction.getCurrentEventData()
         val popup = chooseTargetPopup(
           CodeInsightBundle.message("declaration.navigation.title"),
           actionResult.targets, GTDTarget::presentation
         ) { (navigatable, _, navigationProvider) ->
-          recordAndNavigate(editor, file, navigatable, navigationProvider)
+          recordAndNavigate(editor, file, navigatable, eventData, navigationProvider)
         }
         popup.showInBestPositionFor(editor)
       }
     }
   }
 
-  private fun recordAndNavigate(editor: Editor, file: PsiFile, navigatable: Navigatable, navigationProvider: Any?) {
+  private fun recordAndNavigate(
+    editor: Editor,
+    file: PsiFile,
+    navigatable: Navigatable,
+    eventData: List<EventPair<*>>,
+    navigationProvider: Any?
+  ) {
     if (navigationProvider != null) {
-      GTDUCollector.recordNavigated(GotoDeclarationAction.getCurrentEventData(), navigationProvider.javaClass)
+      GTDUCollector.recordNavigated(eventData, navigationProvider.javaClass)
     }
     gotoTarget(editor, file, navigatable)
   }
