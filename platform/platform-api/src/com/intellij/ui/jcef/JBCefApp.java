@@ -27,6 +27,7 @@ import org.cef.callback.CefSchemeRegistrar;
 import org.cef.handler.CefAppHandlerAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.awt.*;
 import java.io.BufferedReader;
@@ -128,7 +129,7 @@ public final class JBCefApp {
       throw new IllegalStateException("CefApp failed to start");
     }
     CefSettings settings = config.getCefSettings();
-    settings.windowless_rendering_enabled = false;
+    settings.windowless_rendering_enabled = isOffScreenRenderingMode();
     settings.log_severity = getLogLevel();
     settings.log_file = System.getProperty("ide.browser.jcef.log.path",
       System.getProperty("user.home") + Platform.current().fileSeparator + "jcef_" + ProcessHandle.current().pid() + ".log");
@@ -301,6 +302,14 @@ public final class JBCefApp {
   @NotNull
   public JBCefClient createClient() {
     return new JBCefClient(myCefApp.createClient());
+  }
+
+  /**
+   * Returns true if JCEF is run in off-screen rendering mode.
+   */
+  @ApiStatus.Experimental
+  public static boolean isOffScreenRenderingMode() {
+    return RegistryManager.getInstance().is("ide.browser.jcef.osr.enabled");
   }
 
   /**
