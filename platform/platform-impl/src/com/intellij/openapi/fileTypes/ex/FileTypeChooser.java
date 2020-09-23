@@ -84,7 +84,7 @@ public final class FileTypeChooser extends DialogWrapper {
 
   private void updateContextHelp() {
     FileType selectedType = getSelectedType();
-    String fileTypeString = myOpenAsNative.isSelected() || selectedType == null ? "" : (" | " + selectedType.getDescription());
+    String fileTypeString = selectedType == null ? "" : (" | " + selectedType.getDescription());
     myContextHelpLabel.setText(FileTypesBundle.message("label.help.change.association", ShowSettingsUtil.getSettingsMenuName(),
                                                        fileTypeString));
   }
