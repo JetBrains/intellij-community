@@ -22,6 +22,10 @@ public interface CommitExecutor {
     return null;
   }
 
+  default boolean areChangesRequired() {
+    return true;
+  }
+
   default boolean supportsPartialCommit() {
     return false;
   }

@@ -757,8 +757,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
 
     public void updateEnabled(boolean hasDiffs) {
       if (myCommitExecutor != null) {
-        setEnabled(
-          hasDiffs || myCommitExecutor instanceof CommitExecutorBase && !((CommitExecutorBase)myCommitExecutor).areChangesRequired());
+        setEnabled(hasDiffs || !myCommitExecutor.areChangesRequired());
       }
     }
   }

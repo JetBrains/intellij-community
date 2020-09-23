@@ -260,7 +260,7 @@ internal class ChangesViewCommitWorkflowHandler(
 
   override fun checkCommit(executor: CommitExecutor?): Boolean =
     ui.commitProgressUi.run {
-      val executorWithoutChangesAllowed = executor is CommitExecutorBase && !executor.areChangesRequired()
+      val executorWithoutChangesAllowed = executor?.areChangesRequired() == false
 
       isEmptyChanges = !amendCommitHandler.isAmendWithoutChangesAllowed() && !executorWithoutChangesAllowed && isCommitEmpty()
       isEmptyMessage = getCommitMessage().isBlank()
