@@ -108,7 +108,11 @@ class GitStashTree(project: Project, parentDisposable: Disposable) : ChangesTree
   }
 
   override fun installGroupingSupport(): ChangesGroupingSupport {
-    val groupingSupport = ChangesGroupingSupport(myProject, this, false)
+    val groupingSupport = object : ChangesGroupingSupport(myProject, this, false) {
+      override fun isAvailable(groupingKey: String): Boolean {
+        return groupingKey != REPOSITORY_GROUPING && super.isAvailable(groupingKey)
+      }
+    }
     installGroupingSupport(this, groupingSupport, GROUPING_PROPERTY_NAME, *DEFAULT_GROUPING_KEYS)
     return groupingSupport
   }
