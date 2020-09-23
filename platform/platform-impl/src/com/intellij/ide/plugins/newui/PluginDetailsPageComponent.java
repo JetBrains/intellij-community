@@ -12,7 +12,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -53,6 +55,8 @@ import java.util.function.Consumer;
  * @author Alexander Lobas
  */
 public class PluginDetailsPageComponent extends MultiPanel {
+
+  private static final Logger LOG = Logger.getInstance(PluginDetailsPageComponent.class);
   private static final String MARKETPLACE_LINK = "https://plugins.jetbrains.com/plugin/index?xmlId=";
 
   private final MyPluginModel myPluginModel;
@@ -852,10 +856,22 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
+      Project project = e.getProject();
+
+      Project modelProject = myPluginModel.getProject();
+      if (modelProject != project) {
+        LOG.assertTrue(
+          modelProject == null,
+          "Model project='" + modelProject + "', action project='" + project + "'"
+        );
+
+        myPluginModel.setProject(project);
+      }
+
       PluginEnabledState state = myPluginModel.getState(myPlugin);
 
       boolean invisible = myNewState == state ||
-                          e.getProject() == null && myNewState.isPerProject();
+                          project == null && myNewState.isPerProject();
       e.getPresentation().setVisible(!invisible);
     }
   }
