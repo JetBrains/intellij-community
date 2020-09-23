@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.fields.ExtendableTextField;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StatusText;
@@ -38,6 +39,7 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.io.File;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreComboBoxItem>> implements PanelWithAnchor {
@@ -147,11 +149,12 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
     if (targetName != null) {
       TargetEnvironmentConfiguration config = TargetEnvironmentsManager.getInstance().getTargets().findByName(targetName);
       if (config != null) {
-        JavaLanguageRuntimeConfiguration runtime = config.getRuntimes().findByType(JavaLanguageRuntimeConfiguration.class);
-        if (runtime != null) {
-          CustomJreItem item = new CustomJreItem(runtime.getHomePath());
-          myComboBoxModel.add(item);
-          myComboBoxModel.setSelectedItem(item);
+        List<CustomJreItem> items = ContainerUtil.mapNotNull(config.getRuntimes().resolvedConfigs(),
+                                                             configuration -> configuration instanceof JavaLanguageRuntimeConfiguration ?
+                                                                              new CustomJreItem((JavaLanguageRuntimeConfiguration)configuration) : null);
+        myComboBoxModel.addAll(items);
+        if (!items.isEmpty()) {
+          myComboBoxModel.setSelectedItem(items.get(0));
         }
         return false;
       }
@@ -341,6 +344,13 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
       myPath = path;
       myName = name;
       myVersion = version;
+      myID = null;
+    }
+
+    CustomJreItem(JavaLanguageRuntimeConfiguration runtimeConfiguration) {
+      myPath = runtimeConfiguration.getHomePath();
+      myName = null;
+      myVersion = runtimeConfiguration.getJavaVersionString();
       myID = null;
     }
 
