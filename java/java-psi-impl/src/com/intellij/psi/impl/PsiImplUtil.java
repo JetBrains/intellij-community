@@ -333,7 +333,6 @@ public final class PsiImplUtil {
    */
   @Deprecated
   public static PsiType normalizeWildcardTypeByPosition(@NotNull PsiType type, @NotNull PsiExpression expression) {
-    PsiUtilCore.ensureValid(expression);
     PsiUtil.ensureValidType(type);
 
     PsiExpression topLevel = expression;
