@@ -61,7 +61,7 @@
     <action id="Git.Squash.Into.Commit" class="git4idea.rebase.GitCommitSquashBySubjectAction"/>
     <action id="Git.Interactive.Rebase" class="git4idea.rebase.GitInteractiveRebaseAction"/>
     <action id="Git.Commit.And.Push.Executor" class="git4idea.actions.GitCommitAndPushExecutorAction">
-      <add-to-group group-id="Vcs.CommitExecutor.Actions"/>
+      <add-to-group group-id="Vcs.Commit.PrimaryCommitActions"/>
       <keyboard-shortcut first-keystroke="control alt K" keymap="$default"/>
     </action>
 

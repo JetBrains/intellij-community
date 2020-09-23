@@ -3,6 +3,7 @@ package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionToolbar.NOWRAP_LAYOUT_POLICY
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.ex.EditorEx
@@ -108,6 +109,19 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
     setTargetComponent(this@ChangesViewCommitPanel)
     component.isOpaque = false
   }
+  private val primaryCommitActionsToolbar =
+    ActionManager.getInstance().createActionToolbar(
+      ActionPlaces.UNKNOWN,
+      ActionManager.getInstance().getAction("Vcs.Commit.PrimaryCommitActions") as ActionGroup,
+      true
+    ).apply {
+      setTargetComponent(this@ChangesViewCommitPanel)
+      setReservePlaceAutoPopupIcon(false)
+      layoutPolicy = NOWRAP_LAYOUT_POLICY
+
+      component.isOpaque = false
+      component.border = null
+    }
 
   private val commitMessage = CommitMessage(project, false, false, true).apply {
     editorField.addSettingsProvider { it.setBorder(emptyLeft(6)) }
@@ -161,6 +175,7 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
       border = getButtonPanelBorder()
 
       addToLeft(commitButton)
+      addToCenter(primaryCommitActionsToolbar.component)
     }
     centerPanel
       .addToCenter(commitMessage)
@@ -218,12 +233,16 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
   //  See CheckinProjectPanel.getCommitActionName() usages.
   override var defaultCommitActionName: String
     get() = (defaultCommitAction.getValue(Action.NAME) as? String).orEmpty()
-    set(value) = defaultCommitAction.putValue(Action.NAME, value)
+    set(value) {
+      defaultCommitAction.putValue(Action.NAME, value)
+      primaryCommitActionsToolbar.updateActionsImmediately()
+    }
 
   override var isDefaultCommitActionEnabled: Boolean
     get() = defaultCommitAction.isEnabled
     set(value) {
       defaultCommitAction.isEnabled = value
+      primaryCommitActionsToolbar.updateActionsImmediately()
     }
 
   override fun setCustomCommitActions(actions: List<AnAction>) = commitButton.setOptions(actions)

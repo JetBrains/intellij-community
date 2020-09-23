@@ -389,9 +389,11 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     List<CommitExecutorAction> result = new ArrayList<>();
 
     if (isDefaultCommitEnabled() && UISettings.getShadowInstance().getAllowMergeButtons()) {
-      ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("Vcs.CommitExecutor.Actions");
+      ActionGroup primaryActions = (ActionGroup)ActionManager.getInstance().getAction("Vcs.Commit.PrimaryCommitActions");
+      ActionGroup executorActions = (ActionGroup)ActionManager.getInstance().getAction("Vcs.CommitExecutor.Actions");
 
-      result.addAll(map(group.getChildren(null), CommitExecutorAction::new));
+      result.addAll(map(primaryActions.getChildren(null), CommitExecutorAction::new));
+      result.addAll(map(executorActions.getChildren(null), CommitExecutorAction::new));
       result.addAll(map(filter(executors, CommitExecutor::useDefaultAction), CommitExecutorAction::new));
     }
     else {

@@ -317,6 +317,7 @@
               icon="AllIcons.Vcs.History"/>
     </group>
 
+    <group id="Vcs.Commit.PrimaryCommitActions"/>
     <group id="Vcs.CommitExecutor.Actions"/>
 
     <group id="ChangesView.CommitToolbar">

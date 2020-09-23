@@ -183,7 +183,7 @@
     </group>
 
     <action id="Hg.Commit.And.Push.Executor" class="org.zmlx.hg4idea.action.HgCommitAndPushExecutorAction">
-      <add-to-group group-id="Vcs.CommitExecutor.Actions"/>
+      <add-to-group group-id="Vcs.Commit.PrimaryCommitActions"/>
       <keyboard-shortcut first-keystroke="control alt K" keymap="$default"/>
     </action>
 
