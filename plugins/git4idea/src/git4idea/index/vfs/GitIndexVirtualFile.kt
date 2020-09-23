@@ -29,6 +29,7 @@ import git4idea.index.GitIndexUtil
 import git4idea.util.GitFileUtils
 import org.jetbrains.annotations.NonNls
 import java.io.*
+import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 
 class GitIndexVirtualFile(private val project: Project,
@@ -170,6 +171,7 @@ class GitIndexVirtualFile(private val project: Project,
 
     other as GitIndexVirtualFile
 
+    if (project != other.project) return false
     if (root != other.root) return false
     if (filePath != other.filePath) return false
 
@@ -177,9 +179,7 @@ class GitIndexVirtualFile(private val project: Project,
   }
 
   override fun hashCode(): Int {
-    var result = root.hashCode()
-    result = 31 * result + filePath.hashCode()
-    return result
+    return Objects.hash(project, root, filePath)
   }
 
   override fun toString(): @NonNls String {
