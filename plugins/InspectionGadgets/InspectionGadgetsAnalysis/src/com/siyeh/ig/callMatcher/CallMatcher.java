@@ -293,7 +293,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
     public boolean methodReferenceMatches(PsiMethodReferenceExpression methodRef) {
       if (methodRef == null) return false;
       String name = methodRef.getReferenceName();
-      if (!myNames.contains(name)) return false;
+      if (name == null || !myNames.contains(name)) return false;
       PsiMethod method = ObjectUtils.tryCast(methodRef.resolve(), PsiMethod.class);
       if (!methodMatches(method)) return false;
       PsiParameterList parameterList = method.getParameterList();
