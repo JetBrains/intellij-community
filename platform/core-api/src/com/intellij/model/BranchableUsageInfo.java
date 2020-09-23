@@ -26,7 +26,7 @@ public interface BranchableUsageInfo {
    */
   @NotNull UsageInfo obtainBranchCopy(@NotNull ModelBranch branch);
 
-  static UsageInfo[] convertUsages(UsageInfo @NotNull [] usages, ModelBranch branch) {
+  static UsageInfo @NotNull [] convertUsages(UsageInfo @NotNull [] usages, @NotNull ModelBranch branch) {
     Set<String> unsupportedTypes = null;
     List<UsageInfo> result = new ArrayList<>(usages.length);
     for (UsageInfo t : usages) {
