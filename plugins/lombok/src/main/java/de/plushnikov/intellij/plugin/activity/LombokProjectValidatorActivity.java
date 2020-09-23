@@ -120,9 +120,9 @@ public class LombokProjectValidatorActivity implements StartupActivity {
   }
 
   private boolean hasAnnotationProcessorsEnabled(Project project) {
-    CompilerConfigurationImpl compilerConfiguration = getCompilerConfiguration(project);
+    final CompilerConfigurationImpl compilerConfiguration = getCompilerConfiguration(project);
     return compilerConfiguration.getDefaultProcessorProfile().isEnabled() &&
-      compilerConfiguration.getModuleProcessorProfiles().stream().anyMatch(AnnotationProcessingConfiguration::isEnabled);
+      compilerConfiguration.getModuleProcessorProfiles().stream().allMatch(AnnotationProcessingConfiguration::isEnabled);
   }
 
   private boolean hasLombokLibrary(Project project) {
