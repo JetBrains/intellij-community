@@ -29,8 +29,6 @@ internal class FieldExpression(
 
   override fun calculateResult(context: ExpressionContext): Result? = TextResult(fieldName)
 
-  override fun calculateQuickResult(context: ExpressionContext): Result? = calculateResult(context)
-
   override fun calculateLookupItems(context: ExpressionContext): Array<LookupElement> {
     val psiClass = myClassPointer.element ?: return LookupElement.EMPTY_ARRAY
 
