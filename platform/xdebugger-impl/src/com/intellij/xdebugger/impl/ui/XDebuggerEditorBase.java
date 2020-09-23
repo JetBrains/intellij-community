@@ -30,6 +30,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollBar;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -557,7 +558,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
       Icon dropdownIcon = AllIcons.General.Dropdown;
       int width = dropdownIcon.getIconWidth();
       dropdownIcon = IconUtil.cropIcon(dropdownIcon, new Rectangle(width / 2, 0, width - width / 2, dropdownIcon.getIconHeight()));
-      LayeredIcon icon = JBUI.scale(new LayeredIcon(1));
+      LayeredIcon icon = JBUIScale.scaleIcon(new LayeredIcon(1));
       icon.setIcon(dropdownIcon, 0, 0, -5);
       setIcon(icon);
       setDisabledIcon(IconLoader.getDisabledIcon(icon));

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.util.ui;
 
@@ -26,11 +26,11 @@ import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
 //public class EmptyIcon extends JBUI.CachingScalableJBIcon<JBUI.CachingScalableJBIcon> { // backward compatible version
   private static final Map<Pair<Integer, Boolean>, EmptyIcon> cache = new HashMap<>();
 
-  public static final Icon ICON_18 = JBUI.scale(create(18));
-  public static final Icon ICON_16 = JBUI.scale(create(16));
-  public static final Icon ICON_13 = JBUI.scale(create(13));
-  public static final Icon ICON_8 = JBUI.scale(create(8));
-  public static final Icon ICON_0 = JBUI.scale(create(0));
+  public static final Icon ICON_18 = JBUIScale.scaleIcon(create(18));
+  public static final Icon ICON_16 = JBUIScale.scaleIcon(create(16));
+  public static final Icon ICON_13 = JBUIScale.scaleIcon(create(13));
+  public static final Icon ICON_8 = JBUIScale.scaleIcon(create(8));
+  public static final Icon ICON_0 = JBUIScale.scaleIcon(create(0));
 
   protected final int width;
   protected final int height;

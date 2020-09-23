@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
 import com.intellij.util.IconUtil;
@@ -34,7 +35,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBRectangle;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -736,7 +736,7 @@ public final class EditorWindow {
       DecoratedTabIcon result = new DecoratedTabIcon(2, baseIcon);
       result.setIcon(baseIcon, 0);
       result.setIcon(modifiedIcon, 1, -modifiedIcon.getIconWidth() / 2, 0);
-      return JBUI.scale(result);
+      return JBUIScale.scaleIcon(result);
     }
     return baseIcon;
   }

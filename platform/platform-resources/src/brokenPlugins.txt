@@ -773,7 +773,7 @@ ch.uzh.ifi.batteryAwareTransformations 1.0
 edu.ua.highbay.binderplugin 0.5.2
 com.aqqxa.plugin.aligner 1.0
 com.aspose.Note.java.intellij.maven 1.0 1.0.1 1.0.2 1.0.3
-org.sylfra.idea.plugins.revu 2.7.3
+org.sylfra.idea.plugins.revu 2.7.3 2.7.2 2.7.1 2.7 2.6 2.6rc4 2.6rc3 2.6rc2 2.5 2.0.1 2.0 2.0-SNAPSHOT-4 2.0-SNAPSHOT-3 2.0-SNAPSHOT-2 2.0-SNAPSHOT-1 1.0
 pl.psi.jls.wuff.plugin 0.3.2 0.3.3 0.3.4 0.3.5 0.3.6
 com.billguard.appcodeplusplus 1.0 1.1 1.2
 eu.inmite.android.plugin.preioc 1.0.0

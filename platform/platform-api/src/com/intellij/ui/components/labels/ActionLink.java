@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components.labels;
 
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -7,10 +7,13 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -20,7 +23,7 @@ import java.awt.event.InputEvent;
  * @author Konstantin Bulenkov
  */
 public class ActionLink extends LinkLabel<Object> implements DataProvider {
-  private static final EmptyIcon ICON = JBUI.scale(EmptyIcon.create(0, 12));
+  private static final EmptyIcon ICON = JBUIScale.scaleIcon(EmptyIcon.create(0, 12));
   private final AnAction myAction;
   private InputEvent myEvent;
   private Color myVisitedColor;
