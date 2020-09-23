@@ -29,7 +29,7 @@ import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.javadoc.*;
-import com.intellij.psi.search.EverythingGlobalScope;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -95,11 +95,12 @@ public class JavaDocInfoGenerator {
 
   private static final InheritDocProvider<PsiElement[]> ourEmptyElementsProvider = mapProvider(ourEmptyProvider, false);
 
+  @NotNull
   private final Project myProject;
   private final PsiElement myElement;
   private final JavaSdkVersion mySdkVersion;
 
-  public JavaDocInfoGenerator(Project project, PsiElement element) {
+  public JavaDocInfoGenerator(@NotNull Project project, PsiElement element) {
     myProject = project;
     myElement = element;
 
@@ -444,10 +445,10 @@ public class JavaDocInfoGenerator {
     if (myElement instanceof PsiDirectory) {
       final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)myElement);
       if (aPackage == null) return false;
-      items = aPackage.getDirectories(new EverythingGlobalScope(myProject));
+      items = aPackage.getDirectories(GlobalSearchScope.everythingScope(myProject));
     }
     else if (myElement instanceof PsiPackage) {
-      items = ((PsiPackage)myElement).getDirectories(new EverythingGlobalScope(myProject));
+      items = ((PsiPackage)myElement).getDirectories(GlobalSearchScope.everythingScope(myProject));
     }
     else {
       PsiFile containingFile = myElement.getNavigationElement().getContainingFile();
@@ -709,7 +710,7 @@ public class JavaDocInfoGenerator {
   }
 
   private void generatePackageJavaDoc(StringBuilder buffer, PsiPackage psiPackage, boolean generatePrologue) {
-    for (PsiDirectory directory : psiPackage.getDirectories(new EverythingGlobalScope(myProject))) {
+    for (PsiDirectory directory : psiPackage.getDirectories(GlobalSearchScope.everythingScope(myProject))) {
       PsiFile packageInfoFile = directory.findFile(PsiPackage.PACKAGE_INFO_FILE);
       if (packageInfoFile != null) {
         ASTNode node = packageInfoFile.getNode();

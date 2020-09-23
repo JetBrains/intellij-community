@@ -56,7 +56,7 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
 
   @Override
   public PsiDirectory @NotNull [] getDirectories() {
-    return getDirectories(new EverythingGlobalScope(getProject()));
+    return getDirectories(GlobalSearchScope.everythingScope(getProject()));
   }
 
   @Override
