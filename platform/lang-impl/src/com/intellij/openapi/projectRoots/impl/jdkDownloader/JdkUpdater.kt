@@ -179,6 +179,7 @@ internal class JdkUpdaterNotifications : Disposable {
   private val pendingNotifications = HashMap<Sdk, JdkUpdateNotification>()
 
   override fun dispose() : Unit = lock.withLock {
+    pendingNotifications.values.toList().forEach { it.tryReplaceWithNewerNotification() }
     pendingNotifications.clear()
   }
 
