@@ -13,9 +13,9 @@ class ModuleTypeHandler: ConfigurationHandler {
       return
     }
 
-    moduleTypes.forEach { (k, v) ->
-      val key = k as? String ?: return@forEach
-      val value = v as? String ?: return@forEach
+    for ((k, v) in moduleTypes) {
+      val key = k as? String ?: continue
+      val value = v as? String ?: continue
       if ("" == key) {
         module.setModuleType(value)
       } else {
