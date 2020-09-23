@@ -165,6 +165,8 @@ public abstract class PopupState<Popup> {
 
     @Override
     void removeListener(@NotNull Balloon balloon) {
+      // there is no method to remove a listener from a balloon
+      // we assume that all listeners will be removed when it is hidden
     }
 
     @Override
