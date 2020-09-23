@@ -17,12 +17,19 @@ package com.siyeh.ipp.concatenation;
 
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ipp.IPPTestCase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
 public class ReplaceConcatenationWithFormatStringIntentionTest extends IPPTestCase {
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_13;
+  }
 
   public void testNarrowingCast() {
     doTest("class X {" +
