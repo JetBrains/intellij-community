@@ -130,7 +130,7 @@ public class InvokeCompletion extends ActionOnFile {
         return;
       }
       env.logMessage("No lookup");
-      if (expectedVariant == null || prefixEqualsExpected || !checkAnnotatorErrorsAtCaret(editor, env, expectedVariant)) {
+      if (expectedVariant == null || prefixEqualsExpected || !checkHighlightingErrorsAtCaret(editor, env, expectedVariant)) {
         return;
       }
 
@@ -142,7 +142,7 @@ public class InvokeCompletion extends ActionOnFile {
       LookupElement sameItem = ContainerUtil.find(items, e ->
         e.getAllLookupStrings().stream().anyMatch(
           s -> Comparing.equal(s, expectedVariant, e.isCaseSensitive())));
-      if (sameItem == null && !checkAnnotatorErrorsAtCaret(editor, env, expectedVariant)) {
+      if (sameItem == null && !checkHighlightingErrorsAtCaret(editor, env, expectedVariant)) {
         return;
       }
       TestCase.assertNotNull("No variant '" + expectedVariant + "' among " + items + notFound, sameItem);
@@ -164,7 +164,7 @@ public class InvokeCompletion extends ActionOnFile {
     }
   }
 
-  private boolean checkAnnotatorErrorsAtCaret(Editor editor, Environment env, String expectedVariant) {
+  private boolean checkHighlightingErrorsAtCaret(Editor editor, Environment env, String expectedVariant) {
     Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
     List<HighlightInfo> infos = InvokeIntention.highlightErrors(getProject(), hostEditor);
     int caretOffset = hostEditor.getCaretModel().getOffset();
