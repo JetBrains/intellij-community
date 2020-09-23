@@ -57,7 +57,7 @@ class GitIndexVirtualFile(private val project: Project,
   override fun getChildren(): Array<VirtualFile> = EMPTY_ARRAY
   override fun isWritable(): Boolean = true
   override fun isDirectory(): Boolean = false
-  override fun isValid(): Boolean = cachedData.get() != null
+  override fun isValid(): Boolean = cachedData.get() != null && !project.isDisposed
   override fun getName(): String = filePath.name
   override fun getPresentableName(): String = GitBundle.message("stage.vfs.presentable.file.name", filePath.name)
   override fun getPath(): String = encode(project, root, filePath)
