@@ -278,13 +278,13 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     if (!(containingFile instanceof PsiClassOwner)) return null;
 
     final VirtualFile virtualFile = containingFile.getVirtualFile();
-    if (virtualFile == null) return null;
+    if (virtualFile == null || !virtualFile.isValid()) return null;
 
     return findExternalAnnotationsFiles(((PsiClassOwner)containingFile).getPackageName(), virtualFile, f -> getExternalAnnotationsRoots(f));
   }
 
-  private <T> List<PsiFile> findExternalAnnotationsFiles(String packageName, T key, Function<? super T, ? extends List<VirtualFile>> roots) {
-    final List<PsiFile> files = myExternalAnnotationsCache.get(key);
+  private <T> List<PsiFile> findExternalAnnotationsFiles(String packageName, @NotNull T key, @NotNull Function<? super T, ? extends List<VirtualFile>> rootGetter) {
+    List<PsiFile> files = myExternalAnnotationsCache.get(key);
     if (files == NULL_LIST) return null;
 
     if (files != null) {
@@ -303,7 +303,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     Set<PsiFile> possibleAnnotationXmls = new THashSet<>();
 
     String relativePath = packageName.replace('.', '/') + '/' + ANNOTATIONS_XML;
-    for (VirtualFile root : roots.apply(key)) {
+    for (VirtualFile root : rootGetter.apply(key)) {
       VirtualFile ext = root.findFileByRelativePath(relativePath);
       if (ext != null && ext.isValid()) {
         PsiFile psiFile = myPsiManager.findFile(ext);
@@ -318,7 +318,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       return null;
     }
 
-    List<PsiFile> result = new SmartList<>(possibleAnnotationXmls);
+    List<PsiFile> result = new ArrayList<>(possibleAnnotationXmls);
     // writable go first
     result.sort((f1, f2) -> {
       boolean w1 = f1.isWritable();
