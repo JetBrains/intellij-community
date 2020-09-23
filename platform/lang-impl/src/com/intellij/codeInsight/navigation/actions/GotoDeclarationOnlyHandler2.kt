@@ -76,7 +76,7 @@ internal object GotoDeclarationOnlyHandler2 : CodeInsightActionHandler {
 
   private fun recordAndNavigate(editor: Editor, file: PsiFile, navigatable: Navigatable, navigationProvider: Any?) {
     if (navigationProvider != null) {
-      GotoDeclarationAction.recordGTDNavigation(navigationProvider.javaClass)
+      GTDUCollector.recordNavigated(GotoDeclarationAction.getCurrentEventData(), navigationProvider.javaClass)
     }
     gotoTarget(editor, file, navigatable)
   }

@@ -81,19 +81,9 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     }
   }
 
-  static void recordGTD() {
+  static @NotNull List<@NotNull EventPair<?>> getCurrentEventData() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    GTDUCollector.recordPerformed(ourCurrentEventData, GTDUCollector.GTDUChoice.GTD);
-  }
-
-  static void recordSU() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    GTDUCollector.recordPerformed(ourCurrentEventData, GTDUCollector.GTDUChoice.SU);
-  }
-
-  static void recordGTDNavigation(@NotNull Class<?> navigationProviderClass) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    GTDUCollector.recordNavigated(ourCurrentEventData, navigationProviderClass);
+    return Objects.requireNonNull(ourCurrentEventData);
   }
 
   @NotNull
