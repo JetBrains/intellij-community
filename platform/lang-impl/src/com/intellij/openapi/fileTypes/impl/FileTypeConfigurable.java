@@ -3,11 +3,13 @@ package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.lightEdit.LightEditFilePatterns;
 import com.intellij.ide.lightEdit.LightEditService;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.fileTypes.*;
@@ -38,6 +40,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
@@ -83,18 +87,56 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     myFileTypePanel.myAssociatePanel.setVisible(OSAssociateFileTypesUtil.isAvailable());
     myFileTypePanel.myAssociateButton.setText(
       FileTypesBundle.message("filetype.associate.button", ApplicationNamesInfo.getInstance().getFullProductName()));
-    myFileTypePanel.myAssociateButton.addActionListener(__ -> OSAssociateFileTypesUtil.chooseAndAssociate(
-      message -> showAssociationBalloon(message, HintUtil.getInformationColor()),
-      message -> showAssociationBalloon(message, HintUtil.getErrorColor())
-    ));
+    myFileTypePanel.myAssociateButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        OSAssociateFileTypesUtil.chooseAndAssociate(
+          new OSAssociateFileTypesUtil.Callback() {
+            @Override
+            public void beforeStart() {
+              myFileTypePanel.myAssociateButton.setEnabled(false);
+              updateAssociateMessageLabel(
+                FileTypesBundle.message("filetype.associate.message.updating"), null);
+            }
+
+            @Override
+            public void onSuccess(boolean isOsRestartRequired) {
+              myFileTypePanel.myAssociateButton.setEnabled(true);
+              if (isOsRestartRequired) {
+                updateAssociateMessageLabel(
+                  FileTypesBundle.message("filetype.associate.message.os.restart"), AllIcons.General.Warning);
+              }
+              else {
+                updateAssociateMessageLabel("", null);
+              }
+              showAssociationBalloon(
+                FileTypesBundle.message("filetype.associate.success.message", ApplicationInfo.getInstance().getFullApplicationName()),
+                HintUtil.getInformationColor());
+            }
+
+            @Override
+            public void onFailure(@NotNull @Nls String errorMessage) {
+              myFileTypePanel.myAssociateButton.setEnabled(true);
+              updateAssociateMessageLabel("", null);
+              showAssociationBalloon(errorMessage, HintUtil.getErrorColor());
+            }
+          }
+        );
+      }
+    });
     return myFileTypePanel.myWholePanel;
+  }
+
+  private void updateAssociateMessageLabel(@NotNull @Nls String message, @Nullable Icon icon) {
+    myFileTypePanel.myAssociateMessageLabel.setText(message);
+    myFileTypePanel.myAssociateMessageLabel.setIcon(icon);
   }
 
   private void showAssociationBalloon(@NotNull @Nls String message, @NotNull Color color) {
     Balloon balloon = JBPopupFactory.getInstance().createBalloonBuilder(new JLabel(message))
-                                    .setFillColor(color)
-                                    .setHideOnKeyOutside(true)
-                                    .createBalloon();
+      .setFillColor(color)
+      .setHideOnKeyOutside(true)
+      .createBalloon();
     JComponent component = myFileTypePanel.myAssociateButton;
     RelativePoint relativePoint = new RelativePoint(component, new Point(component.getWidth() / 2, component.getHeight() - JBUI.scale(10)));
     balloon.show(relativePoint, Balloon.Position.below);

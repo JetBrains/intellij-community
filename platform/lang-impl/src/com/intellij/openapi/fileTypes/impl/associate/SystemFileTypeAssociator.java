@@ -8,4 +8,8 @@ import java.util.List;
 
 public interface SystemFileTypeAssociator {
   void associateFileTypes(@NotNull List<FileType> fileTypes) throws OSFileAssociationException;
+
+  default boolean isOsRestartRequired() {
+    return false;
+  }
 }

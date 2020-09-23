@@ -27,4 +27,8 @@ public class MacOSFileTypeAssociator implements SystemFileTypeAssociator {
     return bundleId;
   }
 
+  @Override
+  public boolean isOsRestartRequired() {
+    return true;
+  }
 }

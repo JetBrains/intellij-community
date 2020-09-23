@@ -18,4 +18,5 @@ class FileTypePanel {
   JButton myAssociateButton;
   JPanel myAssociatePanel;
   JPanel myRightPanel;
+  JBLabel myAssociateMessageLabel;
 }
