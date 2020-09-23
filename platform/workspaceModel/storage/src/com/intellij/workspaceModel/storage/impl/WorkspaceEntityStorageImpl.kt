@@ -138,7 +138,6 @@ internal class WorkspaceEntityStorageBuilderImpl(
   override fun <M : ModifiableWorkspaceEntity<T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T {
     // Get entity data that will be modified
     val copiedData = entitiesByType.getEntityDataForModification((e as WorkspaceEntityBase).id) as WorkspaceEntityData<T>
-    val backup = copiedData.clone()
     val modifiableEntity = copiedData.wrapAsModifiable(this) as M
 
     val beforePersistentId = if (e is WorkspaceEntityWithPersistentId) e.persistentId() else null
@@ -1030,18 +1029,6 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     return indexes.virtualFileIndex
   }
 
-  private fun quickAssertConsistency() {
-    entitiesByType.entityFamilies.forEach { family ->
-      if (family == null) return@forEach
-      val firstEntity = family.entities.singleOrNull { it != null }
-      if (firstEntity !is WithAssertableConsistency) return@forEach
-      family.entities.forEach entityLoop@ { entity ->
-        if (entity == null) return@entityLoop
-        (entity as WithAssertableConsistency).assertConsistency(this)
-      }
-    }
-  }
-
   internal fun assertConsistency() {
     entitiesByType.assertConsistency(this)
     // Rules:
@@ -1172,17 +1159,6 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
       }
       catch (e: Throwable) {
         reportConsistencyIssue(message, e, sourceFilter, left, right, resulting, initialChangeLogSize)
-      }
-    }
-  }
-
-  internal fun assertConsistencyInStrictModeForAddDiff(message: String, left: WorkspaceEntityStorage, right: WorkspaceEntityStorage, resulting: WorkspaceEntityStorageBuilder) {
-    if (StrictMode.enabled || StrictMode.rbsEnabled) {
-      try {
-        this.quickAssertConsistency()
-      }
-      catch (e: Throwable) {
-        reportConsistencyIssue(message, e, null, left, right, resulting, 0)
       }
     }
   }
