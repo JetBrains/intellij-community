@@ -16,14 +16,14 @@ class EditorConfigCompletionTest : BasePlatformTestCase() {
 
   override fun setUp() {
     super.setUp()
-    Registry.get(EditorConfigRegistry.EDITORCONFIG_CSHARP_SUPPORT_KEY).setValue(true)
+    Registry.get(EditorConfigRegistry.EDITORCONFIG_DOTNET_SUPPORT_KEY).setValue(true)
     val descriptorManager = EditorConfigOptionDescriptorManager.instance as EditorConfigOptionDescriptorManagerImpl
     descriptorManager.loadDescriptors()
   }
 
   override fun tearDown() {
     try {
-      Registry.get(EditorConfigRegistry.EDITORCONFIG_CSHARP_SUPPORT_KEY).resetToDefault()
+      Registry.get(EditorConfigRegistry.EDITORCONFIG_DOTNET_SUPPORT_KEY).resetToDefault()
       val descriptorManager = EditorConfigOptionDescriptorManager.instance as EditorConfigOptionDescriptorManagerImpl
       descriptorManager.loadDescriptors()
     }
