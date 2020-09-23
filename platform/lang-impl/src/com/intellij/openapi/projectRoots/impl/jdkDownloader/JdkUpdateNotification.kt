@@ -164,23 +164,16 @@ internal class JdkUpdateNotification(val jdk: Sdk,
     ProgressManager.getInstance().run(
       object : Task.Backgroundable(null /*progress should be global*/, title, true, ALWAYS_BACKGROUND) {
         override fun run(indicator: ProgressIndicator) {
-          val installer = JdkInstaller.getInstance()
-
           val newJdkHome = try {
-            val newJdkHome =
-              //Optimization: try to check if a given JDK is already installed
-              installer.findLocallyInstalledJdk(newItem) ?: run {
-                val prepare = installer.prepareJdkInstallation(newItem, installer.defaultInstallDir(newItem))
-                installer.installJdk(prepare, indicator, project)
-                prepare.javaHome
-              }
+            val installer = JdkInstaller.getInstance()
 
-            indicator.text = ProjectBundle.message("progress.text.updating.jdk.setting.up")
+            val request = installer.prepareJdkInstallation(newItem, installer.defaultInstallDir(newItem))
+            installer.installJdk(request, indicator, project)
 
             //make sure VFS sees the files and sets up the JDK correctly
-            VfsUtil.markDirtyAndRefresh(false, true, true, newJdkHome.toFile())
-
-            newJdkHome
+            indicator.text = ProjectBundle.message("progress.text.updating.jdk.setting.up")
+            VfsUtil.markDirtyAndRefresh(false, true, true, request.installDir.toFile())
+            request.javaHome
           }
           catch (t: Throwable) {
             if (t is ControlFlowException) {

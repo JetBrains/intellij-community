@@ -306,12 +306,6 @@ class JdkInstaller {
     }
   }
 
-  /**
-   * Scans locally installed with the JdkInstaller JDKs to
-   * find one that is the same as expected here
-   */
-  fun findLocallyInstalledJdk(feedItem: JdkItem) = findAlreadyInstalledJdk(feedItem)?.javaHome
-
   private fun findAlreadyInstalledJdk(feedItem: JdkItem) : JdkInstallRequest? {
     try {
       //TODO: we may track install locations nad use the data to scan more paths
