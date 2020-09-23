@@ -68,6 +68,7 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
   private val supportedColorBlindness = getColorBlindness()
   private val propertyGraph = PropertyGraph()
   private val lafProperty = propertyGraph.graphProperty { laf.lookAndFeelReference }
+  private val syncThemeProperty = propertyGraph.graphProperty { laf.autodetect }
   private val ideFontProperty = propertyGraph.graphProperty { getIdeFont() }
   private val editorFontProperty = propertyGraph.graphProperty { getEditorFont() }
   private val keymapProperty = propertyGraph.graphProperty { keymapManager.activeKeymap }
@@ -76,6 +77,7 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
 
   init {
     lafProperty.afterChange({ QuickChangeLookAndFeel.switchLafAndUpdateUI(laf, laf.findLaf(it), true) }, parentDisposable)
+    syncThemeProperty.afterChange { laf.autodetect = it }
     ideFontProperty.afterChange({
                                   settings.overrideLafFonts = true
                                   settings.fontSize = it
@@ -135,16 +137,16 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
       blockRow {
         header(IdeBundle.message("welcome.screen.color.theme.header"))
         fullRow {
-          comboBox(laf.lafComboBoxModel, lafProperty, laf.lookAndFeelCellRenderer)
+          val theme = comboBox(laf.lafComboBoxModel, lafProperty, laf.lookAndFeelCellRenderer)
+          val syncCheckBox = checkBox(IdeBundle.message("preferred.theme.autodetect.selector"), syncThemeProperty).
+                              withLargeLeftGap().
+                              apply {
+                                component.isOpaque = false
+                                component.isVisible = laf.autodetectSupported
+                              }
 
-          val syncCheckBox = checkBox(IdeBundle.message("preferred.theme.autodetect.selector"),
-                                      { laf.autodetect }, { laf.autodetect = it }).withLargeLeftGap()
-
-          syncCheckBox.visible(laf.autodetectSupported)
-
-          component(laf.settingsToolbar)
-            .visibleIf(syncCheckBox.selected)
-            .withLeftGap()
+          theme.enableIf(syncCheckBox.selected.not())
+          component(laf.settingsToolbar).visibleIf(syncCheckBox.selected).withLeftGap()
         }
       }.largeGapAfter()
       blockRow {

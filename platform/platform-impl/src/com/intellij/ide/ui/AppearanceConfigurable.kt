@@ -101,14 +101,11 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 
           val syncCheckBox = checkBox(message("preferred.theme.autodetect.selector"),
                                       { lafManager.autodetect },
-                                      { lafManager.autodetect = it }).withLargeLeftGap().shouldUpdateLaF()
+                                      { lafManager.autodetect = it }).withLargeLeftGap().shouldUpdateLaF().
+                              apply { component.isVisible = lafManager.autodetectSupported }
 
-          syncCheckBox.visible(lafManager.autodetectSupported)
           theme.enableIf(syncCheckBox.selected.not())
-
-          component(lafManager.settingsToolbar)
-            .visibleIf(syncCheckBox.selected)
-            .withLeftGap()
+          component(lafManager.settingsToolbar).visibleIf(syncCheckBox.selected).withLeftGap()
         }.largeGapAfter()
         fullRow {
           val overrideLaF = checkBox(cdOverrideLaFFont)
