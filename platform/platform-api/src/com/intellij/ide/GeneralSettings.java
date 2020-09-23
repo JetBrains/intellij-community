@@ -59,7 +59,7 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
   private boolean myUseDefaultBrowser = true;
   private boolean mySearchInBackground;
   private boolean myConfirmExit = true;
-  private boolean mySkipWelcomeScreen = PlatformUtils.isDataGrip();
+  private boolean myShowWelcomeScreen = !PlatformUtils.isDataGrip();
   private int myConfirmOpenNewProject = OPEN_PROJECT_ASK;
   private ProcessCloseConfirmation myProcessCloseConfirmation = ProcessCloseConfirmation.ASK;
   private String myDefaultProjectDirectory = "";
@@ -239,12 +239,12 @@ public final class GeneralSettings implements PersistentStateComponent<GeneralSe
     myConfirmExit = confirmExit;
   }
 
-  public boolean isSkipWelcomeScreen() {
-    return mySkipWelcomeScreen;
+  public boolean isShowWelcomeScreen() {
+    return myShowWelcomeScreen;
   }
 
-  public void setSkipWelcomeScreen(boolean show) {
-    mySkipWelcomeScreen = show;
+  public void setShowWelcomeScreen(boolean show) {
+    myShowWelcomeScreen = show;
   }
 
   @MagicConstant(intValues = {OPEN_PROJECT_ASK, OPEN_PROJECT_NEW_WINDOW, OPEN_PROJECT_SAME_WINDOW})
