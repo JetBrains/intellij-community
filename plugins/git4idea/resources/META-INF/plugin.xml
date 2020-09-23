@@ -535,6 +535,8 @@
 
     <vcs.consoleFolding implementation="git4idea.console.GitConsoleFolding"/>
     <console.folding implementation="git4idea.console.GitProgressOutputConsoleFolding"/>
+
+    <searchEverywhereContributor implementation="git4idea.search.GitSearchEverywhereContributor$Companion$Factory"/>
   </extensions>
 
   <extensionPoints>
