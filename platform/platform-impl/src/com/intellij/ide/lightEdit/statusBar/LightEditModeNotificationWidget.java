@@ -16,13 +16,11 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
-import com.intellij.reference.SoftReference;
 import com.intellij.ui.TooltipWithClickableLinks;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBPoint;
 import com.intellij.util.ui.JBUI;
@@ -32,18 +30,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.PopupMenuEvent;
-import javax.swing.event.PopupMenuListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.lang.ref.WeakReference;
 import java.util.function.Supplier;
 
 public class LightEditModeNotificationWidget implements CustomStatusBarWidget {
 
   private final PopupState<JPopupMenu> myPopupState = PopupState.forPopupMenu();
-  private final MyPopupMenuListener myPopupMenuListener = new MyPopupMenuListener();
 
   public LightEditModeNotificationWidget() {
   }
@@ -102,7 +96,7 @@ public class LightEditModeNotificationWidget implements CustomStatusBarWidget {
 
       @Override
       protected boolean beforeShow() {
-        return !myPopupMenuListener.isShowing();
+        return !myPopupState.isShowing();
       }
     };
     tooltip.setToCenter(false);
@@ -136,7 +130,6 @@ public class LightEditModeNotificationWidget implements CustomStatusBarWidget {
       popupMenu.setTargetComponent(actionLink);
       JPopupMenu menu = popupMenu.getComponent();
       myPopupState.prepareToShow(menu);
-      menu.addPopupMenuListener(myPopupMenuListener);
       JBPopupMenu.showAbove(actionLink, menu);
     }
   }
@@ -178,27 +171,4 @@ public class LightEditModeNotificationWidget implements CustomStatusBarWidget {
       }
     }
   }
-
-  private static class MyPopupMenuListener implements PopupMenuListener {
-    private WeakReference<JPopupMenu> myPopupMenuRef;
-
-    public boolean isShowing() {
-      JPopupMenu menu = SoftReference.dereference(myPopupMenuRef);
-      return menu != null && menu.isShowing();
-    }
-
-    @Override
-    public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-      myPopupMenuRef = new WeakReference<>(ObjectUtils.tryCast(e.getSource(), JPopupMenu.class));
-    }
-
-    @Override
-    public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
-      myPopupMenuRef = null;
-    }
-
-    @Override
-    public void popupMenuCanceled(PopupMenuEvent e) {
-    }
-  } 
 }

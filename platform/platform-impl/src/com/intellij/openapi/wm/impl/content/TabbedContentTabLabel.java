@@ -3,16 +3,12 @@ package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.reference.SoftReference;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
-import java.lang.ref.Reference;
-import java.lang.ref.WeakReference;
 import java.util.List;
 
 /**
@@ -21,7 +17,6 @@ import java.util.List;
 public final class TabbedContentTabLabel extends ContentTabLabel {
   private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
   private final TabbedContent myContent;
-  private Reference<JBPopup> myPopupReference = null;
 
   public TabbedContentTabLabel(@NotNull TabbedContent content, @NotNull TabContentLayout layout) {
     super(content, layout);
@@ -29,7 +24,7 @@ public final class TabbedContentTabLabel extends ContentTabLabel {
   }
 
   private boolean isPopupShown() {
-    return (myPopupReference != null && myPopupReference.get() != null && myPopupReference.get().isVisible());
+    return myPopupState.isShowing();
   }
 
   @Override
@@ -41,7 +36,6 @@ public final class TabbedContentTabLabel extends ContentTabLabel {
       if (myPopupState.isRecentlyHidden()) return; // do not show new popup
       final SelectContentTabStep step = new SelectContentTabStep(getContent());
       final ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
-      myPopupReference = new WeakReference<>(popup);
       myPopupState.prepareToShow(popup);
       popup.showUnderneathOf(this);
       popup.addListener(new JBPopupListener() {
@@ -94,11 +88,7 @@ public final class TabbedContentTabLabel extends ContentTabLabel {
   @Override
   public void removeNotify() {
     super.removeNotify();
-    JBPopup popup = SoftReference.dereference(myPopupReference);
-    if (popup != null) {
-      Disposer.dispose(popup);
-      myPopupReference = null;
-    }
+    myPopupState.hidePopup();
   }
 
   @NotNull
