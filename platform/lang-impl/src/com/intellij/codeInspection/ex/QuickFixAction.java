@@ -2,7 +2,6 @@
 
 package com.intellij.codeInspection.ex;
 
-import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionManager;
@@ -101,7 +100,6 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
   }
 
   @Override
-  @ReviseWhenPortedToJDK("9")
   public void actionPerformed(@NotNull final AnActionEvent e) {
     final InspectionResultsView view = getInvoker(e);
     final InspectionTree tree = view.getTree();
