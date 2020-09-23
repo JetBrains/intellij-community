@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.actionSystem.impl.newToolbar
+package com.intellij.openapi.actionSystem.impl.segmentedActionBar
 
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
@@ -14,7 +14,7 @@ import java.util.*
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-open class ControlBarActionComponent : AnAction(), CustomComponentAction {
+open class SegmentedBarActionComponent : AnAction(), CustomComponentAction {
   enum class ControlBarProperty {
     FIRST,
     LAST,
@@ -29,7 +29,7 @@ open class ControlBarActionComponent : AnAction(), CustomComponentAction {
     internal const val CONTROL_BAR_MIDDLE = "CONTROL_BAR_PROPERTY_MIDDLE"
     internal const val CONTROL_BAR_SINGLE = "CONTROL_BAR_PROPERTY_SINGLE"
 
-    private val painter = ControlBarPainter()
+    private val painter = SegmentedBarPainter()
 
     fun isCustomBar(component: Component): Boolean {
       if (component !is JComponent) return false

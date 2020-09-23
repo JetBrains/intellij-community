@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.actionSystem.impl.newToolbar
+package com.intellij.openapi.actionSystem.impl.segmentedActionBar
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.openapi.actionSystem.*
@@ -30,7 +30,7 @@ open class PillActionComponent: AnAction(), CustomComponentAction {
   }
 
   fun showPill() {
-    panel.border = FilledRoundedBorder(JBColor(0xFFCB44, 0xFFCB44), JBUI.scale(5), 0, DarculaUIUtil.LW.float)
+    panel.border = FilledRoundedBorder(JBColor(0xFFCB44, 0xFFCB44), DarculaUIUtil.BUTTON_ARC.float, 0, DarculaUIUtil.LW.float)
   }
 
   fun hidePill() {
@@ -43,7 +43,7 @@ open class PillActionComponent: AnAction(), CustomComponentAction {
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-   // showPill()
+    showPill()
     return panel
   }
 

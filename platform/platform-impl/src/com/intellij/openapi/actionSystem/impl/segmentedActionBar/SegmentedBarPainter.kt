@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.actionSystem.impl.newToolbar
+package com.intellij.openapi.actionSystem.impl.segmentedActionBar
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
@@ -19,7 +19,7 @@ import java.awt.geom.RoundRectangle2D
 import javax.swing.AbstractButton
 import javax.swing.JComponent
 
-internal class ControlBarPainter {
+internal class SegmentedBarPainter {
   fun paintButtonDecorations(g: Graphics2D, c: JComponent, paint: Paint): Boolean {
     if (!(c as AbstractButton).isContentAreaFilled) {
       return true
@@ -38,7 +38,7 @@ internal class ControlBarPainter {
 
       if (c.isEnabled()) {
         g2.paint = paint
-        c.getClientProperty(ControlBarActionComponent.CONTROL_BAR_PROPERTY)?.let {
+        c.getClientProperty(SegmentedBarActionComponent.CONTROL_BAR_PROPERTY)?.let {
           paintComponent(g2, Rectangle(c.getSize()), it.toString())
         } ?: g2.fill(RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc))
       }
@@ -60,15 +60,15 @@ internal class ControlBarPainter {
     val offs = arc * 2
 
     val area = when (position) {
-      ControlBarActionComponent.CONTROL_BAR_FIRST -> {
+      SegmentedBarActionComponent.CONTROL_BAR_FIRST -> {
         val area = Area(RoundRectangle2D.Float(0f, 0f, wdth, r.height.toFloat(), arc, arc))
         area.add(Area(Rectangle2D.Float(wdth - offs, 0f, offs, r.height.toFloat())))
         area
       }
-      ControlBarActionComponent.CONTROL_BAR_MIDDLE -> {
+      SegmentedBarActionComponent.CONTROL_BAR_MIDDLE -> {
         Area(Rectangle2D.Float(0f, 0f, wdth, r.height.toFloat()))
       }
-      ControlBarActionComponent.CONTROL_BAR_LAST -> {
+      SegmentedBarActionComponent.CONTROL_BAR_LAST -> {
         val area = Area(RoundRectangle2D.Float(0f, 0f, wdth, r.height.toFloat(), arc, arc))
         area.add(Area(Rectangle2D.Float(0f, 0f, offs, r.height.toFloat())))
         area
@@ -92,7 +92,7 @@ internal class ControlBarPainter {
     val rect = Rectangle(component.size)
     val insets = component.insets
     JBInsets.removeFrom(rect, JBUI.insets(insets.top, 0, insets.bottom, 0))
-    component.getClientProperty(ControlBarActionComponent.CONTROL_BAR_PROPERTY)?.let {
+    component.getClientProperty(SegmentedBarActionComponent.CONTROL_BAR_PROPERTY)?.let {
       paintComponent(g as Graphics2D, Rectangle(component.getSize()), it.toString())
     } ?: g.fillRect(rect.x, rect.y, rect.width, rect.height)
   }

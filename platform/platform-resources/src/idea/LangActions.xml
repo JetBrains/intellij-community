@@ -497,11 +497,11 @@
       <reference ref="SearchEverywhere"/>
     </group>
 
-    <action id="RunDebugControlAction" class="com.intellij.execution.newToolbar.RunDebugControlAction"/>
+    <action id="RunDebugControlAction" class="com.intellij.execution.segmentedRunDebugWidget.SegmentedRunDebugControlAction"/>
 
-    <group id="NewToolbarRunDebug">
-      <action class="com.intellij.execution.newToolbar.RunDebugLabelAction"/>
-      <action class="com.intellij.execution.newToolbar.RunDebugBarAction"/>
+    <group id="SegmentedRunDebugActionGroup">
+      <action class="com.intellij.execution.segmentedRunDebugWidget.RunDebugLabelAction"/>
+      <action class="com.intellij.execution.segmentedRunDebugWidget.RunDebugBarAction"/>
     </group>
 
     <group id="RunDebugActionsBarGroup" popup="false">

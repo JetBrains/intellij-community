@@ -10,16 +10,16 @@ import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 
 public class FilledRoundedBorder extends LineBorder {
-  private final int myArcSize;
+  private final float myArcSize;
   private final float bw;
 
-  public FilledRoundedBorder(@NotNull Color color, int arcSize, int thickness, float bw) {
+  public FilledRoundedBorder(@NotNull Color color, float arcSize, int thickness, float bw) {
     super(color, thickness);
     myArcSize = arcSize;
     this.bw = bw;
   }
 
-  public FilledRoundedBorder(@NotNull Color color, int arcSize, int thickness) {
+  public FilledRoundedBorder(@NotNull Color color, float arcSize, int thickness) {
     this(color, arcSize, thickness, 0);
   }
 
