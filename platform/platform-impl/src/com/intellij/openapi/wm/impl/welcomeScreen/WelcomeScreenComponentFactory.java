@@ -31,6 +31,7 @@ import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
@@ -47,6 +48,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.Objects;
@@ -81,8 +83,8 @@ public class WelcomeScreenComponentFactory {
     appName.setForeground(JBColor.foreground());
     appName.setFont(appName.getFont().deriveFont(Font.PLAIN));
 
-    ActionLink copyAbout = new ActionLink("", AllIcons.Actions.Copy, createCopyAboutAction());
-    copyAbout.setHoveringIcon(AllIcons.General.CopyHovered);
+    ActionLink copyAbout = new ActionLink("", EmptyIcon.ICON_16, createCopyAboutAction());
+    copyAbout.setHoveringIcon(AllIcons.Actions.Copy);
     copyAbout.setToolTipText(IdeBundle.message("welcome.screen.copy.about.action.text"));
 
     String appVersion = appInfo.getFullVersion();
@@ -102,6 +104,18 @@ public class WelcomeScreenComponentFactory {
     textPanel.add(version);
     panel.add(textPanel, BorderLayout.CENTER);
     panel.setToolTipText(applicationName + " " + appVersion);
+
+    panel.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseEntered(MouseEvent e) {
+        copyAbout.setIcon(AllIcons.Actions.Copy);
+      }
+
+      @Override
+      public void mouseExited(MouseEvent e) {
+        copyAbout.setIcon(EmptyIcon.ICON_16);
+      }
+    });
     return panel;
   }
 
