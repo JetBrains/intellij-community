@@ -22,7 +22,7 @@ import com.intellij.ui.SideBorder
 import com.intellij.ui.components.panels.HorizontalBox
 import com.intellij.util.ui.*
 import com.intellij.util.ui.codereview.InlineIconButton
-import icons.GithubIcons
+import icons.VcsCodeReviewIcons
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
@@ -167,9 +167,8 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
 
       init {
         discardButton = pendingReview?.let { review ->
-          val button = InlineIconButton(icon = GithubIcons.Delete, hoveredIcon =GithubIcons.DeleteHovered,
-                                                                              tooltip = GithubBundle.message(
-                                                                                "pull.request.discard.pending.comments"))
+          val button = InlineIconButton(icon = VcsCodeReviewIcons.Delete, hoveredIcon = VcsCodeReviewIcons.DeleteHovered,
+                                        tooltip = GithubBundle.message("pull.request.discard.pending.comments"))
           button.actionListener = ActionListener {
             if (MessageDialogBuilder.yesNo(GithubBundle.message("pull.request.discard.pending.comments.dialog.title"),
                                            GithubBundle.message("pull.request.discard.pending.comments.dialog.msg")).ask(button)) {
