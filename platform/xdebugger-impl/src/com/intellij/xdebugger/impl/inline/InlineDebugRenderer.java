@@ -24,6 +24,7 @@ import com.intellij.util.Producer;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
+import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.NotNull;
@@ -44,6 +45,8 @@ final class InlineDebugRenderer implements EditorCustomElementRenderer {
   private boolean isHovered = false;
   private int myRemoveXCoordinate = Integer.MAX_VALUE;
   private int myTextStartXCoordinate;
+  public static final String INDENT = "  ";
+  public static final String NAME_VALUE_SEPARATION = XDebuggerInlayUtil.INLINE_HINTS_DELIMETER + " ";
 
   InlineDebugRenderer(SimpleColoredText text,
                       XValueNodeImpl valueNode,
@@ -109,13 +112,23 @@ final class InlineDebugRenderer implements EditorCustomElementRenderer {
 
   @Override
   public int calcWidthInPixels(@NotNull Inlay inlay) {
-    FontInfo fontInfo = getFontInfo(inlay.getEditor());
-    int width = fontInfo.fontMetrics().stringWidth(myText.toString() + "  " + XDebuggerInlayUtil.INLINE_HINTS_DELIMETER + " ");
+    int width = getInlayTextWidth(inlay);
     width += myCustomNode ? AllIcons.Actions.Close.getIconWidth() : AllIcons.General.LinkDropTriangle.getIconWidth();
     if (myCustomNode) {
       width += AllIcons.Debugger.Watch.getIconWidth();
     }
     return width;
+  }
+
+  private int getInlayTextWidth(@NotNull Inlay inlay) {
+    FontInfo fontInfo = getFontInfo(inlay.getEditor());
+    String text;
+    if (isErrorMessage()) {
+      text = myText.getTexts().get(0);
+    } else {
+      text = myText.toString() + NAME_VALUE_SEPARATION;
+    }
+    return fontInfo.fontMetrics().stringWidth(text + INDENT);
   }
 
   private static final float BACKGROUND_ALPHA = 0.55f;
@@ -158,8 +171,8 @@ final class InlineDebugRenderer implements EditorCustomElementRenderer {
     myTextStartXCoordinate = curX;
     for (int i = 0; i < myText.getTexts().size(); i++) {
       String curText = myText.getTexts().get(i);
-      if (i == 0) {
-        curText += XDebuggerInlayUtil.INLINE_HINTS_DELIMETER + " ";
+      if (i == 0 && !isErrorMessage()) {
+        curText += NAME_VALUE_SEPARATION;
       }
       SimpleTextAttributes attr = myText.getAttributes().get(i);
 
@@ -167,6 +180,9 @@ final class InlineDebugRenderer implements EditorCustomElementRenderer {
       g.setColor(fgColor);
       g.drawString(curText, curX, r.y + inlay.getEditor().getAscent());
       curX += fontInfo.fontMetrics().stringWidth(curText);
+      if (isErrorMessage()) {
+        break;
+      }
     }
     if (isHovered) {
       Icon icon;
@@ -180,6 +196,10 @@ final class InlineDebugRenderer implements EditorCustomElementRenderer {
     }
 
     paintEffects(g, r, editor, inlineAttributes, fontInfo, metrics);
+  }
+
+  private boolean isErrorMessage() {
+    return XDebuggerUIConstants.ERROR_MESSAGE_ICON.equals(myValueNode.getIcon());
   }
 
   private static void paintEffects(@NotNull Graphics g,

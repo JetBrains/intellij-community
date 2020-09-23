@@ -8,11 +8,14 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ThreeState;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.Obsolescent;
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.frame.presentation.XErrorValuePresentation;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
+import com.intellij.xdebugger.impl.frame.XDebugView;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl;
@@ -107,6 +110,11 @@ public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNod
     public void computePresentation(@NotNull XValueNode node, @NotNull XValuePlace place) {
       if (myStackFrame != null) {
         if (myTree.isShowing() || ApplicationManager.getApplication().isUnitTestMode()) {
+         if (sessionIsInOtherFileThanNode()) {
+           node.setPresentation(AllIcons.Debugger.Db_watch, EMPTY_PRESENTATION, false);
+           return;
+         }
+
           XDebuggerEvaluator evaluator = myStackFrame.getEvaluator();
           if (evaluator != null) {
             evaluator.evaluate(myExpression, new MyEvaluationCallback(node, place), myStackFrame.getSourcePosition());
@@ -119,6 +127,17 @@ public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNod
       }
 
       node.setPresentation(AllIcons.Debugger.Db_watch, EMPTY_PRESENTATION, false);
+    }
+
+    private boolean sessionIsInOtherFileThanNode() {
+      XDebugSession session = XDebugView.getSession(myTree);
+      if (session != null) {
+        XSourcePosition sessionCurrentPosition = session.getCurrentPosition();
+        if (sessionCurrentPosition != null && !sessionCurrentPosition.getFile().equals(myPosition.getFile())) {
+          return true;
+        }
+      }
+      return false;
     }
 
     private class MyEvaluationCallback extends XEvaluationCallbackBase implements Obsolescent {
@@ -143,7 +162,7 @@ public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNod
 
       @Override
       public void errorOccurred(@NotNull String errorMessage) {
-        myNode.setPresentation(XDebuggerUIConstants.ERROR_MESSAGE_ICON, EMPTY_PRESENTATION, false);
+        myNode.setPresentation(XDebuggerUIConstants.ERROR_MESSAGE_ICON, new XErrorValuePresentation(errorMessage), false);
       }
     }
 
