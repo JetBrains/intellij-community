@@ -222,11 +222,12 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
 
     init {
       markAsHelperNode()
+      setAttributes(SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
     }
 
     override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
       if (kind == NodeKind.CONFLICTED) {
-        renderer.append(textPresentation, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+        renderer.append(textPresentation, attributes)
         renderer.append(FontUtil.spaceAndThinSpace(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
         renderer.append(VcsBundle.message("changes.nodetitle.merge.conflicts.resolve.link.label"),
                         SimpleTextAttributes.LINK_BOLD_ATTRIBUTES,
@@ -254,6 +255,7 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
     ChangesBrowserSpecificFilePathsNode<NodeKind>(NodeKind.UNTRACKED, files, { UnversionedViewDialog(project, files).show() }) {
     init {
       markAsHelperNode()
+      setAttributes(SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
     }
 
     @Nls
