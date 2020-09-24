@@ -40,6 +40,7 @@ import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.PatternUtil;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.TestCase;
@@ -311,10 +312,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
         return 48;
       }
     };
-    FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint().registerExtension(detector, getTestRootDisposable());
-    FileTypeManagerImpl.toLog = true;
-
-    try {
+    runWithDetector(detector, () -> {
       log("T: ------ akjdhfksdjgf");
       File f = createTempFile("xx.asfdasdfas", "akjdhfksdjgf");
       VirtualFile vFile = getVirtualFile(f);
@@ -331,9 +329,18 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       ensureRedetected(vFile, detectorCalled);
       assertTrue(vFile.getFileType().toString(), vFile.getFileType() instanceof ProjectFileType);
       log("T: ------");
+    });
+  }
+
+  private <T extends Throwable> void runWithDetector(@NotNull FileTypeRegistry.@NotNull FileTypeDetector detector, @NotNull ThrowableRunnable<T> runnable) throws T {
+    FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint().registerExtension(detector, getTestRootDisposable());
+    FileTypeManagerImpl fileTypeManager = (FileTypeManagerImpl)FileTypeManager.getInstance();
+    fileTypeManager.toLog = true;
+    try {
+      runnable.run();
     }
     finally {
-      FileTypeManagerImpl.toLog = false;
+      fileTypeManager.toLog = false;
     }
   }
 
@@ -666,10 +673,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
         return 48;
       }
     };
-    FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint().registerExtension(detector, getTestRootDisposable());
-    FileTypeManagerImpl.toLog = true;
-
-    try {
+    runWithDetector(detector, () -> {
       log("T: ------ akjdhfksdjgf");
       File f = createTempFile("xx.asfdasdfas", "akjdhfksdjgf");
       VirtualFile file = getVirtualFile(f);
@@ -688,10 +692,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
       ensureRedetected(file, detectorCalled);
       assertSame(file.getFileType().toString(), file.getFileType(), stuffType);
       log("T: ------");
-    }
-    finally {
-      FileTypeManagerImpl.toLog = false;
-    }
+    });
   }
 
   public void _testStressPlainTextFileWithEverIncreasingLength() throws IOException {

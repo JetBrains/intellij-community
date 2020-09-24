@@ -263,11 +263,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         }
 
         StandardFileType type = myStandardFileTypes.get(fileType.getName());
-        if (type != null) {
-          type.matchers.addAll(fileNameMatchers);
+        if (type == null) {
+          myStandardFileTypes.put(fileType.getName(), new StandardFileType(fileType, fileNameMatchers));
         }
         else {
-          myStandardFileTypes.put(fileType.getName(), new StandardFileType(fileType, fileNameMatchers));
+          type.matchers.addAll(fileNameMatchers);
         }
       }
     };
@@ -458,12 +458,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @TestOnly
-  static volatile boolean toLog = SystemProperties.is("trace.file.type.manager");
-  static boolean toLog() {
+  boolean toLog;
+  boolean toLog() {
     return toLog;
   }
-
-  static void log(@NonNls String message) {
+  void log(@NonNls String message) {
     LOG.debug(message + " - " + Thread.currentThread());
   }
 
