@@ -13,10 +13,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -93,6 +97,9 @@ public class SelectWordHandler extends EditorActionHandler {
     int caretOffset = adjustCaretOffset(caret);
 
     PsiElement element = findElementAt(file, caretOffset);
+    if (element == null) {
+      return null;
+    }
 
     if (element instanceof PsiWhiteSpace && caretOffset > 0) {
       PsiElement anotherElement = findElementAt(file, caretOffset - 1);
@@ -183,11 +190,28 @@ public class SelectWordHandler extends EditorActionHandler {
 
   @Nullable
   private static PsiElement findElementAt(@NotNull final PsiFile file, final int caretOffset) {
-    PsiElement elementAt = file.findElementAt(caretOffset);
-    if (elementAt != null && isLanguageExtension(file, elementAt)) {
-      return file.getViewProvider().findElementAt(caretOffset, file.getLanguage());
+    ThrowableComputable<PsiElement, Exception> computable = () -> {
+      PsiElement elementAt = file.findElementAt(caretOffset);
+      return elementAt != null && isLanguageExtension(file, elementAt)
+             ? file.getViewProvider().findElementAt(caretOffset, file.getLanguage())
+             : elementAt;
+    };
+    try {
+      if (!file.getNode().isParsed()) {
+        //accessing to PSI for non-parsed file may cause reparse in EDT
+        return ProgressManager.getInstance().runProcessWithProgressSynchronously(computable,
+                                                                                 EditorBundle.message("select.word.element.processing"),
+                                                                                 true, file.getProject());
+      }
+      return computable.compute();
     }
-    return elementAt;
+    catch (ProcessCanceledException pce) {
+      return null;
+    }
+    catch (Exception e) {
+      LOG.warn("Cannot find element at given offset", e);
+      return null;
+    }
   }
 
   private static boolean isLanguageExtension(@NotNull final PsiFile file, @NotNull final PsiElement elementAt) {
