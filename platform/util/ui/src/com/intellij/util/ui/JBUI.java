@@ -1002,6 +1002,57 @@ public class JBUI {
         return getInt("NewClass.separatorWidth", JBUIScale.scale(10));
       }
     }
+
+    public static final class NotificationErrorColor {
+      @NotNull
+      public static Color backgroundColor() {
+        return JBColor.namedColor("Notification.ToolWindow.errorBackground", new JBColor(0xffcccc, 0x704745));
+      }
+
+      @NotNull
+      public static Color foregroundColor() {
+        return JBColor.namedColor("Notification.ToolWindow.errorForeground", UIUtil.getToolTipForeground());
+      }
+
+      @NotNull
+      public static Color borderColor() {
+        return JBColor.namedColor("Notification.ToolWindow.errorBorderColor", new JBColor(0xd69696, 0x998a8a));
+      }
+    }
+
+    public static final class NotificationInfo {
+      @NotNull
+      public static Color backgroundColor() {
+        return JBColor.namedColor("Notification.ToolWindow.informativeBackground", new JBColor(0xbaeeba, 0x33412E));
+      }
+
+      @NotNull
+      public static Color foregroundColor() {
+        return JBColor.namedColor("Notification.ToolWindow.informativeForeground", UIUtil.getToolTipForeground());
+      }
+
+      @NotNull
+      public static Color borderColor() {
+        return JBColor.namedColor("Notification.ToolWindow.informativeBorderColor", new JBColor(0xa0bf9d, 0x85997a));
+      }
+    }
+        public static final class NotificationWarning {
+      @NotNull
+      public static Color backgroundColor() {
+        return JBColor.namedColor("Notification.ToolWindow.warningBackground", new JBColor(0xf9f78e, 0x5a5221));
+      }
+
+      @NotNull
+      public static Color foregroundColor() {
+        return JBColor.namedColor("Notification.ToolWindow.warningForeground", UIUtil.getToolTipForeground());
+      }
+
+      @NotNull
+      public static Color borderColor() {
+        return JBColor.namedColor("Notification.ToolWindow.warningBorderColor", new JBColor(0xbab824, 0xa69f63));
+      }
+    }
+
   }
 
   public static int getInt(@NonNls @NotNull String propertyName, int defaultValue) {

@@ -487,7 +487,6 @@
     </group>
 
     <group id="ToolbarRunGroup">
-      <separator/>
       <reference ref="RunConfiguration"/>
       <reference ref="RunnerActions"/>
       <reference ref="Stop"/>
