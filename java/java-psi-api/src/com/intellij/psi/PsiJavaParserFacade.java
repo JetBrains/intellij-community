@@ -99,16 +99,6 @@ public interface PsiJavaParserFacade {
   PsiParameter createParameterFromText(@NotNull @NonNls String text, @Nullable PsiElement context) throws IncorrectOperationException;
 
   /**
-   * Creates a Java record from the specified text.
-   *
-   * @param text    the text of the record to create.
-   * @param context the PSI element used as context for resolving references from the record.
-   * @return the created record instance.
-   * @throws IncorrectOperationException if the text is not a valid record text.
-   */
-  PsiClass createRecordFromText(@NotNull @NonNls String text, @Nullable PsiElement context) throws IncorrectOperationException;
-
-  /**
    * Creates a Java record header from the specified text (excluding parentheses).
    *
    * @param text    the text of the record header to create.

@@ -20,6 +20,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -43,32 +44,10 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
       }
 
       private void checkCanonical(PsiMethod ctor) {
-        PsiCodeBlock body = ctor.getBody();
-        if (body == null) return;
-        PsiIdentifier nameIdentifier = ctor.getNameIdentifier();
-        if (nameIdentifier == null) return;
-        PsiRecordComponent[] components = Objects.requireNonNull(ctor.getContainingClass()).getRecordComponents();
-        PsiParameter[] parameters = ctor.getParameterList().getParameters();
-        PsiAnnotation.TargetType[] targets = {PsiAnnotation.TargetType.PARAMETER, PsiAnnotation.TargetType.TYPE_USE};
-        if (!EntryStream.zip(components, parameters)
-          .mapKeys(c -> ContainerUtil.filter(c.getAnnotations(), anno -> AnnotationTargetUtil.findAnnotationTarget(anno, targets) != null))
-          .mapValues(p -> Arrays.asList(p.getAnnotations()))
-          .allMatch(List::equals)) {
-          return;
+        ProblemDescriptor problemDescriptor = createCanonicalCtorProblemDescriptor(ctor, isOnTheFly);
+        if (problemDescriptor != null) {
+          holder.registerProblem(problemDescriptor);
         }
-        PsiStatement[] statements = body.getStatements();
-        int assignedCount = getAssignedComponentsCount(components, parameters, statements);
-        if (statements.length == components.length && assignedCount == components.length && 
-            ctor.getModifierList().getAnnotations().length == 0 && ctor.getDocComment() == null) {
-          holder.registerProblem(nameIdentifier,
-                                 JavaBundle.message("inspection.redundant.record.constructor.canonical.message"),
-                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL, new DeleteElementFix(ctor));
-          return;
-        }
-        if (PsiUtil.findReturnStatements(body).length > 0) return;
-        if (PsiUtil.getLanguageLevel(ctor) != LanguageLevel.JDK_14_PREVIEW && assignedCount != components.length) return;
-        holder.registerProblem(ctor.getParameterList(), JavaBundle.message("inspection.redundant.record.constructor.can.be.compact.message"),
-                               ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ConvertToCompactConstructorFix());
       }
 
       private void checkCompact(PsiMethod ctor) {
@@ -98,6 +77,40 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
     };
   }
 
+  @Nullable
+  public static ProblemDescriptor createCanonicalCtorProblemDescriptor(@NotNull PsiMethod ctor, boolean isOnTheFly) {
+    PsiCodeBlock body = ctor.getBody();
+    if (body == null) return null;
+    PsiIdentifier nameIdentifier = ctor.getNameIdentifier();
+    if (nameIdentifier == null) return null;
+    PsiRecordComponent[] components = Objects.requireNonNull(ctor.getContainingClass()).getRecordComponents();
+    PsiParameter[] parameters = ctor.getParameterList().getParameters();
+    PsiAnnotation.TargetType[] targets = {PsiAnnotation.TargetType.PARAMETER, PsiAnnotation.TargetType.TYPE_USE};
+    if (!EntryStream.zip(components, parameters)
+      .mapKeys(c -> ContainerUtil.filter(c.getAnnotations(), anno -> AnnotationTargetUtil.findAnnotationTarget(anno, targets) != null))
+      .mapValues(p -> Arrays.asList(p.getAnnotations()))
+      .allMatch(List::equals)) {
+      return null;
+    }
+    PsiStatement[] statements = body.getStatements();
+    int assignedCount = getAssignedComponentsCount(components, parameters, statements);
+    InspectionManager inspectionManager = InspectionManager.getInstance(ctor.getProject());
+    if (statements.length == components.length && assignedCount == components.length &&
+        ctor.getModifierList().getAnnotations().length == 0 && ctor.getDocComment() == null) {
+      return inspectionManager.createProblemDescriptor(nameIdentifier,
+                                                       JavaBundle.message("inspection.redundant.record.constructor.canonical.message"),
+                                                       new DeleteElementFix(ctor), ProblemHighlightType.LIKE_UNUSED_SYMBOL, isOnTheFly);
+    }
+    if (PsiUtil.findReturnStatements(body).length > 0) return null;
+    if (PsiUtil.getLanguageLevel(ctor) != LanguageLevel.JDK_14_PREVIEW && assignedCount != components.length) {
+      return null;
+    }
+    return inspectionManager.createProblemDescriptor(ctor.getParameterList(),
+                                                     JavaBundle.message("inspection.redundant.record.constructor.can.be.compact.message"),
+                                                     new ConvertToCompactConstructorFix(), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                                                     isOnTheFly);
+  }
+
   private static int getAssignedComponentsCount(PsiRecordComponent @NotNull [] components,
                                                 PsiParameter @NotNull [] parameters,
                                                 PsiStatement @NotNull [] statements) {
@@ -112,7 +125,7 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
       if (lValue == null || !ExpressionUtil.isEffectivelyUnqualified(lValue)) break;
       PsiField field = ObjectUtils.tryCast(lValue.resolve(), PsiField.class);
       if (field == null) break;
-      PsiRecordComponent component = JavaPsiRecordUtil.getComponentForField(field); 
+      PsiRecordComponent component = JavaPsiRecordUtil.getComponentForField(field);
       if (component == null || !unprocessed.contains(component)) break;
       PsiParameter parameter = parameters[ArrayUtil.indexOf(components, component)];
       if (!parameter.getName().equals(component.getName())) break;
