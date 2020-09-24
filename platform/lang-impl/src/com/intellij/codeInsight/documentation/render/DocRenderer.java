@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.documentation.render;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.documentation.DocumentationActionProvider;
 import com.intellij.codeInsight.documentation.DocumentationComponent;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.documentation.QuickDocUtil;
@@ -173,6 +174,11 @@ class DocRenderer implements EditorCustomElementRenderer {
       group.add(toggleRenderAllAction);
     }
     group.add(new DocRenderItem.ChangeFontSize());
+
+    for (DocumentationActionProvider provider: DocumentationActionProvider.EP_NAME.getExtensions()) {
+      provider.additionalActions(myItem).forEach(group::add);
+    }
+
     return group;
   }
 

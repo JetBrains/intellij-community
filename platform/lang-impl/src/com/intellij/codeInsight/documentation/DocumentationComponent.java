@@ -337,6 +337,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     actions.add(forward);
     actions.add(edit);
 
+    for (DocumentationActionProvider provider: DocumentationActionProvider.EP_NAME.getExtensions()) {
+      provider.additionalActions(this).forEach(actions::add);
+    }
+
     try {
       String backKey = ScreenReader.isActive() ? "alt LEFT" : "LEFT";
       CustomShortcutSet backShortcutSet = new CustomShortcutSet(KeyboardShortcut.fromString(backKey),
