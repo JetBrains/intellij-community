@@ -4,6 +4,7 @@ package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
 import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
@@ -32,11 +33,7 @@ import com.intellij.xml.util.XmlStringUtil;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntMaps;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -61,7 +58,7 @@ public class ParameterInfoComponent extends JPanel {
   private final JPanel myMainPanel;
   private OneElementComponent[] myPanels;
   private JLabel myShortcutLabel;
-  private final JLabel myDumbLabel = new JLabel(CodeInsightBundle.message("parameter.info.incomplete"));
+  private final JLabel myDumbLabel = new JLabel(IdeBundle.message("dumb.mode.results.might.be.incomplete"));
   private final boolean myAllowSwitchLabel;
 
   private final Font NORMAL_FONT;

@@ -60,6 +60,7 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware, Di
   }
 
   @Nullable
+  @Nls
   default String getAdvertisement() { return null; }
 
   @NotNull

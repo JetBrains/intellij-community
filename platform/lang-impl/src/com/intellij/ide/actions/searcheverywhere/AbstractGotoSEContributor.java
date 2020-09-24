@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.ide.actions.QualifiedNameProviderUtil;
 import com.intellij.ide.actions.SearchEverywherePsiRenderer;
@@ -140,7 +141,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
   @Nullable
   @Override
   public String getAdvertisement() {
-    return DumbService.isDumb(myProject) ? "Results might be incomplete. The project is being indexed." : null;
+    return DumbService.isDumb(myProject) ? IdeBundle.message("dumb.mode.results.might.be.incomplete") : null;
   }
 
   @NotNull

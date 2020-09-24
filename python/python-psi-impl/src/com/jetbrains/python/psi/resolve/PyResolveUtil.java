@@ -371,7 +371,7 @@ public final class PyResolveUtil {
   @Nullable
   public static ScopeOwner parentScopeForUnresolvedClassLevelName(@NotNull PyClass cls, @NotNull String name) {
     // com.jetbrains.python.codeInsight.dataflow.scope.Scope.containsDeclaration could not be used
-    // because it runs resolve on imports that is forbidden while indexing
+    // because it runs resolve on imports that is forbidden during indexing
     return containsDeclaration(cls, name) ? PyUtil.as(cls.getContainingFile(), PyFile.class) : ScopeUtil.getScopeOwner(cls);
   }
 
