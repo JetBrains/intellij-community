@@ -18,6 +18,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
 
@@ -66,8 +67,18 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
   @Override
   protected JComponent createItemComponent() {
-    JPanel panel = new JPanel(new BorderLayout());
     createLabel();
+    JPanel panel = new JPanel(new BorderLayout()) {
+      private final AccessibleContext myAccessibleContext = myTextLabel.getAccessibleContext();
+
+      @Override
+      public AccessibleContext getAccessibleContext() {
+        if (myAccessibleContext == null) {
+          return super.getAccessibleContext();
+        }
+        return myAccessibleContext;
+      }
+    };
     panel.add(myTextLabel, BorderLayout.WEST);
     myValueLabel = new JLabel();
     myValueLabel.setEnabled(false);
