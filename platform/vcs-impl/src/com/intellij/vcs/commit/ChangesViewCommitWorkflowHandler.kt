@@ -4,6 +4,7 @@ package com.intellij.vcs.commit
 import com.intellij.application.subscribe
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -30,6 +31,7 @@ internal class ChangesViewCommitWorkflowHandler(
   override val ui: ChangesViewCommitWorkflowUi
 ) : AbstractCommitWorkflowHandler<ChangesViewCommitWorkflow, ChangesViewCommitWorkflowUi>(),
     CommitAuthorListener,
+    DumbService.DumbModeListener,
     ProjectManagerListener {
 
   override val commitPanel: CheckinProjectPanel = CommitProjectPanelAdapter(this)
@@ -75,6 +77,7 @@ internal class ChangesViewCommitWorkflowHandler(
     Disposer.register(inclusionModel, Disposable { ui.inclusionModel = null })
     ui.setCompletionContext(changeListManager.changeLists)
 
+    project.messageBus.connect(this).subscribe(DumbService.DUMB_MODE, this)
     ProjectManager.TOPIC.subscribe(this, this)
     CheckinHandlerFactory.EP_NAME.addChangeListener(Runnable { commitHandlersChanged() }, this)
     VcsCheckinHandlerFactory.EP_NAME.addChangeListener(Runnable { commitHandlersChanged() }, this)
@@ -118,6 +121,14 @@ internal class ChangesViewCommitWorkflowHandler(
     updateDefaultCommitActionEnabled()
     ui.defaultCommitActionName = getCommitActionName()
     ui.setCustomCommitActions(createCommitExecutorActions())
+  }
+
+  override fun enteredDumbMode() {
+    ui.commitProgressUi.isDumbMode = true
+  }
+
+  override fun exitDumbMode() {
+    ui.commitProgressUi.isDumbMode = false
   }
 
   override fun executionStarted() = updateDefaultCommitActionEnabled()

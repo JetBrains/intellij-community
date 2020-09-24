@@ -38,6 +38,8 @@ interface ChangesViewCommitWorkflowUi : CommitWorkflowUi {
 interface CommitProgressUi {
   var isEmptyMessage: Boolean
   var isEmptyChanges: Boolean
+
+  var isDumbMode: Boolean
 }
 
 interface CommitAuthorListener : EventListener {

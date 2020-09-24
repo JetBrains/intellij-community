@@ -14,6 +14,20 @@ import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.UIUtil.getErrorForeground
 import kotlin.properties.Delegates.observable
 
+private fun JBLabel.setError(@NlsContexts.Label errorText: String) {
+  text = errorText
+  icon = AllIcons.General.Error
+  foreground = getErrorForeground()
+  isVisible = true
+}
+
+private fun JBLabel.setWarning(@NlsContexts.Label warningText: String) {
+  text = warningText
+  icon = AllIcons.General.Warning
+  foreground = null
+  isVisible = true
+}
+
 class ChangesViewCommitProgressPanel(private val commitWorkflowUi: ChangesViewCommitWorkflowUi, commitMessage: EditorTextComponent) :
   NonOpaquePanel(VerticalLayout(0)),
   CommitProgressUi,
@@ -22,12 +36,7 @@ class ChangesViewCommitProgressPanel(private val commitWorkflowUi: ChangesViewCo
 
   private var oldInclusion: Set<Any> = emptySet()
 
-  private val label = JBLabel().apply {
-    isVisible = false
-
-    icon = AllIcons.General.Error
-    foreground = getErrorForeground()
-  }
+  private val label = JBLabel().apply { isVisible = false }
 
   override var isEmptyMessage: Boolean by observable(false) { _, oldValue, newValue ->
     if (oldValue == newValue) return@observable
@@ -35,6 +44,11 @@ class ChangesViewCommitProgressPanel(private val commitWorkflowUi: ChangesViewCo
   }
 
   override var isEmptyChanges: Boolean by observable(false) { _, oldValue, newValue ->
+    if (oldValue == newValue) return@observable
+    update()
+  }
+
+  override var isDumbMode: Boolean by observable(false) { _, oldValue, newValue ->
     if (oldValue == newValue) return@observable
     update()
   }
@@ -56,8 +70,13 @@ class ChangesViewCommitProgressPanel(private val commitWorkflowUi: ChangesViewCo
   }
 
   private fun update() {
-    label.text = buildErrorText()
-    label.isVisible = label.text?.isNotBlank() == true
+    val error = buildErrorText()
+
+    when {
+      error != null -> label.setError(error)
+      isDumbMode -> label.setWarning(message("label.commit.checks.not.available.during.indexing"))
+      else -> label.isVisible = false
+    }
   }
 
   private fun clearError() {
