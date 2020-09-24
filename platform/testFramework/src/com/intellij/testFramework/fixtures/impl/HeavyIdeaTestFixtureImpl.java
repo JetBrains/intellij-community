@@ -22,6 +22,7 @@ import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -62,7 +63,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
   private final Set<ModuleFixtureBuilder<?>> myModuleFixtureBuilders = new LinkedHashSet<>();
   private EditorListenerTracker myEditorListenerTracker;
   private ThreadTracker myThreadTracker;
-  private final String myName;
+  private final String mySanitizedName;
   private final Path myProjectPath;
   private final boolean myIsDirectoryBasedProject;
   private SdkLeakTracker myOldSdks;
@@ -70,7 +71,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
   private AccessToken projectTracker;
 
   HeavyIdeaTestFixtureImpl(@NotNull String name, @Nullable Path projectPath, boolean isDirectoryBasedProject) {
-    myName = name;
+    mySanitizedName = FileUtil.sanitizeFileName(name, false);
     myProjectPath = projectPath;
     myIsDirectoryBasedProject = isDirectoryBasedProject;
   }
@@ -198,13 +199,13 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
   private Path generateProjectPath() {
     Path tempDirectory;
     if (myProjectPath == null) {
-      tempDirectory = TemporaryDirectory.generateTemporaryPath(myName);
+      tempDirectory = TemporaryDirectory.generateTemporaryPath(mySanitizedName);
       myFilesToDelete.add(tempDirectory);
     }
     else {
       tempDirectory = myProjectPath;
     }
-    return tempDirectory.resolve(myName + (myIsDirectoryBasedProject ? "" : ProjectFileType.DOT_DEFAULT_EXTENSION));
+    return tempDirectory.resolve(mySanitizedName + (myIsDirectoryBasedProject ? "" : ProjectFileType.DOT_DEFAULT_EXTENSION));
   }
 
   private void initApplication() {
