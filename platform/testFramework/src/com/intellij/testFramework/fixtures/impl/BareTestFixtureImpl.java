@@ -20,7 +20,7 @@ public class BareTestFixtureImpl extends BaseFixture implements BareTestFixture 
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
     new RunAll(
-      ()-> JarFileSystemImpl.cleanupForNextTest(),
+      () -> JarFileSystemImpl.cleanupForNextTest(),
       () -> EdtTestUtil.runInEdtAndWait(() -> HeavyPlatformTestCase.cleanupApplicationCaches(null)),
       () -> super.tearDown()
     ).run();

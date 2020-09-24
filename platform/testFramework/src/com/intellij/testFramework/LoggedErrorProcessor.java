@@ -12,8 +12,7 @@ public class LoggedErrorProcessor {
 
   private static LoggedErrorProcessor ourInstance = DEFAULT;
 
-  @NotNull
-  public static LoggedErrorProcessor getInstance() {
+  public static @NotNull LoggedErrorProcessor getInstance() {
     return ourInstance;
   }
 

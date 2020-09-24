@@ -18,6 +18,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Target;
 import java.util.List;
 import java.util.function.Function;
 
@@ -43,6 +45,7 @@ public abstract class PersistentFS extends ManagingFS {
   }
 
   @MagicConstant(flagsFromClass = Flags.class)
+  @Target(ElementType.TYPE_USE)
   public @interface Attributes { }
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
@@ -51,8 +54,7 @@ public abstract class PersistentFS extends ManagingFS {
   }
 
   @Override
-  @NotNull
-  protected <P, R> Function<P, R> accessDiskWithCheckCanceled(Function<? super P, ? extends R> function) {
+  protected @NotNull <P, R> Function<P, R> accessDiskWithCheckCanceled(Function<? super P, ? extends R> function) {
     return new DiskQueryRelay<>(function)::accessDiskWithCheckCanceled;
   }
 
@@ -72,8 +74,7 @@ public abstract class PersistentFS extends ManagingFS {
 
   public abstract boolean isHidden(@NotNull VirtualFile file);
 
-  @Attributes
-  public abstract int getFileAttributes(int id);
+  public abstract @Attributes int getFileAttributes(int id);
 
   public static boolean isDirectory(@Attributes int attributes) { return isSet(attributes, Flags.IS_DIRECTORY); }
   public static boolean isWritable(@Attributes int attributes) { return !isSet(attributes, Flags.IS_READ_ONLY); }
@@ -81,8 +82,7 @@ public abstract class PersistentFS extends ManagingFS {
   public static boolean isSpecialFile(@Attributes int attributes) { return !isDirectory(attributes) && isSet(attributes, Flags.IS_SPECIAL); }
   public static boolean isHidden(@Attributes int attributes) { return isSet(attributes, Flags.IS_HIDDEN); }
 
-  @NotNull
-  public static FileAttributes.CaseSensitivity areChildrenCaseSensitive(@Attributes int attributes) {
+  public static @NotNull FileAttributes.CaseSensitivity areChildrenCaseSensitive(@Attributes int attributes) {
     if (!isDirectory(attributes)) {
       throw new IllegalArgumentException("CHILDREN_CASE_SENSITIVE flag defined for directories only but got file: 0b" + Integer.toBinaryString(attributes));
     }
@@ -92,8 +92,7 @@ public abstract class PersistentFS extends ManagingFS {
     return isSet(attributes, Flags.CHILDREN_CASE_SENSITIVE) ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE;
   }
 
-  @Nullable
-  public abstract NewVirtualFile findFileByIdIfCached(int id);
+  public abstract @Nullable NewVirtualFile findFileByIdIfCached(int id);
 
   public abstract int storeUnlinkedContent(byte @NotNull [] bytes);
 
@@ -109,8 +108,7 @@ public abstract class PersistentFS extends ManagingFS {
 
   public abstract void processEvents(@NotNull List<? extends VFileEvent> events);
 
-  @NotNull
-  public static NewVirtualFileSystem replaceWithNativeFS(@NotNull final NewVirtualFileSystem fs) {
+  public static @NotNull NewVirtualFileSystem replaceWithNativeFS(final @NotNull NewVirtualFileSystem fs) {
     if (SystemInfo.isWindows &&
         !(fs instanceof Win32LocalFileSystem) &&
         fs.getProtocol().equals(LocalFileSystem.PROTOCOL) &&

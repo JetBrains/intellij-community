@@ -347,17 +347,19 @@ public final class VfsImplUtil {
   }
 
   /**
-   * check whether {@code event} (in LocalFileSystem) affects some jars and if so, generate appropriate additional JarFileSystem-events and corresponding after-event-actions.
-   * For example, "delete/change/move '/tmp/x.jar'" event should generate "delete jar:///tmp/x.jar!/" events.
+   * <p>Checks whether the {@code event} (in {@link LocalFileSystem}) affects some archives and if so,
+   * generates appropriate additional JarFileSystem-events and corresponding after-event-actions.</p>
+   *
+   * <p>For example, "delete/change/move '/tmp/x.jar'" event should generate "delete jar:///tmp/x.jar!/" one.</p>
    */
   @NotNull
-  public static List<VFileDeleteEvent> getJarInvalidationEvents(@NotNull VFileEvent event,
-                                                                @NotNull List<? super Runnable> outApplyActions) {
+  public static List<VFileDeleteEvent> getJarInvalidationEvents(@NotNull VFileEvent event, @NotNull List<? super Runnable> outApplyActions) {
     if (!(event instanceof VFileDeleteEvent ||
           event instanceof VFileMoveEvent ||
           event instanceof VFilePropertyChangeEvent && VirtualFile.PROP_NAME.equals(((VFilePropertyChangeEvent)event).getPropertyName()))) {
       return Collections.emptyList();
     }
+
     String path;
     if (event instanceof VFilePropertyChangeEvent) {
       path = ((VFilePropertyChangeEvent)event).getOldPath();

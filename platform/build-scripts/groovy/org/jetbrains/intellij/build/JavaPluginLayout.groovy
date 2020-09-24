@@ -8,7 +8,9 @@ class JavaPluginLayout {
     return PluginLayout.plugin("intellij.java.plugin") {
       directoryName = "java"
       mainJarName = "java-impl.jar"
+
       excludeFromModule("intellij.java.resources.en", "search/searchableOptions.xml")
+
       withModule("intellij.platform.jps.build.launcher", "jps-launcher.jar")
       withModule("intellij.platform.jps.build", "jps-builders.jar", null)
       withModule("intellij.platform.jps.build.javac.rt", "jps-builders-6.jar")
@@ -74,6 +76,7 @@ class JavaPluginLayout {
       withModuleLibrary("debugger-memory-agent", "intellij.java.debugger.memory.agent", "")
 
       withResourceArchive("../jdkAnnotations", "lib/jdkAnnotations.jar")
+
       addition.delegate = delegate
       addition()
     }
