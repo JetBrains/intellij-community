@@ -4,8 +4,6 @@ package com.intellij.psi.impl.source.tree.java;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -159,7 +157,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
           LOG.error("poly expression evaluation during overload resolution, processing " + results.length + " results");
         }
 
-        final PsiType type = getResultType(call, methodExpression, candidateInfo, languageLevel, file);
+        final PsiType type = getResultType(call, methodExpression, candidateInfo, languageLevel);
         if (type == null) {
           return null;
         }
@@ -179,8 +177,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
     private static PsiType getResultType(@NotNull PsiMethodCallExpression call,
                                          @NotNull PsiReferenceExpression methodExpression,
                                          @NotNull JavaResolveResult result,
-                                         @NotNull final LanguageLevel languageLevel, 
-                                         @NotNull PsiFile file) {
+                                         @NotNull final LanguageLevel languageLevel) {
       final PsiMethod method = (PsiMethod)result.getElement();
       if (method == null) return null;
 
@@ -205,7 +202,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
         ret = ((PsiClassType)ret).setLanguageLevel(languageLevel);
       }
       if (is15OrHigher) {
-        return captureReturnType(call, method, ret, result, languageLevel, file);
+        return captureReturnType(call, method, ret, result, languageLevel);
       }
       return TypeConversionUtil.erasure(ret);
     }
@@ -232,8 +229,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
                                            PsiMethod method,
                                            PsiType ret,
                                            JavaResolveResult result,
-                                           LanguageLevel languageLevel, 
-                                           PsiFile file) {
+                                           LanguageLevel languageLevel) {
     PsiSubstitutor substitutor = result.getSubstitutor();
     substitutor.ensureValid();
     PsiType substitutedReturnType = substitutor.substitute(ret);
@@ -253,8 +249,10 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
     // If unchecked conversion was necessary for the method to be applicable, 
     // the parameter types of the invocation type are the parameter types of the method's type,
     // and the return type and thrown types are given by the erasures of the return type and thrown types of the method's type.
-    if ((!languageLevel.isAtLeast(LanguageLevel.JDK_1_8) || call.getTypeArguments().length > 0) && method.hasTypeParameters() ||
-        !method.hasTypeParameters() && JavaVersionService.getInstance().isAtLeast(file, JavaSdkVersion.JDK_1_8)) {
+    boolean atLeast8 = languageLevel.isAtLeast(LanguageLevel.JDK_1_8);
+    boolean hasTypeParameters = method.hasTypeParameters();
+    if (hasTypeParameters && (!atLeast8 || call.getTypeArguments().length > 0) ||
+        !hasTypeParameters && atLeast8) {
       PsiType erased = TypeConversionUtil.erasure(substitutedReturnType);
       if (!substitutedReturnType.equals(erased) && result instanceof MethodCandidateInfo && ((MethodCandidateInfo)result).isApplicable()) {
         final PsiType[] args = call.getArgumentList().getExpressionTypes();
