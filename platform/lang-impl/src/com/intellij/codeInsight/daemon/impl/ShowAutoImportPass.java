@@ -220,7 +220,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
   }
 
   @NotNull
-  public static List<HighlightInfo> runGeneralHighlightingPass(@NotNull PsiFile file) {
+  private static List<HighlightInfo> runGeneralHighlightingPass(@NotNull PsiFile file) {
     Project project = file.getProject();
     Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document == null) return Collections.emptyList();

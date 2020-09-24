@@ -533,7 +533,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
 
         @Override
         public @NotNull @NlsContexts.Label String getDescription() {
-          return null;
+          return "";
         }
       };
       FileTypeFactory.FILE_TYPE_FACTORY_EP.getPoint().registerExtension(new FileTypeFactory() {

@@ -235,7 +235,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
 
       @Override
-      public void consume(@NotNull final FileType fileType, String semicolonDelimitedExtensions) {
+      public void consume(@NotNull final FileType fileType, @NotNull String semicolonDelimitedExtensions) {
         register(fileType, parse(semicolonDelimitedExtensions));
       }
 
@@ -362,10 +362,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   private static void initializeMatchers(@NotNull FileTypeBean bean) {
     bean.addMatchers(ContainerUtil.concat(
-      parse(bean.extensions),
-      parse(bean.fileNames, token -> new ExactFileNameMatcher(token)),
-      parse(bean.fileNamesCaseInsensitive, token -> new ExactFileNameMatcher(token, true)),
-      parse(bean.patterns, token -> FileNameMatcherFactory.getInstance().createMatcher(token))));
+      parse(StringUtil.notNullize(bean.extensions)),
+      parse(StringUtil.notNullize(bean.fileNames), token -> new ExactFileNameMatcher(token)),
+      parse(StringUtil.notNullize(bean.fileNamesCaseInsensitive), token -> new ExactFileNameMatcher(token, true)),
+      parse(StringUtil.notNullize(bean.patterns), token -> FileNameMatcherFactory.getInstance().createMatcher(token))));
   }
 
   private void instantiatePendingFileTypes() {
@@ -1065,7 +1065,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   private void writeExtensionsMap(@NotNull Element map, @NotNull FileType type, boolean specifyTypeName) {
     List<FileNameMatcher> associations = myPatternsTable.getAssociations(type);
-    Set<FileNameMatcher> defaultAssociations = CollectionFactory.createSmallMemoryFootprintSet(myInitialAssociations.getAssociations(type));
+    Set<FileNameMatcher> defaultAssociations = new HashSet<>(myInitialAssociations.getAssociations(type));
 
     for (FileNameMatcher matcher : associations) {
       boolean isDefaultAssociationContains = defaultAssociations.remove(matcher);
@@ -1102,13 +1102,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @NotNull
-  private static List<FileNameMatcher> parse(@Nullable String semicolonDelimitedExtensions) {
+  private static List<FileNameMatcher> parse(@NotNull String semicolonDelimitedExtensions) {
     return parse(semicolonDelimitedExtensions, ext -> new ExtensionFileNameMatcher(ext));
   }
 
   @NotNull
-  private static List<FileNameMatcher> parse(@Nullable String semicolonDelimitedExtensions, @NotNull Function<? super String, ? extends FileNameMatcher> matcherFactory) {
-    if (semicolonDelimitedExtensions == null) {
+  private static List<FileNameMatcher> parse(@NotNull String semicolonDelimitedExtensions, @NotNull Function<? super String, ? extends FileNameMatcher> matcherFactory) {
+    if (semicolonDelimitedExtensions.isEmpty()) {
       return Collections.emptyList();
     }
 
@@ -1146,7 +1146,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   private void bindUnresolvedMappings(@NotNull FileType fileType) {
-    for (FileNameMatcher matcher : CollectionFactory.createSmallMemoryFootprintSet(myUnresolvedMappings.keySet())) {
+    for (FileNameMatcher matcher : new ArrayList<>(myUnresolvedMappings.keySet())) {
       String name = myUnresolvedMappings.get(matcher);
       if (fileType.getName().equals(name)) {
         myPatternsTable.addAssociation(matcher, fileType);
@@ -1162,11 +1162,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @NotNull
   private FileType loadFileType(@NotNull Element typeElement, boolean isDefault) {
     String fileTypeName = typeElement.getAttributeValue(ATTRIBUTE_NAME);
-    @NlsSafe String fileTypeDescr = typeElement.getAttributeValue(ATTRIBUTE_DESCRIPTION);
-    String iconPath = typeElement.getAttributeValue("icon");
 
-    String extensionsStr = StringUtil.nullize(typeElement.getAttributeValue("extensions"));
-    if (isDefault && extensionsStr != null) {
+    String extensionsStr = StringUtil.notNullize(typeElement.getAttributeValue("extensions"));
+    if (isDefault && !extensionsStr.isEmpty()) {
       // todo support wildcards
       extensionsStr = filterAlreadyRegisteredExtensions(extensionsStr);
     }
@@ -1186,6 +1184,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       ((AbstractFileType)type).initSupport();
     }
 
+    @NlsSafe String fileTypeDescr = typeElement.getAttributeValue(ATTRIBUTE_DESCRIPTION);
+    String iconPath = typeElement.getAttributeValue("icon");
     setFileTypeAttributes((UserFileType<?>)type, fileTypeName, fileTypeDescr, iconPath);
     registerFileTypeWithoutNotification(type, parse(extensionsStr), Collections.emptyList(), isDefault);
 
@@ -1210,7 +1210,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return type;
   }
 
-  @Nullable
+  @NotNull
   private String filterAlreadyRegisteredExtensions(@NotNull String semicolonDelimited) {
     StringTokenizer tokenizer = new StringTokenizer(semicolonDelimited, FileTypeConsumer.EXTENSION_DELIMITER, false);
     StringBuilder builder = null;
@@ -1226,7 +1226,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         builder.append(extension);
       }
     }
-    return builder == null ? null : builder.toString();
+    return builder == null ? "" : builder.toString();
   }
 
   private static void setFileTypeAttributes(@NotNull UserFileType<?> fileType, @Nullable String name, @Nullable @NlsContexts.Label String description, @Nullable String iconPath) {
