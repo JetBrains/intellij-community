@@ -17,8 +17,11 @@ import java.util.List;
  * a provider isn't passed to the method, but registered separately via {{@link SemContributor}}.
  * Any key can have more than one provider.
  * One more difference with {@link CachedValuesManager} is that a key can be extended by other keys. 
+ * Cached value will be dropped automatically on any change of PSI.
  * 
  * @author peter
+ * @see SemElement
+ * @see SemContributor
  */
 public abstract class SemService {
   public static SemService getSemService(@NotNull Project p) {
