@@ -36,7 +36,8 @@ public class JavaBranchRefactoringTest {
 
       MoveMembersTest.class,
       ConvertToInstanceMethodTest.class,
-      ConvertToInstance8MethodTest.class
+      ConvertToInstance8MethodTest.class,
+      MakeMethodStaticTest.class
       );
     for (Class<? extends TestCase> testClass : testsToWrap) {
       suite.addTest(enableBranchRefactoringsInside(testClass));

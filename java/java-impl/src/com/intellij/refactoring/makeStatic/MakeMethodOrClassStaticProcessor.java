@@ -18,6 +18,7 @@ package com.intellij.refactoring.makeStatic;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
+import com.intellij.model.SimpleBranchableUsageInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -237,7 +238,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
         if (qualifier instanceof PsiThisExpression) qualifier = null;
       }
       if (!PsiTreeUtil.isAncestor(myMember, element, true) || qualifier != null) {
-        result.add(new UsageInfo(element));
+        result.add(new SimpleBranchableUsageInfo(element));
       }
 
       processExternalReference(element, method, result);
