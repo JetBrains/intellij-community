@@ -137,7 +137,9 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
       isOkToProcessDefaultMnemonics = false
     }
 
-    override fun isDefaultButton(): Boolean = IdeFocusManager.getInstance(project).getFocusedDescendantFor(rootComponent) != null
+    override fun isDefaultButton(): Boolean =
+      !progressPanel.isDumbMode &&
+      IdeFocusManager.getInstance(project).getFocusedDescendantFor(rootComponent) != null
   }
   private val commitAuthorComponent = CommitAuthorComponent(project)
   private val progressPanel = ChangesViewCommitProgressPanel(this, commitMessage.editorField)
@@ -412,7 +414,7 @@ class ChangesViewCommitPanel(private val changesViewHost: ChangesViewPanel, priv
 
   inner class DefaultCommitAction : DumbAwareAction() {
     override fun update(e: AnActionEvent) {
-      e.presentation.isEnabledAndVisible = isActive && defaultCommitAction.isEnabled
+      e.presentation.isEnabledAndVisible = isActive && defaultCommitAction.isEnabled && commitButton.isDefaultButton
     }
 
     override fun actionPerformed(e: AnActionEvent) = fireDefaultExecutorCalled()
