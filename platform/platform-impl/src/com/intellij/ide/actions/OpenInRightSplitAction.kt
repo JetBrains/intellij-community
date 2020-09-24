@@ -32,11 +32,9 @@ class OpenInRightSplitAction : AnAction(), DumbAware {
       e.presentation.isEnabledAndVisible = false
       return
     } 
-    val currentFile = FileEditorManagerEx.getInstanceEx(project).splitters.currentFile
     
     val contextFile =  getVirtualFile(e)
-    e.presentation.isEnabledAndVisible = contextFile != null &&
-                                         currentFile != null 
+    e.presentation.isEnabledAndVisible = contextFile != null
   }
 
   companion object {
@@ -45,7 +43,11 @@ class OpenInRightSplitAction : AnAction(), DumbAware {
     fun openInRightSplit(project: @Nullable Project, file: VirtualFile, element: Navigatable? = null) {
       val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
       val splitters = fileEditorManager.splitters
-      val window = splitters.currentWindow ?: return
+      val window = splitters.currentWindow
+      if (window == null) {
+        element?.navigate(true)
+        return
+      }
 
       window.split(SwingConstants.VERTICAL, true, file, true)
 
