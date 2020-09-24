@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.scale.JBUIScale;
@@ -51,11 +52,21 @@ public class EmptyStateProjectsPanel extends JPanel {
 
     DefaultActionGroup moreActionGroup = mainAndMore.getSecond();
     if (moreActionGroup.getChildrenCount() > 0) {
-      JPanel moreLinkPanel = new Wrapper(new FlowLayout(), createLinkWithPopup(moreActionGroup));
+      JPanel moreLinkPanel = new Wrapper(new FlowLayout(), moreActionGroup.getChildrenCount() == 1
+                                                           ? createActionLink(moreActionGroup.getChildren(null)[0])
+                                                           : createLinkWithPopup(moreActionGroup));
+      moreLinkPanel.setBorder(JBUI.Borders.emptyTop(5));
       mainPanel.add(moreLinkPanel);
     }
 
     add(mainPanel);
+  }
+
+  private static ActionLink createActionLink(@NotNull AnAction action) {
+    @SuppressWarnings("DialogTitleCapitalization") ActionLink actionLink =
+      new ActionLink(action.getTemplateText(), null, action, null, ActionPlaces.WELCOME_SCREEN);
+    actionLink.setFocusable(true);
+    return actionLink;
   }
 
   @NotNull
