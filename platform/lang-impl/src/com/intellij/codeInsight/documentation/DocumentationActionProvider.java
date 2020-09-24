@@ -11,10 +11,17 @@ import java.util.List;
 public interface DocumentationActionProvider {
   ExtensionPointName<DocumentationActionProvider> EP_NAME = ExtensionPointName.create("com.intellij.documentationActionProvider");
 
+  /**
+   * Allows to add custom actions to the context menu of a rendered documentation inlay.
+   */
   default List<AnAction> additionalActions(DocRenderItem item) {
     return Collections.emptyList();
   }
 
+  /**
+   * Allows to add custom actions to Quick Documentation popup and Documentation toolwindow.
+   * Actions are added to the context menu and to the toolbar or corner button menu.
+   */
   default List<AnAction> additionalActions(DocumentationComponent component) {
     return Collections.emptyList();
   }
