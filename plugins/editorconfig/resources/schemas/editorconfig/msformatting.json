@@ -294,7 +294,7 @@
     "type": "option",
     "key": "csharp_space_between_parentheses",
     "value": {
-      "type": "list",
+      "type": "union",
       "values": [
         {
           "type": "constant",
@@ -310,6 +310,10 @@
           "type": "constant",
           "value": "type_casts",
           "documentation": "Place space between parentheses in type casts"
+        },
+        {
+          "type": "text",
+          "deprecated": "If you use a value other than control_flow_statements, expressions, or type_casts, the setting is not applied."
         }
       ]
     }
@@ -372,6 +376,10 @@
           "type": "constant",
           "value": "ignore",
           "documentation": "Ignore spaces around binary operators"
+        },
+        {
+          "type": "text",
+          "deprecated": "If use a value other than before_and_after, none, or ignore, the setting is not applied."
         }
       ]
     }
