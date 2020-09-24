@@ -152,12 +152,17 @@ public final class TerminalView {
     createNewSession(terminalRunner, tabState, true);
   }
 
-  @NotNull
-  public ShellTerminalWidget createLocalShellWidget(@Nullable String workingDirectory, @Nullable @Nls String tabName) {
+  public @NotNull ShellTerminalWidget createLocalShellWidget(@Nullable String workingDirectory, @Nullable @Nls String tabName) {
+    return createLocalShellWidget(workingDirectory, tabName, true);
+  }
+
+  public @NotNull ShellTerminalWidget createLocalShellWidget(@Nullable String workingDirectory,
+                                                             @Nullable @Nls String tabName,
+                                                             boolean requestFocus) {
     TerminalTabState tabState = new TerminalTabState();
     tabState.myTabName = tabName;
     tabState.myWorkingDirectory = workingDirectory;
-    JBTerminalWidget widget = createNewSession(myTerminalRunner, tabState, true);
+    JBTerminalWidget widget = createNewSession(myTerminalRunner, tabState, requestFocus);
     return (ShellTerminalWidget)Objects.requireNonNull(widget);
   }
 

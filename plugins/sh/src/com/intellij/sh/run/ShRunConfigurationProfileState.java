@@ -49,8 +49,13 @@ public class ShRunConfigurationProfileState implements RunProfileState {
     if (shRunner == null || !myRunConfiguration.isExecuteInTerminal() || !shRunner.isAvailable(myProject) || isRunBeforeConfig()) {
       return buildExecutionResult();
     }
-    shRunner.run(buildCommand(), myRunConfiguration.getScriptWorkingDirectory(), myRunConfiguration.getName());
+    shRunner.run(buildCommand(), myRunConfiguration.getScriptWorkingDirectory(), myRunConfiguration.getName(), isActivateToolWindow());
     return null;
+  }
+
+  private boolean isActivateToolWindow() {
+    RunnerAndConfigurationSettings settings = RunManager.getInstance(myProject).findSettings(myRunConfiguration);
+    return settings != null && settings.isActivateToolWindowBeforeRun();
   }
 
   private ExecutionResult buildExecutionResult() throws ExecutionException {
