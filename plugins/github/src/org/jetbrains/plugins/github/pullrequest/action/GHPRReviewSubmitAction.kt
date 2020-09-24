@@ -248,13 +248,14 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
     }
   }
 
-  override fun createButton(): JButton {
-    return object : JButton() {
-      override fun isDefaultButton(): Boolean {
-        return getClientProperty(PROP_DEFAULT) as? Boolean ?: super.isDefaultButton()
+  override fun createButton(): JButton =
+    object : JButton() {
+      init {
+        configureForToolbar()
       }
+
+      override fun isDefaultButton(): Boolean = getClientProperty(PROP_DEFAULT) as? Boolean ?: super.isDefaultButton()
     }
-  }
 
   override fun updateButtonFromPresentation(button: JButton, presentation: Presentation) {
     super.updateButtonFromPresentation(button, presentation)

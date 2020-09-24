@@ -19,20 +19,15 @@ abstract class JButtonAction(text: @ActionText String?, @ActionDescription descr
   : DumbAwareAction(text, description, icon), CustomComponentAction {
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    val button = createButton().apply {
-      isFocusable = false
-      font = JBUI.Fonts.toolbarFont()
-      putClientProperty("ActionToolbar.smallVariant", true)
-    }.also { button ->
-      button.addActionListener {
-        val toolbar = ComponentUtil.getParentOfType(ActionToolbar::class.java, button)
-        val dataContext = toolbar?.toolbarDataContext ?: DataManager.getInstance().getDataContext(button)
-        val action = this@JButtonAction
-        val event = AnActionEvent.createFromInputEvent(null, place, presentation, dataContext)
+    val button = createButton()
+    button.addActionListener {
+      val toolbar = ComponentUtil.getParentOfType(ActionToolbar::class.java, button)
+      val dataContext = toolbar?.toolbarDataContext ?: DataManager.getInstance().getDataContext(button)
+      val action = this@JButtonAction
+      val event = AnActionEvent.createFromInputEvent(null, place, presentation, dataContext)
 
-        if (ActionUtil.lastUpdateAndCheckDumb(action, event, true)) {
-          ActionUtil.performActionDumbAware(action, event)
-        }
+      if (ActionUtil.lastUpdateAndCheckDumb(action, event, true)) {
+        ActionUtil.performActionDumbAware(action, event)
       }
     }
 
@@ -40,7 +35,14 @@ abstract class JButtonAction(text: @ActionText String?, @ActionDescription descr
     return button
   }
 
-  protected open fun createButton(): JButton = JButton()
+  protected open fun createButton(): JButton = JButton().configureForToolbar()
+
+  protected fun JButton.configureForToolbar(): JButton =
+    apply {
+      isFocusable = false
+      font = JBUI.Fonts.toolbarFont()
+      putClientProperty("ActionToolbar.smallVariant", true)
+    }
 
   protected fun updateButtonFromPresentation(e: AnActionEvent) {
     val button = UIUtil.findComponentOfType(e.presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY), JButton::class.java)
