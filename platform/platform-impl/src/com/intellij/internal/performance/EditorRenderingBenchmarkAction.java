@@ -67,6 +67,7 @@ public class EditorRenderingBenchmarkAction extends AnAction implements DumbAwar
       long threshold = System.currentTimeMillis() + PERIOD * 1000;
 
       int n = 0;
+      component.setOpaque(false);
       while (true) {
         component.paintImmediately(r);
         n++;
