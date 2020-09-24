@@ -162,29 +162,33 @@ class JdkInstaller {
     }
 
     indicator?.text2 = ProjectBundle.message("progress.text2.downloading.jdk")
-    val downloadFile = Paths.get(PathManager.getTempPath(), "jdk-${item.archiveFileName}")
+    val downloadFile = Paths.get(PathManager.getTempPath(), "jdk-${System.nanoTime()}-${item.archiveFileName}")
     try {
       try {
         HttpRequests.request(item.url)
           .productNameAsUserAgent()
           .saveToFile(downloadFile.toFile(), indicator)
+
+        if (!downloadFile.isFile()) {
+          throw RuntimeException("Downloaded file does not exist: $downloadFile")
+        }
       }
       catch (t: Throwable) {
         if (t is ControlFlowException) throw t
         throw RuntimeException("Failed to download ${item.fullPresentationText} from $url. ${t.message}", t)
       }
 
-      val sizeDiff = Files.size(downloadFile) - item.archiveSize
+      val sizeDiff = runCatching { Files.size(downloadFile) - item.archiveSize }.getOrNull()
       if (sizeDiff != 0L) {
         throw RuntimeException("The downloaded ${item.fullPresentationText} has incorrect file size,\n" +
-                               "the difference is ${sizeDiff.absoluteValue} bytes.\n" +
+                               "the difference is ${sizeDiff?.absoluteValue ?: "unknown" } bytes.\n" +
                                "Check your internet connection and try again later")
       }
 
-      val actualHashCode = com.google.common.io.Files.asByteSource(downloadFile.toFile()).hash(Hashing.sha256()).toString()
+      val actualHashCode = runCatching { com.google.common.io.Files.asByteSource(downloadFile.toFile()).hash(Hashing.sha256()).toString() }.getOrNull()
       if (!actualHashCode.equals(item.sha256, ignoreCase = true)) {
         throw RuntimeException("Failed to verify SHA-256 checksum for ${item.fullPresentationText}\n\n" +
-                               "The actual value is $actualHashCode,\n" +
+                               "The actual value is ${actualHashCode ?: "unknown"},\n" +
                                "but expected ${item.sha256} was expected\n" +
                                "Check your internet connection and try again later")
       }
