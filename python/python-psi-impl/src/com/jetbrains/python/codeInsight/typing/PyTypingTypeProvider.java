@@ -397,14 +397,23 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       return Ref.create(getGenericTypeFromTypeVar(callSite, new Context(context)));
     }
 
-    if (PyNames.CLASS_GETITEM.equals(function.getName())) {
-      final PyInstantiableType<?> instantiableType = as(Ref.deref(getType(callSite, context)), PyInstantiableType.class);
-      if (instantiableType != null) {
-        return Ref.create(instantiableType.toClass());
-      }
+    if (functionReturningCallSiteAsAType(function)) {
+      return getAsClassObjectType(callSite, new Context(context));
     }
 
     return null;
+  }
+
+  private static boolean functionReturningCallSiteAsAType(@NotNull PyFunction function) {
+    final String name = function.getName();
+
+    if (PyNames.CLASS_GETITEM.equals(name)) return true;
+    if (PyNames.GETITEM.equals(name)) {
+      final PyClass cls = function.getContainingClass();
+      return cls != null && "typing._SpecialForm".equals(cls.getQualifiedName());
+    }
+
+    return false;
   }
 
   @Nullable
@@ -838,21 +847,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
           if (resolveToQualifiedNames(indexExpr, context.getTypeContext()).contains(ANY)) {
             return Ref.create(PyBuiltinCache.getInstance(resolved).getTypeType());
           }
-          final PyType type = Ref.deref(getType(indexExpr, context));
-          final PyClassType classType = as(type, PyClassType.class);
-          if (classType != null && !classType.isDefinition()) {
-            return Ref.create(new PyClassTypeImpl(classType.getPyClass(), true));
-          }
-          final PyGenericType typeVar = as(type, PyGenericType.class);
-          if (typeVar != null && !typeVar.isDefinition()) {
-            return Ref.create(new PyGenericType(typeVar.getName(), typeVar.getBound(), true));
-          }
-          // Represent Type[Union[str, int]] internally as Union[Type[str], Type[int]]
-          final PyUnionType unionType = as(type, PyUnionType.class);
-          if (unionType != null &&
-              unionType.getMembers().stream().allMatch(t -> t instanceof PyClassType && !((PyClassType)t).isDefinition())) {
-            return Ref.create(PyUnionType.union(ContainerUtil.map(unionType.getMembers(), t -> ((PyClassType)t).toClass())));
-          }
+          return getAsClassObjectType(indexExpr, context);
         }
         // Map Type[Something] with unsupported type parameter to Any, instead of generic type for the class "type"
         return Ref.create();
@@ -863,6 +858,26 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       return Ref.create(PyBuiltinCache.getInstance(resolved).getTypeType());
     }
     return null;
+  }
+
+  @NotNull
+  private static Ref<PyType> getAsClassObjectType(@NotNull PyExpression expression, @NotNull Context context) {
+    final PyType type = Ref.deref(getType(expression, context));
+    final PyClassType classType = as(type, PyClassType.class);
+    if (classType != null && !classType.isDefinition()) {
+      return Ref.create(new PyClassTypeImpl(classType.getPyClass(), true));
+    }
+    final PyGenericType typeVar = as(type, PyGenericType.class);
+    if (typeVar != null && !typeVar.isDefinition()) {
+      return Ref.create(new PyGenericType(typeVar.getName(), typeVar.getBound(), true));
+    }
+    // Represent Type[Union[str, int]] internally as Union[Type[str], Type[int]]
+    final PyUnionType unionType = as(type, PyUnionType.class);
+    if (unionType != null &&
+        unionType.getMembers().stream().allMatch(t -> t instanceof PyClassType && !((PyClassType)t).isDefinition())) {
+      return Ref.create(PyUnionType.union(ContainerUtil.map(unionType.getMembers(), t -> ((PyClassType)t).toClass())));
+    }
+    return Ref.create();
   }
 
   @Nullable
