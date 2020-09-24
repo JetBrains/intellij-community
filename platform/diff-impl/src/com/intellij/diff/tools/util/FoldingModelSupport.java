@@ -711,7 +711,7 @@ public class FoldingModelSupport {
           int line2 = document.getLineNumber(region.getEndOffset()) + 1;
           collapsed = new LineRange(line1, line2);
           collapsedDescription = ContainerUtil.map(folding.myDescriptions,
-                                                   it -> it != null ? it.get() : null,
+                                                   it -> it != null ? it.getCachedDescription() : null,
                                                    ArrayUtil.EMPTY_STRING_ARRAY);
           break;
         }
@@ -1005,7 +1005,7 @@ public class FoldingModelSupport {
 
       @Nullable
       @RequiresEdt
-      public String get() {
+      public String getCachedDescription() {
         return myDescription.description;
       }
     }
