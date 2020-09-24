@@ -8,13 +8,12 @@ import com.intellij.internal.statistic.eventLog.events.EnumEventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventFields.Enum
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
-import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger.configVersion
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.wm.impl.ToolWindowEventSource
 
 class ToolWindowEventLogGroup : CounterUsagesCollector() {
   companion object {
-    private val GROUP = EventLogGroup("toolwindow", configVersion)
+    private val GROUP = EventLogGroup("toolwindow", 57)
 
     @JvmField
     val TOOLWINDOW_ID = EventFields.StringValidatedByCustomRule("id", "toolwindow")

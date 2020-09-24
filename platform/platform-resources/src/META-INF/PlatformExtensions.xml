@@ -673,6 +673,14 @@
 
     <statistics.counterUsagesCollector groupId="ui.mnemonic" version="1"/>
 
+    <statistics.counterUsagesCollector groupId="event.log" version="57"/>
+    <statistics.counterUsagesCollector groupId="performance" version="57"/>
+    <statistics.counterUsagesCollector groupId="notifications" version="57"/>
+    <statistics.counterUsagesCollector groupId="productivity" version="57"/>
+    <statistics.counterUsagesCollector groupId="ui.dialogs" version="57"/>
+    <statistics.counterUsagesCollector groupId="ui.settings" version="57"/>
+    <statistics.counterUsagesCollector groupId="settings.changes" version="57"/>
+
     <statistics.collectorExtension implementation="com.intellij.ide.actions.ToolwindowFusEventFields"/>
 
     <applicationInitializedListener implementation="com.intellij.openapi.application.Preloader"/>
