@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.ide.plugins.DynamicPluginsTestUtilKt;
+import com.intellij.ide.plugins.DynamicPluginsTestUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -812,7 +812,7 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
 
   public void testReadOnlyFsCachesLength() throws IOException {
     String text = "<virtualFileSystem implementationClass=\"" + TracingJarFileSystemTestWrapper.class.getName() + "\" key=\"jarwrapper\" physical=\"true\"/>";
-    Disposable disposable = DynamicPluginsTestUtilKt.loadExtensionWithText(text, TracingJarFileSystemTestWrapper.class.getClassLoader());
+    Disposable disposable = DynamicPluginsTestUtil.loadExtensionWithText(text, TracingJarFileSystemTestWrapper.class.getClassLoader());
 
     try {
       File testDir = getTempDir().createDir().toFile();
@@ -872,7 +872,7 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
 
   public void testDoNotRecalculateLengthIfEndOfInputStreamIsNotReached() throws IOException {
     String text = "<virtualFileSystem implementationClass=\"" + TracingJarFileSystemTestWrapper.class.getName() + "\" key=\"jarwrapper\" physical=\"true\"/>";
-    Disposable disposable = DynamicPluginsTestUtilKt.loadExtensionWithText(text, TracingJarFileSystemTestWrapper.class.getClassLoader());
+    Disposable disposable = DynamicPluginsTestUtil.loadExtensionWithText(text, TracingJarFileSystemTestWrapper.class.getClassLoader());
 
     try {
       File testDir = getTempDir().createDir().toFile();
