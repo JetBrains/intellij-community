@@ -53,7 +53,11 @@
         <completion.contributor/>
         <custom.custom/>
         <indirect.indirect/>
+
+
         <<error descr="Cannot resolve extension point 'com.intellij.custom.error' in dependencies&nbsp;(Reference: Plugin Dependencies)">custom.error</error>
                 <error descr="Attribute customAttribute is not allowed here">customAttribute</error>=""/>
+
+        <<error descr="Missing dependency declaration for using extension point 'com.intellij.notincluded.notInDependencies'">notincluded.notInDependencies</error>/>
     </extensions>
 </idea-plugin>

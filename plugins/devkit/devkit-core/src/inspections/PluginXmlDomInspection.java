@@ -65,6 +65,7 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Action;
 import org.jetbrains.idea.devkit.dom.*;
 import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
+import org.jetbrains.idea.devkit.dom.index.ExtensionPointIndex;
 import org.jetbrains.idea.devkit.inspections.quickfix.AddWithTagFix;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
@@ -628,17 +629,47 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
   }
 
   private static void annotateUnresolvedExtension(Extensions.UnresolvedExtension unresolvedExtension, DomElementAnnotationHolder holder) {
-    final Extensions extensions = DomUtil.getParentOfType(unresolvedExtension, Extensions.class, true);
+    final Module module = unresolvedExtension.getModule();
+    if (module == null) return;
+
+    final Extensions extensions = unresolvedExtension.getParentOfType(Extensions.class, true);
     assert extensions != null;
-
     String qualifiedExtensionId = extensions.getEpPrefix() + unresolvedExtension.getXmlElementName();
-    String message = new HtmlBuilder()
-      .append(DevKitBundle.message("error.cannot.resolve.extension.point", qualifiedExtensionId))
-      .nbsp()
-      .append(HtmlChunk.link(DEPENDENCIES_DOC_URL, DevKitBundle.message("error.cannot.resolve.plugin.reference.link.title")))
-      .wrapWith(HtmlChunk.html()).toString();
 
-    holder.createProblem(unresolvedExtension, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, message, null);
+    final ExtensionPoint extensionPoint = ExtensionPointIndex.findExtensionPoint(module, qualifiedExtensionId);
+    if (extensionPoint == null) {
+      String message = new HtmlBuilder()
+        .append(DevKitBundle.message("error.cannot.resolve.extension.point", qualifiedExtensionId))
+        .nbsp()
+        .append(HtmlChunk.link(DEPENDENCIES_DOC_URL, DevKitBundle.message("error.cannot.resolve.plugin.reference.link.title")))
+        .wrapWith(HtmlChunk.html()).toString();
+
+      holder.createProblem(unresolvedExtension, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, message, null);
+      return;
+    }
+
+
+    final IdeaPlugin ideaPlugin = extensionPoint.getParentOfType(IdeaPlugin.class, true);
+    assert ideaPlugin != null;
+    String dependencyId = ideaPlugin.getPluginId();
+
+    final LocalQuickFix addDependsFix = new LocalQuickFix() {
+      @Override
+      public @IntentionFamilyName @NotNull String getFamilyName() {
+        return DevKitBundle.message("error.cannot.resolve.extension.point.missing.dependency.fix.family.name");
+      }
+
+      @Override
+      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+        final IdeaPlugin ideaPlugin = extensions.getParentOfType(IdeaPlugin.class, true);
+        assert ideaPlugin != null;
+        final Dependency dependency = ideaPlugin.addDependency();
+        dependency.setStringValue(dependencyId);
+      }
+    };
+    holder.createProblem(unresolvedExtension,
+                         DevKitBundle.message("error.cannot.resolve.extension.point.missing.dependency", qualifiedExtensionId),
+                         addDependsFix);
   }
 
   private static void annotateIdeaVersion(IdeaVersion ideaVersion, DomElementAnnotationHolder holder) {

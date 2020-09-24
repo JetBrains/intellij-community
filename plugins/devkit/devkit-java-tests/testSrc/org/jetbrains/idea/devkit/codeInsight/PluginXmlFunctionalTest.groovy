@@ -133,6 +133,12 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
             <extensionPoint name="custom"/>
         </extensionPoints>
     """)
+    addPluginXml("notInDependencies", """
+        <id>com.intellij.notincluded</id>
+        <extensionPoints>
+            <extensionPoint name="notInDependencies"/>
+        </extensionPoints>
+    """)
     myFixture.addClass("package foo; public class MyRunnable implements java.lang.Runnable {}")
     myFixture.addClass("package foo; @Deprecated public abstract class MyDeprecatedEP {}")
     myFixture.addClass("package foo; public class MyDeprecatedEPImpl extends foo.MyDeprecatedEP {}")
