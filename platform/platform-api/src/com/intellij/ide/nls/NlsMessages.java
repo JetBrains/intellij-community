@@ -33,7 +33,8 @@ public class NlsMessages {
 
   /**
    * @param list list of items
-   * @return localized string representation of all items in the list semantically joined via 'AND'
+   * @return localized string representation of all items in the list with conjunction formatting.
+   * E.g. formatAndList(List.of("X", "Y", "Z")) will produce "X, Y, and Z" in English locale.
    */
   public static @NotNull @Nls String formatAndList(Collection<?> list) {
     return ListFormatter.getInstance(DynamicBundle.getLocale(), ListFormatter.Type.AND, ListFormatter.Width.WIDE).format(list);
@@ -41,21 +42,34 @@ public class NlsMessages {
 
   /**
    * @param list list of items
-   * @return localized string representation of all items in the list semantically joined via 'OR'
+   * @return localized narrow string representation of all items in the list with conjunction formatting. 
+   * In narrow representation the conjunction could be omitted.
+   * E.g. formatAndList(List.of("X", "Y", "Z")) will produce "X, Y, Z" in English locale.
+   */
+  public static @NotNull @Nls String formatNarrowAndList(Collection<?> list) {
+    return ListFormatter.getInstance(DynamicBundle.getLocale(), ListFormatter.Type.AND, ListFormatter.Width.NARROW).format(list);
+  }
+
+  /**
+   * @param list list of items
+   * @return localized narrow string representation of all items in the list with disjunction formatting.
+   * E.g. formatAndList(List.of("X", "Y", "Z")) will produce "X, Y, or Z" in English locale.
    */
   public static @NotNull @Nls String formatOrList(Collection<?> list) {
     return ListFormatter.getInstance(DynamicBundle.getLocale(), ListFormatter.Type.OR, ListFormatter.Width.WIDE).format(list);
   }
 
   /**
-   * @return a collector that collects a stream into the localized string that joins the stream elements into the and-list
+   * @return a collector that collects a stream into the localized string that joins the stream elements using conjunction formatting.
+   * E.g. Stream.of("X", "Y", "Z").collect(joiningAnd()) will produce "X, Y, and Z" in English locale.
    */
   public static <T> @NotNull Collector<T, ?, @Nls String> joiningAnd() {
     return Collectors.collectingAndThen(Collectors.toList(), NlsMessages::formatAndList);
   }
 
   /**
-   * @return a collector that collects a stream into the localized string that joins the stream elements into the or-list
+   * @return a collector that collects a stream into the localized string that joins the stream elements using disjunction formatting.
+   * E.g. Stream.of("X", "Y", "Z").collect(joiningAnd()) will produce "X, Y, and Z" in English locale.
    */
   public static <T> @NotNull Collector<T, ?, @Nls String> joiningOr() {
     return Collectors.collectingAndThen(Collectors.toList(), NlsMessages::formatOrList);

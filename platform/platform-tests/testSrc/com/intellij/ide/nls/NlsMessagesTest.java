@@ -16,6 +16,11 @@ public class NlsMessagesTest {
   }
 
   @Test
+  public void testFormatNarrowAnd() {
+    assertEquals("Java, Kotlin, Groovy", NlsMessages.formatNarrowAndList(Arrays.asList("Java", "Kotlin", "Groovy")));
+  }
+
+  @Test
   public void testFormatOr() {
     assertEquals("Java, Kotlin, or Groovy", NlsMessages.formatOrList(Arrays.asList("Java", "Kotlin", "Groovy")));
   }
