@@ -779,16 +779,12 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static <T> T assertOneElement(@NotNull Collection<? extends T> collection) {
-    Iterator<? extends T> iterator = collection.iterator();
-    String toString = toString(collection);
-    Assert.assertTrue(toString, iterator.hasNext());
-    T t = iterator.next();
-    Assert.assertFalse(toString, iterator.hasNext());
-    return t;
+    Assert.assertEquals(collection.toString(), 1, collection.size());
+    return collection.iterator().next();
   }
 
   public static <T> T assertOneElement(T @NotNull [] ts) {
-    Assert.assertEquals(Arrays.asList(ts).toString(), 1, ts.length);
+    Assert.assertEquals(Arrays.toString(ts), 1, ts.length);
     return ts[0];
   }
 
@@ -1181,8 +1177,7 @@ public abstract class UsefulTestCase extends TestCase {
   protected final class TestDisposable implements Disposable {
     private volatile boolean myDisposed;
 
-    public TestDisposable() {
-    }
+    public TestDisposable() { }
 
     @Override
     public void dispose() {

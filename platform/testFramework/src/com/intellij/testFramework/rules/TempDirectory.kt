@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.util.io.zipFile
@@ -63,16 +64,10 @@ class TempDirectory : ExternalResource() {
     myRoot = null
     myName = null
 
-    try {
-      if (vfsDir != null) {
-        VfsTestUtil.deleteFile(vfsDir)
-      }
-    }
-    finally {
-      if (path != null) {
-        FileUtil.delete(path)
-      }
-    }
+    RunAll(
+      { if (vfsDir != null) VfsTestUtil.deleteFile(vfsDir) },
+      { if (path != null) FileUtil.delete(path) }
+    ).run()
   }
 
   /**
