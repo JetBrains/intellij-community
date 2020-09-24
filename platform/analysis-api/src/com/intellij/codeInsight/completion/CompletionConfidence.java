@@ -14,15 +14,6 @@ import org.jetbrains.annotations.NotNull;
 public abstract class CompletionConfidence {
 
   /**
-   * @deprecated not used anymore, only the user controls whether the lookup will be focused
-   */
-  @Deprecated
-  @NotNull
-  public ThreeState shouldFocusLookup(@NotNull CompletionParameters parameters) {
-    return ThreeState.UNSURE;
-  }
-
-  /**
    * Invoked first when a completion autopopup is scheduled. Extensions are able to cancel this completion process based on location.
    * For example, in string literals or comments completion autopopup may do more harm than good.
    */
