@@ -72,6 +72,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   private final Color disabledForeground = JBColor.namedColor("Table.disabledForeground", JBColor.gray);
 
+  private int myLightSelectionRow = -1;
+
   public JBTable() {
     this(new DefaultTableModel());
   }
@@ -110,6 +112,18 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     setFillsViewportHeight(true);
 
     addMouseListener(new MyMouseListener());
+    addMouseMotionListener(new MouseMotionAdapter() {
+      @Override
+      public void mouseMoved(MouseEvent e) {
+        if (!isStriped()) {
+          int row = rowAtPoint(e.getPoint());
+          if (myLightSelectionRow != row) {
+            myLightSelectionRow = row;
+            repaint();
+          }
+        }
+      }
+    });
 
     if (UIUtil.isUnderWin10LookAndFeel()) {
       addMouseMotionListener(new MouseMotionAdapter() {
@@ -644,16 +658,17 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   public Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
     Component result = super.prepareRenderer(renderer, row, column);
 
-    if (isTableDecorationSupported() && isStriped() && result instanceof JComponent) {
-      final Color bg = row % 2 == 1 ? getBackground() : UIUtil.getDecoratedRowColor();
-      final JComponent c = (JComponent)result;
-      final boolean cellSelected = isCellSelected(row, column);
-      if (!cellSelected) {
-        c.setOpaque(true);
-        c.setBackground(bg);
-        for (Component child : c.getComponents()) {
-          child.setBackground(bg);
-        }
+    if (result instanceof JComponent) {
+      JComponent component = (JComponent)result;
+      if (myLightSelectionRow != row && component.getClientProperty("JBTable.extraBackground") == Boolean.TRUE) {
+        setRendererBackground(row, column, component, getBackground(), null);
+      }
+      if (isTableDecorationSupported() && isStriped()) {
+        final Color bg = row % 2 == 1 ? getBackground() : UIUtil.getDecoratedRowColor();
+        setRendererBackground(row, column, component, bg, null);
+      }
+      if (!isStriped() && myLightSelectionRow == row) {
+        setRendererBackground(row, column, component, UIUtil.getTableLightSelectionBackground(), Boolean.TRUE);
       }
     }
 
@@ -665,6 +680,17 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       ((JCheckBox)renderer).getModel().setRollover(rollOverCell != null && rollOverCell.at(row, column));
     }
     return result;
+  }
+
+  private void setRendererBackground(int row, int column, JComponent renderer, Color color, Object property) {
+    if (!isCellSelected(row, column)) {
+      renderer.putClientProperty("JBTable.extraBackground", property);
+      renderer.setOpaque(true);
+      renderer.setBackground(color);
+      for (Component child : renderer.getComponents()) {
+        child.setBackground(color);
+      }
+    }
   }
 
   @Override
