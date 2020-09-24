@@ -1150,8 +1150,7 @@
     <action id="SaveDocument" class="com.intellij.ide.actions.SaveDocumentAction"/>
 
     <action id="MarkNotificationsAsRead" class="com.intellij.notification.impl.actions.MarkAllNotificationsAsReadAction"/>
-    <action id="SelectInProjectView" class="com.intellij.ide.actions.SelectInProjectViewAction"/>
-    <action id="SelectOpenedFileInProjectView" class="com.intellij.ide.projectView.impl.SelectOpenedFileAction" icon="AllIcons.General.Locate"/>
+    <action id="SelectInProjectView" icon="AllIcons.General.Locate" class="com.intellij.ide.projectView.impl.SelectFileAction"/>
 
     <action id="SetShortcutAction" class="com.intellij.ide.actions.SetShortcutAction" use-shortcut-of="ShowIntentionActions"/>
 
