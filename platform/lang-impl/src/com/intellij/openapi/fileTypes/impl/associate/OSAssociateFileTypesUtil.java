@@ -8,7 +8,6 @@ import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-@SuppressWarnings("ComponentNotRegistered")
 public class OSAssociateFileTypesUtil {
   public final static String ENABLE_REG_KEY =  "system.file.type.associations.enabled";
 
