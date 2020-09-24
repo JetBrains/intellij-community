@@ -23,6 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -32,10 +33,12 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jdom.Element;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.stream.Stream;
 
 public abstract class ResourceInspection extends BaseInspection {
 
@@ -102,10 +105,11 @@ public abstract class ResourceInspection extends BaseInspection {
       return !(boundVariable instanceof PsiResourceVariable) &&
              !isSafelyClosed(boundVariable, expression) &&
              !isResourceFactoryClosed(expression) &&
-             !isResourceEscapingFromMethod(boundVariable, expression);
+             !isResourceEscaping(boundVariable, expression);
     }
   }
 
+  @Contract(pure = true)
   protected abstract boolean isResourceCreation(PsiExpression expression);
 
   protected boolean isResourceFactoryClosed(PsiExpression expression) {
@@ -302,10 +306,11 @@ public abstract class ResourceInspection extends BaseInspection {
     return MethodCallUtils.isMethodCallOnVariable(call, resource, HardcodedMethodConstants.CLOSE);
   }
 
-  boolean isResourceEscapingFromMethod(PsiVariable boundVariable, PsiExpression resourceCreationExpression) {
+  boolean isResourceEscaping(@Nullable PsiVariable boundVariable, @NotNull PsiExpression resourceCreationExpression) {
     if (isSystemErrOrOutUse(resourceCreationExpression)) {
       return true;
     }
+    if (resourcePotentiallyCreatedFromOther(resourceCreationExpression)) return true;
     final PsiElement parent = ExpressionUtils.getPassThroughParent(resourceCreationExpression);
     if (parent instanceof PsiLambdaExpression) {
       PsiLambdaExpression lambda = (PsiLambdaExpression)parent;
@@ -338,13 +343,38 @@ public abstract class ResourceInspection extends BaseInspection {
     if (boundVariable == null) {
       return false;
     }
-    final PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(resourceCreationExpression, PsiCodeBlock.class, true, PsiMember.class);
+    final PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(boundVariable, PsiCodeBlock.class, true, PsiMember.class);
     if (codeBlock == null) {
       return false;
     }
     final EscapeVisitor visitor = new EscapeVisitor(boundVariable);
     codeBlock.accept(visitor);
     return visitor.isEscaped();
+  }
+
+  private boolean resourcePotentiallyCreatedFromOther(@NotNull PsiExpression resourceCreationExpression) {
+    if (resourceCreationExpression instanceof PsiCallExpression) {
+      PsiExpressionList argumentList = ((PsiCallExpression)resourceCreationExpression).getArgumentList();
+      if (argumentList != null && ContainerUtil.or(argumentList.getExpressions(), this::isResourceCreation)) {
+        // resource was created from other, potentially leaking resource
+        return true;
+      }
+      if (resourceCreationExpression instanceof PsiMethodCallExpression) {
+        PsiMethodCallExpression call = (PsiMethodCallExpression)resourceCreationExpression;
+        PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
+        if (qualifier == null) {
+          PsiClass currentClass = PsiTreeUtil.getNonStrictParentOfType(call, PsiClass.class);
+          PsiMethod method = call.resolveMethod();
+          if (currentClass != null && method != null && method.getContainingClass() == currentClass) {
+            return true;
+          }
+        }
+        else if (isResourceCreation(qualifier)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private static boolean assignedToField(PsiAssignmentExpression assignmentExpression) {

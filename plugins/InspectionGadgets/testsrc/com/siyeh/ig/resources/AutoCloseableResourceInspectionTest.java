@@ -255,14 +255,13 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
            "class X implements AutoCloseable {\n" +
            "  @Override\n" +
            "  public void close() {}\n" +
-           "\n" +
-           "  private static void example() {\n" +
-           "    final X x = <warning descr=\"'X' used without 'try'-with-resources statement\">getX</warning>();\n" +
-           "    x.close();\n" +
-           "  " +
+           "  static native X getX();\n" +
            "}\n" +
-           "  \n" +
-           "  private static native X getX();\n" +
+           "class Other {\n" +
+           "  private static void example() {\n" +
+           "    final X x = X.<warning descr=\"'X' used without 'try'-with-resources statement\">getX</warning>();\n" +
+           "    x.close();\n" +
+           "  }\n" +
            "}");
   }
 
@@ -305,6 +304,81 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
            "  private static native X getX();\n" +
            "  private static native void consume(Runnable x);\n" +
            "}");
+  }
+
+
+  public void testResourcePassedToConstructorOfResource() {
+    doTest("import java.io.*;\n" +
+           "\n" +
+           "class X implements AutoCloseable {\n" +
+           "  X(X other) {}\n" +
+           "  X() {}\n" +
+           "  @Override public void close() {}\n" +
+           "  private static void example(X other) {\n" +
+           "    new X(other);\n" +
+           "  " +
+           "}\n" +
+           "}");
+  }
+
+  public void testCreatedResourcePassedToConstructor() {
+    doTest("import java.io.*;\n" +
+           "\n" +
+           "class X implements AutoCloseable {\n" +
+           "  X(X other) {}\n" +
+           "  X() {}\n" +
+           "  @Override public void close() {}\n" +
+           "  private static void example(X other) {\n" +
+           "    new X(new X());\n" +
+           "  " +
+           "}\n" +
+           "}");
+  }
+
+  public void testCreatedResourcePassedToConstructorAsVar() {
+    doTest("import java.io.*;\n" +
+           "\n" +
+           "class X implements AutoCloseable {\n" +
+           "  X(X other) {}\n" +
+           "  X() {}\n" +
+           "  @Override public void close() {}\n" +
+           "  private static void example(X other) {\n" +
+           "    X resource = new X();\n" +
+           "    new X(resource);\n" +
+           "  " +
+           "}\n" +
+           "}");
+  }
+
+  public void testResourceAssigned() {
+    doTest(
+      "class X implements AutoCloseable {\n" +
+      "  @Override public void close() {}\n" +
+      "  private static X example(boolean cond, X other) {\n" +
+           "    X x;\n" +
+      "    if (cond) {\n" +
+      "      x = new X();\n" +
+      "    " +
+      "} else {\n" +
+      "      x = other;\n" +
+      "    " +
+      "}\n" +
+      "    return x;\n" +
+      "  " +
+      "}\n" +
+           "}");
+  }
+
+  public void testResourceObjectMethodReturnsAnotherResource() {
+    doTest(
+      "class X implements AutoCloseable {\n" +
+      "  @Override public void close() {}\n" +
+      "  private static void example() {\n" +
+      "    createPossiblyDependantResource();\n" +
+      "  " +
+      "}\n" +
+      "  private static X createPossiblyDependantResource() { return null; }\n" +
+      "}");
   }
 
   @Override

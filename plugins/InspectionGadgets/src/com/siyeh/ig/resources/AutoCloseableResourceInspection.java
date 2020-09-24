@@ -256,7 +256,7 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
       }
       if (CLOSE.test(ExpressionUtils.getCallForQualifier(expression))) return true;
       final PsiVariable variable = ResourceInspection.getVariable(expression);
-      if (variable instanceof PsiResourceVariable || isResourceEscapingFromMethod(variable, expression)) return true;
+      if (variable instanceof PsiResourceVariable || isResourceEscaping(variable, expression)) return true;
       if (variable == null) return false;
       return ContainerUtil.or(ImplicitResourceCloser.EP_NAME.getExtensionList(), closer -> closer.isSafelyClosed(variable));
     }
