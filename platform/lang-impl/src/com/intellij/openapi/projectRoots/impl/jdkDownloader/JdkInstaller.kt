@@ -16,6 +16,7 @@ import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.JdkUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.Urls
 import com.intellij.util.io.*
 import com.intellij.util.xmlb.annotations.Tag
@@ -236,11 +237,17 @@ class JdkInstaller {
    * or it is being installed right now
    */
   fun prepareJdkInstallation(jdkItem: JdkItem, targetPath: Path): JdkInstallRequest {
-    val existingRequest = findAlreadyInstalledJdk(jdkItem)
-    if (existingRequest != null) return existingRequest
+    if (Registry.`is`("jdk.downloader.reuse.installed")) {
+      val existingRequest = findAlreadyInstalledJdk(jdkItem)
+      if (existingRequest != null) return existingRequest
+    }
 
-    return myLock.withLock {
-      myPendingDownloads.computeIfAbsent(jdkItem) { prepareJdkInstallationImpl(jdkItem, targetPath) }
+    if (Registry.`is`("jdk.downloader.reuse.downloading")) {
+      return myLock.withLock {
+        myPendingDownloads.computeIfAbsent(jdkItem) { prepareJdkInstallationImpl(jdkItem, targetPath) }
+      }
+    } else {
+      return prepareJdkInstallationDirect(jdkItem, targetPath)
     }
   }
 
