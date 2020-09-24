@@ -253,11 +253,39 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
       }
     }
 
+    /**
+     * Updates an action with following logic:<ol>
+     * <li>If selected action is available - current action available and mimics one.</li>
+     * <li>If any action in the group is enabled and visible in the context of the {@code event}, split button enabled and visible, but does
+     * nothing if pressed (can only expand).</li>
+     * </ol>
+     *
+     * @implNote last option can be improved and be customizable. For this class should be made non-final and protected fallback update
+     * method should be introduced. E.g. we want more sophisticated logic in profiler UI
+     */
     private void update(@NotNull AnActionEvent event) {
+      // trying selected item
       if (selectedAction != null) {
         selectedAction.update(event);
-        copyPresentation(event.getPresentation());
+        Presentation eventPresentation = event.getPresentation();
+        copyPresentation(eventPresentation);
+        if (eventPresentation.isEnabled()) {
+          return;
+        }
       }
+
+      // check for enabled children
+      Presentation presentationBackup = event.getPresentation();
+      for (AnAction childAction : myActionGroup.getChildren(event)) {
+        childAction.update(event);
+        Presentation eventPresentation = event.getPresentation();
+        if (eventPresentation.isEnabled()) {
+          presentationBackup.setEnabledAndVisible(true);
+          break;
+        }
+      }
+      presentationBackup.setVisible(true);
+      event.getPresentation().copyFrom(presentationBackup);
     }
   }
 }
