@@ -52,7 +52,9 @@ class FileTemplateSettings extends FileTemplatesLoader implements PersistentStat
 
         final Element templateElement = new Element(ELEMENT_TEMPLATE);
         templateElement.setAttribute(ATTRIBUTE_NAME, template.getQualifiedName());
-        templateElement.setAttribute(ATTRIBUTE_FILE_NAME, template.getFileName());
+        if (!template.getFileName().isEmpty()) {
+          templateElement.setAttribute(ATTRIBUTE_FILE_NAME, template.getFileName());
+        }
         templateElement.setAttribute(ATTRIBUTE_REFORMAT, Boolean.toString(template.isReformatCode()));
         templateElement.setAttribute(ATTRIBUTE_LIVE_TEMPLATE, Boolean.toString(template.isLiveTemplateEnabled()));
 
