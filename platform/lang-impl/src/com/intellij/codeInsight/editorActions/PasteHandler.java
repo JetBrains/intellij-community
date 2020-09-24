@@ -58,13 +58,18 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     execute(editor, dataContext, null);
   }
 
+  private static Transferable getContentsToPasteToEditor(@Nullable Producer<Transferable> producer) {
+    if (producer == null) {
+      return CopyPasteManager.getInstance().getContents();
+    }
+    else {
+      return producer.produce();
+    }
+  }
+
   @Override
   public void execute(Editor editor, DataContext dataContext, @Nullable Producer<Transferable> producer) {
-    final Transferable transferable = EditorModificationUtil.getContentsToPasteToEditor(producer);
-    if (transferable == null) {
-      myOriginalHandler.execute(editor, null, dataContext);
-      return;
-    }
+    final Transferable transferable = getContentsToPasteToEditor(producer);
 
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
 

@@ -26,8 +26,7 @@
     <fileLookupInfoProvider implementation="org.intellij.images.completion.ImageLookupInfoProvider"/>
     <documentationProvider implementation="org.intellij.images.fileTypes.ImageDocumentationProvider"/>
 
-    <customPasteProvider implementation="org.intellij.images.project.ImagePasteProvider"/>
-    <filePasteProvider implementation="org.intellij.images.project.ImagePasteProvider" order="last"/>
+    <filePasteProvider implementation="org.intellij.images.ide.ImagePasteProvider" order="last"/>
 
     <projectService serviceImplementation="org.intellij.images.search.ImageTagManager"/>
     <registryKey key="ide.images.wheel.zooming" defaultValue="true" description="Enable zoom in/out by mouse wheel"/>
