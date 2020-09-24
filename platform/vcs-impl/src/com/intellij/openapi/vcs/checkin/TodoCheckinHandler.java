@@ -48,7 +48,7 @@ import static com.intellij.util.ui.UIUtil.getWarningIcon;
 /**
  * @author irengrig
  */
-public class TodoCheckinHandler extends CheckinHandler {
+public class TodoCheckinHandler extends CheckinHandler implements CommitCheck {
   private final Project myProject;
   private final CheckinProjectPanel myCheckinProjectPanel;
   private final VcsConfiguration myConfiguration;
@@ -58,6 +58,11 @@ public class TodoCheckinHandler extends CheckinHandler {
     myProject = checkinProjectPanel.getProject();
     myCheckinProjectPanel = checkinProjectPanel;
     myConfiguration = VcsConfiguration.getInstance(myProject);
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return myConfiguration.CHECK_NEW_TODO;
   }
 
   @Override
@@ -106,7 +111,8 @@ public class TodoCheckinHandler extends CheckinHandler {
 
   @Override
   public ReturnResult beforeCheckin(@Nullable CommitExecutor executor, PairConsumer<Object, Object> additionalDataConsumer) {
-    if (! myConfiguration.CHECK_NEW_TODO) return ReturnResult.COMMIT;
+    if (!isEnabled()) return ReturnResult.COMMIT;
+
     if (DumbService.getInstance(myProject).isDumb()) {
       if (Messages.showOkCancelDialog(myProject,
                                       VcsBundle.message("checkin.dialog.message.cant.be.performed",
