@@ -27,12 +27,20 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Area;
 
+@SuppressWarnings("ComponentNotRegistered")
 public final class SplitButtonAction extends ActionGroup implements CustomComponentAction {
   private final ActionGroup myActionGroup;
 
   public SplitButtonAction(@NotNull ActionGroup actionGroup) {
     myActionGroup = actionGroup;
     setPopup(true);
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {}
+
+  public @NotNull ActionGroup getActionGroup() {
+    return myActionGroup;
   }
 
   @Override
