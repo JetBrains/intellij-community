@@ -243,7 +243,7 @@ public final class ComponentItem implements Cloneable, PaletteItem {
     myClassName = className;
   }
 
-  public String getToolTipText() {
+  public @NlsSafe String getToolTipText() {
     return myToolTipText != null ? myToolTipText : calcToolTipText(myClassName);
   }
 

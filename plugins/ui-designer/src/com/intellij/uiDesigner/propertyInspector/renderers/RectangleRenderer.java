@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.propertyInspector.renderers;
 
+import com.intellij.openapi.util.NlsSafe;
+
 import java.awt.*;
 
 /**
@@ -22,6 +24,7 @@ public final class RectangleRenderer extends LabelPropertyRenderer<Rectangle> {
     myBuffer.append(value.width).append(", ");
     myBuffer.append(value.height).append("]");
 
-    setText(myBuffer.substring(0, myBuffer.length())); // [jeka] important! do not use toString() on the StringBuffer that is reused
+    @NlsSafe String text = myBuffer.substring(0, myBuffer.length()); // [jeka] important! do not use toString() on the StringBuffer that is reused
+    setText(text);
   }
 }

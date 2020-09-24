@@ -3,6 +3,7 @@ package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -369,7 +370,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
       return constraints.myTitle;
     }
 
-    protected void putValueToTabbedPane(final String text) {
+    protected void putValueToTabbedPane(final @NlsSafe String text) {
       getTabbedPane().setTitleAt(myIndex, text);
     }
 
@@ -410,7 +411,7 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
       return constraints.myToolTip;
     }
 
-    @Override protected void putValueToTabbedPane(final String text) {
+    @Override protected void putValueToTabbedPane(final @NlsSafe String text) {
       getTabbedPane().setToolTipTextAt(myIndex, text);
     }
 
@@ -582,8 +583,8 @@ public final class RadTabbedPane extends RadContainer implements ITabbedPane {
       component.setCustomLayoutConstraints(null);
       final HashMap<String, LwTabbedPane.Constraints> id2Constraints = getId2Constraints(RadTabbedPane.this);
       id2Constraints.put(component.getId(), constraints);
-      final String tabName = calcTabName(constraints == null ? null : constraints.myTitle);
-      String toolTip = null;
+      final @NlsSafe String tabName = calcTabName(constraints == null ? null : constraints.myTitle);
+      @NlsSafe String toolTip = null;
       Icon icon = null;
       if (constraints != null) {
         toolTip = getDescriptorText(constraints.myToolTip);

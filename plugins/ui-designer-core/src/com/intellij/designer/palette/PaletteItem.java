@@ -31,9 +31,9 @@ public interface PaletteItem {
 
   Icon getIcon();
 
-  String getTooltip();
+  @NlsSafe String getTooltip();
 
-  String getVersion();
+  @NlsSafe String getVersion();
 
   boolean isEnabled();
 

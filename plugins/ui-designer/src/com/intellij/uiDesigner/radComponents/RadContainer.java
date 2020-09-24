@@ -3,6 +3,7 @@ package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.uiDesigner.*;
 import com.intellij.uiDesigner.core.AbstractLayout;
 import com.intellij.uiDesigner.designSurface.ComponentDropLocation;
@@ -437,7 +438,7 @@ public class RadContainer extends RadComponent implements IContainer {
    * Updates delegee's border
    */
   public boolean updateBorder() {
-    String title = null;
+    @NlsSafe String title = null;
     String oldTitle = null;
     if (myBorderTitle != null) {
       oldTitle = myBorderTitle.getResolvedValue();

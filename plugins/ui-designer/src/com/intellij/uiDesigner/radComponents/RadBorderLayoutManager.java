@@ -3,6 +3,7 @@
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.XmlWriter;
@@ -358,7 +359,7 @@ public class RadBorderLayoutManager extends RadLayoutManager {
 
   private static class BorderSideEditor extends ComboBoxPropertyEditor<String> {
     BorderSideEditor() {
-      String[] sides = new String[] {
+      @NlsSafe String[] sides = new String[] {
         BorderLayout.CENTER, BorderLayout.NORTH, BorderLayout.SOUTH, BorderLayout.WEST, BorderLayout.EAST,
         BorderLayout.PAGE_START, BorderLayout.PAGE_END, BorderLayout.LINE_START, BorderLayout.LINE_END
       };
@@ -366,7 +367,7 @@ public class RadBorderLayoutManager extends RadLayoutManager {
     }
 
     @Override
-    public JComponent getComponent(RadComponent component, String value, InplaceContext inplaceContext) {
+    public JComponent getComponent(RadComponent component, @NlsSafe String value, InplaceContext inplaceContext) {
       myCbx.setSelectedItem(value);
       return myCbx;
     }
