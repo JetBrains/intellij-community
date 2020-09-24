@@ -24,6 +24,7 @@ class FileTemplateSettings extends FileTemplatesLoader implements PersistentStat
 
   private static final String ELEMENT_TEMPLATE = "template";
   private static final String ATTRIBUTE_NAME = "name";
+  private static final String ATTRIBUTE_FILE_NAME = "file-name";
   private static final String ATTRIBUTE_REFORMAT = "reformat";
   private static final String ATTRIBUTE_LIVE_TEMPLATE = "live-template-enabled";
   private static final String ATTRIBUTE_ENABLED = "enabled";
@@ -51,6 +52,7 @@ class FileTemplateSettings extends FileTemplatesLoader implements PersistentStat
 
         final Element templateElement = new Element(ELEMENT_TEMPLATE);
         templateElement.setAttribute(ATTRIBUTE_NAME, template.getQualifiedName());
+        templateElement.setAttribute(ATTRIBUTE_FILE_NAME, template.getFileName());
         templateElement.setAttribute(ATTRIBUTE_REFORMAT, Boolean.toString(template.isReformatCode()));
         templateElement.setAttribute(ATTRIBUTE_LIVE_TEMPLATE, Boolean.toString(template.isLiveTemplateEnabled()));
 
@@ -77,9 +79,11 @@ class FileTemplateSettings extends FileTemplatesLoader implements PersistentStat
 
       for (Element child : templatesGroup.getChildren(ELEMENT_TEMPLATE)) {
         final String qName = child.getAttributeValue(ATTRIBUTE_NAME);
+        if (qName == null) continue;
         final FileTemplateBase template = manager.getTemplate(qName);
         if (template == null) continue;
 
+        template.setFileName(StringUtil.notNullize(child.getAttributeValue(ATTRIBUTE_FILE_NAME)));
         template.setReformatCode(Boolean.parseBoolean(child.getAttributeValue(ATTRIBUTE_REFORMAT)));
         template.setLiveTemplateEnabled(Boolean.parseBoolean(child.getAttributeValue(ATTRIBUTE_LIVE_TEMPLATE)));
 

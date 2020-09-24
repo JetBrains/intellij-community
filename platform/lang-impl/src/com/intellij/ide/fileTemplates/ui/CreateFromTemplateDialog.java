@@ -72,7 +72,11 @@ public class CreateFromTemplateDialog extends DialogWrapper {
       myDefaultProperties.setProperty(FileTemplate.ATTRIBUTE_NAME, attributesDefaults.getDefaultFileName());
       mustEnterName = false;
     }
-
+    if (!template.getFileName().isEmpty()) {
+      String fileName = FileTemplateUtil.mergeTemplate(myDefaultProperties, template.getFileName(), false);
+      myDefaultProperties.setProperty(FileTemplate.ATTRIBUTE_NAME, fileName);
+      mustEnterName = false;
+    }
     String[] unsetAttributes = null;
     try {
       unsetAttributes = myTemplate.getUnsetAttributes(myDefaultProperties, project);

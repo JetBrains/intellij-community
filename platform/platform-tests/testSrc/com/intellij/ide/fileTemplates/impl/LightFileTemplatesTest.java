@@ -215,7 +215,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
     Element state = settings.getState();
     assertNotNull(state);
     Element element = state.getChildren().get(0).getChildren().get(0);
-    assertEquals("<template name=\"testTemplate.txt\" reformat=\"false\" live-template-enabled=\"false\" enabled=\"true\" />", JDOMUtil
+    assertEquals("<template name=\"testTemplate.txt\" file-name=\"\" reformat=\"false\" live-template-enabled=\"false\" enabled=\"true\" />", JDOMUtil
       .writeElement(element));
   }
 
