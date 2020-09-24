@@ -58,23 +58,24 @@ internal class SegmentedBarPainter {
 
     val wdth = r.width.toFloat()
     val offs = arc * 2
+    val bw = 0f
 
     val area = when (position) {
       SegmentedBarActionComponent.CONTROL_BAR_FIRST -> {
-        val area = Area(RoundRectangle2D.Float(0f, 0f, wdth, r.height.toFloat(), arc, arc))
-        area.add(Area(Rectangle2D.Float(wdth - offs, 0f, offs, r.height.toFloat())))
+        val area = Area(RoundRectangle2D.Float(bw, bw, wdth - bw, r.height.toFloat() - (2*bw), arc, arc))
+        area.add(Area(Rectangle2D.Float(wdth - offs, bw, offs, r.height.toFloat() - (2*bw))))
         area
       }
       SegmentedBarActionComponent.CONTROL_BAR_MIDDLE -> {
-        Area(Rectangle2D.Float(0f, 0f, wdth, r.height.toFloat()))
+        Area(Rectangle2D.Float(0f, bw, wdth, r.height.toFloat() - (2*bw)))
       }
       SegmentedBarActionComponent.CONTROL_BAR_LAST -> {
-        val area = Area(RoundRectangle2D.Float(0f, 0f, wdth, r.height.toFloat(), arc, arc))
-        area.add(Area(Rectangle2D.Float(0f, 0f, offs, r.height.toFloat())))
+        val area = Area(RoundRectangle2D.Float(0f, bw, wdth - bw, r.height.toFloat() - (2*bw), arc, arc))
+        area.add(Area(Rectangle2D.Float(0f, bw, offs, r.height.toFloat() - (2*bw))))
         area
       }
       else -> {
-        Area(RoundRectangle2D.Float(0f, 0f, wdth, r.height.toFloat(), arc, arc))
+        Area(RoundRectangle2D.Float(0f, bw, wdth, r.height.toFloat() - (2*bw), arc, arc))
       }
     }
 
@@ -82,9 +83,8 @@ internal class SegmentedBarPainter {
   }
 
   fun paintActionButtonBackground(g: Graphics, component: JComponent, state: Int) {
-    if (state == ActionButtonComponent.NORMAL && !component.isBackgroundSet) return
     g.color = when (state) {
-      ActionButtonComponent.NORMAL -> component.background
+      ActionButtonComponent.NORMAL -> if(component.isBackgroundSet) component.background else JBColor.namedColor("Panel.background", Gray.xCD)
       ActionButtonComponent.PUSHED -> JBUI.CurrentTheme.ActionButton.pressedBackground()
       else -> JBUI.CurrentTheme.ActionButton.hoverBackground()
     }
@@ -99,7 +99,7 @@ internal class SegmentedBarPainter {
 
   fun paintActionBarBorder(component: JComponent, g: Graphics) {
     val lw = DarculaUIUtil.LW.float
-    val bw = DarculaUIUtil.BW.float
+    val bw = 0f
 
     val g2 = g.create() as Graphics2D
     try {

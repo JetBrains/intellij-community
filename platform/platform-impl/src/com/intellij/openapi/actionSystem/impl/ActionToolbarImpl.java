@@ -459,7 +459,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
   }
 
-  private Dimension getChildPreferredSize(int index) {
+  protected Dimension getChildPreferredSize(int index) {
     Component component = getComponent(index);
     return component.isVisible() ? component.getPreferredSize() : new Dimension();
   }
@@ -787,7 +787,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   /**
    * Calculates bounds of all the components in the toolbar
    */
-  private void calculateBounds(@NotNull Dimension size2Fit, @NotNull List<Rectangle> bounds) {
+  protected void calculateBounds(@NotNull Dimension size2Fit, @NotNull List<Rectangle> bounds) {
     bounds.clear();
     for (int i = 0; i < getComponentCount(); i++) {
       bounds.add(new Rectangle());

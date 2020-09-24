@@ -1,7 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ui;
+package com.intellij.openapi.actionSystem.impl.segmentedActionBar;
 
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -9,18 +11,17 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 
-public class FilledRoundedBorder extends LineBorder {
-  private final float myArcSize;
-  private final float bw;
+public class PillBorder extends LineBorder {
 
-  public FilledRoundedBorder(@NotNull Color color, float arcSize, int thickness, float bw) {
+  public PillBorder(@NotNull Color color, int thickness) {
     super(color, thickness);
-    myArcSize = arcSize;
-    this.bw = bw;
   }
 
-  public FilledRoundedBorder(@NotNull Color color, float arcSize, int thickness) {
-    this(color, arcSize, thickness, 0);
+  @Override
+  public Insets getBorderInsets(Component c, Insets insets) {
+    int scl = JBUIScale.scale(thickness);
+    insets.set(scl, scl, scl, scl);
+    return insets;
   }
 
   @Override
@@ -29,8 +30,9 @@ public class FilledRoundedBorder extends LineBorder {
     Graphics2D g2d = (Graphics2D)g;
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
+    float myArcSize = DarculaUIUtil.BUTTON_ARC.getFloat();
     g.setColor(lineColor);
-    RoundRectangle2D.Float area = new RoundRectangle2D.Float(x + bw, y+bw, width- (bw * 2), height- (bw * 2), myArcSize, myArcSize);
+    RoundRectangle2D.Float area = new RoundRectangle2D.Float(x, y, width, height, myArcSize, myArcSize);
     g2d.fill(area);
 
     config.restore();

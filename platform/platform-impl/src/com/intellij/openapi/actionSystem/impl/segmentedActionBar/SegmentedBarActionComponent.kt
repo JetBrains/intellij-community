@@ -8,11 +8,11 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import java.awt.*
 import java.util.*
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.border.Border
 
 open class SegmentedBarActionComponent : AnAction(), CustomComponentAction {
   enum class ControlBarProperty {
@@ -68,17 +68,33 @@ open class SegmentedBarActionComponent : AnAction(), CustomComponentAction {
     val tb = object : ActionToolbarImpl(ActionPlaces.NAVIGATION_BAR_TOOLBAR, group, true) {
       private var isActive = false
 
+      override fun getInsets(): Insets {
+        return JBUI.emptyInsets()
+      }
+
+      override fun setBorder(border: Border?) {
+
+      }
+
       override fun createCustomComponent(action: CustomComponentAction, presentation: Presentation): JComponent {
         if (!isActive) {
           return super.createCustomComponent(action, presentation)
         }
 
-        var customComponent = super.createCustomComponent(action, presentation)
-        if (action is ComboBoxAction) {
-          customComponent = UIUtil.findComponentOfType(customComponent, ComboBoxAction.ComboBoxButton::class.java)
+        var component = super.createCustomComponent(action, presentation)
+
+        if(component is JPanel && action is ComboBoxAction) {
+          if(component.getComponentCount() == 1) {
+            val cmp = component.getComponent(0)
+            if(cmp is JComponent) {
+              component = cmp
+            }
+          }
         }
-        customComponent.border = JBUI.Borders.empty()
-        return customComponent
+
+        component.border = JBUI.Borders.empty()
+
+        return component
       }
 
       override fun createToolbarButton(action: AnAction,
@@ -123,11 +139,6 @@ open class SegmentedBarActionComponent : AnAction(), CustomComponentAction {
         }
       }
 
-      override fun paintComponent(g: Graphics) {
-        super.paintComponent(g)
-        painter.paintActionBarBackground(this, g)
-      }
-
       override fun paintBorder(g: Graphics) {
         painter.paintActionBarBorder(this, g)
       }
@@ -155,6 +166,21 @@ open class SegmentedBarActionComponent : AnAction(), CustomComponentAction {
         val filtered = newVisibleActions.filter { isSuitableAction(it) }
         isActive = filtered.size > 1
         super.actionsUpdated(forced, if (isActive) filtered else newVisibleActions)
+      }
+
+      override fun calculateBounds(size2Fit: Dimension, bounds: MutableList<Rectangle>) {
+        bounds.clear()
+        for (i in 0 until componentCount) {
+          bounds.add(Rectangle())
+        }
+
+        var offset = 0
+        for (i in 0 until componentCount) {
+          val d = getChildPreferredSize(i)
+          val r = bounds[i]
+          r.setBounds(insets.left + offset, insets.top, d.width, DEFAULT_MINIMUM_BUTTON_SIZE.height)
+          offset += d.width
+        }
       }
     }.apply {
       component.isOpaque = false
