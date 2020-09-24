@@ -1028,11 +1028,12 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
       ShowUsagesActionState state = getState(project);
       state.continuation = showUsagesInMaximalScopeRunnable(parameters, actionHandler);
-      runWhenHidden(label, () -> state.continuation = null);
+      Runnable clearContinuation = () -> state.continuation = null;
+      runWhenHidden(label, clearContinuation);
 
       if (editor == null || editor.isDisposed() || !editor.getComponent().isShowing()) {
         int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
-        HintManager.getInstance().showHint(label, parameters.popupPosition, flags, 0);
+        HintManager.getInstance().showHint(label, parameters.popupPosition, flags, 0, clearContinuation);
       }
       else {
         HintManager.getInstance().showInformationHint(editor, label);
