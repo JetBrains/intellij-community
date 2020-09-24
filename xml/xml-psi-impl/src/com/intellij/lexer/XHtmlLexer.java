@@ -20,7 +20,7 @@ package com.intellij.lexer;
  */
 public class XHtmlLexer extends HtmlLexer {
   public XHtmlLexer(Lexer baseLexer) {
-    super(null, baseLexer, false);
+    super(baseLexer, false);
   }
 
   public XHtmlLexer() {

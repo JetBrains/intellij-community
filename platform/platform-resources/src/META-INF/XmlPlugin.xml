@@ -64,7 +64,6 @@
 
     <extensionPoint name="html.scriptContentProvider"
                     beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <!--suppress DeprecatedClassUsageInspection -->
       <with attribute="implementationClass" implements="com.intellij.lang.HtmlScriptContentProvider"/>
     </extensionPoint>
 
@@ -75,7 +74,7 @@
     </extensionPoint>
 
     <extensionPoint name="html.embeddedContentSupport"
-                    interface="com.intellij.lexer.HtmlEmbeddedContentSupport"
+                    interface="com.intellij.html.embedding.HtmlEmbeddedContentSupport"
                     dynamic="true"/>
 
     <extensionPoint name="html.attributeValueProvider"
@@ -478,6 +477,7 @@
 
     <multiHostInjector implementation="com.intellij.psi.impl.source.html.HtmlConditionalCommentInjector"/>
     <multiHostInjector implementation="com.intellij.psi.impl.source.html.HtmlScriptLanguageInjector"/>
+    <html.scriptContentProvider language="HTML" implementationClass="com.intellij.psi.impl.source.html.TemplateHtmlScriptContentProvider"/>
 
     <gotoRelatedProvider implementation="com.intellij.navigation.HtmlGotoRelatedProvider"/>
     <xml.relatedToHtmlFilesContributor implementation="com.intellij.navigation.LinkedToHtmlFilesContributor"/>

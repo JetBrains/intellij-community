@@ -15,9 +15,10 @@
  */
 package com.intellij.lexer;
 
+import com.intellij.html.embedding.HtmlEmbeddedContentSupport;
+import com.intellij.html.embedding.HtmlEmbedment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.ApiStatus;
@@ -39,17 +40,13 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
     this(null);
   }
 
-  protected HtmlHighlightingLexer(Lexer lexer, boolean caseInsensitive, FileType styleFileType) {
-    this(null, lexer, caseInsensitive, styleFileType);
-  }
-
   public HtmlHighlightingLexer(@Nullable FileType styleFileType) {
-    this(null, new MergingLexerAdapter(new FlexAdapter(new _HtmlLexer()), TOKENS_TO_MERGE), true, styleFileType);
+    this(new MergingLexerAdapter(new FlexAdapter(new _HtmlLexer()), TOKENS_TO_MERGE), true, styleFileType);
   }
 
-  protected HtmlHighlightingLexer(@Nullable Project project, @NotNull Lexer lexer, boolean caseInsensitive,
+  protected HtmlHighlightingLexer(@NotNull Lexer lexer, boolean caseInsensitive,
                                   @Nullable FileType styleFileType) {
-    super(project, lexer, caseInsensitive);
+    super(lexer, caseInsensitive);
     hasNoLayers = Boolean.TRUE.equals(LayeredLexer.ourDisableLayersFlag.get());
     ourStyleFileType = styleFileType;
   }
@@ -93,7 +90,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
     if (embedment != null && !embedment.getRange().isEmpty()) {
       if (hasNoLayers) LayeredLexer.ourDisableLayersFlag.set(Boolean.TRUE);
       try {
-        embeddedLexer = embedment.createHighlightingLexer(this);
+        embeddedLexer = embedment.createHighlightingLexer();
       }
       finally {
         if (hasNoLayers) LayeredLexer.ourDisableLayersFlag.set(null);
@@ -206,6 +203,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
    *
    * @deprecated Use {@link HtmlEmbeddedContentSupport} API
    */
+  @SuppressWarnings("unused")
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   @Deprecated
   @Nullable

@@ -15,10 +15,11 @@
  */
 package com.intellij.lang;
 
+import com.intellij.html.embedding.HtmlEmbeddedContentSupport;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @deprecated in favor of {@link com.intellij.lexer.HtmlEmbeddedContentSupport} API.
+ * @deprecated in favor of {@link HtmlEmbeddedContentSupport} API.
  */
 @Deprecated
 public class LanguageHtmlInlineScriptTokenTypesProvider extends LanguageExtension<HtmlInlineScriptTokenTypesProvider> {

@@ -1,11 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lexer;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.html.embedding.HtmlEmbedment;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
@@ -18,28 +17,13 @@ public class HtmlLexer extends BaseHtmlLexer {
   private int myTokenStart;
   private int myTokenEnd;
 
-  /**
-   * @deprecated use overload with {@code project} parameter.
-   */
-  @Deprecated
+
   public HtmlLexer() {
-    this(null);
+    this(new MergingLexerAdapter(new FlexAdapter(new _HtmlLexer()), TOKENS_TO_MERGE), true);
   }
 
-  /**
-   * @deprecated use overload with {@code project} parameter.
-   */
-  @Deprecated
-  protected HtmlLexer(Lexer _baseLexer, boolean _caseInsensitive) {
-    this(null, _baseLexer, _caseInsensitive);
-  }
-
-  public HtmlLexer(@Nullable Project project) {
-    this(project, new MergingLexerAdapter(new FlexAdapter(new _HtmlLexer()), TOKENS_TO_MERGE), true);
-  }
-
-  protected HtmlLexer(@Nullable Project project, Lexer _baseLexer, boolean _caseInsensitive) {
-    super(project, _baseLexer, _caseInsensitive);
+  protected HtmlLexer(@NotNull Lexer baseLexer, boolean caseInsensitive) {
+    super(baseLexer, caseInsensitive);
   }
 
   @Override
@@ -66,7 +50,7 @@ public class HtmlLexer extends BaseHtmlLexer {
     if (embedment != null) {
       skipEmbedment(embedment);
       myTokenEnd = embedment.getRange().getEndOffset();
-      myTokenType = notNull(embedment.getElementType(this), XmlTokenType.XML_DATA_CHARACTERS);
+      myTokenType = notNull(embedment.getElementType(), XmlTokenType.XML_DATA_CHARACTERS);
     } else {
       myTokenType = tokenType;
     }
