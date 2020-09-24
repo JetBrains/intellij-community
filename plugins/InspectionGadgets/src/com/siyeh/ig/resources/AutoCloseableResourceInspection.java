@@ -54,6 +54,7 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
   final List<String> ignoredTypes = new ArrayList<>(DEFAULT_IGNORED_TYPES);
   @SuppressWarnings("PublicField")
   public boolean ignoreFromMethodCall = false;
+  public boolean ignoreConstructorMethodReferences = true;
   CallMatcher STREAM_HOLDING_RESOURCE = CallMatcher.staticCall("java.nio.file.Files", "lines", "walk", "list", "find");
 
   public AutoCloseableResourceInspection() {
@@ -95,6 +96,7 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
     checkBox.addItemListener(e -> table2.setEnabled(e.getStateChange() == ItemEvent.DESELECTED));
     panel.add(checkBox);
     panel.add(new CheckBox(InspectionGadgetsBundle.message("any.method.may.close.resource.argument"), this, "anyMethodMayClose"));
+    panel.add(new CheckBox(InspectionGadgetsBundle.message("ignore.constructor.method.references"), this, "ignoreConstructorMethodReferences"));
     return panel;
   }
 
@@ -142,6 +144,7 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
     writeBooleanOption(node, "ignoreFromMethodCall", false);
     writeBooleanOption(node, "anyMethodMayClose", true);
+    writeBooleanOption(node, "ignoreConstructorMethodReferences", true);
     if (!DEFAULT_IGNORED_TYPES.equals(ignoredTypes)) {
       final String ignoredTypesString = formatString(ignoredTypes);
       node.addContent(new Element("option").setAttribute("name", "ignoredTypes").setAttribute("value", ignoredTypesString));
@@ -231,6 +234,7 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
     @Override
     public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
       super.visitMethodReferenceExpression(expression);
+      if (ignoreConstructorMethodReferences) return;
       if (!expression.isConstructor()) {
         return;
       }
