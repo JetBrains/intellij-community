@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
@@ -19,10 +20,13 @@ import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,7 +93,7 @@ public class SdkDownloadTracker {
     ApplicationManager.getApplication().assertIsDispatchThread();
     LOG.assertTrue(findTask(originalSdk) == null, "Download is already running for the SDK " + originalSdk);
 
-    PendingDownload pd = new PendingDownload(originalSdk, item);
+    PendingDownload pd = new PendingDownload(originalSdk, item, new SmartPendingDownloadModalityTracker());
     pd.configureSdk(originalSdk);
     myPendingTasks.add(pd);
   }
@@ -163,16 +167,71 @@ public class SdkDownloadTracker {
     return true;
   }
 
+  /**
+   * Performs synchronous SDK download. Must not run on EDT thread.
+   */
+  public void downloadSdk(@NotNull SdkDownloadTask task,
+                          @NotNull List<Sdk> sdks,
+                          @NotNull ProgressIndicator indicator) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+
+    if (sdks.isEmpty()) throw new IllegalArgumentException("There must be at least one SDK in the list for " + task);
+    @NotNull Sdk sdk = Objects.requireNonNull(ContainerUtil.getFirstItem(sdks));
+
+    var tracker = new PendingDownloadModalityTracker() {
+      @Override
+      public void updateModality() { }
+
+      @Override
+      public void invokeLater(@NotNull Runnable r) {
+        //we need to make sure our tasks are executed in-place for the blocking mode
+        ApplicationManager.getApplication().invokeAndWait(r);
+      }
+    };
+
+    PendingDownload pd = new PendingDownload(sdk, task, tracker) {
+      @Override
+      protected void runTask(@NotNull @NlsContexts.ProgressTitle String title, @NotNull Progressive progressive) {
+        indicator.pushState();
+        try {
+          progressive.run(indicator);
+        } finally {
+          indicator.popState();
+        }
+      }
+
+      @Override
+      protected void handleDownloadError(@NotNull SdkType type, @NotNull @Nls String title, @NotNull Throwable exception) {
+        throw new RuntimeException("Failed to download and configure " + type.getPresentableName() + " for "
+                         + myEditableSdks.copy() + ". " + exception.getMessage(), exception);
+      }
+    };
+
+    sdks.forEach(pd::configureSdk);
+    myPendingTasks.add(pd);
+
+    for (Sdk otherSdk : sdks) {
+      if (otherSdk == sdk) continue;
+      pd.registerEditableSdk(otherSdk);
+    }
+
+    pd.startDownloadIfNeeded(sdk);
+  }
+
   // we need to track the "best" modality state to trigger SDK update on completion,
   // while the current Project Structure dialog is shown. The ModalityState from our
   // background task (ProgressManager.run) does not suite if the Project Structure dialog
   // is re-open once again.
-  //
+  private interface PendingDownloadModalityTracker {
+    void updateModality();
+    void invokeLater(@NotNull Runnable r);
+  }
+
   // We grab the modalityState from the {@link #tryRegisterDownloadingListener} call and
   // see if that {@link ModalityState#dominates} the current modality state. In fact,
   // it does call the method from the dialog setup, with NON_MODAL modality, which
   // we would like to ignore.
-  private static class PendingDownloadModalityTracker {
+  private static class SmartPendingDownloadModalityTracker implements PendingDownloadModalityTracker{
     @NotNull
     static ModalityState modality() {
       ModalityState state = ApplicationManager.getApplication().getCurrentModalityState();
@@ -182,14 +241,16 @@ public class SdkDownloadTracker {
 
     ModalityState myModalityState = modality();
 
-    synchronized void updateModality() {
+    @Override
+    public synchronized void updateModality() {
       ModalityState newModality = modality();
       if (newModality != myModalityState && newModality.dominates(myModalityState)) {
         myModalityState = newModality;
       }
     }
 
-    synchronized void invokeLater(@NotNull Runnable r) {
+    @Override
+    public synchronized void invokeLater(@NotNull Runnable r) {
       ApplicationManager.getApplication().invokeLater(r, myModalityState);
     }
   }
@@ -219,7 +280,7 @@ public class SdkDownloadTracker {
   private static class PendingDownload {
     final SdkDownloadTask myTask;
     final ProgressIndicatorBase myProgressIndicator = new ProgressIndicatorBase();
-    final PendingDownloadModalityTracker myModalityTracker = new PendingDownloadModalityTracker();
+    final PendingDownloadModalityTracker myModalityTracker;
 
     final SynchronizedIdentityHashSet<Sdk> myEditableSdks = new SynchronizedIdentityHashSet<>();
     final SynchronizedIdentityHashSet<Runnable> mySdkFailedHandlers = new SynchronizedIdentityHashSet<>();
@@ -228,9 +289,10 @@ public class SdkDownloadTracker {
 
     final AtomicBoolean myIsDownloading = new AtomicBoolean(false);
 
-    PendingDownload(@NotNull Sdk sdk, @NotNull SdkDownloadTask task) {
+    PendingDownload(@NotNull Sdk sdk, @NotNull SdkDownloadTask task, @NotNull PendingDownloadModalityTracker tracker) {
       myEditableSdks.add(sdk);
       myTask = task;
+      myModalityTracker = tracker;
     }
 
     boolean containsSdk(@NotNull Sdk sdk) {
@@ -252,20 +314,32 @@ public class SdkDownloadTracker {
       myEditableSdks.add(editable);
     }
 
+    protected void runTask(@NotNull @NlsContexts.ProgressTitle String title, @NotNull Progressive progressive) {
+      var task = new Task.Backgroundable(null,
+                                         title,
+                                         true,
+                                         PerformInBackgroundOption.ALWAYS_BACKGROUND) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          progressive.run(indicator);
+        }
+      };
+      ProgressManager.getInstance().run(task);
+    }
+
     void startDownloadIfNeeded(@NotNull Sdk sdkFromTable) {
       if (!myIsDownloading.compareAndSet(false, true)) return;
       if (myProgressIndicator.isCanceled()) return;
 
       myModalityTracker.updateModality();
       SdkType type = (SdkType)sdkFromTable.getSdkType();
-      String message = ProjectBundle.message("sdk.configure.downloading", type.getPresentableName());
+      String title = ProjectBundle.message("sdk.configure.downloading", type.getPresentableName());
 
-      Task.Backgroundable task = new Task.Backgroundable(null,
-                                                         message,
-                                                         true,
-                                                         PerformInBackgroundOption.ALWAYS_BACKGROUND) {
+      //noinspection Convert2Lambda
+      Progressive taskAction = new Progressive() {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
+          boolean failed = false;
           try {
             new ProgressIndicatorListenerAdapter() {
               @Override
@@ -287,26 +361,32 @@ public class SdkDownloadTracker {
 
             // make sure VFS has the right image of our SDK to avoid empty SDK from being created
             VfsUtil.markDirtyAndRefresh(false, true, true, new File(myTask.getPlannedHomeDir()));
-            onSdkDownloadCompleted(false);
-          }
-          catch (ProcessCanceledException e) {
-            onSdkDownloadCompleted(true);
+
+            //update the pending SDKs
+            onSdkDownloadCompletedSuccessfully();
           }
           catch (Throwable e) {
-            if (!myProgressIndicator.isCanceled()) {
-              LOG.warn("SDK Download failed. " + e.getMessage(), e);
-              if (!ApplicationManager.getApplication().isUnitTestMode()) {
-                myModalityTracker.invokeLater(() -> {
-                  Messages.showErrorDialog(ProjectBundle.message("error.message.sdk.download.failed", type.getPresentableName()), getTitle());
-                });
-              }
+            failed = true;
+            if (!myProgressIndicator.isCanceled() && !(e instanceof ControlFlowException)) {
+              handleDownloadError(type, title, e);
             }
-            onSdkDownloadCompleted(true);
+          }
+          finally {
+            // dispose our own state
+            disposeNow(!failed);
           }
         }
       };
 
-      ProgressManager.getInstance().run(task);
+      runTask(title, taskAction);
+    }
+
+    protected void handleDownloadError(@NotNull SdkType type, @NotNull @Nls String title, @NotNull Throwable exception) {
+      LOG.warn("SDK Download failed. " + exception.getMessage(), exception);
+      if (ApplicationManager.getApplication().isUnitTestMode()) return;
+      myModalityTracker.invokeLater(() -> {
+        Messages.showErrorDialog(ProjectBundle.message("error.message.sdk.download.failed", type.getPresentableName()), title);
+      });
     }
 
     void registerListener(@NotNull Disposable lifetime,
@@ -332,8 +412,7 @@ public class SdkDownloadTracker {
       myDisposables.add(unsubscribe);
     }
 
-    void onSdkDownloadCompleted(boolean failed) {
-      if (!failed) {
+    void onSdkDownloadCompletedSuccessfully() {
         // we handle ModalityState explicitly to handle the case,
         // when the next ProjectSettings dialog is shown, and we still want to
         // notify all current viewers to reflect our SDK changes, thus we need
@@ -345,13 +424,16 @@ public class SdkDownloadTracker {
               SdkType sdkType = (SdkType)sdk.getSdkType();
               configureSdk(sdk);
 
+              String actualVersion = null;
               try {
-                String actualVersion = sdkType.getVersionString(sdk);
-                SdkModificator modificator = sdk.getSdkModificator();
-                modificator.setVersionString(actualVersion);
-                modificator.commitChanges();
+                actualVersion = sdkType.getVersionString(sdk);
+                if (actualVersion != null) {
+                  SdkModificator modificator = sdk.getSdkModificator();
+                  modificator.setVersionString(actualVersion);
+                  modificator.commitChanges();
+                }
               } catch (Exception e) {
-                LOG.warn("Failed to configure a downloaded SDK. " + e.getMessage(), e);
+                LOG.warn("Failed to configure a version " + actualVersion + " for downloaded SDK. " + e.getMessage(), e);
               }
 
               sdkType.setupSdkPaths(sdk);
@@ -361,10 +443,6 @@ public class SdkDownloadTracker {
             }
           }
         }));
-      }
-
-      // dispose our own state
-      disposeNow(!failed);
     }
 
     void disposeNow(boolean succeeded) {
@@ -386,8 +464,8 @@ public class SdkDownloadTracker {
 
     void configureSdk(@NotNull Sdk sdk) {
       SdkModificator mod = sdk.getSdkModificator();
-      mod.setVersionString(myTask.getPlannedVersion());
       mod.setHomePath(FileUtil.toSystemIndependentName(myTask.getPlannedHomeDir()));
+      mod.setVersionString(myTask.getPlannedVersion());
       mod.commitChanges();
     }
   }
