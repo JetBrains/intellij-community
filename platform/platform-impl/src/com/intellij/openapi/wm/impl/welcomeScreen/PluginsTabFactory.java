@@ -6,7 +6,6 @@ import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WelcomeScreenTab;
 import com.intellij.openapi.wm.WelcomeTabFactory;
 import com.intellij.ui.AncestorListenerAdapter;
@@ -28,9 +27,7 @@ public class PluginsTabFactory implements WelcomeTabFactory {
     return new TabbedWelcomeScreen.DefaultWelcomeScreenTab(IdeBundle.message("welcome.screen.plugins.title")) {
       @Override
       protected JComponent buildComponent() {
-        PluginManagerConfigurable configurable = new PluginManagerConfigurable(
-          parentDisposable instanceof Project ? (Project)parentDisposable : null
-        );
+        PluginManagerConfigurable configurable = new PluginManagerConfigurable();
         BorderLayoutPanel pluginsPanel = UI.Panels.simplePanel(configurable.createComponent()).addToTop(configurable.getTopComponent())
           .withBorder(JBUI.Borders.customLine(JBColor.border(), 0, 1, 0, 0));
         configurable.getTopComponent().setPreferredSize(new JBDimension(configurable.getTopComponent().getPreferredSize().width, 35));

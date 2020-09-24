@@ -14,7 +14,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -856,22 +855,10 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      Project project = e.getProject();
-
-      Project modelProject = myPluginModel.getProject();
-      if (modelProject != project) {
-        LOG.assertTrue(
-          modelProject == null,
-          "Model project='" + modelProject + "', action project='" + project + "'"
-        );
-
-        myPluginModel.setProject(project);
-      }
-
       PluginEnabledState state = myPluginModel.getState(myPlugin);
 
       boolean invisible = myNewState == state ||
-                          project == null && myNewState.isPerProject();
+                          e.getProject() == null && myNewState.isPerProject();
       e.getPresentation().setVisible(!invisible);
     }
   }

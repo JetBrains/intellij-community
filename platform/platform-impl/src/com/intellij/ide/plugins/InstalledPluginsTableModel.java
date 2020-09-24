@@ -23,10 +23,14 @@ public class InstalledPluginsTableModel {
   protected final List<IdeaPluginDescriptor> view = new ArrayList<>();
   private final Map<PluginId, PluginEnabledState> myEnabled = new HashMap<>();
   private final Map<PluginId, Set<PluginId>> myDependentToRequiredListMap = new HashMap<>();
-  private @Nullable Project myProject;
+  private final @Nullable Project myProject;
+  private final @Nullable ProjectPluginTracker myPluginTracker;
 
   public InstalledPluginsTableModel(@Nullable Project project) {
     myProject = project;
+    myPluginTracker = myProject != null ?
+                      ProjectPluginTracker.getInstance(myProject) :
+                      null;
 
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
     for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins()) {
@@ -46,18 +50,12 @@ public class InstalledPluginsTableModel {
     updatePluginDependencies();
   }
 
-  public final @Nullable Project getProject() {
+  protected final @Nullable Project getProject() {
     return myProject;
   }
 
-  public final void setProject(@Nullable Project project) {
-    myProject = project;
-  }
-
   protected final @Nullable ProjectPluginTracker getPluginTracker() {
-    return myProject != null ?
-           ProjectPluginTracker.getInstance(myProject) :
-           null;
+    return myPluginTracker;
   }
 
   protected @NotNull List<IdeaPluginDescriptor> getAllPlugins() {
@@ -79,10 +77,9 @@ public class InstalledPluginsTableModel {
     final boolean descriptorEnabled = ideaPluginDescriptor.isEnabled();
     PluginEnabledState enabled;
     if (descriptorEnabled || PluginManagerCore.isDisabled(pluginId)) {
-      ProjectPluginTracker pluginTracker = getPluginTracker();
-      enabled = (pluginTracker != null && pluginTracker.isEnabled(ideaPluginDescriptor)) ?
+      enabled = (myPluginTracker != null && myPluginTracker.isEnabled(ideaPluginDescriptor)) ?
                 PluginEnabledState.ENABLED_FOR_PROJECT :
-                (pluginTracker != null && pluginTracker.isDisabled(ideaPluginDescriptor)) ?
+                (myPluginTracker != null && myPluginTracker.isDisabled(ideaPluginDescriptor)) ?
                 PluginEnabledState.DISABLED_FOR_PROJECT :
                 descriptorEnabled ?
                 PluginEnabledState.ENABLED :
