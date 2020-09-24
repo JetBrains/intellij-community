@@ -1,12 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.SdkListPresenter;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkDownloadableSdkFix;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkLocalSdkFix;
-import com.intellij.ui.EditorNotificationPanel;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 final class UnknownSdkFixForInvalid extends UnknownSdkFix {
   private final @NotNull String mySdkName;
   private final @NotNull UnknownInvalidSdk mySdk;
-  private final @Nullable DownloadFixAction myDownloadFixAction;
+  private final @Nullable UnknownSdkFixForInvalid.DownloadInvalidFixAction myDownloadFixAction;
   private final @Nullable LocalFixAction myLocalFixAction;
 
   UnknownSdkFixForInvalid(@NotNull Project project, @NotNull UnknownInvalidSdk invalidSdk) {
@@ -23,7 +23,7 @@ final class UnknownSdkFixForInvalid extends UnknownSdkFix {
     mySdk = invalidSdk;
     UnknownSdkLocalSdkFix myLocalFix = mySdk.myLocalSdkFix;
     UnknownSdkDownloadableSdkFix downloadFix = mySdk.myDownloadableSdkFix;
-    myDownloadFixAction = downloadFix != null ? new DownloadFixAction(downloadFix) : null;
+    myDownloadFixAction = downloadFix != null ? new DownloadInvalidFixAction(downloadFix) : null;
     myLocalFixAction = myLocalFix != null ? new LocalFixAction(myLocalFix) : null;
   }
 
@@ -45,10 +45,10 @@ final class UnknownSdkFixForInvalid extends UnknownSdkFix {
     return ProjectBundle.message("dialog.text.resolving.sdks.item", sdkTypeName, mySdkName);
   }
 
-  private class DownloadFixAction implements SuggestedFixAction {
+  private class DownloadInvalidFixAction implements SuggestedFixAction {
     @NotNull final UnknownSdkDownloadableSdkFix myFix;
 
-    private DownloadFixAction(@NotNull UnknownSdkDownloadableSdkFix fix) {
+    private DownloadInvalidFixAction(@NotNull UnknownSdkDownloadableSdkFix fix) {
       myFix = fix;
     }
 
@@ -70,6 +70,16 @@ final class UnknownSdkFixForInvalid extends UnknownSdkFix {
                                    sdkTypeName,
                                    mySdkName
       );
+    }
+
+    @Override
+    public void applySuggestionAsync() {
+      mySdk.applyDownloadFix(myProject);
+    }
+
+    @Override
+    public void applySuggestionModal(@NotNull ProgressIndicator indicator) {
+      throw new RuntimeException("TODO");
     }
   }
 
@@ -105,30 +115,31 @@ final class UnknownSdkFixForInvalid extends UnknownSdkFix {
                                    sdkTypeName,
                                    mySdkName);
     }
+
+    @Override
+    public void applySuggestionAsync() {
+      mySdk.applyLocalFix(myProject);
+    }
+
+    @Override
+    public void applySuggestionModal(@NotNull ProgressIndicator indicator) {
+      throw new RuntimeException("TODO");
+    }
   }
 
   @Override
-  protected final @NotNull EditorNotificationPanel createNotificationPanelImpl(@NotNull Project project) {
+  protected final @NotNull EditorNotificationPanelWrapper createNotificationPanelImpl() {
     String sdkTypeName = mySdkType.getPresentableName();
-    EditorNotificationPanel notification;
-    if (myLocalFixAction != null) {
-      String intentionActionText = myLocalFixAction.getActionText();
-      notification = newNotificationPanel(intentionActionText);
-      notification
-        .createActionLabel(intentionActionText, () -> mySdk.applyLocalFix(project), true)
-        .setToolTipText(myLocalFixAction.getCheckboxActionTooltip());
-    }
-    else if (myDownloadFixAction != null)  {
-      String intentionActionText = myDownloadFixAction.getActionText();
-      notification = newNotificationPanel(intentionActionText);
-      notification.createActionLabel(intentionActionText, () -> mySdk.applyDownloadFix(myProject), true);
+    EditorNotificationPanelWrapper notification;
+
+    var fixAction = getSuggestedFixAction();
+    if (fixAction != null) {
+      notification = createNotificationPanelWithMainAction(fixAction);
     } else {
-      String intentionActionText = ProjectBundle.message("config.invalid.sdk.configure.missing", sdkTypeName, mySdkName);
-      notification = newNotificationPanel(intentionActionText);
+      notification = newNotificationPanel(ProjectBundle.message("config.invalid.sdk.configure.missing", sdkTypeName, mySdkName));
     }
 
-    notification.setText(getNotificationText());
-    notification.createActionLabel(ProjectBundle.message("config.invalid.sdk.configure"), mySdk.createSdkSelectionPopup(project), true);
+    notification.createActionLabel(ProjectBundle.message("config.invalid.sdk.configure"), mySdk.createSdkSelectionPopup(myProject));
     return notification;
   }
 

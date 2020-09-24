@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.SdkType;
@@ -15,7 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 class UnknownSdkFixForDownload extends UnknownSdkFix {
   private final @NotNull String mySdkName;
-  private final @Nullable DownloadFixActionImpl myDownloadFixAction;
+  private final @Nullable DownloadMissingFixAction myDownloadFixAction;
 
   UnknownSdkFixForDownload(@NotNull Project project,
                            @NotNull String sdkName,
@@ -24,7 +25,7 @@ class UnknownSdkFixForDownload extends UnknownSdkFix {
                            @Nullable UnknownSdkDownloadableSdkFix fix) {
     super(project, sdkType);
     mySdkName = sdkName;
-    myDownloadFixAction = fix != null && sdk != null ? new DownloadFixActionImpl(fix, sdk) : null;
+    myDownloadFixAction = fix != null && sdk != null ? new DownloadMissingFixAction(fix, sdk) : null;
   }
 
   @Override
@@ -32,12 +33,12 @@ class UnknownSdkFixForDownload extends UnknownSdkFix {
     return myDownloadFixAction;
   }
 
-  private class DownloadFixActionImpl implements SuggestedFixAction {
+  private class DownloadMissingFixAction implements SuggestedFixAction {
     @NotNull final UnknownSdkDownloadableSdkFix myFix;
     @NotNull final UnknownSdk mySdk;
 
-    private DownloadFixActionImpl(@NotNull UnknownSdkDownloadableSdkFix fix,
-                                  @NotNull UnknownSdk sdk) {
+    private DownloadMissingFixAction(@NotNull UnknownSdkDownloadableSdkFix fix,
+                                     @NotNull UnknownSdk sdk) {
       myFix = fix;
       mySdk = sdk;
     }
@@ -61,6 +62,16 @@ class UnknownSdkFixForDownload extends UnknownSdkFix {
                                    mySdkName
                                    );
     }
+
+    @Override
+    public void applySuggestionAsync() {
+      UnknownSdkTracker.getInstance(myProject).applyDownloadableFix(mySdk, myFix);
+    }
+
+    @Override
+    public void applySuggestionModal(@NotNull ProgressIndicator indicator) {
+      throw new RuntimeException("TODO");
+    }
   }
 
   @Override
@@ -76,31 +87,21 @@ class UnknownSdkFixForDownload extends UnknownSdkFix {
   }
 
   @Override
-  protected final @NotNull EditorNotificationPanel createNotificationPanelImpl(@NotNull Project project) {
-    EditorNotificationPanel notification;
+  protected final @NotNull EditorNotificationPanelWrapper createNotificationPanelImpl() {
+    EditorNotificationPanelWrapper notification;
 
     if (myDownloadFixAction != null) {
-      String actionText = myDownloadFixAction.getActionText();
-      notification = newNotificationPanel(actionText);
-      AtomicBoolean isRunning = new AtomicBoolean(false);
-      notification.createActionLabel(actionText, () -> {
-        if (isRunning.compareAndSet(false, true)) {
-          UnknownSdkTracker.getInstance(myProject).applyDownloadableFix(myDownloadFixAction.mySdk, myDownloadFixAction.myFix);
-        }
-      }, true);
+      notification = createNotificationPanelWithMainAction(myDownloadFixAction);
     } else {
       String sdkTypeName = mySdkType.getPresentableName();
       String intentionActionText = ProjectBundle.message("config.unknown.sdk.configure.missing", sdkTypeName, mySdkName);
       notification = newNotificationPanel(intentionActionText);
     }
 
-    notification.setText(getNotificationText());
     notification.createActionLabel(ProjectBundle.message("config.unknown.sdk.configure"),
                                    UnknownSdkTracker
                                      .getInstance(myProject)
-                                     .createSdkSelectionPopup(mySdkName, mySdkType),
-                                   true
-    );
+                                     .createSdkSelectionPopup(mySdkName, mySdkType));
 
     return notification;
   }
