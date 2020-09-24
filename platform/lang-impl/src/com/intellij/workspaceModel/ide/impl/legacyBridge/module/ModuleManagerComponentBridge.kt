@@ -69,11 +69,6 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     return modules(entityStore.current)
   }
 
-  private fun modules(storage: WorkspaceEntityStorage): Sequence<ModuleBridge> {
-    val moduleMap = storage.moduleMap
-    return storage.entities(ModuleEntity::class.java).mapNotNull { moduleMap.getDataByEntity(it) }
-  }
-
   internal class MyProjectServiceContainerInitializedListener : ProjectServiceContainerInitializedListener {
     override fun serviceCreated(project: Project) {
       val activity = StartUpMeasurer.startMainActivity("(wm) module loading")
@@ -331,20 +326,13 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
   }
 
   override fun moduleDependencyComparator(): Comparator<Module> {
-    val builder = DFSTBuilder(moduleGraph(true))
-    return builder.comparator()
+    return entityStore.cachedValue(dependencyComparatorValue)
   }
 
-  override fun moduleGraph(): Graph<Module> = moduleGraph(includeTests = true)
-  override fun moduleGraph(includeTests: Boolean): Graph<Module> {
-    return GraphGenerator.generate(CachingSemiGraph.cache(object : InboundSemiGraph<Module> {
-      override fun getNodes(): Collection<Module> = modules().toMutableList()
+  override fun moduleGraph(): Graph<Module> = entityStore.cachedValue(dependencyGraphWithTestsValue)
 
-      override fun getIn(m: Module): Iterator<Module> {
-        val dependentModules = ModuleRootManager.getInstance(m).getDependencies(includeTests)
-        return dependentModules.toList().iterator()
-      }
-    }))
+  override fun moduleGraph(includeTests: Boolean): Graph<Module> {
+    return entityStore.cachedValue(if (includeTests) dependencyGraphWithTestsValue else dependencyGraphWithoutTestsValue)
   }
 
   private val entityStore by lazy { WorkspaceModel.getInstance(project).entityStorage }
@@ -623,5 +611,38 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     fun WorkspaceEntityStorage.findModuleEntity(module: ModuleBridge) =
       moduleMap.getEntities(module).firstOrNull() as ModuleEntity?
 
+    private val dependencyGraphWithTestsValue = CachedValue { storage ->
+      buildModuleGraph(storage, true)
+    }
+    private val dependencyGraphWithoutTestsValue = CachedValue { storage ->
+      buildModuleGraph(storage, false)
+    }
+    private val dependencyComparatorValue = CachedValue { storage ->
+      DFSTBuilder(buildModuleGraph(storage, true)).comparator()
+    }
+
+    private fun buildModuleGraph(storage: WorkspaceEntityStorage, includeTests: Boolean): Graph<Module> {
+      return GraphGenerator.generate(CachingSemiGraph.cache(object : InboundSemiGraph<Module> {
+        override fun getNodes(): Collection<Module> {
+          return modules(storage).toList()
+        }
+
+        override fun getIn(m: Module): Iterator<Module> {
+          val moduleMap = storage.moduleMap
+          val entity = moduleMap.getEntities(m as ModuleBridge).firstOrNull() as ModuleEntity?
+          return (entity?.dependencies?.asSequence() ?: emptySequence())
+            .filterIsInstance<ModuleDependencyItem.Exportable.ModuleDependency>()
+            .filter { includeTests || it.scope != ModuleDependencyItem.DependencyScope.TEST }
+            .mapNotNull { it.module.resolve(storage) }
+            .mapNotNull { moduleMap.getDataByEntity(it) }
+            .iterator()
+        }
+      }))
+    }
+
+    private fun modules(storage: WorkspaceEntityStorage): Sequence<ModuleBridge> {
+      val moduleMap = storage.moduleMap
+      return storage.entities(ModuleEntity::class.java).mapNotNull { moduleMap.getDataByEntity(it) }
+    }
   }
 }
