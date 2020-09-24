@@ -659,7 +659,6 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "Zstd-JNI", libraryName: "com.github.luben:zstd", license: "BSD",
                        url: "https://raw.githubusercontent.com/luben/zstd-jni/master/LICENSE"),
 
-    jetbrainsLibrary("debugger-memory-agent"),
     jetbrainsLibrary("change-reminder-prediction-model"),
     jetbrainsLibrary("completion-log-events"),
     jetbrainsLibrary("completion-ranking-java"),
@@ -670,6 +669,7 @@ class CommunityLibraryLicenses {
     jetbrainsLibrary("completion-ranking-rust"),
     jetbrainsLibrary("completion-ranking-scala"),
     jetbrainsLibrary("CoverageReport"),
+    jetbrainsLibrary("debugger-memory-agent"),
     jetbrainsLibrary("file-prediction-model"),
     jetbrainsLibrary("intellij-coverage"),
     jetbrainsLibrary("intellij-markdown"),
