@@ -83,6 +83,7 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
 
   override fun saveEntities(mainEntities: Collection<LibraryEntity>,
                             entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
+                            storage: WorkspaceEntityStorage,
                             writer: JpsFileContentWriter) {
     if (mainEntities.isEmpty()) return
 

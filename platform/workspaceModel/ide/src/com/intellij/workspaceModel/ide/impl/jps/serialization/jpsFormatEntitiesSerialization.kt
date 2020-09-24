@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
+import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.openapi.module.impl.ModulePath
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.TestOnly
  */
 interface JpsFileContentReader {
   fun loadComponent(fileUrl: String, componentName: String, customModuleFilePath: String? = null): Element?
+  fun getExpandMacroMap(fileUrl: String): ExpandMacroToPathMap
 }
 
 interface JpsFileContentWriter {
@@ -30,7 +32,10 @@ interface JpsFileEntitiesSerializer<E : WorkspaceEntity> {
   val mainEntityClass: Class<E>
   fun loadEntities(builder: WorkspaceEntityStorageBuilder, reader: JpsFileContentReader, errorReporter: ErrorReporter,
                    virtualFileManager: VirtualFileUrlManager)
-  fun saveEntities(mainEntities: Collection<E>, entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>, writer: JpsFileContentWriter)
+  fun saveEntities(mainEntities: Collection<E>,
+                   entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
+                   storage: WorkspaceEntityStorage,
+                   writer: JpsFileContentWriter)
 
   val additionalEntityTypes: List<Class<out WorkspaceEntity>>
     get() = emptyList()

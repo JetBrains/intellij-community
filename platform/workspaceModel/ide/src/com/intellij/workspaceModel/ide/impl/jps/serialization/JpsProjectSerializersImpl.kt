@@ -378,7 +378,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     }
 
     serializersToRun.forEach {
-      saveEntitiesBySerializer(it.first, it.second, writer)
+      saveEntitiesBySerializer(it.first, it.second, storage, writer)
     }
   }
 
@@ -423,9 +423,10 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
 
   private fun <E : WorkspaceEntity> saveEntitiesBySerializer(serializer: JpsFileEntitiesSerializer<E>,
                                                              entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
+                                                             storage: WorkspaceEntityStorage,
                                                              writer: JpsFileContentWriter) {
     @Suppress("UNCHECKED_CAST")
-    serializer.saveEntities(entities[serializer.mainEntityClass] as? Collection<E> ?: emptyList(), entities, writer)
+    serializer.saveEntities(entities[serializer.mainEntityClass] as? Collection<E> ?: emptyList(), entities, storage, writer)
   }
 
   private fun <E : WorkspaceEntity> createSerializersForDirectoryEntities(factory: JpsDirectoryEntitiesSerializerFactory<E>,
@@ -464,17 +465,26 @@ class CachingJpsFileContentReader(projectBaseDirUrl: String) : JpsFileContentRea
     return content[componentName]
   }
 
+  override fun getExpandMacroMap(fileUrl: String): ExpandMacroToPathMap {
+    return getMacroManager(fileUrl, null).expandMacroMap
+  }
+
   private fun loadComponents(fileUrl: String, customModuleFilePath: String?): Map<String, Element> {
+    val macroManager = getMacroManager(fileUrl, customModuleFilePath)
+
+    val file = Paths.get(JpsPathUtil.urlToPath(fileUrl))
+    return if (Files.isRegularFile(file)) loadStorageFile(file, macroManager) else emptyMap()
+  }
+
+  private fun getMacroManager(fileUrl: String,
+                              customModuleFilePath: String?): PathMacroManager {
     val path = JpsPathUtil.urlToPath(fileUrl)
-    val macroManager = if (FileUtil.extensionEquals(fileUrl, "iml") || isExternalModuleFile(path)) {
+    return if (FileUtil.extensionEquals(fileUrl, "iml") || isExternalModuleFile(path)) {
       ModulePathMacroManagerBridge(PathMacros.getInstance(), customModuleFilePath ?: path)
     }
     else {
       projectPathMacroManager
     }
-
-    val file = Paths.get(path)
-    return if (Files.isRegularFile(file)) loadStorageFile(file, macroManager) else emptyMap()
   }
 
   internal class ModulePathMacroManagerBridge(pathMacros: PathMacros, private val moduleFilePath: String) : PathMacroManager(

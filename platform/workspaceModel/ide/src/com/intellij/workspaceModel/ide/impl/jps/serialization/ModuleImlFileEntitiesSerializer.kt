@@ -2,6 +2,8 @@
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.module.impl.ModuleManagerImpl
 import com.intellij.openapi.module.impl.ModulePath
@@ -38,6 +40,7 @@ private val STANDARD_MODULE_OPTIONS = setOf(
 internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: ModulePath,
                                                     override val fileUrl: VirtualFileUrl,
                                                     override val internalEntitySource: JpsFileEntitySource,
+                                                    private val internalModuleListSerializer: JpsModuleListSerializer? = null,
                                                     private val externalModuleListSerializer: JpsModuleListSerializer? = null,
                                                     private val externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null)
   : JpsFileEntitiesSerializer<ModuleEntity> {
@@ -301,10 +304,11 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
 
   override fun saveEntities(mainEntities: Collection<ModuleEntity>,
                             entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
+                            storage: WorkspaceEntityStorage,
                             writer: JpsFileContentWriter) {
     val module = mainEntities.singleOrNull()
     if (module != null && acceptsSource(module.entitySource)) {
-      saveModuleEntities(module, entities, writer)
+      saveModuleEntities(module, entities, storage, writer)
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -324,6 +328,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
 
   private fun saveModuleEntities(module: ModuleEntity,
                                  entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
+                                 storage: WorkspaceEntityStorage,
                                  writer: JpsFileContentWriter) {
     val rootManagerElement = JDomSerializationUtil.createComponentElement(MODULE_ROOT_MANAGER_COMPONENT_NAME)
     val externalSystemOptions = module.externalSystemOptions
@@ -563,9 +568,11 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String,
     internal fun createModuleEntitiesSerializer(fileUrl: VirtualFileUrl,
                                                 moduleGroup: String?,
                                                 source: JpsFileEntitySource,
+                                                internalModuleListSerializer: JpsModuleListSerializer? = null,
                                                 externalModuleListSerializer: JpsModuleListSerializer? = null,
                                                 externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null) =
       ModuleImlFileEntitiesSerializer(ModulePath(JpsPathUtil.urlToPath(fileUrl.filePath), moduleGroup), fileUrl, source,
+                                      internalModuleListSerializer,
                                       externalModuleListSerializer,
                                       externalStorageConfigurationManager)
   }
@@ -584,7 +591,7 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String,
   }
 
   override fun createSerializer(internalSource: JpsFileEntitySource, fileUrl: VirtualFileUrl, moduleGroup: String?): JpsFileEntitiesSerializer<ModuleEntity> {
-    return createModuleEntitiesSerializer(fileUrl, moduleGroup, internalSource, externalModuleListSerializer, externalStorageConfigurationManager)
+    return createModuleEntitiesSerializer(fileUrl, moduleGroup, internalSource, this, externalModuleListSerializer, externalStorageConfigurationManager)
   }
 
   override fun loadFileList(reader: JpsFileContentReader, virtualFileManager: VirtualFileUrlManager): List<Pair<VirtualFileUrl, String?>> {
