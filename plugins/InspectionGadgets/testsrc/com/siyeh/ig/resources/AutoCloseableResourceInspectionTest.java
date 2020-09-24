@@ -266,9 +266,52 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
            "}");
   }
 
+
+  public void testLambdaReturnsResource() {
+    doTest("import java.io.*;\n" +
+           "\n" +
+           "class X implements AutoCloseable {\n" +
+           "  @Override\n" +
+           "  public void close() {}\n" +
+           "\n" +
+           "  private static void example() {\n" +
+           "    consume(() -> new X());\n" +
+           "  " +
+           "}\n" +
+           "  \n" +
+           "  interface Consumer {" +
+           " X use();" +
+           "}\n" +
+           "  private static native X getX();\n" +
+           "  private static native void consume(Consumer x);\n" +
+           "}");
+  }
+
+  public void testLambdaNotReturnsResource() {
+    doTest("import java.io.*;\n" +
+           "\n" +
+           "class X implements AutoCloseable {\n" +
+           "  @Override\n" +
+           "  public void close() {}\n" +
+           "\n" +
+           "  private static void example() {\n" +
+           "    consume(() -> new <warning descr=\"'X' used without 'try'-with-resources statement\">X</warning>());\n" +
+           "  " +
+           "}\n" +
+           "  \n" +
+           "  interface Runnable {" +
+           " void run();" +
+           "}\n" +
+           "  private static native X getX();\n" +
+           "  private static native void consume(Runnable x);\n" +
+           "}");
+  }
+
   @Override
   protected LocalInspectionTool getInspection() {
-    return new AutoCloseableResourceInspection();
+    AutoCloseableResourceInspection inspection = new AutoCloseableResourceInspection();
+    inspection.ignoreConstructorMethodReferences = false;
+    return inspection;
   }
 
   @Override

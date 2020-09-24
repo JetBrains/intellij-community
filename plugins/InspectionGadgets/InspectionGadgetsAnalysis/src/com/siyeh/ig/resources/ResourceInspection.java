@@ -307,6 +307,13 @@ public abstract class ResourceInspection extends BaseInspection {
       return true;
     }
     final PsiElement parent = ExpressionUtils.getPassThroughParent(resourceCreationExpression);
+    if (parent instanceof PsiLambdaExpression) {
+      PsiLambdaExpression lambda = (PsiLambdaExpression)parent;
+      PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(lambda);
+      if (!PsiType.VOID.equals(returnType)) {
+        return true;
+      }
+    }
     if (parent instanceof PsiReturnStatement) {
       return true;
     }
