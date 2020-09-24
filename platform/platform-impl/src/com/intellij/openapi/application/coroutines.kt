@@ -38,6 +38,19 @@ suspend fun <T> smartReadAction(project: Project, action: (ctx: CoroutineContext
 }
 
 /**
+ * Suspends until dumb mode is over and runs [action] in Smart Mode on EDT
+ */
+suspend fun <T> smartAction(project: Project, action: (ctx: CoroutineContext) -> T): T {
+  val unsatisfied = ReadConstraints.inSmartMode(project).findUnsatisfiedConstraint()
+  if (unsatisfied != null) {
+    yieldUntilRun(unsatisfied::schedule)
+    check(unsatisfied.isCorrectContext())
+  }
+  coroutineContext.ensureActive()
+  return action(coroutineContext)
+}
+
+/**
  * Suspends until it's possible to obtain the read lock with all [constraints] [satisfied][ContextConstraint.isCorrectContext]
  * and then runs the [action] holding the lock.
  * @see readAction
