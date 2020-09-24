@@ -381,6 +381,29 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
       "}");
   }
 
+  public void testResourceEscapesToConstructor() {
+    doTest(
+      "class X implements AutoCloseable {\n" +
+      "  @Override public void close() {}\n" +
+      "  private static void example() {\n" +
+      "    X x = createX();\n" +
+      "    if (x != null) {\n" +
+      "      new EscapeTo(10, x);\n" +
+      "    " +
+      "}\n" +
+      "  }\n" +
+      "  native static X createX();\n" +
+      "}\n" +
+      "class EscapeTo {\n" +
+      "  X x;\n" +
+      " " +
+      " EscapeTo(int y, X x) {" +
+      "this.x = x;" +
+      "}\n" +
+      "  native void doStuff();\n" +
+      "}");
+  }
+
   @Override
   protected LocalInspectionTool getInspection() {
     AutoCloseableResourceInspection inspection = new AutoCloseableResourceInspection();
