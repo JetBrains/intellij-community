@@ -5,10 +5,7 @@ import com.intellij.application.options.RegistryManager;
 import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationAction;
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.Application;
@@ -22,7 +19,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -37,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ThreadInfo;
@@ -63,8 +61,6 @@ public final class PerformanceWatcher implements Disposable {
   static final String DUMP_PREFIX = "threadDump-";
   private static final String DURATION_FILE_NAME = ".duration";
   private static final String PID_FILE_NAME = ".pid";
-  private static final NotificationGroup NOTIFICATION_GROUP =
-    new NotificationGroup("PerformanceWatcher", NotificationDisplayType.STICKY_BALLOON);
   private ScheduledFuture<?> myThread;
   private final File myLogDir = new File(PathManager.getLogPath());
 
@@ -319,15 +315,24 @@ public final class PerformanceWatcher implements Disposable {
     if (myJitProblemReported.compareAndSet(false, true)) {
       ApplicationEx app = ApplicationManagerEx.getApplicationEx();
       String action = IdeBundle.message(app.isRestartCapable() ? "ide.restart.action" : "ide.shutdown.action");
-      Notification notification = NOTIFICATION_GROUP.createNotification(
-        IdeBundle.message("notification.content.jit.compiler.disabled"), MessageType.ERROR)
-        .addAction(new NotificationAction(action) {
+      String title = IdeBundle.message("notification.title.jit.compiler.disabled");
+      String content = IdeBundle.message("notification.content.jit.compiler.disabled");
+      NotificationListener listener = new NotificationListener.Adapter() {
         @Override
-        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-          notification.expire();
-          app.restart(true);
+        protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
+          if ("help".equals(e.getDescription())) {
+            HelpManager.getInstance().invokeHelp("Tuning_product_");
+          }
         }
-      });
+      };
+      Notification notification = new Notification("PerformanceWatcher", title, content, NotificationType.ERROR, listener).
+        addAction(new NotificationAction(action) {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+            notification.expire();
+            app.restart(true);
+          }
+        });
       notification.notify(null);
     }
   }
