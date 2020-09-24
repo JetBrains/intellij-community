@@ -218,7 +218,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
     return state == _HtmlLexer.START_TAG_NAME || state == _HtmlLexer.END_TAG_NAME;
   }
 
-  /* Deprecated APIs */
+  /* Deprecated APIs kept for binary compatibility */
   /**
    * This API does no longer work. The value of the field is always {@code false}.
    *
@@ -254,6 +254,24 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   protected boolean seenTag;
+
+  /**
+   * This API does no longer work. The value of the field is always {@code false}.
+   *
+   * @deprecated Use {@link HtmlEmbeddedContentSupport} API
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  protected boolean seenStylesheetType;
+
+  /**
+   * This API does no longer work. The value of the field is always {@code null}.
+   *
+   * @deprecated Use {@link HtmlEmbeddedContentSupport} API
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  protected String styleType;
 
   /**
    * This API does no longer work.
