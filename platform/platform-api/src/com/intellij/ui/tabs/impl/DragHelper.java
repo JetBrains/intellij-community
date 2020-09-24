@@ -229,6 +229,11 @@ final class DragHelper extends MouseDragHelper {
   }
 
   @Override
+  protected boolean canFinishDragging(@NotNull JComponent component, @NotNull Point point) {
+    return !myTabs.contains(point) || !myTabs.getVisibleInfos().isEmpty();
+  }
+
+  @Override
   protected void processDragFinish(@NotNull MouseEvent event, boolean willDragOutStart) {
     super.processDragFinish(event, willDragOutStart);
 

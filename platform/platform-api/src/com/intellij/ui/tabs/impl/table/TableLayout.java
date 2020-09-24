@@ -249,7 +249,7 @@ public class TableLayout extends TabLayout {
   }
 
   @Override
-  @MagicConstant(intValues = {SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT, -1})
+  @MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT, -1})
   public int getDropSideFor(@NotNull Point point) {
     return TabsUtil.getDropSideFor(point, myTabs);
   }

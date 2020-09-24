@@ -138,7 +138,7 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
       if (provider != null) {
         window = EditorWindow.DATA_KEY.getData(provider);
       }
-      if (window != null && dropSide != -1) {
+      if (window != null && dropSide != -1 && dropSide != CENTER) {
         window.split(dropSide == BOTTOM || dropSide == TOP ? JSplitPane.VERTICAL_SPLIT : JSplitPane.HORIZONTAL_SPLIT,
                      true, file, false, dropSide != LEFT && dropSide != TOP);
         return;
@@ -170,7 +170,7 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
     window.setFilePinned(file, Objects.requireNonNullElseGet(dropInBetweenPinnedTabs, dockableEditor::isPinned));
   }
 
-  @MagicConstant(intValues = {TOP, LEFT, BOTTOM, RIGHT, -1})
+  @MagicConstant(intValues = {CENTER, TOP, LEFT, BOTTOM, RIGHT, -1})
   public int getCurrentDropSide() {
     return myCurrentOver instanceof JBTabsEx ? ((JBTabsEx)myCurrentOver).getDropSide() : -1;
   }
@@ -269,7 +269,7 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
 
   private class MyDropAreaPainter extends AbstractPainter {
     private Shape myBoundingBox;
-    private final Color myColor = JBColor.namedColor("dropArea.base", 0x4f4fff, 0x5081c0);
+    private final Color myColor = JBColor.namedColor("DragAndDrop.areaBackground", 0x3d7dcc, 0x404a57);
 
     @Override
     public boolean needsRepaint() {
@@ -280,10 +280,7 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
     public void executePaint(Component component, Graphics2D g) {
       if (myBoundingBox == null) return;
       GraphicsUtil.setupAAPainting(g);
-      g.setColor(ColorUtil.toAlpha(myColor, 200));
-      g.setStroke(new BasicStroke(2));
-      g.draw(myBoundingBox);
-      g.setColor(ColorUtil.toAlpha(myColor, 40));
+      g.setColor(ColorUtil.withAlpha(myColor, .2));
       g.fill(myBoundingBox);
     }
 

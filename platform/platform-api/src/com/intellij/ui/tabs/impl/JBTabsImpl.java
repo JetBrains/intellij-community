@@ -172,7 +172,7 @@ public class JBTabsImpl extends JComponent
   protected TabInfo myDropInfo;
   private int myDropInfoIndex;
 
-  @MagicConstant(intValues = {SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT, -1})
+  @MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT, -1})
   private int myDropSide = -1;
   protected boolean myShowDropLocation = true;
 
@@ -791,7 +791,7 @@ public class JBTabsImpl extends JComponent
     myDropInfoIndex = dropInfoIndex;
   }
 
-  @MagicConstant(intValues = {SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT, -1})
+  @MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT, -1})
   private void setDropSide(int side) {
     myDropSide = side;
   }
@@ -2952,6 +2952,9 @@ public class JBTabsImpl extends JComponent
     int side = index != -1
                ? -1
                : NEW_TABS ? myTabsLayout.getDropSideFor(pointInMySpace) : myLayout.getDropSideFor(pointInMySpace);
+    if (myVisibleInfos.isEmpty()) {
+      side = SwingConstants.CENTER ;
+    }
     if (index != getDropInfoIndex()) {
       setDropInfoIndex(index);
       relayout(true, false);
@@ -2968,7 +2971,7 @@ public class JBTabsImpl extends JComponent
   }
 
   @Override
-  @MagicConstant(intValues = {SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT, -1})
+  @MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT, -1})
   public int getDropSide() {
     return myDropSide;
   }

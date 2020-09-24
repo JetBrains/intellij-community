@@ -2,6 +2,7 @@
 package com.intellij.ui.tabs;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
@@ -45,8 +46,10 @@ public final class TabsUtil {
     return font;
   }
 
-  @MagicConstant(intValues = {TOP, LEFT, BOTTOM, RIGHT, -1})
+  @MagicConstant(intValues = {CENTER, TOP, LEFT, BOTTOM, RIGHT, -1})
   public static int getDropSideFor(Point point, JComponent component) {
+    double r = Math.max(.05, Math.min(.45, Registry.doubleValue("ide.tabbedPane.dragToSplitRatio")));
+
     int placement = UISettings.getInstance().getState().getEditorTabPlacement();
     Dimension size = component.getSize();
     double width = size.getWidth();
@@ -54,28 +57,28 @@ public final class TabsUtil {
     GeneralPath topShape = new GeneralPath();
     topShape.moveTo(0, 0);
     topShape.lineTo(width, 0);
-    topShape.lineTo(width * 2 / 3, height / 3);
-    topShape.lineTo(width / 3, height / 3);
+    topShape.lineTo(width * (1 - r), height * r);
+    topShape.lineTo(width  * r, height  * r);
     topShape.closePath();
 
     GeneralPath leftShape = new GeneralPath();
     leftShape.moveTo(0, 0);
-    leftShape.lineTo(width / 3, height / 3);
-    leftShape.lineTo(width / 3, height * 2 / 3);
+    leftShape.lineTo(width  * r, height  * r);
+    leftShape.lineTo(width  * r, height * (1 - r));
     leftShape.lineTo(0, height);
     leftShape.closePath();
 
     GeneralPath bottomShape = new GeneralPath();
     bottomShape.moveTo(0, height);
-    bottomShape.lineTo(width / 3, height * 2 / 3);
-    bottomShape.lineTo(width * 2 / 3, height * 2 / 3);
+    bottomShape.lineTo(width  * r, height * (1 - r));
+    bottomShape.lineTo(width * (1 - r), height * (1 - r));
     bottomShape.lineTo(width, height);
     bottomShape.closePath();
 
     GeneralPath rightShape = new GeneralPath();
     rightShape.moveTo(width, 0);
-    rightShape.lineTo(width * 2 / 3, height / 3);
-    rightShape.lineTo(width * 2 / 3, height * 2 / 3);
+    rightShape.lineTo(width * (1 - r), height  * r);
+    rightShape.lineTo(width * (1 - r), height * (1 - r));
     rightShape.lineTo(width, height);
     rightShape.closePath();
 
@@ -83,6 +86,6 @@ public final class TabsUtil {
     if (placement != LEFT && leftShape.contains(point)) return LEFT;
     if (placement != BOTTOM && bottomShape.contains(point)) return BOTTOM;
     if (placement != TOP && topShape.contains(point)) return TOP;
-    return -1;
+    return new Rectangle(size).contains(point) ? CENTER : -1;
   }
 }

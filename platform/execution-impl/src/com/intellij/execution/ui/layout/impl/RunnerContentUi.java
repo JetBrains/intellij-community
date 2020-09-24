@@ -1398,7 +1398,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
   private static class MyDropAreaPainter extends AbstractPainter {
     private Shape myBoundingBox;
-    private final Color myColor = JBColor.namedColor("dropArea.base", 0x4f4fff, 0x5081c0);
+    private final Color myColor = JBColor.namedColor("DragAndDrop.areaBackground", 0x3d7dcc, 0x404a57);
 
 
     @Override
@@ -1410,10 +1410,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     public void executePaint(Component component, Graphics2D g) {
       if (myBoundingBox == null) return;
       GraphicsUtil.setupAAPainting(g);
-      g.setColor(ColorUtil.toAlpha(myColor, 200));
-      g.setStroke(new BasicStroke(2));
-      g.draw(myBoundingBox);
-      g.setColor(ColorUtil.toAlpha(myColor, 40));
+      g.setColor(ColorUtil.withAlpha(myColor, .2));
       g.fill(myBoundingBox);
     }
 
