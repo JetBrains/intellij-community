@@ -30,6 +30,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.psi.PsiDocumentManager;
@@ -350,6 +351,11 @@ public final class DocRenderItem {
   private static void updateInlays(@NotNull Editor editor, boolean recreateContent) {
     Collection<DocRenderItem> items = editor.getUserData(OUR_ITEMS);
     if (items != null) updateInlays(items, recreateContent);
+  }
+
+  public void updateText(@NotNull @Nls String newContent) {
+    textToRender = newContent;
+    updateInlays(Collections.singletonList(this), true);
   }
 
   private void updateIcon() {
