@@ -75,19 +75,18 @@ public class ModuleUtilCore {
   @Nullable
   public static Module findModuleForPsiElement(@NotNull PsiElement element) {
     PsiFile containingFile = element.getContainingFile();
-    if (containingFile == null) {
-      if (!element.isValid()) return null;
-    }
-    else {
-      if (!containingFile.isValid()) return null;
-    }
+    PsiElement elementOrFile = Objects.requireNonNullElse(containingFile, element);
+    if (!elementOrFile.isValid()) return null;
 
-    Project project = (containingFile == null ? element : containingFile).getProject();
+    Project project = elementOrFile.getProject();
     if (project.isDefault()) return null;
     final ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(project);
 
     if (element instanceof PsiFileSystemItem && (!(element instanceof PsiFile) || element.getContext() == null)) {
-      VirtualFile vFile = ((PsiFileSystemItem)element).getVirtualFile();
+      VirtualFile vFile = null;
+      if (!(element instanceof PsiFile)) {
+        vFile = ((PsiFileSystemItem)element).getVirtualFile(); 
+      }
       if (vFile == null) {
         vFile = containingFile == null ? null : containingFile.getOriginalFile().getVirtualFile();
         if (vFile == null) {
@@ -106,9 +105,7 @@ public class ModuleUtilCore {
         for (OrderEntry orderEntry : orderEntries) {
           modules.add(orderEntry.getOwnerModule());
         }
-        final Module[] candidates = modules.toArray(Module.EMPTY_ARRAY);
-        Arrays.sort(candidates, ModuleManager.getInstance(project).moduleDependencyComparator());
-        return candidates[0];
+        return Collections.min(modules, ModuleManager.getInstance(project).moduleDependencyComparator());
       }
       return fileIndex.getModuleForFile(vFile);
     }
