@@ -147,6 +147,16 @@ public final class PathManager {
     if (rootPath == null) return null;
 
     Path root = Paths.get(rootPath).toAbsolutePath();
+    // Android Studio: On Bazel tests, there may be some symlinks that need to be followed.
+    // E.g., rootPath = bazel-out/x64_windows-fastbuild/bin/tools/adt/idea/adt-ui/intellij.android.adt.ui_tests.exe.j/0/util.jar
+    // where the path contains the symlink:
+    //   0 ->  %REPO%/prebuilts/studio/intellij-sdk/ai-202/windows/android-studio/lib/
+    if (SystemInfoRt.isWindows && System.getProperties().containsKey("TEST_WORKSPACE")) {
+      try {
+        root = root.toRealPath();
+      }
+      catch (IOException ignore) { }
+    }
     do {
       root = root.getParent();
     } while (root != null && !isIdeaHome(root) && !isKotlinIdeRepoHome(root));
