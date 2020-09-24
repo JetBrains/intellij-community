@@ -216,7 +216,16 @@ public class MessageBusImpl implements MessageBus {
       MessageBusImpl parentBus = bus;
       boolean hasHandlers = false;
       do {
-        List<Object> handlers = parentBus.subscriberCache.computeIfAbsent(topic, parentBus::computeSubscribers);
+        // computeIfAbsent cannot be used here: https://youtrack.jetbrains.com/issue/IDEA-250464
+        List<Object> handlers = parentBus.subscriberCache.get(topic);
+        if (handlers == null) {
+          handlers = parentBus.computeSubscribers(topic);
+          List<Object> existing = parentBus.subscriberCache.putIfAbsent(topic, handlers);
+          if (existing != null) {
+            handlers = existing;
+          }
+        }
+
         if (handlers.isEmpty()) {
           continue;
         }
