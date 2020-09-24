@@ -526,7 +526,7 @@ public class GeneralCommandLine implements UserDataHolder {
 
   private static final class MyMap extends Object2ObjectOpenCustomHashMap<String, String> {
     private MyMap() {
-      super(FastUtilHashingStrategies.getStringStrategy(SystemInfoRt.isWindows));
+      super(FastUtilHashingStrategies.getStringStrategy(!SystemInfoRt.isWindows));
     }
 
     @Override
