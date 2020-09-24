@@ -56,6 +56,10 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
     super(project, area);
   }
 
+  public void setShowGrid(boolean v) {
+    myPackagesTable.setShowGrid(v);
+  }
+
   private Sdk getSelectedSdk() {
     PyPackageManagementService service = (PyPackageManagementService)myPackageManagementService;
     return service != null ? service.getSdk() : null;

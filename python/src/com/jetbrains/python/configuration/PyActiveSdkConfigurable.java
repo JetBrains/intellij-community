@@ -97,6 +97,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
     final PackagesNotificationPanel packagesNotificationPanel = new PackagesNotificationPanel();
     myPackagesPanel = new PyInstalledPackagesPanel(myProject, packagesNotificationPanel);
+    myPackagesPanel.setShowGrid(false);
 
     final Pair<PyCustomSdkUiProvider, Disposable> customizer = buildCustomizer();
     myDisposable = customizer == null ? null : customizer.second;

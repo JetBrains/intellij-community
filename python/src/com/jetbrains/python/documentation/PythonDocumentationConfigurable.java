@@ -47,6 +47,7 @@ public class PythonDocumentationConfigurable implements SearchableConfigurable, 
   @Override
   public JComponent createComponent() {
     SwingUtilities.updateComponentTreeUI(myPanel); // TODO: create Swing components in this method (see javadoc)
+    myPanel.getTable().setShowGrid(false);
     return myPanel;
   }
 

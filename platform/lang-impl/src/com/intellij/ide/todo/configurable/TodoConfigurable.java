@@ -122,6 +122,7 @@ public class TodoConfigurable implements SearchableConfigurable, Configurable.No
     myMultiLineCheckBox = new JCheckBox(IdeBundle.message("label.todo.multiline"));
 
     myPatternsTable = new JBTable(myPatternsModel);
+    myPatternsTable.setShowGrid(false);
     myPatternsTable.getEmptyText().setText(IdeBundle.message("text.todo.no.patterns"));
     TableColumn typeColumn = myPatternsTable.getColumnModel().getColumn(0);
     JTableHeader tableHeader = myPatternsTable.getTableHeader();
@@ -220,6 +221,7 @@ public class TodoConfigurable implements SearchableConfigurable, Configurable.No
 
     // Panel with filters
     myFiltersTable = new JBTable(myFiltersModel);
+    myFiltersTable.setShowGrid(false);
     myFiltersTable.getEmptyText().setText(IdeBundle.message("text.todo.no.filters"));
 
     // Column "Name"

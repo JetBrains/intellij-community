@@ -79,7 +79,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Co
         return editExtLocation(o);
       }
     };
-    myExtPanel.getTable().setShowColumns(true);
+    myExtPanel.getTable().setShowGrid(false);
 
     myExtPanel.setRenderer(1, new PathRenderer());
 
@@ -114,6 +114,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Co
         return editIgnoreLocation(o);
       }
     };
+    myIgnorePanel.getTable().setShowGrid(false);
 
     myPanel.add(myExtPanel,
                 new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.NORTH, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));

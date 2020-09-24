@@ -91,6 +91,7 @@ public class JsonSchemaMappingsView implements Disposable {
     MyAddActionButtonRunnable addActionButtonRunnable = new MyAddActionButtonRunnable();
 
     myTableView = new JsonMappingsTableView(addActionButtonRunnable);
+    myTableView.setShowGrid(false);
     myTableView.getTableHeader().setVisible(false);
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myTableView);
     final MyEditActionButtonRunnableImpl editAction = new MyEditActionButtonRunnableImpl();

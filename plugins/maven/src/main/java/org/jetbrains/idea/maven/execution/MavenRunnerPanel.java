@@ -125,6 +125,7 @@ public class MavenRunnerPanel {
 
     collectProperties();
     propertiesPanel.add(myPropertiesPanel = new MavenPropertiesPanel(myProperties), BorderLayout.CENTER);
+    myPropertiesPanel.getTable().setShowGrid(false);
     myPropertiesPanel.getEmptyText().setText(MavenConfigurableBundle.message("maven.settings.runner.properties.not.defined"));
 
     c.gridx = 0;

@@ -333,6 +333,7 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
 
   override fun createComponent(): JComponent {
     val table = JBTable(this)
+    table.setShowGrid(false)
     table.emptyText.text = message("settings.file.colors.no.colors.specified")
 
     table.emptyText.appendSecondaryText(message("settings.file.colors.add.colors.link"), LINK_PLAIN_ATTRIBUTES) {

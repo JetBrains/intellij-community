@@ -257,6 +257,7 @@ final class BrowserSettingsPanel {
           }
         }
       });
+    browsersEditor.setShowGrid(false);
     browsersTable = browsersEditor.createComponent();
   }
 
