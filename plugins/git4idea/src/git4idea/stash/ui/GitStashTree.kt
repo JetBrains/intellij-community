@@ -15,8 +15,10 @@ import git4idea.stash.GitStashCache
 import git4idea.stash.GitStashTracker
 import git4idea.stash.GitStashTrackerListener
 import git4idea.ui.StashInfo
+import java.util.stream.Stream
 import javax.swing.event.TreeExpansionEvent
 import javax.swing.event.TreeExpansionListener
+import kotlin.streams.toList
 
 class GitStashTree(project: Project, parentDisposable: Disposable) : ChangesTree(project, false, false) {
   private val stashTracker get() = project.service<GitStashTracker>()
@@ -86,6 +88,15 @@ class GitStashTree(project: Project, parentDisposable: Disposable) : ChangesTree
 
   override fun resetTreeState() {
     expandDefaults()
+  }
+
+  override fun getData(dataId: String): Any? {
+    if (STASH_INFO.`is`(dataId)) return selectedStashes().toList()
+    return super.getData(dataId)
+  }
+
+  private fun selectedStashes(): Stream<StashInfo> {
+    return VcsTreeModelData.selected(this).userObjectsStream(StashInfo::class.java)
   }
 
   class StashInfoChangesBrowserNode(private val stash: StashInfo) : ChangesBrowserNode<StashInfo>(stash) {

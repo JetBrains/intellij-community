@@ -289,6 +289,16 @@
       <reference id="Vcs.ShowTabbedFileHistory"/>
       <reference id="LocalHistory"/>
     </group>
+
+    <action id="Git.Stash.Pop" class="git4idea.stash.ui.GitPopStashAction"/>
+    <action id="Git.Stash.Apply" class="git4idea.stash.ui.GitApplyStashAction"/>
+    <action id="Git.Stash.Drop" class="git4idea.stash.ui.GitDropStashAction"/>
+
+    <group id="Git.Stash.ContextMenu">
+      <reference id="Git.Stash.Pop"/>
+      <reference id="Git.Stash.Apply"/>
+      <reference id="Git.Stash.Drop"/>
+    </group>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
