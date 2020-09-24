@@ -22,7 +22,7 @@ public class ChangesBrowserSpecificFilePathsNode<T> extends ChangesBrowserNode<T
     // if files presented in the same view recalculate number of dirs and files -> provide -1; otherwise use from model
     myManyDirectoryCount = count(files, it -> it.isDirectory());
     myManyFileCount = files.size() - myManyDirectoryCount;
-    myIsMany = files.size() > Registry.intValue("vcs.unversioned.files.max.intree", 1000);
+    myIsMany = isManyFiles(files);
     myDialogShower = shower;
   }
 
@@ -47,5 +47,9 @@ public class ChangesBrowserSpecificFilePathsNode<T> extends ChangesBrowserNode<T
 
   public boolean isManyFiles() {
     return myIsMany;
+  }
+
+  public static boolean isManyFiles(@NotNull Collection<?> files) {
+    return files.size() > Registry.intValue("vcs.unversioned.files.max.intree", 1000);
   }
 }

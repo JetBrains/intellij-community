@@ -160,14 +160,16 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
     }
 
     private fun createUntrackedNode() {
-      val allUntrackedFiles = untrackedFilesMap.values.flatten()
-      if (allUntrackedFiles.isEmpty()) return
+      val allUntrackedStatuses = untrackedFilesMap.values.flatten()
+      if (allUntrackedStatuses.isEmpty()) return
 
-      val untrackedRootNode = ChangesBrowserUntrackedNode(project, allUntrackedFiles.map { it.path }).also { insertIntoRootNode(it) }
-      if (!untrackedRootNode.isManyFiles) {
+      if (ChangesBrowserSpecificFilePathsNode.isManyFiles(allUntrackedStatuses)) {
+        ChangesBrowserUntrackedNode(project, allUntrackedStatuses.map { it.path }).also { insertIntoRootNode(it) }
+      } else {
+        val unstagedNode = createKindNode(NodeKind.UNSTAGED)
         untrackedFilesMap.forEach { (root, untrackedInRoot) ->
           untrackedInRoot.forEach {
-            insertFileStatusNode(GitFileStatusNode(root, it, NodeKind.UNTRACKED), untrackedRootNode)
+            insertFileStatusNode(GitFileStatusNode(root, it, NodeKind.UNTRACKED), unstagedNode)
           }
         }
       }
