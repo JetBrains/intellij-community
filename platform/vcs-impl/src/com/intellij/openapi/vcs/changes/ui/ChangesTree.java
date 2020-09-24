@@ -155,12 +155,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   TreePath getPathIfCheckBoxClicked(@NotNull Point p) {
     if (!myShowCheckboxes || !isEnabled()) return null;
 
-    TreePath path = getPathIfInsideComponent(p);
-    if (path != null && isIncludable(path)) return path;
-    return null;
-  }
-
-  public @Nullable TreePath getPathIfInsideComponent(@NotNull Point p) {
     TreePath path = getPathForLocation(p.x, p.y);
     if (path == null) return null;
 
@@ -168,8 +162,8 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     if (pathBounds == null) return null;
 
     Rectangle checkBoxBounds = pathBounds.getBounds();
-    checkBoxBounds.setSize(getComponentWidth(path), checkBoxBounds.height);
-    if (!checkBoxBounds.contains(p)) return null;
+    checkBoxBounds.setSize(getCheckboxWidth(), checkBoxBounds.height);
+    if (!checkBoxBounds.contains(p) || !isIncludable(path)) return null;
 
     return path;
   }
@@ -180,7 +174,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
       protected int getRendererRelativeX(@NotNull MouseEvent e, @NotNull JTree tree, @NotNull TreePath path) {
         int x = super.getRendererRelativeX(e, tree, path);
 
-        return x - getComponentWidth(path);
+        return x - getCheckboxWidth();
       }
 
       @Override
@@ -192,7 +186,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     }.installOn(this);
   }
 
-  protected int getComponentWidth(@NotNull TreePath path) {
+  private int getCheckboxWidth() {
     if (!myShowCheckboxes) return 0;
     return myCheckboxWidth;
   }

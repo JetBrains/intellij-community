@@ -13,7 +13,6 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.popup.ActiveIcon
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.vcs.FilePath
@@ -41,10 +40,11 @@ import git4idea.status.GitStagingAreaHolder
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
+import java.awt.Point
+import java.awt.Rectangle
 import java.awt.event.MouseEvent
 import java.awt.event.MouseMotionListener
 import java.util.stream.Stream
-import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreePath
@@ -54,7 +54,7 @@ val GIT_FILE_STATUS_NODES_STREAM = DataKey.create<Stream<GitFileStatusNode>>("Gi
 val GIT_STAGE_TREE = DataKey.create<GitStageTree>("GitStageTree")
 
 abstract class GitStageTree(project: Project, parentDisposable: Disposable) : ChangesTree(project, false, true) {
-  private var hoverNode: ChangesBrowserNode<*>? = null
+  private var hoverData: HoverData? = null
     set(value) {
       if (field != value) {
         field = value
@@ -77,9 +77,20 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
 
   abstract fun showMergeDialog(conflictedFiles: List<VirtualFile>);
 
-  override fun getComponentWidth(path: TreePath): Int {
-    val node = path.lastPathComponent as? ChangesBrowserNode<*> ?: return 0
-    return getFirstMatchingOperation(node)?.icon?.iconWidth ?: 0
+  private fun getHoverData(point: Point): HoverData? {
+    val path = getClosestPathForLocation(point.x, point.y) ?: return null
+    val node = path.lastPathComponent as? ChangesBrowserNode<*> ?: return null
+    val operation = getFirstMatchingOperation(node) ?: return null
+
+    val componentWidth = operation.icon?.iconWidth ?: return null
+    val componentBounds = getComponentBounds(path, componentWidth) ?: return null
+    return HoverData(node, operation, componentBounds.contains(point))
+  }
+
+  private fun getComponentBounds(path: TreePath, componentWidth: Int): Rectangle? {
+    val bounds = getPathBounds(path) ?: return null
+    bounds.setSize(componentWidth, bounds.height)
+    return bounds
   }
 
   internal fun getFirstMatchingOperation(node: ChangesBrowserNode<*>): StagingAreaOperation? {
@@ -304,41 +315,60 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
   private class GitStageTreeRenderer(textRenderer: ChangesBrowserNodeRenderer) :
     ChangesTreeCellRenderer<JBLabel>(textRenderer, JBLabel()) {
 
-    override fun JBLabel.prepare(tree: ChangesTree, node: ChangesBrowserNode<*>) {
-      val baseIcon = (tree as? GitStageTree)?.getFirstMatchingOperation(node)?.icon
-      isVisible = baseIcon != null
-      icon = baseIcon?.let { it -> activeIcon(it, tree).apply { setActive(tree.hoverNode == node) } }
-    }
+    override fun JBLabel.prepare(tree: ChangesTree, node: ChangesBrowserNode<*>, selected: Boolean) {
+      val hoverData = (tree as? GitStageTree)?.hoverData
+      if (hoverData == null) {
+        isVisible = false
+        icon = null
+        return
+      }
 
-    private fun activeIcon(icon: Icon, component: JComponent) = ActiveIcon(icon, IconLoader.getDisabledIcon(icon, component))
+      val hovered = hoverData.node == node
+      val baseIcon = when {
+        hovered -> hoverData.operation.icon
+        selected -> tree.getFirstMatchingOperation(node)?.icon
+        else -> null
+      }
+
+      if (baseIcon == null) {
+        isVisible = false
+        icon = null
+        return
+      }
+
+      isVisible = true
+      icon = if (hovered && hoverData.isOverOperationIcon) baseIcon
+             else IconLoader.getDisabledIcon(baseIcon, this)
+    }
   }
 
   private inner class MyMouseMotionListener : MouseMotionListener {
 
     override fun mouseMoved(e: MouseEvent?) {
-      if (e == null) return
-      val path = getPathIfInsideComponent(e.point)
-      val node = path?.lastPathComponent as? ChangesBrowserNode<*>
-      hoverNode = node
-
-      if (node != null) {
-        getFirstMatchingOperation(node)?.let {
-          toolTipText = it.actionText.get()
-        }
+      val hoverData = e?.let { getHoverData(it.point) }
+      if (hoverData == null) {
+        toolTipText = null
+        this@GitStageTree.hoverData = null
+        return
       }
+
+      this@GitStageTree.hoverData = hoverData
+      toolTipText = if (hoverData.isOverOperationIcon) hoverData.operation.actionText.get() else null
     }
 
     override fun mouseDragged(e: MouseEvent?) = Unit
   }
 
+  private data class HoverData(val node: ChangesBrowserNode<*>,
+                               val operation: StagingAreaOperation,
+                               val isOverOperationIcon: Boolean)
+
   private inner class MyClickListener : ClickListener() {
     override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
-      val path: TreePath = getPathIfInsideComponent(event.point) ?: return false
-      val node = path.lastPathComponent as? ChangesBrowserNode<*> ?: return false
-      getFirstMatchingOperation(node)?.let {
-        val nodes = VcsTreeModelData.children(node).userObjects(GitFileStatusNode::class.java)
-        performStageOperation(nodes, it)
-      }
+      val (node, operation, isOverOperation) = getHoverData(event.point) ?: return false
+      if (!isOverOperation) return false
+      val nodes = VcsTreeModelData.children(node).userObjects(GitFileStatusNode::class.java)
+      performStageOperation(nodes, operation)
       return false
     }
   }

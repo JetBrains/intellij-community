@@ -25,7 +25,7 @@ abstract class ChangesTreeCellRenderer<C : JComponent>(
     buildLayout()
   }
 
-  protected abstract fun C.prepare(tree: ChangesTree, node: ChangesBrowserNode<*>)
+  protected abstract fun C.prepare(tree: ChangesTree, node: ChangesBrowserNode<*>, selected: Boolean)
 
   private fun buildLayout() {
     layout = BorderLayout()
@@ -62,7 +62,7 @@ abstract class ChangesTreeCellRenderer<C : JComponent>(
     component.apply {
       background = null
       isOpaque = false
-      prepare(tree, value as ChangesBrowserNode<*>)
+      prepare(tree, value as ChangesBrowserNode<*>, selected)
     }
 
     return this
@@ -96,7 +96,7 @@ abstract class ChangesTreeCellRenderer<C : JComponent>(
 class CheckboxTreeCellRenderer(textRenderer: ChangesBrowserNodeRenderer) :
   ChangesTreeCellRenderer<ThreeStateCheckBox>(textRenderer, ThreeStateCheckBox()) {
 
-  override fun ThreeStateCheckBox.prepare(tree: ChangesTree, node: ChangesBrowserNode<*>) {
+  override fun ThreeStateCheckBox.prepare(tree: ChangesTree, node: ChangesBrowserNode<*>, seleted: Boolean) {
     isVisible = tree.run { isShowCheckboxes && isInclusionVisible(node) }
     if (isVisible) {
       state = tree.getNodeStatus(node)
