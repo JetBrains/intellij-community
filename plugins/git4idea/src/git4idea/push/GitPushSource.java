@@ -66,5 +66,10 @@ public abstract class GitPushSource implements PushSource {
     public GitLocalBranch getBranch() {
       throw new IllegalStateException("Push is not allowed from detached HEAD");
     }
+
+    @NotNull
+    public String getRevision() {
+      return myRevision;
+    }
   }
 }
