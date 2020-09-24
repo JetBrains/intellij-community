@@ -21,16 +21,7 @@
     <orderEntry type="library" scope="TEST" name="kotlin-plugin-android-compile-deps" level="project" />
     <orderEntry type="library" scope="TEST" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem" scope="TEST" />
-     <orderEntry type="module-library">
-          <library name="org.jetbrains.intellij.deps.android.tools.base:studio.android.sdktools.common:27.0.0.0" type="repository">
-            <properties maven-id="org.jetbrains.intellij.deps.android.tools.base:studio.android.sdktools.common:27.0.0.0" />
-            <CLASSES>
-              <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/android/tools/base/studio.android.sdktools.common/27.0.0.0/studio.android.sdktools.common-27.0.0.0.jar!/" />
-            </CLASSES>
-            <JAVADOC />
-            <SOURCES />
-          </library>
-        </orderEntry>
+    <orderEntry type="module" module-name="android.sdktools.common" />
     <orderEntry type="module" module-name="intellij.groovy.psi" />
   </component>
 </module>
