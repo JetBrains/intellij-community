@@ -2779,7 +2779,7 @@ public class StringUtil extends StringUtilRt {
     final int textLength = text.length();
     if (textLength > maxLength) {
       final int prefixLength = maxLength - suffixLength - symbol.length();
-      assert prefixLength > 0;
+      assert prefixLength >= 0;
       return text.substring(0, prefixLength) + symbol + text.substring(textLength - suffixLength);
     }
     else {
