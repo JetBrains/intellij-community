@@ -9,6 +9,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
@@ -191,10 +192,12 @@ public class SelectWordHandler extends EditorActionHandler {
   @Nullable
   private static PsiElement findElementAt(@NotNull final PsiFile file, final int caretOffset) {
     ThrowableComputable<PsiElement, Exception> computable = () -> {
-      PsiElement elementAt = file.findElementAt(caretOffset);
-      return elementAt != null && isLanguageExtension(file, elementAt)
-             ? file.getViewProvider().findElementAt(caretOffset, file.getLanguage())
-             : elementAt;
+      return ReadAction.compute(() -> {
+        PsiElement elementAt = file.findElementAt(caretOffset);
+        return elementAt != null && isLanguageExtension(file, elementAt)
+               ? file.getViewProvider().findElementAt(caretOffset, file.getLanguage())
+               : elementAt;
+      });
     };
     try {
       if (!file.getNode().isParsed()) {
