@@ -1,0 +1,14 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+        <codeInsight.unresolvedReferenceQuickFixProvider
+                implementation="com.jetbrains.packagesearch.intellij.plugin.intentions.KotlinPackageSearchQuickFixProvider"/>
+
+        <packagesearch.projectModuleOperationProvider
+                implementation="com.jetbrains.packagesearch.intellij.plugin.extensions.gradle.mpp.GradleMppProjectModuleOperationProvider"/>
+        <packagesearch.projectModuleProvider
+                implementation="com.jetbrains.packagesearch.intellij.plugin.extensions.gradle.mpp.GradleMppProjectModuleProvider"/>
+
+        <projectService
+                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.extensions.gradle.mpp.configuration.PackageSearchGradleMppConfiguration"/>
+    </extensions>
+</idea-plugin>

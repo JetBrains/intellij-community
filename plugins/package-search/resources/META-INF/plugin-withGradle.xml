@@ -1,0 +1,26 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+        <localInspection
+                bundle="messages.packageSearchBundle"
+                enabledByDefault="true"
+                groupKey="packagesearch.inspection.update.group"
+                implementationClass="com.jetbrains.packagesearch.intellij.plugin.extensions.gradle.GradlePackageUpdateInspection"
+                key="packagesearch.inspection.update.key.gradle"
+                hasStaticDescription="true"
+                level="WARNING"/>
+
+        <packagesearch.projectModuleOperationProvider
+                implementation="com.jetbrains.packagesearch.intellij.plugin.extensions.gradle.GradleProjectModuleOperationProvider"/>
+        <packagesearch.projectModuleProvider
+                implementation="com.jetbrains.packagesearch.intellij.plugin.extensions.gradle.GradleProjectModuleProvider"/>
+
+        <packagesearch.configurableContributor
+                implementation="com.jetbrains.packagesearch.intellij.plugin.extensions.gradle.configuration.ui.GradleConfigurableContributor"/>
+
+        <search.optionContributor
+                implementation="com.jetbrains.packagesearch.intellij.plugin.extensions.gradle.configuration.GradleSearchableOptionContributor"/>
+
+        <projectService
+                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.extensions.gradle.configuration.PackageSearchGradleConfiguration"/>
+    </extensions>
+</idea-plugin>
