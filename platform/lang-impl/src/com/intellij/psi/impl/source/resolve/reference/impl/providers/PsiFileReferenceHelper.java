@@ -15,10 +15,12 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.SyntheticFileSystemItem;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Query;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -60,7 +62,7 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
   @Override
   @NotNull
   public Collection<PsiFileSystemItem> getRoots(@NotNull final Module module) {
-    return getContextsForModule(module, "", module.getModuleWithDependenciesScope());
+    return getContextsForScope(module.getProject(), "", module.getModuleWithDependenciesScope());
   }
 
   @NotNull
@@ -72,7 +74,7 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
       Module module = index.getModuleForFile(file);
       if (module == null) return emptyList();
 
-      contexts = getContextsForModule(module, "", module.getModuleWithDependenciesScope());
+      contexts = getContextsForScope(project, "", module.getModuleWithDependenciesScope());
     }
     else {
       contexts = getContexts(project, file, true);
@@ -179,7 +181,8 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
                 path += "." + rootPackagePrefix;
               }
 
-              List<PsiFileSystemItem> contextsForModule = getContextsForModule(module, path, module.getModuleWithDependenciesScope());
+              List<PsiFileSystemItem> contextsForModule = getContextsForScope(
+                project, path, item.getResolveScope().intersectWith(ProjectScope.getContentScope(project)));
               if (!includeMissingPackages) {
                 return contextsForModule;
               }
@@ -268,24 +271,13 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
     return url.trim();
   }
 
-  static List<PsiFileSystemItem> getContextsForModule(@NotNull Module module,
-                                                      @NotNull String packageName,
-                                                      @Nullable GlobalSearchScope scope) {
-    List<PsiFileSystemItem> result = null;
-    Query<VirtualFile> query = DirectoryIndex.getInstance(module.getProject()).getDirectoriesByPackageName(packageName, false);
-    PsiManager manager = null;
-
-    for (VirtualFile file : query) {
-      if (scope != null && !scope.contains(file)) continue;
-      if (result == null) {
-        result = new ArrayList<>();
-        manager = PsiManager.getInstance(module.getProject());
-      }
-      PsiDirectory psiDirectory = manager.findDirectory(file);
-      if (psiDirectory != null) result.add(psiDirectory);
-    }
-
-    return result != null ? result : emptyList();
+  static List<PsiFileSystemItem> getContextsForScope(@NotNull Project project,
+                                                     @NotNull String packageName,
+                                                     @NotNull GlobalSearchScope scope) {
+    DirectoryIndex dirIndex = DirectoryIndex.getInstance(project);
+    Query<VirtualFile> query = dirIndex.getDirectoriesByPackageName(packageName, scope);
+    Collection<VirtualFile> files = ContainerUtil.reverse(ContainerUtil.sorted(query.findAll(), scope::compare));
+    return ContainerUtil.mapNotNull(files, PsiManager.getInstance(project)::findDirectory);
   }
 
   private static final class VirtualPsiDirectory extends SyntheticFileSystemItem {
