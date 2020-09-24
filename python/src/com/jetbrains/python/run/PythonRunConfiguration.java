@@ -41,7 +41,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
   public static final String MODULE_MODE = "MODULE_MODE";
   public static final String REDIRECT_INPUT = "REDIRECT_INPUT";
   public static final String INPUT_FILE = "INPUT_FILE";
-  private static final Pattern QUALIFIED_NAME = Pattern.compile("^[a-zA-Z0-9._]*[a-zA-Z0-9_]$");
+  private static final Pattern QUALIFIED_NAME = Pattern.compile("^[\\p{javaJavaIdentifierPart}-.]*\\p{javaJavaIdentifierPart}$");
 
   private String myScriptName;
   private String myScriptParameters;
