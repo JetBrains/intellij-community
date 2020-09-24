@@ -44,8 +44,7 @@ import java.util.stream.Collector;
 import static com.intellij.ide.actions.SearchEverywhereAction.SEARCH_EVERYWHERE_POPUP;
 import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.DIALOG_CLOSED;
 
-public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
-
+public final class SearchEverywhereManagerImpl implements SearchEverywhereManager {
   public static final String ALL_CONTRIBUTORS_GROUP_ID = "SearchEverywhereContributor.All";
   private static final String LOCATION_SETTINGS_KEY = "search.everywhere.popup";
 
