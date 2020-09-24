@@ -129,7 +129,6 @@ public class ChangeClassSignatureDialog extends RefactoringDialog {
   @Override
   protected JComponent createCenterPanel() {
     myTable = new JBTable(myTableModel);
-    myTable.setStriped(true);
     TableColumn nameColumn = myTable.getColumnModel().getColumn(NAME_COLUMN);
     TableColumn boundColumn = myTable.getColumnModel().getColumn(BOUND_VALUE_COLUMN);
     TableColumn valueColumn = myTable.getColumnModel().getColumn(DEFAULT_VALUE_COLUMN);

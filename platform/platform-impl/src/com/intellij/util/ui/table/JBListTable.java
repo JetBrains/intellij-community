@@ -53,7 +53,6 @@ public abstract class JBListTable {
     myInternalTable = t;
     myMainTable = new MyTable();
     myMainTable.setTableHeader(null);
-    myMainTable.setStriped(true);
     myRowResizeAnimator = new RowResizeAnimator(myMainTable);
     Disposer.register(parent, myRowResizeAnimator);
   }

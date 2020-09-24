@@ -55,7 +55,6 @@ public class MatrixControlBuilder {
       }
     };
     myTable.setFocusable(false);
-    myTable.setStriped(true);
     DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
     renderer.setHorizontalAlignment(SwingConstants.CENTER);
     for (int i = 0, max = myTable.getColumnCount(); i < max; i++) {

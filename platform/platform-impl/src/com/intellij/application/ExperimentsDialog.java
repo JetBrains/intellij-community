@@ -38,7 +38,6 @@ public class ExperimentsDialog extends DialogWrapper {
     table.getColumnModel().getColumn(0).setCellRenderer(getIdRenderer());
     table.getColumnModel().getColumn(1).setCellRenderer(getValueRenderer());
     table.getColumnModel().getColumn(1).setCellEditor(new BooleanTableCellEditor());
-    table.setStriped(true);
     table.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     JTextArea myDescription = new JTextArea(4, 50);
