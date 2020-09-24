@@ -6,9 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.ui.icons.IconLoadMeasurer;
 import com.intellij.ui.icons.ImageDescriptor;
@@ -103,10 +100,10 @@ public final class ImageLoader {
                                          boolean isSvg,
                                          String name,
                                          String ext,
-                                         double scale,
+                                         float scale,
                                          @NotNull List<ImageDescriptor> list) {
     String _ext = isSvg ? "svg" : ext;
-    double _scale = isSvg ? scale : (retina ? 2 : 1);
+    float _scale = isSvg ? scale : (retina ? 2 : 1);
 
     if (retina && isDark) {
       list.add(new ImageDescriptor(name + "@2x_dark." + _ext, _scale, isSvg, true));
@@ -138,17 +135,17 @@ public final class ImageLoader {
 
     // Prefer retina images for HiDPI scale, because downscaling
     // retina images provides a better result than up-scaling non-retina images.
-    double pixScale = scaleContext.getScale(DerivedScaleType.PIX_SCALE);
+    float pixScale = (float)scaleContext.getScale(DerivedScaleType.PIX_SCALE);
 
     int dotIndex = path.lastIndexOf('.');
     String name = dotIndex < 0 ? path : path.substring(0, dotIndex);
-    double scale = adjustScaleFactor(BitUtil.isSet(flags, ALLOW_FLOAT_SCALING), pixScale);
+    float scale = adjustScaleFactor(BitUtil.isSet(flags, ALLOW_FLOAT_SCALING), pixScale);
 
     boolean isSvg = rasterizedCacheKey != 0;
     boolean isDark = (flags & DARK) == DARK;
     boolean isRetina = JBUIScale.isHiDPI(pixScale);
 
-    double imageScale = isSvg ? scale : (isRetina ? 2 : 1);
+    float imageScale;
 
     String ext = isSvg ? "svg" : (dotIndex < 0 || (dotIndex == path.length() - 1) ? "" : path.substring(dotIndex + 1));
 
@@ -156,17 +153,21 @@ public final class ImageLoader {
     boolean isEffectiveDark = isDark;
     if (isRetina && isDark && (imageFlags & ImageDescriptor.HAS_DARK_2x) == ImageDescriptor.HAS_DARK_2x) {
       effectivePath = name + "@2x_dark." + ext;
+      imageScale = isSvg ? scale : 2;
     }
     else if (isDark && (imageFlags & ImageDescriptor.HAS_DARK) == ImageDescriptor.HAS_DARK) {
       effectivePath = name + "_dark." + ext;
+      imageScale = isSvg ? scale : 1;
     }
     else {
       isEffectiveDark = false;
-     if (isRetina && (imageFlags & ImageDescriptor.HAS_2x) == ImageDescriptor.HAS_2x) {
+      if (isRetina && (imageFlags & ImageDescriptor.HAS_2x) == ImageDescriptor.HAS_2x) {
         effectivePath = name + "@2x." + ext;
+        imageScale = isSvg ? scale : 2;
       }
       else {
         effectivePath = path;
+        imageScale = isSvg ? scale : 1;
       }
     }
 
@@ -277,7 +278,14 @@ public final class ImageLoader {
         connection.addRequestProperty("User-Agent", "IntelliJ");
       }
 
-      image = loadFromStream(connection.getInputStream(), descriptor.path, descriptor.scale, descriptor.isDark, originalUserSize, descriptor.isSvg);
+      try (InputStream stream = connection.getInputStream()) {
+        if (descriptor.isSvg) {
+          image = SVGLoader.load(descriptor.path, stream, descriptor.scale, descriptor.isDark, originalUserSize);
+        }
+        else {
+          image = loadPng(stream, descriptor.scale, originalUserSize);
+        }
+      }
       if (start != -1) {
         IconLoadMeasurer.addLoadFromUrl(start);
       }
@@ -320,9 +328,10 @@ public final class ImageLoader {
     }
   }
 
+  @ApiStatus.Internal
   public static @NotNull Image loadFromStream(@NotNull InputStream stream,
                                               @Nullable String path,
-                                              double scale,
+                                              float scale,
                                               boolean isDark,
                                               @NotNull ImageLoader.Dimension2DDouble originalUserSize,
                                               boolean isSvg) throws IOException {
@@ -339,8 +348,7 @@ public final class ImageLoader {
     }
   }
 
-  @NotNull
-  private static Image loadPng(@NotNull InputStream stream, double scale, @NotNull Dimension2DDouble originalUserSize) throws IOException {
+  private static @NotNull Image loadPng(@NotNull InputStream stream, double scale, @NotNull Dimension2DDouble originalUserSize) throws IOException {
     long start = StartUpMeasurer.getCurrentTimeIfEnabled();
     Image image;
     if (stream instanceof BufferExposingByteArrayInputStream) {
@@ -348,14 +356,7 @@ public final class ImageLoader {
       image = Toolkit.getDefaultToolkit().createImage(byteInput.getInternalBuffer(), 0, byteInput.available());
     }
     else {
-      BufferExposingByteArrayOutputStream outputStream = new BufferExposingByteArrayOutputStream();
-      try {
-        FileUtilRt.copy(stream, outputStream);
-      }
-      finally {
-        stream.close();
-      }
-      image = Toolkit.getDefaultToolkit().createImage(outputStream.getInternalBuffer(), 0, outputStream.size());
+      image = Toolkit.getDefaultToolkit().createImage(stream.readAllBytes());
     }
 
     waitForImage(image);
@@ -392,7 +393,7 @@ public final class ImageLoader {
                                               boolean isSvg,
                                               @NotNull ImageLoader.Dimension2DDouble originalUserSize) {
     if (isUpScaleNeeded && !isSvg) {
-      double scale = adjustScaleFactor(BitUtil.isSet(flags, ALLOW_FLOAT_SCALING), scaleContext.getScale(DerivedScaleType.PIX_SCALE));
+      double scale = adjustScaleFactor(BitUtil.isSet(flags, ALLOW_FLOAT_SCALING), (float)scaleContext.getScale(DerivedScaleType.PIX_SCALE));
       if (imageScale > 1) {
         // compensate the image original scale
         scale /= imageScale;
@@ -427,17 +428,18 @@ public final class ImageLoader {
                                                                  @NotNull ScaleContext scaleContext) {
     // Prefer retina images for HiDPI scale, because downscaling
     // retina images provides a better result than up-scaling non-retina images.
-    double pixScale = scaleContext.getScale(DerivedScaleType.PIX_SCALE);
+    float pixScale = (float)scaleContext.getScale(DerivedScaleType.PIX_SCALE);
 
     int i = path.lastIndexOf('.');
     final String name = i < 0 ? path : path.substring(0, i);
     String ext = i < 0 || (i == path.length() - 1) ? "" : path.substring(i + 1);
-    double scale = adjustScaleFactor(BitUtil.isSet(flags, ALLOW_FLOAT_SCALING), pixScale);
+    float scale = adjustScaleFactor(BitUtil.isSet(flags, ALLOW_FLOAT_SCALING), pixScale);
 
     List<ImageDescriptor> list;
     if (!path.startsWith("file:") && path.contains("://")) {
-      boolean isSvg = StringUtilRt.endsWithIgnoreCase(StringUtil.substringBeforeLast(path, "?"), ".svg");
-      list = Collections.singletonList(new ImageDescriptor(name + "." + ext, 1.0, isSvg, true));
+      int qI = path.lastIndexOf('?');
+      boolean isSvg = StringUtilRt.endsWithIgnoreCase(qI == -1 ? path : path.substring(0, qI), ".svg");
+      list = Collections.singletonList(new ImageDescriptor(name + "." + ext, 1f, isSvg, true));
     }
     else {
       boolean isSvg = "svg".equalsIgnoreCase(ext);
@@ -503,7 +505,7 @@ public final class ImageLoader {
     return load(path, filters, aClass, flags, scaleContext, !path.endsWith(".svg"));
   }
 
-  private static double adjustScaleFactor(boolean allowFloatScaling, double scale) {
+  private static float adjustScaleFactor(boolean allowFloatScaling, float scale) {
     return allowFloatScaling ? scale : JBUIScale.isHiDPI(scale) ? 2f : 1f;
   }
 
@@ -576,9 +578,10 @@ public final class ImageLoader {
   public static Image loadFromStream(@NotNull InputStream inputStream) {
     // for backward compatibility assume the image is hidpi-aware (includes default SYS_SCALE)
     ScaleContext scaleContext = ScaleContext.create();
-    try {
+    try (inputStream) {
       ImageLoader.Dimension2DDouble originalUserSize = new ImageLoader.Dimension2DDouble(0, 0);
-      Image image = loadFromStream(inputStream, null, scaleContext.getScale(DerivedScaleType.PIX_SCALE), false, originalUserSize, false);
+      double scale = scaleContext.getScale(DerivedScaleType.PIX_SCALE);
+      Image image = loadPng(inputStream, scale, originalUserSize);
       if (StartupUiUtil.isJreHiDPI(scaleContext)) {
         double userScale = scaleContext.getScale(DerivedScaleType.EFF_USR_SCALE);
         image = new JBHiDPIScaledImage(image, originalUserSize.getWidth() * userScale, originalUserSize.getHeight() * userScale,
@@ -595,7 +598,7 @@ public final class ImageLoader {
   public static @Nullable Image loadCustomIcon(@NotNull File file) throws IOException {
     ScaleContext scaleContext = ScaleContext.create();
     // probably, need implement naming conventions: filename ends with @2x => HiDPI (scale=2)
-    double scale = scaleContext.getScale(DerivedScaleType.PIX_SCALE);
+    float scale = (float)scaleContext.getScale(DerivedScaleType.PIX_SCALE);
     ImageDescriptor imageDescriptor = new ImageDescriptor(file.toURI().toURL().toString(), scale, StringUtilRt.endsWithIgnoreCase(file.getPath(), ".svg"), file.getPath().contains("_dark."));
     Image icon = ImageUtil.ensureHiDPI(loadByDescriptor(imageDescriptor, true, null, new Dimension2DDouble(0, 0), null, null), scaleContext);
     if (icon == null) {

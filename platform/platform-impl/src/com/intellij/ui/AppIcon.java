@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -69,7 +69,7 @@ public abstract class AppIcon {
 
   public abstract void setErrorBadge(Project project, String text);
 
-  public abstract void setOkBadge(Project project, boolean visible);
+  public abstract void setOkBadge(@Nullable Project project, boolean visible);
 
   public abstract void requestAttention(@Nullable Project project, boolean critical);
 
@@ -130,7 +130,7 @@ public abstract class AppIcon {
     }
 
     @Override
-    public final void setOkBadge(Project project, boolean visible) {
+    public final void setOkBadge(@Nullable Project project, boolean visible) {
       if (!isAppActive() && Registry.is("ide.appIcon.badge")) {
         _setTextBadge(getIdeFrame(project), null);
         _setOkBadge(getIdeFrame(project), visible);
@@ -277,19 +277,19 @@ public abstract class AppIcon {
     public void _setOkBadge(@Nullable JFrame frame, boolean visible) {
       EDT.assertIsEdt();
 
-      if (getAppImage() == null) return;
+      if (getAppImage() == null) {
+        return;
+      }
 
       AppImage img = createAppImage();
-
       if (visible) {
         Icon okIcon = AllIcons.Mac.AppIconOk512;
-
-        int myImgWidth = img.myImg.getWidth();
-        if (myImgWidth != 128) {
-          okIcon = IconUtil.scale(okIcon, frame != null ? frame.getRootPane() : null, myImgWidth / 128f);
+        int w = img.myImg.getWidth();
+        if (w != 128) {
+          okIcon = IconUtil.scale(okIcon, frame != null ? frame.getRootPane() : null, w / 128f);
         }
 
-        int x = myImgWidth - okIcon.getIconWidth();
+        int x = w - okIcon.getIconWidth();
         int y = 0;
 
         okIcon.paintIcon(JOptionPane.getRootFrame(), img.myG2d, x, y);
@@ -372,7 +372,7 @@ public abstract class AppIcon {
       return new AppImage(current, g);
     }
 
-    private static class AppImage {
+    private static final class AppImage {
       BufferedImage myImg;
       Graphics2D myG2d;
 

@@ -12,15 +12,15 @@ public final class ImageDescriptor {
 
   public final boolean isDark;
   public final @NotNull String path;
-  public final double scale; // initial scale factor
+  public final float scale; // initial scale factor
   public final boolean isSvg;
   public final boolean original; // path is not altered
 
-  public ImageDescriptor(@NotNull String path, double scale, boolean isSvg, boolean isDark) {
+  public ImageDescriptor(@NotNull String path, float scale, boolean isSvg, boolean isDark) {
     this(path, scale, isSvg, isDark, false);
   }
 
-  public ImageDescriptor(@NotNull String path, double scale, boolean isSvg, boolean isDark, boolean original) {
+  public ImageDescriptor(@NotNull String path, float scale, boolean isSvg, boolean isDark, boolean original) {
     assert !path.isEmpty();
 
     this.path = path;

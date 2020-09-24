@@ -25,15 +25,15 @@ internal class ImageSvgPreCompiler {
   /// the expected scales of images that we have
   /// the macOS touch bar uses 2.5x scale
   /// the application icon (which one?) is 4x on macOS
-  private val scales = doubleArrayOf(1.0,
-                                     1.25, /*Windows*/
-                                     1.5, /*Windows*/
-                                     2.0,
-                                     2.5 /*macOS touchBar*/
+  private val scales = floatArrayOf(1f,
+                                     1.25f, /*Windows*/
+                                     1.5f, /*Windows*/
+                                     2.0f,
+                                     2.5f /*macOS touchBar*/
   )
 
   /// the 4.0 scale is used on retina macOS for product icon, adds few more scales for few icons
-  private val productIconScales = (scales + scales.map { it * 2 }).toSortedSet().toDoubleArray()
+  private val productIconScales = (scales + scales.map { it * 2 }).toSortedSet().toFloatArray()
 
   private val productIconPrefixes = mutableListOf<String>()
 
@@ -51,13 +51,13 @@ internal class ImageSvgPreCompiler {
       .compressionLevel(2)
     val store = storeBuilder.truncateAndOpen(dbFile)
     try {
-      val scaleToMap = ConcurrentHashMap<Double, MVMap<Long, ImageValue>>(2, 0.75f, 2)
+      val scaleToMap = ConcurrentHashMap<Float, MVMap<Long, ImageValue>>(2, 0.75f, 2)
 
       val mapBuilder = MVMap.Builder<Long, ImageValue>()
       mapBuilder.keyType(LongDataType.INSTANCE)
       mapBuilder.valueType(ImageValue.ImageValueSerializer())
 
-      val getMapByScale: (scale: Double, isDark: Boolean) -> MutableMap<Long, ImageValue> = { k, isDark ->
+      val getMapByScale: (scale: Float, isDark: Boolean) -> MutableMap<Long, ImageValue> = { k, isDark ->
         SvgCacheManager.getMap(k, isDark, scaleToMap, store, mapBuilder)
       }
 
@@ -77,7 +77,7 @@ internal class ImageSvgPreCompiler {
                          rootDir: Path,
                          level: Int,
                          rootRobotData: IconRobotsData,
-                         getMapByScale: (scale: Double, isDark: Boolean) -> MutableMap<Long, ImageValue>) {
+                         getMapByScale: (scale: Float, isDark: Boolean) -> MutableMap<Long, ImageValue>) {
     val stream = try {
       Files.newDirectoryStream(dir)
     }
@@ -122,7 +122,7 @@ internal class ImageSvgPreCompiler {
 
   private fun processSvgFiles(list: List<Path>,
                               rootDir: Path,
-                              getMapByScale: (scale: Double, isDark: Boolean) -> MutableMap<Long, ImageValue>) {
+                              getMapByScale: (scale: Float, isDark: Boolean) -> MutableMap<Long, ImageValue>) {
     val svgDocumentFactory = SaxSvgDocumentFactory()
     var i = 0
     while (i < list.size) {
@@ -162,8 +162,8 @@ internal class ImageSvgPreCompiler {
   private fun preCompile(svgFile: Path,
                          x2: Path?,
                          svgDocumentFactory: SaxSvgDocumentFactory,
-                         scales: DoubleArray,
-                         getMapByScale: (scale: Double, isDark: Boolean) -> MutableMap<Long, ImageValue>) {
+                         scales: FloatArray,
+                         getMapByScale: (scale: Float, isDark: Boolean) -> MutableMap<Long, ImageValue>) {
     val data = loadAndNormalizeSvgFile(svgFile)
     totalFiles.incrementAndGet()
 

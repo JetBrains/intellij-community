@@ -446,7 +446,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
       if (file.toString().endsWith(".svg")) {
         // don't mask any exception for svg file
         val data = loadAndNormalizeSvgFile(imageFile)
-        loadedImage = SVGLoader.loadWithoutCache(null, InputSource(data.reader()), 1.0, null)
+        loadedImage = SVGLoader.loadWithoutCache(null, InputSource(data.reader()), 1f, null)
         key = getImageKey(data.toByteArray())
       }
       else {

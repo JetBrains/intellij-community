@@ -84,7 +84,7 @@ public final class AboutPopup {
     ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
 
     final PopupPanel panel = new PopupPanel(new BorderLayout());
-    Icon image = IconLoader.getIcon(appInfo.getAboutImageUrl());
+    Icon image = IconLoader.getIcon(appInfo.getAboutImageUrl(), AboutPopup.class);
     if (appInfo.showLicenseeInfo()) {
       final InfoSurface infoSurface = new InfoSurface(image, showDebugInfo);
       infoSurface.setPreferredSize(new Dimension(image.getIconWidth(), image.getIconHeight()));
@@ -805,11 +805,9 @@ public final class AboutPopup {
     dialog.show();
   }
 
-  @NotNull
-  @NlsSafe
-  public static String getAboutText() {
+  public static @NotNull @NlsSafe String getAboutText() {
     ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
-    InfoSurface infoSurface = new InfoSurface(IconLoader.getIcon(appInfo.getAboutImageUrl()), false);
+    InfoSurface infoSurface = new InfoSurface(IconLoader.getIcon(appInfo.getAboutImageUrl(), AboutPopup.class), false);
     return infoSurface.getText();
   }
 }

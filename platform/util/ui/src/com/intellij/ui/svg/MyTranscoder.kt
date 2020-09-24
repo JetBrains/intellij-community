@@ -33,7 +33,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 @ApiStatus.Internal
-class MyTranscoder(private val scale: Double) : SVGAbstractTranscoder() {
+class MyTranscoder(private val scale: Float) : SVGAbstractTranscoder() {
   companion object {
     @JvmStatic
     val iconMaxSize: Double by lazy {
@@ -50,7 +50,7 @@ class MyTranscoder(private val scale: Double) : SVGAbstractTranscoder() {
     @Throws(TranscoderException::class)
     @JvmStatic
     @JvmOverloads
-    fun createImage(scale: Double,
+    fun createImage(scale: Float,
                     document: Document,
                     outDimensions: ImageLoader.Dimension2DDouble? /*OUT*/,
                     overriddenWidth: Float = -1f,

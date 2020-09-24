@@ -640,6 +640,11 @@ public class AllIcons {
 
   public static final class Mac {
     /** 55x55 */ public static final @NotNull Icon AppIconOk512 = load("/mac/appIconOk512.png", 0L, 0);
+
+    public static final class Touchbar {
+      /** 16x16 */ public static final @NotNull Icon PopoverArrow = load("/mac/touchbar/popoverArrow.svg", 6164157203097399931L, 0);
+      /** 24x24 */ public static final @NotNull Icon PopoverClose = load("/mac/touchbar/popoverClose.svg", 1534527156176366926L, 0);
+    }
   }
 
   public static final class Modules {

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -13,7 +14,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.foundation.ID;
 import org.jetbrains.annotations.NotNull;
@@ -101,7 +101,7 @@ final class TouchBar implements NSTLibrary.ItemCreator {
     myStats = ourCollectStats ? TouchBarStats.getStats(touchbarName) : null;
     myItems = new ItemsContainer(touchbarName);
     if (replaceEsc) {
-      final Icon ic = IconLoader.getIcon("/mac/touchbar/popoverClose_dark.svg");
+      final Icon ic = AllIcons.Mac.Touchbar.PopoverClose;
       myCustomEsc = new TBItemButton(myItemListener, null).setIcon(ic).setWidth(64).setTransparentBg(true).setAction(() -> {
         _closeSelf();
         if (emulateESC) {

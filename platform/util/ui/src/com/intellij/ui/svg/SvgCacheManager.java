@@ -32,19 +32,33 @@ public final class SvgCacheManager {
   private static final ComponentColorModel colorModel = new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_sRGB), new int[]{8, 8, 8, 8}, true, false, Transparency.TRANSLUCENT, DataBuffer.TYPE_BYTE);
 
   private final MVStore store;
-  private final Map<Double, MVMap<byte[], ImageValue>> scaleToMap = new ConcurrentHashMap<>(2, 0.75f, 2);
+  private final Map<Float, MVMap<byte[], ImageValue>> scaleToMap = new ConcurrentHashMap<>(2, 0.75f, 2);
   private final MVMap.Builder<byte[], ImageValue> mapBuilder;
 
-  public SvgCacheManager(@NotNull Path dbFile) {
-    MVStore.Builder storeBuilder = new MVStore.Builder()
-      .backgroundExceptionHandler((t, e) -> {
+  private static final class StoreErrorHandler implements Thread.UncaughtExceptionHandler {
+    private boolean isStoreOpened;
+
+    @Override
+    public void uncaughtException(Thread t, Throwable e) {
+      if (isStoreOpened) {
         getLogger().error(e);
-      })
+      }
+      else {
+        getLogger().warn("Cache will be recreated or previous version of data reused", e);
+      }
+    }
+  }
+
+  public SvgCacheManager(@NotNull Path dbFile) {
+    StoreErrorHandler storeErrorHandler = new StoreErrorHandler();
+    MVStore.Builder storeBuilder = new MVStore.Builder()
+      .backgroundExceptionHandler(storeErrorHandler)
       .autoCommitDelay(60_000)
       .compressHigh();
     store = storeBuilder.openOrNewOnIoError(dbFile, true, e -> {
       getLogger().error("Cannot open icon cache database", e);
     });
+    storeErrorHandler.isStoreOpened = true;
 
     MVMap.Builder<byte[], ImageValue> mapBuilder;
     mapBuilder = new MVMap.Builder<>();
@@ -57,9 +71,9 @@ public final class SvgCacheManager {
     return Logger.getInstance(SvgCacheManager.class);
   }
 
-  public static <K, V> @NotNull MVMap<K, V> getMap(double scale,
+  public static <K, V> @NotNull MVMap<K, V> getMap(float scale,
                                                    boolean isDark,
-                                                   @NotNull Map<Double, MVMap<K, V>> scaleToMap,
+                                                   @NotNull Map<Float, MVMap<K, V>> scaleToMap,
                                                    @NotNull MVStore store,
                                                    @NotNull MVMap.MapBuilder<MVMap<K, V>, K, V> mapBuilder) {
     return scaleToMap.computeIfAbsent(scale, scale2 -> {
@@ -99,7 +113,7 @@ public final class SvgCacheManager {
 
   public final @Nullable Image loadFromCache(byte @NotNull [] theme,
                                              byte @NotNull [] imageBytes,
-                                             double scale,
+                                             float scale,
                                              boolean isDark,
                                              @NotNull ImageLoader.Dimension2DDouble docSize) {
     byte[] key = getCacheKey(theme, imageBytes);
@@ -129,7 +143,7 @@ public final class SvgCacheManager {
 
   public void storeLoadedImage(byte @NotNull [] theme,
                                byte @NotNull [] imageBytes,
-                               double scale,
+                               float scale,
                                @NotNull BufferedImage image,
                                @NotNull ImageLoader.Dimension2DDouble size) {
     byte[] key = getCacheKey(theme, imageBytes);

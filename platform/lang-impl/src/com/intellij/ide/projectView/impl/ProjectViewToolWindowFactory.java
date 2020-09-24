@@ -19,7 +19,7 @@ public final class ProjectViewToolWindowFactory implements ToolWindowFactory, Du
 
   @Override
   public void init(@NotNull ToolWindow window) {
-    window.setIcon(IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getToolWindowIconUrl()));
+    window.setIcon(IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getToolWindowIconUrl(), ProjectViewToolWindowFactory.class));
     window.setStripeTitle(IdeUICustomization.getInstance().getProjectViewTitle());
   }
 }

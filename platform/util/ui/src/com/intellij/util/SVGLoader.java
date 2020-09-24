@@ -18,7 +18,6 @@ import com.intellij.ui.svg.SaxSvgDocumentFactory;
 import com.intellij.ui.svg.SvgCacheManager;
 import com.intellij.ui.svg.SvgPrebuiltCacheManager;
 import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.JBUI;
 import org.apache.batik.anim.dom.SVGOMDocument;
 import org.apache.batik.bridge.BridgeContext;
 import org.apache.batik.bridge.GVTBuilder;
@@ -116,7 +115,7 @@ public final class SVGLoader {
     return load(null, stream, scale);
   }
 
-  public static Image load(@Nullable URL url, @NotNull InputStream stream, double scale) throws IOException {
+  public static Image load(@Nullable URL url, @NotNull InputStream stream, float scale) throws IOException {
     return load(url == null ? null : url.getPath(), stream, scale, false, null);
   }
 
@@ -124,7 +123,7 @@ public final class SVGLoader {
   public static @Nullable Image loadFromClassResource(@NotNull Class<?> resourceClass,
                                                       @NotNull String path,
                                                       long rasterizedCacheKey,
-                                                      double scale,
+                                                      float scale,
                                                       boolean isDark,
                                                       @NotNull ImageLoader.Dimension2DDouble docSize /*OUT*/) throws IOException {
     byte[] svgBytes = null;
@@ -216,7 +215,7 @@ public final class SVGLoader {
   }
 
   private static void cacheImage(@Nullable String path,
-                                 double scale,
+                                 float scale,
                                  ImageLoader.@NotNull Dimension2DDouble docSize,
                                  byte[] theme,
                                  byte[] svgBytes,
@@ -234,7 +233,7 @@ public final class SVGLoader {
   @ApiStatus.Internal
   public static @NotNull Image load(@Nullable String path,
                                     @NotNull InputStream stream,
-                                    double scale,
+                                    float scale,
                                     boolean isDark,
                                     @Nullable ImageLoader.Dimension2DDouble docSize /*OUT*/) throws IOException {
     long start = StartUpMeasurer.getCurrentTimeIfEnabled();
@@ -292,7 +291,7 @@ public final class SVGLoader {
 
   public static @NotNull BufferedImage loadWithoutCache(@Nullable String path,
                                                         @NotNull InputSource inputSource,
-                                                        double scale,
+                                                        float scale,
                                                         @Nullable ImageLoader.Dimension2DDouble docSize /*OUT*/)
     throws IOException, TranscoderException {
     long start = StartUpMeasurer.getCurrentTimeIfEnabled();
@@ -303,7 +302,7 @@ public final class SVGLoader {
     return image;
   }
 
-  public static @NotNull BufferedImage loadWithoutCache(byte @NotNull [] content, double scale) throws IOException {
+  public static @NotNull BufferedImage loadWithoutCache(byte @NotNull [] content, float scale) throws IOException {
     try {
       return MyTranscoder.createImage(scale, createDocument(null, new InputSource(new ByteArrayInputStream(content))), null);
     }
@@ -328,19 +327,13 @@ public final class SVGLoader {
   /**
    * Loads a HiDPI-aware image of the size specified in the svg file.
    */
-  public static <T extends BufferedImage> T loadHiDPI(@Nullable URL url, @NotNull InputStream stream, ScaleContext ctx) throws IOException {
-    BufferedImage image = (BufferedImage)load(url, stream, ctx.getScale(DerivedScaleType.PIX_SCALE));
-    @SuppressWarnings("unchecked") T t = (T)ImageUtil.ensureHiDPI(image, ctx);
+  public static <T extends BufferedImage> T loadHiDPI(@Nullable URL url, @NotNull InputStream stream, ScaleContext context) throws IOException {
+    BufferedImage image = (BufferedImage)load(url, stream, (float)context.getScale(DerivedScaleType.PIX_SCALE));
+    @SuppressWarnings("unchecked") T t = (T)ImageUtil.ensureHiDPI(image, context);
     return t;
   }
 
-  /** @deprecated Use {@link #loadHiDPI(URL, InputStream, ScaleContext)} */
-  @Deprecated
-  public static <T extends BufferedImage> T loadHiDPI(@Nullable URL url, @NotNull InputStream stream, JBUI.ScaleContext ctx) throws IOException {
-    return loadHiDPI(url, stream, (ScaleContext)ctx);
-  }
-
-  public static ImageLoader.Dimension2DDouble getDocumentSize(@NotNull InputStream stream, double scale) throws IOException {
+  public static ImageLoader.Dimension2DDouble getDocumentSize(@NotNull InputStream stream, float scale) throws IOException {
     // In order to get the size we parse the whole document and build a tree ("GVT"), what might be too expensive.
     // So, to optimize we extract the svg header (possibly prepended with <?xml> header) and parse only it.
     // Assumes 8-bit encoding of the input stream (no one in theirs right mind would use wide characters for SVG anyway).
@@ -365,7 +358,7 @@ public final class SVGLoader {
   }
 
   public static double getMaxZoomFactor(@Nullable String path, @NotNull InputStream stream, @NotNull ScaleContext scaleContext) throws IOException {
-    ImageLoader.Dimension2DDouble size = getDocumentSize(scaleContext.getScale(DerivedScaleType.PIX_SCALE), createDocument(path, new InputSource(stream)));
+    ImageLoader.Dimension2DDouble size = getDocumentSize((float)scaleContext.getScale(DerivedScaleType.PIX_SCALE), createDocument(path, new InputSource(stream)));
     double iconMaxSize = MyTranscoder.getIconMaxSize();
     return Math.min(iconMaxSize / size.getWidth(), iconMaxSize / size.getHeight());
   }
@@ -515,7 +508,7 @@ public final class SVGLoader {
     IconLoader.clearCache();
   }
 
-  private static ImageLoader.Dimension2DDouble getDocumentSize(double scale, @NotNull Document document) {
+  private static ImageLoader.Dimension2DDouble getDocumentSize(float scale, @NotNull Document document) {
     BridgeContext ctx = new MyTranscoder(scale).createBridgeContext((SVGOMDocument)document);
     new GVTBuilder().build(ctx, document);
     Dimension2D size = ctx.getDocumentSize();

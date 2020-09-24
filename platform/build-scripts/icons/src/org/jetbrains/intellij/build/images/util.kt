@@ -55,7 +55,7 @@ private fun loadImage(file: Path): Image? {
   if (file.toString().endsWith(".svg")) {
     // don't mask any exception for svg file
     Files.newInputStream(file).buffered().use {
-      return SVGLoader.loadWithoutCache(null, InputSource(it), 1.0, null)
+      return SVGLoader.loadWithoutCache(null, InputSource(it), 1f, null)
     }
   }
 
