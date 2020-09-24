@@ -62,7 +62,9 @@ public class ProjectProblemHintProvider implements InlayHintsProvider<NoSettings
 
         ProjectProblemUtils.reportProblems(editor, problems);
         if (!isInSplitEditorMode || getSelectedEditor(editorManager) == editor) {
-          FileState fileState = new FileState(snapshot, changes);
+          Map<PsiMember, ScopedMember> allChanges = new HashMap<>(changes);
+          prevChanges.forEach((key, value) -> allChanges.putIfAbsent(key, value));
+          FileState fileState = new FileState(snapshot, allChanges);
           FileStateUpdater.updateState(file, fileState);
         }
 

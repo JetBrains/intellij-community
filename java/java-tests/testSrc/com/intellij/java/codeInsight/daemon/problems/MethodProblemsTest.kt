@@ -411,6 +411,78 @@ internal class MethodProblemsTest : ProjectProblemsViewTest() {
     }
   }
 
+  fun testRenameMethodAndRecreate() {
+    val targetClass = myFixture.addClass("""
+      public class A {
+        void m1() {}
+      }
+    """.trimIndent())
+
+    myFixture.addClass("""
+      public class RefClass {
+        void test(A a) {
+          a.m1();
+        }
+      }
+    """.trimIndent())
+
+    doTest(targetClass) {
+      changeMethod(targetClass) { psiMethod, _ ->
+        psiMethod.name = "m2"
+      }
+
+      assertSize(1, ProjectProblemUtils.getReportedProblems(myFixture.editor).entries)
+
+      WriteCommandAction.runWriteCommandAction(project) {
+        val factory = JavaPsiFacade.getInstance(project).elementFactory
+        targetClass.add(factory.createMethodFromText("void m1() {}", targetClass))
+      }
+      myFixture.doHighlighting()
+
+      assertEmpty(ProjectProblemUtils.getReportedProblems(myFixture.editor).entries)
+    }
+  }
+
+  fun testRenameMethodCreateOneMoreAndRenameItToInitial() {
+    val targetClass = myFixture.addClass("""
+      public class A {
+        void m1() {}
+      }
+    """.trimIndent())
+
+    myFixture.addClass("""
+      public class RefClass {
+        void test(A a) {
+          a.m1();
+        }
+      }
+    """.trimIndent())
+
+    doTest(targetClass) {
+      changeMethod(targetClass) { psiMethod, _ ->
+        psiMethod.name = "m2"
+      }
+
+      assertSize(1, ProjectProblemUtils.getReportedProblems(myFixture.editor).entries)
+
+      WriteCommandAction.runWriteCommandAction(project) {
+        val factory = JavaPsiFacade.getInstance(project).elementFactory
+        targetClass.add(factory.createMethodFromText("void m3() {}", targetClass))
+      }
+      myFixture.doHighlighting()
+
+      assertSize(1, ProjectProblemUtils.getReportedProblems(myFixture.editor).entries)
+
+      WriteCommandAction.runWriteCommandAction(project) {
+        val method = targetClass.findMethodsByName("m3", false)[0]
+        method.name = "m1"
+      }
+      myFixture.doHighlighting()
+
+      assertEmpty(ProjectProblemUtils.getReportedProblems(myFixture.editor).entries)
+    }
+  }
+
 
   private fun doMethodTest(methodChangeAction: (PsiMethod, PsiElementFactory) -> Unit) {
 
