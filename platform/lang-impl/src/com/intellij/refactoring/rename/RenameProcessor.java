@@ -401,7 +401,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
     List<UsageInfo> branchedUsages =
       branch == null ? Arrays.asList(usages)
-                     : ContainerUtil.mapNotNull(usages, info -> shouldSkip(info) ? null : ((MoveRenameUsageInfo)info).branched(branch));
+                     : ContainerUtil.mapNotNull(usages, info -> shouldSkip(info) ? null : ((MoveRenameUsageInfo)info).obtainBranchCopy(branch));
     MultiMap<PsiElement, UsageInfo> classified = classifyUsages(elementsToChange.values(), branchedUsages);
 
     NonCodeUsageInfo[] nonCodeUsages =
