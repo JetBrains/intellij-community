@@ -294,7 +294,7 @@
     "type": "option",
     "key": "csharp_space_between_parentheses",
     "value": {
-      "type": "union",
+      "type": "list",
       "values": [
         {
           "type": "constant",
