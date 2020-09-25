@@ -14,6 +14,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.basePath
@@ -40,7 +41,7 @@ class PyAddNewVirtualEnvFromFilePanel(private val module: Module,
       text = FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(projectBasePath))
 
       addBrowseFolderListener(
-        PyBundle.message("python.sdk.select.location.for.virtualenv.title"),
+        PySdkBundle.message("python.venv.location.chooser"),
         null,
         module.project,
         FileChooserDescriptorFactory.createSingleFolderDescriptor())
@@ -64,8 +65,8 @@ class PyAddNewVirtualEnvFromFilePanel(private val module: Module,
 
     layout = BorderLayout()
     val formPanel = FormBuilder.createFormBuilder()
-      .addLabeledComponent(PyBundle.message("sdk.create.venv.dialog.label.location"), pathField)
-      .addLabeledComponent(PyBundle.message("base.interpreter"), baseSdkField)
+      .addLabeledComponent(PySdkBundle.message("python.venv.location.label"), pathField)
+      .addLabeledComponent(PySdkBundle.message("python.venv.base.label"), baseSdkField)
       .addLabeledComponent(PyBundle.message("sdk.create.venv.dependencies.label"), requirementsTxtOrSetupPyField)
       .panel
     add(formPanel, BorderLayout.NORTH)

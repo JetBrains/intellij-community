@@ -16,6 +16,7 @@
 package com.jetbrains.python.sdk.add
 
 import com.intellij.CommonBundle
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -27,7 +28,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.newProject.steps.PyAddNewEnvironmentPanel
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction.OK
@@ -80,9 +81,9 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
       val text = field.text
       val file = File(text)
       val message = when {
-        StringUtil.isEmptyOrSpaces(text) -> PyBundle.message("python.sdk.environment.location.field.empty")
-        file.exists() && !file.isDirectory -> PyBundle.message("python.sdk.environment.location.field.path.not.directory")
-        file.isNotEmptyDirectory -> PyBundle.message("python.sdk.environment.location.directory.not.empty")
+        StringUtil.isEmptyOrSpaces(text) -> PySdkBundle.message("python.venv.location.field.empty")
+        file.exists() && !file.isDirectory -> PySdkBundle.message("python.venv.location.field.not.directory")
+        file.isNotEmptyDirectory -> PySdkBundle.message("python.venv.location.directory.not.empty")
         else -> return null
       }
       return ValidationInfo(message, field)
@@ -96,7 +97,7 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
     @JvmStatic
     fun validateSdkComboBox(field: PySdkPathChoosingComboBox, defaultButtonName: @NlsContexts.Button String): ValidationInfo? {
       return when (val sdk = field.selectedSdk) {
-        null -> ValidationInfo(PyBundle.message("python.sdk.interpreter.field.is.empty"), field)
+        null -> ValidationInfo(PySdkBundle.message("python.sdk.field.is.empty"), field)
         is PySdkToInstall -> {
           val message = sdk.getInstallationWarning(defaultButtonName)
           ValidationInfo(message).asWarning().withOKEnabled()
@@ -108,7 +109,7 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
     @NlsContexts.Button
     private fun getDefaultButtonName(view: PyAddSdkView): String {
       return if (view.component.parent?.parent is PyAddNewEnvironmentPanel) {
-        PyBundle.message("python.sdk.button.create") // ProjectSettingsStepBase.createActionButton
+        IdeBundle.message("new.dir.project.create") // ProjectSettingsStepBase.createActionButton
       }
       else {
         CommonBundle.getOkButtonText() // DialogWrapper.createDefaultActions

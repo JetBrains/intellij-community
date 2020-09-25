@@ -20,6 +20,7 @@ import com.intellij.openapi.util.use
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyDisposable
+import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.inspections.PyInspectionExtension
 import com.jetbrains.python.inspections.PyPackageRequirementsInspection
 import com.jetbrains.python.psi.PyFile
@@ -35,7 +36,7 @@ object PyProjectSdkConfiguration {
     val lifetime = suppressTipAndInspectionsFor(module, extension)
 
     ProgressManager.getInstance().run(
-      object : Backgroundable(module.project, PyBundle.message("configuring.python.interpreter"), false) {
+      object : Backgroundable(module.project, PySdkBundle.message("python.configuring.interpreter.progress"), false) {
         override fun run(indicator: ProgressIndicator) {
           indicator.isIndeterminate = true
           lifetime.use { setSdkUsingExtension(module, extension, supplier) }
@@ -80,7 +81,7 @@ object PyProjectSdkConfiguration {
       PyBundle.message("sdk.has.been.configured.as.the.project.interpreter", sdk.name),
       NotificationType.INFORMATION
     ).apply {
-      val configureSdkAction = NotificationAction.createSimpleExpiring(PyBundle.message("configure.python.interpreter")) {
+      val configureSdkAction = NotificationAction.createSimpleExpiring(PySdkBundle.message("python.configure.interpreter.action")) {
         PySdkPopupFactory.createAndShow(project, module)
       }
 

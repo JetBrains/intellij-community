@@ -22,6 +22,7 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.sdk.*
 import java.awt.BorderLayout
 
@@ -44,7 +45,7 @@ class PyAddSystemWideInterpreterPanel(private val module: Module?,
       addChangeListener(this)
     }
     val formPanel = FormBuilder.createFormBuilder()
-      .addLabeledComponent(PyBundle.message("interpreter"), sdkComboBox)
+      .addLabeledComponent(PySdkBundle.message("python.interpreter.label"), sdkComboBox)
       .addComponentToRightColumn(permWarning)
       .panel
     add(formPanel, BorderLayout.NORTH)

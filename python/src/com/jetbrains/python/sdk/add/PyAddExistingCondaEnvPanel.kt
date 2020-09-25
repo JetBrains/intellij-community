@@ -26,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.sdk.PyDetectedSdk
 import com.jetbrains.python.sdk.associateWithModule
@@ -75,7 +76,7 @@ class PyAddExistingCondaEnvPanel(private val project: Project?,
 
     layout = BorderLayout()
     val formPanel = FormBuilder.createFormBuilder()
-      .addLabeledComponent(PyBundle.message("interpreter"), sdkComboBox)
+      .addLabeledComponent(PySdkBundle.message("python.interpreter.label"), sdkComboBox)
       .addLabeledComponent(PyBundle.message("python.sdk.conda.path"), condaPathField)
       .addComponent(makeSharedField)
       .panel

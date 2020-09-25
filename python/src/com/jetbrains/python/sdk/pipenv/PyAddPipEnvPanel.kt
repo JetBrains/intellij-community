@@ -18,6 +18,7 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.PythonModuleTypeBase
 import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
@@ -105,7 +106,7 @@ class PyAddPipEnvPanel(private val project: Project?,
         }
         addLabeledComponent(associatedObjectLabel, moduleField)
       }
-      addLabeledComponent(PyBundle.message("base.interpreter"), baseSdkField)
+      addLabeledComponent(PySdkBundle.message("python.venv.base.label"), baseSdkField)
       addComponent(installPackagesCheckBox)
       addLabeledComponent(PyBundle.message("python.sdk.pipenv.executable"), pipEnvPathField)
     }

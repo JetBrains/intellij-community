@@ -71,7 +71,7 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
 
     StartupManager.getInstance(project).runWhenProjectIsInitialized {
       ProgressManager.getInstance().run(
-        object : Task.Backgroundable(project, PyBundle.message("configuring.python.interpreter"), extension == null) {
+        object : Task.Backgroundable(project, PySdkBundle.message("python.configuring.interpreter.progress"), extension == null) {
           override fun run(indicator: ProgressIndicator) = lifetime.use { configureSdk(project, module, extension, indicator) }
         }
       )

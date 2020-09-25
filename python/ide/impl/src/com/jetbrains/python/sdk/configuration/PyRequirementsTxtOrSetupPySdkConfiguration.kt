@@ -24,6 +24,7 @@ import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.packaging.PyPackageManagerImpl
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.sdk.*
@@ -94,14 +95,14 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
                                location: String,
                                requirementsTxtOrSetupPy: String,
                                existingSdks: List<Sdk>): Sdk? {
-    ProgressManager.progress(PyBundle.message("python.sdk.creating.virtualenv.title"))
+    ProgressManager.progress(PySdkBundle.message("python.creating.venv.sentence"))
     LOGGER.debug("Creating virtual environment")
 
     val path = try {
       PyPackageManagerImpl.getInstance(baseSdk).createVirtualEnv(location, false)
     }
     catch (e: ExecutionException) {
-      showSdkExecutionException(baseSdk, e, PyBundle.message("python.sdk.failed.to.create.interpreter.title"))
+      showSdkExecutionException(baseSdk, e, PySdkBundle.message("python.creating.venv.failed.title"))
       return null
     }
 
@@ -128,7 +129,7 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
         PyPackageManagerImpl.getInstance(sdk).install(emptyList(), getCommandForPipInstall(requirementsTxtOrSetupPyFile))
       }
       catch (e: ExecutionException) {
-        showSdkExecutionException(sdk, e, PyBundle.message("python.packaging.notification.title.install.packages.failed"))
+        showSdkExecutionException(sdk, e, PyBundle.message("python.packaging.failed.to.install.packages.title"))
       }
     }
 
@@ -157,7 +158,7 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
       get() = panel.envData
 
     init {
-      title = PyBundle.message("python.sdk.creating.virtualenv.title")
+      title = PySdkBundle.message("python.creating.venv.title")
       init()
     }
 
