@@ -739,7 +739,7 @@ public class StringUtil extends StringUtilRt {
    * @return word in plural form
    */
   @Contract(pure = true)
-  public static @NotNull @NonNls String pluralize(@NotNull String word) {
+  public static @NotNull @NonNls String pluralize(@NotNull @NonNls String word) {
     return Strings.pluralize(word);
   }
 
