@@ -297,11 +297,14 @@ public abstract class InplaceRefactoring {
                                           final PsiElement scope,
                                           final PsiFile containingFile) {
     final PsiElement context = InjectedLanguageManager.getInstance(containingFile.getProject()).getInjectionHost(containingFile);
-    myScope = context != null ? context.getContainingFile() : scope;
+    final Editor topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor);
+    //do not change scope if it's injected fragment in separate editor (created by QuickEditAction)
+    //in this case there is no top level editor and there would be no need to adjust ranges
+    myScope = context != null && topLevelEditor != myEditor ? context.getContainingFile() : scope;
     final TemplateBuilderImpl builder = new TemplateBuilderImpl(myScope);
 
     PsiElement nameIdentifier = getNameIdentifier();
-    int offset = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor).getCaretModel().getOffset();
+    int offset = topLevelEditor.getCaretModel().getOffset();
     PsiElement selectedElement = getSelectedInEditorElement(nameIdentifier, refs, stringUsages, offset);
 
     boolean subrefOnPrimaryElement = false;
@@ -356,7 +359,7 @@ public abstract class InplaceRefactoring {
         }
 
         revertState();
-        final TemplateState templateState = TemplateManagerImpl.getTemplateState(InjectedLanguageEditorUtil.getTopLevelEditor(myEditor));
+        final TemplateState templateState = TemplateManagerImpl.getTemplateState(topLevelEditor);
         if (templateState != null) {
           templateState.gotoEnd(true);
         }
