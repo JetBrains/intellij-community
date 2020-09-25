@@ -6,14 +6,13 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
-import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.layout.*
 import git4idea.branch.GitBranchOperationType.CHECKOUT
 import git4idea.branch.GitBranchOperationType.CREATE
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
-import git4idea.validators.checkRefName
+import git4idea.validators.GitRefNameValidator
 import git4idea.validators.conflictsWithLocalBranch
 import git4idea.validators.conflictsWithRemoteBranch
 import org.jetbrains.annotations.Nls
@@ -91,7 +90,8 @@ internal class GitNewBranchDialog @JvmOverloads constructor(project: Project,
   }
 
   private fun validateBranchName(): ValidationInfoBuilder.(JTextField) -> ValidationInfo? = {
-    val errorInfo = checkRefName(it.text) ?: conflictsWithRemoteBranch(repositories, it.text)
+    it.text = GitRefNameValidator.getInstance().cleanUpBranchName(it.text)
+    val errorInfo = conflictsWithRemoteBranch(repositories, it.text)
     if (errorInfo != null) error(errorInfo.message)
     else {
       val localBranchConflict = conflictsWithLocalBranch(repositories, it.text)
