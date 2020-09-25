@@ -24,7 +24,7 @@ class CompilerDriverUnknownSdkTracker(
 
   fun fixSdkSettings(updateProjectSdk: Boolean,
                      modules: List<Module>,
-                     @Nls errorMessage: String) {
+                     @Nls errorMessage: String): UnknownSdkModalNotification.Outcome {
     val collector = object: UnknownSdkCollector(project) {
       override fun checkProjectSdk(project: Project): Boolean = updateProjectSdk
       override fun collectModulesToCheckSdk(project: Project) = modules
@@ -35,5 +35,7 @@ class CompilerDriverUnknownSdkTracker(
       .newModalHandler(errorMessage)
 
     UnknownSdkTracker.getInstance(project).updateUnknownSdksBlocking(collector, handler)
+
+    return handler.outcome
   }
 }

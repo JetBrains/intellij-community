@@ -683,14 +683,14 @@ public final class CompileDriver {
         }
       }
       /// test with UnknownSdkTrack if given SDKs are valid and not missing
-      CompilerDriverUnknownSdkTracker
+      /// TODO: test it before this method is executed at all to make sure the inner check is run
+      var outcome = CompilerDriverUnknownSdkTracker
         .getInstance(myProject)
         .fixSdkSettings(projectSdkNotSpecified,
                         Arrays.asList(scopeModules),
                         JavaCompilerBundle.message("error.jdk.not.specified.with.fixSuggestion"));
-      //TODO: restart the test and see if it was helpful
 
-      if (!modulesWithoutJdkAssigned.isEmpty()) {
+      if (!modulesWithoutJdkAssigned.isEmpty() || outcome.getShouldOpenProjectStructureDialog()) {
         showNotSpecifiedError("error.jdk.not.specified", projectSdkNotSpecified, modulesWithoutJdkAssigned, JavaCompilerBundle.message("modules.classpath.title"));
         return false;
       }
