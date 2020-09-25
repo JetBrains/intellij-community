@@ -62,6 +62,7 @@ public class UnknownInvalidSdk implements UnknownSdk {
     String sdkHome = myLocalSdkFix.getExistingSdkHome();
 
     copySdk(project, sdkFixVersionString, sdkHome);
+    myLocalSdkFix.configureSdk(mySdk);
   }
 
   private void copySdk(@NotNull Project project,
