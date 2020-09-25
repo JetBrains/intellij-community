@@ -40,6 +40,12 @@ final class PortableCompilationCache {
     JpsCaches(CompilationContext context) {
       this.context = context
     }
+
+    def maybeAvailableLocally() {
+      def files = dir.list()
+      context.messages.info("$dir.absolutePath: $files")
+      dir.isDirectory() && files != null && files.length > 0
+    }
   }
 
   /**
@@ -139,15 +145,17 @@ final class PortableCompilationCache {
    * For more details see {@link JavaBackwardReferenceIndexWriter#initialize}
    */
   def downloadCacheAndCompileProject() {
+    def cachesAreDownloaded = false
     if (forceRebuild) {
       clean()
     }
-    else if (forceDownload || !jpsCaches.dir.isDirectory() || !jpsCaches.dir.list()) {
+    else if (forceDownload || !jpsCaches.maybeAvailableLocally()) {
       downloadCache()
+      cachesAreDownloaded = true
     }
     // ensure that all Maven dependencies are resolved before compilation
     CompilationTasks.create(context).resolveProjectDependencies()
-    if (forceRebuild || !downloader.availableForHeadCommit || downloader.anyLocalChanges() || !forceDownload) {
+    if (!cachesAreDownloaded || !downloader.availableForHeadCommit || downloader.anyLocalChanges) {
       context.options.incrementalCompilation = !forceRebuild
       compileProject()
     }

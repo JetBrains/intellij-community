@@ -80,12 +80,15 @@ class PortableCompilationCacheDownloader implements AutoCloseable {
     executor = new NamedThreadPoolExecutor("Jps Output Upload", executorThreadsCount)
   }
 
-  def anyLocalChanges() {
+  @Lazy
+  boolean anyLocalChanges = {
     def localChanges = git.status()
-    context.messages.info('Local changes:')
-    localChanges.each { context.messages.info("\t$it") }
+    if (!localChanges.isEmpty()) {
+      context.messages.info('Local changes:')
+      localChanges.each { context.messages.info("\t$it") }
+    }
     !localChanges.isEmpty()
-  }
+  }()
 
   @Override
   void close() {
