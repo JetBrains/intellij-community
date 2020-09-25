@@ -208,7 +208,17 @@ public abstract class InplaceRefactoring {
 
     final List<Pair<PsiElement, TextRange>> stringUsages = new NotNullList<>();
     collectAdditionalElementsToRename(stringUsages);
-    return buildTemplateAndStart(refs, stringUsages, scope, containingFile);
+    try {
+      return buildTemplateAndStart(refs, stringUsages, scope, containingFile);
+    }
+    catch (Throwable e) {
+      if (!ourRenamersStack.isEmpty() && ourRenamersStack.peek() == this) {
+        ourRenamersStack.pop();
+      }
+      myEditor.putUserData(INPLACE_RENAMER, null);
+      FinishMarkAction.finish(myProject, myEditor, myMarkAction);
+      throw e;
+    }
   }
 
   protected boolean notSameFile(@Nullable VirtualFile file, @NotNull PsiFile containingFile) {
