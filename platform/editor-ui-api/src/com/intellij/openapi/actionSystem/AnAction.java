@@ -13,6 +13,7 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.util.SmartFMap;
 import com.intellij.util.SmartList;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -385,6 +386,12 @@ public abstract class AnAction implements PossiblyDumbAware {
     myActionTextOverrides = myActionTextOverrides.plus(place, text);
   }
 
+  @ApiStatus.Internal
+  public void copyActionTextOverride(@NotNull String fromPlace, @NotNull String toPlace) {
+    myActionTextOverrides = myActionTextOverrides.plus(toPlace, myActionTextOverrides.get(fromPlace));
+  }
+
+  @ApiStatus.Internal
   public void applyTextOverride(AnActionEvent e) {
     Supplier<String> override = myActionTextOverrides.get(e.getPlace());
     if (override != null) {

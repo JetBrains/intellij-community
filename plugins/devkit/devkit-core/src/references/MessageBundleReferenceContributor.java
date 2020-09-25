@@ -211,12 +211,11 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
 
           String idWithoutPlaceSuffix = StringUtil.substringBeforeLast(myId, ".");
 
-          IdeaPluginRegistrationIndex.processAction(project, idWithoutPlaceSuffix, scope, processor);
+          IdeaPluginRegistrationIndex.processActionOrGroup(project, idWithoutPlaceSuffix, scope, processor);
 
           boolean foundOverrideText = false;
           for (ActionOrGroup result : processor.getResults()) {
-            Action action = (Action)result;
-            for (OverrideText overrideText : action.getOverrideTexts()) {
+            for (OverrideText overrideText : result.getOverrideTexts()) {
               if (place.equals(overrideText.getPlace().getStringValue())) {
                 foundOverrideText = true;
                 break;
