@@ -170,4 +170,17 @@ public class GlobalSearchScopeTest extends HeavyPlatformTestCase {
     GlobalSearchScope scope4 = GlobalSearchScope.union(new GlobalSearchScope[]{GlobalSearchScope.EMPTY_SCOPE, p, GlobalSearchScope.EMPTY_SCOPE, pm, m});
     assertEquals(pm, scope4);
   }
+
+  public void testProjectEverythingScopeDoesNotContainNonIndexableFiles() throws Exception {
+    GlobalSearchScope scope = GlobalSearchScope.everythingScope(getProject());
+
+    VirtualFile contentRoot = getVirtualFile(createTempDir("contentRoot"));
+    PsiTestUtil.removeAllRoots(getModule(), null);
+    PsiTestUtil.addContentRoot(getModule(), contentRoot);
+
+    assertTrue(scope.contains(contentRoot));
+
+    VirtualFile fileOutsideIndexingScope = getVirtualFile(createTempDir("outsideIndexingScope"));
+    assertFalse(scope.contains(fileOutsideIndexingScope));
+  }
 }

@@ -1548,8 +1548,13 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return null;
   }
 
-  @NotNull List<IndexableFileSet> getIndexableSets() {
+  @NotNull
+  public List<IndexableFileSet> getIndexableSets() {
     return myIndexableSets;
+  }
+
+  public boolean containsIndexableSet(@NotNull IndexableFileSet set, @NotNull Project project) {
+    return project.equals(myIndexableSetToProjectMap.get(set));
   }
 
   @ApiStatus.Internal

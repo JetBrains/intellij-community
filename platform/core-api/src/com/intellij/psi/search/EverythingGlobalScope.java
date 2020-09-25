@@ -34,10 +34,8 @@ public class EverythingGlobalScope extends GlobalSearchScope {
   }
 
   /**
-   * @deprecated
-   * Use {@link GlobalSearchScope#everythingScope(Project)} instead
+   * Use {@link GlobalSearchScope#everythingScope(Project)} instead to make index query
    */
-  @Deprecated
   public EverythingGlobalScope() {
   }
 
