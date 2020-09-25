@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -279,7 +280,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
     try {
       inserted = owner.addAnnotation(fqn);
     }
-    catch (UnsupportedOperationException e) {
+    catch (UnsupportedOperationException | IncorrectOperationException e) {
       String message = "Cannot add annotation to "+owner.getClass();
       if (owner instanceof PsiElement) {
         StreamEx.iterate(((PsiElement)owner).getParent(), p -> p != null && !(p instanceof PsiFileSystemItem), PsiElement::getParent)
