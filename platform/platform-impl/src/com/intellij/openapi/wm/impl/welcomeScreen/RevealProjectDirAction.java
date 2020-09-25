@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.ReopenProjectAction;
 import com.intellij.ide.actions.RevealFileAction;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -16,7 +17,7 @@ import java.io.File;
 /**
  * @author Konstantin Bulenkov
  */
-public class RevealProjectDirAction extends DumbAwareAction {
+public class RevealProjectDirAction extends DumbAwareAction implements LightEditCompatible {
   public RevealProjectDirAction() {
     super(RevealFileAction.getActionName());
   }
