@@ -8,21 +8,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.api.PackageSearchVirtualFileAccess
 import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyOperationMetadata
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleType
 import com.jetbrains.packagesearch.intellij.plugin.extensions.gradle.configuration.packageSearchGradleConfigurationForProject
-import com.jetbrains.packagesearch.patchers.buildsystem.Gradle
 import com.jetbrains.packagesearch.patchers.buildsystem.OperationFailure
 import com.jetbrains.packagesearch.patchers.buildsystem.OperationItem
-import com.jetbrains.packagesearch.patchers.buildsystem.OperationType
-import com.jetbrains.packagesearch.patchers.buildsystem.gradle.dependency.GradleDependency
-import com.jetbrains.packagesearch.patchers.buildsystem.gradle.dependency.GradleRemoteCoordinates
-import com.jetbrains.packagesearch.patchers.buildsystem.gradle.dependency.unified.GradleUnifiedDependencyConverter
-import com.jetbrains.packagesearch.patchers.buildsystem.gradle.repository.GradleMavenRepository
-import com.jetbrains.packagesearch.patchers.buildsystem.gradle.repository.unified.GradleUnifiedDependencyRepositoryConverter
 import com.jetbrains.packagesearch.patchers.buildsystem.unified.UnifiedDependency
 import com.jetbrains.packagesearch.patchers.buildsystem.unified.UnifiedDependencyRepository
 import org.jetbrains.plugins.gradle.settings.GradleSettings
@@ -58,20 +50,21 @@ open class GradleProjectModuleOperationProvider : ProjectModuleOperationProvider
 
         saveAdditionalScopeToConfigurationIfNeeded(project, operationMetadata.scope)
 
-        val dependenciesToAdd = setOf(
-            GradleDependency(
-                GradleRemoteCoordinates.StringRemoteCoordinates(
-                    operationMetadata.groupId,
-                    operationMetadata.artifactId,
-                    operationMetadata.version
-                ),
-                operationMetadata.scope
-            )
-        )
-
-        return Gradle(PackageSearchVirtualFileAccess(project, virtualFile))
-            .doBatch(removeDependencies = dependenciesToAdd, addDependencies = dependenciesToAdd)
-            .filter { it.operationType == OperationType.ADD }
+        //val dependenciesToAdd = setOf(
+        //    //GradleDependency(
+        //    //    GradleRemoteCoordinates.StringRemoteCoordinates(
+        //    //        operationMetadata.groupId,
+        //    //        operationMetadata.artifactId,
+        //    //        operationMetadata.version
+        //    //    ),
+        //    //    operationMetadata.scope
+        //    //)
+        //)
+        //
+        //return Gradle(PackageSearchVirtualFileAccess(project, virtualFile))
+        //    .doBatch(removeDependencies = dependenciesToAdd, addDependencies = dependenciesToAdd)
+        //    .filter { it.operationType == OperationType.ADD }
+        return emptyList() // TODO use new APIs here instead
     }
 
     override fun removeDependenciesFromProject(
@@ -83,27 +76,25 @@ open class GradleProjectModuleOperationProvider : ProjectModuleOperationProvider
             PackageSearchBundle.getMessage("packagesearch.packageoperation.error.gradle.missing.configuration")
         }
 
-        val dependenciesToRemove = setOf(
-            GradleDependency(
-                GradleRemoteCoordinates.StringRemoteCoordinates(
-                    operationMetadata.groupId,
-                    operationMetadata.artifactId,
-                    operationMetadata.version
-                ),
-                operationMetadata.scope
-            )
-        )
-
-        return parseGradleGroovyBuildScriptFrom(project, virtualFile) { gradle ->
-            gradle.doBatch(removeDependencies = dependenciesToRemove)
-        }
+        //val dependenciesToRemove = setOf(
+        //    GradleDependency(
+        //        GradleRemoteCoordinates.StringRemoteCoordinates(
+        //            operationMetadata.groupId,
+        //            operationMetadata.artifactId,
+        //            operationMetadata.version
+        //        ),
+        //        operationMetadata.scope
+        //    )
+        //)
+        //
+        //return parseGradleGroovyBuildScriptFrom(project, virtualFile) { gradle ->
+        //    gradle.doBatch(removeDependencies = dependenciesToRemove)
+        //}
+        return emptyList() // TODO use new APIs here instead
     }
 
     override fun listDependenciesInProject(project: Project, virtualFile: VirtualFile): Collection<UnifiedDependency> {
-        val dependencies = parseGradleGroovyBuildScriptFrom(project, virtualFile) { gradle ->
-            gradle.listDependencies()
-        }
-        return dependencies.map { GradleUnifiedDependencyConverter.convert(it) }
+        return emptyList() // TODO use new APIs here instead
     }
 
     @Suppress("ComplexMethod")
@@ -112,48 +103,50 @@ open class GradleProjectModuleOperationProvider : ProjectModuleOperationProvider
         project: Project,
         virtualFile: VirtualFile
     ): List<OperationFailure<out OperationItem>> {
-
-        val gradleRepository =
-            when {
-                repository.id != null && repository.id == "maven_central" -> {
-                    GradleMavenRepository.MavenCentral
-                }
-                repository.url != null &&
-                    (repository.url!!.contains("://repo1.maven.org") ||
-                        repository.url!!.contains("://repo.maven.apache.org")) -> {
-                    GradleMavenRepository.MavenCentral
-                }
-                repository.id != null && repository.id == "gmaven" -> {
-                    GradleMavenRepository.Google
-                }
-                repository.url != null && repository.url!!.contains("://maven.google.com") -> {
-                    GradleMavenRepository.Google
-                }
-                repository.id != null && repository.id == "jcenter" -> {
-                    GradleMavenRepository.JCenter
-                }
-                repository.url != null && repository.url!!.contains("://jcenter.bintray.com") -> {
-                    GradleMavenRepository.JCenter
-                }
-                else -> {
-                    GradleMavenRepository.Generic(repository.url!!)
-                }
-            }
-
-        return parseGradleGroovyBuildScriptFrom(project, virtualFile) { gradle ->
-            if (!gradle.listRepositories().any { it.isEquivalentTo(gradleRepository) }) {
-                gradle.doBatch(addRepositories = setOf(gradleRepository))
-            } else {
-                emptyList()
-            }
-        }
+        //
+        //val gradleRepository =
+        //    when {
+        //        repository.id != null && repository.id == "maven_central" -> {
+        //            GradleMavenRepository.MavenCentral
+        //        }
+        //        repository.url != null &&
+        //            (repository.url!!.contains("://repo1.maven.org") ||
+        //                repository.url!!.contains("://repo.maven.apache.org")) -> {
+        //            GradleMavenRepository.MavenCentral
+        //        }
+        //        repository.id != null && repository.id == "gmaven" -> {
+        //            GradleMavenRepository.Google
+        //        }
+        //        repository.url != null && repository.url!!.contains("://maven.google.com") -> {
+        //            GradleMavenRepository.Google
+        //        }
+        //        repository.id != null && repository.id == "jcenter" -> {
+        //            GradleMavenRepository.JCenter
+        //        }
+        //        repository.url != null && repository.url!!.contains("://jcenter.bintray.com") -> {
+        //            GradleMavenRepository.JCenter
+        //        }
+        //        else -> {
+        //            GradleMavenRepository.Generic(repository.url!!)
+        //        }
+        //    }
+        //
+        //return parseGradleGroovyBuildScriptFrom(project, virtualFile) { gradle ->
+        //    if (!gradle.listRepositories().any { it.isEquivalentTo(gradleRepository) }) {
+        //        gradle.doBatch(addRepositories = setOf(gradleRepository))
+        //    } else {
+        //        emptyList()
+        //    }
+        //}
+        return emptyList() // TODO use new APIs here instead
     }
 
     override fun listRepositoriesInProject(project: Project, virtualFile: VirtualFile): Collection<UnifiedDependencyRepository> {
-        val dependencies = parseGradleGroovyBuildScriptFrom(project, virtualFile) { gradle ->
-            gradle.listRepositories()
-        }
-        return dependencies.map { GradleUnifiedDependencyRepositoryConverter.convert(it) }
+        //val repositories = parseGradleGroovyBuildScriptFrom(project, virtualFile) { gradle ->
+        //    gradle.listRepositories()
+        //}
+        //return repositories.map { GradleUnifiedDependencyRepositoryConverter.convert(it) }
+        return emptyList() // TODO use new APIs here instead
     }
 
     override fun refreshProject(project: Project, virtualFile: VirtualFile) {

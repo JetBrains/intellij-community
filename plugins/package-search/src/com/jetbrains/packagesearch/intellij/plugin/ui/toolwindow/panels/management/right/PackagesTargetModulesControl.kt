@@ -102,15 +102,15 @@ class PackagesTargetModulesControl(private val viewModel: PackageSearchToolWindo
         private val cellBorder: Border = JBEmptyBorder(0)
     ) : ColoredTableCellRenderer() {
 
-        override fun customizeCellRenderer(table: JTable?, value: Any?, selected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
-            if (value is String && table != null) {
-                colored(table, selected)
-                border = cellBorder
-                preferredSize = Dimension(preferredSize.width, max(preferredSize.height, JBUI.scale(buttonSize + 2)))
-                append(value, SimpleTextAttributes.REGULAR_ATTRIBUTES)
-                if (highlight) {
-                    SpeedSearchUtil.applySpeedSearchHighlighting(table, this, true, selected)
-                }
+        override fun customizeCellRenderer(table: JTable, value: Any?, selected: Boolean, hasFocus: Boolean, row: Int, column: Int) {
+            if (value !is String) return
+
+            colored(table, selected)
+            border = cellBorder
+            preferredSize = Dimension(preferredSize.width, max(preferredSize.height, JBUI.scale(buttonSize + 2)))
+            append(value, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+            if (highlight) {
+                SpeedSearchUtil.applySpeedSearchHighlighting(table, this, true, selected)
             }
         }
     }

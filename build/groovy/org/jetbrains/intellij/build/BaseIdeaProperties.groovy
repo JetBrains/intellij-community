@@ -72,7 +72,8 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.filePrediction",
     "intellij.markdown",
     "intellij.webp",
-    "intellij.grazie"
+    "intellij.grazie",
+    "intellij.packagesearch"
   ]
   protected static final Map<String, String> CE_CLASS_VERSIONS = [
     ""                                                          : "11",

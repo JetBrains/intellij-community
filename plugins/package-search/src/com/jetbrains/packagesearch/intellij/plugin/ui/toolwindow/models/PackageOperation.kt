@@ -1,6 +1,7 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.util.text.VersionComparatorUtil
 import com.intellij.util.ui.JBInsets
@@ -11,6 +12,7 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.looksLikeGradleVariable
 import com.jetbrains.packagesearch.intellij.plugin.ui.RiderUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.InstallationInformation.Companion.DEFAULT_SCOPE
+import org.jetbrains.annotations.Nls
 import java.awt.Dimension
 import javax.swing.Icon
 import javax.swing.JButton
@@ -68,11 +70,11 @@ enum class PackageOperationType {
 }
 
 class PackageOperation(
-    val title: String,
-    val description: String,
-    val htmlDescription: String,
-    val icon: Icon,
-    val packageOperationType: PackageOperationType
+  @Nls val title: String,
+  @Nls val description: String,
+  @Nls val htmlDescription: String,
+  val icon: Icon,
+  val packageOperationType: PackageOperationType
 ) {
 
     companion object {
