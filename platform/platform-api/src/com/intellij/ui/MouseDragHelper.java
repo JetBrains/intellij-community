@@ -140,7 +140,7 @@ public abstract class MouseDragHelper extends MouseAdapter implements MouseMotio
       myCancelled = false;
       return;
     }
-    if (!canFinishDragging(e)) {
+    if (myDraggingNow && !canFinishDragging(e)) {
       cancelDragging();
       e.consume();
       myPressedOnScreenPoint = null;
