@@ -89,6 +89,27 @@ public class SelectWordHandler extends EditorActionHandler {
 
   @Nullable("null means unable to select")
   private static TextRange selectWord(@NotNull Caret caret, @NotNull Project project) {
+    ThrowableComputable<TextRange, Exception> computable = () -> {
+      return ReadAction.compute(() -> {
+        return doSelectWord(caret, project);
+      });
+    };
+    try {
+      return ProgressManager.getInstance().runProcessWithProgressSynchronously(computable,
+                                                                               EditorBundle.message("select.word.progress"),
+                                                                               true, project);
+    }
+    catch (ProcessCanceledException pce) {
+      return null;
+    }
+    catch (Exception e) {
+      LOG.error("Cannot select word at given offset", e);
+      return null;
+    }
+  }
+
+  @Nullable
+  private static TextRange doSelectWord(@NotNull Caret caret, @NotNull Project project) {
     Document document = caret.getEditor().getDocument();
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) return null;
@@ -191,30 +212,10 @@ public class SelectWordHandler extends EditorActionHandler {
 
   @Nullable
   private static PsiElement findElementAt(@NotNull final PsiFile file, final int caretOffset) {
-    ThrowableComputable<PsiElement, Exception> computable = () -> {
-      return ReadAction.compute(() -> {
-        PsiElement elementAt = file.findElementAt(caretOffset);
-        return elementAt != null && isLanguageExtension(file, elementAt)
-               ? file.getViewProvider().findElementAt(caretOffset, file.getLanguage())
-               : elementAt;
-      });
-    };
-    try {
-      if (!file.getNode().isParsed()) {
-        //accessing to PSI for non-parsed file may cause reparse in EDT
-        return ProgressManager.getInstance().runProcessWithProgressSynchronously(computable,
-                                                                                 EditorBundle.message("select.word.element.processing"),
-                                                                                 true, file.getProject());
-      }
-      return computable.compute();
-    }
-    catch (ProcessCanceledException pce) {
-      return null;
-    }
-    catch (Exception e) {
-      LOG.warn("Cannot find element at given offset", e);
-      return null;
-    }
+    PsiElement elementAt = file.findElementAt(caretOffset);
+    return elementAt != null && isLanguageExtension(file, elementAt)
+           ? file.getViewProvider().findElementAt(caretOffset, file.getLanguage())
+           : elementAt;
   }
 
   private static boolean isLanguageExtension(@NotNull final PsiFile file, @NotNull final PsiElement elementAt) {
