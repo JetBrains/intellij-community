@@ -135,6 +135,12 @@ public final class IoTestUtil {
   public static void assumeUnix() throws AssumptionViolatedException {
     Assume.assumeTrue("Need Unix, can't run on " + SystemInfo.OS_NAME, SystemInfo.isUnix);
   }
+  public static void assumeCaseSensitiveFS() throws AssumptionViolatedException {
+    Assume.assumeTrue("Assumed case sensitive FS but got " + SystemInfo.OS_NAME, SystemInfo.isFileSystemCaseSensitive);
+  }
+  public static void assumeCaseInsensitiveFS() throws AssumptionViolatedException {
+    Assume.assumeFalse("Assumed case insensitive FS but got " + SystemInfo.OS_NAME, SystemInfo.isFileSystemCaseSensitive);
+  }
 
   @NotNull
   public static File createJunction(@NotNull String target, @NotNull String junction) {
