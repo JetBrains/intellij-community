@@ -21,8 +21,6 @@ class CompletionLoggerInitializer(project: Project) : LookupTracker() {
     fun shouldInitialize(): Boolean =
       (ApplicationManager.getApplication().isEAP && StatisticsUploadAssistant.isSendAllowed()) || ApplicationManager.getApplication().isUnitTestMode
 
-    var isEnabledInTests: Boolean = false
-
     private val LOGGED_SESSIONS_RATIO: Map<String, Double> = mapOf(
       "python" to 0.5,
       "scala" to 0.3,
@@ -50,7 +48,6 @@ class CompletionLoggerInitializer(project: Project) : LookupTracker() {
 
   override fun lookupCreated(lookup: LookupImpl,
                              storage: MutableLookupStorage) {
-    if (ApplicationManager.getApplication().isUnitTestMode && !isEnabledInTests) return
     if (!shouldInitialize()) return
 
     val experimentInfo = ExperimentStatus.getInstance().forLanguage(storage.language)

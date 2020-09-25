@@ -57,6 +57,7 @@
 
   <projectListeners>
     <listener class="com.intellij.stats.completion.tracker.CompletionLoggerInitializer"
-              topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
+              topic="com.intellij.codeInsight.lookup.LookupManagerListener"
+              activeInTestMode="false"/>
   </projectListeners>
 </idea-plugin>
