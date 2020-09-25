@@ -31,10 +31,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -349,6 +346,7 @@ public class MavenUtil {
     properties.setProperty("GROUP_ID", projectId.getGroupId());
     properties.setProperty("ARTIFACT_ID", projectId.getArtifactId());
     properties.setProperty("VERSION", projectId.getVersion());
+
     if (parentId != null) {
       conditions.setProperty("HAS_PARENT", "true");
       properties.setProperty("PARENT_GROUP_ID", parentId.getGroupId());
@@ -367,6 +365,18 @@ public class MavenUtil {
             properties.setProperty("PARENT_RELATIVE_PATH", relativePath);
           }
         }
+      }
+    } else {
+      //set language level only for root pom
+      Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
+      if (sdk != null && sdk.getSdkType() instanceof JavaSdk) {
+        JavaSdk javaSdk = (JavaSdk)sdk.getSdkType();
+        JavaSdkVersion version = javaSdk.getVersion(sdk);
+        String description = version == null ? null : version.getDescription();
+        boolean shouldSetLangLevel = version != null && version.isAtLeast(JavaSdkVersion.JDK_1_6);
+        conditions.setProperty("SHOULD_SET_LANG_LEVEL", String.valueOf(shouldSetLangLevel));
+        properties.setProperty("COMPILER_LEVEL_SOURCE", description);
+        properties.setProperty("COMPILER_LEVEL_TARGET", description);
       }
     }
     runOrApplyFileTemplate(project, file, MavenFileTemplateGroupFactory.MAVEN_PROJECT_XML_TEMPLATE, properties, conditions, interactive);
