@@ -138,10 +138,21 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   public void click() {
-    performAction(new MouseEvent(this, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 0, 0, 1, false));
+    click(true);
+  }
+
+  /**
+   * @param checkIsShowing If true, prevent action to be performed if the button is not showed.
+   */
+  public void click(boolean checkIsShowing) {
+    performAction(new MouseEvent(this, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 0, 0, 1, false), checkIsShowing);
   }
 
   private void performAction(MouseEvent e) {
+    performAction(e, true);
+  }
+
+  private void performAction(MouseEvent e, boolean checkIsShowing) {
     AnActionEvent event = AnActionEvent.createFromInputEvent(e, myPlace, myPresentation, getDataContext(), false, true);
     if (!ActionUtil.lastUpdateAndCheckDumb(myAction, event, false)) {
       return;
@@ -152,7 +163,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       final DataContext dataContext = event.getDataContext();
       manager.fireBeforeActionPerformed(myAction, dataContext, event);
       Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
-      if (component != null && !component.isShowing()) {
+      if (component != null && checkIsShowing && !component.isShowing()) {
         return;
       }
       actionPerformed(event);
