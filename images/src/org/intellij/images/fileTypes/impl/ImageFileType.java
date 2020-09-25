@@ -11,6 +11,9 @@ import javax.swing.*;
 public final class ImageFileType extends UserBinaryFileType {
   public static final ImageFileType INSTANCE = new ImageFileType();
 
+  private ImageFileType() {
+  }
+
   @NotNull
   @Override
   public String getName() {

@@ -16,6 +16,9 @@ import javax.swing.*;
 public class EclipseFileType implements FileType {
   public static final FileType INSTANCE = new EclipseFileType();
 
+  private EclipseFileType() {
+  }
+
   @Override
   @NotNull
   @NonNls

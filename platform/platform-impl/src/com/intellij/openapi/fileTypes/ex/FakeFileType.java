@@ -8,6 +8,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public abstract class FakeFileType implements FileTypeIdentifiableByVirtualFile {
+  protected FakeFileType() {
+  }
 
   @Override
   @NotNull

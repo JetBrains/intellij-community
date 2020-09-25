@@ -26,6 +26,9 @@ import javax.swing.*;
 public class ArchiveFileType implements FileType {
   public static final ArchiveFileType INSTANCE = new ArchiveFileType();
 
+  protected ArchiveFileType() {
+  }
+
   @Override
   @NotNull
   public String getName() {

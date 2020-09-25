@@ -20,6 +20,9 @@ public class PatchFileType implements FileType {
 
   public static final String NAME = "PATCH"; //NON-NLS
 
+  private PatchFileType() {
+  }
+
   @Override
   @NotNull
   @NonNls

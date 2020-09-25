@@ -31,9 +31,11 @@ public class RegExpFileType extends LanguageFileType {
         super(RegExpLanguage.INSTANCE);
     }
 
-    public RegExpFileType(@NotNull Language language) {
+    private RegExpFileType(@NotNull Language language) {
         super(language);
-        if (!(language.getBaseLanguage() instanceof RegExpLanguage)) throw new AssertionError();
+        if (!(language.getBaseLanguage() instanceof RegExpLanguage)) {
+            throw new IllegalArgumentException(String.valueOf(language.getBaseLanguage()));
+        }
     }
 
     @Override
@@ -60,5 +62,10 @@ public class RegExpFileType extends LanguageFileType {
     @Nullable
     public Icon getIcon() {
         return getLanguage() == RegExpLanguage.INSTANCE ? AllIcons.FileTypes.Regexp : null;
+    }
+
+    @NotNull
+    public static LanguageFileType forLanguage(@NotNull Language language) {
+        return new RegExpFileType(language);
     }
 }

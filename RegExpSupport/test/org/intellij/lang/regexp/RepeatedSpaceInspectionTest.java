@@ -1,9 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.intellij.lang.regexp.inspection;
+package org.intellij.lang.regexp;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import org.intellij.lang.regexp.RegExpFileType;
 import org.intellij.lang.regexp.ecmascript.EcmaScriptRegexpLanguage;
+import org.intellij.lang.regexp.inspection.RegExpInspectionTestCase;
+import org.intellij.lang.regexp.inspection.RepeatedSpaceInspection;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -38,7 +39,7 @@ public class RepeatedSpaceInspectionTest extends RegExpInspectionTestCase {
 
   public void testEscapedWhitespace() {
     quickfixTest("<warning descr=\"3 consecutive spaces in RegExp\"><caret>\\   </warning>", " {3}", "Replace with ' {3}",
-                 new RegExpFileType(EcmaScriptRegexpLanguage.INSTANCE));
+                 RegExpFileType.forLanguage(EcmaScriptRegexpLanguage.INSTANCE));
   }
 
   public void testNoStringIndexOutOfBoundsException() {

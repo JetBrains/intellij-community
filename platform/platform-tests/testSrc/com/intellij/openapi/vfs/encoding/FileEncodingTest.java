@@ -980,7 +980,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
   public void testEncodingDetectionRequestsRunInOneThreadForEachDocument() {
     Set<Thread> detectThreads = ContainerUtil.newConcurrentSet();
     class MyFT extends LanguageFileType implements FileTypeIdentifiableByVirtualFile {
-      MyFT() {
+      private MyFT() {
         super(new Language("my") {
         });
       }

@@ -39,7 +39,6 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.*;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
@@ -361,11 +360,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   private static void initializeMatchers(@NotNull FileTypeBean bean) {
-    bean.addMatchers(ContainerUtil.concat(
-      parse(StringUtil.notNullize(bean.extensions)),
-      parse(StringUtil.notNullize(bean.fileNames), token -> new ExactFileNameMatcher(token)),
-      parse(StringUtil.notNullize(bean.fileNamesCaseInsensitive), token -> new ExactFileNameMatcher(token, true)),
-      parse(StringUtil.notNullize(bean.patterns), token -> FileNameMatcherFactory.getInstance().createMatcher(token))));
+    bean.addMatchers(parse(StringUtil.notNullize(bean.extensions)));
+    bean.addMatchers(parse(StringUtil.notNullize(bean.fileNames), token -> new ExactFileNameMatcher(token)));
+    bean.addMatchers(parse(StringUtil.notNullize(bean.fileNamesCaseInsensitive), token -> new ExactFileNameMatcher(token, true)));
+    bean.addMatchers(parse(StringUtil.notNullize(bean.patterns), token -> FileNameMatcherFactory.getInstance().createMatcher(token)));
   }
 
   private void instantiatePendingFileTypes() {
@@ -1175,7 +1173,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
     Element element = typeElement.getChild(AbstractFileType.ELEMENT_HIGHLIGHTING);
     if (element == null) {
-      type = new UserBinaryFileType();
+      type = UserBinaryFileType.INSTANCE;
     }
     else {
       SyntaxTable table = AbstractFileType.readSyntaxTable(element);

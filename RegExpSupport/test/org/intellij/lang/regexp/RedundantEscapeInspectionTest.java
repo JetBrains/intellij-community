@@ -1,9 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.intellij.lang.regexp.inspection;
+package org.intellij.lang.regexp;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import org.intellij.lang.regexp.RegExpFileType;
 import org.intellij.lang.regexp.ecmascript.EcmaScriptRegexpLanguage;
+import org.intellij.lang.regexp.inspection.RedundantEscapeInspection;
+import org.intellij.lang.regexp.inspection.RegExpInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,7 +28,7 @@ public class RedundantEscapeInspectionTest extends RegExpInspectionTestCase {
 
   public void testEscapedU() {
     quickfixTest("<warning descr=\"Redundant character escape '\\u' in RegExp\">\\u</warning>", "u", "Remove redundant escape",
-                 new RegExpFileType(EcmaScriptRegexpLanguage.INSTANCE));
+                 RegExpFileType.forLanguage(EcmaScriptRegexpLanguage.INSTANCE));
   }
 
   public void testPoundSign() {

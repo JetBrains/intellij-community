@@ -15,6 +15,9 @@ import javax.swing.*;
 public class DictionaryFileType implements FileType {
   public static final DictionaryFileType INSTANCE = new DictionaryFileType();
 
+  private DictionaryFileType() {
+  }
+
   @NotNull
   @Override
   public String getName() {

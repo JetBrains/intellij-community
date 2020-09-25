@@ -53,6 +53,8 @@ import org.junit.Assume;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -653,7 +655,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   }
 
   public void testIfDetectorRanThenIdeaReopenedTheDetectorShouldBeReRun() throws IOException {
-    final UserBinaryFileType stuffType = new UserBinaryFileType();
+    final UserBinaryFileType stuffType = new UserBinaryFileType(){};
     stuffType.setName("stuffType");
 
     final Set<VirtualFile> detectorCalled = ContainerUtil.newConcurrentSet();
@@ -1037,6 +1039,9 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   }
 
   private static class MyReplaceableByContentDetectionFileType implements FileType, PlainTextLikeFileType {
+    private MyReplaceableByContentDetectionFileType() {
+    }
+
     @NotNull
     @Override
     public String getName() {
@@ -1094,6 +1099,9 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   private static class MyTestFileType implements FileType {
     public static final String NAME = "Foo files";
 
+    private MyTestFileType() {
+    }
+
     @NotNull
     @Override
     public String getName() {
@@ -1138,6 +1146,9 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   private static class MyHaskellFileType implements FileType {
     public static final String NAME = "Haskell";
 
+    private MyHaskellFileType() {
+    }
+
     @NotNull
     @Override
     public String getName() {
@@ -1176,6 +1187,18 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     @Override
     public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
       return null;
+    }
+  }
+
+  public void testFileTypeConstructorsMustBeNonPublic() {
+    FileType[] fileTypes = myFileTypeManager.getRegisteredFileTypes();
+    LOG.debug("Registered file types: "+fileTypes.length);
+    for (FileType fileType : fileTypes) {
+      if (fileType.getClass() == AbstractFileType.class) continue;
+      Constructor<?>[] constructors = fileType.getClass().getDeclaredConstructors();
+      for (Constructor<?> constructor : constructors) {
+        assertFalse("FileType constructor must be non-public to avoid duplicates but got: " + constructor, Modifier.isPublic(constructor.getModifiers()));
+      }
     }
   }
 }

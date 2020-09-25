@@ -354,4 +354,9 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
   public void setCommenter(@NotNull Commenter commenter) {
     myCommenter = commenter;
   }
+
+  @Override
+  public String toString() {
+    return "AbstractFileType "+mySyntaxTable;
+  }
 }

@@ -11,6 +11,9 @@ import javax.swing.*;
 public class PyRemoteDebugFileType implements FileType {
   public static final PyRemoteDebugFileType INSTANCE = new PyRemoteDebugFileType();
 
+  private PyRemoteDebugFileType() {
+  }
+
   @NotNull
   @Override
   public String getName() {

@@ -12,6 +12,9 @@ public class TerminalSessionFileType extends FakeFileType {
 
   public final static TerminalSessionFileType INSTANCE = new TerminalSessionFileType();
 
+  private TerminalSessionFileType() {
+  }
+
   @Override
   @NotNull
   public String getName() {

@@ -84,7 +84,7 @@ public final class CheckRegExpForm {
     }
     else {
       // for correct syntax highlighting
-      fileType = new RegExpFileType(language);
+      fileType = RegExpFileType.forLanguage(language);
     }
     final EditorTextField myRegExp = new EditorTextField(document, project, fileType, false, false) {
       @Override
