@@ -48,17 +48,12 @@ public final class ImplementOrExtendFix extends LocalQuickFixAndIntentionActionO
     // to plugin.xml or java class
     PsiClass subclass = mySubclassPointer.getElement();
     if (subclass == null || !subclass.isValid()) return;
-    boolean external = file != subclass.getContainingFile();
-    if (external) {
-      ReadonlyStatusHandler readonlyStatusHandler = ReadonlyStatusHandler.getInstance(project);
-      ReadonlyStatusHandler.OperationStatus status = readonlyStatusHandler.ensureFilesWritable(
-        Collections.singletonList(subclass.getContainingFile().getVirtualFile()));
-
-      if (status.hasReadonlyFiles()) {
+    PsiFile subclassFile = subclass.getContainingFile();
+    boolean external = file != subclassFile;
+    if (external && !subclassFile.isWritable()) {
         String className = subclass.getQualifiedName();
         Messages.showErrorDialog(project, RefactoringBundle.message("0.is.read.only", className), CommonBundle.getErrorTitle());
         return;
-      }
     }
     PsiClass parentClass = myParentClassPointer.getElement();
     if (parentClass == null) return;
