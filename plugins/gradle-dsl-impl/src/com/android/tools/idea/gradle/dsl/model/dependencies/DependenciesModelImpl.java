@@ -624,12 +624,12 @@ public class DependenciesModelImpl extends GradleDslBlockModel implements Depend
   }
 
   @NotNull
-  private GradleDslElement resolveElement(@NotNull GradleDslElement element) {
+  private static GradleDslElement resolveElement(@NotNull GradleDslElement element) {
     GradleDslElement resolved = element;
     if (element instanceof GradleDslLiteral) {
       GradleDslElement foundElement = followElement((GradleDslLiteral)element);
       if (foundElement instanceof GradleDslExpression) {
-        resolved = (GradleDslExpression)foundElement;
+        resolved = foundElement;
       }
     }
     return resolved;
