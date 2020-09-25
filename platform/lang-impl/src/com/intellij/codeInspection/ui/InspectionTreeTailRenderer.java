@@ -72,21 +72,13 @@ public abstract class InspectionTreeTailRenderer<E extends Exception> {
   private String getPresentableName(HighlightDisplayLevel level, boolean pluralize) {
     final HighlightSeverity severity = level.getSeverity();
     if (pluralize) {
-      String name = myPluralizedSeverityNames.get(severity);
-      if (name == null) {
-        final String lowerCaseName = StringUtil.toLowerCase(level.getName());
-        name = SeverityRegistrar.isDefaultSeverity(severity) ? StringUtil.pluralize(lowerCaseName) : lowerCaseName;
-        myPluralizedSeverityNames.put(severity, name);
-      }
-      return name;
+      return myPluralizedSeverityNames.computeIfAbsent(severity, s -> {
+        String lowerCaseName = StringUtil.toLowerCase(level.getName());
+        return SeverityRegistrar.isDefaultSeverity(s) ? StringUtil.pluralize(lowerCaseName) : lowerCaseName;
+      });
     }
     else {
-      String name = myUnpluralizedSeverityNames.get(severity);
-      if (name == null) {
-        name = StringUtil.toLowerCase(level.getName());
-        myUnpluralizedSeverityNames.put(severity, name);
-      }
-      return name;
+      return myUnpluralizedSeverityNames.computeIfAbsent(severity, s -> StringUtil.toLowerCase(level.getName()));
     }
   }
 }
