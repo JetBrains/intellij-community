@@ -414,7 +414,7 @@ public class EditorSearchSession implements SearchSession,
   private void updateEmptyText() {
     if (myComponent.getSearchTextComponent() instanceof ComponentWithEmptyText) {
       String emptyText = getEmptyText();
-      ((ComponentWithEmptyText)myComponent.getSearchTextComponent()).getEmptyText().setText(emptyText);
+      ((ComponentWithEmptyText)myComponent.getSearchTextComponent()).getEmptyText().setText(StringUtil.capitalize(emptyText));
     }
   }
 
