@@ -52,15 +52,15 @@ fun cutLineIfTooLong(text: String, maxLength: Int = ConsoleBuffer.getCycleBuffer
 
 private class Shortener(private val attributes: MutableMap<String, String>,
                         var currentLength: Int,
-                        private val minValueLengthToCut: Int,
-                        private val margin: Int) {
+                        private val margin: Int,
+                        private val minValueLengthToCut: Int) {
   private val shortened = mutableSetOf<String>()
   fun shortenAttribute(attribute: String) {
     if (attribute in shortened) {
       return
     }
     val value = attributes[attribute] ?: return
-    if (value.length <= minValueLengthToCut) { // Tool short to cut
+    if (value.length <= minValueLengthToCut) { // Too short to cut
       return
     }
 

@@ -54,7 +54,7 @@ class LongLineCutterTest {
     val message = createMessage(mapOf(
       "expected" to "A".repeat(maxLength * 2),
       "actual" to "B".repeat(maxLength * 2)
-    ));
+    ))
     val result = parseMessage(cutLineIfTooLong(message, maxLength, 10))!!
 
     val actual = result.attributes["actual"]!!
@@ -90,14 +90,15 @@ class LongLineCutterTest {
 
   @Test
   fun attributesAreNotValidated() {
-    val maxLength = 1000
+    val maxLength = 199
     val message = createMessage(ServiceMessageTypes.TEST_FAILED, mapOf(
-      "details" to "Q".repeat(maxLength * 2),
+      "details" to "Q".repeat(maxLength * 3),
     ))
-    val result = cutLineIfTooLong(message, maxLength, 100)
+    val margin = 49
+    val result = cutLineIfTooLong(message, maxLength, margin)
     Assert.assertTrue(result.length <= maxLength)
     val shortenedMessage = parseMessage(result)!!
     val details = shortenedMessage.attributes["details"]!!
-    Assert.assertTrue(details.startsWith("Q") && details.endsWith("Q") && details.contains("<...>"))
+    Assert.assertEquals("Q".repeat(margin) + "<...>" + "Q".repeat(margin), details)
   }
 }
