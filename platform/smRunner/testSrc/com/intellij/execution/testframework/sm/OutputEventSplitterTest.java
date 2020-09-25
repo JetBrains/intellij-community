@@ -107,7 +107,7 @@ public class OutputEventSplitterTest extends LightPlatformTestCase {
 
     mySplitter.process(message, ProcessOutputType.STDOUT);
     final String shortenedLine = myOutput.get(ProcessOutputTypes.STDOUT).toList().get(0);
-    final ServiceMessage shortenedMessage = ServiceMessage.parse(shortenedLine);
+    final ServiceMessage shortenedMessage = ServiceMessageUtil.parse(shortenedLine, true);
     Assert.assertTrue("Failed to shorten message", shortenedMessage.toString().length() <= maxSize);
     final Map<String, String> attrs = shortenedMessage.getAttributes();
     Assert.assertEquals(attrs.get("expected").replaceFirst("abc", junk), attrs.get("actual"));

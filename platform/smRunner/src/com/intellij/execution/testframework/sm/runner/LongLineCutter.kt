@@ -2,6 +2,7 @@
 package com.intellij.execution.testframework.sm.runner
 
 import com.intellij.execution.impl.ConsoleBuffer
+import com.intellij.execution.testframework.sm.ServiceMessageUtil
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
 
 private const val ELLIPSIS = "<...>"
@@ -22,7 +23,7 @@ fun cutLineIfTooLong(text: String, maxLength: Int = ConsoleBuffer.getCycleBuffer
     return text
   }
 
-  val message = ServiceMessage.parse(text.trim())
+  val message = ServiceMessageUtil.parse(text.trim(), false)
 
   if (message == null) {
     //Not a message, cut as regular text
