@@ -72,7 +72,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   private final Color disabledForeground = JBColor.namedColor("Table.disabledForeground", JBColor.gray);
 
-  private int myLightSelectionRow = -1;
+  protected int myLightSelectionRow = -1;
 
   public JBTable() {
     this(new DefaultTableModel());
