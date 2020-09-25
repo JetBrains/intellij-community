@@ -224,7 +224,7 @@ public final class IconLoader {
         // do not use cache
         int flags = ImageLoader.ALLOW_FLOAT_SCALING;
         if (isDark) {
-          flags |= ImageLoader.DARK;
+          flags |= ImageLoader.USE_DARK;
         }
         assert overriddenPath != null;
         assert ownerClass != null;
@@ -1066,12 +1066,12 @@ public final class IconLoader {
 
     @Override
     public @Nullable Image loadImage(@Nullable List<ImageFilter> filters, @NotNull ScaleContext scaleContext, boolean isDark) {
-      int flags = ImageLoader.FIND_SVG | ImageLoader.ALLOW_FLOAT_SCALING;
+      int flags = ImageLoader.USE_SVG | ImageLoader.ALLOW_FLOAT_SCALING;
       if (useCacheOnLoad) {
         flags |= ImageLoader.USE_CACHE;
       }
       if (isDark) {
-        flags |= ImageLoader.DARK;
+        flags |= ImageLoader.USE_DARK;
       }
 
       if (ownerClass != null && overriddenPath != null) {

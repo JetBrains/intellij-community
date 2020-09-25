@@ -93,7 +93,8 @@ public final class Splash extends Window {
     super.dispose();
   }
 
-  private @NotNull Image loadImage(@NotNull String path) {
+  @NotNull
+  private static Image loadImage(@NotNull String path) {
     Image result = SplashSlideLoader.loadImage(path);
     if (result == null) {
       throw new IllegalStateException("Cannot find image: " + path);
