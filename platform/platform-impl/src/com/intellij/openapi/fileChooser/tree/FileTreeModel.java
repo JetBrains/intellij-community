@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
-import com.intellij.ui.tree.Identifiable;
 import com.intellij.ui.tree.MapBasedTree;
 import com.intellij.ui.tree.MapBasedTree.Entry;
 import com.intellij.ui.tree.MapBasedTree.UpdateResult;
@@ -28,7 +27,6 @@ import java.io.File;
 import java.lang.reflect.Method;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -44,7 +42,7 @@ import static com.intellij.util.ReflectionUtil.getDeclaredMethod;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 
-public final class FileTreeModel extends AbstractTreeModel implements Identifiable, InvokerSupplier {
+public final class FileTreeModel extends AbstractTreeModel implements InvokerSupplier {
   private final Invoker invoker = Invoker.forBackgroundThreadWithReadAction(this);
   private final State state;
   private volatile List<Root> roots;
@@ -73,24 +71,6 @@ public final class FileTreeModel extends AbstractTreeModel implements Identifiab
       }
       treeStructureChanged(state.path, null, null);
     });
-  }
-
-  @Override
-  public Object getUniqueID(@NotNull TreePath path) {
-    Object object = path.getLastPathComponent();
-    TreePath parent = path.getParentPath();
-    return parent != null && object instanceof Node
-           ? getUniqueID(parent, (Node)object, new ArrayDeque<>())
-           : parent != null || object != state ? null : state.toString();
-  }
-
-  private Object getUniqueID(TreePath path, Node node, ArrayDeque<? super String> deque) {
-    deque.addFirst(node.getName());
-    Object object = path.getLastPathComponent();
-    TreePath parent = path.getParentPath();
-    return parent != null && object instanceof Node
-           ? getUniqueID(parent, (Node)object, deque)
-           : parent != null || object != state ? null : deque.toArray();
   }
 
   @NotNull
