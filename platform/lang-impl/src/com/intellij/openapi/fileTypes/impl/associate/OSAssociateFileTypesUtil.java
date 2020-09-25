@@ -3,10 +3,13 @@ package com.intellij.openapi.fileTypes.impl.associate;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.impl.associate.ui.FileTypeAssociationDialog;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class OSAssociateFileTypesUtil {
   public final static String ENABLE_REG_KEY =  "system.file.type.associations.enabled";
@@ -21,19 +24,22 @@ public class OSAssociateFileTypesUtil {
     if (associator != null) {
       FileTypeAssociationDialog dialog = new FileTypeAssociationDialog();
       if (dialog.showAndGet()) {
-        ApplicationManager.getApplication().executeOnPooledThread(
-          () -> {
-            try {
-              callback.beforeStart();
-              associator.associateFileTypes(dialog.getSelectedFileTypes());
-              callback.onSuccess(associator.isOsRestartRequired());
+        List<FileType> fileTypes = dialog.getSelectedFileTypes();
+        if (fileTypes.size() > 0) {
+          ApplicationManager.getApplication().executeOnPooledThread(
+            () -> {
+              try {
+                callback.beforeStart();
+                associator.associateFileTypes(fileTypes);
+                callback.onSuccess(associator.isOsRestartRequired());
+              }
+              catch (OSFileAssociationException exception) {
+                callback.onFailure(exception.getMessage());
+                LOG.info(exception);
+              }
             }
-            catch (OSFileAssociationException exception) {
-              callback.onFailure(exception.getMessage());
-              LOG.info(exception);
-            }
-          }
-        );
+          );
+        }
       }
     }
   }
