@@ -8,13 +8,16 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.psi.Property;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComponentValidator;
+import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -23,20 +26,59 @@ import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBTextField;
+import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class UnusedPropertyInspection extends PropertiesInspectionBase {
   public static final String SHORT_NAME = "UnusedProperty";
-  private static final Logger LOG = Logger.getInstance(UnusedPropertyInspection.class);
 
+  public @NotNull @RegExp String fileNameMask = ".*";
+  
   @Override
   @NotNull
   public String getShortName() {
     return SHORT_NAME;
+  }
+
+  @Override
+  public @Nullable JComponent createOptionsPanel() {
+    JPanel panel = new JPanel(new GridBagLayout());
+    final GridBagConstraints constraints = new GridBagConstraints();
+    constraints.gridx = 0;
+    constraints.gridy = 0;
+    constraints.weightx = 1.0;
+    constraints.weighty = 1.0;
+    constraints.anchor = GridBagConstraints.FIRST_LINE_START;
+    constraints.fill = GridBagConstraints.HORIZONTAL;
+    panel.add(new JBLabel(PropertiesBundle.message("label.analyze.only.property.files.whose.name.matches")), constraints);
+    JBTextField textField = new JBTextField(fileNameMask);
+    constraints.gridy++;
+    panel.add(textField, constraints);
+    ComponentValidator validator = new ComponentValidator(Disposer.newDisposable()).withValidator(() -> {
+      String text = textField.getText();
+      fileNameMask = text.isEmpty() ? ".*" : text;
+      String errorMessage = null;
+      try {
+        Pattern.compile(text);
+      }
+      catch (PatternSyntaxException ex) {
+        errorMessage = StringUtil.substringBefore(ex.getMessage(), "\n");
+      }
+      boolean hasError = StringUtil.isNotEmpty(errorMessage);
+      return hasError ? new ValidationInfo(errorMessage, textField) : null;
+    }).andRegisterOnDocumentListener(textField).installOn(textField);
+    validator.revalidate();
+    return panel;
   }
 
   @Nullable
@@ -64,8 +106,17 @@ public class UnusedPropertyInspection extends PropertiesInspectionBase {
                                         final boolean isOnTheFly,
                                         @NotNull final LocalInspectionToolSession session) {
     final PsiFile file = session.getFile();
+    if (!fileNameMask.isEmpty()) {
+      try {
+        Pattern p = Pattern.compile(fileNameMask);
+        if (!p.matcher(file.getName()).matches()) {
+          return PsiElementVisitor.EMPTY_VISITOR;
+        }
+      }
+      catch (PatternSyntaxException ignored) { }
+    }
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
-    if (module == null) return super.buildVisitor(holder, isOnTheFly, session);
+    if (module == null) return PsiElementVisitor.EMPTY_VISITOR;
 
     final UnusedPropertiesSearchHelper helper = new UnusedPropertiesSearchHelper(module);
     return new PsiElementVisitor() {
