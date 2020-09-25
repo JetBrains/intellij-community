@@ -29,6 +29,11 @@ public final class ElevatorProto {
   static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_elevation_rpc_CommandLine_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_elevation_rpc_CommandLine_EnvironVar_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_elevation_rpc_CommandLine_EnvironVar_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -41,12 +46,15 @@ public final class ElevatorProto {
       "\n\016elevator.proto\022\relevation.rpc\"@\n\014Spawn" +
       "Request\0220\n\014command_line\030\001 \001(\0132\032.elevatio" +
       "n.rpc.CommandLine\"*\n\nSpawnReply\022\017\n\007messa" +
-      "ge\030\001 \001(\t\022\013\n\003pid\030\002 \001(\r\"2\n\013CommandLine\022\020\n\010" +
-      "exe_path\030\001 \001(\t\022\021\n\targuments\030\002 \003(\t2M\n\010Ele" +
-      "vator\022A\n\005Spawn\022\033.elevation.rpc.SpawnRequ" +
-      "est\032\031.elevation.rpc.SpawnReply\"\000B?\n,com." +
-      "intellij.execution.process.elevation.rpc" +
-      "B\rElevatorProtoP\001b\006proto3"
+      "ge\030\001 \001(\t\022\013\n\003pid\030\002 \001(\004\"\233\001\n\013CommandLine\022\017\n" +
+      "\007command\030\001 \003(\t\022\023\n\013working_dir\030\002 \001(\t\022;\n\014e" +
+      "nviron_vars\030\003 \003(\0132%.elevation.rpc.Comman" +
+      "dLine.EnvironVar\032)\n\nEnvironVar\022\014\n\004name\030\001" +
+      " \001(\t\022\r\n\005value\030\002 \001(\t2M\n\010Elevator\022A\n\005Spawn" +
+      "\022\033.elevation.rpc.SpawnRequest\032\031.elevatio" +
+      "n.rpc.SpawnReply\"\000B?\n,com.intellij.execu" +
+      "tion.process.elevation.rpcB\rElevatorProt" +
+      "oP\001b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -69,7 +77,13 @@ public final class ElevatorProto {
     internal_static_elevation_rpc_CommandLine_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_elevation_rpc_CommandLine_descriptor,
-        new java.lang.String[] { "ExePath", "Arguments", });
+        new java.lang.String[] { "Command", "WorkingDir", "EnvironVars", });
+    internal_static_elevation_rpc_CommandLine_EnvironVar_descriptor =
+      internal_static_elevation_rpc_CommandLine_descriptor.getNestedTypes().get(0);
+    internal_static_elevation_rpc_CommandLine_EnvironVar_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_elevation_rpc_CommandLine_EnvironVar_descriptor,
+        new java.lang.String[] { "Name", "Value", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

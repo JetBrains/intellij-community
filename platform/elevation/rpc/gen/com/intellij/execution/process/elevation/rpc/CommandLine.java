@@ -16,8 +16,9 @@ private static final long serialVersionUID = 0L;
     super(builder);
   }
   private CommandLine() {
-    exePath_ = "";
-    arguments_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+    command_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+    workingDir_ = "";
+    environVars_ = java.util.Collections.emptyList();
   }
 
   @java.lang.Override
@@ -53,17 +54,26 @@ private static final long serialVersionUID = 0L;
             break;
           case 10: {
             java.lang.String s = input.readStringRequireUtf8();
-
-            exePath_ = s;
+            if (!((mutable_bitField0_ & 0x00000001) != 0)) {
+              command_ = new com.google.protobuf.LazyStringArrayList();
+              mutable_bitField0_ |= 0x00000001;
+            }
+            command_.add(s);
             break;
           }
           case 18: {
             java.lang.String s = input.readStringRequireUtf8();
-            if (!((mutable_bitField0_ & 0x00000001) != 0)) {
-              arguments_ = new com.google.protobuf.LazyStringArrayList();
-              mutable_bitField0_ |= 0x00000001;
+
+            workingDir_ = s;
+            break;
+          }
+          case 26: {
+            if (!((mutable_bitField0_ & 0x00000002) != 0)) {
+              environVars_ = new java.util.ArrayList<com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar>();
+              mutable_bitField0_ |= 0x00000002;
             }
-            arguments_.add(s);
+            environVars_.add(
+                input.readMessage(com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar.parser(), extensionRegistry));
             break;
           }
           default: {
@@ -82,7 +92,10 @@ private static final long serialVersionUID = 0L;
           e).setUnfinishedMessage(this);
     } finally {
       if (((mutable_bitField0_ & 0x00000001) != 0)) {
-        arguments_ = arguments_.getUnmodifiableView();
+        command_ = command_.getUnmodifiableView();
+      }
+      if (((mutable_bitField0_ & 0x00000002) != 0)) {
+        environVars_ = java.util.Collections.unmodifiableList(environVars_);
       }
       this.unknownFields = unknownFields.build();
       makeExtensionsImmutable();
@@ -101,77 +114,835 @@ private static final long serialVersionUID = 0L;
             com.intellij.execution.process.elevation.rpc.CommandLine.class, com.intellij.execution.process.elevation.rpc.CommandLine.Builder.class);
   }
 
-  public static final int EXE_PATH_FIELD_NUMBER = 1;
-  private volatile java.lang.Object exePath_;
+  public interface EnvironVarOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:elevation.rpc.CommandLine.EnvironVar)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>string name = 1;</code>
+     * @return The name.
+     */
+    java.lang.String getName();
+    /**
+     * <code>string name = 1;</code>
+     * @return The bytes for name.
+     */
+    com.google.protobuf.ByteString
+        getNameBytes();
+
+    /**
+     * <code>string value = 2;</code>
+     * @return The value.
+     */
+    java.lang.String getValue();
+    /**
+     * <code>string value = 2;</code>
+     * @return The bytes for value.
+     */
+    com.google.protobuf.ByteString
+        getValueBytes();
+  }
   /**
-   * <code>string exe_path = 1;</code>
-   * @return The exePath.
+   * Protobuf type {@code elevation.rpc.CommandLine.EnvironVar}
+   */
+  public static final class EnvironVar extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:elevation.rpc.CommandLine.EnvironVar)
+      EnvironVarOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use EnvironVar.newBuilder() to construct.
+    private EnvironVar(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private EnvironVar() {
+      name_ = "";
+      value_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new EnvironVar();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private EnvironVar(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 10: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              name_ = s;
+              break;
+            }
+            case 18: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              value_ = s;
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.intellij.execution.process.elevation.rpc.ElevatorProto.internal_static_elevation_rpc_CommandLine_EnvironVar_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.intellij.execution.process.elevation.rpc.ElevatorProto.internal_static_elevation_rpc_CommandLine_EnvironVar_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar.class, com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar.Builder.class);
+    }
+
+    public static final int NAME_FIELD_NUMBER = 1;
+    private volatile java.lang.Object name_;
+    /**
+     * <code>string name = 1;</code>
+     * @return The name.
+     */
+    @java.lang.Override
+    public java.lang.String getName() {
+      java.lang.Object ref = name_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        name_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string name = 1;</code>
+     * @return The bytes for name.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getNameBytes() {
+      java.lang.Object ref = name_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        name_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int VALUE_FIELD_NUMBER = 2;
+    private volatile java.lang.Object value_;
+    /**
+     * <code>string value = 2;</code>
+     * @return The value.
+     */
+    @java.lang.Override
+    public java.lang.String getValue() {
+      java.lang.Object ref = value_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        value_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string value = 2;</code>
+     * @return The bytes for value.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getValueBytes() {
+      java.lang.Object ref = value_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        value_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!getNameBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, name_);
+      }
+      if (!getValueBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, value_);
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!getNameBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, name_);
+      }
+      if (!getValueBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, value_);
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar)) {
+        return super.equals(obj);
+      }
+      com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar other = (com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar) obj;
+
+      if (!getName()
+          .equals(other.getName())) return false;
+      if (!getValue()
+          .equals(other.getValue())) return false;
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + NAME_FIELD_NUMBER;
+      hash = (53 * hash) + getName().hashCode();
+      hash = (37 * hash) + VALUE_FIELD_NUMBER;
+      hash = (53 * hash) + getValue().hashCode();
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code elevation.rpc.CommandLine.EnvironVar}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:elevation.rpc.CommandLine.EnvironVar)
+        com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVarOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.intellij.execution.process.elevation.rpc.ElevatorProto.internal_static_elevation_rpc_CommandLine_EnvironVar_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.intellij.execution.process.elevation.rpc.ElevatorProto.internal_static_elevation_rpc_CommandLine_EnvironVar_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar.class, com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar.Builder.class);
+      }
+
+      // Construct using com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        name_ = "";
+
+        value_ = "";
+
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.intellij.execution.process.elevation.rpc.ElevatorProto.internal_static_elevation_rpc_CommandLine_EnvironVar_descriptor;
+      }
+
+      @java.lang.Override
+      public com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar getDefaultInstanceForType() {
+        return com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar build() {
+        com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar buildPartial() {
+        com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar result = new com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar(this);
+        result.name_ = name_;
+        result.value_ = value_;
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar) {
+          return mergeFrom((com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar other) {
+        if (other == com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar.getDefaultInstance()) return this;
+        if (!other.getName().isEmpty()) {
+          name_ = other.name_;
+          onChanged();
+        }
+        if (!other.getValue().isEmpty()) {
+          value_ = other.value_;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private java.lang.Object name_ = "";
+      /**
+       * <code>string name = 1;</code>
+       * @return The name.
+       */
+      public java.lang.String getName() {
+        java.lang.Object ref = name_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          name_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string name = 1;</code>
+       * @return The bytes for name.
+       */
+      public com.google.protobuf.ByteString
+          getNameBytes() {
+        java.lang.Object ref = name_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          name_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string name = 1;</code>
+       * @param value The name to set.
+       * @return This builder for chaining.
+       */
+      public Builder setName(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        name_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string name = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearName() {
+        
+        name_ = getDefaultInstance().getName();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string name = 1;</code>
+       * @param value The bytes for name to set.
+       * @return This builder for chaining.
+       */
+      public Builder setNameBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        name_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object value_ = "";
+      /**
+       * <code>string value = 2;</code>
+       * @return The value.
+       */
+      public java.lang.String getValue() {
+        java.lang.Object ref = value_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          value_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string value = 2;</code>
+       * @return The bytes for value.
+       */
+      public com.google.protobuf.ByteString
+          getValueBytes() {
+        java.lang.Object ref = value_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          value_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string value = 2;</code>
+       * @param value The value to set.
+       * @return This builder for chaining.
+       */
+      public Builder setValue(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        value_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string value = 2;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearValue() {
+        
+        value_ = getDefaultInstance().getValue();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string value = 2;</code>
+       * @param value The bytes for value to set.
+       * @return This builder for chaining.
+       */
+      public Builder setValueBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        value_ = value;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:elevation.rpc.CommandLine.EnvironVar)
+    }
+
+    // @@protoc_insertion_point(class_scope:elevation.rpc.CommandLine.EnvironVar)
+    private static final com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar();
+    }
+
+    public static com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<EnvironVar>
+        PARSER = new com.google.protobuf.AbstractParser<EnvironVar>() {
+      @java.lang.Override
+      public EnvironVar parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new EnvironVar(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<EnvironVar> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<EnvironVar> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public static final int COMMAND_FIELD_NUMBER = 1;
+  private com.google.protobuf.LazyStringList command_;
+  /**
+   * <code>repeated string command = 1;</code>
+   * @return A list containing the command.
+   */
+  public com.google.protobuf.ProtocolStringList
+      getCommandList() {
+    return command_;
+  }
+  /**
+   * <code>repeated string command = 1;</code>
+   * @return The count of command.
+   */
+  public int getCommandCount() {
+    return command_.size();
+  }
+  /**
+   * <code>repeated string command = 1;</code>
+   * @param index The index of the element to return.
+   * @return The command at the given index.
+   */
+  public java.lang.String getCommand(int index) {
+    return command_.get(index);
+  }
+  /**
+   * <code>repeated string command = 1;</code>
+   * @param index The index of the value to return.
+   * @return The bytes of the command at the given index.
+   */
+  public com.google.protobuf.ByteString
+      getCommandBytes(int index) {
+    return command_.getByteString(index);
+  }
+
+  public static final int WORKING_DIR_FIELD_NUMBER = 2;
+  private volatile java.lang.Object workingDir_;
+  /**
+   * <code>string working_dir = 2;</code>
+   * @return The workingDir.
    */
   @java.lang.Override
-  public java.lang.String getExePath() {
-    java.lang.Object ref = exePath_;
+  public java.lang.String getWorkingDir() {
+    java.lang.Object ref = workingDir_;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
       com.google.protobuf.ByteString bs = 
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
-      exePath_ = s;
+      workingDir_ = s;
       return s;
     }
   }
   /**
-   * <code>string exe_path = 1;</code>
-   * @return The bytes for exePath.
+   * <code>string working_dir = 2;</code>
+   * @return The bytes for workingDir.
    */
   @java.lang.Override
   public com.google.protobuf.ByteString
-      getExePathBytes() {
-    java.lang.Object ref = exePath_;
+      getWorkingDirBytes() {
+    java.lang.Object ref = workingDir_;
     if (ref instanceof java.lang.String) {
       com.google.protobuf.ByteString b = 
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
-      exePath_ = b;
+      workingDir_ = b;
       return b;
     } else {
       return (com.google.protobuf.ByteString) ref;
     }
   }
 
-  public static final int ARGUMENTS_FIELD_NUMBER = 2;
-  private com.google.protobuf.LazyStringList arguments_;
+  public static final int ENVIRON_VARS_FIELD_NUMBER = 3;
+  private java.util.List<com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar> environVars_;
   /**
-   * <code>repeated string arguments = 2;</code>
-   * @return A list containing the arguments.
+   * <code>repeated .elevation.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
    */
-  public com.google.protobuf.ProtocolStringList
-      getArgumentsList() {
-    return arguments_;
+  @java.lang.Override
+  public java.util.List<com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar> getEnvironVarsList() {
+    return environVars_;
   }
   /**
-   * <code>repeated string arguments = 2;</code>
-   * @return The count of arguments.
+   * <code>repeated .elevation.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
    */
-  public int getArgumentsCount() {
-    return arguments_.size();
+  @java.lang.Override
+  public java.util.List<? extends com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVarOrBuilder> 
+      getEnvironVarsOrBuilderList() {
+    return environVars_;
   }
   /**
-   * <code>repeated string arguments = 2;</code>
-   * @param index The index of the element to return.
-   * @return The arguments at the given index.
+   * <code>repeated .elevation.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
    */
-  public java.lang.String getArguments(int index) {
-    return arguments_.get(index);
+  @java.lang.Override
+  public int getEnvironVarsCount() {
+    return environVars_.size();
   }
   /**
-   * <code>repeated string arguments = 2;</code>
-   * @param index The index of the value to return.
-   * @return The bytes of the arguments at the given index.
+   * <code>repeated .elevation.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
    */
-  public com.google.protobuf.ByteString
-      getArgumentsBytes(int index) {
-    return arguments_.getByteString(index);
+  @java.lang.Override
+  public com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar getEnvironVars(int index) {
+    return environVars_.get(index);
+  }
+  /**
+   * <code>repeated .elevation.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+   */
+  @java.lang.Override
+  public com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVarOrBuilder getEnvironVarsOrBuilder(
+      int index) {
+    return environVars_.get(index);
   }
 
   private byte memoizedIsInitialized = -1;
@@ -188,11 +959,14 @@ private static final long serialVersionUID = 0L;
   @java.lang.Override
   public void writeTo(com.google.protobuf.CodedOutputStream output)
                       throws java.io.IOException {
-    if (!getExePathBytes().isEmpty()) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 1, exePath_);
+    for (int i = 0; i < command_.size(); i++) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 1, command_.getRaw(i));
     }
-    for (int i = 0; i < arguments_.size(); i++) {
-      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, arguments_.getRaw(i));
+    if (!getWorkingDirBytes().isEmpty()) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 2, workingDir_);
+    }
+    for (int i = 0; i < environVars_.size(); i++) {
+      output.writeMessage(3, environVars_.get(i));
     }
     unknownFields.writeTo(output);
   }
@@ -203,16 +977,20 @@ private static final long serialVersionUID = 0L;
     if (size != -1) return size;
 
     size = 0;
-    if (!getExePathBytes().isEmpty()) {
-      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, exePath_);
-    }
     {
       int dataSize = 0;
-      for (int i = 0; i < arguments_.size(); i++) {
-        dataSize += computeStringSizeNoTag(arguments_.getRaw(i));
+      for (int i = 0; i < command_.size(); i++) {
+        dataSize += computeStringSizeNoTag(command_.getRaw(i));
       }
       size += dataSize;
-      size += 1 * getArgumentsList().size();
+      size += 1 * getCommandList().size();
+    }
+    if (!getWorkingDirBytes().isEmpty()) {
+      size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, workingDir_);
+    }
+    for (int i = 0; i < environVars_.size(); i++) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeMessageSize(3, environVars_.get(i));
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -229,10 +1007,12 @@ private static final long serialVersionUID = 0L;
     }
     com.intellij.execution.process.elevation.rpc.CommandLine other = (com.intellij.execution.process.elevation.rpc.CommandLine) obj;
 
-    if (!getExePath()
-        .equals(other.getExePath())) return false;
-    if (!getArgumentsList()
-        .equals(other.getArgumentsList())) return false;
+    if (!getCommandList()
+        .equals(other.getCommandList())) return false;
+    if (!getWorkingDir()
+        .equals(other.getWorkingDir())) return false;
+    if (!getEnvironVarsList()
+        .equals(other.getEnvironVarsList())) return false;
     if (!unknownFields.equals(other.unknownFields)) return false;
     return true;
   }
@@ -244,11 +1024,15 @@ private static final long serialVersionUID = 0L;
     }
     int hash = 41;
     hash = (19 * hash) + getDescriptor().hashCode();
-    hash = (37 * hash) + EXE_PATH_FIELD_NUMBER;
-    hash = (53 * hash) + getExePath().hashCode();
-    if (getArgumentsCount() > 0) {
-      hash = (37 * hash) + ARGUMENTS_FIELD_NUMBER;
-      hash = (53 * hash) + getArgumentsList().hashCode();
+    if (getCommandCount() > 0) {
+      hash = (37 * hash) + COMMAND_FIELD_NUMBER;
+      hash = (53 * hash) + getCommandList().hashCode();
+    }
+    hash = (37 * hash) + WORKING_DIR_FIELD_NUMBER;
+    hash = (53 * hash) + getWorkingDir().hashCode();
+    if (getEnvironVarsCount() > 0) {
+      hash = (37 * hash) + ENVIRON_VARS_FIELD_NUMBER;
+      hash = (53 * hash) + getEnvironVarsList().hashCode();
     }
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
@@ -378,15 +1162,22 @@ private static final long serialVersionUID = 0L;
     private void maybeForceBuilderInitialization() {
       if (com.google.protobuf.GeneratedMessageV3
               .alwaysUseFieldBuilders) {
+        getEnvironVarsFieldBuilder();
       }
     }
     @java.lang.Override
     public Builder clear() {
       super.clear();
-      exePath_ = "";
-
-      arguments_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+      command_ = com.google.protobuf.LazyStringArrayList.EMPTY;
       bitField0_ = (bitField0_ & ~0x00000001);
+      workingDir_ = "";
+
+      if (environVarsBuilder_ == null) {
+        environVars_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000002);
+      } else {
+        environVarsBuilder_.clear();
+      }
       return this;
     }
 
@@ -414,12 +1205,21 @@ private static final long serialVersionUID = 0L;
     public com.intellij.execution.process.elevation.rpc.CommandLine buildPartial() {
       com.intellij.execution.process.elevation.rpc.CommandLine result = new com.intellij.execution.process.elevation.rpc.CommandLine(this);
       int from_bitField0_ = bitField0_;
-      result.exePath_ = exePath_;
       if (((bitField0_ & 0x00000001) != 0)) {
-        arguments_ = arguments_.getUnmodifiableView();
+        command_ = command_.getUnmodifiableView();
         bitField0_ = (bitField0_ & ~0x00000001);
       }
-      result.arguments_ = arguments_;
+      result.command_ = command_;
+      result.workingDir_ = workingDir_;
+      if (environVarsBuilder_ == null) {
+        if (((bitField0_ & 0x00000002) != 0)) {
+          environVars_ = java.util.Collections.unmodifiableList(environVars_);
+          bitField0_ = (bitField0_ & ~0x00000002);
+        }
+        result.environVars_ = environVars_;
+      } else {
+        result.environVars_ = environVarsBuilder_.build();
+      }
       onBuilt();
       return result;
     }
@@ -468,19 +1268,45 @@ private static final long serialVersionUID = 0L;
 
     public Builder mergeFrom(com.intellij.execution.process.elevation.rpc.CommandLine other) {
       if (other == com.intellij.execution.process.elevation.rpc.CommandLine.getDefaultInstance()) return this;
-      if (!other.getExePath().isEmpty()) {
-        exePath_ = other.exePath_;
-        onChanged();
-      }
-      if (!other.arguments_.isEmpty()) {
-        if (arguments_.isEmpty()) {
-          arguments_ = other.arguments_;
+      if (!other.command_.isEmpty()) {
+        if (command_.isEmpty()) {
+          command_ = other.command_;
           bitField0_ = (bitField0_ & ~0x00000001);
         } else {
-          ensureArgumentsIsMutable();
-          arguments_.addAll(other.arguments_);
+          ensureCommandIsMutable();
+          command_.addAll(other.command_);
         }
         onChanged();
+      }
+      if (!other.getWorkingDir().isEmpty()) {
+        workingDir_ = other.workingDir_;
+        onChanged();
+      }
+      if (environVarsBuilder_ == null) {
+        if (!other.environVars_.isEmpty()) {
+          if (environVars_.isEmpty()) {
+            environVars_ = other.environVars_;
+            bitField0_ = (bitField0_ & ~0x00000002);
+          } else {
+            ensureEnvironVarsIsMutable();
+            environVars_.addAll(other.environVars_);
+          }
+          onChanged();
+        }
+      } else {
+        if (!other.environVars_.isEmpty()) {
+          if (environVarsBuilder_.isEmpty()) {
+            environVarsBuilder_.dispose();
+            environVarsBuilder_ = null;
+            environVars_ = other.environVars_;
+            bitField0_ = (bitField0_ & ~0x00000002);
+            environVarsBuilder_ = 
+              com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
+                 getEnvironVarsFieldBuilder() : null;
+          } else {
+            environVarsBuilder_.addAllMessages(other.environVars_);
+          }
+        }
       }
       this.mergeUnknownFields(other.unknownFields);
       onChanged();
@@ -512,190 +1338,430 @@ private static final long serialVersionUID = 0L;
     }
     private int bitField0_;
 
-    private java.lang.Object exePath_ = "";
+    private com.google.protobuf.LazyStringList command_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+    private void ensureCommandIsMutable() {
+      if (!((bitField0_ & 0x00000001) != 0)) {
+        command_ = new com.google.protobuf.LazyStringArrayList(command_);
+        bitField0_ |= 0x00000001;
+       }
+    }
     /**
-     * <code>string exe_path = 1;</code>
-     * @return The exePath.
+     * <code>repeated string command = 1;</code>
+     * @return A list containing the command.
      */
-    public java.lang.String getExePath() {
-      java.lang.Object ref = exePath_;
+    public com.google.protobuf.ProtocolStringList
+        getCommandList() {
+      return command_.getUnmodifiableView();
+    }
+    /**
+     * <code>repeated string command = 1;</code>
+     * @return The count of command.
+     */
+    public int getCommandCount() {
+      return command_.size();
+    }
+    /**
+     * <code>repeated string command = 1;</code>
+     * @param index The index of the element to return.
+     * @return The command at the given index.
+     */
+    public java.lang.String getCommand(int index) {
+      return command_.get(index);
+    }
+    /**
+     * <code>repeated string command = 1;</code>
+     * @param index The index of the value to return.
+     * @return The bytes of the command at the given index.
+     */
+    public com.google.protobuf.ByteString
+        getCommandBytes(int index) {
+      return command_.getByteString(index);
+    }
+    /**
+     * <code>repeated string command = 1;</code>
+     * @param index The index to set the value at.
+     * @param value The command to set.
+     * @return This builder for chaining.
+     */
+    public Builder setCommand(
+        int index, java.lang.String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureCommandIsMutable();
+      command_.set(index, value);
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string command = 1;</code>
+     * @param value The command to add.
+     * @return This builder for chaining.
+     */
+    public Builder addCommand(
+        java.lang.String value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureCommandIsMutable();
+      command_.add(value);
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string command = 1;</code>
+     * @param values The command to add.
+     * @return This builder for chaining.
+     */
+    public Builder addAllCommand(
+        java.lang.Iterable<java.lang.String> values) {
+      ensureCommandIsMutable();
+      com.google.protobuf.AbstractMessageLite.Builder.addAll(
+          values, command_);
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string command = 1;</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearCommand() {
+      command_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+      bitField0_ = (bitField0_ & ~0x00000001);
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string command = 1;</code>
+     * @param value The bytes of the command to add.
+     * @return This builder for chaining.
+     */
+    public Builder addCommandBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+      ensureCommandIsMutable();
+      command_.add(value);
+      onChanged();
+      return this;
+    }
+
+    private java.lang.Object workingDir_ = "";
+    /**
+     * <code>string working_dir = 2;</code>
+     * @return The workingDir.
+     */
+    public java.lang.String getWorkingDir() {
+      java.lang.Object ref = workingDir_;
       if (!(ref instanceof java.lang.String)) {
         com.google.protobuf.ByteString bs =
             (com.google.protobuf.ByteString) ref;
         java.lang.String s = bs.toStringUtf8();
-        exePath_ = s;
+        workingDir_ = s;
         return s;
       } else {
         return (java.lang.String) ref;
       }
     }
     /**
-     * <code>string exe_path = 1;</code>
-     * @return The bytes for exePath.
+     * <code>string working_dir = 2;</code>
+     * @return The bytes for workingDir.
      */
     public com.google.protobuf.ByteString
-        getExePathBytes() {
-      java.lang.Object ref = exePath_;
+        getWorkingDirBytes() {
+      java.lang.Object ref = workingDir_;
       if (ref instanceof String) {
         com.google.protobuf.ByteString b = 
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
-        exePath_ = b;
+        workingDir_ = b;
         return b;
       } else {
         return (com.google.protobuf.ByteString) ref;
       }
     }
     /**
-     * <code>string exe_path = 1;</code>
-     * @param value The exePath to set.
+     * <code>string working_dir = 2;</code>
+     * @param value The workingDir to set.
      * @return This builder for chaining.
      */
-    public Builder setExePath(
+    public Builder setWorkingDir(
         java.lang.String value) {
       if (value == null) {
     throw new NullPointerException();
   }
   
-      exePath_ = value;
+      workingDir_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>string exe_path = 1;</code>
+     * <code>string working_dir = 2;</code>
      * @return This builder for chaining.
      */
-    public Builder clearExePath() {
+    public Builder clearWorkingDir() {
       
-      exePath_ = getDefaultInstance().getExePath();
+      workingDir_ = getDefaultInstance().getWorkingDir();
       onChanged();
       return this;
     }
     /**
-     * <code>string exe_path = 1;</code>
-     * @param value The bytes for exePath to set.
+     * <code>string working_dir = 2;</code>
+     * @param value The bytes for workingDir to set.
      * @return This builder for chaining.
      */
-    public Builder setExePathBytes(
+    public Builder setWorkingDirBytes(
         com.google.protobuf.ByteString value) {
       if (value == null) {
     throw new NullPointerException();
   }
   checkByteStringIsUtf8(value);
       
-      exePath_ = value;
+      workingDir_ = value;
       onChanged();
       return this;
     }
 
-    private com.google.protobuf.LazyStringList arguments_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-    private void ensureArgumentsIsMutable() {
-      if (!((bitField0_ & 0x00000001) != 0)) {
-        arguments_ = new com.google.protobuf.LazyStringArrayList(arguments_);
-        bitField0_ |= 0x00000001;
+    private java.util.List<com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar> environVars_ =
+      java.util.Collections.emptyList();
+    private void ensureEnvironVarsIsMutable() {
+      if (!((bitField0_ & 0x00000002) != 0)) {
+        environVars_ = new java.util.ArrayList<com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar>(environVars_);
+        bitField0_ |= 0x00000002;
        }
     }
+
+    private com.google.protobuf.RepeatedFieldBuilderV3<
+        com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar, com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar.Builder, com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVarOrBuilder> environVarsBuilder_;
+
     /**
-     * <code>repeated string arguments = 2;</code>
-     * @return A list containing the arguments.
+     * <code>repeated .elevation.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
      */
-    public com.google.protobuf.ProtocolStringList
-        getArgumentsList() {
-      return arguments_.getUnmodifiableView();
+    public java.util.List<com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar> getEnvironVarsList() {
+      if (environVarsBuilder_ == null) {
+        return java.util.Collections.unmodifiableList(environVars_);
+      } else {
+        return environVarsBuilder_.getMessageList();
+      }
     }
     /**
-     * <code>repeated string arguments = 2;</code>
-     * @return The count of arguments.
+     * <code>repeated .elevation.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
      */
-    public int getArgumentsCount() {
-      return arguments_.size();
+    public int getEnvironVarsCount() {
+      if (environVarsBuilder_ == null) {
+        return environVars_.size();
+      } else {
+        return environVarsBuilder_.getCount();
+      }
     }
     /**
-     * <code>repeated string arguments = 2;</code>
-     * @param index The index of the element to return.
-     * @return The arguments at the given index.
+     * <code>repeated .elevation.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
      */
-    public java.lang.String getArguments(int index) {
-      return arguments_.get(index);
+    public com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar getEnvironVars(int index) {
+      if (environVarsBuilder_ == null) {
+        return environVars_.get(index);
+      } else {
+        return environVarsBuilder_.getMessage(index);
+      }
     }
     /**
-     * <code>repeated string arguments = 2;</code>
-     * @param index The index of the value to return.
-     * @return The bytes of the arguments at the given index.
+     * <code>repeated .elevation.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
      */
-    public com.google.protobuf.ByteString
-        getArgumentsBytes(int index) {
-      return arguments_.getByteString(index);
-    }
-    /**
-     * <code>repeated string arguments = 2;</code>
-     * @param index The index to set the value at.
-     * @param value The arguments to set.
-     * @return This builder for chaining.
-     */
-    public Builder setArguments(
-        int index, java.lang.String value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  ensureArgumentsIsMutable();
-      arguments_.set(index, value);
-      onChanged();
+    public Builder setEnvironVars(
+        int index, com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar value) {
+      if (environVarsBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureEnvironVarsIsMutable();
+        environVars_.set(index, value);
+        onChanged();
+      } else {
+        environVarsBuilder_.setMessage(index, value);
+      }
       return this;
     }
     /**
-     * <code>repeated string arguments = 2;</code>
-     * @param value The arguments to add.
-     * @return This builder for chaining.
+     * <code>repeated .elevation.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
      */
-    public Builder addArguments(
-        java.lang.String value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  ensureArgumentsIsMutable();
-      arguments_.add(value);
-      onChanged();
+    public Builder setEnvironVars(
+        int index, com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar.Builder builderForValue) {
+      if (environVarsBuilder_ == null) {
+        ensureEnvironVarsIsMutable();
+        environVars_.set(index, builderForValue.build());
+        onChanged();
+      } else {
+        environVarsBuilder_.setMessage(index, builderForValue.build());
+      }
       return this;
     }
     /**
-     * <code>repeated string arguments = 2;</code>
-     * @param values The arguments to add.
-     * @return This builder for chaining.
+     * <code>repeated .elevation.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
      */
-    public Builder addAllArguments(
-        java.lang.Iterable<java.lang.String> values) {
-      ensureArgumentsIsMutable();
-      com.google.protobuf.AbstractMessageLite.Builder.addAll(
-          values, arguments_);
-      onChanged();
+    public Builder addEnvironVars(com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar value) {
+      if (environVarsBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureEnvironVarsIsMutable();
+        environVars_.add(value);
+        onChanged();
+      } else {
+        environVarsBuilder_.addMessage(value);
+      }
       return this;
     }
     /**
-     * <code>repeated string arguments = 2;</code>
-     * @return This builder for chaining.
+     * <code>repeated .elevation.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
      */
-    public Builder clearArguments() {
-      arguments_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-      bitField0_ = (bitField0_ & ~0x00000001);
-      onChanged();
+    public Builder addEnvironVars(
+        int index, com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar value) {
+      if (environVarsBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureEnvironVarsIsMutable();
+        environVars_.add(index, value);
+        onChanged();
+      } else {
+        environVarsBuilder_.addMessage(index, value);
+      }
       return this;
     }
     /**
-     * <code>repeated string arguments = 2;</code>
-     * @param value The bytes of the arguments to add.
-     * @return This builder for chaining.
+     * <code>repeated .elevation.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
      */
-    public Builder addArgumentsBytes(
-        com.google.protobuf.ByteString value) {
-      if (value == null) {
-    throw new NullPointerException();
-  }
-  checkByteStringIsUtf8(value);
-      ensureArgumentsIsMutable();
-      arguments_.add(value);
-      onChanged();
+    public Builder addEnvironVars(
+        com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar.Builder builderForValue) {
+      if (environVarsBuilder_ == null) {
+        ensureEnvironVarsIsMutable();
+        environVars_.add(builderForValue.build());
+        onChanged();
+      } else {
+        environVarsBuilder_.addMessage(builderForValue.build());
+      }
       return this;
+    }
+    /**
+     * <code>repeated .elevation.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+     */
+    public Builder addEnvironVars(
+        int index, com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar.Builder builderForValue) {
+      if (environVarsBuilder_ == null) {
+        ensureEnvironVarsIsMutable();
+        environVars_.add(index, builderForValue.build());
+        onChanged();
+      } else {
+        environVarsBuilder_.addMessage(index, builderForValue.build());
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .elevation.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+     */
+    public Builder addAllEnvironVars(
+        java.lang.Iterable<? extends com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar> values) {
+      if (environVarsBuilder_ == null) {
+        ensureEnvironVarsIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, environVars_);
+        onChanged();
+      } else {
+        environVarsBuilder_.addAllMessages(values);
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .elevation.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+     */
+    public Builder clearEnvironVars() {
+      if (environVarsBuilder_ == null) {
+        environVars_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000002);
+        onChanged();
+      } else {
+        environVarsBuilder_.clear();
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .elevation.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+     */
+    public Builder removeEnvironVars(int index) {
+      if (environVarsBuilder_ == null) {
+        ensureEnvironVarsIsMutable();
+        environVars_.remove(index);
+        onChanged();
+      } else {
+        environVarsBuilder_.remove(index);
+      }
+      return this;
+    }
+    /**
+     * <code>repeated .elevation.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+     */
+    public com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar.Builder getEnvironVarsBuilder(
+        int index) {
+      return getEnvironVarsFieldBuilder().getBuilder(index);
+    }
+    /**
+     * <code>repeated .elevation.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+     */
+    public com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVarOrBuilder getEnvironVarsOrBuilder(
+        int index) {
+      if (environVarsBuilder_ == null) {
+        return environVars_.get(index);  } else {
+        return environVarsBuilder_.getMessageOrBuilder(index);
+      }
+    }
+    /**
+     * <code>repeated .elevation.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+     */
+    public java.util.List<? extends com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVarOrBuilder> 
+         getEnvironVarsOrBuilderList() {
+      if (environVarsBuilder_ != null) {
+        return environVarsBuilder_.getMessageOrBuilderList();
+      } else {
+        return java.util.Collections.unmodifiableList(environVars_);
+      }
+    }
+    /**
+     * <code>repeated .elevation.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+     */
+    public com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar.Builder addEnvironVarsBuilder() {
+      return getEnvironVarsFieldBuilder().addBuilder(
+          com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar.getDefaultInstance());
+    }
+    /**
+     * <code>repeated .elevation.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+     */
+    public com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar.Builder addEnvironVarsBuilder(
+        int index) {
+      return getEnvironVarsFieldBuilder().addBuilder(
+          index, com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar.getDefaultInstance());
+    }
+    /**
+     * <code>repeated .elevation.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+     */
+    public java.util.List<com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar.Builder> 
+         getEnvironVarsBuilderList() {
+      return getEnvironVarsFieldBuilder().getBuilderList();
+    }
+    private com.google.protobuf.RepeatedFieldBuilderV3<
+        com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar, com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar.Builder, com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVarOrBuilder> 
+        getEnvironVarsFieldBuilder() {
+      if (environVarsBuilder_ == null) {
+        environVarsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
+            com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar, com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar.Builder, com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVarOrBuilder>(
+                environVars_,
+                ((bitField0_ & 0x00000002) != 0),
+                getParentForChildren(),
+                isClean());
+        environVars_ = null;
+      }
+      return environVarsBuilder_;
     }
     @java.lang.Override
     public final Builder setUnknownFields(

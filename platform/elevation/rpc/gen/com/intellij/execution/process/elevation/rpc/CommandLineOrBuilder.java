@@ -8,39 +8,63 @@ public interface CommandLineOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>string exe_path = 1;</code>
-   * @return The exePath.
-   */
-  java.lang.String getExePath();
-  /**
-   * <code>string exe_path = 1;</code>
-   * @return The bytes for exePath.
-   */
-  com.google.protobuf.ByteString
-      getExePathBytes();
-
-  /**
-   * <code>repeated string arguments = 2;</code>
-   * @return A list containing the arguments.
+   * <code>repeated string command = 1;</code>
+   * @return A list containing the command.
    */
   java.util.List<java.lang.String>
-      getArgumentsList();
+      getCommandList();
   /**
-   * <code>repeated string arguments = 2;</code>
-   * @return The count of arguments.
+   * <code>repeated string command = 1;</code>
+   * @return The count of command.
    */
-  int getArgumentsCount();
+  int getCommandCount();
   /**
-   * <code>repeated string arguments = 2;</code>
+   * <code>repeated string command = 1;</code>
    * @param index The index of the element to return.
-   * @return The arguments at the given index.
+   * @return The command at the given index.
    */
-  java.lang.String getArguments(int index);
+  java.lang.String getCommand(int index);
   /**
-   * <code>repeated string arguments = 2;</code>
+   * <code>repeated string command = 1;</code>
    * @param index The index of the value to return.
-   * @return The bytes of the arguments at the given index.
+   * @return The bytes of the command at the given index.
    */
   com.google.protobuf.ByteString
-      getArgumentsBytes(int index);
+      getCommandBytes(int index);
+
+  /**
+   * <code>string working_dir = 2;</code>
+   * @return The workingDir.
+   */
+  java.lang.String getWorkingDir();
+  /**
+   * <code>string working_dir = 2;</code>
+   * @return The bytes for workingDir.
+   */
+  com.google.protobuf.ByteString
+      getWorkingDirBytes();
+
+  /**
+   * <code>repeated .elevation.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+   */
+  java.util.List<com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar> 
+      getEnvironVarsList();
+  /**
+   * <code>repeated .elevation.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+   */
+  com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVar getEnvironVars(int index);
+  /**
+   * <code>repeated .elevation.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+   */
+  int getEnvironVarsCount();
+  /**
+   * <code>repeated .elevation.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+   */
+  java.util.List<? extends com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVarOrBuilder> 
+      getEnvironVarsOrBuilderList();
+  /**
+   * <code>repeated .elevation.rpc.CommandLine.EnvironVar environ_vars = 3;</code>
+   */
+  com.intellij.execution.process.elevation.rpc.CommandLine.EnvironVarOrBuilder getEnvironVarsOrBuilder(
+      int index);
 }

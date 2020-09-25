@@ -20,8 +20,8 @@ public interface SpawnReplyOrBuilder extends
       getMessageBytes();
 
   /**
-   * <code>uint32 pid = 2;</code>
+   * <code>uint64 pid = 2;</code>
    * @return The pid.
    */
-  int getPid();
+  long getPid();
 }
