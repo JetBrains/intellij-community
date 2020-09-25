@@ -6,6 +6,7 @@ import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.elevation.daemon.ElevatorDaemonRuntimeClasspath
+import com.intellij.execution.process.elevation.rpc.AwaitRequest
 import com.intellij.execution.process.elevation.rpc.CommandLine
 import com.intellij.execution.process.elevation.rpc.ElevatorGrpcKt.ElevatorCoroutineStub
 import com.intellij.execution.process.elevation.rpc.SpawnRequest
@@ -15,7 +16,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SystemProperties
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import java.io.Closeable
 import java.io.File
 import java.io.InputStream
@@ -62,19 +63,28 @@ private fun Class<*>.getResourcePath(): String? {
 }
 
 private class ElevatedProcess private constructor(
+  coroutineScope: CoroutineScope,
   private val elevatorClient: ElevatorClient,
   private val pid: Long
-) : Process() {
+) : Process(),
+    CoroutineScope by coroutineScope {
   companion object {
-    fun create(elevatorClient: ElevatorClient,
+    fun create(coroutineScope: CoroutineScope,
+               elevatorClient: ElevatorClient,
                processBuilder: ProcessBuilder): ElevatedProcess {
-      val pid = runBlocking {
+      val pid = runBlocking(coroutineScope.coroutineContext) {
         elevatorClient.spawn(processBuilder.command(),
-                             processBuilder.directory() ?: File("."),  // defaults to current working directory
+                             processBuilder.directory() ?: File(".").normalize(),  // defaults to current working directory
                              processBuilder.environment())
       }
-      return ElevatedProcess(elevatorClient, pid)
+      return ElevatedProcess(coroutineScope, elevatorClient, pid)
     }
+  }
+
+  private val reaper: Deferred<Int> = async {
+    // must be called exactly once;
+    // once invoked, the pid is no more valid, and the process must be assumed reaped
+    elevatorClient.await(pid)
   }
 
   override fun pid(): Long {
@@ -86,11 +96,19 @@ private class ElevatedProcess private constructor(
   override fun getErrorStream(): InputStream = InputStream.nullInputStream()
 
   override fun waitFor(): Int {
-    TODO("Not yet implemented")
+    return runBlocking {
+      reaper.await()
+    }
   }
 
   override fun exitValue(): Int {
-    TODO("Not yet implemented")
+    return try {
+      @Suppress("EXPERIMENTAL_API_USAGE")
+      reaper.getCompleted()
+    }
+    catch (e: IllegalStateException) {
+      throw IllegalThreadStateException(e.message)
+    }
   }
 
   override fun destroy() {
@@ -118,6 +136,14 @@ private class ElevatorClient(private val channel: ManagedChannel) : Closeable {
     return response.pid
   }
 
+  suspend fun await(pid: Long): Int {
+    val request = AwaitRequest.newBuilder()
+      .setPid(pid)
+      .build()
+    val reply = stub.await(request)
+    return reply.exitCode
+  }
+
   override fun close() {
     channel.shutdown().awaitTermination(5, TimeUnit.SECONDS)
   }
@@ -127,8 +153,11 @@ fun main() {
   //org.apache.log4j.BasicConfigurator.configure()
   val commandLine = GeneralCommandLine("/bin/echo", "hello")
   startElevatorDaemon().use { elevatorClient ->
-    val elevatedProcess = ElevatedProcess.create(elevatorClient,
+    val elevatedProcess = ElevatedProcess.create(GlobalScope,
+                                                 elevatorClient,
                                                  commandLine.toProcessBuilder())
     println("pid: ${elevatedProcess.pid()}")
+    println("waitFor: ${elevatedProcess.waitFor()}")
+    println("exitValue: ${elevatedProcess.exitValue()}")
   }
 }

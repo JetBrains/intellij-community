@@ -27,4 +27,11 @@ internal class ElevatorServerService : ElevatorGrpcKt.ElevatorCoroutineImplBase(
       .setPid(pid)
       .build()
   }
+
+  override suspend fun await(request: AwaitRequest): AwaitReply {
+    val exitCode = processManager.awaitTermination(request.pid)
+    return AwaitReply.newBuilder()
+      .setExitCode(exitCode)
+      .build()
+  }
 }
