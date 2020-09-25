@@ -69,15 +69,17 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
 
   private final CompositeDisposable myDisposables = new CompositeDisposable();
   private final boolean myWatchesInVariables;
+  private final boolean myVertical;
   private final boolean inlineWatchesEnabled;
 
   public XWatchesViewImpl(@NotNull XDebugSessionImpl session, boolean watchesInVariables) {
-    this(session, watchesInVariables, watchesInVariables);
-
+    this(session, watchesInVariables, watchesInVariables, true);
   }
-  public XWatchesViewImpl(@NotNull XDebugSessionImpl session, boolean watchesInVariables, boolean vertical) {
+
+  protected XWatchesViewImpl(@NotNull XDebugSessionImpl session, boolean watchesInVariables, boolean vertical, boolean createToolbar) {
     super(session);
     myWatchesInVariables = watchesInVariables;
+    myVertical = vertical;
     inlineWatchesEnabled = Registry.is("debugger.watches.inline.enabled");
 
     XDebuggerTree tree = getTree();
@@ -107,20 +109,31 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
       }
     }.registerCustomShortcutSet(CommonShortcuts.getPaste(), tree, myDisposables);
 
+    if(createToolbar)
+      createToolbar(AnAction.EMPTY_ARRAY);
+  }
+
+  protected void createToolbar(AnAction[] extraActions){
+    final DefaultActionGroup actionGroup = new DefaultActionGroup();
+    actionGroup.add(ActionManager.getInstance().getAction(XDebuggerActions.WATCHES_TREE_TOOLBAR_GROUP));
+
+    for (var action : extraActions) {
+      actionGroup.add(action);
+    }
+
     ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(
       ActionPlaces.DEBUGGER_TOOLBAR,
-      DebuggerSessionTabBase.getCustomizedActionGroup(XDebuggerActions.WATCHES_TREE_TOOLBAR_GROUP),
-      !vertical);
+      actionGroup,
+      !myVertical);
     toolbar.setBorder(new CustomLineBorder(CaptionPanel.CNT_ACTIVE_BORDER_COLOR, 0, 0,
-                                           vertical ? 0 : 1,
-                                           vertical ? 1 : 0));
-    toolbar.setTargetComponent(tree);
+            myVertical ? 0 : 1,
+            myVertical ? 1 : 0));
+    toolbar.setTargetComponent(getTree());
 
     if (!myWatchesInVariables) {
       getTree().getEmptyText().setText(XDebuggerBundle.message("debugger.no.watches"));
     }
-    getPanel().add(toolbar.getComponent(), vertical ? BorderLayout.WEST : BorderLayout.NORTH);
-
+    getPanel().add(toolbar.getComponent(), myVertical ? BorderLayout.WEST : BorderLayout.NORTH);
     installEditListeners();
   }
 
