@@ -479,7 +479,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     List<UsageInfo> codeUsages = new ArrayList<>();
 
     for (UsageInfo usage : usages) {
-      if (!(usage instanceof BranchableUsageInfo)) continue;
+      if (!(usage instanceof MoveRenameUsageInfo)) continue;
       if (branch != null) {
         usage = ((BranchableUsageInfo) usage).obtainBranchCopy(branch);
       }
