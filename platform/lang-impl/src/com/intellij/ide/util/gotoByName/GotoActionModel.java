@@ -433,13 +433,13 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     if (text != null && matcher.matches(text)) {
       return MatchMode.NAME;
     }
-    else if (description != null && !description.equals(text) && new WordPrefixMatcher(pattern).matches(description)) {
-      return MatchMode.DESCRIPTION;
-    }
     for (Supplier<String> synonym : anAction.getSynonyms()) {
       if (matcher.matches(synonym.get())) {
         return MatchMode.SYNONYM;
       }
+    }
+    if (description != null && !description.equals(text) && new WordPrefixMatcher(pattern).matches(description)) {
+      return MatchMode.DESCRIPTION;
     }
     if (text == null) {
       return MatchMode.NONE;
