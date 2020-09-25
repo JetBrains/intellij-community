@@ -731,8 +731,15 @@ public class StringUtil extends StringUtilRt {
     if (escaped) buffer.append('\\');
   }
 
+  /**
+   * Pluralize English word. Could be used when e.g. generating collection name by element type.
+   * Do not use this method in localized context, as it works for English language only.
+   * 
+   * @param word word to pluralize
+   * @return word in plural form
+   */
   @Contract(pure = true)
-  public static @NotNull String pluralize(@NotNull String word) {
+  public static @NotNull @NonNls String pluralize(@NotNull String word) {
     return Strings.pluralize(word);
   }
 
