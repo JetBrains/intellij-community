@@ -35,7 +35,7 @@ class ElevatorServer private constructor(private val server: Server) {
     fun createLocalElevatorServerForTesting(): ElevatorServer {
       val server = InProcessServerBuilder.forName("testing")
         .directExecutor()
-        .addService(ElevatorServerService())
+        .addService(ElevatorServerService.createServiceDefinition())
         .build()
       return ElevatorServer(server)
     }
@@ -45,7 +45,7 @@ class ElevatorServer private constructor(private val server: Server) {
 private fun createServer(host: String, port: Int): Server {
   return NettyServerBuilder
     .forAddress(InetSocketAddress(host, port))
-    .addService(ElevatorServerService())
+    .addService(ElevatorServerService.createServiceDefinition())
     .build()
 }
 
