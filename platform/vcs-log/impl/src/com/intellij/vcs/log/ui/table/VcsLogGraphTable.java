@@ -620,6 +620,11 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     return VcsCommitStyleFactory.combine(ContainerUtil.append(styles, defaultStyle));
   }
 
+  @Override
+  protected void setRendererBackground(int row, int column, JComponent renderer, Color color, Object property) {
+    // do not overwrite renderer background
+  }
+
   public void viewportSet(JViewport viewport) {
     viewport.addChangeListener(e -> {
       if (isShowRootNames()) {

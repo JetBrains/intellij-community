@@ -682,7 +682,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     return result;
   }
 
-  private void setRendererBackground(int row, int column, JComponent renderer, Color color, Object property) {
+  protected void setRendererBackground(int row, int column, JComponent renderer, Color color, Object property) {
     if (!isCellSelected(row, column)) {
       renderer.putClientProperty("JBTable.extraBackground", property);
       renderer.setOpaque(true);
