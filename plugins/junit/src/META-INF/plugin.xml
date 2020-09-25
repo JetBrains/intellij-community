@@ -69,6 +69,7 @@
     <stacktrace.fold substring="at org.junit.platform."/>
     <stacktrace.fold substring="at org.junit.jupiter."/>
     <stacktrace.fold substring="at org.junit.vintage."/>
+    <stacktrace.fold substring="at org.mockito.internal."/>
     <programRunner implementation="com.intellij.execution.junit.JUnitDebuggerRunner"/>
     <codeInsight.externalLibraryResolver implementation="com.intellij.execution.junit.codeInsight.JUnitExternalLibraryResolver"/>
     <codeInsight.externalLibraryResolver implementation="com.intellij.execution.junit.codeInsight.JUnit5ExternalLibraryResolver"/>
