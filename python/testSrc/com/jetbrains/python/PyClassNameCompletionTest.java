@@ -157,7 +157,7 @@ public class PyClassNameCompletionTest extends PyTestCase {
   }
 
   // PY-44586
-  public void testNoDuplicatesForStubsAndOverrides() {
+  public void testNoDuplicatesForStubsAndOverloads() {
     doExtendedCompletion();
     List<String> allVariants = myFixture.getLookupElementStrings();
     assertNotNull(allVariants);

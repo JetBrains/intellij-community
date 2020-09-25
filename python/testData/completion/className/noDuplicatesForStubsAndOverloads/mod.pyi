@@ -1,11 +1,11 @@
-from typing import override
+from typing import overload
 
 
-@override
+@overload
 def my_func(p: int):
     pass
 
 
-@override
+@overload
 def my_func(p1: str, p2: int):
     pass
