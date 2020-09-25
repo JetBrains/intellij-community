@@ -5,6 +5,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import java.io.File
 
 typealias Pid = Long
 
@@ -12,9 +13,15 @@ internal class ElevatorProcessManager {
   private val processMap = mutableMapOf<Pid, Process>()
   private val mutex = Mutex()
 
-  suspend fun createProcess(command: Array<String>): Pid {
-    val processBuilder = ProcessBuilder()
-      .command(*command)
+  suspend fun createProcess(command: List<String>, workingDir: File, environVars: Map<String, String>): Pid {
+    val processBuilder = ProcessBuilder().apply {
+      command(command)
+      directory(workingDir)
+      environment().run {
+        clear()
+        putAll(environVars)
+      }
+    }
 
     val process = withContext(Dispatchers.IO) {
       @Suppress("BlockingMethodInNonBlockingContext")

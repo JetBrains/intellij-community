@@ -57,7 +57,7 @@ private static final long serialVersionUID = 0L;
           }
           case 16: {
 
-            pid_ = input.readUInt32();
+            pid_ = input.readUInt64();
             break;
           }
           default: {
@@ -131,13 +131,13 @@ private static final long serialVersionUID = 0L;
   }
 
   public static final int PID_FIELD_NUMBER = 2;
-  private int pid_;
+  private long pid_;
   /**
-   * <code>uint32 pid = 2;</code>
+   * <code>uint64 pid = 2;</code>
    * @return The pid.
    */
   @java.lang.Override
-  public int getPid() {
+  public long getPid() {
     return pid_;
   }
 
@@ -158,8 +158,8 @@ private static final long serialVersionUID = 0L;
     if (!getMessageBytes().isEmpty()) {
       com.google.protobuf.GeneratedMessageV3.writeString(output, 1, message_);
     }
-    if (pid_ != 0) {
-      output.writeUInt32(2, pid_);
+    if (pid_ != 0L) {
+      output.writeUInt64(2, pid_);
     }
     unknownFields.writeTo(output);
   }
@@ -173,9 +173,9 @@ private static final long serialVersionUID = 0L;
     if (!getMessageBytes().isEmpty()) {
       size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, message_);
     }
-    if (pid_ != 0) {
+    if (pid_ != 0L) {
       size += com.google.protobuf.CodedOutputStream
-        .computeUInt32Size(2, pid_);
+        .computeUInt64Size(2, pid_);
     }
     size += unknownFields.getSerializedSize();
     memoizedSize = size;
@@ -210,7 +210,8 @@ private static final long serialVersionUID = 0L;
     hash = (37 * hash) + MESSAGE_FIELD_NUMBER;
     hash = (53 * hash) + getMessage().hashCode();
     hash = (37 * hash) + PID_FIELD_NUMBER;
-    hash = (53 * hash) + getPid();
+    hash = (53 * hash) + com.google.protobuf.Internal.hashLong(
+        getPid());
     hash = (29 * hash) + unknownFields.hashCode();
     memoizedHashCode = hash;
     return hash;
@@ -346,7 +347,7 @@ private static final long serialVersionUID = 0L;
       super.clear();
       message_ = "";
 
-      pid_ = 0;
+      pid_ = 0L;
 
       return this;
     }
@@ -428,7 +429,7 @@ private static final long serialVersionUID = 0L;
         message_ = other.message_;
         onChanged();
       }
-      if (other.getPid() != 0) {
+      if (other.getPid() != 0L) {
         setPid(other.getPid());
       }
       this.mergeUnknownFields(other.unknownFields);
@@ -536,33 +537,33 @@ private static final long serialVersionUID = 0L;
       return this;
     }
 
-    private int pid_ ;
+    private long pid_ ;
     /**
-     * <code>uint32 pid = 2;</code>
+     * <code>uint64 pid = 2;</code>
      * @return The pid.
      */
     @java.lang.Override
-    public int getPid() {
+    public long getPid() {
       return pid_;
     }
     /**
-     * <code>uint32 pid = 2;</code>
+     * <code>uint64 pid = 2;</code>
      * @param value The pid to set.
      * @return This builder for chaining.
      */
-    public Builder setPid(int value) {
+    public Builder setPid(long value) {
       
       pid_ = value;
       onChanged();
       return this;
     }
     /**
-     * <code>uint32 pid = 2;</code>
+     * <code>uint64 pid = 2;</code>
      * @return This builder for chaining.
      */
     public Builder clearPid() {
       
-      pid_ = 0;
+      pid_ = 0L;
       onChanged();
       return this;
     }

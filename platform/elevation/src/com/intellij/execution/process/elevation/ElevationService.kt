@@ -63,22 +63,22 @@ private fun Class<*>.getResourcePath(): String? {
 
 private class ElevatedProcess private constructor(
   private val elevatorClient: ElevatorClient,
-  private val pid: Int
+  private val pid: Long
 ) : Process() {
   companion object {
     fun create(elevatorClient: ElevatorClient,
-               exePath: String,
-               arguments: List<String>): ElevatedProcess {
+               processBuilder: ProcessBuilder): ElevatedProcess {
       val pid = runBlocking {
-        elevatorClient.spawn(exePath,
-                             arguments)
+        elevatorClient.spawn(processBuilder.command(),
+                             processBuilder.directory() ?: File("."),  // defaults to current working directory
+                             processBuilder.environment())
       }
       return ElevatedProcess(elevatorClient, pid)
     }
   }
 
   override fun pid(): Long {
-    return pid.toLong()
+    return pid
   }
 
   override fun getOutputStream(): OutputStream = OutputStream.nullOutputStream()
@@ -101,10 +101,17 @@ private class ElevatedProcess private constructor(
 private class ElevatorClient(private val channel: ManagedChannel) : Closeable {
   private val stub: ElevatorCoroutineStub = ElevatorCoroutineStub(channel)
 
-  suspend fun spawn(exePath: String, arguments: Iterable<String>): Int {
+  suspend fun spawn(command: List<String>, workingDir: File, environVars: Map<String, String>): Long {
+    val environVarList = environVars.map { (name, value) ->
+      CommandLine.EnvironVar.newBuilder()
+        .setName(name)
+        .setValue(value)
+        .build()
+    }
     val commandLine = CommandLine.newBuilder()
-      .setExePath(exePath)
-      .addAllArguments(arguments)
+      .addAllCommand(command)
+      .setWorkingDir(workingDir.absolutePath)
+      .addAllEnvironVars(environVarList)
       .build()
     val request = SpawnRequest.newBuilder().setCommandLine(commandLine).build()
     val response = stub.spawn(request)
@@ -117,12 +124,11 @@ private class ElevatorClient(private val channel: ManagedChannel) : Closeable {
 }
 
 fun main() {
-  org.apache.log4j.BasicConfigurator.configure()
+  //org.apache.log4j.BasicConfigurator.configure()
   val commandLine = GeneralCommandLine("/bin/echo", "hello")
   startElevatorDaemon().use { elevatorClient ->
     val elevatedProcess = ElevatedProcess.create(elevatorClient,
-                                                 commandLine.exePath,
-                                                 commandLine.parametersList.list)
+                                                 commandLine.toProcessBuilder())
     println("pid: ${elevatedProcess.pid()}")
   }
 }
