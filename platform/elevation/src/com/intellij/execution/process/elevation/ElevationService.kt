@@ -6,6 +6,7 @@ import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.elevation.daemon.ElevatorDaemonRuntimeClasspath
+import com.intellij.execution.process.elevation.daemon.ElevatorServer
 import com.intellij.execution.process.elevation.rpc.AwaitRequest
 import com.intellij.execution.process.elevation.rpc.CommandLine
 import com.intellij.execution.process.elevation.rpc.ElevatorGrpcKt.ElevatorCoroutineStub
@@ -16,6 +17,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SystemProperties
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
+import io.grpc.inprocess.InProcessChannelBuilder
 import kotlinx.coroutines.*
 import java.io.Closeable
 import java.io.File
@@ -43,6 +45,11 @@ private fun startElevatorDaemon(): ElevatorClient {
   daemonProcessHandler.startNotify()
 
   val channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext().build()
+  return ElevatorClient(channel)
+}
+
+private fun startLocalElevatorClientForTesting(): ElevatorClient {
+  val channel = InProcessChannelBuilder.forName("testing").directExecutor().build()
   return ElevatorClient(channel)
 }
 
@@ -152,7 +159,11 @@ private class ElevatorClient(private val channel: ManagedChannel) : Closeable {
 fun main() {
   //org.apache.log4j.BasicConfigurator.configure()
   val commandLine = GeneralCommandLine("/bin/echo", "hello")
-  startElevatorDaemon().use { elevatorClient ->
+
+  val elevatorServer = ElevatorServer.createLocalElevatorServerForTesting()
+  elevatorServer.start()
+
+  startLocalElevatorClientForTesting().use { elevatorClient ->
     val elevatedProcess = ElevatedProcess.create(GlobalScope,
                                                  elevatorClient,
                                                  commandLine.toProcessBuilder())
@@ -160,4 +171,8 @@ fun main() {
     println("waitFor: ${elevatedProcess.waitFor()}")
     println("exitValue: ${elevatedProcess.exitValue()}")
   }
+
+
+  elevatorServer.stop()
+  elevatorServer.blockUntilShutdown()
 }
