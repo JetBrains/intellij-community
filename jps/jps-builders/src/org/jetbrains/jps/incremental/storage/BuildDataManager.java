@@ -386,6 +386,11 @@ public class BuildDataManager implements StorageOwner {
     }
 
     @Override
+    public @NotNull Iterator<String> getOutputsIterator(@NotNull String srcPath) throws IOException {
+      return myDelegate.getOutputsIterator(srcPath);
+    }
+
+    @Override
     @NotNull
     public Iterator<String> getSourcesIterator() throws IOException {
       return myDelegate.getSourcesIterator();

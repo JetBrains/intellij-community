@@ -19,6 +19,7 @@ import org.jetbrains.jps.incremental.java.ClassPostProcessor;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
+import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.jps.javac.OutputFileObject;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
@@ -188,27 +189,20 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
     @Override
     public void process(CompileContext context, OutputFileObject out) {
-      Map<String, String> stubToSrc = STUB_TO_SRC.get(context);
-      if (stubToSrc == null) {
-        return;
-      }
-      File src = out.getSourceFile();
-      if (src == null) {
-        return;
-      }
-      String groovy = stubToSrc.get(FileUtil.toSystemIndependentName(src.getPath()));
-      if (groovy == null) {
-        return;
-      }
-      try {
-        final File groovyFile = new File(groovy);
-        if (!FSOperations.isMarkedDirty(context, CompilationRound.CURRENT, groovyFile)) {
-          FSOperations.markDirty(context, CompilationRound.NEXT, groovyFile);
-          FILES_MARKED_DIRTY_FOR_NEXT_ROUND.set(context, Boolean.TRUE);
+      final Map<String, String> stubToSrc = STUB_TO_SRC.get(context);
+      if (stubToSrc != null) {
+        for (String groovy : Iterators.filter(Iterators.map(out.getSourceFiles(), file -> stubToSrc.get(FileUtil.toSystemIndependentName(file.getPath()))), Iterators.notNullFilter())) {
+          try {
+            final File groovyFile = new File(groovy);
+            if (!FSOperations.isMarkedDirty(context, CompilationRound.CURRENT, groovyFile)) {
+              FSOperations.markDirty(context, CompilationRound.NEXT, groovyFile);
+              FILES_MARKED_DIRTY_FOR_NEXT_ROUND.set(context, Boolean.TRUE);
+            }
+          }
+          catch (IOException e) {
+            LOG.error(e);
+          }
         }
-      }
-      catch (IOException e) {
-        LOG.error(e);
       }
     }
   }

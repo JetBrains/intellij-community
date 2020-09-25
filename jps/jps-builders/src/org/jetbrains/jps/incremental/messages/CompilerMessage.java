@@ -28,26 +28,19 @@ public class CompilerMessage extends BuildMessage {
    * @deprecated use either {@link #createInternalCompilationError(String, Throwable)} or {@link #createInternalBuilderError(String, Throwable)} instead
    */
   @Deprecated
-  public CompilerMessage(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String compilerName, @NotNull Throwable internalError) {
+  public CompilerMessage(@NlsSafe @NotNull String compilerName, @NotNull Throwable internalError) {
     this(compilerName, Kind.ERROR, getTextFromThrowable(internalError), null, -1L, -1L, -1L, -1L, -1L);
   }
 
-  public CompilerMessage(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String compilerName,
-                         Kind kind,
-                         @Nls(capitalization = Nls.Capitalization.Sentence) String messageText) {
+  public CompilerMessage(@NlsSafe @NotNull String compilerName, Kind kind, @Nls(capitalization = Nls.Capitalization.Sentence) String messageText) {
     this(compilerName, kind, messageText, null, -1L, -1L, -1L, -1L, -1L);
   }
 
-  public CompilerMessage(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String compilerName,
-                         Kind kind,
-                         @Nls(capitalization = Nls.Capitalization.Sentence) String messageText,
-                         String sourcePath) {
+  public CompilerMessage(@NlsSafe @NotNull String compilerName, Kind kind, @Nls(capitalization = Nls.Capitalization.Sentence) String messageText, String sourcePath) {
     this(compilerName, kind, messageText, sourcePath, -1L, -1L, -1L, -1L, -1L);
   }
 
-  public CompilerMessage(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String compilerName,
-                         Kind kind,
-                         @Nls(capitalization = Nls.Capitalization.Sentence) String messageText,
+  public CompilerMessage(@NlsSafe @NotNull String compilerName, Kind kind, @Nls(capitalization = Nls.Capitalization.Sentence) String messageText,
                          @Nullable String sourcePath,
                          long problemBeginOffset,
                          long problemEndOffset,

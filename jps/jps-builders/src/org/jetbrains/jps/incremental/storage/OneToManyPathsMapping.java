@@ -3,17 +3,16 @@ package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.util.Function;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.JBIterator;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
+import org.jetbrains.jps.javac.Iterators;
 
 import java.io.*;
 import java.util.*;
-
-import static com.intellij.util.containers.ContainerUtil.map;
 
 /**
  * @author Eugene Zhuravlev
@@ -48,7 +47,13 @@ public final class OneToManyPathsMapping extends AbstractStateStorage<String, Co
   @Override
   public Collection<String> getState(@NotNull String keyPath) throws IOException {
     Collection<String> collection = super.getState(normalizePath(keyPath));
-    return collection != null ? map(collection, toFull()) : null;
+    return collection != null ? ContainerUtil.map(collection, toFull()) : null;
+  }
+
+  @NotNull
+  public Iterator<String> getStateIterator(@NotNull String keyPath) throws IOException {
+    Collection<String> collection = super.getState(normalizePath(keyPath));
+    return collection == null? Collections.emptyIterator() : Iterators.map(collection.iterator(), toFull());
   }
 
   @Override
@@ -58,13 +63,12 @@ public final class OneToManyPathsMapping extends AbstractStateStorage<String, Co
 
   @Override
   public Collection<String> getKeys() throws IOException {
-    Collection<String> keys = super.getKeys();
-    return keys != null ? map(keys, toFull()) : null;
+    return ContainerUtil.map(super.getKeys(), toFull());
   }
 
   @Override
   public Iterator<String> getKeysIterator() throws IOException {
-    return JBIterator.from(super.getKeysIterator()).map(toFull());
+    return Iterators.map(super.getKeysIterator(), toFull());
   }
 
   public final void removeData(@NotNull String keyPath, @NotNull String boundPath) throws IOException {

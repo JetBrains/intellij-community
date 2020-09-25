@@ -6,7 +6,9 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.BinaryContent;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileManager;
+import javax.tools.JavaFileObject;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
@@ -92,9 +94,8 @@ public final class JavacProtoUtil {
     if (relativePath != null) {
       msgBuilder.setRelativePath(relativePath);
     }
-    final URI srcUri = fileObject.getSourceUri();
-    if (srcUri != null) {
-      msgBuilder.setSourceUri(srcUri.toString());
+    for (URI uri : fileObject.getSourceUris()) {
+      msgBuilder.addSourceUri(uri.toString());
     }
     final JavaFileManager.Location location = fileObject.getLocation();
     if (location != null) {

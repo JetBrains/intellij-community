@@ -2,6 +2,7 @@
 package org.jetbrains.jps.javac;
 
 import com.intellij.util.BooleanFunction;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.CanceledStatus;
@@ -11,10 +12,12 @@ import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.builders.java.JavaSourceTransformer;
 import org.jetbrains.jps.incremental.LineOutputWriter;
 
+import javax.annotation.processing.Processor;
 import javax.tools.*;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.*;
 
 /**
@@ -35,6 +38,8 @@ public final class JavacMain {
   )));
 
   public static final String JAVA_RUNTIME_VERSION = System.getProperty("java.runtime.version");
+  private static final boolean TRACK_AP_GENERATED_DEPENDENCIES = Boolean.parseBoolean(System.getProperty("jps.track.ap.dependencies", "true"));
+
 
   public static boolean compile(Collection<String> options,
                                 final Collection<? extends File> sources,
@@ -118,10 +123,12 @@ public final class JavacMain {
         }
       }
 
+      final boolean isAnnotationProcessingEnabled = isAnnotationProcessingEnabled(_options);
+
       if (!modulePath.isEmpty()) {
         try {
           setLocation(fileManager, "MODULE_PATH", modulePath.getPath());
-          if (isAnnotationProcessingEnabled(_options) &&
+          if (isAnnotationProcessingEnabled &&
             getLocation(fileManager, "ANNOTATION_PROCESSOR_MODULE_PATH") == null &&
             fileManager.getLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH) == null) {
             // default annotation processing discovery path to module path if not explicitly set
@@ -144,7 +151,7 @@ public final class JavacMain {
         try {
           fileManager.setLocation(StandardLocation.CLASS_PATH, classpath);
           if (!usingJavac &&
-              isAnnotationProcessingEnabled(_options) &&
+            isAnnotationProcessingEnabled &&
               !_options.contains("-processorpath") &&
               (javacBefore9 || (!_options.contains("--processor-module-path") && getLocation(fileManager, "ANNOTATION_PROCESSOR_MODULE_PATH") == null))) {
             // for non-javac file manager ensure annotation processor path defaults to classpath
@@ -184,10 +191,14 @@ public final class JavacMain {
         }
       };
 
-      final StandardJavaFileManager fm = wrapWithCallDispatcher(StandardJavaFileManager.class, fileManager, fileManager.getClass().getSuperclass(), fileManager.getStdManager());
+      // methods added to newer versions of StandardJavaFileManager interfaces have default implementations that
+      // do not delegate to corresponding methods of FileManager's base implementation
+      // this proxy object makes sure the calls, not implemented in our file manager, are dispatched further to the base file manager implementation
+      final StandardJavaFileManager fm = APIWrappers.wrap(StandardJavaFileManager.class, fileManager, fileManager.getClass().getSuperclass(), fileManager.getStdManager());
       final JavaCompiler.CompilationTask task = tryInstallClientCodeWrapperCallDispatcher(compiler.getTask(
-        out, fm, diagnosticConsumer, _options, null, fileManager.getJavaFileObjectsFromFiles(sources)
+        out, fm, diagnosticConsumer, _options, null, fileManager.setInputSources(sources)
       ), fm);
+
       for (JavaCompilerToolExtension extension : JavaCompilerToolExtension.getExtensions()) {
         try {
           extension.beforeCompileTaskExecution(compilingTool, task, _options, diagnosticConsumer);
@@ -198,12 +209,13 @@ public final class JavacMain {
         }
       }
 
-      //if (!IS_VM_6_VERSION) { //todo!
-      //  // Do not add the processor for JDK 1.6 because of the bugs in javac
-      //  // The processor's presence may lead to NPE and resolve bugs in compiler
-      //  final JavacASTAnalyser analyzer = new JavacASTAnalyser(outConsumer, !annotationProcessingEnabled);
-      //  task.setProcessors(Collections.singleton(analyzer));
-      //}
+      if (TRACK_AP_GENERATED_DEPENDENCIES && isAnnotationProcessingEnabled) {
+        final Iterable<Processor> processors = lookupAnnotationProcessors(fileManager, getAnnotationProcessorNames(_options));
+        if (processors != null) {
+          task.setProcessors(processors);
+        }
+      }
+
       return task.call();
     }
     catch(IllegalArgumentException e) {
@@ -237,6 +249,70 @@ public final class JavacMain {
       }
     }
     return false;
+  }
+
+  @Nullable
+  private static Iterable<Processor> lookupAnnotationProcessors(final JpsJavacFileManager fileManager, @Nullable Iterable<String> processorNames) {
+    try {
+      Iterable<Processor> processors = null;
+
+      if (hasLocation(fileManager, "ANNOTATION_PROCESSOR_MODULE_PATH")) {
+        // this is equivalent to
+        //processors = fileManager.getServiceLoader(StandardLocation.locationFor("ANNOTATION_PROCESSOR_MODULE_PATH"), Processor.class);
+        // if java modules are involved, they should be properly handled by the fileManager
+
+        //noinspection unchecked
+        processors = (ServiceLoader<Processor>)JavaFileManager.class.getMethod("getServiceLoader", JavaFileManager.Location.class, Class.class).invoke(
+          fileManager, StandardLocation.locationFor("ANNOTATION_PROCESSOR_MODULE_PATH"), Processor.class
+        );
+      }
+      else {
+        final ClassLoader processorClassLoader = fileManager.getClassLoader(
+          // If processorpath is not explicitly set, use the classpath.
+          fileManager.hasLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH) ? StandardLocation.ANNOTATION_PROCESSOR_PATH : StandardLocation.CLASS_PATH
+        );
+        if (processorClassLoader != null) {
+          processors = ServiceLoader.load(Processor.class, processorClassLoader);
+        }
+      }
+
+      if (processors != null) {
+        if (processorNames != null) {
+          processors = Iterators.filterWithOrder(processors, Iterators.map(processorNames, new Function<String, BooleanFunction<? super Processor>>() {
+            @Override
+            public BooleanFunction<? super Processor> fun(final String procName) {
+              return new BooleanFunction<Processor>() {
+                @Override
+                public boolean fun(Processor processor) {
+                  return procName.equals(processor.getClass().getName());
+                }
+              };
+            }
+          }));
+        }
+        return Iterators.map(processors, new Function<Processor, Processor>() {
+          @Override
+          public Processor fun(Processor processor) {
+            return APIWrappers.newProcessorWrapper(processor, fileManager);
+          }
+        });
+      }
+    }
+    catch (Throwable e) {
+      throw new RuntimeException(e);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static Iterable<String> getAnnotationProcessorNames(Iterable<String> options) {
+    for (Iterator<String> it = options.iterator(); it.hasNext(); ) {
+      final String option = it.next();
+      if ("-processor".equals(option)) {
+        return it.hasNext()? Arrays.asList(it.next().split(",")) : null;
+      }
+    }
+    return null;
   }
 
   private static String buildCompilerErrorMessage(Throwable e) {
@@ -279,9 +355,7 @@ public final class JavacMain {
         if (isClientCodeWrapper(currentManager, delegateTo)) {
           final Method putMethod = contextObject.getClass().getMethod("put", Class.class, Object.class);
           putMethod.invoke(contextObject, JavaFileManager.class, null);  // must clear previous value first
-          putMethod.invoke(contextObject, JavaFileManager.class, wrapWithCallDispatcher(
-            StandardJavaFileManager.class, (StandardJavaFileManager)currentManager, Object.class, delegateTo)
-          );
+          putMethod.invoke(contextObject, JavaFileManager.class, APIWrappers.wrap(StandardJavaFileManager.class, currentManager, Object.class, delegateTo));
         }
         else {
           installCallDispatcherRecursively(currentManager, delegateTo, new HashSet<Object>());
@@ -302,7 +376,7 @@ public final class JavacMain {
             if (JavaFileManager.class.isAssignableFrom(field.getType())) {
               final Object value = field.get(obj);
               if (isClientCodeWrapper(value, delegateTo)) {
-                field.set(obj, wrapWithCallDispatcher(StandardJavaFileManager.class, (StandardJavaFileManager)value, Object.class, delegateTo));
+                field.set(obj, APIWrappers.wrap(StandardJavaFileManager.class, value, Object.class, delegateTo));
               }
               else {
                 installCallDispatcherRecursively(value, delegateTo, visited);
@@ -363,58 +437,26 @@ public final class JavacMain {
     }
   }
 
-  private static void setLocation(JpsJavacFileManager fileManager, String locationId, Iterable<? extends File> path) throws IOException {
+  private static void setLocation(StandardJavaFileManager fileManager, String locationId, Iterable<? extends File> path) throws IOException {
     JavaFileManager.Location location = StandardLocation.locationFor(locationId);
     if (location != null) { // if this option is supported
       fileManager.setLocation(location, path);
     }
   }
 
-  private static Iterable<? extends File> getLocation(JpsJavacFileManager fileManager, String locationId) {
+  private static Iterable<? extends File> getLocation(StandardJavaFileManager fileManager, String locationId) {
     final JavaFileManager.Location location = StandardLocation.locationFor(locationId);
     return location != null? fileManager.getLocation(location) : null;
+  }
+
+  private static boolean hasLocation(StandardJavaFileManager fileManager, String locationId) {
+    final JavaFileManager.Location location = StandardLocation.locationFor(locationId);
+    return location != null && fileManager.hasLocation(location);
   }
 
   // methods added to newer versions of StandardJavaFileManager interfaces have default implementations that
   // do not delegate to corresponding methods of FileManager's base implementation
   // this proxy object makes sure the calls, not implemented in our file manager, are dispatched further to the base file manager implementation
-  private static <T> T wrapWithCallDispatcher(final Class<T> ifaceClass, final T targetObject, final Class<?> parentToTopSearchAt, final T delegateTo) {
-    //return fileManager;
-    return ifaceClass.cast(Proxy.newProxyInstance(targetObject.getClass().getClassLoader(), new Class[]{ifaceClass}, new InvocationHandler() {
-      private final Map<Method, Boolean> ourImplStatus = Collections.synchronizedMap(new HashMap<Method, Boolean>());
-      @Override
-      public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        try {
-          return method.invoke(getApiCallHandler(method, parentToTopSearchAt), args);
-        }
-        catch (InvocationTargetException e) {
-          final Throwable cause = e.getCause();
-          throw cause != null? cause : e;
-        }
-      }
-
-      private T getApiCallHandler(Method method, Class<?> parentToTopSearchAt) {
-        Boolean isImplemented = ourImplStatus.get(method);
-        if (isImplemented == null) {
-          isImplemented = Boolean.FALSE;
-          // important: look for implemented methods starting from the actual class
-          Class<?> aClass = targetObject.getClass();
-          while (!(parentToTopSearchAt.equals(aClass) || Object.class.equals(aClass))) {
-            try {
-              aClass.getDeclaredMethod(method.getName(), method.getParameterTypes());
-              isImplemented = Boolean.TRUE;
-              break;
-            }
-            catch (NoSuchMethodException e) {
-              aClass = aClass.getSuperclass();
-            }
-          }
-          ourImplStatus.put(method, isImplemented);
-        }
-        return isImplemented ? targetObject : delegateTo;
-      }
-    }));
-  }
 
   private static boolean isJavacBefore9(JavaCompilingTool compilingTool) {
     // since java 9 internal API's used by the optimizedFileManager have changed

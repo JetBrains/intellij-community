@@ -53,7 +53,8 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -143,7 +144,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
   @Override
   @NotNull
   public String getPresentableName() {
-    return getBuilderName();
+    return StringUtil.capitalize(getBuilderName());
   }
 
   @Override
