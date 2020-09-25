@@ -641,104 +641,117 @@ public final class CompileDriver {
   private boolean validateCompilerConfiguration(@NotNull final CompileScope scope) {
     try {
       final Module[] scopeModules = scope.getAffectedModules();
-      final List<String> modulesWithoutOutputPathSpecified = new ArrayList<>();
-      final List<String> modulesWithoutJdkAssigned = new ArrayList<>();
       final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
-      boolean projectSdkNotSpecified = false;
-      boolean projectOutputNotSpecified = false;
-      for (final Module module : scopeModules) {
-        if (!compilerManager.isValidationEnabled(module)) {
-          continue;
-        }
+      List<Module> modulesWithSources = ContainerUtil.filter(scopeModules, module -> {
+        if (!compilerManager.isValidationEnabled(module)) return false;
         final boolean hasSources = hasSources(module, JavaSourceRootType.SOURCE);
         final boolean hasTestSources = hasSources(module, JavaSourceRootType.TEST_SOURCE);
         if (!hasSources && !hasTestSources) {
           // If module contains no sources, shouldn't have to select JDK or output directory (SCR #19333)
           // todo still there may be problems with this approach if some generated files are attributed by this module
-          continue;
+          return false;
         }
-        final Sdk jdk = ModuleRootManager.getInstance(module).getSdk();
-        if (jdk == null) {
-          projectSdkNotSpecified |= ModuleRootManager.getInstance(module).isSdkInherited();
-          modulesWithoutJdkAssigned.add(module.getName());
-        }
-        final String outputPath = getModuleOutputPath(module, false);
-        final String testsOutputPath = getModuleOutputPath(module, true);
-        if (outputPath == null && testsOutputPath == null) {
-          CompilerModuleExtension compilerExtension = CompilerModuleExtension.getInstance(module);
-          projectOutputNotSpecified |= compilerExtension != null && compilerExtension.isCompilerOutputPathInherited();
-          modulesWithoutOutputPathSpecified.add(module.getName());
-        }
-        else {
-          if (outputPath == null) {
-            if (hasSources) {
-              modulesWithoutOutputPathSpecified.add(module.getName());
-            }
-          }
-          if (testsOutputPath == null) {
-            if (hasTestSources) {
-              modulesWithoutOutputPathSpecified.add(module.getName());
-            }
-          }
-        }
-      }
-      /// test with UnknownSdkTrack if given SDKs are valid and not missing
-      /// TODO: test it before this method is executed at all to make sure the inner check is run
-      var outcome = CompilerDriverUnknownSdkTracker
-        .getInstance(myProject)
-        .fixSdkSettings(projectSdkNotSpecified,
-                        Arrays.asList(scopeModules),
-                        JavaCompilerBundle.message("error.jdk.not.specified.with.fixSuggestion"));
+        return true;
+      });
 
-      if (!modulesWithoutJdkAssigned.isEmpty() || outcome.getShouldOpenProjectStructureDialog()) {
-        showNotSpecifiedError("error.jdk.not.specified", projectSdkNotSpecified, modulesWithoutJdkAssigned, JavaCompilerBundle.message("modules.classpath.title"));
-        return false;
-      }
-
-      if (!modulesWithoutOutputPathSpecified.isEmpty()) {
-        showNotSpecifiedError("error.output.not.specified", projectOutputNotSpecified, modulesWithoutOutputPathSpecified, DefaultModuleConfigurationEditorFactory.getInstance().getOutputEditorDisplayName());
-        return false;
-      }
-
-      final List<Chunk<ModuleSourceSet>> chunks = ModuleCompilerUtil.getCyclicDependencies(myProject, Arrays.asList(scopeModules));
-      for (final Chunk<ModuleSourceSet> chunk : chunks) {
-        final Set<ModuleSourceSet> sourceSets = chunk.getNodes();
-        if (sourceSets.size() <= 1) {
-          continue; // no need to check one-module chunks
-        }
-        Sdk jdk = null;
-        LanguageLevel languageLevel = null;
-        for (final ModuleSourceSet sourceSet : sourceSets) {
-          Module module = sourceSet.getModule();
-          final Sdk moduleJdk = ModuleRootManager.getInstance(module).getSdk();
-          if (jdk == null) {
-            jdk = moduleJdk;
-          }
-          else {
-            if (!jdk.equals(moduleJdk)) {
-              showCyclicModulesHaveDifferentJdksError(ModuleSourceSet.getModules(sourceSets));
-              return false;
-            }
-          }
-
-          LanguageLevel moduleLanguageLevel = EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
-          if (languageLevel == null) {
-            languageLevel = moduleLanguageLevel;
-          }
-          else {
-            if (!languageLevel.equals(moduleLanguageLevel)) {
-              showCyclicModulesHaveDifferentLanguageLevel(ModuleSourceSet.getModules(sourceSets));
-              return false;
-            }
-          }
-        }
-      }
+      if (!validateJdks(modulesWithSources)) return false;
+      if (!validateOutputs(modulesWithSources)) return false;
+      if (!validateCyclicDependencies(scopeModules)) return false;
       return true;
     }
     catch (Throwable e) {
       LOG.error(e);
       return false;
     }
+  }
+
+  private boolean validateJdks(@NotNull List<Module> scopeModules) {
+    final List<String> modulesWithoutJdkAssigned = new ArrayList<>();
+    boolean projectSdkNotSpecified = false;
+    for (final Module module : scopeModules) {
+      final Sdk jdk = ModuleRootManager.getInstance(module).getSdk();
+      if (jdk != null) continue;
+      projectSdkNotSpecified |= ModuleRootManager.getInstance(module).isSdkInherited();
+      modulesWithoutJdkAssigned.add(module.getName());
+    }
+
+    var outcome = CompilerDriverUnknownSdkTracker
+      .getInstance(myProject)
+      .fixSdkSettings(projectSdkNotSpecified,
+                      scopeModules,
+                      JavaCompilerBundle.message("error.jdk.not.specified.with.fixSuggestion"));
+
+    if (modulesWithoutJdkAssigned.isEmpty() && !outcome.getShouldOpenProjectStructureDialog()) return false;
+    showNotSpecifiedError("error.jdk.not.specified", projectSdkNotSpecified, modulesWithoutJdkAssigned, JavaCompilerBundle.message("modules.classpath.title"));
+    return true;
+  }
+
+  private boolean validateOutputs(@NotNull List<Module> scopeModules) {
+    final List<String> modulesWithoutOutputPathSpecified = new ArrayList<>();
+    boolean projectOutputNotSpecified = false;
+    for (final Module module : scopeModules) {
+      final String outputPath = getModuleOutputPath(module, false);
+      final String testsOutputPath = getModuleOutputPath(module, true);
+      if (outputPath == null && testsOutputPath == null) {
+        CompilerModuleExtension compilerExtension = CompilerModuleExtension.getInstance(module);
+        projectOutputNotSpecified |= compilerExtension != null && compilerExtension.isCompilerOutputPathInherited();
+        modulesWithoutOutputPathSpecified.add(module.getName());
+      }
+      else {
+        if (outputPath == null) {
+          if (hasSources(module, JavaSourceRootType.SOURCE)) {
+            modulesWithoutOutputPathSpecified.add(module.getName());
+          }
+        }
+        if (testsOutputPath == null) {
+          if (hasSources(module, JavaSourceRootType.TEST_SOURCE)) {
+            modulesWithoutOutputPathSpecified.add(module.getName());
+          }
+        }
+      }
+    }
+
+    if (modulesWithoutOutputPathSpecified.isEmpty()) return false;
+
+    showNotSpecifiedError("error.output.not.specified", projectOutputNotSpecified, modulesWithoutOutputPathSpecified, DefaultModuleConfigurationEditorFactory.getInstance().getOutputEditorDisplayName());
+    return true;
+  }
+
+  private boolean validateCyclicDependencies(Module[] scopeModules) {
+    final List<Chunk<ModuleSourceSet>> chunks = ModuleCompilerUtil.getCyclicDependencies(myProject, Arrays.asList(scopeModules));
+    for (final Chunk<ModuleSourceSet> chunk : chunks) {
+      final Set<ModuleSourceSet> sourceSets = chunk.getNodes();
+      if (sourceSets.size() <= 1) {
+        continue; // no need to check one-module chunks
+      }
+      Sdk jdk = null;
+      LanguageLevel languageLevel = null;
+      for (final ModuleSourceSet sourceSet : sourceSets) {
+        Module module = sourceSet.getModule();
+        final Sdk moduleJdk = ModuleRootManager.getInstance(module).getSdk();
+        if (jdk == null) {
+          jdk = moduleJdk;
+        }
+        else {
+          if (!jdk.equals(moduleJdk)) {
+            showCyclicModulesHaveDifferentJdksError(ModuleSourceSet.getModules(sourceSets));
+            return false;
+          }
+        }
+
+        LanguageLevel moduleLanguageLevel = EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
+        if (languageLevel == null) {
+          languageLevel = moduleLanguageLevel;
+        }
+        else {
+          if (!languageLevel.equals(moduleLanguageLevel)) {
+            showCyclicModulesHaveDifferentLanguageLevel(ModuleSourceSet.getModules(sourceSets));
+            return false;
+          }
+        }
+      }
+    }
+    return true;
   }
 
   private void showCyclicModulesHaveDifferentLanguageLevel(Set<? extends Module> modulesInChunk) {
