@@ -654,7 +654,7 @@ public final class CompileDriver {
         return true;
       });
 
-      if (!validateJdks(modulesWithSources)) return false;
+      if (!validateJdks(modulesWithSources, true)) return false;
       if (!validateOutputs(modulesWithSources)) return false;
       if (!validateCyclicDependencies(scopeModules)) return false;
       return true;
@@ -665,7 +665,7 @@ public final class CompileDriver {
     }
   }
 
-  private boolean validateJdks(@NotNull List<Module> scopeModules) {
+  private boolean validateJdks(@NotNull List<Module> scopeModules, boolean runUnknownSdkCheck) {
     final List<String> modulesWithoutJdkAssigned = new ArrayList<>();
     boolean projectSdkNotSpecified = false;
     for (final Module module : scopeModules) {
@@ -675,13 +675,18 @@ public final class CompileDriver {
       modulesWithoutJdkAssigned.add(module.getName());
     }
 
-    var outcome = CompilerDriverUnknownSdkTracker
+    var showDialog = runUnknownSdkCheck && CompilerDriverUnknownSdkTracker
       .getInstance(myProject)
       .fixSdkSettings(projectSdkNotSpecified,
                       scopeModules,
-                      JavaCompilerBundle.message("error.jdk.not.specified.with.fixSuggestion"));
+                      JavaCompilerBundle.message("error.jdk.not.specified.with.fixSuggestion")).getShouldOpenProjectStructureDialog();
 
-    if (modulesWithoutJdkAssigned.isEmpty() && !outcome.getShouldOpenProjectStructureDialog()) return false;
+    if (showDialog) {
+      //we need the message with correctly updated JDKs
+      return validateJdks(scopeModules, false);
+    }
+
+    if (modulesWithoutJdkAssigned.isEmpty()) return false;
     showNotSpecifiedError("error.jdk.not.specified", projectSdkNotSpecified, modulesWithoutJdkAssigned, JavaCompilerBundle.message("modules.classpath.title"));
     return true;
   }

@@ -64,7 +64,7 @@ class UnknownSdkModalNotification(
 
       val actionsWithoutFix = actions.filter { it.suggestedFixAction == null }
 
-      val isOk = invokeAndWaitIfNeeded {
+      val isOk = actionsWithFix.isNotEmpty() && invokeAndWaitIfNeeded {
         createConfirmSdkDownloadFixDialog(errorMessage, actionsWithFix, actionsWithoutFix).showAndGet()
       }
 
