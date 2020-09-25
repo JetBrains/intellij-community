@@ -65,7 +65,6 @@
         </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-de/5.0/language-de-5.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/5.0/languagetool-core-5.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/german-pos-dict/1.2.1/german-pos-dict-1.2.1.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/edu/washington/cs/knowitall/openregex/1.1.1/openregex-1.1.1.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/de/danielnaber/jwordsplitter/4.4/jwordsplitter-4.4.jar!/" />
