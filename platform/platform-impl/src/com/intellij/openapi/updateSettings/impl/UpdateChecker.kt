@@ -84,6 +84,27 @@ object UpdateChecker {
     }
   }
 
+  class DialogResultCallbackProvider: UpdateResultCallbackProvider {
+    override fun createCallback(checkForUpdateResult: CheckForUpdateResult,
+                                updatedPlugins: Collection<PluginDownloader>?,
+                                incompatiblePlugins: Collection<IdeaPluginDescriptor>?,
+                                updateSettings: UpdateSettings,
+                                enableLink: Boolean): UpdateResultCallback {
+      return object : UpdateResultCallback(checkForUpdateResult, updatedPlugins, incompatiblePlugins, updateSettings, enableLink) {
+        override fun run() {
+          val updatedChannel = getCheckForUpdateResult().updatedChannel
+          val newBuild = getCheckForUpdateResult().newBuild
+          if (updatedChannel != null && newBuild != null) {
+            val patches = getCheckForUpdateResult().patches
+
+            UpdateInfoDialog(updatedChannel, newBuild, patches, shouldEnableLink(),
+                             getUpdatedPlugins(), getIncompatiblePlugins()).show()
+          }
+        }
+      }
+    }
+  }
+
   @JvmStatic
   fun getNotificationGroup(): NotificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("IDE and Plugin Updates")
 
@@ -94,7 +115,8 @@ object UpdateChecker {
   fun updateAndShowResult(): ActionCallback {
     val callback = ActionCallback()
     ApplicationManager.getApplication().executeOnPooledThread {
-      doUpdateAndShowResult(null, true, false, false, UpdateSettings.getInstance(), null, callback)
+      doUpdateAndShowResult(null, true, false, false,
+                            UpdateSettings.getInstance(), null, callback, DialogResultCallbackProvider())
     }
     return callback
   }
@@ -105,13 +127,23 @@ object UpdateChecker {
    */
   @JvmStatic
   fun updateAndShowResult(project: Project?, customSettings: UpdateSettings?) {
+    updateAndShowResult(project, customSettings, DialogResultCallbackProvider())
+  }
+
+  /**
+   * This is intended to be a customized usage. An UpdateInfoDialog is shown in the standard update flow,
+   * while resultCallbackProvider param allows extensions to change how the result of the update check is used,
+   * without being forced to show the UpdateInfoDialog.
+   */
+  @JvmStatic
+  fun updateAndShowResult(project: Project?, customSettings: UpdateSettings?, resultCallbackProvider: UpdateResultCallbackProvider) {
     val settings = customSettings ?: UpdateSettings.getInstance()
     val fromSettings = customSettings != null
 
     ProgressManager.getInstance().run(object : Task.Backgroundable(project, IdeBundle.message("updates.checking.progress"), true) {
       override fun run(indicator: ProgressIndicator) = doUpdateAndShowResult(getProject(), !fromSettings,
                                                                              fromSettings || WelcomeFrame.getInstance() != null, true,
-                                                                             settings, indicator, null)
+                                                                             settings, indicator, null, resultCallbackProvider)
 
       override fun isConditionalModal(): Boolean = fromSettings
       override fun shouldStartInBackground(): Boolean = !fromSettings
@@ -130,7 +162,8 @@ object UpdateChecker {
                                     showEmptyNotification: Boolean,
                                     updateSettings: UpdateSettings,
                                     indicator: ProgressIndicator?,
-                                    callback: ActionCallback?) {
+                                    callback: ActionCallback?,
+                                    resultCallbackProvider: UpdateResultCallbackProvider) {
     // check platform update
 
     indicator?.text = IdeBundle.message("updates.checking.platform")
@@ -166,8 +199,18 @@ object UpdateChecker {
 
     UpdateSettings.getInstance().saveLastCheckedInfo()
 
+    val updatedPlugins =
+      checkPluginsUpdateResult.availableUpdates?.filter { downloader -> !PluginUpdateDialog.isIgnored(downloader.descriptor) }
+
+    val showResultCallback = resultCallbackProvider.createCallback(result,
+                                                                   updatedPlugins,
+                                                                   checkPluginsUpdateResult.incompatiblePlugins,
+                                                                   updateSettings,
+                                                                   showSettingsLink)
+
     ApplicationManager.getApplication().invokeLater {
-      showUpdateResult(project, result, checkPluginsUpdateResult, externalUpdates, showSettingsLink, showDialog, showEmptyNotification)
+      showUpdateResult(project, result, checkPluginsUpdateResult, externalUpdates, showSettingsLink,
+                       showDialog, showEmptyNotification, showResultCallback)
       callback?.setDone()
     }
   }
@@ -506,22 +549,18 @@ object UpdateChecker {
                                externalUpdates: Collection<ExternalUpdate>?,
                                showSettingsLink: Boolean,
                                showDialog: Boolean,
-                               showEmptyNotification: Boolean) {
+                               showEmptyNotification: Boolean,
+                               showResultCallback: UpdateResultCallback) {
     val updatedChannel = checkForUpdateResult.updatedChannel
     val newBuild = checkForUpdateResult.newBuild
 
     val updatedPlugins = getAllUpdatedPlugins(checkPluginsUpdateResult)
 
     if (updatedChannel != null && newBuild != null) {
-      val runnable = {
-        UpdateInfoDialog(updatedChannel, newBuild, checkForUpdateResult.patches, showSettingsLink, updatedPlugins,
-                         checkPluginsUpdateResult.incompatiblePlugins).show()
-      }
-
       ourShownNotifications.remove(NotificationUniqueType.PLATFORM)?.forEach { it.expire() }
 
       if (showDialog) {
-        runnable.invoke()
+        showResultCallback.run()
       }
       else {
         IdeUpdateUsageTriggerCollector.trigger("notification.shown")
@@ -529,7 +568,7 @@ object UpdateChecker {
                                       newBuild.version)
         showNotification(project, title, "", {
           IdeUpdateUsageTriggerCollector.trigger("notification.clicked")
-          runnable()
+          showResultCallback.run()
         }, null, NotificationUniqueType.PLATFORM, "ide.update.available")
       }
       return
