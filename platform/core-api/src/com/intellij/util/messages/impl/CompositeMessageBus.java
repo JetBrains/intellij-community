@@ -275,6 +275,13 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
 
   @Override
   public final void unsubscribeLazyListeners(@NotNull PluginId pluginId, @NotNull List<ListenerDescriptor> listenerDescriptors) {
+    topicClassToListenerDescriptor.values().removeIf(descriptors -> {
+      if (descriptors.removeIf(descriptor -> descriptor.pluginDescriptor.getPluginId().equals(pluginId))) {
+        return descriptors.isEmpty();
+      }
+      return false;
+    });
+
     if (listenerDescriptors.isEmpty() || subscribers.isEmpty()) {
       return;
     }
