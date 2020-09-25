@@ -9,6 +9,8 @@ import com.intellij.ide.lightEdit.LightEditService;
 import com.intellij.ide.lightEdit.actions.LightEditOpenFileInProjectAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.NlsSafe;
@@ -63,11 +65,18 @@ public class LightEditModeNotificationWidget implements CustomStatusBarWidget {
     panel.add(actionLink, gc.next());
     panel.setOpaque(false);
 
+    configureTooltip(label, actionLink);
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(EditorColorsManager.TOPIC, scheme -> {
+      configureTooltip(label, actionLink);
+    });
+
+    return panel;
+  }
+
+  private void configureTooltip(@NotNull JBLabel label, @NotNull ActionLink actionLink) {
     IdeTooltip tooltip = createTooltip(actionLink);
     IdeTooltipManager.getInstance().setCustomTooltip(label, tooltip);
     IdeTooltipManager.getInstance().setCustomTooltip(actionLink, tooltip);
-
-    return panel;
   }
 
   private @NotNull ActionLink createActionLink() {
