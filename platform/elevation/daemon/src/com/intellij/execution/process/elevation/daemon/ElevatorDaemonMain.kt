@@ -2,21 +2,18 @@
 package com.intellij.execution.process.elevation.daemon
 
 import io.grpc.Server
+import io.grpc.inprocess.InProcessServerBuilder
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder
 import java.net.InetSocketAddress
 import kotlin.system.exitProcess
 
-private class ElevatorServer constructor(private val host: String,
-                                         private val port: Int) {
-  private val server: Server = NettyServerBuilder
-    .forAddress(InetSocketAddress(host, port))
-    .addService(ElevatorServerService())
-    .build()
+class ElevatorServer private constructor(private val server: Server) {
+  constructor(host: String, port: Int) : this(createServer(host, port)) {
+    println("Created server on $host:$port")
+  }
 
   fun start() {
-    println("Starting server on $host:$port")
     server.start()
-    println("Server started, listening on $host:$port")
     Runtime.getRuntime().addShutdownHook(
       Thread {
         println("*** shutting down gRPC server since JVM is shutting down")
@@ -26,7 +23,7 @@ private class ElevatorServer constructor(private val host: String,
     )
   }
 
-  private fun stop() {
+  fun stop() {
     server.shutdown()
   }
 
@@ -34,6 +31,22 @@ private class ElevatorServer constructor(private val host: String,
     server.awaitTermination()
   }
 
+  companion object {
+    fun createLocalElevatorServerForTesting(): ElevatorServer {
+      val server = InProcessServerBuilder.forName("testing")
+        .directExecutor()
+        .addService(ElevatorServerService())
+        .build()
+      return ElevatorServer(server)
+    }
+  }
+}
+
+private fun createServer(host: String, port: Int): Server {
+  return NettyServerBuilder
+    .forAddress(InetSocketAddress(host, port))
+    .addService(ElevatorServerService())
+    .build()
 }
 
 private fun die(message: String): Nothing {
