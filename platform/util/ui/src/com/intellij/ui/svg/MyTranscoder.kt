@@ -4,7 +4,6 @@ package com.intellij.ui.svg
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.ImageLoader
-import org.apache.batik.anim.dom.SAXSVGDocumentFactory
 import org.apache.batik.anim.dom.SVGOMDocument
 import org.apache.batik.bridge.*
 import org.apache.batik.bridge.svg12.SVG12BridgeContext
@@ -17,7 +16,6 @@ import org.apache.batik.transcoder.TranscoderInput
 import org.apache.batik.transcoder.TranscoderOutput
 import org.apache.batik.util.ParsedURL
 import org.apache.batik.util.SVGConstants
-import org.apache.batik.util.XMLResourceDescriptor
 import org.jetbrains.annotations.ApiStatus
 import org.w3c.dom.Document
 import org.w3c.dom.Element
@@ -36,13 +34,13 @@ import kotlin.math.min
 class MyTranscoder(private val scale: Float) : SVGAbstractTranscoder() {
   companion object {
     @JvmStatic
-    val iconMaxSize: Double by lazy {
-      var maxSize = Integer.MAX_VALUE.toDouble()
+    val iconMaxSize: Float by lazy {
+      var maxSize = Integer.MAX_VALUE.toFloat()
       if (!GraphicsEnvironment.isHeadless()) {
         val device = GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice
         val bounds = device.defaultConfiguration.bounds
         val tx = device.defaultConfiguration.defaultTransform
-        maxSize = max(bounds.width * tx.scaleX, bounds.height * tx.scaleY).toInt().toDouble()
+        maxSize = max(bounds.width * tx.scaleX, bounds.height * tx.scaleY).toInt().toFloat()
       }
       maxSize
     }
@@ -63,7 +61,7 @@ class MyTranscoder(private val scale: Float) : SVGAbstractTranscoder() {
         transcoder.addTranscodingHint(KEY_HEIGHT, overriddenHeight)
       }
 
-      val iconMaxSize = iconMaxSize.toFloat()
+      val iconMaxSize = iconMaxSize
       transcoder.addTranscodingHint(KEY_MAX_WIDTH, iconMaxSize)
       transcoder.addTranscodingHint(KEY_MAX_HEIGHT, iconMaxSize)
 
@@ -81,10 +79,9 @@ class MyTranscoder(private val scale: Float) : SVGAbstractTranscoder() {
       renderer.renderingHints = renderingHints
 
       renderer.updateOffScreen(w, h)
-      // curTxf.translate(0.5, 0.5);
       renderer.transform = transcoder.curTxf
       renderer.tree = transcoder.root
-      transcoder.root = null // We're done with it...
+      transcoder.root = null
       try {
         // now we are sure that the aoi is the image size
         @Suppress("SpellCheckingInspection")
@@ -188,7 +185,7 @@ class MyTranscoder(private val scale: Float) : SVGAbstractTranscoder() {
   override fun setImageSize(docWidth: Float, docHeight: Float) {
     origDocWidth = docWidth
     origDocHeight = docHeight
-    super.setImageSize((docWidth * scale).toFloat(), (docHeight * scale).toFloat())
+    super.setImageSize(docWidth * scale, docHeight * scale)
   }
 
   override fun createUserAgent(): UserAgent {
@@ -207,7 +204,17 @@ class MyTranscoder(private val scale: Float) : SVGAbstractTranscoder() {
 
       override fun getBrokenLinkDocument(e: Element, url: String, message: String): SVGDocument {
         logger().warn("$url $message")
-        return createFallbackPlaceholder()
+        try {
+          val fallbackIcon = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\">\n" +
+                             "  <rect x=\"1\" y=\"1\" width=\"14\" height=\"14\" fill=\"none\" stroke=\"red\" stroke-width=\"2\"/>\n" +
+                             "  <line x1=\"1\" y1=\"1\" x2=\"15\" y2=\"15\" stroke=\"red\" stroke-width=\"2\"/>\n" +
+                             "  <line x1=\"1\" y1=\"15\" x2=\"15\" y2=\"1\" stroke=\"red\" stroke-width=\"2\"/>\n" +
+                             "</svg>\n"
+          return createSvgDocument(null, StringReader(fallbackIcon)) as SVGDocument
+        }
+        catch (e: IOException) {
+          throw IllegalStateException(e)
+        }
       }
 
       override fun getScriptSecurity(scriptType: String?, scriptPURL: ParsedURL?, docPURL: ParsedURL?): ScriptSecurity {
@@ -230,21 +237,5 @@ class MyTranscoder(private val scale: Float) : SVGAbstractTranscoder() {
     else {
       BridgeContext(userAgent)
     }
-  }
-}
-
-private fun createFallbackPlaceholder(): SVGDocument {
-  try {
-    val fallbackIcon = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\">\n" +
-                       "  <rect x=\"1\" y=\"1\" width=\"14\" height=\"14\" fill=\"none\" stroke=\"red\" stroke-width=\"2\"/>\n" +
-                       "  <line x1=\"1\" y1=\"1\" x2=\"15\" y2=\"15\" stroke=\"red\" stroke-width=\"2\"/>\n" +
-                       "  <line x1=\"1\" y1=\"15\" x2=\"15\" y2=\"1\" stroke=\"red\" stroke-width=\"2\"/>\n" +
-                       "</svg>\n"
-
-    val factory = SAXSVGDocumentFactory(XMLResourceDescriptor.getXMLParserClassName())
-    return factory.createDocument(null, StringReader(fallbackIcon)) as SVGDocument
-  }
-  catch (e: IOException) {
-    throw IllegalStateException(e)
   }
 }

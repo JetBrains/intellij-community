@@ -2,10 +2,9 @@
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.SVGLoader
 import com.intellij.util.io.DigestUtil
-import org.xml.sax.InputSource
 import java.awt.Dimension
 import java.awt.Image
 import java.io.File
@@ -54,8 +53,8 @@ internal fun imageSize(file: Path): Dimension? {
 private fun loadImage(file: Path): Image? {
   if (file.toString().endsWith(".svg")) {
     // don't mask any exception for svg file
-    Files.newInputStream(file).buffered().use {
-      return SVGLoader.loadWithoutCache(null, InputSource(it), 1f, null)
+    Files.newBufferedReader(file).use {
+      return SVGLoader.loadWithoutCache(null, it, 1f, null)
     }
   }
 
@@ -84,12 +83,12 @@ internal enum class ImageType(private val suffix: String) {
     }
 
     fun getBasicName(suffix: String, prefix: List<String>): String {
-      val name = FileUtil.getNameWithoutExtension(suffix)
+      val name = FileUtilRt.getNameWithoutExtension(suffix)
       return stripSuffix((prefix + name).joinToString("/"))
     }
 
     fun fromFile(file: Path): ImageType {
-      return fromName(FileUtil.getNameWithoutExtension(file.fileName.toString()))
+      return fromName(FileUtilRt.getNameWithoutExtension(file.fileName.toString()))
     }
 
     private fun fromName(name: String): ImageType {

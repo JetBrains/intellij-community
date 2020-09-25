@@ -14,18 +14,18 @@ public final class GithubIcons {
   private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, GithubIcons.class, cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon Branch = load("/org/jetbrains/plugins/github/branch.svg", 2242440598891271311L, 2);
-  /** 16x16 */ public static final @NotNull Icon DefaultAvatar = load("/org/jetbrains/plugins/github/defaultAvatar.svg", -4638574232832152829L, 0);
-  /** 16x16 */ public static final @NotNull Icon IssueClosed = load("/org/jetbrains/plugins/github/issueClosed.svg", -7037855982526119988L, 0);
-  /** 16x16 */ public static final @NotNull Icon IssueOpened = load("/org/jetbrains/plugins/github/issueOpened.svg", -5718339124170044540L, 0);
-  /** 16x16 */ public static final @NotNull Icon LocalBranch = load("/org/jetbrains/plugins/github/localBranch.svg", -4768104342270407164L, 2);
-  /** 16x16 */ public static final @NotNull Icon PullRequestClosed = load("/org/jetbrains/plugins/github/pullRequestClosed.svg", 336102527900581575L, 0);
-  /** 16x16 */ public static final @NotNull Icon PullRequestDraft = load("/org/jetbrains/plugins/github/pullRequestDraft.svg", -7297092550951079864L, 0);
-  /** 16x16 */ public static final @NotNull Icon PullRequestMerged = load("/org/jetbrains/plugins/github/pullRequestMerged.svg", -6354582545185855850L, 0);
-  /** 16x16 */ public static final @NotNull Icon PullRequestOpen = load("/org/jetbrains/plugins/github/pullRequestOpen.svg", 6139715954805183686L, 0);
-  /** 13x13 */ public static final @NotNull Icon PullRequestsToolWindow = load("/org/jetbrains/plugins/github/pullRequestsToolWindow.svg", -3529459705161620770L, 2);
-  /** 16x16 */ public static final @NotNull Icon Review = load("/org/jetbrains/plugins/github/review.svg", 2169678564977980984L, 0);
-  /** 16x16 */ public static final @NotNull Icon ReviewAccepted = load("/org/jetbrains/plugins/github/reviewAccepted.svg", -6357918455029273941L, 0);
-  /** 16x16 */ public static final @NotNull Icon ReviewRejected = load("/org/jetbrains/plugins/github/reviewRejected.svg", 7125197429682082414L, 0);
-  /** 16x16 */ public static final @NotNull Icon Timeline = load("/org/jetbrains/plugins/github/timeline.svg", -1571421489555448493L, 0);
+  /** 16x16 */ public static final @NotNull Icon Branch = load("/org/jetbrains/plugins/github/branch.svg", 7013179854221709094L, 2);
+  /** 16x16 */ public static final @NotNull Icon DefaultAvatar = load("/org/jetbrains/plugins/github/defaultAvatar.svg", 9213503488564590836L, 0);
+  /** 16x16 */ public static final @NotNull Icon IssueClosed = load("/org/jetbrains/plugins/github/issueClosed.svg", 2954294575409812311L, 0);
+  /** 16x16 */ public static final @NotNull Icon IssueOpened = load("/org/jetbrains/plugins/github/issueOpened.svg", 2451531945931995302L, 0);
+  /** 16x16 */ public static final @NotNull Icon LocalBranch = load("/org/jetbrains/plugins/github/localBranch.svg", 2411085552552625999L, 2);
+  /** 16x16 */ public static final @NotNull Icon PullRequestClosed = load("/org/jetbrains/plugins/github/pullRequestClosed.svg", -4139963041270704048L, 0);
+  /** 16x16 */ public static final @NotNull Icon PullRequestDraft = load("/org/jetbrains/plugins/github/pullRequestDraft.svg", -6701890803024899920L, 0);
+  /** 16x16 */ public static final @NotNull Icon PullRequestMerged = load("/org/jetbrains/plugins/github/pullRequestMerged.svg", -2107994938482243386L, 0);
+  /** 16x16 */ public static final @NotNull Icon PullRequestOpen = load("/org/jetbrains/plugins/github/pullRequestOpen.svg", -5145211218350150377L, 0);
+  /** 13x13 */ public static final @NotNull Icon PullRequestsToolWindow = load("/org/jetbrains/plugins/github/pullRequestsToolWindow.svg", -4380807086021222956L, 2);
+  /** 16x16 */ public static final @NotNull Icon Review = load("/org/jetbrains/plugins/github/review.svg", -1363360950002682892L, 0);
+  /** 16x16 */ public static final @NotNull Icon ReviewAccepted = load("/org/jetbrains/plugins/github/reviewAccepted.svg", -8487338624661711343L, 0);
+  /** 16x16 */ public static final @NotNull Icon ReviewRejected = load("/org/jetbrains/plugins/github/reviewRejected.svg", 76240743978930006L, 0);
+  /** 16x16 */ public static final @NotNull Icon Timeline = load("/org/jetbrains/plugins/github/timeline.svg", -330867259688084164L, 0);
 }

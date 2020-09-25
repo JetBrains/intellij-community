@@ -14,13 +14,13 @@ public final class DvcsImplIcons {
   private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, DvcsImplIcons.class, cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon CherryPick = load("/icons/cherryPick.svg", 7021458459553037467L, 2);
-  /** 16x16 */ public static final @NotNull Icon CurrentBranchFavoriteLabel = load("/icons/currentBranchFavoriteLabel.svg", -1938391854253034228L, 0);
-  /** 16x16 */ public static final @NotNull Icon CurrentBranchLabel = load("/icons/currentBranchLabel.svg", -5425820907241054060L, 0);
-  /** 16x16 */ public static final @NotNull Icon Incoming = load("/icons/incoming.svg", -3489807051240050601L, 2);
-  /** 16x16 */ public static final @NotNull Icon IncomingLayer = load("/icons/incomingLayer.svg", 2546780460996435463L, 2);
-  /** 16x16 */ public static final @NotNull Icon IncomingOutgoing = load("/icons/incomingOutgoing.svg", -4344053879671613503L, 2);
-  /** 16x16 */ public static final @NotNull Icon IncomingOutgoingLayer = load("/icons/incomingOutgoingLayer.svg", 9199112927539942152L, 2);
-  /** 16x16 */ public static final @NotNull Icon Outgoing = load("/icons/outgoing.svg", 4459988687892051076L, 2);
-  /** 16x16 */ public static final @NotNull Icon OutgoingLayer = load("/icons/outgoingLayer.svg", 367969491506687178L, 2);
+  /** 16x16 */ public static final @NotNull Icon CherryPick = load("/icons/cherryPick.svg", 8121888426639848694L, 2);
+  /** 16x16 */ public static final @NotNull Icon CurrentBranchFavoriteLabel = load("/icons/currentBranchFavoriteLabel.svg", -5100325215613088446L, 0);
+  /** 16x16 */ public static final @NotNull Icon CurrentBranchLabel = load("/icons/currentBranchLabel.svg", 3819831225637521358L, 0);
+  /** 16x16 */ public static final @NotNull Icon Incoming = load("/icons/incoming.svg", 8229951403001488976L, 2);
+  /** 16x16 */ public static final @NotNull Icon IncomingLayer = load("/icons/incomingLayer.svg", 728029283896002474L, 2);
+  /** 16x16 */ public static final @NotNull Icon IncomingOutgoing = load("/icons/incomingOutgoing.svg", 220799405741956046L, 2);
+  /** 16x16 */ public static final @NotNull Icon IncomingOutgoingLayer = load("/icons/incomingOutgoingLayer.svg", -2180464981987082170L, 2);
+  /** 16x16 */ public static final @NotNull Icon Outgoing = load("/icons/outgoing.svg", 7570750940097397641L, 2);
+  /** 16x16 */ public static final @NotNull Icon OutgoingLayer = load("/icons/outgoingLayer.svg", 3212326245263732758L, 2);
 }

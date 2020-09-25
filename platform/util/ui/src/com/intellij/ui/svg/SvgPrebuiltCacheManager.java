@@ -26,8 +26,8 @@ public final class SvgPrebuiltCacheManager {
   public SvgPrebuiltCacheManager(@NotNull Path dbFile) throws IOException {
     MVStore.Builder storeBuilder = new MVStore.Builder()
       .readOnly()
-      .backgroundExceptionHandler((t, e) -> {
-        SvgCacheManager.getLogger().error(e);
+      .backgroundExceptionHandler((e, store) -> {
+        SvgCacheManager.getLogger().error("Icon Cache Error (db=" + store.getFileStore() + ")", e);
       })
       .autoCommitDelay(60_000)
       .compressHigh();

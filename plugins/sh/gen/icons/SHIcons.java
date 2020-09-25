@@ -14,5 +14,5 @@ public final class SHIcons {
   private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, SHIcons.class, cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon ShFile = load("/icons/shFile.svg", -7397725416222144519L, 0);
+  /** 16x16 */ public static final @NotNull Icon ShFile = load("/icons/shFile.svg", 5123689148493670156L, 0);
 }

@@ -47,7 +47,8 @@ public final class JDOMUtil {
   private static volatile XMLInputFactory XML_INPUT_FACTORY;
 
   // do not use AtomicNotNullLazyValue to reduce class loading
-  private static XMLInputFactory getXmlInputFactory() {
+  @ApiStatus.Internal
+  public static XMLInputFactory getXmlInputFactory() {
     XMLInputFactory factory = XML_INPUT_FACTORY;
     if (factory != null) {
       return factory;

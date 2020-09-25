@@ -21,6 +21,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
 
 @SuppressWarnings("UndesirableClassUsage")
 @ApiStatus.Internal
@@ -35,16 +36,16 @@ public final class SvgCacheManager {
   private final Map<Float, MVMap<byte[], ImageValue>> scaleToMap = new ConcurrentHashMap<>(2, 0.75f, 2);
   private final MVMap.Builder<byte[], ImageValue> mapBuilder;
 
-  private static final class StoreErrorHandler implements Thread.UncaughtExceptionHandler {
+  private static final class StoreErrorHandler implements BiConsumer<Throwable, MVStore> {
     private boolean isStoreOpened;
 
     @Override
-    public void uncaughtException(Thread t, Throwable e) {
+    public void accept(Throwable e, MVStore store) {
       if (isStoreOpened) {
-        getLogger().error(e);
+        getLogger().error("Icon Cache Error (db=" + store.getFileStore() + ")", e);
       }
       else {
-        getLogger().warn("Cache will be recreated or previous version of data reused", e);
+        getLogger().warn("Icon Cache will be recreated or previous version of data reused (db=" + store.getFileStore() + ")", e);
       }
     }
   }
@@ -76,8 +77,8 @@ public final class SvgCacheManager {
                                                    @NotNull Map<Float, MVMap<K, V>> scaleToMap,
                                                    @NotNull MVStore store,
                                                    @NotNull MVMap.MapBuilder<MVMap<K, V>, K, V> mapBuilder) {
-    return scaleToMap.computeIfAbsent(scale, scale2 -> {
-      return store.openMap("icons-v1" + (isDark ? "_d" : "") + "@" + scale2, mapBuilder);
+    return scaleToMap.computeIfAbsent(scale + (isDark ? 10_000 : 0), __ -> {
+      return store.openMap("icons-v1@" + scale + (isDark ? "_d" : ""), mapBuilder);
     });
   }
 

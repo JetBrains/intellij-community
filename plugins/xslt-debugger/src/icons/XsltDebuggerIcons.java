@@ -14,5 +14,5 @@ public final class XsltDebuggerIcons {
   private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, XsltDebuggerIcons.class, cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon XmlComment = load("/icons/xmlComment.svg", 6425537726148766859L, 0);
+  /** 16x16 */ public static final @NotNull Icon XmlComment = load("/icons/xmlComment.svg", 8307305859969558941L, 0);
 }

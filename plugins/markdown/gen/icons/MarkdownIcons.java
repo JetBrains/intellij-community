@@ -16,14 +16,14 @@ public final class MarkdownIcons {
   }
 
   public static final class EditorActions {
-    /** 16x16 */ public static final @NotNull Icon Bold = load("/icons/editor_actions/Bold.svg", 3254957130187659755L, 2);
-    /** 16x16 */ public static final @NotNull Icon Code_span = load("/icons/editor_actions/Code_span.svg", 1173251916184382353L, 2);
-    /** 16x16 */ public static final @NotNull Icon Header_level_down = load("/icons/editor_actions/Header_level_down.svg", -5644439765667589620L, 2);
-    /** 16x16 */ public static final @NotNull Icon Header_level_up = load("/icons/editor_actions/Header_level_up.svg", 1738191812294750273L, 2);
-    /** 16x16 */ public static final @NotNull Icon Italic = load("/icons/editor_actions/Italic.svg", 3240123994625852203L, 2);
-    /** 16x16 */ public static final @NotNull Icon Link = load("/icons/editor_actions/Link.svg", -5412337752198422491L, 2);
-    /** 16x16 */ public static final @NotNull Icon Strike_through = load("/icons/editor_actions/Strike_through.svg", 3804698961796377166L, 2);
+    /** 16x16 */ public static final @NotNull Icon Bold = load("/icons/editor_actions/Bold.svg", -6445952954704500578L, 2);
+    /** 16x16 */ public static final @NotNull Icon Code_span = load("/icons/editor_actions/Code_span.svg", -9115359587845322559L, 2);
+    /** 16x16 */ public static final @NotNull Icon Header_level_down = load("/icons/editor_actions/Header_level_down.svg", -4386543711380196485L, 2);
+    /** 16x16 */ public static final @NotNull Icon Header_level_up = load("/icons/editor_actions/Header_level_up.svg", -4897203554988708352L, 2);
+    /** 16x16 */ public static final @NotNull Icon Italic = load("/icons/editor_actions/Italic.svg", 4976429474595351440L, 2);
+    /** 16x16 */ public static final @NotNull Icon Link = load("/icons/editor_actions/Link.svg", 7399315794832636966L, 2);
+    /** 16x16 */ public static final @NotNull Icon Strike_through = load("/icons/editor_actions/Strike_through.svg", 7655458485343876010L, 2);
   }
 
-  /** 16x16 */ public static final @NotNull Icon MarkdownPlugin = load("/icons/MarkdownPlugin.svg", 5350961264005962568L, 0);
+  /** 16x16 */ public static final @NotNull Icon MarkdownPlugin = load("/icons/MarkdownPlugin.svg", -2842140869353630844L, 0);
 }

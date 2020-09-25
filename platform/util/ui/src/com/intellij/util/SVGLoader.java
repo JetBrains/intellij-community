@@ -14,8 +14,8 @@ import com.intellij.ui.icons.IconLoadMeasurer;
 import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.ui.svg.MyTranscoder;
-import com.intellij.ui.svg.SaxSvgDocumentFactory;
 import com.intellij.ui.svg.SvgCacheManager;
+import com.intellij.ui.svg.SvgDocumentFactoryKt;
 import com.intellij.ui.svg.SvgPrebuiltCacheManager;
 import com.intellij.util.ui.ImageUtil;
 import org.apache.batik.anim.dom.SVGOMDocument;
@@ -29,17 +29,15 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Dimension2D;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -88,7 +86,7 @@ public final class SVGLoader {
 
     SvgCacheManager cache;
     try {
-      cache = USE_CACHE ? new SvgCacheManager(Paths.get(PathManager.getSystemPath(), "icons-v1.db")) : null;
+      cache = USE_CACHE ? new SvgCacheManager(Paths.get(PathManager.getSystemPath(), "icons-v2.db")) : null;
     }
     catch (Exception e) {
       Logger.getInstance(SVGLoader.class).error(e);
@@ -195,7 +193,7 @@ public final class SVGLoader {
     }
 
     try {
-      bufferedImage = loadWithoutCache(path, new InputSource(stream), scale, docSize);
+      bufferedImage = loadWithoutCache(path, new InputStreamReader(stream, StandardCharsets.UTF_8), scale, docSize);
     }
     catch (TranscoderException e) {
       docSize.setSize(0, 0);
@@ -273,7 +271,7 @@ public final class SVGLoader {
     start = StartUpMeasurer.getCurrentTimeIfEnabled();
     BufferedImage bufferedImage;
     try {
-      bufferedImage = loadWithoutCache(path, new InputSource(stream), scale, docSize);
+      bufferedImage = loadWithoutCache(path, new InputStreamReader(stream, StandardCharsets.UTF_8), scale, docSize);
     }
     catch (TranscoderException e) {
       docSize.setSize(0, 0);
@@ -290,12 +288,12 @@ public final class SVGLoader {
   }
 
   public static @NotNull BufferedImage loadWithoutCache(@Nullable String path,
-                                                        @NotNull InputSource inputSource,
+                                                        @NotNull Reader reader,
                                                         float scale,
                                                         @Nullable ImageLoader.Dimension2DDouble docSize /*OUT*/)
     throws IOException, TranscoderException {
     long start = StartUpMeasurer.getCurrentTimeIfEnabled();
-    BufferedImage image = MyTranscoder.createImage(scale, createDocument(path, inputSource), docSize);
+    BufferedImage image = MyTranscoder.createImage(scale, createDocument(path, reader), docSize);
     if (start != -1) {
       IconLoadMeasurer.svgDecoding.addDurationStartedAt(start);
     }
@@ -304,7 +302,7 @@ public final class SVGLoader {
 
   public static @NotNull BufferedImage loadWithoutCache(byte @NotNull [] content, float scale) throws IOException {
     try {
-      return MyTranscoder.createImage(scale, createDocument(null, new InputSource(new ByteArrayInputStream(content))), null);
+      return MyTranscoder.createImage(scale, createDocument(null, new ByteArrayInputStream(content)), null);
     }
     catch (TranscoderException e) {
       throw new IOException(e);
@@ -317,7 +315,7 @@ public final class SVGLoader {
   public static Image load(@Nullable URL url, @NotNull InputStream stream, @NotNull ScaleContext scaleContext, double width, double height) throws IOException {
     try {
       double scale = scaleContext.getScale(DerivedScaleType.PIX_SCALE);
-      return MyTranscoder.createImage(1, createDocument(url != null ? url.getPath() : null, new InputSource(stream)), null, (float)(width * scale), (float)(height * scale));
+      return MyTranscoder.createImage(1, createDocument(url != null ? url.getPath() : null, stream), null, (float)(width * scale), (float)(height * scale));
     }
     catch (TranscoderException e) {
       throw new IOException(e);
@@ -351,29 +349,32 @@ public final class SVGLoader {
       }
       else if (checkClosingBracket && ch == '>') {
         buffer.write(new byte[]{'<', '/', 's', 'v', 'g', '>'});
-        return getDocumentSize(scale, createDocument(null, new InputSource(new ByteArrayInputStream(buffer.getInternalBuffer(), 0, buffer.size()))));
+        return getDocumentSize(scale, createDocument(null, new ByteArrayInputStream(buffer.getInternalBuffer(), 0, buffer.size())));
       }
     }
     return new ImageLoader.Dimension2DDouble(ICON_DEFAULT_SIZE * scale, ICON_DEFAULT_SIZE * scale);
   }
 
   public static double getMaxZoomFactor(@Nullable String path, @NotNull InputStream stream, @NotNull ScaleContext scaleContext) throws IOException {
-    ImageLoader.Dimension2DDouble size = getDocumentSize((float)scaleContext.getScale(DerivedScaleType.PIX_SCALE), createDocument(path, new InputSource(stream)));
-    double iconMaxSize = MyTranscoder.getIconMaxSize();
+    ImageLoader.Dimension2DDouble size = getDocumentSize((float)scaleContext.getScale(DerivedScaleType.PIX_SCALE), createDocument(path, stream));
+    float iconMaxSize = MyTranscoder.getIconMaxSize();
     return Math.min(iconMaxSize / size.getWidth(), iconMaxSize / size.getHeight());
   }
 
-  private static @NotNull Document createDocument(@Nullable String url, @NotNull InputSource inputSource) {
-    inputSource.setSystemId(url);
-    Document document = new SaxSvgDocumentFactory().createDocument(url, inputSource);
+  private static @NotNull Document createDocument(@Nullable String url, @NotNull Reader reader) {
+    Document document = SvgDocumentFactoryKt.createSvgDocument(url, reader);
     patchColors(url, document);
     return document;
+  }
+
+  private static @NotNull Document createDocument(@Nullable String url, @NotNull InputStream inputStream) {
+    return createDocument(url, new InputStreamReader(inputStream, StandardCharsets.UTF_8));
   }
 
   private static void patchColors(@Nullable String url, @NotNull Document document) {
     SvgElementColorPatcherProvider colorPatcher = ourColorPatcher;
     if (colorPatcher != null) {
-      final SvgElementColorPatcher patcher = colorPatcher.forPath(url);
+      SvgElementColorPatcher patcher = colorPatcher.forPath(url);
       if (patcher != null) {
         patcher.patchColors(document.getDocumentElement());
       }

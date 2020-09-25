@@ -30,7 +30,6 @@ import org.jetbrains.mvstore.type.*;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.lang.Thread.UncaughtExceptionHandler;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.*;
@@ -42,6 +41,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.LongSupplier;
 import java.util.function.Predicate;
@@ -3374,7 +3374,7 @@ public final class MVStore implements AutoCloseable {
     private void handleException(Throwable error) {
         if (config.backgroundExceptionHandler != null) {
             try {
-                config.backgroundExceptionHandler.uncaughtException(Thread.currentThread(), error);
+                config.backgroundExceptionHandler.accept(error, this);
             } catch(Throwable e) {
                 if (error != e) { // OOME may be the same
                     error.addSuppressed(e);
@@ -3804,7 +3804,7 @@ public final class MVStore implements AutoCloseable {
         private int autoCompactFillRate = 90;
         private int versionsToKeep = 0;
 
-        private UncaughtExceptionHandler backgroundExceptionHandler;
+        private BiConsumer<Throwable, MVStore> backgroundExceptionHandler;
 
         private boolean readOnly;
 
@@ -3973,7 +3973,7 @@ public final class MVStore implements AutoCloseable {
          * Set the listener to be used for exceptions that occur when writing in
          * the background thread.
          */
-        public Builder backgroundExceptionHandler(Thread.UncaughtExceptionHandler exceptionHandler) {
+        public Builder backgroundExceptionHandler(BiConsumer<Throwable, MVStore> exceptionHandler) {
             backgroundExceptionHandler = exceptionHandler;
             return this;
         }

@@ -14,13 +14,13 @@ public final class XpathIcons {
   private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, XpathIcons.class, cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon Association = load("/icons/association.svg", -6696304270056562113L, 0);
-  /** 16x16 */ public static final @NotNull Icon Association_small = load("/icons/association_small.svg", 670029732533385539L, 2);
-  /** 16x16 */ public static final @NotNull Icon Function = load("/icons/function.svg", 3991764717675807635L, 0);
-  /** 16x16 */ public static final @NotNull Icon Namespace = load("/icons/namespace.svg", -3788120675108780221L, 1);
-  /** 16x16 */ public static final @NotNull Icon Template = load("/icons/template.svg", 3713651814026402307L, 0);
+  /** 16x16 */ public static final @NotNull Icon Association = load("/icons/association.svg", -7403222202896058893L, 0);
+  /** 16x16 */ public static final @NotNull Icon Association_small = load("/icons/association_small.svg", -4408586659187314448L, 2);
+  /** 16x16 */ public static final @NotNull Icon Function = load("/icons/function.svg", -8647225230679120905L, 0);
+  /** 16x16 */ public static final @NotNull Icon Namespace = load("/icons/namespace.svg", 6560971896897595798L, 1);
+  /** 16x16 */ public static final @NotNull Icon Template = load("/icons/template.svg", -6186276055786546033L, 0);
   /** 16x16 */ public static final @NotNull Icon Xml = load("/icons/xml.png", 0L, 2);
-  /** 16x16 */ public static final @NotNull Icon Xpath = load("/icons/xpath.svg", -5612741295582496055L, 0);
-  /** 16x16 */ public static final @NotNull Icon XsltFiletypeOverlay = load("/icons/xslt-filetype-overlay.svg", -5210184873060565611L, 0);
-  /** 16x16 */ public static final @NotNull Icon Xslt = load("/icons/xslt.svg", 6980568868928270860L, 0);
+  /** 16x16 */ public static final @NotNull Icon Xpath = load("/icons/xpath.svg", -8027759177032054128L, 0);
+  /** 16x16 */ public static final @NotNull Icon XsltFiletypeOverlay = load("/icons/xslt-filetype-overlay.svg", 5876110118122367463L, 0);
+  /** 16x16 */ public static final @NotNull Icon Xslt = load("/icons/xslt.svg", 7560485992842670866L, 0);
 }

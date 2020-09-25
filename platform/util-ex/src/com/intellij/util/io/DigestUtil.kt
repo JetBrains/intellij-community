@@ -33,6 +33,10 @@ object DigestUtil {
   private val sha256 by lazyPub { getMessageDigest("SHA-256") }
 
   @JvmStatic
+  fun sha512(): MessageDigest = sha512.cloneDigest()
+  private val sha512 by lazyPub { getMessageDigest("SHA-512") }
+
+  @JvmStatic
   fun digestToHash(digest: MessageDigest) = bytesToHex(digest.digest())
 
   @JvmStatic

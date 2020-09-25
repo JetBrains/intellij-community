@@ -17,7 +17,6 @@ import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
-import org.xml.sax.InputSource
 import java.awt.image.BufferedImage
 import java.io.File
 import java.nio.file.*
@@ -446,8 +445,8 @@ internal open class IconsClassGenerator(private val projectHome: Path,
       if (file.toString().endsWith(".svg")) {
         // don't mask any exception for svg file
         val data = loadAndNormalizeSvgFile(imageFile)
-        loadedImage = SVGLoader.loadWithoutCache(null, InputSource(data.reader()), 1f, null)
-        key = getImageKey(data.toByteArray())
+        loadedImage = SVGLoader.loadWithoutCache(null, data.reader(), 1f, null)
+        key = getImageKey(data.toByteArray(), file.fileName.toString())
       }
       else {
         loadedImage = Files.newInputStream(file).buffered().use { ImageIO.read(it) }
@@ -627,8 +626,14 @@ private fun capitalize(name: String): String {
 private const val iconLoaderCode = "IconManager.getInstance()"
 private val hashFactory: XXHashFactory = XXHashFactory.fastestJavaInstance()
 
-internal fun getImageKey(fileData: ByteArray): Long {
-  return hashFactory.hash64().hash(fileData, 0, fileData.size, SvgCacheManager.HASH_SEED)
+// grid-layout.svg duplicates grid-view.svg, but grid-layout_dark.svg differs from grid-view_dark.svg
+// so, add filename to image id to support such scenario
+internal fun getImageKey(fileData: ByteArray, fileName: String): Long {
+  val h = hashFactory.newStreamingHash64(SvgCacheManager.HASH_SEED)
+  h.update(fileData, 0, fileData.size)
+  val nameBytes = fileName.toByteArray()
+  h.update(nameBytes, 0, nameBytes.size)
+  return h.value
 }
 
 // remove line separators to unify line separators (\n vs \r\n), trim lines
