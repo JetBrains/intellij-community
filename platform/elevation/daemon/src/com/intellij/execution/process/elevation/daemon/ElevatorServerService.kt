@@ -2,6 +2,8 @@
 package com.intellij.execution.process.elevation.daemon
 
 import com.intellij.execution.process.elevation.rpc.*
+import io.grpc.ServerInterceptors
+import io.grpc.ServerServiceDefinition
 import io.grpc.Status
 import io.grpc.StatusException
 import java.io.File
@@ -33,5 +35,12 @@ internal class ElevatorServerService : ElevatorGrpcKt.ElevatorCoroutineImplBase(
     return AwaitReply.newBuilder()
       .setExitCode(exitCode)
       .build()
+  }
+
+  companion object {
+    fun createServiceDefinition(): ServerServiceDefinition {
+      val service = ElevatorServerService()
+      return ServerInterceptors.intercept(service, ExceptionStatusDescriptionAugmenterServerInterceptor)
+    }
   }
 }
