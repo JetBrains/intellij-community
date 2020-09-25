@@ -102,7 +102,8 @@
     <listener class="com.intellij.completion.ml.tracker.CompletionFactorsInitializer"
               topic="com.intellij.codeInsight.lookup.LookupManagerListener" />
     <listener class="com.intellij.completion.ml.sorting.PositionDiffArrowInitializer"
-              topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
+              topic="com.intellij.codeInsight.lookup.LookupManagerListener"
+              activeInTestMode="false"/>
     <listener class="com.intellij.completion.ml.ngram.NGramFileListener"
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener$Before"/>
   </projectListeners>
