@@ -31,6 +31,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,7 +43,7 @@ import java.util.Set;
  */
 public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<PsiMethod> {
   private static final Logger LOG = Logger.getInstance(MakeMethodStaticProcessor.class);
-  private List<PsiMethod> myAdditionalMethods;
+  private @Nullable List<PsiMethod> myAdditionalMethods;
 
   public MakeMethodStaticProcessor(final Project project, final PsiMethod method, final Settings settings) {
     super(project, method, settings);

@@ -21,6 +21,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -110,7 +111,7 @@ public final class Settings {
     myDelegate = delegate;
   }
 
-  Settings obtainBranchCopy(ModelBranch branch) {
+  @NotNull Settings obtainBranchCopy(@NotNull ModelBranch branch) {
     if (myFieldToNameList.isEmpty()) return this; 
     return new Settings(myReplaceUsages, myClassParameterName,
                         ContainerUtil.map2Array(myFieldToNameList, PsiField.class, fp -> branch.obtainPsiCopy(fp.field)),

@@ -8,15 +8,15 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 
 /**
- * Simple UsageInfo that supports branching
+ * Simple PsiElement-based UsageInfo that supports branching
  */
-public final class SimpleBranchableUsageInfo extends UsageInfo implements BranchableUsageInfo {
-  public SimpleBranchableUsageInfo(@NotNull PsiElement element) {
+public final class PsiElementUsageInfo extends UsageInfo implements BranchableUsageInfo {
+  public PsiElementUsageInfo(@NotNull PsiElement element) {
     super(element);
   }
 
   @Override
   public @NotNull UsageInfo obtainBranchCopy(@NotNull ModelBranch branch) {
-    return new SimpleBranchableUsageInfo(branch.obtainPsiCopy(Objects.requireNonNull(getElement())));
+    return new PsiElementUsageInfo(branch.obtainPsiCopy(Objects.requireNonNull(getElement())));
   }
 }
