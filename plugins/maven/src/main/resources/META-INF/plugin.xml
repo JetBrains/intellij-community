@@ -277,6 +277,7 @@
     <module.workingDirectoryProvider implementation="org.jetbrains.idea.maven.project.MavenWorkingDirectoryProvider"/>
     <notificationGroup id="Maven: non-managed pom.xml" displayType="BALLOON"/>
     <notificationGroup id="Maven" displayType="BALLOON"/>
+    <toolWindowAllowlist id="Maven"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.properties">
@@ -426,6 +427,7 @@
     <compiler implementation="org.jetbrains.idea.maven.importing.MavenCompilerEclipseExtension"/>
     <executionEnvironmentProvider
       implementation="org.jetbrains.idea.maven.execution.MavenApplicationConfigurationExecutionEnvironmentProvider"/>
+
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains.idea.reposearch">
     <provider implementation="org.jetbrains.idea.maven.onlinecompletion.MavenCompletionProviderFactory"/>
