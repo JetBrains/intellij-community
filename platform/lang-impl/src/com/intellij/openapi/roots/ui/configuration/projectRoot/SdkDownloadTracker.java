@@ -94,7 +94,7 @@ public class SdkDownloadTracker {
     LOG.assertTrue(findTask(originalSdk) == null, "Download is already running for the SDK " + originalSdk);
 
     PendingDownload pd = new PendingDownload(originalSdk, item, new SmartPendingDownloadModalityTracker());
-    pd.configureSdk(originalSdk);
+    configureSdk(originalSdk, item);
     myPendingTasks.add(pd);
   }
 
@@ -463,10 +463,18 @@ public class SdkDownloadTracker {
     }
 
     void configureSdk(@NotNull Sdk sdk) {
-      SdkModificator mod = sdk.getSdkModificator();
-      mod.setHomePath(FileUtil.toSystemIndependentName(myTask.getPlannedHomeDir()));
-      mod.setVersionString(myTask.getPlannedVersion());
-      mod.commitChanges();
+      getInstance().configureSdk(sdk, myTask);
     }
+  }
+
+  /**
+   * Applies configuration for the SDK from the expectations of
+   * the given {@link SdkDownloadTask}
+   */
+  public void configureSdk(@NotNull Sdk sdk, @NotNull SdkDownloadTask task) {
+    SdkModificator mod = sdk.getSdkModificator();
+    mod.setHomePath(FileUtil.toSystemIndependentName(task.getPlannedHomeDir()));
+    mod.setVersionString(task.getPlannedVersion());
+    mod.commitChanges();
   }
 }
