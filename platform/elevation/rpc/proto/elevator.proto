@@ -8,6 +8,7 @@ option java_outer_classname = "ElevatorProto";
 
 service Elevator {
   rpc Spawn (SpawnRequest) returns (SpawnReply) {}
+  rpc Await (AwaitRequest) returns (AwaitReply) {}
 }
 
 message SpawnRequest {
@@ -17,6 +18,14 @@ message SpawnRequest {
 message SpawnReply {
   string message = 1;
   uint64 pid = 2;
+}
+
+message AwaitRequest {
+  uint64 pid = 1;
+}
+
+message AwaitReply {
+  uint32 exit_code = 1;
 }
 
 message CommandLine {

@@ -2,6 +2,7 @@
 package com.intellij.execution.process.elevation.daemon
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -31,6 +32,22 @@ internal class ElevatorProcessManager {
     return registerProcess(process)
   }
 
+  suspend fun awaitTermination(pid: Pid): Int {
+    val process = getProcess(pid)
+    requireNotNull(process) { "Unknown PID $pid" }
+
+    try {
+      withContext(Dispatchers.IO) {
+        process.onExit().await()
+      }
+    }
+    finally {
+      unregisterProcess(pid)
+    }
+
+    return process.exitValue()
+  }
+
   private suspend fun registerProcess(process: Process): Pid {
     val pid = process.pid()
     mutex.withLock {
@@ -39,5 +56,19 @@ internal class ElevatorProcessManager {
       }
     }
     return pid
+  }
+
+  // intentionally nullable, because we can't reliably sync with the event when the process exits
+  private suspend fun getProcess(pid: Pid): Process? {
+    return mutex.withLock {
+      processMap[pid]
+    }
+  }
+
+  private suspend fun unregisterProcess(pid: Pid): Process {
+    val process = mutex.withLock {
+      processMap.remove(pid)
+    }
+    return requireNotNull(process) { "Unknown PID $pid" }
   }
 }

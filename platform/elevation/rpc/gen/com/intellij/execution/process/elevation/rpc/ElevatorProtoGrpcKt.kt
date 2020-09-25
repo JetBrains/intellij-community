@@ -9,11 +9,14 @@ import io.grpc.MethodDescriptor
 import io.grpc.ServerServiceDefinition
 import io.grpc.ServerServiceDefinition.builder
 import io.grpc.ServiceDescriptor
+import io.grpc.Status
 import io.grpc.Status.UNIMPLEMENTED
 import io.grpc.StatusException
 import io.grpc.kotlin.AbstractCoroutineServerImpl
 import io.grpc.kotlin.AbstractCoroutineStub
+import io.grpc.kotlin.ClientCalls
 import io.grpc.kotlin.ClientCalls.unaryRpc
+import io.grpc.kotlin.ServerCalls
 import io.grpc.kotlin.ServerCalls.unaryServerMethodDefinition
 import io.grpc.kotlin.StubFor
 import kotlin.coroutines.CoroutineContext
@@ -33,6 +36,10 @@ object ElevatorGrpcKt {
     @JvmStatic
     get() = ElevatorGrpc.getSpawnMethod()
 
+  val awaitMethod: MethodDescriptor<AwaitRequest, AwaitReply>
+    @JvmStatic
+    get() = ElevatorGrpc.getAwaitMethod()
+
   /**
    * A stub for issuing RPCs to a(n) elevation.rpc.Elevator service as suspending coroutines.
    */
@@ -46,8 +53,7 @@ object ElevatorGrpcKt {
 
     /**
      * Executes this RPC and returns the response message, suspending until the RPC completes
-     * with [`Status.OK`][io.grpc.Status].  If the RPC completes with another status, a
-     * corresponding
+     * with [`Status.OK`][Status].  If the RPC completes with another status, a corresponding
      * [StatusException] is thrown.  If this coroutine is cancelled, the RPC is also cancelled
      * with the corresponding exception as a cause.
      *
@@ -58,6 +64,23 @@ object ElevatorGrpcKt {
     suspend fun spawn(request: SpawnRequest): SpawnReply = unaryRpc(
       channel,
       ElevatorGrpc.getSpawnMethod(),
+      request,
+      callOptions,
+      Metadata()
+    )
+    /**
+     * Executes this RPC and returns the response message, suspending until the RPC completes
+     * with [`Status.OK`][Status].  If the RPC completes with another status, a corresponding
+     * [StatusException] is thrown.  If this coroutine is cancelled, the RPC is also cancelled
+     * with the corresponding exception as a cause.
+     *
+     * @param request The request message to send to the server.
+     *
+     * @return The single response from the server.
+     */
+    suspend fun await(request: AwaitRequest): AwaitReply = unaryRpc(
+      channel,
+      ElevatorGrpc.getAwaitMethod(),
       request,
       callOptions,
       Metadata()
@@ -73,8 +96,8 @@ object ElevatorGrpcKt {
      * Returns the response to an RPC for elevation.rpc.Elevator.Spawn.
      *
      * If this method fails with a [StatusException], the RPC will fail with the corresponding
-     * [io.grpc.Status].  If this method fails with a [java.util.concurrent.CancellationException],
-     * the RPC will fail
+     * [Status].  If this method fails with a [java.util.concurrent.CancellationException], the RPC
+     * will fail
      * with status `Status.CANCELLED`.  If this method fails for any other reason, the RPC will
      * fail with `Status.UNKNOWN` with the exception as a cause.
      *
@@ -83,11 +106,30 @@ object ElevatorGrpcKt {
     open suspend fun spawn(request: SpawnRequest): SpawnReply = throw
         StatusException(UNIMPLEMENTED.withDescription("Method elevation.rpc.Elevator.Spawn is unimplemented"))
 
+    /**
+     * Returns the response to an RPC for elevation.rpc.Elevator.Await.
+     *
+     * If this method fails with a [StatusException], the RPC will fail with the corresponding
+     * [Status].  If this method fails with a [java.util.concurrent.CancellationException], the RPC
+     * will fail
+     * with status `Status.CANCELLED`.  If this method fails for any other reason, the RPC will
+     * fail with `Status.UNKNOWN` with the exception as a cause.
+     *
+     * @param request The request from the client.
+     */
+    open suspend fun await(request: AwaitRequest): AwaitReply = throw
+        StatusException(UNIMPLEMENTED.withDescription("Method elevation.rpc.Elevator.Await is unimplemented"))
+
     final override fun bindService(): ServerServiceDefinition = builder(getServiceDescriptor())
       .addMethod(unaryServerMethodDefinition(
       context = this.context,
       descriptor = ElevatorGrpc.getSpawnMethod(),
       implementation = ::spawn
+    ))
+      .addMethod(unaryServerMethodDefinition(
+      context = this.context,
+      descriptor = ElevatorGrpc.getAwaitMethod(),
+      implementation = ::await
     )).build()
   }
 }
