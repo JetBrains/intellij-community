@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.InstalledPluginsState;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,6 +38,7 @@ public class PluginsTabFactory implements WelcomeTabFactory {
             if (!configurable.isModified()) return;
             try {
               configurable.apply();
+              InstalledPluginsState.getInstance().runShutdownCallback();
             }
             catch (ConfigurationException exception) {
               LOG.error(exception);
