@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.lightEdit.statusBar;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
@@ -20,7 +19,6 @@ import com.intellij.ui.TooltipWithClickableLinks;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.popup.PopupState;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBPoint;
 import com.intellij.util.ui.JBUI;
@@ -75,9 +73,7 @@ public class LightEditModeNotificationWidget implements CustomStatusBarWidget {
   private @NotNull ActionLink createActionLink() {
     ActionLink actionLink = new ActionLink();
     actionLink.setText(ApplicationBundle.message("light.edit.status.bar.notification.link.text"));
-    actionLink.setIconTextGap(JBUIScale.scale(1));
-    actionLink.setHorizontalTextPosition(SwingConstants.LEADING);
-    actionLink.setIcon(AllIcons.General.LinkDropTriangle);
+    actionLink.setDropDownLinkIcon();
     actionLink.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
