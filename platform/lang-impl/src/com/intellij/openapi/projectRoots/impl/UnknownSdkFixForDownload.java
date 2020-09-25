@@ -7,12 +7,9 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdk;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkDownloadableSdkFix;
-import com.intellij.ui.EditorNotificationPanel;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.concurrent.atomic.AtomicBoolean;
 
 class UnknownSdkFixForDownload extends UnknownSdkFix {
   private final @NotNull String mySdkName;
@@ -29,11 +26,11 @@ class UnknownSdkFixForDownload extends UnknownSdkFix {
   }
 
   @Override
-  public @Nullable SuggestedFixAction getSuggestedFixAction() {
+  public @Nullable UnknownSdkFixAction getSuggestedFixAction() {
     return myDownloadFixAction;
   }
 
-  private class DownloadMissingFixAction implements SuggestedFixAction {
+  private class DownloadMissingFixAction implements UnknownSdkFixAction {
     @NotNull final UnknownSdkDownloadableSdkFix myFix;
     @NotNull final UnknownSdk mySdk;
 

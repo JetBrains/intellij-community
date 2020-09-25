@@ -82,7 +82,7 @@ public class UnknownInvalidSdk implements UnknownSdk {
   void applyDownloadFix(@NotNull Project project) {
     if (myDownloadableSdkFix == null) return;
 
-    UnknownSdkDownloader.downloadFix(project,
+    UnknownSdkDownloader.downloadFixAsync(project,
                                      this,
                                      myDownloadableSdkFix,
                                      __ -> mySdk,

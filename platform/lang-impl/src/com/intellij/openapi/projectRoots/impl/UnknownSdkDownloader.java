@@ -30,12 +30,12 @@ public final class UnknownSdkDownloader {
   private static final Logger LOG = Logger.getInstance(UnknownSdkDownloader.class);
 
   @ApiStatus.Internal
-  public static void downloadFix(@Nullable Project project,
-                                 @NotNull UnknownSdk info,
-                                 @NotNull UnknownSdkDownloadableSdkFix fix,
-                                 @NotNull Function<? super SdkDownloadTask, ? extends Sdk> createSdk,
-                                 @NotNull Consumer<? super Sdk> onSdkNameReady,
-                                 @NotNull Consumer<? super Sdk> onCompleted) {
+  public static void downloadFixAsync(@Nullable Project project,
+                                      @NotNull UnknownSdk info,
+                                      @NotNull UnknownSdkDownloadableSdkFix fix,
+                                      @NotNull Function<? super SdkDownloadTask, ? extends Sdk> createSdk,
+                                      @NotNull Consumer<? super Sdk> onSdkNameReady,
+                                      @NotNull Consumer<? super Sdk> onCompleted) {
     if (!Registry.is("unknown.sdk.apply.download.fix")) {
       ApplicationManager.getApplication().invokeLater(() -> {
         onCompleted.consume(null);

@@ -10,15 +10,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.impl.UnknownSdkBalloonNotification.FixedSdksNotification
 import com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotification.FixableSdkNotification
-import com.intellij.openapi.projectRoots.impl.UnknownSdkFix.SuggestedFixAction
 import com.intellij.openapi.projectRoots.impl.UnknownSdkTracker.ShowStatusCallback
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ex.MultiLineLabel
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.Nls
 import javax.swing.Action
-import javax.swing.SwingConstants
 
 @Service
 class UnknownSdkModalNotification(
@@ -74,7 +71,7 @@ class UnknownSdkModalNotification(
     }
 
     private fun createConfirmSdkDownloadFixDialog(
-      actions: Map<UnknownSdkFix, SuggestedFixAction>,
+      actions: Map<UnknownSdkFix, UnknownSdkFixAction>,
       actionsWithoutFix: List<UnknownSdkFix>
     ) = object : DialogWrapper(project) {
       init {

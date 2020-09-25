@@ -310,7 +310,7 @@ public class UnknownSdkTracker {
                                  @NotNull UnknownSdkDownloadableSdkFix fix,
                                  @NotNull Consumer<? super Sdk> onSdkNameReady,
                                  @NotNull Consumer<? super Sdk> onCompleted) {
-    UnknownSdkDownloader.downloadFix(project, info, fix,
+    UnknownSdkDownloader.downloadFixAsync(project, info, fix,
                 task -> {
                   String actualSdkName = info.getSdkName();
                   if (actualSdkName == null) {

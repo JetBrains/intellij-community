@@ -4,7 +4,6 @@ package com.intellij.openapi.projectRoots.impl;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.SdkType;
@@ -85,7 +84,7 @@ public abstract class UnknownSdkFix {
     }
 
     @NotNull
-    private EditorNotificationPanelWrapper attachAction(@NotNull SuggestedFixAction fixAction) {
+    private EditorNotificationPanelWrapper attachAction(@NotNull UnknownSdkFixAction fixAction) {
       HyperlinkLabel label = panel.createActionLabel(fixAction.getActionText(), () -> {
         if (!myIsRunning.compareAndSet(false, true)) return;
         fixAction.applySuggestionAsync();
@@ -101,7 +100,7 @@ public abstract class UnknownSdkFix {
   }
 
   @NotNull
-  protected EditorNotificationPanelWrapper createNotificationPanelWithMainAction(@NotNull SuggestedFixAction fixAction) {
+  protected EditorNotificationPanelWrapper createNotificationPanelWithMainAction(@NotNull UnknownSdkFixAction fixAction) {
     var notification = newNotificationPanel(fixAction.getActionText());
     return notification.attachAction(fixAction);
   }
@@ -115,33 +114,5 @@ public abstract class UnknownSdkFix {
   public abstract String getSdkTypeAndNameText();
 
   @Nullable
-  public abstract SuggestedFixAction getSuggestedFixAction();
-
-  public interface SuggestedFixAction {
-    /**
-     * @return the common text for grouping and naming the action
-     */
-    @NotNull @Nls String getActionKindText();
-
-    @NotNull @Nls String getActionText();
-
-    @NotNull @Nls String getCheckboxActionText();
-
-    default @Nullable @Nls String getCheckboxActionTooltip() {
-      return null;
-    }
-
-    /**
-     * Starts the fix action and forgets about it running.
-     * The implementation is responsible to implement necessary
-     * progress dialogs, invoke later calls and so on
-     */
-    void applySuggestionAsync();
-
-    /**
-     * Applies suggestions in a modal progress, e.g. as a part of
-     * the {@link UnknownSdkModalNotification}
-     */
-    void applySuggestionModal(@NotNull ProgressIndicator indicator);
-  }
+  public abstract UnknownSdkFixAction getSuggestedFixAction();
 }

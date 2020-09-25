@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -28,7 +29,7 @@ final class UnknownSdkFixForInvalid extends UnknownSdkFix {
   }
 
   @Override
-  public @Nullable SuggestedFixAction getSuggestedFixAction() {
+  public @Nullable UnknownSdkFixAction getSuggestedFixAction() {
     if (myLocalFixAction != null) return myLocalFixAction;
     return myDownloadFixAction;
   }
@@ -45,7 +46,7 @@ final class UnknownSdkFixForInvalid extends UnknownSdkFix {
     return ProjectBundle.message("dialog.text.resolving.sdks.item", sdkTypeName, mySdkName);
   }
 
-  private class DownloadInvalidFixAction implements SuggestedFixAction {
+  private class DownloadInvalidFixAction implements UnknownSdkFixAction {
     @NotNull final UnknownSdkDownloadableSdkFix myFix;
 
     private DownloadInvalidFixAction(@NotNull UnknownSdkDownloadableSdkFix fix) {
@@ -83,7 +84,7 @@ final class UnknownSdkFixForInvalid extends UnknownSdkFix {
     }
   }
 
-  private class LocalFixAction implements SuggestedFixAction {
+  private class LocalFixAction implements UnknownSdkFixAction {
     @NotNull final UnknownSdkLocalSdkFix myFix;
 
     private LocalFixAction(@NotNull UnknownSdkLocalSdkFix localSdkFix) {
