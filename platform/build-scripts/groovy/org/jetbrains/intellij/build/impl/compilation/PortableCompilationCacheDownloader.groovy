@@ -44,7 +44,8 @@ class PortableCompilationCacheDownloader implements AutoCloseable {
 
   private final SourcesStateProcessor sourcesStateProcessor = new SourcesStateProcessor(context)
 
-  private boolean availableForHeadCommitForced = false
+  private boolean availableForHeadCommitForced
+  private boolean downloadCompilationOutputsOnly
   /**
    * If true then latest commit in current repository will be used to download caches.
    */
@@ -67,11 +68,13 @@ class PortableCompilationCacheDownloader implements AutoCloseable {
     new CommitsHistory(json).commitsForRemote(gitUrl)
   }()
 
-  PortableCompilationCacheDownloader(CompilationContext context, String remoteCacheUrl, String gitUrl, boolean availableForHeadCommit) {
+  PortableCompilationCacheDownloader(CompilationContext context, String remoteCacheUrl, String gitUrl,
+                                     boolean availableForHeadCommit, boolean downloadCompilationOutputsOnly) {
     this.context = context
     this.remoteCacheUrl = StringUtil.trimEnd(remoteCacheUrl, '/')
     this.gitUrl = gitUrl
     this.availableForHeadCommitForced = availableForHeadCommit
+    this.downloadCompilationOutputsOnly = downloadCompilationOutputsOnly
 
     int executorThreadsCount = Runtime.getRuntime().availableProcessors()
     executor = new NamedThreadPoolExecutor("Jps Output Upload", executorThreadsCount)
@@ -98,9 +101,7 @@ class PortableCompilationCacheDownloader implements AutoCloseable {
       }
       context.messages.info("Using cache for commit $lastCachedCommit ($availableCommitDepth behind last commit).")
       context.messages.info("Using $executor.corePoolSize threads to download caches.")
-      // In case if outputs are available for the current commit
-      // cache is not needed as we are not going to compile anything.
-      if (!availableForHeadCommit || anyLocalChanges()) {
+      if (!downloadCompilationOutputsOnly || anyLocalChanges) {
         executor.submit {
           saveJpsCache(lastCachedCommit)
         }

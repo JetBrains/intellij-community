@@ -26,8 +26,14 @@ final class PortableCompilationCache {
      * {@link JpsCaches} archive upload may be skipped if only {@link org.jetbrains.intellij.build.impl.compilation.cache.CompilationOutput}s are required
      * without any incremental compilation (for tests execution as an example)
      */
-    private static final String SKIP_UPLOAD_PROPERTY = 'intellij.jps.remote.cache.compilationOutputsOnly'
+    private static final String SKIP_UPLOAD_PROPERTY = 'intellij.jps.remote.cache.uploadCompilationOutputsOnly'
+    /**
+     * {@link JpsCaches} archive download may be skipped if only {@link org.jetbrains.intellij.build.impl.compilation.cache.CompilationOutput}s are required
+     * without any incremental compilation (for tests execution as an example)
+     */
+    private static final String SKIP_DOWNLOAD_PROPERTY = 'intellij.jps.remote.cache.downloadCompilationOutputsOnly'
     private final CompilationContext context
+    final boolean skipDownload = bool(SKIP_DOWNLOAD_PROPERTY, false)
     final boolean skipUpload = bool(SKIP_UPLOAD_PROPERTY, false)
     final File dir = context.compilationData.dataStorageRoot
 
@@ -107,7 +113,8 @@ final class PortableCompilationCache {
   @Lazy
   private PortableCompilationCacheDownloader downloader = {
     def availableForHeadCommit = bool(AVAILABLE_FOR_HEAD_PROPERTY, false)
-    new PortableCompilationCacheDownloader(context, remoteCache.url, remoteGitUrl, availableForHeadCommit)
+    new PortableCompilationCacheDownloader(context, remoteCache.url, remoteGitUrl,
+                                           availableForHeadCommit, jpsCaches.skipDownload)
   }()
 
   @Lazy
