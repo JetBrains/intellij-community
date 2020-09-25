@@ -76,6 +76,8 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
     data class RemoveEntity(val id: EntityId) : ChangeEntry()
 
+    data class ChangeEntitySource<E : WorkspaceEntity>(val newData: WorkspaceEntityData<E>) : ChangeEntry()
+
     data class ReplaceEntity<E : WorkspaceEntity>(
       val newData: WorkspaceEntityData<E>,
       val newChildren: List<Pair<ConnectionId, EntityId>>,
@@ -253,9 +255,10 @@ internal class WorkspaceEntityStorageBuilderImpl(
     val copiedData = entitiesByType.getEntityDataForModification((e as WorkspaceEntityBase).id) as WorkspaceEntityData<T>
     copiedData.entitySource = newSource
 
-    updateChangeLog { it.add(ChangeEntry.ReplaceEntity(copiedData, emptyList(), emptyList(), emptyMap())) }
+    val entityId = copiedData.createPid()
+    updateChangeLog { it.add(ChangeEntry.ChangeEntitySource(copiedData)) }
 
-    indexes.entitySourceIndex.index(copiedData.createPid(), newSource)
+    indexes.entitySourceIndex.index(entityId, newSource)
 
     return copiedData.createEntity(this)
   }
@@ -394,7 +397,9 @@ internal class WorkspaceEntityStorageBuilderImpl(
           val (localNode, localNodePid) = localNodeAndId
           // This entity already exists. Store the association of pids
           replaceMap[localNodePid] = matchedEntityId
-          if (localNode.hasPersistentId() && localNode != matchedEntityData) {
+          val dataDiffersByProperties = !localNode.equalsIgnoringEntitySource(matchedEntityData)
+          val dataDiffersByEntitySource = localNode.entitySource != matchedEntityData.entitySource
+          if (localNode.hasPersistentId() && (dataDiffersByEntitySource || dataDiffersByProperties)) {
             // Entity exists in local store, but has changes. Generate replace operation
             val clonedEntity = matchedEntityData.clone()
             val persistentIdBefore = matchedEntityData.persistentId(replaceWith)
@@ -414,8 +419,14 @@ internal class WorkspaceEntityStorageBuilderImpl(
             replaceWith.indexes.entitySourceIndex.getEntryById(matchedEntityId)?.also { this.indexes.entitySourceIndex.index(pid, it) }
             this.indexes.updateExternalMappingForEntityId(matchedEntityId, pid, replaceWith.indexes)
 
-            updateChangeLog { it.add(ChangeEntry.ReplaceEntity(clonedEntity, emptyList(), emptyList(), emptyMap())) }
+            if (dataDiffersByProperties) {
+              updateChangeLog { it.add(ChangeEntry.ReplaceEntity(clonedEntity, emptyList(), emptyList(), emptyMap())) }
+            }
+            if (dataDiffersByEntitySource) {
+              updateChangeLog { it.add(ChangeEntry.ChangeEntitySource(clonedEntity)) }
+            }
           }
+
 
           if (localNode == matchedEntityData) {
             this.indexes.updateExternalMappingForEntityId(matchedEntityId, localNodePid, replaceWith.indexes)
@@ -643,6 +654,23 @@ internal class WorkspaceEntityStorageBuilderImpl(
             }
           }
         }
+        is ChangeEntry.ChangeEntitySource<*> -> {
+          val id = change.newData.createPid()
+          val oldChange = changes.remove(id)
+          if (oldChange?.second is EntityChange.Added) {
+            val addedEntity = change.newData.createEntity(this) as WorkspaceEntityBase
+            changes[addedEntity.id] = addedEntity.id.clazz.findEntityClass<WorkspaceEntity>() to EntityChange.Added(addedEntity)
+          }
+          else {
+            val oldData = originalImpl.entityDataById(id)
+            if (oldData != null) {
+              val replacedData = oldData.createEntity(originalImpl) as WorkspaceEntityBase
+              val replaceToData = change.newData.createEntity(this) as WorkspaceEntityBase
+              changes[replacedData.id] = replacedData.id.clazz.findEntityClass<WorkspaceEntity>() to EntityChange.Replaced(
+                replacedData, replaceToData)
+            }
+          }
+        }
       }
     }
     return changes.values.groupBy { it.first }.mapValues { list -> list.value.map { it.second } }
@@ -727,10 +755,26 @@ internal class WorkspaceEntityStorageBuilderImpl(
           }
 
           // We don't modify entity that isn't exist in this version of storage
-          if (this.entityDataById(usedPid) != null) {
+          val existingEntity = this.entityDataById(usedPid)
+          if (existingEntity != null) {
+            newData.entitySource = existingEntity.entitySource  // Replace entity doesn't modify entitySource
             indexes.updateIndices(outdatedId, newData.createPid(), diff)
             updateChangeLog { it.add(ChangeEntry.ReplaceEntity(newData, updatedNewChildren, updatedRemovedChildren, updatedModifiedParents)) }
             replaceEntityWithRefs(newData, outdatedId.clazz, updatedNewChildren, updatedRemovedChildren, updatedModifiedParents, initialStorage, initialChangeLogSize, diff)
+          }
+        }
+        is ChangeEntry.ChangeEntitySource<out WorkspaceEntity> -> {
+          change as ChangeEntry.ChangeEntitySource<WorkspaceEntity>
+
+          val outdatedId = change.newData.createPid()
+          val usedPid = replaceMap.getOrDefault(outdatedId, outdatedId)
+
+          // We don't modify entity that isn't exist in this version of storage
+          val existingEntityData = this.entityDataById(usedPid)
+          if (existingEntityData != null) {
+            existingEntityData.entitySource = change.newData.entitySource
+            indexes.updateIndices(outdatedId, usedPid, diff)
+            updateChangeLog { it.add(ChangeEntry.ChangeEntitySource(existingEntityData)) }
           }
         }
       }

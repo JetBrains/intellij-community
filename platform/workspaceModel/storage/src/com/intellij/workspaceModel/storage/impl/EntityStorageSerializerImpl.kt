@@ -181,6 +181,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
     kryo.register(WorkspaceEntityStorageBuilderImpl.ChangeEntry.AddEntity::class.java)
     kryo.register(WorkspaceEntityStorageBuilderImpl.ChangeEntry.RemoveEntity::class.java)
     kryo.register(WorkspaceEntityStorageBuilderImpl.ChangeEntry.ReplaceEntity::class.java)
+    kryo.register(WorkspaceEntityStorageBuilderImpl.ChangeEntry.ChangeEntitySource::class.java)
     kryo.register(LinkedHashSet::class.java)
 
     registerFieldSerializer(kryo, Collections.unmodifiableCollection<Any>(emptySet()).javaClass) {
@@ -331,6 +332,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
           is WorkspaceEntityStorageBuilderImpl.ChangeEntry.AddEntity<*> -> it.entityData
           is WorkspaceEntityStorageBuilderImpl.ChangeEntry.RemoveEntity -> null
           is WorkspaceEntityStorageBuilderImpl.ChangeEntry.ReplaceEntity<*> -> it.newData
+          is WorkspaceEntityStorageBuilderImpl.ChangeEntry.ChangeEntitySource<*> -> it.newData
         }
       }.asSequence()
 
