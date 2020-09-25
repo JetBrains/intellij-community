@@ -1,5 +1,5 @@
 <idea-plugin implementation-detail="true">
-  <id>org.jetbrains.idea.gradle.dsl</id>
+  <id>org.jetbrains.idea.gradle.dsl.impl</id>
   <name>Gradle DSL API</name>
   <vendor>JetBrains, Google</vendor>
   <description>
@@ -20,8 +20,8 @@
   </extensions>
 
   <extensionPoints>
-    <extensionPoint name="parserFactory" interface="com.android.tools.idea.gradle.dsl.parser.GradleDslConverterFactory" dynamic="true"/>
-    <extensionPoint name="upToDateChecker" interface="com.android.tools.idea.gradle.dsl.UpToDateChecker" dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.idea.gradle.dsl.parserFactory" interface="com.android.tools.idea.gradle.dsl.parser.GradleDslConverterFactory" dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.idea.gradle.dsl.upToDateChecker" interface="com.android.tools.idea.gradle.dsl.UpToDateChecker" dynamic="true"/>
   </extensionPoints>
 
 

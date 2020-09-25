@@ -174,6 +174,9 @@ class CommunityRepositoryModules {
       withModule("intellij.gradle.toolingLoaderRt")
       withProjectLibrary("Gradle")
     },
+    plugin("intellij.gradle.dsl.impl") {
+      withModule("intellij.gradle.dsl")
+    },
     plugin("intellij.gradle.java") {
       withModule("intellij.gradle.jps")
     },
