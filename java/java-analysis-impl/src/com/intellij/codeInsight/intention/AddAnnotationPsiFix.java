@@ -10,7 +10,6 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.project.Project;
@@ -18,6 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.light.LightElement;
+import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -70,12 +70,12 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
     if (modifierListOwner instanceof PsiNamedElement) {
       final String name = ((PsiNamedElement)modifierListOwner).getName();
       if (name != null) {
-        String type = LanguageFindUsages.getType(modifierListOwner);
+        JavaElementKind type = JavaElementKind.fromElement(modifierListOwner).lessDescriptive();
         if (shortName == null) {
-          return JavaAnalysisBundle.message("inspection.i18n.quickfix.annotate.element", type, name);
+          return JavaAnalysisBundle.message("inspection.i18n.quickfix.annotate.element", type.object(), name);
         }
         return JavaAnalysisBundle
-          .message("inspection.i18n.quickfix.annotate.element.as", type, name, shortName);
+          .message("inspection.i18n.quickfix.annotate.element.as", type.object(), name, shortName);
       }
     }
     if (shortName == null) {

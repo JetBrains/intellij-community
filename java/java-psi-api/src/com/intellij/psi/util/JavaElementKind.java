@@ -59,6 +59,30 @@ public enum JavaElementKind {
     return JavaPsiBundle.message(propertyKey, 1);
   }
 
+  /**
+   * @return less descriptive type for this type; usually result can be described in a single word 
+   * (e.g. LOCAL_VARIABLE is replaced with VARIABLE).
+   */
+  public @NotNull JavaElementKind lessDescriptive() {
+    switch (this) {
+      case ABSTRACT_METHOD:
+        return METHOD;
+      case LOCAL_VARIABLE:
+      case PATTERN_VARIABLE:
+        return VARIABLE;
+      case CONSTANT:
+        return FIELD;
+      case ANONYMOUS_CLASS:
+        return CLASS;
+      default:
+        return this;
+    }
+  }
+
+  /**
+   * @param element element to get the kind from
+   * @return resulting kind
+   */
   public static JavaElementKind fromElement(@NotNull PsiElement element) {
     if (element instanceof PsiClass) {
       PsiClass psiClass = (PsiClass)element;

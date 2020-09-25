@@ -18,7 +18,6 @@ import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElementAsIntentionAdapter;
 import com.intellij.ide.IdeBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
@@ -1872,7 +1871,7 @@ public final class HighlightUtil {
 
   @NotNull
   static @NlsContexts.DetailedDescription String staticContextProblemDescription(@NotNull PsiElement refElement) {
-    String type = LanguageFindUsages.getType(refElement);
+    String type = JavaElementKind.fromElement(refElement).lessDescriptive().subject();
     String name = HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY);
     return JavaErrorBundle.message("non.static.symbol.referenced.from.static.context", type, name);
   }
