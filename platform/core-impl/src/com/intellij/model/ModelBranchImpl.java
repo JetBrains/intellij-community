@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.file.PsiFileImplUtil;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -65,6 +66,11 @@ public abstract class ModelBranchImpl extends UserDataHolderBase implements Mode
 
   void addVfsStructureChange(BranchedVirtualFileImpl file) {
     myVfsChanges.incModificationCount();
+
+    PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(myProject);
+    psiManager.beforeChange(false);
+    psiManager.afterChange(false);
+
     myVfsStructureChanges.add(file);
 
     VfsUtilCore.processFilesRecursively(file, each -> {
