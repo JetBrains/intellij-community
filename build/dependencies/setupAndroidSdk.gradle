@@ -40,13 +40,16 @@ if (Os.isFamily(Os.FAMILY_WINDOWS)){
   osFamily = 'darwin'
 }
 
-// infer kotlin_version from kotlin-plugin (e.g. "1.3.60-eap-143" in "1.3.60-eap-143-IJ2019.3-1:EAP")
+// infer kotlin_version from kotlin-plugin (e.g. "1.4.10" in "203-1.4.10-release-IJ2965:Ideadev")
 def kotlinVersionLen = kotlinPluginBuild.indexOf("-release")
 if (kotlinVersionLen == -1) {
-  kotlinVersionLen = kotlinPluginBuild.indexOf("-IJ20")
+  kotlinVersionLen = kotlinPluginBuild.indexOf("-IJ")
 }
 
-ext.kotlin_version = kotlinPluginBuild.substring(0, kotlinVersionLen)
+ext.kotlin_version = kotlinPluginBuild.substring(
+  4, // number of chars in "203-" string (or "202-" string or any other platform identifier with dash string)
+  kotlinVersionLen
+)
 ext.android_m2_version = "27.0.0.0"
 ext.android_sdk_version = "${osFamily}.4.0.0.0"
 
