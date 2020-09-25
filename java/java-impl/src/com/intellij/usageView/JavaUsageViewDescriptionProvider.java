@@ -19,6 +19,7 @@ import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
+import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.util.ObjectUtils;
@@ -86,6 +87,6 @@ public class JavaUsageViewDescriptionProvider implements ElementDescriptionProvi
   @Nls
   private static String getAnonymousClassName(@Nls String name) {
     return name != null ? JavaPsiBundle.message("java.terms.anonymous.class.base.ref", name)
-                        : JavaPsiBundle.message("java.terms.anonymous.class");
+                        : JavaElementKind.ANONYMOUS_CLASS.subject();
   }
 }

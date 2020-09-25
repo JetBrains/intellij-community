@@ -17,6 +17,7 @@ package com.intellij.codeInsight.highlighting;
 
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.psi.*;
+import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import org.jetbrains.annotations.NotNull;
@@ -38,29 +39,17 @@ public class JavaHighlightUsagesDescriptionProvider implements ElementDescriptio
       if (elementName == null) {
         elementName = ((PsiClass)element).getName();
       }
-      elementName = (JavaPsiBundle.message(((PsiClass)element).isInterface() ? "java.terms.interface" : "java.terms.class")) + ' ' + elementName;
     }
     else if (element instanceof PsiMethod) {
       elementName = PsiFormatUtil.formatMethod((PsiMethod)element, PsiSubstitutor.EMPTY, METHOD_FLAGS, PsiFormatUtilBase.SHOW_TYPE);
-      elementName = JavaPsiBundle.message("java.terms.method") + ' ' + elementName;
     }
     else if (element instanceof PsiVariable) {
       elementName = PsiFormatUtil.formatVariable((PsiVariable)element, VARIABLE_FLAGS, PsiSubstitutor.EMPTY);
-      if (element instanceof PsiField) {
-        elementName = JavaPsiBundle.message("java.terms.field") + ' ' + elementName;
-      }
-      else if (element instanceof PsiParameter) {
-        elementName = JavaPsiBundle.message("java.terms.parameter") + ' ' + elementName;
-      }
-      else {
-        elementName = JavaPsiBundle.message("java.terms.variable") + ' ' + elementName;
-      }
     }
     else if (element instanceof PsiPackage) {
       elementName = ((PsiPackage)element).getQualifiedName();
-      elementName = JavaPsiBundle.message("java.terms.package") + ' ' + elementName;
     }
-
-    return elementName;
+    return elementName == null ? null :
+           JavaPsiBundle.message("element.kind.and.name", JavaElementKind.fromElement(element).subject(), elementName);
   }
 }

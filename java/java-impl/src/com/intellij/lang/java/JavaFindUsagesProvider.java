@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.psi.meta.PsiMetaOwner;
+import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.util.indexing.IndexingBundle;
@@ -70,52 +71,9 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     if (ThrowSearchUtil.isSearchable(element)) {
       return JavaBundle.message("java.terms.exception");
     }
-    if (element instanceof PsiPackage) {
-      return JavaPsiBundle.message("java.terms.package");
-    }
-    if (element instanceof PsiLabeledStatement) {
-      return JavaBundle.message("java.terms.label");
-    }
-    if (element instanceof PsiClass) {
-      if (((PsiClass)element).isAnnotationType()) {
-        return JavaBundle.message("java.terms.annotation.interface");
-      }
-      if (((PsiClass)element).isEnum()) {
-        return JavaBundle.message("java.terms.enum");
-      }
-      if (((PsiClass)element).isInterface()) {
-        return JavaPsiBundle.message("java.terms.interface");
-      }
-      if (element instanceof PsiTypeParameter) {
-        return JavaBundle.message("java.terms.type.parameter");
-      }
-      return JavaPsiBundle.message("java.terms.class");
-    }
-    if (element instanceof PsiField) {
-      return JavaPsiBundle.message("java.terms.field");
-    }
-    if (element instanceof PsiParameter) {
-      return JavaPsiBundle.message("java.terms.parameter");
-    }
-    if (element instanceof PsiLocalVariable) {
-      return JavaPsiBundle.message("java.terms.variable");
-    }
-    if (element instanceof PsiMethod) {
-      final PsiMethod psiMethod = (PsiMethod)element;
-      final boolean isConstructor = psiMethod.isConstructor();
-      if (isConstructor) {
-        return JavaBundle.message("java.terms.constructor");
-      }
-      return JavaPsiBundle.message("java.terms.method");
-    }
-    if (element instanceof PsiExpression) {
-      return JavaBundle.message("java.terms.expression");
-    }
-    if (element instanceof PsiJavaModule) {
-      return JavaBundle.message("java.terms.module");
-    }
-    if (element instanceof PsiRecordComponent) {
-      return JavaBundle.message("java.terms.record.component");
+    JavaElementKind kind = JavaElementKind.fromElement(element);
+    if (kind != JavaElementKind.UNKNOWN) {
+      return kind.subject();
     }
 
     final String name = TypePresentationService.getService().getTypePresentableName(element.getClass());
@@ -147,7 +105,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
       if (element instanceof PsiAnonymousClass) {
         String name = ((PsiAnonymousClass)element).getBaseClassReference().getReferenceName();
         return name != null ? JavaPsiBundle.message("java.terms.anonymous.class.base.ref", name) 
-                            : JavaPsiBundle.message("java.terms.anonymous.class");
+                            : JavaElementKind.ANONYMOUS_CLASS.subject();
       }
       else {
         PsiClass aClass = (PsiClass)element;

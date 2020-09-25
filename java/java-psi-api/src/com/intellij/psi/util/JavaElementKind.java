@@ -7,8 +7,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-import java.util.Locale;
-
 /**
  * Represents a kind of element that appears in Java source code.
  * The main purpose of this enum is to be able to display localized element name in UI
@@ -16,6 +14,7 @@ import java.util.Locale;
 public enum JavaElementKind {
   ABSTRACT_METHOD("element.abstract_method"),
   ANNOTATION("element.annotation"),
+  ANONYMOUS_CLASS("element.anonymous_class"),
   CLASS("element.class"),
   CONSTANT("element.constant"),
   CONSTRUCTOR("element.constructor"),
@@ -25,6 +24,7 @@ public enum JavaElementKind {
   FIELD("element.field"),
   INITIALIZER("element.initializer"),
   INTERFACE("element.interface"),
+  LABEL("element.label"),
   LOCAL_VARIABLE("element.local_variable"),
   METHOD("element.method"),
   MODULE("element.module"),
@@ -62,6 +62,9 @@ public enum JavaElementKind {
   public static JavaElementKind fromElement(@NotNull PsiElement element) {
     if (element instanceof PsiClass) {
       PsiClass psiClass = (PsiClass)element;
+      if (psiClass instanceof PsiAnonymousClass) {
+        return ANONYMOUS_CLASS;
+      }
       if (psiClass.isEnum()) {
         return ENUM;
       }
@@ -118,6 +121,9 @@ public enum JavaElementKind {
     }
     if (element instanceof PsiClassInitializer) {
       return INITIALIZER;
+    }
+    if (element instanceof PsiLabeledStatement) {
+      return LABEL;
     }
     if (element instanceof PsiStatement) {
       return STATEMENT;
