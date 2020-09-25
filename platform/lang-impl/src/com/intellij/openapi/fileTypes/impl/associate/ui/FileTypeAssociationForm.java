@@ -82,8 +82,8 @@ public class FileTypeAssociationForm {
     List<MyFileTypeItem> items = new ArrayList<>();
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     for (FileType fileType : fileTypeManager.getRegisteredFileTypes()) {
-      if (fileType instanceof LanguageFileType &&
-          !(fileType instanceof PlainTextFileType) &&
+      if (!(fileType instanceof PlainTextFileType) &&
+          !fileType.isReadOnly() &&
           !fileTypeManager.getAssociations(fileType).isEmpty()) {
         items.add(new MyFileTypeItem(fileType));
       }
@@ -97,7 +97,7 @@ public class FileTypeAssociationForm {
 
     private MyFileTypeItem(FileType fileType) {
       myFileType = fileType;
-      setText(myFileType.getDisplayName());
+      setText(myFileType.getDescription());
     }
 
     private @NlsSafe String getExtensionList() {
@@ -107,7 +107,7 @@ public class FileTypeAssociationForm {
 
     @Override
     public int compareTo(@NotNull FileTypeAssociationForm.MyFileTypeItem item) {
-      return myFileType.getDisplayName().compareTo(item.myFileType.getDisplayName());
+      return myFileType.getDescription().compareTo(item.myFileType.getDescription());
     }
   }
 
