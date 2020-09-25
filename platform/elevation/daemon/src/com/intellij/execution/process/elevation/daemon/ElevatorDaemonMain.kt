@@ -1,9 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process.elevation.daemon
 
-import com.intellij.execution.process.elevation.rpc.ElevatorGrpcKt
-import com.intellij.execution.process.elevation.rpc.SpawnReply
-import com.intellij.execution.process.elevation.rpc.SpawnRequest
 import io.grpc.Server
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder
 import java.net.InetSocketAddress
@@ -13,7 +10,7 @@ private class ElevatorServer constructor(private val host: String,
                                          private val port: Int) {
   private val server: Server = NettyServerBuilder
     .forAddress(InetSocketAddress(host, port))
-    .addService(ElevatorService())
+    .addService(ElevatorServerService())
     .build()
 
   fun start() {
@@ -37,13 +34,6 @@ private class ElevatorServer constructor(private val host: String,
     server.awaitTermination()
   }
 
-  private class ElevatorService : ElevatorGrpcKt.ElevatorCoroutineImplBase() {
-    override suspend fun spawn(request: SpawnRequest): SpawnReply {
-      return SpawnReply.newBuilder()
-        .setPid(42)
-        .build()
-    }
-  }
 }
 
 private fun die(message: String): Nothing {
