@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow
 
+import com.intellij.analysis.problemsView.HighlightingDuplicate
 import com.intellij.analysis.problemsView.ProblemsCollector
 import com.intellij.analysis.problemsView.ProblemsProvider
 import com.intellij.codeInsight.problems.WolfTheProblemSolverImpl
@@ -27,13 +28,23 @@ internal class HighlightingErrorsProvider(override val project: Project) : Probl
     }
   }
 
+  internal fun isFileWatched(file: VirtualFile) = synchronized(watchers) { watchers.containsKey(file) }
+
   override fun problemsAppeared(file: VirtualFile) {
-    synchronized(watchers) {
+    val added = synchronized(watchers) {
+      val size = watchers.size
       watchers.computeIfAbsent(file) { file ->
         HighlightingWatcher(this, ProblemsCollector.getInstance(project), file, ERROR.myVal).also { watcher ->
           Disposer.register(this, watcher)
         }
       }
+      size < watchers.size
+    }
+    if (added) {
+      val collector = ProblemsCollector.getInstance(project)
+      collector.getFileProblems(file)
+        .filter { it is HighlightingDuplicate }
+        .forEach { collector.problemDisappeared(it) }
     }
   }
 
