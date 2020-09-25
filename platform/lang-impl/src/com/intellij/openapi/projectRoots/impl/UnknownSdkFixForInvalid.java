@@ -75,12 +75,12 @@ final class UnknownSdkFixForInvalid extends UnknownSdkFix {
 
     @Override
     public void applySuggestionAsync() {
-      mySdk.applyDownloadFix(myProject);
+      mySdk.newSdkDownloadTask(myProject).runAsync(myProject);
     }
 
     @Override
     public void applySuggestionModal(@NotNull ProgressIndicator indicator) {
-      throw new RuntimeException("TODO");
+      mySdk.newSdkDownloadTask(myProject).runBlocking(indicator);
     }
   }
 
@@ -124,7 +124,9 @@ final class UnknownSdkFixForInvalid extends UnknownSdkFix {
 
     @Override
     public void applySuggestionModal(@NotNull ProgressIndicator indicator) {
-      throw new RuntimeException("TODO");
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        mySdk.applyLocalFix(myProject);
+      });
     }
   }
 

@@ -296,21 +296,12 @@ public class UnknownSdkTracker {
     return lookups;
   }
 
-  public void applyDownloadableFix(@NotNull UnknownSdk info, @NotNull UnknownSdkDownloadableSdkFix fix) {
-    downloadFix(myProject, info, fix, sdk -> {}, sdk -> {
-      if (sdk != null) {
-        updateUnknownSdksNow();
-      }
-    });
-  }
-
   @ApiStatus.Internal
-  public static void downloadFix(@Nullable Project project,
-                                 @NotNull UnknownSdk info,
-                                 @NotNull UnknownSdkDownloadableSdkFix fix,
-                                 @NotNull Consumer<? super Sdk> onSdkNameReady,
-                                 @NotNull Consumer<? super Sdk> onCompleted) {
-    UnknownSdkDownloader.downloadFixAsync(project, info, fix,
+  public static UnknownSdkDownloadTask createDownloadFixTask(@NotNull UnknownSdk info,
+                                                             @NotNull UnknownSdkDownloadableSdkFix fix,
+                                                             @NotNull Consumer<? super Sdk> onSdkNameReady,
+                                                             @NotNull Consumer<? super Sdk> onCompleted) {
+    return new UnknownSdkDownloadTask(info, fix,
                 task -> {
                   String actualSdkName = info.getSdkName();
                   if (actualSdkName == null) {
@@ -326,6 +317,15 @@ public class UnknownSdkTracker {
                   }
                   onCompleted.consume(sdk);
                 });
+  }
+
+  @ApiStatus.Internal
+  public static void downloadFix(@Nullable Project project,
+                                 @NotNull UnknownSdk info,
+                                 @NotNull UnknownSdkDownloadableSdkFix fix,
+                                 @NotNull Consumer<? super Sdk> onSdkNameReady,
+                                 @NotNull Consumer<? super Sdk> onCompleted) {
+    createDownloadFixTask(info, fix, onSdkNameReady, onCompleted).runAsync(project);
   }
 
   @NotNull

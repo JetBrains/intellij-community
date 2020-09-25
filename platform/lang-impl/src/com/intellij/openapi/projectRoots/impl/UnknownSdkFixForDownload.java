@@ -60,14 +60,23 @@ class UnknownSdkFixForDownload extends UnknownSdkFix {
                                    );
     }
 
+    @NotNull
+    private UnknownSdkDownloadTask createDownloadTask() {
+      return UnknownSdkTracker.createDownloadFixTask(mySdk, myFix, sdk -> {}, sdk -> {
+        if (sdk != null) {
+          UnknownSdkTracker.getInstance(myProject).updateUnknownSdksNow();
+        }
+      });
+    }
+
     @Override
     public void applySuggestionAsync() {
-      UnknownSdkTracker.getInstance(myProject).applyDownloadableFix(mySdk, myFix);
+      createDownloadTask().runAsync(myProject);
     }
 
     @Override
     public void applySuggestionModal(@NotNull ProgressIndicator indicator) {
-      throw new RuntimeException("TODO");
+      createDownloadTask().runBlocking(indicator);
     }
   }
 

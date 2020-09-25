@@ -80,19 +80,23 @@ public class UnknownInvalidSdk implements UnknownSdk {
     UnknownSdkTracker.getInstance(project).updateUnknownSdksNow();
   }
 
+  @NotNull
+  UnknownSdkDownloadTask newSdkDownloadTask(@NotNull Project project) {
+    return new UnknownSdkDownloadTask(
+                               this,
+                                    Objects.requireNonNull(myDownloadableSdkFix),
+                               __ -> mySdk,
+                               __ -> {
+                               },
+                               sdk -> {
+                                 UnknownSdkTracker.getInstance(project).updateUnknownSdksNow();
+                               }
+    );
+  }
+
   void applyDownloadFix(@NotNull Project project) {
     if (myDownloadableSdkFix == null) return;
-
-    UnknownSdkDownloader.downloadFixAsync(project,
-                                     this,
-                                     myDownloadableSdkFix,
-                                     __ -> mySdk,
-                                     __ -> {
-                                     },
-                                     sdk -> {
-                                       UnknownSdkTracker.getInstance(project).updateUnknownSdksNow();
-                                     }
-    );
+    newSdkDownloadTask(project).runAsync(project);
   }
 
   @NotNull
