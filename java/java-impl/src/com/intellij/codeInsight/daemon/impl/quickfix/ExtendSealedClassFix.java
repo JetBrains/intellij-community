@@ -144,8 +144,7 @@ public class ExtendSealedClassFix implements DefaultIntentionActionWithChoice {
       Query<PsiClass> subclassInheritors = DirectClassInheritorsSearch.search(subclass);
       if (PsiModifier.FINAL.equals(myModifier) && subclassInheritors.findFirst() != null ||
           PsiModifier.SEALED.equals(myModifier) && subclassInheritors.anyMatch(child -> !hasSealedClassSubclassModifier(child))) {
-        PsiIdentifier subclassIdentifier = subclass.getNameIdentifier();
-        if (subclassIdentifier instanceof Navigatable) ((Navigatable)subclassIdentifier).navigate(true);
+        subclass.navigate(true);
       }
     }
   }
