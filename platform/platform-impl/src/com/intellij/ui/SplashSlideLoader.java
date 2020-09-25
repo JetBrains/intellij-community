@@ -112,7 +112,7 @@ public class SplashSlideLoader {
     @Nullable
     private static Path getCacheFile(@NotNull String url, float scale) {
         byte[] bytes = FileUtilRt.getNameWithoutExtension(url).getBytes(StandardCharsets.UTF_8);
-        String extension = FileUtilRt.getNameWithoutExtension(url);
+        String extension = FileUtilRt.getExtension(url);
         try {
             var d = MessageDigest.getInstance("SHA-256");
             //caches version
