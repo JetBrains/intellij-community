@@ -32,9 +32,8 @@ public class UnknownSdkBalloonNotification {
     myProject = project;
   }
 
-  @NotNull
-  public FixedSdksNotification buildNotifications(@NotNull Map<? extends UnknownSdk, UnknownSdkLocalSdkFix> localFixes) {
-    if (localFixes.isEmpty()) return emptyNotification();
+  public void notifyFixedSdks(@NotNull Map<? extends UnknownSdk, UnknownSdkLocalSdkFix> localFixes) {
+    if (localFixes.isEmpty()) return;
 
     Set<@Nls String> usages = new TreeSet<>();
     for (Map.Entry<? extends UnknownSdk, UnknownSdkLocalSdkFix> entry : localFixes.entrySet()) {
@@ -61,60 +60,13 @@ public class UnknownSdkBalloonNotification {
       change = ProjectBundle.message("notification.link.change.sdks");
     }
 
-    return new FixedSdksNotification(usages, title, message, change);
-  }
-
-  @NotNull
-  private static FixedSdksNotification emptyNotification() {
-    return new FixedSdksNotification(Collections.emptySet(), "", "", "");
-  }
-
-  public static final class FixedSdksNotification {
-    private final Set<@Nls String> myUsages;
-    private final String myTitle;
-    private final String myMessage;
-    private final String myChangeAction;
-
-    private FixedSdksNotification(@NotNull Set<@Nls String> usages,
-                                  @Nls @NotNull String title,
-                                  @Nls @NotNull String message,
-                                  @Nls @NotNull String changeAction) {
-      myUsages = usages;
-      myTitle = title;
-      myMessage = message;
-      myChangeAction = changeAction;
-    }
-
-    @Nls
-    @NotNull
-    public String getTitle() {
-      return myTitle;
-    }
-
-    @NotNull
-    public String getMessage() {
-      return myMessage;
-    }
-
-    @NotNull
-    public String getChangeActionText() {
-      return myChangeAction;
-    }
-
-    @NotNull
-    public Set<@Nls String> getUsages() {
-      return myUsages;
-    }
-  }
-
-  public void notifyFixedSdks(@NotNull FixedSdksNotification info) {
-    if (info.getUsages().isEmpty() || info.getMessage().isBlank()) return;
+    if (usages.isEmpty() || message.isBlank()) return;
 
     NotificationGroupManager.getInstance().getNotificationGroup("Missing SDKs")
-      .createNotification(info.getTitle(), info.getMessage(), NotificationType.INFORMATION, null)
+      .createNotification(title, message, NotificationType.INFORMATION, null)
       .setImportant(true)
       .addAction(createSimple(
-        info.getChangeActionText(),
+        change,
         () -> ProjectSettingsService.getInstance(myProject).openProjectSettings()))
       .notify(myProject);
   }

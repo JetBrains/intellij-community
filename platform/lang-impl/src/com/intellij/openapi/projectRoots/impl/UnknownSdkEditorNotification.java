@@ -8,9 +8,6 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.SdkType;
-import com.intellij.openapi.roots.ui.configuration.UnknownSdk;
-import com.intellij.openapi.roots.ui.configuration.UnknownSdkDownloadableSdkFix;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -18,12 +15,11 @@ import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -61,8 +57,12 @@ public class UnknownSdkEditorNotification {
     return ImmutableList.copyOf(myNotifications.get());
   }
 
-  public void showNotifications(@NotNull UnknownSdkEditorNotification.FixableSdkNotification notifications) {
-    myNotifications.set(ImmutableSet.copyOf(notifications.getInfos()));
+  public void showNotifications(@NotNull List<UnknownSdkFix> notifications) {
+    if (!Registry.is("unknown.sdk.show.editor.actions")) {
+      notifications = Collections.emptyList();
+    }
+
+    myNotifications.set(ImmutableSet.copyOf(notifications));
     EditorNotifications.getInstance(myProject).updateAllNotifications();
 
     ApplicationManager.getApplication().invokeLater(() -> {
@@ -70,54 +70,6 @@ public class UnknownSdkEditorNotification {
         updateEditorNotifications(editor);
       }
     });
-  }
-
-  public static final class FixableSdkNotification {
-    private final Set<UnknownSdkFix> myInfos;
-
-    private FixableSdkNotification(@NotNull Set<UnknownSdkFix> infos) {
-      myInfos = ImmutableSet.copyOf(infos);
-    }
-
-    @NotNull
-    public Set<UnknownSdkFix> getInfos() {
-      return myInfos;
-    }
-
-    public boolean isEmpty() {
-      return myInfos.isEmpty();
-    }
-  }
-
-  @NotNull
-  public FixableSdkNotification buildNotifications(@NotNull List<UnknownSdk> unfixableSdks,
-                                                   @NotNull Map<UnknownSdk, UnknownSdkDownloadableSdkFix> files,
-                                                   @NotNull List<UnknownInvalidSdk> invalidSdks) {
-    ImmutableSet.Builder<UnknownSdkFix> notifications = ImmutableSet.builder();
-
-    if (Registry.is("unknown.sdk.show.editor.actions")) {
-      for (UnknownSdk e : unfixableSdks) {
-        @Nullable String name = e.getSdkName();
-        SdkType type = e.getSdkType();
-        if (name == null) continue;
-        notifications.add(new UnknownSdkFixForDownload(myProject, name, type, null, null));
-      }
-
-      for (Map.Entry<UnknownSdk, UnknownSdkDownloadableSdkFix> e : files.entrySet()) {
-        UnknownSdk unknownSdk = e.getKey();
-        String name = unknownSdk.getSdkName();
-        if (name == null) continue;
-
-        UnknownSdkDownloadableSdkFix fix = e.getValue();
-        notifications.add(new UnknownSdkFixForDownload(myProject, name, unknownSdk.getSdkType(), unknownSdk, fix));
-      }
-
-      for (UnknownInvalidSdk sdk : invalidSdks) {
-        notifications.add(new UnknownSdkFixForInvalid(myProject, sdk));
-      }
-    }
-
-    return new FixableSdkNotification(notifications.build());
   }
 
   private void updateEditorNotifications(@NotNull FileEditor editor) {
@@ -138,10 +90,10 @@ public class UnknownSdkEditorNotification {
     for (UnknownSdkFix info : myNotifications.get()) {
       VirtualFile file = editor.getFile();
       if (file == null) continue;
+      if (myProject != info.getProject()) continue;
+      if (!info.getSdkType().isRelevantForFile(myProject, file)) continue;
 
-      EditorNotificationPanel notification = info.createNotificationPanel(file, myProject);
-      if (notification == null) continue;
-
+      EditorNotificationPanel notification = new UnknownSdkEditorPanel(myProject, info);
       notifications.add(notification);
       myFileEditorManager.addTopComponent(editor, notification);
     }

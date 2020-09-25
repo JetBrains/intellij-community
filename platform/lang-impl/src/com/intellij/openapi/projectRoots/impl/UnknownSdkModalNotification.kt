@@ -8,8 +8,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
-import com.intellij.openapi.projectRoots.impl.UnknownSdkBalloonNotification.FixedSdksNotification
-import com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotification.FixableSdkNotification
 import com.intellij.openapi.projectRoots.impl.UnknownSdkTracker.ShowStatusCallback
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ex.MultiLineLabel
@@ -36,25 +34,22 @@ class UnknownSdkModalNotification(
     val outcome: Outcome
   }
 
-  fun newModalHandler(@Nls errorMessage: String) : UnknownSdkModalNotificationHandler = object : UnknownSdkTracker.ShowStatusCallbackAdapter(project), UnknownSdkModalNotificationHandler {
+  fun newModalHandler(@Nls errorMessage: String) : UnknownSdkModalNotificationHandler = object : ShowStatusCallback, UnknownSdkModalNotificationHandler {
     override lateinit var outcome: Outcome
 
-    override fun notifySdks(fixed: FixedSdksNotification, actions: FixableSdkNotification) {
-      //this was fixed automatically, it could hopefully be enough
-      mySdkBalloonNotification.notifyFixedSdks(fixed)
-
+    override fun showStatus(actions: List<UnknownSdkFix>) {
       //nothing to do, so it's done!
-      if (actions.isEmpty) {
+      if (actions.isEmpty()) {
         outcome = Outcome.NO_CHANGES
         return
       }
 
-      val actionsWithFix = actions.infos.mapNotNull {
+      val actionsWithFix = actions.mapNotNull {
         val fix = it.suggestedFixAction
         if (fix != null) it to fix else null
       }.toMap()
 
-      val actionsWithoutFix = actions.infos.filter { it.suggestedFixAction == null }
+      val actionsWithoutFix = actions.filter { it.suggestedFixAction == null }
 
       val isOk = invokeAndWaitIfNeeded {
         createConfirmSdkDownloadFixDialog(actionsWithFix, actionsWithoutFix).showAndGet()

@@ -12,8 +12,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
-import com.intellij.openapi.projectRoots.impl.UnknownSdkBalloonNotification.FixedSdksNotification;
-import com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotification.FixableSdkNotification;
 import com.intellij.openapi.roots.ui.configuration.*;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver.UnknownSdkLookup;
 import com.intellij.openapi.util.io.FileUtil;
@@ -207,7 +205,14 @@ public class UnknownSdkTracker {
                  indicator.popState();
                }
 
-               UnknownInvalidSdk.removeAndUpdate(invalidSdks, fixable, localFixes, downloadFixes);
+               List<UnknownSdkFix> fixProposals = new ArrayList<>();
+
+               fixable.removeAll(invalidSdks);
+               for (UnknownInvalidSdk invalidSdk : invalidSdks) {
+                 var localSdkFix = localFixes.remove(invalidSdk);
+                 var downloadableSdkFix = downloadFixes.remove(invalidSdk);
+                 fixProposals.add(invalidSdk.buildFix(myProject, localSdkFix, downloadableSdkFix));
+               }
 
                if (!localFixes.isEmpty()) {
                  indicator.pushState();
@@ -216,7 +221,28 @@ public class UnknownSdkTracker {
                  indicator.popState();
                }
 
-               showStatus.showStatus(fixable, localFixes, downloadFixes, invalidSdks);
+               for (UnknownSdk e : fixable) {
+                 @Nullable String name = e.getSdkName();
+                 SdkType type = e.getSdkType();
+                 if (name == null) continue;
+                 fixProposals.add(new UnknownMissingSdkFix(myProject, name, type, null));
+               }
+
+               for (Map.Entry<UnknownSdk, UnknownSdkDownloadableSdkFix> e : downloadFixes.entrySet()) {
+                 UnknownSdk unknownSdk = e.getKey();
+                 String name = unknownSdk.getSdkName();
+                 if (name == null) continue;
+
+                 UnknownSdkDownloadableSdkFix fix = e.getValue();
+                 UnknownMissingSdkFixDownload download = new UnknownMissingSdkFixDownload(myProject, unknownSdk, fix);
+                 fixProposals.add(new UnknownMissingSdkFix(myProject,
+                                                            name,
+                                                            unknownSdk.getSdkType(),
+                                                            download));
+               }
+
+
+               showStatus.showStatus(fixProposals);
              } catch (Throwable t) {
                if (t instanceof ControlFlowException) {
                  showStatus.showInterruptedStatus();
@@ -230,57 +256,21 @@ public class UnknownSdkTracker {
   }
 
   public interface ShowStatusCallback {
+    void showStatus(@NotNull List<UnknownSdkFix> fixes);
+
     default void showInterruptedStatus() {
       showEmptyStatus();
     }
 
     default void showEmptyStatus() {
-      showStatus(Collections.emptyList(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyList());
+      showStatus(Collections.emptyList());
     }
-
-    void showStatus(@NotNull List<UnknownSdk> unknownSdksWithoutFix,
-                    @NotNull Map<UnknownSdk, UnknownSdkLocalSdkFix> localFixes,
-                    @NotNull Map<UnknownSdk, UnknownSdkDownloadableSdkFix> downloadFixes,
-                    @NotNull List<UnknownInvalidSdk> invalidSdks);
   }
 
-  public static abstract class ShowStatusCallbackAdapter implements ShowStatusCallback {
-    protected final UnknownSdkBalloonNotification mySdkBalloonNotification;
-    protected final UnknownSdkEditorNotification mySdkEditorNotification;
-
-    protected ShowStatusCallbackAdapter(@NotNull Project project) {
-      mySdkBalloonNotification = UnknownSdkBalloonNotification.getInstance(project);
-      mySdkEditorNotification = UnknownSdkEditorNotification.getInstance(project);
-    }
-
+  private class DefaultShowStatusCallbackAdapter implements ShowStatusCallback {
     @Override
-    public final void showStatus(@NotNull List<UnknownSdk> unknownSdksWithoutFix,
-                                 @NotNull Map<UnknownSdk, UnknownSdkLocalSdkFix> localFixes,
-                                 @NotNull Map<UnknownSdk, UnknownSdkDownloadableSdkFix> downloadFixes,
-                                 @NotNull List<UnknownInvalidSdk> invalidSdks) {
-      var fixed = mySdkBalloonNotification.buildNotifications(localFixes);
-      var actions = mySdkEditorNotification.buildNotifications(unknownSdksWithoutFix, downloadFixes, invalidSdks);
-      notifySdks(fixed, actions);
-    }
-
-    /**
-     * The notification callback that can be executed on any thread,
-     * it can also be in the same call stack of the {@link #updateUnknownSdksBlocking(UnknownSdkCollector, ShowStatusCallback)}
-     * method call, if no actions were found.
-     */
-    protected abstract void notifySdks(@NotNull FixedSdksNotification fixed,
-                                       @NotNull FixableSdkNotification actions);
-  }
-
-  private class DefaultShowStatusCallbackAdapter extends ShowStatusCallbackAdapter {
-    private DefaultShowStatusCallbackAdapter() {
-      super(myProject);
-    }
-
-    @Override
-    protected void notifySdks(@NotNull FixedSdksNotification fixed, @NotNull FixableSdkNotification actions) {
-      mySdkBalloonNotification.notifyFixedSdks(fixed);
-      mySdkEditorNotification.showNotifications(actions);
+    public void showStatus(@NotNull List<UnknownSdkFix> fixes) {
+      UnknownSdkEditorNotification.getInstance(myProject).showNotifications(fixes);
     }
   }
 
@@ -352,6 +342,7 @@ public class UnknownSdkTracker {
       configureLocalSdk(info, fix, sdk -> {});
     }
 
+    UnknownSdkBalloonNotification.getInstance(myProject).notifyFixedSdks(localFixes);
     updateUnknownSdks();
   }
 
