@@ -3,8 +3,8 @@ package com.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.DefaultBundleService;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
 import java.lang.ref.Reference;
@@ -43,7 +43,7 @@ public class AbstractBundle {
 
   @Contract(pure = true)
   public @NotNull @Nls String getMessage(@NotNull @NonNls String key, Object @NotNull ... params) {
-    return message(getResourceBundle(), key, params);
+    return message(getResourceBundle(null), key, params);
   }
 
   /**
@@ -134,10 +134,10 @@ public class AbstractBundle {
   }
 
   private static final Map<ClassLoader, Map<String, ResourceBundle>> ourCache =
-    ConcurrentFactoryMap.createWeakMap(k -> ContainerUtil.createConcurrentSoftValueMap());
+    ConcurrentFactoryMap.createWeakMap(k -> CollectionFactory.createConcurrentSoftValueMap());
 
   private static final Map<ClassLoader, Map<String, ResourceBundle>> ourDefaultCache =
-    ConcurrentFactoryMap.createWeakMap(k -> ContainerUtil.createConcurrentSoftValueMap());
+    ConcurrentFactoryMap.createWeakMap(k -> CollectionFactory.createConcurrentSoftValueMap());
 
   public @NotNull ResourceBundle getResourceBundle(@NotNull @NonNls String pathToBundle, @NotNull ClassLoader loader) {
     return getResourceBundle(pathToBundle, loader, DefaultBundleService.isDefaultBundle()? ourDefaultCache.get(loader) : ourCache.get(loader));

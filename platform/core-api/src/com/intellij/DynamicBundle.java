@@ -9,7 +9,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.DefaultBundleService;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +25,7 @@ public class DynamicBundle extends AbstractBundle {
   private static final Method SET_PARENT = ReflectionUtil.getDeclaredMethod(ResourceBundle.class, "setParent", ResourceBundle.class);
 
   private static @NotNull String ourLangTag = Locale.ENGLISH.toLanguageTag();
-  private static final Map<String, DynamicBundle> ourBundlesForForms = ContainerUtil.createConcurrentSoftValueMap();
+  private static final Map<String, DynamicBundle> ourBundlesForForms = CollectionFactory.createConcurrentSoftValueMap();
 
   public DynamicBundle(@NotNull String pathToBundle) {
     super(pathToBundle);
@@ -78,8 +78,8 @@ public class DynamicBundle extends AbstractBundle {
   public static final DynamicBundle INSTANCE = new DynamicBundle("") { };
 
   @SuppressWarnings("deprecation")
-  public static class LanguageBundleEP extends AbstractExtensionPointBean {
-    public static final ExtensionPointName<LanguageBundleEP> EP_NAME = ExtensionPointName.create("com.intellij.languageBundle");
+  public static final class LanguageBundleEP extends AbstractExtensionPointBean {
+    public static final ExtensionPointName<LanguageBundleEP> EP_NAME = new ExtensionPointName<>("com.intellij.languageBundle");
 
     @Attribute("lang")
     public String lang = Locale.ENGLISH.getLanguage();

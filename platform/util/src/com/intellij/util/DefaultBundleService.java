@@ -11,7 +11,7 @@ import java.util.function.Supplier;
  * <p>It can be useful if a language plugin is enabled, but some computation should be invoked with a default locale
  * (e.g. getting actions' default text/description).</p>
  */
-public class DefaultBundleService {
+public final class DefaultBundleService {
   private static final DefaultBundleService INSTANCE = new DefaultBundleService();
   private static final ThreadLocal<Boolean> ourDefaultBundle = ThreadLocal.withInitial(() -> false);
 
