@@ -68,6 +68,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Predicate;
 
+import static com.intellij.codeInspection.WritersKt.writeProjectDescription;
 import static com.intellij.codeInspection.targets.TargetsKt.runAnalysisByTargets;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
@@ -435,6 +436,11 @@ public final class InspectionApplication implements CommandLineInspectionProgres
                                 ContainerUtil.map2List(inspectionsResults, path -> path.toFile()));
         if (myOutPath != null) {
           reportConverter.projectData(project, Paths.get(myOutPath).resolve("projectStructure"));
+
+          //for backward compatibility with teamcity plugin
+          if ("sa".equals(myOutputFormat)) {
+            writeProjectDescription(Paths.get(myOutPath).resolve("projectDescription.json"), project);
+          }
         }
       }
       catch (InspectionsReportConverter.ConversionException e) {

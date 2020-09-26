@@ -69,9 +69,15 @@ class TargetsRunner(val application: InspectionApplication,
 
     application.configureProject(projectPath, project, scope)
 
-    converter.projectData(project, Paths.get(application.myOutPath).resolve("projectStructure"))
+    val outPath = Paths.get(application.myOutPath)
+    converter.projectData(project, outPath.resolve("projectStructure"))
+
+    //for backward compatibility with teamcity plugin
+    if ( "sa" == application.myOutputFormat ) {
+      writeProjectDescription(outPath.resolve("projectDescription.json"), project)
+    }
     application.writeDescriptions(baseProfile, converter)
-    Files.copy(targetsFile, Paths.get(application.myOutPath).resolve("targets.json"), StandardCopyOption.REPLACE_EXISTING)
+    Files.copy(targetsFile, outPath.resolve("targets.json"), StandardCopyOption.REPLACE_EXISTING)
 
     targetDefinitions.forEach { target ->
       if (!executeTarget(target, converter)) {
