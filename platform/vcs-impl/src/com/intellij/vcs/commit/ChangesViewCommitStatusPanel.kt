@@ -15,6 +15,7 @@ import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Borders.emptyRight
 import com.intellij.util.ui.JBUI.emptyInsets
 import com.intellij.util.ui.components.BorderLayoutPanel
+import com.intellij.util.ui.update.UiNotifyConnector.doWhenFirstShown
 
 private val isCompactCommitLegend get() = Registry.get("vcs.non.modal.commit.legend.compact")
 
@@ -46,6 +47,8 @@ internal class ChangesViewCommitStatusPanel(tree: ChangesTree, private val commi
   }
 
   private fun setupTabUpdater() {
+    doWhenFirstShown(this) { updateTab() } // as UI components could be created before tool window `Content`
+
     branchComponent.addChangeListener(this::updateTab, commitWorkflowUi)
     project.messageBus.connect(commitWorkflowUi).subscribe(ChangesViewContentManagerListener.TOPIC, this)
 
@@ -64,7 +67,7 @@ internal class ChangesViewCommitStatusPanel(tree: ChangesTree, private val commi
     val tab = project.getLocalChangesTab() ?: return
 
     val branch = branchComponent.text
-    tab.displayName = if (branch?.isBlank() == true) message("tab.title.commit") else message("tab.title.commit.to.branch", branch)
+    tab.displayName = if (branch?.isNotBlank() == true) message("tab.title.commit.to.branch", branch) else message("tab.title.commit")
     tab.description = branchComponent.toolTipText
   }
 
