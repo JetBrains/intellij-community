@@ -2,18 +2,23 @@
 package git4idea.stash.ui
 
 import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
+import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.util.Processor
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepositoryManager
 import git4idea.stash.GitStashCache
 import git4idea.stash.GitStashTracker
 import git4idea.stash.GitStashTrackerListener
+import git4idea.stash.ui.GitStashUi.Companion.GIT_STASH_UI_PLACE
 import git4idea.ui.StashInfo
 import java.util.stream.Stream
 import javax.swing.event.TreeExpansionEvent
@@ -27,6 +32,17 @@ class GitStashTree(project: Project, parentDisposable: Disposable) : ChangesTree
   init {
     isKeepTreeState = true
     setEmptyText(GitBundle.message("stash.empty.text"))
+
+    doubleClickHandler = Processor {e ->
+      val diffAction = ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_DIFF_COMMON)
+
+      val dataContext = DataManager.getInstance().getDataContext(this)
+      val event = AnActionEvent.createFromAnAction(diffAction, e, GIT_STASH_UI_PLACE, dataContext)
+      val isEnabled = ActionUtil.lastUpdateAndCheckDumb(diffAction, event, true)
+      if (isEnabled) ActionUtil.performActionDumbAwareWithCallbacks(diffAction, event, dataContext)
+
+      isEnabled
+    }
 
     project.messageBus.connect(parentDisposable).subscribe(GitStashCache.GIT_STASH_LOADED, object : GitStashCache.StashLoadedListener {
       override fun stashLoaded(stashInfo: StashInfo) {
@@ -92,7 +108,8 @@ class GitStashTree(project: Project, parentDisposable: Disposable) : ChangesTree
 
   override fun getData(dataId: String): Any? {
     if (STASH_INFO.`is`(dataId)) return selectedStashes().toList()
-    return super.getData(dataId)
+    if (GIT_STASH_TREE_FLAG.`is`(dataId)) return true
+    return VcsTreeModelData.getData(myProject, this, dataId) ?: super.getData(dataId)
   }
 
   private fun selectedStashes(): Stream<StashInfo> {
@@ -112,5 +129,9 @@ class GitStashTree(project: Project, parentDisposable: Disposable) : ChangesTree
 
     override fun getTextPresentation(): String = stash.stash
     override fun shouldExpandByDefault() = false
+  }
+
+  companion object {
+    val GIT_STASH_TREE_FLAG = DataKey.create<Boolean>("GitStashTreeFlag")
   }
 }

@@ -31,6 +31,8 @@ class GitStashUi(project: Project, disposable: Disposable) : Disposable {
 
   private fun buildToolbar(): JComponent {
     val toolbarGroup = DefaultActionGroup()
+    toolbarGroup.add(ActionManager.getInstance().getAction("Git.Stash.Toolbar"))
+    toolbarGroup.addSeparator()
     toolbarGroup.add(ActionManager.getInstance().getAction(ChangesTree.GROUP_BY_ACTION_GROUP))
     toolbarGroup.addSeparator()
     toolbarGroup.addAll(TreeActionsToolbarPanel.createTreeActions(tree))

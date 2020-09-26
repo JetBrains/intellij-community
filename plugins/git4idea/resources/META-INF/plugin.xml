@@ -294,10 +294,14 @@
     <action id="Git.Stash.Apply" class="git4idea.stash.ui.GitApplyStashAction"/>
     <action id="Git.Stash.Drop" class="git4idea.stash.ui.GitDropStashAction"/>
 
+    <group id="Git.Stash.Toolbar">
+      <reference id="Diff.ShowDiff"/>
+    </group>
     <group id="Git.Stash.ContextMenu">
       <reference id="Git.Stash.Pop"/>
       <reference id="Git.Stash.Apply"/>
       <reference id="Git.Stash.Drop"/>
+      <reference id="Diff.ShowDiff"/>
     </group>
   </actions>
 
@@ -558,6 +562,7 @@
     <projectService serviceImplementation="git4idea.stash.GitStashTracker"/>
     <projectService serviceImplementation="git4idea.stash.GitStashCache"/>
     <backgroundPostStartupActivity implementation="git4idea.stash.ui.GitStashStartupActivity"/>
+    <diff.actions.ShowDiffAction.ExtensionProvider implementation="git4idea.stash.ui.GitShowDiffFromStashAction"/>
 
     <vcs.consoleFolding implementation="git4idea.console.GitConsoleFolding"/>
     <console.folding implementation="git4idea.console.GitProgressOutputConsoleFolding"/>
