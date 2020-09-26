@@ -5,6 +5,7 @@ import com.intellij.application.subscribe
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.DumbService.isDumb
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -77,7 +78,9 @@ internal class ChangesViewCommitWorkflowHandler(
     Disposer.register(inclusionModel, Disposable { ui.inclusionModel = null })
     ui.setCompletionContext(changeListManager.changeLists)
 
+    if (isDumb(project)) enteredDumbMode()
     project.messageBus.connect(this).subscribe(DumbService.DUMB_MODE, this)
+
     ProjectManager.TOPIC.subscribe(this, this)
     CheckinHandlerFactory.EP_NAME.addChangeListener(Runnable { commitHandlersChanged() }, this)
     VcsCheckinHandlerFactory.EP_NAME.addChangeListener(Runnable { commitHandlersChanged() }, this)
