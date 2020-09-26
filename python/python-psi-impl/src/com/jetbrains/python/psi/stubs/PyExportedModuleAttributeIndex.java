@@ -12,4 +12,9 @@ public class PyExportedModuleAttributeIndex extends StringStubIndexExtension<PyE
   public @NotNull StubIndexKey<String, PyElement> getKey() {
     return KEY;
   }
+
+  @Override
+  public boolean traceKeyHashToVirtualFileMapping() {
+    return true;
+  }
 }

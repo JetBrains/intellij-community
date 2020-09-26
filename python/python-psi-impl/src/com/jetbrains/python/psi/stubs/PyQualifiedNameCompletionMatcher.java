@@ -19,6 +19,7 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.Processor;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.IdFilter;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
@@ -51,13 +52,14 @@ public class PyQualifiedNameCompletionMatcher {
     Set<QualifiedName> alreadySuggestedAttributes = new HashSet<>();
     IndexLookupStats stats = new IndexLookupStats();
     try {
+      IdFilter idFilter = IdFilter.getProjectIdFilter(project, true);
       stubIndex.processAllKeys(PyExportedModuleAttributeIndex.KEY, attributeName -> {
         ProgressManager.checkCanceled();
         stats.scannedKeys++;
         if (!attributeMatcher.isStartMatch(attributeName)) return true;
         stats.matchingKeys++;
         return stubIndex.processElements(PyExportedModuleAttributeIndex.KEY,
-                                         attributeName, project, moduleMatchingScope, PyElement.class, element -> {
+                                         attributeName, project, moduleMatchingScope, idFilter, PyElement.class, element -> {
             ProgressManager.checkCanceled();
             VirtualFile vFile = element.getContainingFile().getVirtualFile();
             QualifiedName moduleQualifiedName = ModuleQualifiedNameMatchingScope.restoreModuleQualifiedName(vFile, project);
@@ -78,7 +80,7 @@ public class PyQualifiedNameCompletionMatcher {
             }
             return true;
           });
-      }, moduleMatchingScope, null);
+      }, moduleMatchingScope, idFilter);
     }
     catch (ProcessCanceledException e) {
       stats.cancelled = true;
