@@ -391,10 +391,10 @@ public class ExternalSystemTaskActivator {
     BEFORE_REBUILD("external.system.task.before.rebuild"),
     AFTER_REBUILD("external.system.task.after.rebuild");
 
-    @PropertyKey(resourceBundle = ExternalSystemBundle.BUNDLE)
+    @PropertyKey(resourceBundle = ExternalSystemBundle.PATH_TO_BUNDLE)
     public final String myMessageKey;
 
-    Phase(@PropertyKey(resourceBundle = ExternalSystemBundle.BUNDLE) String messageKey) {
+    Phase(@PropertyKey(resourceBundle = ExternalSystemBundle.PATH_TO_BUNDLE) String messageKey) {
       myMessageKey = messageKey;
     }
 

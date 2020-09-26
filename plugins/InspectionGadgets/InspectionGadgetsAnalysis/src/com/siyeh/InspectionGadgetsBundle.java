@@ -9,12 +9,11 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public final class InspectionGadgetsBundle {
+public final class InspectionGadgetsBundle extends DynamicBundle {
   @NonNls public static final String BUNDLE = "messages.InspectionGadgetsBundle";
-  private static final DynamicBundle INSTANCE = new DynamicBundle(BUNDLE);
+  private static final InspectionGadgetsBundle INSTANCE = new InspectionGadgetsBundle();
 
-  private InspectionGadgetsBundle() {
-  }
+  private InspectionGadgetsBundle() { super(BUNDLE); }
 
   @NotNull
   public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {

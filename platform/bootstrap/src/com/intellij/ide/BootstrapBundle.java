@@ -7,22 +7,22 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-public final class BootstrapBundle {
+public final class BootstrapBundle extends AbstractBundle {
   private static final String BUNDLE = "messages.BootstrapBundle";
 
-  private static final @Nullable AbstractBundle INSTANCE;
-
-  private BootstrapBundle() {
-  }
+  private static final @Nullable BootstrapBundle INSTANCE;
 
   static {
-    AbstractBundle instance = null;
+    BootstrapBundle instance = null;
     try {
-      instance = new AbstractBundle(BUNDLE);
+      instance = new BootstrapBundle();
     }
-    catch (Throwable ignored) {
-    }
+    catch (Throwable ignored) { }
     INSTANCE = instance;
+  }
+
+  private BootstrapBundle() {
+    super(BUNDLE);
   }
 
   // used for reporting startup errors, hence must not produce any exceptions
@@ -31,15 +31,12 @@ public final class BootstrapBundle {
       try {
         return INSTANCE.getMessage(key, params);
       }
-      catch (Throwable ignored) {
-      }
+      catch (Throwable ignored) { }
     }
 
     StringBuilder sb = new StringBuilder();
     sb.append('!').append(key).append('!');
-    for (Object param : params) {
-      sb.append(param).append('!');
-    }
+    for (Object param : params) sb.append(param).append('!');
     return sb.toString();  // NON-NLS (fallback)
   }
 }

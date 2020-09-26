@@ -9,11 +9,12 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public final class CopyrightBundle {
+public final class CopyrightBundle extends DynamicBundle {
   @NonNls private static final String BUNDLE = "messages.CopyrightBundle";
-  private static final DynamicBundle INSTANCE = new DynamicBundle(BUNDLE);
+  private static final CopyrightBundle INSTANCE = new CopyrightBundle();
 
   private CopyrightBundle() {
+    super(BUNDLE);
   }
 
   @NotNull

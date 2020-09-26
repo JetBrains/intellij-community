@@ -20,14 +20,14 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 
-public class DynamicBundle extends AbstractBundle {
+public abstract class DynamicBundle extends AbstractBundle {
   private static final Logger LOG = Logger.getInstance(DynamicBundle.class);
   private static final Method SET_PARENT = ReflectionUtil.getDeclaredMethod(ResourceBundle.class, "setParent", ResourceBundle.class);
 
   private static @NotNull String ourLangTag = Locale.ENGLISH.toLanguageTag();
   private static final Map<String, DynamicBundle> ourBundlesForForms = CollectionFactory.createConcurrentSoftValueMap();
 
-  public DynamicBundle(@NotNull String pathToBundle) {
+  protected DynamicBundle(@NotNull String pathToBundle) {
     super(pathToBundle);
   }
 
