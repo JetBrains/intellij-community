@@ -114,6 +114,13 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
     fun refreshVirtualFiles(project: Project, paths: Collection<VirtualFile>) {
       refreshFilePaths(project, paths.map(VcsUtil::getFilePath))
     }
+
+    @JvmStatic
+    fun refreshRoots(project: Project, roots: Collection<VirtualFile>) {
+      project.serviceIfCreated<GitIndexFileSystemRefresher>()?.refresh {
+        roots.contains(it.root)
+      }
+    }
   }
 
   private class RefreshSession(private val filesToRefresh: List<GitIndexVirtualFile>, private val postRunnable: Runnable?) {
