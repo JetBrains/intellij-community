@@ -12,6 +12,8 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.lightEdit.LightEditCompatible;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.InternalActionsBundle;
@@ -27,6 +29,7 @@ import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
@@ -281,12 +284,19 @@ public class UiInspectorAction extends ToggleAction implements DumbAware, LightE
     private void openClass(String fqn, boolean requestFocus) {
       if (myProject != null) {
         try {
-          Class<?> facade = Class.forName("com.intellij.psi.JavaPsiFacade");
-          Method getInstance = facade.getDeclaredMethod("getInstance", Project.class);
-          Method findClass = facade.getDeclaredMethod("findClass", String.class, GlobalSearchScope.class);
-          Object result = findClass.invoke(getInstance.invoke(null, myProject), fqn, GlobalSearchScope.allScope(myProject));
-          if (result instanceof PsiElement) {
-            PsiNavigateUtil.navigate((PsiElement)result, requestFocus);
+          String javaPsiFacadeFqn = "com.intellij.psi.JavaPsiFacade";
+          PluginId pluginId = PluginManager.getPluginByClassName(javaPsiFacadeFqn);
+          if (pluginId != null) {
+            IdeaPluginDescriptor plugin = PluginManager.getInstance().findEnabledPlugin(pluginId);
+            if (plugin != null) {
+              Class<?> facade = Class.forName(javaPsiFacadeFqn, false, plugin.getPluginClassLoader());
+              Method getInstance = facade.getDeclaredMethod("getInstance", Project.class);
+              Method findClass = facade.getDeclaredMethod("findClass", String.class, GlobalSearchScope.class);
+              Object result = findClass.invoke(getInstance.invoke(null, myProject), fqn, GlobalSearchScope.allScope(myProject));
+              if (result instanceof PsiElement) {
+                PsiNavigateUtil.navigate((PsiElement)result, requestFocus);
+              }
+            }
           }
         }
         catch (Exception ignore) {
