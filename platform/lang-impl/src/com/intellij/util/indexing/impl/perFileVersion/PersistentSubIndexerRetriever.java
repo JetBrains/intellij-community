@@ -81,9 +81,8 @@ public final class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersi
 
   public FileIndexingState getSubIndexerState(int fileId, @NotNull IndexedFile file) throws IOException {
     try (DataInputStream stream = FSRecords.readAttributeWithLock(fileId, myFileAttribute)) {
-      int currentIndexedVersion;
       if (stream != null) {
-        currentIndexedVersion = DataInputOutputUtil.readINT(stream);
+        int currentIndexedVersion = DataInputOutputUtil.readINT(stream);
         if (currentIndexedVersion == UNINDEXED_STATE) {
           return FileIndexingState.NOT_INDEXED;
         }
