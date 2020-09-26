@@ -3,7 +3,8 @@ package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.util.SVGLoader
+import com.intellij.ui.svg.SvgTranscoder
+import com.intellij.ui.svg.createSvgDocument
 import com.intellij.util.io.DigestUtil
 import java.awt.Dimension
 import java.awt.Image
@@ -54,7 +55,7 @@ private fun loadImage(file: Path): Image? {
   if (file.toString().endsWith(".svg")) {
     // don't mask any exception for svg file
     Files.newBufferedReader(file).use {
-      return SVGLoader.loadWithoutCache(null, it, 1f, null)
+      return SvgTranscoder.createImage(1f, createSvgDocument(null, it), null)
     }
   }
 

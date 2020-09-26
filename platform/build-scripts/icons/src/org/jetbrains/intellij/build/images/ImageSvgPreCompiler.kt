@@ -3,8 +3,8 @@ package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.util.text.Formats
 import com.intellij.ui.svg.ImageValue
-import com.intellij.ui.svg.MyTranscoder
 import com.intellij.ui.svg.SvgCacheManager
+import com.intellij.ui.svg.SvgTranscoder
 import com.intellij.ui.svg.createSvgDocument
 import com.intellij.util.ImageLoader
 import com.intellij.util.io.DigestUtil
@@ -209,14 +209,14 @@ internal class ImageSvgPreCompiler {
     val light2x = variants.find { it.toString().endsWith("@2x.svg") }
     for (scale in scales) {
       val document = createSvgDocument(null, if (scale >= 2 && light2x != null) Files.newBufferedReader(light2x) else light1xData.reader())
-      addEntry(getMapByScale(scale, false), MyTranscoder.createImage(scale, document, dimension), dimension, light1x, imageKey)
+      addEntry(getMapByScale(scale, false), SvgTranscoder.createImage(scale, document, dimension), dimension, light1x, imageKey)
     }
 
     val dark2x = variants.find { it.toString().endsWith("@2x_dark.svg") }
     val dark1x = variants.find { it !== dark2x && it.toString().endsWith("_dark.svg") } ?: return
     for (scale in scales) {
       val document = createSvgDocument(null, Files.newBufferedReader(if (scale >= 2 && dark2x != null) dark2x else dark1x))
-      val image = MyTranscoder.createImage(scale, document, dimension)
+      val image = SvgTranscoder.createImage(scale, document, dimension)
       addEntry(getMapByScale(scale, true), image, dimension, dark1x, imageKey)
     }
   }

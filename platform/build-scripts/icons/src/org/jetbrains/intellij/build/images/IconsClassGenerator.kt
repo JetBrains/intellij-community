@@ -3,8 +3,9 @@ package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.svg.SvgCacheManager
+import com.intellij.ui.svg.SvgTranscoder
+import com.intellij.ui.svg.createSvgDocument
 import com.intellij.util.LineSeparator
-import com.intellij.util.SVGLoader
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.diff.Diff
@@ -418,7 +419,8 @@ internal open class IconsClassGenerator(private val projectHome: Path,
 
     if (deprecation?.replacementContextClazz != null) {
       val method = if (customLoad) "load" else "$iconLoaderCode.getIcon"
-      append(result, "public static final @NotNull Icon $iconName = $method(\"${deprecation.replacement}\", ${deprecation.replacementContextClazz}.class);", level)
+      append(result, "public static final @NotNull Icon $iconName = " +
+                     "$method(\"${deprecation.replacement}\", ${deprecation.replacementContextClazz}.class);", level)
       return
     }
     else if (deprecation?.replacementReference != null) {
@@ -445,7 +447,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
       if (file.toString().endsWith(".svg")) {
         // don't mask any exception for svg file
         val data = loadAndNormalizeSvgFile(imageFile)
-        loadedImage = SVGLoader.loadWithoutCache(null, data.reader(), 1f, null)
+        loadedImage = SvgTranscoder.createImage(1f, createSvgDocument(null, data.reader()), null)
         key = getImageKey(data.toByteArray(), file.fileName.toString())
       }
       else {
@@ -466,7 +468,8 @@ internal open class IconsClassGenerator(private val projectHome: Path,
 
     val method = if (customLoad) "load" else "$iconLoaderCode.getIcon"
     val relativePath = rootPrefix + rootDir.relativize(imageFile).systemIndependentPath
-    append(result, "${javaDoc}public static final @NotNull Icon $iconName = $method(\"$relativePath\", ${key}L, ${image.getFlags()});", level)
+    append(result, "${javaDoc}public static final @NotNull Icon $iconName = " +
+                   "$method(\"$relativePath\", ${key}L, ${image.getFlags()});", level)
 
     val oldName = deprecatedIconFieldNameMap.get(iconName)
     if (oldName != null) {

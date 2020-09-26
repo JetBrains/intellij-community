@@ -29,13 +29,13 @@ import java.lang.ref.WeakReference
 import kotlin.math.max
 import kotlin.math.min
 
-private fun logger() = Logger.getInstance(MyTranscoder::class.java)
+private fun logger() = Logger.getInstance(SvgTranscoder::class.java)
 
 private val identityTransform = AffineTransform()
 private val supportedFeatures = HashSet<String>()
 
 @ApiStatus.Internal
-class MyTranscoder private constructor(private var width: Float, private var height: Float) : UserAgent {
+class SvgTranscoder private constructor(private var width: Float, private var height: Float) : UserAgent {
   companion object {
     init {
       SVGFeatureStrings.addSupportedFeatureStrings(supportedFeatures)
@@ -54,14 +54,17 @@ class MyTranscoder private constructor(private var width: Float, private var hei
     }
 
     @JvmStatic
-    fun createBridgeContext(document: SVGOMDocument): BridgeContext {
-      val transcoder = MyTranscoder(16f, 16f)
-      return if (document.isSVG12) {
+    fun getDocumentSize(scale: Float, document: Document): ImageLoader.Dimension2DDouble {
+      val transcoder = SvgTranscoder(16f, 16f)
+      val bridgeContext = if ((document as SVGOMDocument).isSVG12) {
         SVG12BridgeContext(transcoder)
       }
       else {
         BridgeContext(transcoder)
       }
+      GVTBuilder().build(bridgeContext, document)
+      val size = bridgeContext.documentSize
+      return ImageLoader.Dimension2DDouble(size.width * scale, size.height * scale)
     }
 
     @Throws(TranscoderException::class)
@@ -72,8 +75,8 @@ class MyTranscoder private constructor(private var width: Float, private var hei
                     outDimensions: ImageLoader.Dimension2DDouble? /*OUT*/,
                     overriddenWidth: Float = -1f,
                     overriddenHeight: Float = -1f): BufferedImage {
-      val transcoder = MyTranscoder(if (overriddenWidth == -1f) 16f else overriddenWidth,
-                                    if (overriddenHeight == -1f) 16f else overriddenHeight)
+      val transcoder = SvgTranscoder(if (overriddenWidth == -1f) 16f else overriddenWidth,
+                                     if (overriddenHeight == -1f) 16f else overriddenHeight)
 
       val iconMaxSize = iconMaxSize
       val bridgeContext = if ((document as SVGOMDocument).isSVG12) {
