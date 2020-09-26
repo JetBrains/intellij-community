@@ -510,9 +510,9 @@ public final class SVGLoader {
   }
 
   private static ImageLoader.Dimension2DDouble getDocumentSize(float scale, @NotNull Document document) {
-    BridgeContext ctx = new MyTranscoder(scale).createBridgeContext((SVGOMDocument)document);
-    new GVTBuilder().build(ctx, document);
-    Dimension2D size = ctx.getDocumentSize();
+    BridgeContext bridgeContext = MyTranscoder.createBridgeContext((SVGOMDocument)document);
+    new GVTBuilder().build(bridgeContext, document);
+    Dimension2D size = bridgeContext.getDocumentSize();
     return new ImageLoader.Dimension2DDouble(size.getWidth() * scale, size.getHeight() * scale);
   }
 
