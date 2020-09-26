@@ -7,7 +7,9 @@ import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.TestApplicationManager;
 import com.intellij.testFramework.fixtures.BareTestFixture;
+import org.jetbrains.annotations.TestOnly;
 
+@TestOnly
 public class BareTestFixtureImpl extends BaseFixture implements BareTestFixture {
   @Override
   public void setUp() throws Exception {

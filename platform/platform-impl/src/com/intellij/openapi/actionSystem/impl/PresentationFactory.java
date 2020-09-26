@@ -15,11 +15,9 @@
  */
 package com.intellij.openapi.actionSystem.impl;
 
-import com.intellij.DynamicBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
@@ -27,9 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 
 public class PresentationFactory {
-  private static final @NotNull NotNullLazyValue<Boolean> hasAnyLanguagePack =
-    NotNullLazyValue.createValue(DynamicBundle.LanguageBundleEP.EP_NAME::hasAnyExtensions);
-
   private final Map<AnAction,Presentation> myAction2Presentation = ContainerUtil.createWeakMap();
 
   private static final WeakList<PresentationFactory> ourAllFactories = new WeakList<>();
