@@ -2,6 +2,8 @@ package com.jetbrains.python.psi.stubs;
 
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -15,6 +17,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.Processor;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyElement;
@@ -28,6 +31,8 @@ import java.util.Objects;
 import java.util.Set;
 
 public class PyQualifiedNameCompletionMatcher {
+  private static final Logger LOG = Logger.getInstance(PyQualifiedNameCompletionMatcher.class);
+
   private PyQualifiedNameCompletionMatcher() {
   }
 
@@ -44,32 +49,61 @@ public class PyQualifiedNameCompletionMatcher {
 
     GlobalSearchScope moduleMatchingScope = new ModuleQualifiedNameMatchingScope(scope, qualifierMatcher, project);
     Set<QualifiedName> alreadySuggestedAttributes = new HashSet<>();
-    stubIndex.processAllKeys(PyExportedModuleAttributeIndex.KEY, attributeName -> {
-      ProgressManager.checkCanceled();
-      if (!attributeMatcher.isStartMatch(attributeName)) return true;
-      return stubIndex.processElements(PyExportedModuleAttributeIndex.KEY,
-                                       attributeName, project, moduleMatchingScope, PyElement.class, element -> {
-          ProgressManager.checkCanceled();
-          VirtualFile vFile = element.getContainingFile().getVirtualFile();
-          QualifiedName moduleQualifiedName = ModuleQualifiedNameMatchingScope.restoreModuleQualifiedName(vFile, project);
-          assert moduleQualifiedName != null : vFile;
-          QualifiedName canonicalImportPath = findCanonicalImportPath(element, moduleQualifiedName, currentFile);
-          QualifiedName importPath;
-          if (canonicalImportPath != null && qualifierMatcher.prefixMatches(canonicalImportPath.toString())) {
-            importPath = canonicalImportPath;
-          }
-          else {
-            importPath = moduleQualifiedName;
-          }
-          QualifiedName attributeQualifiedName = importPath.append(attributeName);
-          if (alreadySuggestedAttributes.add(attributeQualifiedName)) {
-            if (!processor.process(new ExportedName(attributeQualifiedName, element))) {
-              return false;
+    IndexLookupStats stats = new IndexLookupStats();
+    try {
+      stubIndex.processAllKeys(PyExportedModuleAttributeIndex.KEY, attributeName -> {
+        ProgressManager.checkCanceled();
+        stats.scannedKeys++;
+        if (!attributeMatcher.isStartMatch(attributeName)) return true;
+        stats.matchingKeys++;
+        return stubIndex.processElements(PyExportedModuleAttributeIndex.KEY,
+                                         attributeName, project, moduleMatchingScope, PyElement.class, element -> {
+            ProgressManager.checkCanceled();
+            VirtualFile vFile = element.getContainingFile().getVirtualFile();
+            QualifiedName moduleQualifiedName = ModuleQualifiedNameMatchingScope.restoreModuleQualifiedName(vFile, project);
+            assert moduleQualifiedName != null : vFile;
+            QualifiedName canonicalImportPath = findCanonicalImportPath(element, moduleQualifiedName, currentFile);
+            QualifiedName importPath;
+            if (canonicalImportPath != null && qualifierMatcher.prefixMatches(canonicalImportPath.toString())) {
+              importPath = canonicalImportPath;
             }
-          }
-          return true;
-        });
-    }, moduleMatchingScope, null);
+            else {
+              importPath = moduleQualifiedName;
+            }
+            QualifiedName attributeQualifiedName = importPath.append(attributeName);
+            if (alreadySuggestedAttributes.add(attributeQualifiedName)) {
+              if (!processor.process(new ExportedName(attributeQualifiedName, element))) {
+                return false;
+              }
+            }
+            return true;
+          });
+      }, moduleMatchingScope, null);
+    }
+    catch (ProcessCanceledException e) {
+      stats.cancelled = true;
+      throw e;
+    }
+    finally {
+      if (LOG.isDebugEnabled()) {
+        String qualifiedNamePattern = qualifierPattern + "." + attributePattern;
+        LOG.debug("Index lookup stats for '" + qualifiedNamePattern + "':\n" +
+                  "Scanned keys: " + stats.scannedKeys + "\n" +
+                  "Matched keys: " + stats.matchingKeys + "\n" +
+                  (stats.cancelled ? "Cancelled in " : "Completed in ") + stats.getDuration() + " ms");
+      }
+    }
+  }
+
+  private static class IndexLookupStats {
+    long startNanoTime = System.nanoTime();
+    int scannedKeys;
+    int matchingKeys;
+    boolean cancelled;
+
+    long getDuration() {
+      return TimeoutUtil.getDurationMillis(startNanoTime);
+    }
   }
 
   @NotNull
