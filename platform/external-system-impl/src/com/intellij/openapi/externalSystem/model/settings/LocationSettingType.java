@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.settings;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -27,15 +28,15 @@ public enum LocationSettingType {
 
   EXPLICIT_CORRECT("setting.type.location.explicit.correct");
 
-  @PropertyKey(resourceBundle = ExternalSystemBundle.PATH_TO_BUNDLE)
+  @PropertyKey(resourceBundle = ExternalSystemBundle.BUNDLE)
   @NotNull private final String myDescriptionKey;
   @NotNull private final Color myColor;
 
-  LocationSettingType(@NotNull @PropertyKey(resourceBundle = ExternalSystemBundle.PATH_TO_BUNDLE) String descriptionKey) {
+  LocationSettingType(@NotNull @PropertyKey(resourceBundle = ExternalSystemBundle.BUNDLE) String descriptionKey) {
     this(descriptionKey, "TextField.foreground");
   }
 
-  LocationSettingType(@NotNull @PropertyKey(resourceBundle = ExternalSystemBundle.PATH_TO_BUNDLE) String descriptionKey,
+  LocationSettingType(@NotNull @PropertyKey(resourceBundle = ExternalSystemBundle.BUNDLE) String descriptionKey,
                       @NotNull String key)
   {
     myDescriptionKey = descriptionKey;

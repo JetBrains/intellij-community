@@ -25,7 +25,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -315,7 +314,6 @@ public final class PluginManagerCore {
                                                                @NotNull Class<?> pluginClass) {
     ClassLoader classLoader = pluginClass.getClassLoader();
     PluginId pluginId;
-    //noinspection InstanceofIncompatibleInterface
     if (classLoader instanceof PluginAwareClassLoader) {
       pluginId = ((PluginAwareClassLoader)classLoader).getPluginId();
     }
@@ -643,7 +641,7 @@ public final class PluginManagerCore {
     Set<IdeaPluginDescriptorImpl> uniqueCheck = new HashSet<>();
     return new CachingSemiGraph<>(descriptors, rootDescriptor -> {
       List<PluginDependency> dependencies = rootDescriptor.pluginDependencies;
-      List<PluginId> incompatibleModuleIds = ContainerUtil.notNullize(rootDescriptor.incompatibilities);
+      List<PluginId> incompatibleModuleIds = rootDescriptor.incompatibilities == null ? Collections.emptyList() : rootDescriptor.incompatibilities;
       if (dependencies == null) {
         dependencies = Collections.emptyList();
       }
@@ -727,7 +725,7 @@ public final class PluginManagerCore {
       for (IdeaPluginDescriptor descriptor : component) {
         descriptor.setEnabled(false);
       }
-      String pluginsString = StringUtil.join(component, p -> "'" + p.getName() + "'", ", ");
+      String pluginsString = component.stream().map(it -> "'" + it.getName() + "'").collect(Collectors.joining(", "));
       errors.add(() -> CoreBundle.message("plugin.loading.error.plugins.cannot.be.loaded.because.they.form.a.dependency.cycle", pluginsString));
     }
   }
@@ -780,7 +778,7 @@ public final class PluginManagerCore {
       @NlsSafe String nameToDisable;
       if (disabledIds.size() == 1) {
         PluginId id = disabledIds.keySet().iterator().next();
-        nameToDisable = idMap.containsKey(id) ? idMap.get(id).getName() : StringUtil.notNullize(id.getIdString());
+        nameToDisable = idMap.containsKey(id) ? idMap.get(id).getName() : id.getIdString();
       }
       else {
         nameToDisable = null;
@@ -1025,11 +1023,10 @@ public final class PluginManagerCore {
     Set<IdeaPluginDescriptorImpl> explicitlyEnabled = null;
     if (selectedIds != null) {
       Set<PluginId> set = new HashSet<>();
-      List<String> strings = StringUtil.split(selectedIds, ",");
-      for (String it : strings) {
+      for (String it : selectedIds.split(",")) {
         set.add(PluginId.getId(it));
       }
-      set.addAll(((ApplicationInfoImpl)ApplicationInfoImpl.getShadowInstance()).getEssentialPluginsIds());
+      set.addAll(ApplicationInfoImpl.getShadowInstance().getEssentialPluginsIds());
 
       explicitlyEnabled = new LinkedHashSet<>(set.size());
       for (PluginId id : set) {
@@ -1142,7 +1139,7 @@ public final class PluginManagerCore {
   }
 
   private static void checkEssentialPluginsAreAvailable(@NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap) {
-    List<PluginId> required = ((ApplicationInfoImpl)ApplicationInfoImpl.getShadowInstance()).getEssentialPluginsIds();
+    List<PluginId> required = ApplicationInfoImpl.getShadowInstance().getEssentialPluginsIds();
     List<String> missing = null;
     for (PluginId id : required) {
       IdeaPluginDescriptorImpl descriptor = idMap.get(id);
@@ -1166,8 +1163,10 @@ public final class PluginManagerCore {
 
     if (loadingResult.duplicateModuleMap != null) {
       for (Map.Entry<PluginId, List<IdeaPluginDescriptorImpl>> entry : loadingResult.duplicateModuleMap.entrySet()) {
-        globalErrors.add(CoreBundle.messagePointer("plugin.loading.error.module.declared.by.multiple.plugins", entry.getKey(),
-                                                   StringUtil.join(entry.getValue(), "\n  ")));
+        globalErrors.add(() -> {
+          return CoreBundle.message("plugin.loading.error.module.declared.by.multiple.plugins", entry.getKey(),
+                                    entry.getValue().stream().map(IdeaPluginDescriptorImpl::toString).collect(Collectors.joining("\n  ")));
+        });
       }
     }
 
@@ -1368,10 +1367,12 @@ public final class PluginManagerCore {
     boolean result = true;
 
     for (PluginId incompatibleId : ContainerUtil.notNullize(descriptor.incompatibilities)) {
-      if (!loadedModuleIds.contains(incompatibleId) || disabledPlugins.contains(incompatibleId)) continue;
+      if (!loadedModuleIds.contains(incompatibleId) || disabledPlugins.contains(incompatibleId)) {
+        continue;
+      }
 
       result = false;
-      String presentableName = StringUtil.notNullize(incompatibleId.getIdString());
+      String presentableName = incompatibleId.getIdString();
       PluginLoadingError.create(descriptor, CoreBundle.messagePointer("plugin.loading.error.long.ide.contains.conflicting.module", descriptor.getName(), presentableName),
                                 CoreBundle.messagePointer("plugin.loading.error.short.ide.contains.conflicting.module", presentableName), notifyUser).register(errors);
     }
@@ -1396,7 +1397,7 @@ public final class PluginManagerCore {
 
       String depName = dep == null ? null : dep.getName();
       if (depName == null) {
-        @NlsSafe String depPresentableId = StringUtil.notNullize(depId.getIdString());
+        @NlsSafe String depPresentableId = depId.getIdString();
         if (errors.containsKey(depId)) {
           PluginLoadingError.create(descriptor, CoreBundle.messagePointer("plugin.loading.error.long.depends.on.failed.to.load.plugin", descriptor.getName(), depPresentableId),
                                     CoreBundle.messagePointer("plugin.loading.error.short.depends.on.failed.to.load.plugin", depPresentableId), notifyUser).register(errors);

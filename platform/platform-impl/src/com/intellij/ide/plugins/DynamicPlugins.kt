@@ -67,6 +67,7 @@ import com.intellij.util.MemoryDumpHelper
 import com.intellij.util.SystemProperties
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.URLUtil
+import com.intellij.util.io.exists
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.xmlb.BeanBinding
 import org.jetbrains.annotations.NonNls
@@ -555,7 +556,7 @@ object DynamicPlugins {
             FileUtil.asyncDelete(File(snapshotPath))
             classLoaderUnloaded = true
           }
-          if (Registry.`is`("ide.plugins.analyze.snapshot") && File(snapshotPath).exists()) {
+          if (Registry.`is`("ide.plugins.analyze.snapshot") && Paths.get(snapshotPath).exists()) {
             val analysisResult = analyzeSnapshot(snapshotPath, pluginDescriptor.pluginId)
             if (analysisResult.isEmpty()) {
               LOG.info("Successfully unloaded plugin ${pluginDescriptor.pluginId} (no strong references to classloader in .hprof file)")

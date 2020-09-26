@@ -3,19 +3,20 @@ package com.intellij.openapi.application;
 
 import com.intellij.DynamicBundle;
 import com.intellij.ide.IdeDeprecatedMessagesBundle;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
 /**
  * Provides access to localized properties of the IntelliJ Platform.
  */
-public final class ApplicationBundle extends DynamicBundle {
+public final class ApplicationBundle {
   public static final String BUNDLE = "messages.ApplicationBundle";
-  public static final ApplicationBundle INSTANCE = new ApplicationBundle();
+  public static final DynamicBundle INSTANCE = new DynamicBundle(BUNDLE);
 
   private ApplicationBundle() {
-    super(BUNDLE);
   }
 
   public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {

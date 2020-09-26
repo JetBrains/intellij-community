@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.build;
 
 import com.intellij.DynamicBundle;
@@ -10,12 +9,11 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public final class BuildBundle extends DynamicBundle {
+public final class BuildBundle {
   @NonNls private static final String BUNDLE = "messages.BuildBundle";
-  private static final BuildBundle INSTANCE = new BuildBundle();
+  private static final DynamicBundle INSTANCE = new DynamicBundle(BUNDLE);
 
   private BuildBundle() {
-    super(BUNDLE);
   }
 
   @NotNull

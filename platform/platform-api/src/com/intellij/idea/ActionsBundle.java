@@ -10,22 +10,20 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public final class ActionsBundle extends DynamicBundle {
-  @NonNls private static final String IDEA_ACTIONS_BUNDLE = "messages.ActionsBundle";
-
-  private static final ActionsBundle ourInstance = new ActionsBundle();
+public final class ActionsBundle {
+  @NonNls private static final String BUNDLE = "messages.ActionsBundle";
+  private static final DynamicBundle INSTANCE = new DynamicBundle(BUNDLE);
 
   private ActionsBundle() {
-    super(IDEA_ACTIONS_BUNDLE);
   }
 
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = IDEA_ACTIONS_BUNDLE) String key, Object @NotNull ... params) {
-    return ourInstance.getMessage(key, params);
+  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.getMessage(key, params);
   }
 
   @NotNull
-  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = IDEA_ACTIONS_BUNDLE) String key, Object @NotNull ... params) {
-    return ourInstance.getLazyMessage(key, params);
+  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.getLazyMessage(key, params);
   }
 
   public static @NlsActions.ActionText String actionText(@NonNls String actionId) {

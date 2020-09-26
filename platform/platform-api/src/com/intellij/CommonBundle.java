@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij;
 
 import com.intellij.openapi.util.NlsContexts.Button;
@@ -13,12 +13,11 @@ import java.util.function.Supplier;
  * @author yole
  */
 @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-public final class CommonBundle extends DynamicBundle {
+public final class CommonBundle {
   private static final String BUNDLE = "messages.CommonBundle";
-  private static final CommonBundle INSTANCE = new CommonBundle();
+  private static final DynamicBundle INSTANCE = new DynamicBundle(BUNDLE);
 
   private CommonBundle() {
-    super(BUNDLE);
   }
 
   @NotNull

@@ -9,11 +9,12 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public final class VcsBundle extends DynamicBundle {
+public final class VcsBundle {
   @NonNls public static final String BUNDLE = "messages.VcsBundle";
-  public static final VcsBundle INSTANCE = new VcsBundle();
+  public static final DynamicBundle INSTANCE = new DynamicBundle(BUNDLE);
 
-  private VcsBundle() { super(BUNDLE); }
+  private VcsBundle() {
+  }
 
   @NotNull
   public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {

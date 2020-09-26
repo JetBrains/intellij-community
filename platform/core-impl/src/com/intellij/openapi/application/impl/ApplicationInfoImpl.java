@@ -949,6 +949,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return PluginManagerCore.CORE_ID == pluginId || Collections.binarySearch(myEssentialPluginsIds, pluginId) >= 0;
   }
 
+  @Override
   public @NotNull List<PluginId> getEssentialPluginsIds() {
     return myEssentialPluginsIds;
   }

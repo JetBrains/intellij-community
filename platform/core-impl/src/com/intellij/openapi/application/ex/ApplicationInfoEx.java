@@ -158,4 +158,6 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   public abstract @Nullable String getProgressTailIcon();
 
   public abstract @NotNull BuildNumber getApiVersionAsNumber();
+
+  public abstract @NotNull List<PluginId> getEssentialPluginsIds();
 }

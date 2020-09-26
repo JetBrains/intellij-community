@@ -10,11 +10,12 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public final class DaemonBundle extends DynamicBundle {
+public final class DaemonBundle {
   @NonNls private static final String BUNDLE = "messages.DaemonBundle";
-  private static final DaemonBundle INSTANCE = new DaemonBundle();
+  private static final DynamicBundle INSTANCE = new DynamicBundle(BUNDLE);
 
-  private DaemonBundle() { super(BUNDLE); }
+  private DaemonBundle() {
+  }
 
   @NotNull
   public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {

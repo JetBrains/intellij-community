@@ -389,7 +389,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     return null;
   }
 
-  protected String message(@PropertyKey(resourceBundle = ExternalSystemBundle.PATH_TO_BUNDLE) @NotNull String key, Object @NotNull ... params) {
+  protected String message(@PropertyKey(resourceBundle = ExternalSystemBundle.BUNDLE) @NotNull String key, Object @NotNull ... params) {
     return ExternalSystemBundle.message(key, params);
   }
 

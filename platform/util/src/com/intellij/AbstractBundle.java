@@ -31,13 +31,13 @@ import java.util.function.Supplier;
  *
  * @author Denis Zhdanov
  */
-public abstract class AbstractBundle {
+public class AbstractBundle {
   private static final Logger LOG = Logger.getInstance(AbstractBundle.class);
   private Reference<ResourceBundle> myBundle;
   private Reference<ResourceBundle> myDefaultBundle;
   private final @NonNls String myPathToBundle;
 
-  protected AbstractBundle(@NonNls @NotNull String pathToBundle) {
+  public AbstractBundle(@NonNls @NotNull String pathToBundle) {
     myPathToBundle = pathToBundle;
   }
 
@@ -168,7 +168,7 @@ public abstract class AbstractBundle {
     ourCache.clear();
   }
 
-  protected void clearLocaleCache() {
+  public final void clearLocaleCache() {
     if (myBundle != null) {
       myBundle.clear();
     }
