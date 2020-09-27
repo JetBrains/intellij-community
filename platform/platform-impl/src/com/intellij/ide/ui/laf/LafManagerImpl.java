@@ -306,24 +306,22 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   @Override
   public void loadState(@NotNull Element element) {
-    myCurrentLaf = loadLafState(element, ELEMENT_LAF, getDefaultLaf());
-    autodetect = Boolean.valueOf(element.getAttributeValue(ATTRIBUTE_AUTODETECT));
-    myPreferredLightLaf = loadLafState(element, ELEMENT_PREFERRED_LIGHT_LAF, myDefaultLightLaf);
-    myPreferredDarkLaf = loadLafState(element, ELEMENT_PREFERRED_DARK_LAF, myDefaultDarkLaf);
+    myCurrentLaf = loadLafState(element, ELEMENT_LAF);
+    if (myCurrentLaf == null) {
+      myCurrentLaf = getDefaultLaf();
+    }
+
+    autodetect = Boolean.parseBoolean(element.getAttributeValue(ATTRIBUTE_AUTODETECT));
+    myPreferredLightLaf = Objects.requireNonNullElse(loadLafState(element, ELEMENT_PREFERRED_LIGHT_LAF), myDefaultLightLaf);
+    myPreferredDarkLaf = Objects.requireNonNullElse(loadLafState(element, ELEMENT_PREFERRED_DARK_LAF), myDefaultDarkLaf);
   }
 
-  private UIManager.LookAndFeelInfo loadLafState(@NotNull Element element, @NonNls String attrName, UIManager.LookAndFeelInfo defaultValue) {
-    UIManager.LookAndFeelInfo laf = null;
+  private @Nullable UIManager.LookAndFeelInfo loadLafState(@NotNull Element element, @NonNls String attrName) {
     Element lafElement = element.getChild(attrName);
-    if (lafElement != null) {
-      laf = findLaf(lafElement.getAttributeValue(ATTRIBUTE_CLASS_NAME), lafElement.getAttributeValue(ATTRIBUTE_THEME_NAME));
+    if (lafElement == null) {
+      return null;
     }
-
-    // If LAF is undefined (wrong class name or something else) we have set default LAF anyway.
-    if (laf == null) {
-      laf = defaultValue;
-    }
-    return laf;
+    return findLaf(lafElement.getAttributeValue(ATTRIBUTE_CLASS_NAME), lafElement.getAttributeValue(ATTRIBUTE_THEME_NAME));
   }
 
   @Nullable
@@ -498,8 +496,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     throw new IllegalStateException("No default L&F found: " + defaultLafName);
   }
 
-  @Nullable
-  private UIManager.LookAndFeelInfo findLaf(@NotNull String className) {
+  private @Nullable UIManager.LookAndFeelInfo findLaf(@NotNull String className) {
     if (myDefaultLightLaf.getClassName().equals(className)) {
       return myDefaultLightLaf;
     }
