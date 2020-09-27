@@ -234,7 +234,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   private MenuItemPresentationFactory createPresentationFactory() {
     return new MenuItemPresentationFactory() {
       @Override
-      protected void processPresentation(Presentation presentation) {
+      protected void processPresentation(@NotNull Presentation presentation) {
         super.processPresentation(presentation);
         if (myNoIconsInPopup) {
           presentation.setIcon(null);
@@ -517,7 +517,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   @Override
-  public AnAction getAction() {
+  public @NotNull AnAction getAction() {
     return myAction;
   }
 

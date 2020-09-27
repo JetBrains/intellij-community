@@ -36,9 +36,6 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
   }
 
   @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {}
-
-  @Override
   public void update(@NotNull AnActionEvent e) {
     myActionGroup.update(e);
     Presentation presentation = e.getPresentation();
@@ -201,13 +198,11 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
       ActionManagerImpl am = (ActionManagerImpl) ActionManager.getInstance();
       ActionPopupMenu popupMenu = am.createActionPopupMenu(event.getPlace(), actionGroup, new MenuItemPresentationFactory() {
         @Override
-        protected void processPresentation(Presentation presentation) {
+        protected void processPresentation(@NotNull Presentation presentation) {
           super.processPresentation(presentation);
-          if (presentation != null &&
-              StringUtil.defaultIfEmpty(presentation.getText(), "").equals(myPresentation.getText()) &&
+          if (StringUtil.defaultIfEmpty(presentation.getText(), "").equals(myPresentation.getText()) &&
               StringUtil.defaultIfEmpty(presentation.getDescription(), "").equals(myPresentation.getDescription())) {
             presentation.setEnabled(selectedActionEnabled());
-            //presentation.putClientProperty(Toggleable.SELECTED_PROPERTY, myPresentation.getClientProperty(Toggleable.SELECTED_PROPERTY));
           }
         }
       });

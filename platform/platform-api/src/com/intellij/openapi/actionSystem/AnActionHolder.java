@@ -15,9 +15,12 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Konstantin Bulenkov
  */
 public interface AnActionHolder {
+  @NotNull
   AnAction getAction();
 }
