@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf;
 
 import com.intellij.ide.ui.UITheme;
@@ -15,6 +15,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.util.SVGLoader;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.File;
@@ -33,7 +34,7 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
   private final UITheme myTheme;
   private boolean myInitialised;
 
-  public UIThemeBasedLookAndFeelInfo(UITheme theme) {
+  public UIThemeBasedLookAndFeelInfo(@NotNull UITheme theme) {
     super(theme.getName(), theme.isDark() ? DarculaLaf.class.getName() : IntelliJLaf.class.getName());
     myTheme = theme;
   }
@@ -172,7 +173,8 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
       if (myTheme.getBackground() != null) {
         propertyManager.unsetValue(backgroundPropertyKey);
       }
-    } else {
+    }
+    else {
       propertyManager.setValue(backgroundPropertyKey, value);
     }
   }
