@@ -9,7 +9,7 @@ import java.util.*;
 
 public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
   @NonNls
-  protected static final Map<String, String[][]> DEFAULT_DUPLICATES = new HashMap<String, String[][]>(){{
+  protected static final Map<String, String[][]> DEFAULT_DUPLICATES = new HashMap<>(){{
     put("$default", new String[][] {
     { "ADD",                      "ExpandTreeNode", "Graph.ZoomIn"},
     { "DELETE",                   "$Delete", "DatabaseView.DropAction"},
@@ -114,6 +114,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift ctrl alt RIGHT",     "MoveElementRight", "Terminal.MoveToolWindowTabRight"},
     { "SPACE",                    "Console.TableResult.ColumnVisibility", "QuickPreview"},
     { "shift ctrl X",             "Github.PullRequest.Diff.Comment.Create", "com.jetbrains.php.framework.FrameworkRunConsoleAction"},
+    { "ctrl L",                   "FindNext", "Terminal.ClearBuffer"},
     });
     put("Mac OS X 10.5+", new String[][] {
     { "F1",                       "QuickJavaDoc", "org.jetbrains.r.actions.REditorHelpAction"},
@@ -149,6 +150,8 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "alt R",                    "Django.RunManageTaskAction", "org.jetbrains.plugins.ruby.tasks.rake.actions.RakeTasksPopupAction"},
     { "alt DOWN",                 "EditorUnSelectWord", "MethodOverloadSwitchDown", "ShowSearchHistory"},
     { "alt UP",                   "EditorSelectWord", "MethodOverloadSwitchUp"},
+    { "meta L",                   "GotoLine", "Terminal.ClearBuffer"},
+    { "meta K",                   "CheckinProject", "Terminal.ClearBuffer"},
     });
     put("Mac OS X", new String[][] {
     { "Force touch",              "GotoDeclaration", "RunToCursor"},
@@ -170,7 +173,8 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift meta LEFT",          "EditorLineStartWithSelection", "ResizeToolWindowLeft"},
     { "shift meta RIGHT",         "EditorLineEndWithSelection", "ResizeToolWindowRight"},
     { "alt R",                    "Django.RunManageTaskAction", "org.jetbrains.plugins.ruby.tasks.rake.actions.RakeTasksPopupAction"},
-    { "ctrl SPACE",               "ChangesView.SetDefault", "CodeCompletion"}
+    { "ctrl SPACE",               "ChangesView.SetDefault", "CodeCompletion"},
+    { "meta K",                   "CheckinProject", "Terminal.ClearBuffer"},
     });
     put("Emacs", new String[][] {
     { "TAB",                      "SelectVirtualTemplateElement", "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection",
@@ -201,6 +205,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift ctrl DOWN",          "EditorForwardParagraphWithSelection", "ResizeToolWindowDown"},
     { "shift ctrl UP",            "EditorBackwardParagraphWithSelection", "ResizeToolWindowUp"},
     { "ESCAPE",                   SECOND_STROKE, "FocusEditor", "Terminal.SwitchFocusToEditor"},
+    { "ctrl L",                   "EditorScrollToCenter", "Terminal.ClearBuffer"},
     });
     put("Visual Studio", new String[][] {
     { "F7",                       "CompileDirty", "NextDiff"},
@@ -232,7 +237,8 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "ctrl MINUS",               "Back", "CollapseAll", "CollapseExpandableComponent"},
     { "ctrl alt ENTER",           "ReformatCode", "org.jetbrains.r.actions.DebugSelection"},
     { "shift ctrl H",             "ChangesView.ShelveSilently", "ReplaceInPath"},
-    { "shift ctrl alt P",         "IntroduceFunctionalParameter", "ReformatWithPrettierAction", "VcsShowPrevChangeMarker"}
+    { "shift ctrl alt P",         "IntroduceFunctionalParameter", "ReformatWithPrettierAction", "VcsShowPrevChangeMarker"},
+    { "ctrl L",                   "$Cut", "Terminal.ClearBuffer"},
     });
     put("Default for XWin", new String[][] {
     { "shift ctrl alt button1",   "EditorAddRectangularSelectionOnMouseDrag", "QuickEvaluateExpression"},
@@ -292,6 +298,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift control T",          "GotoClass", "GotoChangedFile"},
     { "shift ctrl alt RIGHT",     "PreviousEditorTab", "Terminal.MoveToolWindowTabRight"},
     { "shift ctrl alt LEFT",      "NextEditorTab", "Terminal.MoveToolWindowTabLeft"},
+    { "ctrl L",                   "GotoLine", "Terminal.ClearBuffer"},
     });
     put("NetBeans 6.5", new String[][] {
     { "F4",                       "RunToCursor", "EditSource"},
@@ -356,6 +363,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift meta U",             "FindUsagesInFile", "ShelveChanges.UnshelveWithDialog"},
     { "shift meta F6",            "Diff.PrevChange", "PreviousTab"},
     { "control shift alt Z",      "Vcs.RollbackChangedLines", "ChangesView.Revert"},
+    { "meta K",                   "FindNext", "Terminal.ClearBuffer"},
     });
     put("Sublime Text", new String[][] {
     { "F2",                       "ChangesView.Rename", "Console.TableResult.EditValue", "Git.Reword.Commit", "Git.Rename.Local.Branch", "GotoNextBookmark", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "ShelvedChanges.Rename", "XDebugger.SetValue"},
@@ -380,7 +388,8 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift ctrl DOWN",          "MoveLineDown", "ResizeToolWindowDown"},
     { "shift ctrl ENTER",         "Console.Jpa.GenerateSql", "EditorStartNewLineBefore", "org.jetbrains.r.actions.RRunAction", "Terminal.SmartCommandExecution.Debug"},
     { "shift ctrl T",             "ReopenClosedTab", "ServiceView.ShowServices"},
-    { "shift ctrl UP",            "MoveLineUp", "ResizeToolWindowUp"}
+    { "shift ctrl UP",            "MoveLineUp", "ResizeToolWindowUp"},
+    { "ctrl L",                   "EditorSelectWord", "Terminal.ClearBuffer"},
     });
     put("Sublime Text (Mac OS X)", new String[][] {
     { "F2",                       "ChangesView.Rename", "Console.TableResult.EditValue", "Git.Reword.Commit", "Git.Rename.Local.Branch", "GotoNextBookmark", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "ShelvedChanges.Rename", "XDebugger.SetValue"},
@@ -400,7 +409,9 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift ENTER",              "CollapseExpandableComponent", "Console.TableResult.EditValueMaximized", "EditorSplitLine", "ExpandExpandableComponent", "NotebookRunCellSelectBelowAction", "OpenInRightSplit", "RConsoleNextLineAction"},
     { "shift meta D",             "Console.TableResult.CompareCells", "EditorDuplicate", "Uml.ShowDiff"},
     { "shift meta ENTER",         "Console.Jpa.GenerateSql", "EditorStartNewLineBefore",  "org.jetbrains.r.actions.RRunAction", "Terminal.SmartCommandExecution.Debug"},
-    { "shift meta T",             "ReopenClosedTab", "ServiceView.ShowServices"}
+    { "shift meta T",             "ReopenClosedTab", "ServiceView.ShowServices"},
+    { "meta L",                   "EditorSelectWord", "Terminal.ClearBuffer"},
+    { "meta K",                   "SECOND_STROKE_SHORTCUT", "Terminal.ClearBuffer"},
     });
     put("macOS System Shortcuts", new String[][] {
       { "meta I",                   "DatabaseView.PropertiesAction", "QuickJavaDoc"},
