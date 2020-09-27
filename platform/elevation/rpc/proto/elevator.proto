@@ -16,8 +16,7 @@ message SpawnRequest {
 }
 
 message SpawnReply {
-  string message = 1;
-  uint64 pid = 2;
+  uint64 pid = 1;
 }
 
 message AwaitRequest {

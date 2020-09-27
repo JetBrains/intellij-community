@@ -8,19 +8,7 @@ public interface SpawnReplyOrBuilder extends
     com.google.protobuf.MessageOrBuilder {
 
   /**
-   * <code>string message = 1;</code>
-   * @return The message.
-   */
-  java.lang.String getMessage();
-  /**
-   * <code>string message = 1;</code>
-   * @return The bytes for message.
-   */
-  com.google.protobuf.ByteString
-      getMessageBytes();
-
-  /**
-   * <code>uint64 pid = 2;</code>
+   * <code>uint64 pid = 1;</code>
    * @return The pid.
    */
   long getPid();

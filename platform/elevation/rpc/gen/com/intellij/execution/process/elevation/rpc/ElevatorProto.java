@@ -55,19 +55,19 @@ public final class ElevatorProto {
     java.lang.String[] descriptorData = {
       "\n\016elevator.proto\022\relevation.rpc\"@\n\014Spawn" +
       "Request\0220\n\014command_line\030\001 \001(\0132\032.elevatio" +
-      "n.rpc.CommandLine\"*\n\nSpawnReply\022\017\n\007messa" +
-      "ge\030\001 \001(\t\022\013\n\003pid\030\002 \001(\004\"\033\n\014AwaitRequest\022\013\n" +
-      "\003pid\030\001 \001(\004\"\037\n\nAwaitReply\022\021\n\texit_code\030\001 " +
-      "\001(\r\"\233\001\n\013CommandLine\022\017\n\007command\030\001 \003(\t\022\023\n\013" +
-      "working_dir\030\002 \001(\t\022;\n\014environ_vars\030\003 \003(\0132" +
-      "%.elevation.rpc.CommandLine.EnvironVar\032)" +
-      "\n\nEnvironVar\022\014\n\004name\030\001 \001(\t\022\r\n\005value\030\002 \001(" +
-      "\t2\220\001\n\010Elevator\022A\n\005Spawn\022\033.elevation.rpc." +
-      "SpawnRequest\032\031.elevation.rpc.SpawnReply\"" +
-      "\000\022A\n\005Await\022\033.elevation.rpc.AwaitRequest\032" +
-      "\031.elevation.rpc.AwaitReply\"\000B?\n,com.inte" +
-      "llij.execution.process.elevation.rpcB\rEl" +
-      "evatorProtoP\001b\006proto3"
+      "n.rpc.CommandLine\"\031\n\nSpawnReply\022\013\n\003pid\030\001" +
+      " \001(\004\"\033\n\014AwaitRequest\022\013\n\003pid\030\001 \001(\004\"\037\n\nAwa" +
+      "itReply\022\021\n\texit_code\030\001 \001(\r\"\233\001\n\013CommandLi" +
+      "ne\022\017\n\007command\030\001 \003(\t\022\023\n\013working_dir\030\002 \001(\t" +
+      "\022;\n\014environ_vars\030\003 \003(\0132%.elevation.rpc.C" +
+      "ommandLine.EnvironVar\032)\n\nEnvironVar\022\014\n\004n" +
+      "ame\030\001 \001(\t\022\r\n\005value\030\002 \001(\t2\220\001\n\010Elevator\022A\n" +
+      "\005Spawn\022\033.elevation.rpc.SpawnRequest\032\031.el" +
+      "evation.rpc.SpawnReply\"\000\022A\n\005Await\022\033.elev" +
+      "ation.rpc.AwaitRequest\032\031.elevation.rpc.A" +
+      "waitReply\"\000B?\n,com.intellij.execution.pr" +
+      "ocess.elevation.rpcB\rElevatorProtoP\001b\006pr" +
+      "oto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -84,7 +84,7 @@ public final class ElevatorProto {
     internal_static_elevation_rpc_SpawnReply_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_elevation_rpc_SpawnReply_descriptor,
-        new java.lang.String[] { "Message", "Pid", });
+        new java.lang.String[] { "Pid", });
     internal_static_elevation_rpc_AwaitRequest_descriptor =
       getDescriptor().getMessageTypes().get(2);
     internal_static_elevation_rpc_AwaitRequest_fieldAccessorTable = new
