@@ -19,7 +19,6 @@ import org.jetbrains.annotations.TestOnly;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.*;
-import java.util.concurrent.ConcurrentMap;
 import java.util.function.Predicate;
 
 class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
@@ -31,7 +30,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
   }
 
   // root message bus constructor
-  protected CompositeMessageBus(@NotNull MessageBusOwner owner) {
+  CompositeMessageBus(@NotNull MessageBusOwner owner) {
     super(owner);
   }
 
@@ -39,7 +38,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
    * Must be a concurrent map, because remove operation may be concurrently performed (synchronized only per topic).
    */
   @Override
-  public final void setLazyListeners(@NotNull ConcurrentMap<String, List<ListenerDescriptor>> map) {
+  public final void setLazyListeners(@NotNull Map<String, List<ListenerDescriptor>> map) {
     if (topicClassToListenerDescriptor == Collections.<String, List<ListenerDescriptor>>emptyMap()) {
       topicClassToListenerDescriptor = map;
     }
@@ -84,24 +83,22 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
   }
 
   @Override
-  protected final @NotNull MessageBusImpl.MessagePublisher createPublisher(@NotNull Topic<?> topic, BroadcastDirection direction) {
+  protected final <L> @NotNull MessagePublisher<L> createPublisher(@NotNull Topic<L> topic, @NotNull BroadcastDirection direction) {
     if (direction == BroadcastDirection.TO_PARENT) {
-      return new ToParentMessagePublisher(topic, this);
+      return new ToParentMessagePublisher<>(topic, this);
     }
-    else if (direction == BroadcastDirection.TO_DIRECT_CHILDREN) {
+    if (direction == BroadcastDirection.TO_DIRECT_CHILDREN) {
       if (parentBus != null) {
         throw new IllegalArgumentException("Broadcast direction TO_DIRECT_CHILDREN is allowed only for app level message bus. " +
                                            "Please publish to app level message bus or change topic broadcast direction to NONE or TO_PARENT");
       }
-      return new ToDirectChildrenMessagePublisher(topic, this);
+      return new ToDirectChildrenMessagePublisher<>(topic, this);
     }
-    else {
-      return new MessagePublisher(topic, this);
-    }
+    return new MessagePublisher<>(topic, this);
   }
 
-  private static final class ToDirectChildrenMessagePublisher extends MessagePublisher implements InvocationHandler {
-    ToDirectChildrenMessagePublisher(@NotNull Topic<?> topic, @NotNull CompositeMessageBus bus) {
+  private static final class ToDirectChildrenMessagePublisher<L>  extends MessagePublisher<L>  implements InvocationHandler {
+    ToDirectChildrenMessagePublisher(@NotNull Topic<L> topic, @NotNull CompositeMessageBus bus) {
       super(topic, bus);
     }
 
@@ -110,7 +107,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
       List<Throwable> exceptions = null;
       boolean hasHandlers = false;
 
-      List<Object> handlers = bus.subscriberCache.computeIfAbsent(topic, bus::computeSubscribers);
+      List<L> handlers = bus.computeHandlers(topic, topic1 -> bus.computeSubscribers(topic1));
       if (!handlers.isEmpty()) {
         exceptions = executeOrAddToQueue(topic, method, args, handlers, jobQueue, bus.messageDeliveryListener, null);
         hasHandlers = true;
@@ -122,8 +119,8 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
           continue;
         }
 
-        handlers = childBus.subscriberCache.computeIfAbsent(topic, topic1 -> {
-          List<Object> result = new ArrayList<>();
+        handlers = childBus.computeHandlers(topic, topic1 -> {
+          List<L> result = new ArrayList<>();
           childBus.doComputeSubscribers(topic1, result, /* subscribeLazyListeners = */ !childBus.owner.isParentLazyListenersIgnored());
           return result.isEmpty() ? Collections.emptyList() : result;
         });
@@ -143,7 +140,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
   }
 
   @Override
-  protected final @NotNull List<Object> computeSubscribers(@NotNull Topic<?> topic) {
+  protected final @NotNull <L> List<L> computeSubscribers(@NotNull Topic<L> topic) {
     // light project
     if (owner.isDisposed()) {
       return Collections.emptyList();
@@ -152,7 +149,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
   }
 
   @Override
-  protected final void doComputeSubscribers(@NotNull Topic<?> topic, @NotNull List<Object> result, boolean subscribeLazyListeners) {
+  protected final <L> void doComputeSubscribers(@NotNull Topic<L> topic, @NotNull List<? super L> result, boolean subscribeLazyListeners) {
     if (subscribeLazyListeners) {
       subscribeLazyListeners(topic);
     }
@@ -168,7 +165,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
     }
   }
 
-  private void subscribeLazyListeners(@NotNull Topic<?> topic) {
+  private <L> void subscribeLazyListeners(@NotNull Topic<L> topic) {
     if (topic.getListenerClass() == Runnable.class) {
       return;
     }
@@ -179,11 +176,11 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
     }
 
     // use linked hash map for repeatable results
-    Map<PluginId, List<Object>> listenerMap = new LinkedHashMap<>();
+    Map<PluginId, List<L>> listenerMap = new LinkedHashMap<>();
     for (ListenerDescriptor listenerDescriptor : listenerDescriptors) {
       try {
         listenerMap.computeIfAbsent(listenerDescriptor.pluginDescriptor.getPluginId(), __ -> new ArrayList<>())
-          .add(owner.createListener(listenerDescriptor));
+          .add((L)owner.createListener(listenerDescriptor));
       }
       catch (ExtensionNotApplicableException ignore) {
       }
@@ -195,9 +192,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
       }
     }
 
-    listenerMap.forEach((key, listeners) -> {
-      subscribers.add(new DescriptorBasedMessageBusConnection(key, topic, listeners));
-    });
+    listenerMap.forEach((key, listeners) -> subscribers.add(new DescriptorBasedMessageBusConnection<>(key, topic, listeners)));
   }
 
   @Override
@@ -209,13 +204,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
   }
 
   @Override
-  protected final void clearSubscriberCacheRecursively(@Nullable Map<Topic<?>, Object> handlers, @Nullable Topic<?> topic) {
-    clearSubscriberCache(this, handlers, topic);
-    childBuses.forEach(childBus -> childBus.clearSubscriberCacheRecursively(handlers, topic));
-  }
-
-  @Override
-  final boolean notifyConnectionTerminated(Object[] topicAndHandlerPairs) {
+  final boolean notifyConnectionTerminated(Object @NotNull [] topicAndHandlerPairs) {
     boolean isChildClearingNeeded = super.notifyConnectionTerminated(topicAndHandlerPairs);
     if (!isChildClearingNeeded) {
       return false;
@@ -225,7 +214,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
 
     // disposed handlers are not removed for TO_CHILDREN topics in the same way as for others directions because it is not wise to check each child bus -
     // waitingBuses list can be used instead of checking each child bus message queue
-    SortedSet<MessageBusImpl> waitingBuses = rootBus.myWaitingBuses.get();
+    Set<MessageBusImpl> waitingBuses = rootBus.myWaitingBuses.get();
     if (!waitingBuses.isEmpty()) {
       waitingBuses.removeIf(bus -> {
         JobQueue jobQueue = bus.messageQueue.get();
@@ -239,14 +228,9 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
   }
 
   @Override
-  protected final void clearSubscriberCache(Object[] topicAndHandlerPairs) {
+  protected final void clearSubscriberCache(Object @NotNull [] topicAndHandlerPairs) {
     super.clearSubscriberCache(topicAndHandlerPairs);
     childBuses.forEach(childBus -> childBus.clearSubscriberCache(topicAndHandlerPairs));
-  }
-
-  @Override
-  protected final void removeChildConnectionsRecursively(@NotNull Topic<?> topic, @Nullable Object handlers) {
-    childBuses.forEach(childBus -> childBus.removeChildConnectionsRecursively(topic, handlers));
   }
 
   @Override
@@ -274,7 +258,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
   }
 
   @Override
-  public final void unsubscribeLazyListeners(@NotNull PluginId pluginId, @NotNull List<ListenerDescriptor> listenerDescriptors) {
+  public final void unsubscribeLazyListeners(@NotNull PluginId pluginId, @NotNull List<? extends ListenerDescriptor> listenerDescriptors) {
     topicClassToListenerDescriptor.values().removeIf(descriptors -> {
       if (descriptors.removeIf(descriptor -> descriptor.pluginDescriptor.getPluginId().equals(pluginId))) {
         return descriptors.isEmpty();
@@ -292,14 +276,15 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
     }
 
     boolean isChanged = false;
-    List<DescriptorBasedMessageBusConnection> newSubscribers = null;
+    List<DescriptorBasedMessageBusConnection<?>> newSubscribers = null;
     for (Iterator<MessageHandlerHolder> connectionIterator = subscribers.iterator(); connectionIterator.hasNext(); ) {
       MessageHandlerHolder holder = connectionIterator.next();
       if (!(holder instanceof DescriptorBasedMessageBusConnection)) {
         continue;
       }
 
-      DescriptorBasedMessageBusConnection connection = (DescriptorBasedMessageBusConnection)holder;
+      //noinspection unchecked
+      DescriptorBasedMessageBusConnection<Object> connection = (DescriptorBasedMessageBusConnection<Object>)holder;
       if (connection.pluginId != pluginId) {
         continue;
       }
@@ -320,7 +305,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
         if (newSubscribers == null) {
           newSubscribers = new ArrayList<>();
         }
-        newSubscribers.add(new DescriptorBasedMessageBusConnection(pluginId, connection.topic, newHandlers));
+        newSubscribers.add(new DescriptorBasedMessageBusConnection<>(pluginId, connection.topic, newHandlers));
       }
     }
 
@@ -340,7 +325,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
   }
 
   @Override
-  public void disconnectPluginConnections(@NotNull Predicate<Class<?>> predicate) {
+  public void disconnectPluginConnections(@NotNull Predicate<? super Class<?>> predicate) {
     super.disconnectPluginConnections(predicate);
     childBuses.forEach(bus -> bus.disconnectPluginConnections(predicate));
   }

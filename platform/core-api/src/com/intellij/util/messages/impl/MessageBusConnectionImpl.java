@@ -60,7 +60,7 @@ final class MessageBusConnectionImpl extends BaseBusConnection implements Messag
     bus.deliverImmediately(this);
   }
 
-  static boolean removeHandlersFromJob(@NotNull Message job, Object[] topicAndHandlerPairs) {
+  static boolean removeHandlersFromJob(@NotNull Message<?> job, Object @NotNull [] topicAndHandlerPairs) {
     return job.handlers.removeIf(handler -> {
       for (int i = 0; i < topicAndHandlerPairs.length; i +=2) {
         if (job.topic == topicAndHandlerPairs[i] && handler == topicAndHandlerPairs[i + 1]) {
@@ -71,7 +71,7 @@ final class MessageBusConnectionImpl extends BaseBusConnection implements Messag
     });
   }
 
-  boolean isMyHandler(@NotNull Topic<?> topic, @NotNull Object handler) {
+  <L> boolean isMyHandler(@NotNull Topic<L> topic, @NotNull L handler) {
     if (defaultHandler == handler) {
       return true;
     }

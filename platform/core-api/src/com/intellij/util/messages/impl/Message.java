@@ -10,18 +10,18 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 
-final class Message {
-  final Topic<?> topic;
+final class Message<L> {
+  final Topic<L> topic;
   final Method listenerMethod;
   final Object[] args;
-  final List<Object> handlers;
+  final List<L> handlers;
   final @Nullable ClientId clientId;
 
   // to avoid creating Message for each handler
   // see note about pumpMessages in createPublisher (invoking job handlers can be stopped and continued as part of another pumpMessages call)
   int currentHandlerIndex;
 
-  Message(@NotNull Topic<?> topic, @NotNull Method listenerMethod, Object[] args, @NotNull List<Object> handlers) {
+  Message(@NotNull Topic<L> topic, @NotNull Method listenerMethod, Object[] args, @NotNull List<L> handlers) {
     this.topic = topic;
     listenerMethod.setAccessible(true);
     this.listenerMethod = listenerMethod;
