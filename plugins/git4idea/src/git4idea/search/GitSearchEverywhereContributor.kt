@@ -88,13 +88,15 @@ class GitSearchEverywhereContributor(private val project: Project) : WeightedSea
       }
     }
 
-    val allRootsIndexed = GitRepositoryManager.getInstance(project).repositories.all { index.isIndexed(it.root) }
-    if (!allRootsIndexed) return
+    if (Registry.`is`("git.search.everywhere.commit.by.message")) {
+      val allRootsIndexed = GitRepositoryManager.getInstance(project).repositories.all { index.isIndexed(it.root) }
+      if (!allRootsIndexed) return
 
-    val commitsFromIndex = index.dataGetter?.filter(listOf(VcsLogFilterObject.fromPattern(pattern))) ?: return
-    dataManager.miniDetailsGetter.loadCommitsData(commitsFromIndex, {
-      consumer.process(FoundItemDescriptor(it, COMMIT_BY_MESSAGE_WEIGHT))
-    }, progressIndicator)
+      val commitsFromIndex = index.dataGetter?.filter(listOf(VcsLogFilterObject.fromPattern(pattern))) ?: return
+      dataManager.miniDetailsGetter.loadCommitsData(commitsFromIndex, {
+        consumer.process(FoundItemDescriptor(it, COMMIT_BY_MESSAGE_WEIGHT))
+      }, progressIndicator)
+    }
   }
 
   private fun awaitFullLogDataPack(dataManager: VcsLogData, indicator: ProgressIndicator): DataPack? {
