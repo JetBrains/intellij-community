@@ -259,8 +259,7 @@ public final class IconLoader {
    * Might return null if icon was not found.
    * Use only if you expected null return value, otherwise see {@link IconLoader#getIcon(String, Class)}
    */
-  @Nullable
-  public static Icon findIcon(@NotNull String path, @NotNull Class<?> aClass) {
+  public static @Nullable Icon findIcon(@NotNull String path, @NotNull Class<?> aClass) {
     return findIcon(path, aClass, aClass.getClassLoader(), null, false);
   }
 

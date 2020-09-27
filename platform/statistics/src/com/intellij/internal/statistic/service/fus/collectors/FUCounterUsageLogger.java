@@ -59,7 +59,7 @@ import java.util.concurrent.TimeUnit;
  * @see ProjectUsagesCollector
  */
 @ApiStatus.Internal
-public class FUCounterUsageLogger {
+public final class FUCounterUsageLogger {
   private static final int LOG_REGISTERED_DELAY_MIN = 24 * 60;
   private static final int LOG_REGISTERED_INITIAL_DELAY_MIN = 5;
 

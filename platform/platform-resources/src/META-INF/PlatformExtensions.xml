@@ -1125,6 +1125,4 @@
     <listener class="com.intellij.internal.statistic.collectors.fus.TypingEventsLogger" activeInHeadlessMode="true" activeInTestMode="false"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
   </applicationListeners>
-  <projectListeners>
-  </projectListeners>
 </idea-plugin>

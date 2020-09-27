@@ -25,7 +25,7 @@ import java.util.ResourceBundle;
  * To get an instance of registered NotificationGroup use {@link com.intellij.notification.NotificationGroupManager}
  */
 public final class NotificationGroupEP implements PluginAware {
-  static final ExtensionPointName<NotificationGroupEP> EP_NAME = ExtensionPointName.create("com.intellij.notificationGroup");
+  static final ExtensionPointName<NotificationGroupEP> EP_NAME = new ExtensionPointName<>("com.intellij.notificationGroup");
 
   @Attribute("id")
   @RequiredElement
@@ -80,10 +80,8 @@ public final class NotificationGroupEP implements PluginAware {
     return AbstractBundle.message(resourceBundle, key);
   }
 
-  @Nullable
-  public Icon getIcon() {
-    if (icon == null) return null;
-    return IconLoader.findIcon(icon, getClass());
+  public @Nullable Icon getIcon() {
+    return icon == null ? null : IconLoader.findIcon(icon, getClass());
   }
 
   @Transient
