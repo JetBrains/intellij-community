@@ -1042,6 +1042,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     button.isSelected = windowInfoSnapshot.isVisible
     button.updatePresentation()
     addStripeButton(button, toolWindowPane.getStripeFor((contentFactory as? ToolWindowFactoryEx)?.anchor ?: info.anchor))
+    toolWindowPane.onStripeButtonAdded(button)
 
     // If preloaded info is visible or active then we have to show/activate the installed
     // tool window. This step has sense only for windows which are not in the auto hide

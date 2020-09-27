@@ -549,6 +549,12 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     revalidate();
   }
 
+  public void onStripeButtonAdded(@NotNull StripeButton button) {
+    if (button.toolWindow.isAvailable() && button.toolWindow.getIcon() != null) {
+      newStripe.addButton(button, (o1, o2) -> 0);
+    }
+  }
+
   @FunctionalInterface
   interface Resizer {
     void setSize(int size);
