@@ -201,7 +201,7 @@ class FilePartNode {
         assert FileUtil.namesEqual(actualUrl, expectedUrl) : "Expected url: '" + expectedUrl + "' but got: '" + actualUrl + "'";
       }
       else {
-        assert Comparing.equal(getParentThroughJar(myFile, myFS), parent) : "parent: " + parent + "; myFile: " + myFile;
+        assert Comparing.equal(getParentThroughJar(myFile, myFS), parent) : "parent: " + parent + "; myFile: " + myFile + "; getParentThroughJar(myFile, myFS): " + getParentThroughJar(myFile, myFS) + "; myFS: " + myFS + "; myFile.getParent(): " + myFile.getParent()+"; this: "+this;
       }
     }
     assert !"..".equals(name) && !".".equals(name) : "url must not contain '.' or '..' but got: " + this;
@@ -498,7 +498,7 @@ class FilePartNode {
     return false;
   }
 
-  boolean isCaseSensitive() {
+  private boolean isCaseSensitive() {
     VirtualFile file = myFile();
     return file == null ? myFS.isCaseSensitive() : file.isCaseSensitive();
   }
