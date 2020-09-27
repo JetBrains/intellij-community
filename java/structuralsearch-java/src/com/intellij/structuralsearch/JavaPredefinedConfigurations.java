@@ -50,7 +50,7 @@ final class JavaPredefinedConfigurations {
                                getOperatorType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.foreaches"), "for ('_Type '_Variable : '_Expression) {\n  '_Statement*;\n}",
                                getOperatorType()),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.logging.without.if"), "[!within( statement in if (java search template) )]LOG.debug('_Argument*);",
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.logging.without.if"), "[!within( statement in if )]LOG.debug('_Argument*);",
                                getOperatorType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.statement.in.if"), "if('_condition) { 'statement*; }", getOperatorType()),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.assert.without.description"), "assert '_condition : '_description{0};",
