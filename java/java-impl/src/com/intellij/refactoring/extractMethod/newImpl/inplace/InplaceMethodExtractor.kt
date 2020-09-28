@@ -137,10 +137,6 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     fragmentsToRevert.forEach { Disposer.register(templateState, it) }
     setActiveExtractor(editor, this)
 
-    val range = fragmentsToRevert[1].range
-    val highlight = HighlightManager.getInstance(myProject).addHighlight(editor, range.range.stripWhitespace(editor.document.text), DiffColors.DIFF_INSERTED)
-    Disposer.register(templateState, Disposable { HighlightManager.getInstance(myProject).removeSegmentHighlighter(editor, highlight) })
-
     val preview = EditorCodePreview.getActivePreview(editor) ?: EditorPreviewUtils.addPreviewRanges(editor, previewLines)
     EditorCodePreview.setActivePreview(editor, preview)
     preview.popups.forEach(CodeFragmentPopup::updateCodePreview)
