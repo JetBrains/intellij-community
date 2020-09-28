@@ -753,7 +753,10 @@
         <action id="TechnicalSupport" class="com.intellij.ide.actions.TechnicalSupportAction"/>
         <action id="ReportProblem" class="com.intellij.ide.actions.ReportProblemAction"/>
         <action id="SendFeedback" class="com.intellij.ide.actions.SendFeedbackAction"/>
-        <action id="ShowLog" class="com.intellij.ide.actions.ShowLogAction"/>
+        <action id="ShowLog" class="com.intellij.ide.actions.ShowLogAction">
+          <synonym key="action.ShowLog.Finder.text"/>
+          <synonym key="action.ShowLog.Explorer.text"/>
+        </action>
         <action id="CollectZippedLogs" class="com.intellij.ide.actions.CollectZippedLogsAction"/>
         <separator/>
         <group id="HelpDiagnosticTools" popup="true">
