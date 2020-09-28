@@ -768,7 +768,9 @@
         <action id="EditCustomProperties" class="com.intellij.ide.actions.EditCustomPropertiesAction"/>
         <action id="EditCustomVmOptions" class="com.intellij.ide.actions.EditCustomVmOptionsAction"/>
         <separator/>
-        <action id="CheckForUpdate" class="com.intellij.openapi.updateSettings.impl.CheckForUpdateAction"/>
+        <action id="CheckForUpdate" class="com.intellij.openapi.updateSettings.impl.CheckForUpdateAction">
+          <override-text place="WelcomeScreen"/>
+        </action>
         <action id="About" class="com.intellij.ide.actions.AboutAction"/>
         <separator/>
       </group>
@@ -876,25 +878,25 @@
               icon="AllIcons.ToolbarDecorator.Export"/>
       <action id="WelcomeScreen.Configure.RestoreDefault" class="com.intellij.configurationStore.RestoreDefaultSettingsAction"/>
 
-      <action id="WelcomeScreen.Configure.CollectZippedLogs" class="com.intellij.ide.actions.CollectZippedLogsAction"/>
+      <reference ref="CollectZippedLogs"/>
 
-      <action id="WelcomeScreen.Configure.Properties" class="com.intellij.ide.actions.EditCustomPropertiesAction"/>
-      <action id="WelcomeScreen.Configure.VMOptions" class="com.intellij.ide.actions.EditCustomVmOptionsAction"/>
+      <reference ref="EditCustomProperties"/>
+      <reference ref="EditCustomVmOptions"/>
 
       <action id="WelcomeScreen.Configure.DesktopEntry" class="com.intellij.ide.actions.CreateDesktopEntryAction"
               icon="AllIcons.Welcome.CreateDesktopEntry"/>
 
-      <action id="WelcomeScreen.Update" class="com.intellij.openapi.updateSettings.impl.CheckForUpdateAction"/>
+      <reference ref="CheckForUpdate"/>
     </group>
 
     <group id="WelcomeScreen.Help">
       <reference ref="WelcomeScreen.Documentation"/>
       <separator/>
-      <reference ref="WelcomeScreen.Configure.Properties"/>
-      <reference ref="WelcomeScreen.Configure.VMOptions"/>
-      <reference ref="WelcomeScreen.Configure.CollectZippedLogs"/>
+      <reference ref="EditCustomProperties"/>
+      <reference ref="EditCustomVmOptions"/>
+      <reference ref="CollectZippedLogs"/>
       <separator/>
-      <reference ref="WelcomeScreen.Update"/>
+      <reference ref="CheckForUpdate"/>
     </group>
 
     <group id="WelcomeScreenRecentProjectActionGroup">
