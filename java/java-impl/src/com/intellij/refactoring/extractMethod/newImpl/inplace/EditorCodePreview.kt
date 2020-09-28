@@ -5,6 +5,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.editor.event.VisibleAreaEvent
+import com.intellij.openapi.editor.event.VisibleAreaListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.ui.awt.RelativePoint
@@ -21,7 +23,7 @@ class EditorCodePreview(val editor: Editor, lines: List<IntRange>): Disposable {
       return editor.getUserData(EDITOR_CODE_PREVIEW)
     }
 
-    fun setActivePreview(editor: Editor, preview: EditorCodePreview) {
+    fun setActivePreview(editor: Editor, preview: EditorCodePreview?) {
       editor.putUserData(EDITOR_CODE_PREVIEW, preview)
     }
   }
@@ -37,9 +39,8 @@ class EditorCodePreview(val editor: Editor, lines: List<IntRange>): Disposable {
   }
 
   override fun dispose() {
-    Disposer.dispose(tracker)
-    popups.forEach(Disposer::dispose)
-    editor.document.removeDocumentListener(documentListener)
+    if (updateOnDocumentChange) editor.document.removeDocumentListener(documentListener)
+    setActivePreview(editor, null)
   }
 
   var updateOnDocumentChange: Boolean = false
@@ -58,9 +59,9 @@ class EditorCodePreview(val editor: Editor, lines: List<IntRange>): Disposable {
     tracker.subscribe {
       updatePopupPositions()
     }
-    editor.scrollingModel.addVisibleAreaListener {
-      updatePopupPositions()
-    }
+    editor.scrollingModel.addVisibleAreaListener(VisibleAreaListener { updatePopupPositions() }, this)
+    popups.forEach { popup -> Disposer.register(this, popup) }
+    Disposer.register(this, tracker)
   }
 
   fun updatePopupPositions() {

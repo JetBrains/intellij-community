@@ -145,6 +145,7 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     EditorCodePreview.setActivePreview(editor, preview)
     preview.popups.forEach(CodeFragmentPopup::updateCodePreview)
     preview.updateOnDocumentChange = true
+    Disposer.register(templateState, preview)
   }
 
   private fun findLines(document: Document, range: TextRange): IntRange {

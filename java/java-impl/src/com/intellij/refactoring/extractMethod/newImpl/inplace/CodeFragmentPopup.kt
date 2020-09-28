@@ -57,6 +57,7 @@ class CodeFragmentPopup(val editor: Editor, val lines: IntRange): Disposable {
 
   override fun dispose() {
     wrapper.hide(true)
+    wrapper.window.dispose()
   }
 
   val window: Window

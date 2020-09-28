@@ -2,6 +2,7 @@
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.PositionTracker
 import java.awt.Component
@@ -34,6 +35,7 @@ class LocationTracker(private val component: Component): Disposable {
 
   init {
     tracker.init(client)
+    Disposer.register(this, tracker)
   }
 
   fun subscribe(locationListener: LocationListener) {
@@ -54,6 +56,5 @@ class LocationTracker(private val component: Component): Disposable {
   }
 
   override fun dispose() {
-    tracker.dispose()
   }
 }
