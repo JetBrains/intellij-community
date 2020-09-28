@@ -292,8 +292,8 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
                                getEditor(sourceSide).getDocument(), change.getStartLine(sourceSide), change.getEndLine(sourceSide));
 
     myDiffChanges.remove(change);
+    myInvalidDiffChanges.add(change);
     change.markInvalid();
-    change.destroy();
   }
 
   //

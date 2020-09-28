@@ -113,6 +113,8 @@ public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
 
   public void markInvalid() {
     myIsValid = false;
+
+    destroyOperations();
   }
 
   //
