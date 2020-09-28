@@ -66,7 +66,6 @@ import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_ONLY_AFFECTE
  */
 public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
   @NotNull public static final DataKey<Boolean> HAS_AFFECTED_FILES = DataKey.create("VcsLogChangesBrowser.HasAffectedFiles");
-  @NotNull private final Project myProject;
   @NotNull private final MainVcsLogUiProperties myUiProperties;
   @NotNull private final Function<? super CommitId, ? extends VcsShortCommitDetails> myDataGetter;
 
@@ -86,7 +85,6 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
                        @NotNull Function<? super CommitId, ? extends VcsShortCommitDetails> getter,
                        @NotNull Disposable parent) {
     super(project, false, false);
-    myProject = project;
     myUiProperties = uiProperties;
     myDataGetter = getter;
 

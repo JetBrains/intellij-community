@@ -23,6 +23,7 @@ import com.intellij.psi.PsiFile;
  *
  * @see LanguageCodeStyleSettingsProvider
  */
+@SuppressWarnings("FieldNameHidesFieldInSuperclass")
 public class LegacyCodeStyleSettings extends CommonCodeStyleSettings {
   /**
    * @deprecated See {@link LegacyCodeStyleSettings}

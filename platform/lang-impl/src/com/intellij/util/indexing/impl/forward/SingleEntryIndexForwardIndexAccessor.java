@@ -73,7 +73,6 @@ public class SingleEntryIndexForwardIndexAccessor<V> extends AbstractMapForwardI
   }
 
   public static class SingleValueDiffBuilder<V> extends DirectInputDataDiffBuilder<Integer, V> {
-    private final int myInputId;
     private final boolean myContainsValue;
     @Nullable
     private final V myCurrentValue;
@@ -84,7 +83,6 @@ public class SingleEntryIndexForwardIndexAccessor<V> extends AbstractMapForwardI
 
     private SingleValueDiffBuilder(int inputId, boolean containsValue, @Nullable V currentValue) {
       super(inputId);
-      myInputId = inputId;
       myContainsValue = containsValue;
       myCurrentValue = currentValue;
     }

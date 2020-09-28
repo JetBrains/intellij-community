@@ -40,7 +40,6 @@ import java.awt.*;
 import java.util.List;
 
 public class UsageContextDataflowToPanel extends UsageContextPanelBase {
-  @NotNull private final UsageViewPresentation myPresentation;
   private JComponent myPanel;
 
   public static class Provider implements UsageContextPanel.Provider {
@@ -71,7 +70,6 @@ public class UsageContextDataflowToPanel extends UsageContextPanelBase {
 
   public UsageContextDataflowToPanel(@NotNull Project project, @NotNull UsageViewPresentation presentation) {
     super(project, presentation);
-    myPresentation = presentation;
   }
 
   @Override

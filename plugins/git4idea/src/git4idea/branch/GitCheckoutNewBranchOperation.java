@@ -18,7 +18,6 @@ package git4idea.branch;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.HtmlBuilder;
-import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vcs.VcsNotifier;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -38,15 +37,12 @@ import static git4idea.util.GitUIUtil.code;
  * Create new branch (starting from the current branch) and check it out.
  */
 class GitCheckoutNewBranchOperation extends GitBranchOperation {
-
-  @NotNull private final Project myProject;
   @NotNull private final String myNewBranchName;
 
   GitCheckoutNewBranchOperation(@NotNull Project project, @NotNull Git git, @NotNull GitBranchUiHandler uiHandler,
                                 @NotNull Collection<? extends GitRepository> repositories, @NotNull String newBranchName) {
     super(project, git, uiHandler, repositories);
     myNewBranchName = newBranchName;
-    myProject = project;
   }
 
   @Override

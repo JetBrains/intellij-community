@@ -963,11 +963,8 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
   }
 
   private static class MyExternalPromptDialog extends OptionsMessageDialog {
-    private final Project myProject;
-
     MyExternalPromptDialog(final Project project) {
       super(project, getMessage(), JavaBundle.message("external.annotation.prompt"), Messages.getQuestionIcon());
-      myProject = project;
       init();
     }
 

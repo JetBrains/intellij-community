@@ -41,13 +41,11 @@ final class ChangeSignaturePassFactory implements TextEditorHighlightingPassFact
   }
 
   private static class ChangeSignaturePass extends TextEditorHighlightingPass {
-    private final Project myProject;
     private final PsiFile myFile;
     private final Editor myEditor;
 
     ChangeSignaturePass(Project project, PsiFile file, Editor editor) {
       super(project, editor.getDocument(), true);
-      myProject = project;
       myFile = file;
       myEditor = editor;
     }

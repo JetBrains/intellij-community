@@ -12,13 +12,11 @@ import java.util.List;
 
 public class CoverageListRootNode extends CoverageListNode {
   private List<AbstractTreeNode<?>> myTopLevelPackages;
-  private final Project myProject;
 
   public CoverageListRootNode(Project project, @NotNull PsiNamedElement classOrPackage,
                               CoverageSuitesBundle bundle,
                               CoverageViewManager.StateBean stateBean) {
     super(project, classOrPackage, bundle, stateBean);
-    myProject = classOrPackage.getProject();
   }
 
   private List<AbstractTreeNode<?>> getTopLevelPackages(CoverageSuitesBundle bundle, CoverageViewManager.StateBean stateBean, Project project) {

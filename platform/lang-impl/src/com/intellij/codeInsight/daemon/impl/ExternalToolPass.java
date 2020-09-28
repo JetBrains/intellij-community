@@ -42,7 +42,6 @@ import java.util.*;
 public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance(ExternalToolPass.class);
 
-  private final Document myDocument;
   private final AnnotationHolderImpl myAnnotationHolder;
   private final ExternalToolPassFactory myExternalToolPassFactory;
   private final boolean myMainHighlightingPass;
@@ -78,7 +77,6 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
                    @NotNull HighlightInfoProcessor processor,
                    boolean mainHighlightingPass) {
     super(file.getProject(), document, LangBundle.message("pass.external.annotators"), file, editor, new TextRange(startOffset, endOffset), false, processor);
-    myDocument = document;
     myAnnotationHolder = new AnnotationHolderImpl(new AnnotationSession(file));
     myExternalToolPassFactory = factory;
     myMainHighlightingPass = mainHighlightingPass;

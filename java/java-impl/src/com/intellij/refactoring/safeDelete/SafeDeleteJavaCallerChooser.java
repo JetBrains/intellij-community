@@ -45,13 +45,11 @@ import java.util.Set;
 
 abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
   private final PsiMethod myMethod;
-  private final Project myProject;
   private final ArrayList<? super UsageInfo> myResult;
 
   SafeDeleteJavaCallerChooser(PsiMethod method, Project project, ArrayList<? super UsageInfo> result) {
     super(method, project, JavaRefactoringBundle.message("safe.delete.select.methods.to.propagate.delete.parameters.dialog.title"), null, EmptyConsumer.getInstance());
     myMethod = method;
-    myProject = project;
     myResult = result;
   }
 

@@ -49,7 +49,6 @@ import java.util.Set;
 public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOptions {
   private static final String RECENTS_KEY = "MoveMembersDialog.RECENTS_KEY";
 
-  private final Project myProject;
   private final PsiClass mySourceClass;
   private final String mySourceClassName;
   private final List<MemberInfo> myMemberInfos;
@@ -72,7 +71,6 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
                            Set<PsiMember> preselectMembers,
                            MoveCallback moveCallback) {
     super(project, true, true);
-    myProject = project;
     mySourceClass = sourceClass;
     myMoveCallback = moveCallback;
     setTitle(MoveMembersImpl.getRefactoringName());

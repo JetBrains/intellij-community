@@ -56,7 +56,6 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   private final IMerger myMerger;
   private ResolveWorker myResolveWorker;
   private FilePath myMergeTarget;
-  private final @ProgressTitle @NotNull String myTitle;
   private final boolean myDryRun;
 
   public SvnIntegrateChangesTask(
@@ -70,7 +69,6 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   ) {
     super(vcs.getProject(), title, true, VcsConfiguration.getInstance(vcs.getProject()).getUpdateOption());
     myDryRun = dryRun;
-    myTitle = title;
 
     myProjectLevelVcsManager = ProjectLevelVcsManagerEx.getInstanceEx(myProject);
     myVcs = vcs;

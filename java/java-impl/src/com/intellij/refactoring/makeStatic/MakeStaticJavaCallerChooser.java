@@ -38,11 +38,8 @@ import java.util.List;
 import java.util.Set;
 
 abstract class MakeStaticJavaCallerChooser extends JavaCallerChooser {
-  private final Project myProject;
-
   MakeStaticJavaCallerChooser(PsiMethod method, Project project, Consumer<Set<PsiMethod>> consumer) {
     super(method, project, JavaRefactoringBundle.message("make.static.methods.to.propagate.dialog.title"), null, consumer);
-    myProject = project;
   }
 
   static PsiMethod isTheLastClassRef(PsiElement element, PsiMethod member) {

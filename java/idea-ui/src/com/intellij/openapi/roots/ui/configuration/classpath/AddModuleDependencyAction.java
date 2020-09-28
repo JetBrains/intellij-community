@@ -32,7 +32,6 @@ import java.util.Set;
 
 class AddModuleDependencyAction extends AddItemPopupAction<Module> {
   private final StructureConfigurableContext myContext;
-  private final ClasspathPanel myClasspathPanel;
 
   AddModuleDependencyAction(final ClasspathPanel classpathPanel,
                                    int actionIndex,
@@ -40,7 +39,6 @@ class AddModuleDependencyAction extends AddItemPopupAction<Module> {
     super(classpathPanel, actionIndex, JavaUiBundle.message("classpath.add.module.dependency.action"),
           StdModuleTypes.JAVA.getIcon());
     myContext = context;
-    myClasspathPanel = classpathPanel;
   }
 
   @Override

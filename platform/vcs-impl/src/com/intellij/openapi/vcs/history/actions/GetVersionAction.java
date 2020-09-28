@@ -153,14 +153,12 @@ public class GetVersionAction extends AnAction implements DumbAware {
   }
 
   private static class MyWriteVersionTask extends Task.Backgroundable {
-    @NotNull private final Project myProject;
     @NotNull private final FilePath myFilePath;
     @NotNull private final VcsFileRevision myRevision;
     @Nullable private final VirtualFile myFile;
 
     MyWriteVersionTask(@NotNull Project project, @NotNull FilePath filePath, @NotNull VcsFileRevision revision) {
       super(project, VcsBundle.message("show.diff.progress.title"));
-      myProject = project;
       myFilePath = filePath;
       myRevision = revision;
       myFile = filePath.getVirtualFile();

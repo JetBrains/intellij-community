@@ -38,7 +38,6 @@ import java.util.*;
 public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
   public static final TodoItem[] EMPTY_ITEMS = new TodoItem[0];
 
-  private final Project myProject;
   private final PsiTodoSearchHelper myPsiTodoSearchHelper = new MyPsiTodoSearchHelper();
   private final MultiMap<PsiFile, TodoItem> myMap = new MultiMap<>();
 
@@ -50,7 +49,6 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
                                           @NotNull List<Change> changes,
                                           @NotNull Collection<? extends TodoItem> todoItems) {
     super(tree, project);
-    myProject = project;
 
     myIncludedFiles = collectIncludedFiles(todoItems);
     myIncludedChangeListsIds = collectIncludedChangeListsIds(project, changes);
