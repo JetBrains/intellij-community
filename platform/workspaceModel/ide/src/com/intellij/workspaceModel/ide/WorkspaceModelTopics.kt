@@ -70,6 +70,7 @@ class WorkspaceModelTopics : Disposable {
       application.runWriteAction {
         val innerActivity = activity.startChild("(wm) WriteAction. After modules are loaded")
         allEvents.forEach { queue ->
+          queue.collectToQueue = false
           queue.events.forEach { (isBefore, event) ->
             if (isBefore) queue.originalListener.beforeChanged(event)
             else queue.originalListener.changed(event)
@@ -79,7 +80,6 @@ class WorkspaceModelTopics : Disposable {
         innerActivity.end()
       }
     }
-    allEvents.forEach { it.collectToQueue = false }
     allEvents.clear()
     modulesAreLoaded = true
     activity.end()
