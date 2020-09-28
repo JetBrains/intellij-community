@@ -36,6 +36,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
@@ -50,8 +51,6 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Map;
-import java.util.Objects;
 
 import static com.intellij.openapi.externalSystem.debugger.DebuggerBackendExtension.RUNTIME_MODULE_DIR_KEY;
 
@@ -196,14 +195,17 @@ class ForkedDebuggerThread extends Thread {
                                      DataInputStream inputStream) {
     ApplicationManager.getApplication().invokeLater(() -> {
       final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-      ContentManager contentManager = toolWindowManager.getToolWindow(ToolWindowId.DEBUG).getContentManager();
-      Content content = contentManager.findContent(processName);
-      if (content != null) {
-        RunContentDescriptor descriptor = content.getUserData(RunContentDescriptor.DESCRIPTOR_KEY);
-        if (descriptor != null) {
-          ProcessHandler handler = descriptor.getProcessHandler();
-          if (handler != null) {
-            handler.destroyProcess();
+      ToolWindow window = toolWindowManager.getToolWindow(ToolWindowId.DEBUG);
+      if (window != null) {
+        ContentManager contentManager = window.getContentManager();
+        Content content = contentManager.findContent(processName);
+        if (content != null) {
+          RunContentDescriptor descriptor = content.getUserData(RunContentDescriptor.DESCRIPTOR_KEY);
+          if (descriptor != null) {
+            ProcessHandler handler = descriptor.getProcessHandler();
+            if (handler != null) {
+              handler.destroyProcess();
+            }
           }
         }
       }
@@ -264,10 +266,13 @@ class ForkedDebuggerThread extends Thread {
     @Override
     public void processTerminated(@NotNull ProcessEvent event) {
       final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
-      ContentManager contentManager = toolWindowManager.getToolWindow(ToolWindowId.DEBUG).getContentManager();
-      Content content = myDescriptor.getAttachedContent();
-      if (content != null) {
-        ApplicationManager.getApplication().invokeLater(() -> contentManager.removeContent(content, true));
+      ToolWindow window = toolWindowManager.getToolWindow(ToolWindowId.DEBUG);
+      if (window != null) {
+        ContentManager contentManager = window.getContentManager();
+        Content content = myDescriptor.getAttachedContent();
+        if (content != null) {
+          ApplicationManager.getApplication().invokeLater(() -> contentManager.removeContent(content, true));
+        }
       }
 
       removeLink();
