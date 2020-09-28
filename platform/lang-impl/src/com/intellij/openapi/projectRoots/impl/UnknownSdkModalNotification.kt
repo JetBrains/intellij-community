@@ -50,7 +50,7 @@ class UnknownSdkModalNotification(
   fun newModalHandler(@Nls errorMessage: String): UnknownSdkModalNotificationHandler = object : ShowStatusCallback, UnknownSdkModalNotificationHandler {
     override lateinit var outcome: Outcome
 
-    override fun showStatus(actions: List<UnknownSdkFix>) {
+    override fun showStatus(actions: List<UnknownSdkFix>, indicator: ProgressIndicator) {
       //nothing to do, so it's done!
       if (actions.isEmpty()) {
         outcome = NO_DIALOG

@@ -14,10 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 import static com.intellij.notification.NotificationAction.createSimple;
 
@@ -32,13 +29,13 @@ public class UnknownSdkBalloonNotification {
     myProject = project;
   }
 
-  public void notifyFixedSdks(@NotNull Map<? extends UnknownSdk, UnknownSdkLocalSdkFix> localFixes) {
+  public void notifyFixedSdks(@NotNull List<UnknownMissingSdkFixLocal> localFixes) {
     if (localFixes.isEmpty()) return;
 
     Set<@Nls String> usages = new TreeSet<>();
-    for (Map.Entry<? extends UnknownSdk, UnknownSdkLocalSdkFix> entry : localFixes.entrySet()) {
-      UnknownSdkLocalSdkFix fix = entry.getValue();
-      String usageText = ProjectBundle.message("notification.text.sdk.usage.is.set.to", entry.getKey().getSdkName(), fix.getVersionString());
+    for (var entry : localFixes) {
+      UnknownSdkLocalSdkFix fix = entry.getLocalSdkFix();
+      String usageText = ProjectBundle.message("notification.text.sdk.usage.is.set.to", entry.getSdkName(), fix.getVersionString());
       usages.add(new HtmlBuilder()
                    .append(usageText)
                    .append(HtmlChunk.br())
@@ -49,8 +46,8 @@ public class UnknownSdkBalloonNotification {
     @Nls String message = StringUtil.join(usages, "<br/><br/>");
     String title, change;
     if (localFixes.size() == 1) {
-      Map.Entry<? extends UnknownSdk, UnknownSdkLocalSdkFix> entry = localFixes.entrySet().iterator().next();
-      UnknownSdk info = entry.getKey();
+      var entry = localFixes.iterator().next();
+      UnknownSdk info = entry.getUnknownSdk();
       String sdkTypeName = info.getSdkType().getPresentableName();
       title = ProjectBundle.message("notification.title.sdk.configured", sdkTypeName);
       change = ProjectBundle.message("notification.link.change.sdk", sdkTypeName);

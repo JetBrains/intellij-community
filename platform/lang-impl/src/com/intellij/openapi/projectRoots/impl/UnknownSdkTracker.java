@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
+import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.ControlFlowException;
@@ -9,6 +10,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
@@ -214,35 +216,31 @@ public class UnknownSdkTracker {
                  fixProposals.add(invalidSdk.buildFix(myProject, localSdkFix, downloadableSdkFix));
                }
 
-               if (!localFixes.isEmpty()) {
-                 indicator.pushState();
-                 indicator.setText(ProjectBundle.message("progress.text.configuring.sdks"));
-                 configureLocalSdks(localFixes);
-                 indicator.popState();
-               }
+               var allMissingSdks = ImmutableSet.<UnknownSdk>builder()
+                 .addAll(downloadFixes.keySet())
+                 .addAll(localFixes.keySet())
+                 .addAll(fixable)
+                 .build();
 
-               for (UnknownSdk e : fixable) {
-                 @Nullable String name = e.getSdkName();
-                 SdkType type = e.getSdkType();
-                 if (name == null) continue;
-                 fixProposals.add(new UnknownMissingSdkFix(myProject, name, type, null));
-               }
-
-               for (Map.Entry<UnknownSdk, UnknownSdkDownloadableSdkFix> e : downloadFixes.entrySet()) {
-                 UnknownSdk unknownSdk = e.getKey();
+               for (UnknownSdk unknownSdk : allMissingSdks) {
                  String name = unknownSdk.getSdkName();
                  if (name == null) continue;
 
-                 UnknownSdkDownloadableSdkFix fix = e.getValue();
-                 UnknownMissingSdkFixDownload download = new UnknownMissingSdkFixDownload(myProject, unknownSdk, fix);
+                 var downloadFix = downloadFixes.get(unknownSdk);
+                 var localSdkFix = localFixes.get(unknownSdk);
+
+                 UnknownSdkFixAction theFixAction;
+                 if (downloadFix != null) theFixAction = new UnknownMissingSdkFixDownload(myProject, unknownSdk, downloadFix);
+                 else if (localSdkFix != null)  theFixAction = new UnknownMissingSdkFixLocal(name, unknownSdk, localSdkFix);
+                 else theFixAction = null;
+
                  fixProposals.add(new UnknownMissingSdkFix(myProject,
-                                                            name,
-                                                            unknownSdk.getSdkType(),
-                                                            download));
+                                                           name,
+                                                           unknownSdk.getSdkType(),
+                                                           theFixAction));
                }
 
-
-               showStatus.showStatus(fixProposals);
+               showStatus.showStatus(fixProposals, indicator);
              } catch (Throwable t) {
                if (t instanceof ControlFlowException) {
                  showStatus.showInterruptedStatus();
@@ -256,21 +254,48 @@ public class UnknownSdkTracker {
   }
 
   public interface ShowStatusCallback {
-    void showStatus(@NotNull List<UnknownSdkFix> fixes);
+    void showStatus(@NotNull List<UnknownSdkFix> fixes, @NotNull ProgressIndicator indicator);
 
     default void showInterruptedStatus() {
-      showEmptyStatus();
+      showStatus(Collections.emptyList(), new ProgressIndicatorBase());
     }
 
     default void showEmptyStatus() {
-      showStatus(Collections.emptyList());
+      showStatus(Collections.emptyList(), new ProgressIndicatorBase());
     }
   }
 
   private class DefaultShowStatusCallbackAdapter implements ShowStatusCallback {
     @Override
-    public void showStatus(@NotNull List<UnknownSdkFix> fixes) {
-      UnknownSdkEditorNotification.getInstance(myProject).showNotifications(fixes);
+    public void showStatus(@NotNull List<UnknownSdkFix> fixes, @NotNull ProgressIndicator indicator) {
+      List<UnknownSdkFix> otherFixes = new ArrayList<>();
+      List<UnknownMissingSdkFixLocal> localFixes = new ArrayList<>();
+
+      for (UnknownSdkFix fix : fixes) {
+        if (fix instanceof UnknownMissingSdkFixLocal) {
+          localFixes.add((UnknownMissingSdkFixLocal)fix);
+        } else {
+          otherFixes.add(fix);
+        }
+      }
+
+      UnknownSdkEditorNotification.getInstance(myProject).showNotifications(otherFixes);
+
+      for (UnknownMissingSdkFixLocal fix : new ArrayList<>(localFixes)) {
+        try {
+          fix.applySuggestionModal(indicator);
+        } catch (Throwable t) {
+          LOG.warn("Failed to apply SDK fix: " + fix + ". " + t.getMessage(), t);
+          localFixes.remove(fix);
+        }
+      }
+
+      if (!localFixes.isEmpty()) {
+        indicator.pushState();
+        indicator.setText(ProjectBundle.message("progress.text.configuring.sdks"));
+        UnknownSdkBalloonNotification.getInstance(myProject).notifyFixedSdks(localFixes);
+        indicator.popState();
+      }
     }
   }
 
@@ -332,20 +357,6 @@ public class UnknownSdkTracker {
       .buildEditorNotificationPanelHandler();
   }
 
-  private void configureLocalSdks(@NotNull Map<UnknownSdk, UnknownSdkLocalSdkFix> localFixes) {
-    if (localFixes.isEmpty()) return;
-
-    for (Map.Entry<UnknownSdk, UnknownSdkLocalSdkFix> e : localFixes.entrySet()) {
-      UnknownSdk info = e.getKey();
-      UnknownSdkLocalSdkFix fix = e.getValue();
-
-      configureLocalSdk(info, fix, sdk -> {});
-    }
-
-    UnknownSdkBalloonNotification.getInstance(myProject).notifyFixedSdks(localFixes);
-    updateUnknownSdks();
-  }
-
   @ApiStatus.Internal
   public static void configureLocalSdk(@NotNull UnknownSdk info,
                                        @NotNull UnknownSdkLocalSdkFix fix,
@@ -357,32 +368,42 @@ public class UnknownSdkTracker {
       }
 
       try {
-        String actualSdkName = info.getSdkName();
-        if (actualSdkName == null) {
-          actualSdkName = fix.getSuggestedSdkName();
-        }
-
-        Sdk sdk = ProjectJdkTable.getInstance().createSdk(actualSdkName, info.getSdkType());
-        SdkModificator mod = sdk.getSdkModificator();
-        mod.setHomePath(FileUtil.toSystemIndependentName(fix.getExistingSdkHome()));
-        mod.setVersionString(fix.getVersionString());
-        mod.commitChanges();
-
-        try {
-          info.getSdkType().setupSdkPaths(sdk);
-        }
-        catch (Exception error) {
-          LOG.warn("Failed to setupPaths for " + sdk + ". " + error.getMessage(), error);
-        }
-        fix.configureSdk(sdk);
-        registerNewSdkInJdkTable(actualSdkName, sdk);
-        LOG.info("Automatically set Sdk " + info + " to " + fix.getExistingSdkHome());
+        Sdk sdk = applyLocalFix(info, fix);
         onCompleted.consume(sdk);
       } catch (Exception error) {
         LOG.warn("Failed to configure " + info.getSdkType().getPresentableName() + " " + " for " + info + " for path " + fix + ". " + error.getMessage(), error);
         onCompleted.consume(null);
       }
     });
+  }
+
+  @Nullable
+  static Sdk applyLocalFix(@NotNull UnknownSdk info, @NotNull UnknownSdkLocalSdkFix fix) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (!Registry.is("unknown.sdk.apply.local.fix")) return null;
+
+    String actualSdkName = info.getSdkName();
+    if (actualSdkName == null) {
+      actualSdkName = fix.getSuggestedSdkName();
+    }
+
+    Sdk sdk = ProjectJdkTable.getInstance().createSdk(actualSdkName, info.getSdkType());
+    SdkModificator mod = sdk.getSdkModificator();
+    mod.setHomePath(FileUtil.toSystemIndependentName(fix.getExistingSdkHome()));
+    mod.setVersionString(fix.getVersionString());
+    mod.commitChanges();
+
+    try {
+      info.getSdkType().setupSdkPaths(sdk);
+    }
+    catch (Exception error) {
+      LOG.warn("Failed to setupPaths for " + sdk + ". " + error.getMessage(), error);
+    }
+
+    fix.configureSdk(sdk);
+    registerNewSdkInJdkTable(actualSdkName, sdk);
+    LOG.info("Automatically set Sdk " + info + " to " + fix.getExistingSdkHome());
+    return sdk;
   }
 
   @NotNull
