@@ -165,7 +165,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       childActivity = childActivity.endAndStart("(wm) Add changes to store")
       WriteAction.runAndWait<RuntimeException> {
         WorkspaceModel.getInstance(project).updateProjectModel { updater ->
-          updater.replaceBySource({ it is JpsFileEntitySource || it is JpsImportedEntitySource }, builder.toStorage())
+          updater.replaceBySource({ it is JpsFileEntitySource || it is JpsFileDependentEntitySource }, builder.toStorage())
         }
       }
       sourcesToSave.clear()

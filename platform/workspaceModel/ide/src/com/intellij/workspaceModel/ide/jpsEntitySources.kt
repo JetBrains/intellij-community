@@ -73,6 +73,14 @@ sealed class JpsFileEntitySource : EntitySource {
 }
 
 /**
+ * Represents entities which configuration is loaded from an JPS format configuration file (e.g. *.iml, stored in [originalSource]) and some additional configuration
+ * files (e.g. '.classpath' and *.eml files for Eclipse projects).  
+ */
+interface JpsFileDependentEntitySource {
+  val originalSource: JpsFileEntitySource
+}
+
+/**
  * Represents entities imported from external project system.
  */
 data class ExternalEntitySource(val displayName: String, val id: String) : EntitySource
@@ -83,7 +91,10 @@ data class ExternalEntitySource(val displayName: String, val id: String) : Entit
  */
 data class JpsImportedEntitySource(val internalFile: JpsFileEntitySource,
                                    val externalSystemId: String,
-                                   val storedExternally: Boolean) : EntitySource
+                                   val storedExternally: Boolean) : EntitySource, JpsFileDependentEntitySource {
+  override val originalSource: JpsFileEntitySource
+    get() = internalFile
+}
 
 fun JpsImportedEntitySource.toExternalSource(): ProjectModelExternalSource = ExternalProjectSystemRegistry.getInstance().getSourceById(externalSystemId)
 /**
