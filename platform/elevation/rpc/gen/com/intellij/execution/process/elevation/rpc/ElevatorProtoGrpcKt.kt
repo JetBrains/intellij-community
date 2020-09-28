@@ -32,13 +32,13 @@ object ElevatorGrpcKt {
   val serviceDescriptor: ServiceDescriptor
     get() = ElevatorGrpc.getServiceDescriptor()
 
-  val spawnMethod: MethodDescriptor<SpawnRequest, SpawnReply>
+  val createProcessMethod: MethodDescriptor<CreateProcessRequest, CreateProcessReply>
     @JvmStatic
-    get() = ElevatorGrpc.getSpawnMethod()
+    get() = ElevatorGrpc.getCreateProcessMethod()
 
-  val awaitMethod: MethodDescriptor<AwaitRequest, AwaitReply>
+  val awaitTerminationMethod: MethodDescriptor<AwaitTerminationRequest, AwaitTerminationReply>
     @JvmStatic
-    get() = ElevatorGrpc.getAwaitMethod()
+    get() = ElevatorGrpc.getAwaitTerminationMethod()
 
   /**
    * A stub for issuing RPCs to a(n) elevation.rpc.Elevator service as suspending coroutines.
@@ -61,9 +61,9 @@ object ElevatorGrpcKt {
      *
      * @return The single response from the server.
      */
-    suspend fun spawn(request: SpawnRequest): SpawnReply = unaryRpc(
+    suspend fun createProcess(request: CreateProcessRequest): CreateProcessReply = unaryRpc(
       channel,
-      ElevatorGrpc.getSpawnMethod(),
+      ElevatorGrpc.getCreateProcessMethod(),
       request,
       callOptions,
       Metadata()
@@ -78,9 +78,10 @@ object ElevatorGrpcKt {
      *
      * @return The single response from the server.
      */
-    suspend fun await(request: AwaitRequest): AwaitReply = unaryRpc(
+    suspend fun awaitTermination(request: AwaitTerminationRequest): AwaitTerminationReply =
+        unaryRpc(
       channel,
-      ElevatorGrpc.getAwaitMethod(),
+      ElevatorGrpc.getAwaitTerminationMethod(),
       request,
       callOptions,
       Metadata()
@@ -93,7 +94,7 @@ object ElevatorGrpcKt {
     coroutineContext: CoroutineContext = EmptyCoroutineContext
   ) : AbstractCoroutineServerImpl(coroutineContext) {
     /**
-     * Returns the response to an RPC for elevation.rpc.Elevator.Spawn.
+     * Returns the response to an RPC for elevation.rpc.Elevator.CreateProcess.
      *
      * If this method fails with a [StatusException], the RPC will fail with the corresponding
      * [Status].  If this method fails with a [java.util.concurrent.CancellationException], the RPC
@@ -103,11 +104,11 @@ object ElevatorGrpcKt {
      *
      * @param request The request from the client.
      */
-    open suspend fun spawn(request: SpawnRequest): SpawnReply = throw
-        StatusException(UNIMPLEMENTED.withDescription("Method elevation.rpc.Elevator.Spawn is unimplemented"))
+    open suspend fun createProcess(request: CreateProcessRequest): CreateProcessReply = throw
+        StatusException(UNIMPLEMENTED.withDescription("Method elevation.rpc.Elevator.CreateProcess is unimplemented"))
 
     /**
-     * Returns the response to an RPC for elevation.rpc.Elevator.Await.
+     * Returns the response to an RPC for elevation.rpc.Elevator.AwaitTermination.
      *
      * If this method fails with a [StatusException], the RPC will fail with the corresponding
      * [Status].  If this method fails with a [java.util.concurrent.CancellationException], the RPC
@@ -117,19 +118,20 @@ object ElevatorGrpcKt {
      *
      * @param request The request from the client.
      */
-    open suspend fun await(request: AwaitRequest): AwaitReply = throw
-        StatusException(UNIMPLEMENTED.withDescription("Method elevation.rpc.Elevator.Await is unimplemented"))
+    open suspend fun awaitTermination(request: AwaitTerminationRequest): AwaitTerminationReply =
+        throw
+        StatusException(UNIMPLEMENTED.withDescription("Method elevation.rpc.Elevator.AwaitTermination is unimplemented"))
 
     final override fun bindService(): ServerServiceDefinition = builder(getServiceDescriptor())
       .addMethod(unaryServerMethodDefinition(
       context = this.context,
-      descriptor = ElevatorGrpc.getSpawnMethod(),
-      implementation = ::spawn
+      descriptor = ElevatorGrpc.getCreateProcessMethod(),
+      implementation = ::createProcess
     ))
       .addMethod(unaryServerMethodDefinition(
       context = this.context,
-      descriptor = ElevatorGrpc.getAwaitMethod(),
-      implementation = ::await
+      descriptor = ElevatorGrpc.getAwaitTerminationMethod(),
+      implementation = ::awaitTermination
     )).build()
   }
 }

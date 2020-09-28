@@ -15,25 +15,25 @@ public final class ElevatorProto {
         (com.google.protobuf.ExtensionRegistryLite) registry);
   }
   static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_elevation_rpc_SpawnRequest_descriptor;
+    internal_static_elevation_rpc_CreateProcessRequest_descriptor;
   static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_elevation_rpc_SpawnRequest_fieldAccessorTable;
+      internal_static_elevation_rpc_CreateProcessRequest_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_elevation_rpc_SpawnReply_descriptor;
+    internal_static_elevation_rpc_CreateProcessReply_descriptor;
   static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_elevation_rpc_SpawnReply_fieldAccessorTable;
+      internal_static_elevation_rpc_CreateProcessReply_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_elevation_rpc_AwaitRequest_descriptor;
+    internal_static_elevation_rpc_AwaitTerminationRequest_descriptor;
   static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_elevation_rpc_AwaitRequest_fieldAccessorTable;
+      internal_static_elevation_rpc_AwaitTerminationRequest_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_elevation_rpc_AwaitReply_descriptor;
+    internal_static_elevation_rpc_AwaitTerminationReply_descriptor;
   static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_elevation_rpc_AwaitReply_fieldAccessorTable;
+      internal_static_elevation_rpc_AwaitTerminationReply_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_elevation_rpc_CommandLine_descriptor;
   static final 
@@ -53,49 +53,51 @@ public final class ElevatorProto {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\016elevator.proto\022\relevation.rpc\"@\n\014Spawn" +
-      "Request\0220\n\014command_line\030\001 \001(\0132\032.elevatio" +
-      "n.rpc.CommandLine\"\031\n\nSpawnReply\022\013\n\003pid\030\001" +
-      " \001(\004\"\033\n\014AwaitRequest\022\013\n\003pid\030\001 \001(\004\"\037\n\nAwa" +
-      "itReply\022\021\n\texit_code\030\001 \001(\r\"\233\001\n\013CommandLi" +
-      "ne\022\017\n\007command\030\001 \003(\t\022\023\n\013working_dir\030\002 \001(\t" +
-      "\022;\n\014environ_vars\030\003 \003(\0132%.elevation.rpc.C" +
-      "ommandLine.EnvironVar\032)\n\nEnvironVar\022\014\n\004n" +
-      "ame\030\001 \001(\t\022\r\n\005value\030\002 \001(\t2\220\001\n\010Elevator\022A\n" +
-      "\005Spawn\022\033.elevation.rpc.SpawnRequest\032\031.el" +
-      "evation.rpc.SpawnReply\"\000\022A\n\005Await\022\033.elev" +
-      "ation.rpc.AwaitRequest\032\031.elevation.rpc.A" +
-      "waitReply\"\000B?\n,com.intellij.execution.pr" +
-      "ocess.elevation.rpcB\rElevatorProtoP\001b\006pr" +
-      "oto3"
+      "\n\016elevator.proto\022\relevation.rpc\"H\n\024Creat" +
+      "eProcessRequest\0220\n\014command_line\030\001 \001(\0132\032." +
+      "elevation.rpc.CommandLine\"!\n\022CreateProce" +
+      "ssReply\022\013\n\003pid\030\001 \001(\004\"&\n\027AwaitTermination" +
+      "Request\022\013\n\003pid\030\001 \001(\004\"*\n\025AwaitTermination" +
+      "Reply\022\021\n\texit_code\030\001 \001(\r\"\233\001\n\013CommandLine" +
+      "\022\017\n\007command\030\001 \003(\t\022\023\n\013working_dir\030\002 \001(\t\022;" +
+      "\n\014environ_vars\030\003 \003(\0132%.elevation.rpc.Com" +
+      "mandLine.EnvironVar\032)\n\nEnvironVar\022\014\n\004nam" +
+      "e\030\001 \001(\t\022\r\n\005value\030\002 \001(\t2\311\001\n\010Elevator\022Y\n\rC" +
+      "reateProcess\022#.elevation.rpc.CreateProce" +
+      "ssRequest\032!.elevation.rpc.CreateProcessR" +
+      "eply\"\000\022b\n\020AwaitTermination\022&.elevation.r" +
+      "pc.AwaitTerminationRequest\032$.elevation.r" +
+      "pc.AwaitTerminationReply\"\000B?\n,com.intell" +
+      "ij.execution.process.elevation.rpcB\rElev" +
+      "atorProtoP\001b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
         new com.google.protobuf.Descriptors.FileDescriptor[] {
         });
-    internal_static_elevation_rpc_SpawnRequest_descriptor =
+    internal_static_elevation_rpc_CreateProcessRequest_descriptor =
       getDescriptor().getMessageTypes().get(0);
-    internal_static_elevation_rpc_SpawnRequest_fieldAccessorTable = new
+    internal_static_elevation_rpc_CreateProcessRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_elevation_rpc_SpawnRequest_descriptor,
+        internal_static_elevation_rpc_CreateProcessRequest_descriptor,
         new java.lang.String[] { "CommandLine", });
-    internal_static_elevation_rpc_SpawnReply_descriptor =
+    internal_static_elevation_rpc_CreateProcessReply_descriptor =
       getDescriptor().getMessageTypes().get(1);
-    internal_static_elevation_rpc_SpawnReply_fieldAccessorTable = new
+    internal_static_elevation_rpc_CreateProcessReply_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_elevation_rpc_SpawnReply_descriptor,
+        internal_static_elevation_rpc_CreateProcessReply_descriptor,
         new java.lang.String[] { "Pid", });
-    internal_static_elevation_rpc_AwaitRequest_descriptor =
+    internal_static_elevation_rpc_AwaitTerminationRequest_descriptor =
       getDescriptor().getMessageTypes().get(2);
-    internal_static_elevation_rpc_AwaitRequest_fieldAccessorTable = new
+    internal_static_elevation_rpc_AwaitTerminationRequest_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_elevation_rpc_AwaitRequest_descriptor,
+        internal_static_elevation_rpc_AwaitTerminationRequest_descriptor,
         new java.lang.String[] { "Pid", });
-    internal_static_elevation_rpc_AwaitReply_descriptor =
+    internal_static_elevation_rpc_AwaitTerminationReply_descriptor =
       getDescriptor().getMessageTypes().get(3);
-    internal_static_elevation_rpc_AwaitReply_fieldAccessorTable = new
+    internal_static_elevation_rpc_AwaitTerminationReply_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_elevation_rpc_AwaitReply_descriptor,
+        internal_static_elevation_rpc_AwaitTerminationReply_descriptor,
         new java.lang.String[] { "ExitCode", });
     internal_static_elevation_rpc_CommandLine_descriptor =
       getDescriptor().getMessageTypes().get(4);

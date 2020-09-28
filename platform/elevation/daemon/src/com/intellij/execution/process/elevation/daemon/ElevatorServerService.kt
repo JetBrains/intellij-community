@@ -12,7 +12,7 @@ import java.io.IOException
 internal class ElevatorServerService : ElevatorGrpcKt.ElevatorCoroutineImplBase() {
   private val processManager = ElevatorProcessManager()
 
-  override suspend fun spawn(request: SpawnRequest): SpawnReply {
+  override suspend fun createProcess(request: CreateProcessRequest): CreateProcessReply {
     val commandLine = request.commandLine
 
     val pid = try {
@@ -25,14 +25,14 @@ internal class ElevatorServerService : ElevatorGrpcKt.ElevatorCoroutineImplBase(
       throw StatusException(Status.NOT_FOUND.withCause(e))
     }
 
-    return SpawnReply.newBuilder()
+    return CreateProcessReply.newBuilder()
       .setPid(pid)
       .build()
   }
 
-  override suspend fun await(request: AwaitRequest): AwaitReply {
+  override suspend fun awaitTermination(request: AwaitTerminationRequest): AwaitTerminationReply {
     val exitCode = processManager.awaitTermination(request.pid)
-    return AwaitReply.newBuilder()
+    return AwaitTerminationReply.newBuilder()
       .setExitCode(exitCode)
       .build()
   }
