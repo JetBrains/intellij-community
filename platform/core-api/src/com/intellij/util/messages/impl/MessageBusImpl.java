@@ -219,7 +219,7 @@ public class MessageBusImpl implements MessageBus {
         }
       }
       else {
-        Message<Object> message = (Message)new Message<>(topic, method, args, handlers);
+        Message<L> message = new Message<>(topic, method, args, handlers);
         jobQueue.queue.offerLast(message);
       }
       return exceptions;
