@@ -59,16 +59,13 @@ internal class PredictionService(val project: Project) : Disposable {
   private val gitHistoryTraverserListener = object : GitHistoryTraverserListener {
     override fun traverserCreated(newTraverser: GitHistoryTraverser) = synchronized(LOCK) {
       updateTraverser(newTraverser)
+      Disposer.register(newTraverser, Disposable { disposeTraverser() })
     }
 
     override fun graphUpdated() = synchronized(LOCK) {
       predictionRequirements?.filesHistoryProvider?.clear()
       setEmptyPrediction(PredictionData.EmptyPredictionReason.GRAPH_CHANGED)
       calculatePrediction()
-    }
-
-    override fun traverserDisposed() = synchronized(LOCK) {
-      disposeTraverser()
     }
   }
 
@@ -172,7 +169,7 @@ internal class PredictionService(val project: Project) : Disposable {
     }
     val rootFiles = getGitRootFiles(project, changeListFiles)
     val roots = rootFiles.keys
-    filesHistoryProvider.traverser.withIndex(roots, this@PredictionService) { indexedRoots ->
+    filesHistoryProvider.traverser.withIndex(roots) { indexedRoots ->
       taskController.request(
         PredictionRequest(filesHistoryProvider, indexedRoots.map { it to rootFiles.getValue(it.root) }.toMap())
       )

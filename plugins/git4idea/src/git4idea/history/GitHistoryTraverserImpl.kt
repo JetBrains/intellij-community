@@ -3,6 +3,7 @@ package git4idea.history
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -30,6 +31,10 @@ import git4idea.history.GitHistoryTraverser.TraverseCommitInfo
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal class GitHistoryTraverserImpl(private val project: Project, private val logData: VcsLogData) : GitHistoryTraverser {
+  init {
+    Disposer.register(logData, this)
+  }
+
   override fun toHash(id: TraverseCommitId) = logData.getCommitId(id)!!.hash
 
   private fun startSearch(
@@ -50,6 +55,9 @@ internal class GitHistoryTraverserImpl(private val project: Project, private val
     val traverse = TraverseImpl(this)
     walker(hashNodeId, graph, visited) {
       ProgressManager.checkCanceled()
+      if (Disposer.isDisposed(this)) {
+        throw ProcessCanceledException()
+      }
       val commitId = permanentGraph.permanentCommitsInfo.getCommitId(it)
       val parents = graph.getNodes(it, LiteLinearGraph.NodeFilter.DOWN)
       traverse.commitHandler(TraverseCommitInfo(commitId, parents))
@@ -87,7 +95,6 @@ internal class GitHistoryTraverserImpl(private val project: Project, private val
 
   override fun withIndex(
     roots: Collection<VirtualFile>,
-    disposable: Disposable,
     block: GitHistoryTraverser.(Collection<GitHistoryTraverser.IndexedRoot>) -> Unit
   ) {
     val index = logData.index
@@ -108,7 +115,7 @@ internal class GitHistoryTraverserImpl(private val project: Project, private val
     }
 
     index.addListener(listener)
-    Disposer.register(disposable, Disposable { index.removeListener(listener) })
+    Disposer.register(this, Disposable { index.removeListener(listener) })
     runBlockIfIndexed(listener)
   }
 
@@ -131,6 +138,9 @@ internal class GitHistoryTraverserImpl(private val project: Project, private val
   }
 
   override fun getCurrentUser(root: VirtualFile): VcsUser? = logData.currentUser[root]
+
+  override fun dispose() {
+  }
 
   private fun getRoot(id: TraverseCommitId): VirtualFile = logData.getCommitId(id)!!.root
 

@@ -19,7 +19,7 @@ import git4idea.GitCommit
  */
 typealias TraverseCommitId = Int
 
-interface GitHistoryTraverser {
+interface GitHistoryTraverser : Disposable {
   /**
    * Start traversing down through the repository history started from [start].
    * Each commit will be handled by [commitHandler] which could return false to finish traversing
@@ -39,7 +39,7 @@ interface GitHistoryTraverser {
    *
    * [block] shouldn't execute long running tasks.
    */
-  fun withIndex(roots: Collection<VirtualFile>, disposable: Disposable, block: GitHistoryTraverser.(Collection<IndexedRoot>) -> Unit)
+  fun withIndex(roots: Collection<VirtualFile>, block: GitHistoryTraverser.(Collection<IndexedRoot>) -> Unit)
 
   /**
    * Load commit hash.
