@@ -42,7 +42,20 @@ class AutoFinalTransformationSupport : AstTransformationSupport {
   override fun applyTransformation(context: TransformationContext) {
 
     val autoFinalStack: MutableList<AutoFinalMode> = ArrayList()
-    autoFinalStack.add(getAutoFinalMode(context.codeClass))
+    var currentClass = context.codeClass
+    while (true) {
+      val autoFinalMode = getAutoFinalMode(currentClass)
+      if (autoFinalMode == AutoFinalMode.UNKNOWN) {
+        currentClass = currentClass.containingClass as? GrTypeDefinition ?: break
+      }
+      else {
+        autoFinalStack.add(autoFinalMode)
+        break
+      }
+    }
+    if (autoFinalStack.isEmpty()) {
+      autoFinalStack.add(AutoFinalMode.UNKNOWN)
+    }
 
     context.codeClass.acceptChildren(object : GroovyRecursiveElementVisitor() {
 

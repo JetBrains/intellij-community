@@ -49,4 +49,23 @@ class Bar {
 }
 """
     }
+
+    @Test
+    void 'autoFinal works on nested classes'() {
+        doTest """
+@AutoFinal
+@CompileStatic
+class Foo {
+
+    static class Bar {
+        String s
+        
+        def foo() {
+            <error>s</error> = ""
+        }
+    }
+
+}
+"""
+    }
 }
