@@ -202,10 +202,23 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     ChangesGroupingSupport result = new ChangesGroupingSupport(myProject, this, false);
 
     migrateShowFlattenSetting();
-    result.setGroupingKeysOrSkip(set(notNull(PropertiesComponent.getInstance(myProject).getValues(GROUPING_KEYS), DEFAULT_GROUPING_KEYS)));
-    result.addPropertyChangeListener(e -> changeGrouping());
+    installGroupingSupport(this, result, GROUPING_KEYS, DEFAULT_GROUPING_KEYS);
 
     return result;
+  }
+
+  protected static void installGroupingSupport(@NotNull ChangesTree tree, @NotNull ChangesGroupingSupport groupingSupport,
+                                               @NotNull @NonNls String propertyName, @NonNls String... defaultGroupingKeys) {
+    groupingSupport.setGroupingKeysOrSkip(set(notNull(PropertiesComponent.getInstance(tree.getProject()).getValues(propertyName),
+                                                      defaultGroupingKeys)));
+    groupingSupport.addPropertyChangeListener(e -> {
+      PropertiesComponent.getInstance(tree.getProject()).setValues(propertyName,
+                                                                   ArrayUtilRt.toStringArray(groupingSupport.getGroupingKeys()));
+
+      List<Object> oldSelection = selected(tree).userObjects();
+      tree.rebuildTree();
+      tree.setSelectedChanges(oldSelection);
+    });
   }
 
   private void migrateShowFlattenSetting() {
@@ -332,14 +345,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
       myCheckBoxClickHandler = null;
     }
     repaint();
-  }
-
-  private void changeGrouping() {
-    PropertiesComponent.getInstance(myProject).setValues(GROUPING_KEYS, ArrayUtilRt.toStringArray(getGroupingSupport().getGroupingKeys()));
-
-    List<Object> oldSelection = selected(this).userObjects();
-    rebuildTree();
-    setSelectedChanges(oldSelection);
   }
 
   private boolean isCurrentModelFlat() {

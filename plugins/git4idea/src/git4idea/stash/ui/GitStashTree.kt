@@ -20,6 +20,7 @@ import git4idea.stash.GitStashTracker
 import git4idea.stash.GitStashTrackerListener
 import git4idea.stash.ui.GitStashUi.Companion.GIT_STASH_UI_PLACE
 import git4idea.ui.StashInfo
+import org.jetbrains.annotations.NonNls
 import java.util.stream.Stream
 import javax.swing.event.TreeExpansionEvent
 import javax.swing.event.TreeExpansionListener
@@ -106,6 +107,12 @@ class GitStashTree(project: Project, parentDisposable: Disposable) : ChangesTree
     expandDefaults()
   }
 
+  override fun installGroupingSupport(): ChangesGroupingSupport {
+    val groupingSupport = ChangesGroupingSupport(myProject, this, false)
+    installGroupingSupport(this, groupingSupport, GROUPING_PROPERTY_NAME, *DEFAULT_GROUPING_KEYS)
+    return groupingSupport
+  }
+
   override fun getData(dataId: String): Any? {
     if (STASH_INFO.`is`(dataId)) return selectedStashes().toList()
     if (GIT_STASH_TREE_FLAG.`is`(dataId)) return true
@@ -133,5 +140,6 @@ class GitStashTree(project: Project, parentDisposable: Disposable) : ChangesTree
 
   companion object {
     val GIT_STASH_TREE_FLAG = DataKey.create<Boolean>("GitStashTreeFlag")
+    @NonNls private const val GROUPING_PROPERTY_NAME = "GitStash.ChangesTree.GroupingKeys"
   }
 }
