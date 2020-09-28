@@ -10,7 +10,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
@@ -240,7 +239,8 @@ public class UnknownSdkTracker {
                                                            theFixAction));
                }
 
-               showStatus.showStatus(fixProposals, indicator);
+               List<UnknownSdkFix> explicitProposals = applyAndRemoveLocalFixes(fixProposals, indicator);
+               showStatus.showStatus(explicitProposals);
              } catch (Throwable t) {
                if (t instanceof ControlFlowException) {
                  showStatus.showInterruptedStatus();
@@ -254,49 +254,55 @@ public class UnknownSdkTracker {
   }
 
   public interface ShowStatusCallback {
-    void showStatus(@NotNull List<UnknownSdkFix> fixes, @NotNull ProgressIndicator indicator);
+    void showStatus(@NotNull List<UnknownSdkFix> fixes);
 
     default void showInterruptedStatus() {
-      showStatus(Collections.emptyList(), new ProgressIndicatorBase());
+      showStatus(Collections.emptyList());
     }
 
     default void showEmptyStatus() {
-      showStatus(Collections.emptyList(), new ProgressIndicatorBase());
+      showStatus(Collections.emptyList());
     }
   }
 
   private class DefaultShowStatusCallbackAdapter implements ShowStatusCallback {
     @Override
-    public void showStatus(@NotNull List<UnknownSdkFix> fixes, @NotNull ProgressIndicator indicator) {
-      List<UnknownSdkFix> otherFixes = new ArrayList<>();
-      List<UnknownMissingSdkFixLocal> localFixes = new ArrayList<>();
+    public void showStatus(@NotNull List<UnknownSdkFix> fixes) {
+      UnknownSdkEditorNotification.getInstance(myProject).showNotifications(fixes);
+    }
+  }
 
-      for (UnknownSdkFix fix : fixes) {
-        if (fix instanceof UnknownMissingSdkFixLocal) {
-          localFixes.add((UnknownMissingSdkFixLocal)fix);
-        } else {
-          otherFixes.add(fix);
-        }
+  @NotNull
+  private List<UnknownSdkFix> applyAndRemoveLocalFixes(@NotNull List<UnknownSdkFix> fixes, @NotNull ProgressIndicator indicator) {
+    List<UnknownSdkFix> otherFixes = new ArrayList<>();
+    List<UnknownMissingSdkFixLocal> localFixes = new ArrayList<>();
+
+    for (UnknownSdkFix fix : fixes) {
+      if (fix instanceof UnknownMissingSdkFixLocal) {
+        localFixes.add((UnknownMissingSdkFixLocal)fix);
+      } else {
+        otherFixes.add(fix);
       }
+    }
 
-      UnknownSdkEditorNotification.getInstance(myProject).showNotifications(otherFixes);
+    if (!localFixes.isEmpty()) {
+      indicator.pushState();
+      indicator.setText(ProjectBundle.message("progress.text.configuring.sdks"));
 
       for (UnknownMissingSdkFixLocal fix : new ArrayList<>(localFixes)) {
         try {
           fix.applySuggestionModal(indicator);
-        } catch (Throwable t) {
+        }
+        catch (Throwable t) {
           LOG.warn("Failed to apply SDK fix: " + fix + ". " + t.getMessage(), t);
           localFixes.remove(fix);
         }
       }
 
-      if (!localFixes.isEmpty()) {
-        indicator.pushState();
-        indicator.setText(ProjectBundle.message("progress.text.configuring.sdks"));
-        UnknownSdkBalloonNotification.getInstance(myProject).notifyFixedSdks(localFixes);
-        indicator.popState();
-      }
+      UnknownSdkBalloonNotification.getInstance(myProject).notifyFixedSdks(localFixes);
+      indicator.popState();
     }
+    return otherFixes;
   }
 
   @NotNull
