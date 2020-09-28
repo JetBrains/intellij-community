@@ -346,7 +346,7 @@ public class SdkDownloadTracker {
               public void cancelled() {
                 myProgressIndicator.cancel();
               }
-            }.installToProgress((ProgressIndicatorEx)indicator);
+            }.installToProgressIfPossible(indicator);
 
             ProgressIndicatorEx relayToVisibleIndicator = new RelayUiToDelegateIndicator(indicator);
 

@@ -38,7 +38,7 @@ internal class UnknownSdkDownloadTask(
     if (!isRunning.compareAndSet(false, true)) return false
 
     if (!Registry.`is`("unknown.sdk.apply.download.fix")) {
-      ApplicationManager.getApplication().invokeLater { onCompleted.consume(null) }
+      invokeLater { onCompleted.consume(null) }
       return false
     }
 
@@ -74,37 +74,22 @@ internal class UnknownSdkDownloadTask(
   private fun runImpl(indicator: ProgressIndicator) {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
 
-    var sdk: Sdk? = null
-    try {
+    val sdk = runCatching {
       val task = fix.createTask(indicator)
       val downloadTracker = SdkDownloadTracker.getInstance()
-      sdk = invokeAndWaitIfNeeded { createSdk.apply(task) }
+      val sdk = invokeAndWaitIfNeeded { createSdk.apply(task) }
       downloadTracker.configureSdk(sdk, task)
       invokeAndWaitIfNeeded { onSdkNameReady.consume(sdk) }
       downloadTracker.downloadSdk(task, listOf(sdk), indicator)
+      sdk
     }
-    catch (t: Exception) {
-      sdk = null
+    invokeAndWaitIfNeeded { onCompleted.consume(sdk.getOrNull()) }
+
+    sdk.exceptionOrNull()?.let { t ->
       if (t is ControlFlowException) throw t
       throw object : RuntimeException("Failed to download ${info.sdkType.presentableName} ${fix.downloadDescription} for $info. ${t.message}", t) {
         override fun getLocalizedMessage() = ProjectBundle.message("dialog.message.failed.to.download.0.1", fix.downloadDescription, t.message)
       }
     }
-    finally {
-      invokeAndWaitIfNeeded { onCompleted.consume(sdk) }
-    }
-  }
-}
-
-object UnknownSdkDownloader {
-  @JvmStatic
-  @ApiStatus.Internal
-  fun downloadFixAsync(project: Project?,
-                       info: UnknownSdk,
-                       fix: UnknownSdkDownloadableSdkFix,
-                       createSdk: Function<in SdkDownloadTask?, out Sdk>,
-                       onSdkNameReady: Consumer<in Sdk?>,
-                       onCompleted: Consumer<in Sdk?>) {
-    UnknownSdkDownloadTask(info, fix, createSdk, onSdkNameReady, onCompleted).runAsync(project)
   }
 }
