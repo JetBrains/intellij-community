@@ -1,24 +1,21 @@
-// "Fix all 'Redundant usage of unmodifiable collection factories' problems in file" "true"
+// "Fix all 'Redundant usage of unmodifiable collection wrappers' problems in file" "true"
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 class Main {
 
   public static void main(String[] args) {
-    Collections.unmodifiableCollecti<caret>on(getEmptyList());
+    Collection unmodifiableCollection = Collections.unmodifiableCollecti<caret>on(getEmptyList());
 
-    Collections.unmodifiableList(getEmptyList());
-    Collections.unmodifiableSet(getEmptySet());
-    Collections.unmodifiableMap(getEmptyMap());
+    List unmodifiableList = Collections.unmodifiableList(getEmptyList());
+    Set unmodifiableSet = Collections.unmodifiableSet(getEmptySet());
+    Map unmodifiableMap = Collections.unmodifiableMap(getEmptyMap());
 
-    Collections.unmodifiableSortedSet(getEmptySet());
-    Collections.unmodifiableSortedMap(getEmptyMap());
+    SortedSet unmodifiableSortedSet = Collections.unmodifiableSortedSet(getEmptySet());
+    SortedMap unmodifiableSortedMap = Collections.unmodifiableSortedMap(getEmptyMap());
 
-    Collections.unmodifiableNavigableSet(getEmptySet());
-    Collections.unmodifiableNavigableMap(getEmptyMap());
+    NavigableSet unmodifiableNavigableSet = Collections.unmodifiableNavigableSet(getEmptySet());
+    NavigableMap unmodifiableNavigableMap = Collections.unmodifiableNavigableMap(getEmptyMap());
   }
 
   static List getEmptyList() {

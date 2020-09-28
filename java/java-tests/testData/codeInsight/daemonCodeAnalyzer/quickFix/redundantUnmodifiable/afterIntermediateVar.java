@@ -1,4 +1,4 @@
-// "Fix all 'Redundant usage of unmodifiable collection factories' problems in file" "true"
+// "Fix all 'Redundant usage of unmodifiable collection wrappers' problems in file" "true"
 
 import java.util.*;
 
@@ -14,16 +14,16 @@ class Main {
     Map map = new HashMap();
     map = Collections.emptyMap();
 
-    list;
+    Collection unmodifiableCollection = list;
 
-    list;
-    set;
-    map;
+    List unmodifiableList = list;
+    Set unmodifiableSet = set;
+    Map unmodifiableMap = map;
 
-    set;
-    map;
+    SortedSet unmodifiableSortedSet = set;
+    SortedMap unmodifiableSortedMap = map;
 
-    set;
-    map;
+    NavigableSet unmodifiableNavigableSet = set;
+    NavigableMap unmodifiableNavigableMap = map;
   }
 }

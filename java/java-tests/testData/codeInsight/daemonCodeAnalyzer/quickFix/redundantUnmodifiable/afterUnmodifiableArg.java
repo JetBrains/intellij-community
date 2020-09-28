@@ -1,20 +1,20 @@
-// "Fix all 'Redundant usage of unmodifiable collection factories' problems in file" "true"
+// "Fix all 'Redundant usage of unmodifiable collection wrappers' problems in file" "true"
 
-import java.util.Collections;
+import java.util.*;
 
 class Main {
 
   public static void main(String[] args) {
-    Collections.EMPTY_LIST;
+    Collections unmodifiableCollection = Collections.EMPTY_LIST;
 
-    Collections.EMPTY_LIST;
-    Collections.EMPTY_SET;
-    Collections.EMPTY_MAP;
+    List unmodifiableList = Collections.EMPTY_LIST;
+    Set unmodifiableSet = Collections.EMPTY_SET;
+    Map unmodifiableMap = Collections.EMPTY_MAP;
 
-    Collections.EMPTY_SET;
-    Collections.EMPTY_MAP;
+    SortedSet unmodifiableSortedSet = Collections.EMPTY_SET;
+    SortedMap unmodifiableSortedMap = Collections.EMPTY_MAP;
 
-    Collections.EMPTY_SET;
-    Collections.EMPTY_MAP;
+    NavigableSet unmodifiableNavigableSet = Collections.EMPTY_SET;
+    NavigableMap unmodifiableNavigableMap = Collections.EMPTY_MAP;
   }
 }

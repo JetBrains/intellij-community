@@ -1,6 +1,6 @@
-// "Fix all 'Redundant usage of unmodifiable collection factories' problems in file" "true"
+// "Fix all 'Redundant usage of unmodifiable collection wrappers' problems in file" "true"
 
-import java.util.Collections;
+import java.util.*;
 
 class Main {
 
@@ -8,37 +8,37 @@ class Main {
         /*empty*/
         /*empty too*/
         /*blah blah blah*/
-        Collections.emptyList();
+        Collection unmodifiableCollection = Collections.emptyList();
 
         /*empty*/
         /*empty too*/
         /*blah blah blah*/
-        Collections.emptyList();
+        List unmodifiableList = Collections.emptyList();
         /*empty*/
         /*empty too*/
         /*blah blah blah*/
-        Collections.emptySet();
+        Set unmodifiableSet = Collections.emptySet();
         /*empty*/
         /*empty too*/
         /*blah blah blah*/
-        Collections.emptyMap();
+        Map unmodifiableMap = Collections.emptyMap();
 
         /*empty*/
         /*empty too*/
         /*blah blah blah*/
-        Collections.emptySet();
+        SortedSet unmodifiableSortedSet = Collections.emptySet();
         /*empty*/
         /*empty too*/
         /*blah blah blah*/
-        Collections.emptyMap();
+        SortedMap unmodifiableSortedMap = Collections.emptyMap();
 
         /*empty*/
         /*empty too*/
         /*blah blah blah*/
-        Collections.emptySet();
+        NavigableSet unmodifiableNavigableSet = Collections.emptySet();
         /*empty*/
         /*empty too*/
         /*blah blah blah*/
-        Collections.emptyMap();
+        NavigableMap unmodifiableNavigableMap = Collections.emptyMap();
     }
 }

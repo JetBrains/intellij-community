@@ -8,41 +8,20 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_COLLECTIONS;
-import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
 import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
 public class RedundantUnmodifiableInspection extends AbstractBaseJavaLocalInspectionTool {
-  private static final CallMatcher COLLECTIONS_UNMODIFIABLE_COLLECTION =
-    staticCall(JAVA_UTIL_COLLECTIONS, "unmodifiableCollection").parameterCount(1);
-  private static final CallMatcher COLLECTIONS_UNMODIFIABLE_LIST =
-    staticCall(JAVA_UTIL_COLLECTIONS, "unmodifiableList").parameterCount(1);
-  private static final CallMatcher COLLECTIONS_UNMODIFIABLE_SET =
-    staticCall(JAVA_UTIL_COLLECTIONS, "unmodifiableSet").parameterCount(1);
-  private static final CallMatcher COLLECTIONS_UNMODIFIABLE_MAP =
-    staticCall(JAVA_UTIL_COLLECTIONS, "unmodifiableMap").parameterCount(1);
-
-  private static final CallMatcher COLLECTIONS_UNMODIFIABLE_SORTED_SET =
-    staticCall(JAVA_UTIL_COLLECTIONS, "unmodifiableSortedSet").parameterCount(1);
-  private static final CallMatcher COLLECTIONS_UNMODIFIABLE_SORTED_MAP =
-    staticCall(JAVA_UTIL_COLLECTIONS, "unmodifiableSortedMap").parameterCount(1);
-
-  private static final CallMatcher COLLECTIONS_UNMODIFIABLE_NAVIGABLE_MAP =
-    staticCall(JAVA_UTIL_COLLECTIONS, "unmodifiableNavigableMap").parameterCount(1);
-  private static final CallMatcher COLLECTIONS_UNMODIFIABLE_NAVIGABLE_SET =
-    staticCall(JAVA_UTIL_COLLECTIONS, "unmodifiableNavigableSet").parameterCount(1);
-
   private static final CallMatcher COLLECTIONS_UNMODIFIABLE =
-    anyOf(COLLECTIONS_UNMODIFIABLE_COLLECTION, COLLECTIONS_UNMODIFIABLE_SET,
-          COLLECTIONS_UNMODIFIABLE_MAP, COLLECTIONS_UNMODIFIABLE_LIST,
-          COLLECTIONS_UNMODIFIABLE_SORTED_SET, COLLECTIONS_UNMODIFIABLE_SORTED_MAP,
-          COLLECTIONS_UNMODIFIABLE_NAVIGABLE_MAP, COLLECTIONS_UNMODIFIABLE_NAVIGABLE_SET);
+    staticCall(JAVA_UTIL_COLLECTIONS,"unmodifiableCollection", "unmodifiableList",
+               "unmodifiableSet", "unmodifiableMap", "unmodifiableSortedSet", "unmodifiableSortedMap",
+               "unmodifiableNavigableMap", "unmodifiableNavigableSet").parameterCount(1);
 
   @NotNull
   @Override
@@ -51,10 +30,9 @@ public class RedundantUnmodifiableInspection extends AbstractBaseJavaLocalInspec
 
       @Override
       public void visitMethodCallExpression(PsiMethodCallExpression call) {
-        super.visitMethodCallExpression(call);
-
+        if (ExpressionUtils.isVoidContext(call)) return;
         if (COLLECTIONS_UNMODIFIABLE.test(call)) {
-          PsiExpression arg = ArrayUtil.getFirstElement(call.getArgumentList().getExpressions());
+          PsiExpression arg = call.getArgumentList().getExpressions()[0];
           if (arg == null) return;
 
           DfType dfType = CommonDataflow.getDfType(arg);
@@ -77,7 +55,7 @@ public class RedundantUnmodifiableInspection extends AbstractBaseJavaLocalInspec
     @NotNull
     @Override
     public String getFamilyName() {
-      return JavaBundle.message("inspection.redundant.unmodifiable.call.replace.with.arg.quickfix");
+      return JavaBundle.message("inspection.redundant.unmodifiable.call.unwrap.argument.quickfix");
     }
 
     @Override

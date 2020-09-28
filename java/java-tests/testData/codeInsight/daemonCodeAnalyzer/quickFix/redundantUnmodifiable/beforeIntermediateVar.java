@@ -1,4 +1,4 @@
-// "Fix all 'Redundant usage of unmodifiable collection factories' problems in file" "true"
+// "Fix all 'Redundant usage of unmodifiable collection wrappers' problems in file" "true"
 
 import java.util.*;
 
@@ -14,16 +14,16 @@ class Main {
     Map map = new HashMap();
     map = Collections.emptyMap();
 
-    Collections.unmodifiableCollecti<caret>on(list);
+    Collection unmodifiableCollection = Collections.unmodifiableCollecti<caret>on(list);
 
-    Collections.unmodifiableList(list);
-    Collections.unmodifiableSet(set);
-    Collections.unmodifiableMap(map);
+    List unmodifiableList = Collections.unmodifiableList(list);
+    Set unmodifiableSet = Collections.unmodifiableSet(set);
+    Map unmodifiableMap = Collections.unmodifiableMap(map);
 
-    Collections.unmodifiableSortedSet(set);
-    Collections.unmodifiableSortedMap(map);
+    SortedSet unmodifiableSortedSet = Collections.unmodifiableSortedSet(set);
+    SortedMap unmodifiableSortedMap = Collections.unmodifiableSortedMap(map);
 
-    Collections.unmodifiableNavigableSet(set);
-    Collections.unmodifiableNavigableMap(map);
+    NavigableSet unmodifiableNavigableSet = Collections.unmodifiableNavigableSet(set);
+    NavigableMap unmodifiableNavigableMap = Collections.unmodifiableNavigableMap(map);
   }
 }
