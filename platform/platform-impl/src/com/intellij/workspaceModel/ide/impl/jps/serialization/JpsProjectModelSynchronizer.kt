@@ -29,6 +29,7 @@ import com.intellij.workspaceModel.ide.impl.recordModuleLoadingActivity
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
@@ -216,6 +217,14 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     }
     LOG.debugValues("Saving affected entities", affectedSources)
     data.saveEntities(storage, affectedSources, writer)
+  }
+
+  @TestOnly
+  fun markAllEntitiesAsDirty() {
+    val allSources = WorkspaceModel.getInstance(project).entityStorage.current.entitiesBySource { true }.keys
+    synchronized(sourcesToSave) {
+      sourcesToSave.addAll(allSources)
+    }
   }
 
   private fun getAndResetIncomingChanges(): JpsConfigurationFilesChange? {

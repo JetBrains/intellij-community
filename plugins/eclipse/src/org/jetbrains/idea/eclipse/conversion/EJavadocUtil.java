@@ -117,7 +117,7 @@ public final class EJavadocUtil {
   }
 
   @Nullable
-  private static String stripPathInsideJar(@Nullable String relativeToModulePathWithJarSuffix) {
+  public static String stripPathInsideJar(@Nullable String relativeToModulePathWithJarSuffix) {
     String relativeToModulePath = relativeToModulePathWithJarSuffix;
     if (relativeToModulePath != null) {
       int jarSufIdx = relativeToModulePathWithJarSuffix.indexOf(JarFileSystem.JAR_SEPARATOR);
@@ -128,7 +128,7 @@ public final class EJavadocUtil {
     return relativeToModulePath;
   }
 
-  static boolean isJarFileExist(String path) {
+  public static boolean isJarFileExist(String path) {
     final int jarSufIdx = path.indexOf(JarFileSystem.JAR_SEPARATOR);
     if (jarSufIdx != -1) {
       path = path.substring(0, jarSufIdx);
@@ -188,10 +188,10 @@ public final class EJavadocUtil {
     setupAttributes(orderEntry, s -> toEclipseJavadocPath(model, s), JAVADOC_LOCATION, libraryOrderEntry.getRootUrls(JavadocOrderRootType.getInstance()));
   }
 
-  static void setupAttributes(Element orderEntry,
-                              Function<? super String, String> fun,
-                              String attributeName,
-                              String[] roots) {
+  public static <T> void setupAttributes(Element orderEntry,
+                                         Function<? super T, String> fun,
+                                         String attributeName,
+                                         T[] roots) {
     final List<String> eclipseUrls = new ArrayList<>();
     if (roots.length > 0) {
       eclipseUrls.add(fun.fun(roots[0]));

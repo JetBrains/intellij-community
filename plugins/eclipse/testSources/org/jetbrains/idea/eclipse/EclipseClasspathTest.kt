@@ -23,13 +23,13 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.assertions.Assertions
 import com.intellij.testFramework.loadProjectAndCheckResults
-import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContentOf
+import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
 import org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathWriter
-import org.junit.Assume
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -164,8 +164,6 @@ class EclipseClasspathTest {
   }
 
   fun doTest(relativePath: String) {
-    //todo loading and saving in Eclipse format isn't implemented in workspace model yet (IDEA-246236)
-    Assume.assumeFalse(ProjectModelRule.isWorkspaceModelEnabled)
     val testDataRoot = PluginPathManager.getPluginHome("eclipse").toPath().resolve("testData/round")
     val testRoot = testDataRoot.resolve(testName.methodName.removePrefix("test").decapitalize()).resolve(relativePath)
     val commonRoot = testDataRoot.resolve("common")
@@ -174,6 +172,9 @@ class EclipseClasspathTest {
         ModuleManager.getInstance(project).modules.forEach {
           it.moduleFile!!.delete(this)
           it.stateStore.clearCaches()
+        }
+        if (WorkspaceModel.isEnabled) {
+          JpsProjectModelSynchronizer.getInstance(project)!!.markAllEntitiesAsDirty()
         }
       }
       project.stateStore.save(true)

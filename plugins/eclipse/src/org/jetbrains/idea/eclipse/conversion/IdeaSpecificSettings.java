@@ -39,15 +39,15 @@ import static org.jetbrains.idea.eclipse.conversion.EPathUtil.areUrlsPointTheSam
  * Read/write .eml
  */
 public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<ModifiableRootModel, ContentEntry, Sdk> {
-  @NonNls private static final String RELATIVE_MODULE_SRC = "relative-module-src";
-  @NonNls private static final String RELATIVE_MODULE_CLS = "relative-module-cls";
-  @NonNls private static final String RELATIVE_MODULE_JAVADOC = "relative-module-javadoc";
-  @NonNls private static final String PROJECT_RELATED = "project-related";
+  @NonNls public static final String RELATIVE_MODULE_SRC = "relative-module-src";
+  @NonNls public static final String RELATIVE_MODULE_CLS = "relative-module-cls";
+  @NonNls public static final String RELATIVE_MODULE_JAVADOC = "relative-module-javadoc";
+  @NonNls public static final String PROJECT_RELATED = "project-related";
 
-  @NonNls private static final String SRCROOT_ATTR = "srcroot";
-  @NonNls private static final String SRCROOT_BIND_ATTR = "bind";
+  @NonNls public static final String SRCROOT_ATTR = "srcroot";
+  @NonNls public static final String SRCROOT_BIND_ATTR = "bind";
   private static final Logger LOG = Logger.getInstance(IdeaSpecificSettings.class);
-  @NonNls private static final String JAVADOCROOT_ATTR = "javadocroot_attr";
+  @NonNls public static final String JAVADOCROOT_ATTR = "javadocroot_attr";
   public static final String INHERIT_JDK = "inheritJdk";
 
   @Override
