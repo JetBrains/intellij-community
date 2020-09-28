@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectModelExternalSource
@@ -250,7 +251,9 @@ internal class LibraryModifiableModelBridgeImpl(
 
     val kind = currentLibrary.kind
     if (kind == null) {
-      if (properties != null && properties !is DummyLibraryProperties) error("Setting properties with null kind is unsupported")
+      if (properties != null && properties !is DummyLibraryProperties) {
+        LOG.error("Setting properties with null kind is unsupported")
+      }
       return
     }
 
@@ -358,4 +361,8 @@ internal class LibraryModifiableModelBridgeImpl(
 
   override fun readExternal(element: Element?) = throw UnsupportedOperationException()
   override fun writeExternal(element: Element?) = throw UnsupportedOperationException()
+
+  companion object {
+    private val LOG = logger<LibraryModifiableModelBridgeImpl>()
+  }
 }

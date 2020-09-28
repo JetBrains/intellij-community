@@ -1,6 +1,6 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ExcludeFolder
 import com.intellij.openapi.roots.ModuleRootModel
@@ -8,15 +8,15 @@ import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.util.CachedValueImpl
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
+import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.VirtualFileUrl
 import com.intellij.workspaceModel.storage.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addSourceRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.asJavaResourceRoot
 import com.intellij.workspaceModel.storage.bridgeEntities.asJavaSourceRoot
-import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.java.JavaResourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
@@ -30,7 +30,7 @@ internal class ModifiableContentEntryBridge(
   val contentEntryUrl: VirtualFileUrl
 ): ContentEntry {
   companion object {
-    private val LOG = Logger.getInstance(javaClass)
+    private val LOG = logger<ModifiableContentEntryBridge>()
   }
   private val virtualFileManager = VirtualFileUrlManager.getInstance(modifiableRootModel.project)
 
@@ -94,7 +94,7 @@ internal class ModifiableContentEntryBridge(
     val legacyBridgeSourceFolder = sourceFolder as SourceFolderBridge
     val sourceRootEntity = currentContentEntry.value.sourceRootEntities.firstOrNull { it == legacyBridgeSourceFolder.sourceRootEntity }
     if (sourceRootEntity == null) {
-      Logger.getInstance(javaClass).error("SourceFolder ${sourceFolder.url} is not present under content entry $contentEntryUrl")
+      LOG.error("SourceFolder ${sourceFolder.url} is not present under content entry $contentEntryUrl")
       return
     }
 

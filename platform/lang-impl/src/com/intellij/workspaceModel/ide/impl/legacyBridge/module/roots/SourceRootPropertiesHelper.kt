@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
@@ -157,7 +158,7 @@ internal object SourceRootPropertiesHelper {
 
     val serializer = findSerializer(rootType)
     if (serializer == null) {
-      SourceFolderBridge.LOG.warn("Module source root type $rootType (${entity.rootType}) is not registered as JpsModelSerializerExtension")
+      LOG.warn("Module source root type $rootType (${entity.rootType}) is not registered as JpsModelSerializerExtension")
       return elementFactory.createDummyElement()
     }
 
@@ -167,9 +168,10 @@ internal object SourceRootPropertiesHelper {
       serializer.loadProperties(element)
     }
     catch (t: Throwable) {
-      SourceFolderBridge.LOG.error("Unable to deserialize source root '${entity.rootType}' from xml '${customSourceRoot.propertiesXmlTag}': ${t.message}", t)
+      LOG.error("Unable to deserialize source root '${entity.rootType}' from xml '${customSourceRoot.propertiesXmlTag}': ${t.message}", t)
       elementFactory.createDummyElement()
     }
   }
 
+  private val LOG = logger<SourceRootPropertiesHelper>()
 }
