@@ -264,22 +264,6 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
     return DiffUtil.isEditable(getEditor(side));
   }
 
-  protected boolean isSomeChangeSelected(@NotNull ThreeSide side) {
-    if (getChanges().isEmpty()) return false;
-
-    EditorEx editor = getEditor(side);
-    return DiffUtil.isSomeRangeSelected(editor, lines ->
-      ContainerUtil.exists(getChanges(), change -> isChangeSelected(change, lines, side)));
-  }
-
-  @NotNull
-  @RequiresEdt
-  private List<SimpleThreesideDiffChange> getSelectedChanges(@NotNull ThreeSide side) {
-    EditorEx editor = getEditor(side);
-    BitSet lines = DiffUtil.getSelectedLines(editor);
-    return ContainerUtil.filter(getChanges(), change -> isChangeSelected(change, lines, side));
-  }
-
   //
   // Modification operations
   //
@@ -294,6 +278,9 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
     myDiffChanges.remove(change);
     myInvalidDiffChanges.add(change);
     change.markInvalid();
+
+    // Do not rely on DocumentListener in case of identical change
+    scheduleRediff();
   }
 
   //
@@ -328,6 +315,17 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
     protected boolean isVisible(@NotNull ThreeSide side) {
       if (!isEditable(myModifiedSide)) return false;
       return !isBothEditable() || side == mySourceSide;
+    }
+
+    @Override
+    protected boolean isEnabled(@NotNull ThreesideDiffChangeBase change) {
+      Side side1 = myModifiedSide.select(Side.LEFT, null, Side.RIGHT);
+      if (side1 != null && change.isChange(side1)) return true;
+
+      Side side2 = mySourceSide.select(Side.LEFT, null, Side.RIGHT);
+      if (side2 != null && change.isChange(side2)) return true;
+
+      return false;
     }
 
     protected boolean isBothEditable() {
@@ -398,6 +396,8 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
 
     protected abstract boolean isVisible(@NotNull ThreeSide side);
 
+    protected abstract boolean isEnabled(@NotNull ThreesideDiffChangeBase change);
+
     @Nls
     @NotNull
     protected abstract String getText(@NotNull ThreeSide side);
@@ -407,6 +407,29 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
 
     @RequiresWriteLock
     protected abstract void doPerform(@NotNull AnActionEvent e, @NotNull ThreeSide side, @NotNull List<SimpleThreesideDiffChange> changes);
+
+    private boolean isSomeChangeSelected(@NotNull ThreeSide side) {
+      if (getChanges().isEmpty()) return false;
+
+      EditorEx editor = getEditor(side);
+      return DiffUtil.isSomeRangeSelected(editor, lines ->
+        ContainerUtil.exists(getChanges(), change -> isChangeSelected(change, lines, side)));
+    }
+
+    @NotNull
+    @RequiresEdt
+    private List<SimpleThreesideDiffChange> getSelectedChanges(@NotNull ThreeSide side) {
+      EditorEx editor = getEditor(side);
+      BitSet lines = DiffUtil.getSelectedLines(editor);
+      return ContainerUtil.filter(getChanges(), change -> isChangeSelected(change, lines, side));
+    }
+
+    private boolean isChangeSelected(@NotNull ThreesideDiffChangeBase change, @NotNull BitSet lines, @NotNull ThreeSide side) {
+      if (!isEnabled(change)) return false;
+      int line1 = change.getStartLine(side);
+      int line2 = change.getEndLine(side);
+      return DiffUtil.isSelectedByLine(lines, line1, line2);
+    }
   }
 
   //
