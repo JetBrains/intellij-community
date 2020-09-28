@@ -68,6 +68,8 @@ open class TestCloseProjectWindowHelper : CloseProjectWindowHelper() {
   var wasShowWelcomeFrameIfNoProjectOpenedCalled = false
     private set
 
+  override val isShowWelcomeScreenFromSettings = true
+
   override fun quitApp() {
     assertThat(wasQuitAppCalled).isFalse()
     wasQuitAppCalled = true
