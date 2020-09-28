@@ -1,7 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model;
 
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
@@ -114,7 +116,7 @@ public abstract class ModelBranchImpl extends UserDataHolderBase implements Mode
     while (prefixEnd > 0) {
       VirtualFile someParent = VirtualFileManager.getInstance().findFileByUrl(url.substring(0, prefixEnd));
       if (someParent != null) {
-        return findFileByUrl(url, findFileCopy(someParent));
+        return findFileByUrl(url, findPhysicalFileCopy(someParent));
       }
       prefixEnd = url.lastIndexOf('/', prefixEnd - 1);
     }
@@ -142,10 +144,27 @@ public abstract class ModelBranchImpl extends UserDataHolderBase implements Mode
 
   @Override
   @NotNull
-  public BranchedVirtualFileImpl findFileCopy(@NotNull VirtualFile original) {
+  public VirtualFile findFileCopy(@NotNull VirtualFile original) {
+    return original instanceof VirtualFileWindow ? findInjectedFileCopy((VirtualFileWindow)original) : findPhysicalFileCopy(original);
+  }
+
+  @NotNull
+  private VirtualFile findInjectedFileCopy(VirtualFileWindow original) {
+    VirtualFile hostCopy = findPhysicalFileCopy(original.getDelegate());
+    DocumentWindow injectedDoc = original.getDocumentWindow();
+    PsiFile hostPsi = PsiManager.getInstance(myProject).findFile(hostCopy);
+    assert hostPsi != null;
+    PsiElement leaf =
+      InjectedLanguageManager.getInstance(myProject).findInjectedElementAt(hostPsi, injectedDoc.getHostRanges()[0].getStartOffset());
+    assert leaf != null;
+    PsiFile injectedCopy = leaf.getContainingFile();
+    return injectedCopy.getViewProvider().getVirtualFile();
+  }
+
+  @NotNull
+  BranchedVirtualFileImpl findPhysicalFileCopy(@NotNull VirtualFile original) {
     assert ModelBranch.getFileBranch(original) != this;
     return myVFileCopies.computeIfAbsent(original, __ -> {
-      assert !(original instanceof VirtualFileWindow);
       assert original instanceof VirtualFileWithId;
       return new BranchedVirtualFileImpl(this, original, original.getName(), original.isDirectory(), null);
     });

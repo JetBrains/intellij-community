@@ -5,6 +5,7 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.model.ModelBranch;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -115,7 +116,7 @@ public class InjectedLanguageUtilBase {
                                   boolean probeUp,
                                   @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
     //do not inject into nonphysical files except during completion
-    if (!containingFile.isPhysical() && containingFile.getOriginalFile() == containingFile) {
+    if (!containingFile.isPhysical() && containingFile.getOriginalFile() == containingFile && ModelBranch.getPsiBranch(containingFile) == null) {
       final PsiElement context = InjectedLanguageManager.getInstance(containingFile.getProject()).getInjectionHost(containingFile);
       if (context == null) return false;
 

@@ -143,7 +143,7 @@ class BranchedVirtualFileImpl extends BranchedVirtualFile {
     if (myChangedParent != null) return myChangedParent;
     assert myOriginal != null;
     VirtualFile parent = myOriginal.getParent();
-    return parent == null ? null : myBranch.findFileCopy(parent);
+    return parent == null ? null : myBranch.findPhysicalFileCopy(parent);
   }
 
   @Override
@@ -158,7 +158,7 @@ class BranchedVirtualFileImpl extends BranchedVirtualFile {
     VirtualFile[] baseChildren = myOriginal.getChildren();
     if (baseChildren == null) return null;
 
-    return ContainerUtil.map2Array(baseChildren, BranchedVirtualFileImpl.class, f -> Objects.requireNonNull(myBranch.findFileCopy(f)));
+    return ContainerUtil.map2Array(baseChildren, BranchedVirtualFileImpl.class, f -> Objects.requireNonNull(myBranch.findPhysicalFileCopy(f)));
   }
 
   @Override
