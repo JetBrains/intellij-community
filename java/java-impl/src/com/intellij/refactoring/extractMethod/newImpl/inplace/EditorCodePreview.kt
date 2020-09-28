@@ -98,13 +98,13 @@ class EditorCodePreview(val editor: Editor, lines: List<IntRange>): Disposable {
         position.translate(0, popup.window.height)
       }
     position = Point(-3, editor.scrollingModel.visibleArea.height)
-    popups.zip(positions)
+    popups.zip(positions).reversed()
       .filter { (_, position) -> position == PopupPosition.Bottom }
       .forEach { (popup, _) ->
         position.translate(0, -popup.window.height)
         popup.window.location = RelativePoint(editor.component, position).screenPoint
       }
-    popups.zip(positions).reversed()
+    popups.zip(positions)
       .filterNot { (_, position) -> position == PopupPosition.Hidden }
       .forEach { (popup, _) ->
         popup.show()
