@@ -2,7 +2,6 @@
 package com.intellij.openapi.util.registry
 
 import com.intellij.ide.plugins.DynamicPluginListener
-import com.intellij.ide.plugins.DynamicPlugins
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.*
@@ -74,7 +73,7 @@ class RegistryKeyBean : PluginAware {
 
   @JvmField
   @Attribute("defaultValue")
-  @RequiredElement
+  @RequiredElement(allowEmpty = true)
   val defaultValue = ""
 
   @JvmField
