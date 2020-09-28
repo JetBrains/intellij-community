@@ -312,10 +312,7 @@ class JdkInstaller {
                          .takeWhile { it.isDirectory() }
                          .take(5)
                          .mapNotNull { markerFile(it) }
-                         .filter { it.isFile() }
-                         //test the marker file is older than the JDK directory. A heuristics.
-                         .firstOrNull { runCatching { it.lastModified() >= jdkPath.lastModified() }.getOrNull() == true }
-                       ?: return null
+                         .firstOrNull { it.isFile() } ?: return null
 
       val json = JdkListParser.readTree(markerFile.readBytes())
       return JdkListParser.parseJdkItem(json, JdkPredicate.createInstance())
