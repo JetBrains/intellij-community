@@ -126,6 +126,11 @@ internal class StorageJpsConfigurationReader(private val project: Project,
 
   override fun loadComponent(fileUrl: String, componentName: String, customModuleFilePath: String?): Element? {
     val filePath = JpsPathUtil.urlToPath(fileUrl)
+    if (componentName == "") {
+      //this is currently used for loading Eclipse project configuration from .classpath file
+      val file = VirtualFileManager.getInstance().findFileByUrl(fileUrl)
+      return file?.inputStream?.use { JDOMUtil.load(it) }
+    }
     if (FileUtil.extensionEquals(filePath, "iml") || isExternalModuleFile(filePath)) {
       //todo fetch data from ModuleStore (https://jetbrains.team/p/wm/issues/51)
       return getCachingReader().loadComponent(fileUrl, componentName, customModuleFilePath)
