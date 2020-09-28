@@ -103,7 +103,7 @@
       <reference ref="Vcs.UmlDiff" />
     </group>
 
-    <group id="Git.MainMenu" class="git4idea.actions.GitMainMenuActionGroup">
+    <group id="Git.MainMenu" class="git4idea.actions.GitMainMenuActionGroup" searchable="false">
 
       <reference ref="CheckinProject"/>
       <reference ref="Vcs.Push"/>
@@ -176,7 +176,7 @@
       <reference id="Git.Rebase.Skip"/>
     </group>
 
-    <group id="Git.Menu" class="git4idea.actions.GitMenu" popup="true">
+    <group id="Git.Menu" class="git4idea.actions.GitMenu" popup="true" searchable="false">
       <reference ref="Git.FileActions"/>
       <separator/>
       <reference ref="ChangesView.Revert" />
@@ -185,7 +185,7 @@
       <add-to-group group-id="VcsGlobalGroup" anchor="after" relative-to-action="Vcs.Specific"/>
     </group>
 
-    <group id="Git.ContextMenu" class="git4idea.actions.GitMenu" popup="true">
+    <group id="Git.ContextMenu" class="git4idea.actions.GitMenu" popup="true" searchable="false">
       <reference ref="Git.FileActions"/>
       <reference ref="Show.Current.Revision"/>
       <reference ref="ChangesView.Revert" />
