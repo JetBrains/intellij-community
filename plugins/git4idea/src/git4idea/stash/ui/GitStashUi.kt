@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
+import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
@@ -23,8 +24,20 @@ class GitStashUi(project: Project, disposable: Disposable) : Disposable {
     tree = GitStashTree(project, this)
     PopupHandler.installPopupHandler(tree, "Git.Stash.ContextMenu", GIT_STASH_UI_PLACE)
 
-    mainComponent.add(buildToolbar(), BorderLayout.NORTH)
-    mainComponent.add(ScrollPaneFactory.createScrollPane(tree, SideBorder.TOP), BorderLayout.CENTER)
+    val toolbar = buildToolbar()
+
+    val treePanel = JPanel(BorderLayout())
+    treePanel.add(toolbar, BorderLayout.NORTH)
+    treePanel.add(ScrollPaneFactory.createScrollPane(tree, SideBorder.TOP), BorderLayout.CENTER)
+
+    val diffPreview = GitStashDiffPreview(project, tree, this)
+    diffPreview.toolbarWrapper.setVerticalSizeReferent(toolbar)
+
+    val splitter = OnePixelSplitter("git.stash.diff.splitter", 0.5f)
+    splitter.firstComponent = treePanel
+    splitter.secondComponent = diffPreview.component
+
+    mainComponent.add(splitter, BorderLayout.CENTER)
 
     Disposer.register(disposable, this)
   }
