@@ -64,7 +64,7 @@ public final class JavaSdkImpl extends JavaSdk {
 
   private static final String VM_EXE_NAME = SystemInfo.isWindows ? "java.exe" : "java";  // do not use JavaW.exe because of issues with encoding
 
-  private final Map<String, String> myCachedSdkHomeToVersionString = new ConcurrentHashMap<>();
+  private final Map<String, JdkVersionDetector.JdkVersionInfo> myCachedSdkHomeToInfo = new ConcurrentHashMap<>();
   private final Map<String, JavaVersion> myCachedVersionStringToJdkVersion = new ConcurrentHashMap<>();
 
   public JavaSdkImpl() {
@@ -92,7 +92,7 @@ public final class JavaSdkImpl extends JavaSdk {
   private void updateCache(@NotNull VFileEvent event, @NotNull String fileName) {
     if (ArchiveFileType.INSTANCE.equals(FileTypeManager.getInstance().getFileTypeByFileName(fileName))) {
       String filePath = event.getPath();
-      if (myCachedSdkHomeToVersionString.keySet().removeIf(sdkHome -> FileUtil.isAncestor(sdkHome, filePath, false))) {
+      if (myCachedSdkHomeToInfo.keySet().removeIf(sdkHome -> FileUtil.isAncestor(sdkHome, filePath, false))) {
         myCachedVersionStringToJdkVersion.clear();
       }
     }
@@ -239,8 +239,10 @@ public final class JavaSdkImpl extends JavaSdk {
   @NotNull
   @Override
   public String suggestSdkName(@Nullable String currentSdkName, String sdkHome) {
-    String suggestedName = JdkUtil.suggestJdkName(getVersionString(sdkHome));
-    return suggestedName != null ? suggestedName : currentSdkName != null ? currentSdkName : "";
+    var info = getInfo(sdkHome);
+    if (info == null) return currentSdkName != null ? currentSdkName : "";
+
+    return JdkUtil.suggestJdkName(info.version, info.vendorPrefix);
   }
 
   @Override
@@ -374,12 +376,18 @@ public final class JavaSdkImpl extends JavaSdk {
     return root;
   }
 
+  @Nullable
+  private JdkVersionDetector.JdkVersionInfo getInfo(String sdkHome) {
+    return myCachedSdkHomeToInfo.computeIfAbsent(sdkHome, homePath -> {
+      return SdkVersionUtil.getJdkVersionInfo(homePath);
+    });
+  }
+
   @Override
   public final String getVersionString(String sdkHome) {
-    return myCachedSdkHomeToVersionString.computeIfAbsent(sdkHome, homePath -> {
-      JdkVersionDetector.JdkVersionInfo jdkInfo = SdkVersionUtil.getJdkVersionInfo(homePath);
-      return jdkInfo != null ? JdkVersionDetector.formatVersionString(jdkInfo.version) : null;
-    });
+    var info = getInfo(sdkHome);
+    if (info == null) return null;
+    return info.displayVersionString();
   }
 
   @Override

@@ -76,7 +76,12 @@ public final class JdkUtil {
     JavaVersion version = JavaVersion.tryParse(versionString);
     if (version == null) return null;
 
+    return suggestJdkName(version, null);
+  }
+
+  public static @NotNull String suggestJdkName(@NotNull JavaVersion version, @Nullable String vendorPrefix) {
     StringBuilder suggested = new StringBuilder();
+    if (vendorPrefix != null) suggested.append(vendorPrefix).append('-');
     if (version.feature < 9) suggested.append("1.");
     suggested.append(version.feature);
     if (version.ea) suggested.append("-ea");

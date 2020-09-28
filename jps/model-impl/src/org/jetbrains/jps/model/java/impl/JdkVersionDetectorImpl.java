@@ -25,6 +25,8 @@ import java.util.concurrent.Future;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
+import static org.jetbrains.jps.model.java.impl.JdkVendorDetector.detectJdkVendorByReleaseFile;
+
 public class JdkVersionDetectorImpl extends JdkVersionDetector {
   private static final Logger LOG = Logger.getInstance(JdkVersionDetectorImpl.class);
 
@@ -48,7 +50,11 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
           JavaVersion version = JavaVersion.parse(versionString);
           String arch = StringUtil.unquoteString(p.getProperty("OS_ARCH", ""));
           boolean x64 = "x86_64".equals(arch) || "amd64".equals(arch);
-          return new JdkVersionInfo(version, x64 ? Bitness.x64 : Bitness.x32);
+          Bitness bitness = x64 ? Bitness.x64 : Bitness.x32;
+          JdkVendorDetector.Vendor vendor = detectJdkVendorByReleaseFile(p);
+          return vendor != null
+                 ? new JdkVersionInfo(version, bitness, vendor.getPrefix(), vendor.displayName)
+                 : new JdkVersionInfo(version, bitness);
         }
       }
       catch (IOException | IllegalArgumentException e) {
