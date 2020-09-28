@@ -78,8 +78,12 @@ public class SplashSlideLoader {
             var file = getCacheFile(url, scale);
             if (file != null) {
                 try {
-                    var fileAttributes = Files.readAttributes(file, BasicFileAttributes.class);
-                    if (!fileAttributes.isRegularFile()) {
+                    try {
+                        var fileAttributes = Files.readAttributes(file, BasicFileAttributes.class);
+                        if (!fileAttributes.isRegularFile()) {
+                            return null;
+                        }
+                    } catch (IOException ignored) {
                         return null;
                     }
                     Image image = ImageIO.read(file.toFile());
@@ -88,7 +92,8 @@ public class SplashSlideLoader {
                     }
                     return image;
                 } catch (IOException e) {
-                    Logger.getInstance(SplashSlideLoader.class).error("Failed to load splash image", e);
+                    // don't use `error`, because it can crash application
+                    Logger.getInstance(SplashSlideLoader.class).warn("Failed to load splash image", e);
                 }
             }
         }
