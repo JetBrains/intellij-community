@@ -3,6 +3,9 @@
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
+import com.intellij.java.JavaBundle;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
@@ -102,9 +105,6 @@ public final class Util {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length == 0) return new TIntArrayList();
 
-    PsiMethod[] overridingMethods = OverridingMethodsSearch.search(method).toArray(PsiMethod.EMPTY_ARRAY);
-    final PsiMethod[] allMethods = ArrayUtil.append(overridingMethods, method);
-
     final TIntHashSet suspects = new TIntHashSet();
     expr.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
@@ -119,36 +119,48 @@ public final class Util {
       }
     });
 
-    final TIntIterator iterator = suspects.iterator();
-    while(iterator.hasNext()) {
-      final int paramNum = iterator.next();
-      for (PsiMethod psiMethod : allMethods) {
-        PsiParameter[] psiParameters = psiMethod.getParameterList().getParameters();
-        if (paramNum >= psiParameters.length) continue;
-        PsiParameter parameter = psiParameters[paramNum];
-        if (!ReferencesSearch.search(parameter, parameter.getResolveScope(), false).forEach(reference -> {
-          PsiElement element = reference.getElement();
-          boolean stillCanBeRemoved = false;
-          if (element != null) {
-            stillCanBeRemoved = isAncestor(expr, element, false) || PsiUtil.isInsideJavadocComment(getPhysical(element));
-            if (!stillCanBeRemoved && occurences != null) {
-              for (PsiExpression occurence : occurences) {
-                if (isAncestor(occurence, element, false)) {
-                  stillCanBeRemoved = true;
-                  break;
-                }
-              }
-            }
-          }
-          if (!stillCanBeRemoved) {
-            iterator.remove();
-            return false;
-          }
-         return true;
-        })) break;
-      }
+    removeUsed(method, expr, occurences, suspects);
+
+    if (suspects.isEmpty()) return new TIntArrayList();
+
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      OverridingMethodsSearch.search(method).forEach(psiMethod -> {
+        ReadAction.run(() -> removeUsed(psiMethod, expr, occurences, suspects));
+        return !suspects.isEmpty();
+      });
+    }, JavaBundle.message("progress.title.search.for.overriding.methods"), true, method.getProject())) {
+      return new TIntArrayList();
     }
 
     return new TIntArrayList(suspects.toArray());
+  }
+
+  private static void removeUsed(PsiMethod containingMethod, @NotNull PsiExpression expr,
+                                 PsiExpression @Nullable [] occurences,
+                                 TIntHashSet suspects) {
+    final TIntIterator iterator = suspects.iterator();
+    while (iterator.hasNext()) {
+      final int paramNum = iterator.next();
+      PsiParameter[] psiParameters = containingMethod.getParameterList().getParameters();
+      if (paramNum >= psiParameters.length) continue;
+      PsiParameter parameter = psiParameters[paramNum];
+      ReferencesSearch.search(parameter, parameter.getResolveScope(), false).forEach(reference -> {
+        PsiElement element = reference.getElement();
+        boolean stillCanBeRemoved = isAncestor(expr, element, false) || PsiUtil.isInsideJavadocComment(getPhysical(element));
+        if (!stillCanBeRemoved && occurences != null) {
+          for (PsiExpression occurence : occurences) {
+            if (isAncestor(occurence, element, false)) {
+              stillCanBeRemoved = true;
+              break;
+            }
+          }
+        }
+        if (!stillCanBeRemoved) {
+          iterator.remove();
+          return false;
+        }
+        return true;
+      });
+    }
   }
 }
