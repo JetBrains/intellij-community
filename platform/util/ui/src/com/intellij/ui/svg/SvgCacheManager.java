@@ -128,7 +128,7 @@ public final class SvgCacheManager {
       }
 
       Image image = readImage(data, docSize);
-      IconLoadMeasurer.svgCacheRead.addDurationStartedAt(start);
+      IconLoadMeasurer.svgCacheRead.end(start);
       return image;
     }
     catch (Exception e) {

@@ -172,7 +172,7 @@ public final class SVGLoader {
       }
 
       if (start != -1) {
-        IconLoadMeasurer.svgCacheRead.addDurationStartedAt(start);
+        IconLoadMeasurer.svgCacheRead.end(start);
       }
     }
     else {
@@ -224,7 +224,7 @@ public final class SVGLoader {
       }
 
       if (start != -1) {
-        IconLoadMeasurer.svgCacheRead.addDurationStartedAt(start);
+        IconLoadMeasurer.svgCacheRead.end(start);
       }
     }
     return loadAndCache(path, stream, scale, docSize, theme, svgBytes);
@@ -247,14 +247,14 @@ public final class SVGLoader {
     }
 
     if (decodingStart != -1) {
-      IconLoadMeasurer.svgDecoding.addDurationStartedAt(decodingStart);
+      IconLoadMeasurer.svgDecoding.end(decodingStart);
     }
 
     if (theme != null) {
       try {
         long cacheWriteStart = StartUpMeasurer.getCurrentTimeIfEnabled();
         persistentCache.storeLoadedImage(theme, svgBytes, scale, bufferedImage, docSize);
-        IconLoadMeasurer.svgCacheWrite.addDurationStartedAt(cacheWriteStart);
+        IconLoadMeasurer.svgCacheWrite.end(cacheWriteStart);
       }
       catch (Exception e) {
         Logger.getInstance(SVGLoader.class).error("Failed to write SVG cache for: " + path, e);

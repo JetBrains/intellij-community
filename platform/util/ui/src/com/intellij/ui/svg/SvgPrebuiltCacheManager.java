@@ -51,7 +51,7 @@ public final class SvgPrebuiltCacheManager {
       }
 
       Image image = SvgCacheManager.readImage(data, docSize);
-      IconLoadMeasurer.svgPreBuiltLoad.addDurationStartedAt(start);
+      IconLoadMeasurer.svgPreBuiltLoad.end(start);
       return image;
     }
     catch (Exception e) {

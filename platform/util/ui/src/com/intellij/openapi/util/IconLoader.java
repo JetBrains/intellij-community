@@ -232,7 +232,7 @@ public final class IconLoader {
       }
     };
     if (startTime != -1) {
-      IconLoadMeasurer.addFindIcon(startTime);
+      IconLoadMeasurer.findIcon.end(startTime);
     }
     return resolver;
   }
@@ -342,7 +342,7 @@ public final class IconLoader {
     }
 
     if (startTime != -1) {
-      IconLoadMeasurer.addFindIcon(startTime);
+      IconLoadMeasurer.findIcon.end(startTime);
     }
     return icon;
   }
@@ -833,7 +833,7 @@ public final class IconLoader {
       boolean useMRI = MultiResolutionImageProvider.isMultiResolutionImageAvailable() && SystemInfo.isMac;
       ScaleContext ctx = useMRI ? ScaleContext.create() : ScaleContext.createIdentity();
       ctx.setScale(USR_SCALE.of(1));
-      Image img = loadFromUrl(ctx, isDark);
+      Image img = loadImage(ctx, isDark);
       if (useMRI) {
         img = MultiResolutionImageProvider.convertFromJBImage(img);
       }
@@ -881,7 +881,7 @@ public final class IconLoader {
       return resolver == null ? null : resolver.getURL();
     }
 
-    private @Nullable Image loadFromUrl(@NotNull ScaleContext scaleContext, boolean isDark) {
+    private @Nullable Image loadImage(@NotNull ScaleContext scaleContext, boolean isDark) {
       long start = StartUpMeasurer.getCurrentTimeIfEnabled();
 
       ImageDataLoader resolver = this.resolver;
@@ -891,7 +891,7 @@ public final class IconLoader {
 
       Image image = resolver.loadImage(getFilters(), scaleContext, isDark);
       if (start != -1) {
-        IconLoadMeasurer.addFindIconLoad(start);
+        IconLoadMeasurer.findIconLoad.end(start);
       }
       return image;
     }
@@ -959,7 +959,7 @@ public final class IconLoader {
         return icon;
       }
 
-      Image image = host.loadFromUrl(scaleContext, host.isDark());
+      Image image = host.loadImage(scaleContext, host.isDark());
       if (image == null) {
         return null;
       }

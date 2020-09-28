@@ -184,7 +184,7 @@ public final class ImageLoader {
       }
 
       if (start != -1) {
-        IconLoadMeasurer.addLoadFromResources(start);
+        IconLoadMeasurer.loadFromResources.end(start);
       }
       if (loadingStart != -1) {
         IconLoadMeasurer.addLoading(isSvg, loadingStart);
@@ -288,7 +288,7 @@ public final class ImageLoader {
         }
       }
       if (start != -1) {
-        IconLoadMeasurer.addLoadFromUrl(start);
+        IconLoadMeasurer.loadFromUrl.end(start);
       }
     }
     else {
@@ -299,7 +299,7 @@ public final class ImageLoader {
         image = loadPngFromClassResource(descriptor.path, resourceClass, descriptor.scale, originalUserSize, BitUtil.isSet(flags, USE_IMAGE_IO));
       }
       if (start != -1) {
-        IconLoadMeasurer.addLoadFromResources(start);
+        IconLoadMeasurer.loadFromResources.end(start);
       }
     }
 
@@ -367,7 +367,7 @@ public final class ImageLoader {
     }
     originalUserSize.setSize(image.getWidth(null) / scale, image.getHeight(null) / scale);
     if (start != -1) {
-      IconLoadMeasurer.pngDecoding.addDurationStartedAt(start);
+      IconLoadMeasurer.pngDecoding.end(start);
     }
     return image;
   }

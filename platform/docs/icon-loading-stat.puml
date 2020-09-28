@@ -3,7 +3,16 @@
 
 ' Time measurement: svg-decode includes svg-cache-read.
 
-:Load Image;
+:find-icon;
+note right
+  Externally called method ""IconLoader.findIcon""
+end note
+
+:find-icon-load;
+note right
+  Internally called method ""CachedImageIcon.loadImage"".
+  Called numerous times per ""CachedImageIcon"" instance — to compute a new scale.
+end note
 
 if (Is SVG) then (yes)
   :svg-load]
