@@ -1,20 +1,23 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
+import com.intellij.codeInsight.highlighting.HighlightManager
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.injected.changesHandler.range
@@ -25,7 +28,9 @@ import com.intellij.refactoring.extractMethod.newImpl.*
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil
+import com.intellij.refactoring.suggested.stripWhitespace
 import com.intellij.util.PsiNavigateUtil
+import com.intellij.util.SmartList
 
 class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOptions, private val popupProvider: ExtractMethodPopupProvider)
   : InplaceRefactoring(editor, null, extractOptions.project) {
@@ -99,6 +104,12 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     }
   }
 
+  private fun HighlightManager.addHighlight(editor: Editor, range: TextRange, attributes: TextAttributesKey): RangeHighlighter {
+    val out = SmartList<RangeHighlighter>()
+    this.addOccurrenceHighlight(editor, range.startOffset, range.endOffset, attributes, 0, out)
+    return out.first()
+  }
+
   override fun afterTemplateStart() {
     super.afterTemplateStart()
     popupProvider.setChangeListener { restartInplace() }
@@ -118,6 +129,21 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     TemplateInlayUtil.createNavigatableButtonWithPopup(templateState, offset, presentation, popupProvider.panel) ?: return
     fragmentsToRevert.forEach { Disposer.register(templateState, it) }
     setActiveExtractor(editor, this)
+
+    val range = fragmentsToRevert[1].range
+    val highlight = HighlightManager.getInstance(myProject).addHighlight(editor, range.range.stripWhitespace(editor.document.text), DiffColors.DIFF_INSERTED)
+    Disposer.register(templateState, Disposable { HighlightManager.getInstance(myProject).removeSegmentHighlighter(editor, highlight) })
+
+    val lineRanges = fragmentsToRevert.map { findLines(editor.document, it.range.range) }.map { it.first .. it.last + 1}
+
+    val preview = EditorCodePreview.getActivePreview(editor) ?: EditorPreviewUtils.addPreviewRanges(editor, lineRanges)
+    EditorCodePreview.setActivePreview(editor, preview)
+    preview.popups.forEach(CodeFragmentPopup::updateCodePreview)
+    preview.updateOnDocumentChange = true
+  }
+
+  private fun findLines(document: Document, range: TextRange): IntRange {
+    return document.getLineNumber(range.startOffset)..document.getLineNumber(range.endOffset)
   }
 
   fun restartInDialog() {
@@ -155,6 +181,7 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
   }
 
   override fun performCleanup() {
+    EditorCodePreview.getActivePreview(editor)?.updateOnDocumentChange = false
     revertState()
   }
 
