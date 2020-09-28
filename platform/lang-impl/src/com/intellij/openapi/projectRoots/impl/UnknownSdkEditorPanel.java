@@ -31,12 +31,12 @@ public final class UnknownSdkEditorPanel extends EditorNotificationPanel {
     setText(fix.getNotificationText());
 
     if (myAction != null) {
-      HyperlinkLabel label = createActionLabel(myAction.getActionText(), () -> {
+      HyperlinkLabel label = createActionLabel(myAction.getActionShortText(), () -> {
         if (!myIsRunning.compareAndSet(false, true)) return;
         myAction.applySuggestionAsync();
       }, true);
 
-      String tooltip = myAction.getCheckboxActionTooltip();
+      String tooltip = myAction.getActionTooltipText();
       if (tooltip != null) label.setToolTipText(tooltip);
     }
 
@@ -60,7 +60,7 @@ public final class UnknownSdkEditorPanel extends EditorNotificationPanel {
   @Override
   protected String getIntentionActionText() {
     UnknownSdkFixAction action = myFix.getSuggestedFixAction();
-    if (action != null) return action.getActionText();
+    if (action != null) return action.getActionShortText();
     return myFix.getIntentionActionText();
   }
 

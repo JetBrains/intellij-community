@@ -14,38 +14,33 @@ import org.jetbrains.annotations.Nullable;
 class UnknownInvalidSdkFixLocal implements UnknownSdkFixAction {
   private @NotNull final UnknownInvalidSdk mySdk;
   private @NotNull final Project myProject;
-  private @NotNull final UnknownSdkLocalSdkFix myLocalSdkFix;
+  private @NotNull final UnknownSdkLocalSdkFix myFix;
 
   UnknownInvalidSdkFixLocal(@NotNull UnknownInvalidSdk sdk,
                             @NotNull Project project,
                             @NotNull UnknownSdkLocalSdkFix localSdkFix) {
     mySdk = sdk;
     myProject = project;
-    myLocalSdkFix = localSdkFix;
+    myFix = localSdkFix;
   }
 
   @Override
-  public @NotNull @Nls String getActionKindText() {
-    return ProjectBundle.message("config.unknown.sdk.local.verb");
-  }
-
-  @Override
-  public @NotNull @Nls String getActionText() {
+  public @NotNull @Nls String getActionShortText() {
     String sdkTypeName = mySdk.mySdkType.getPresentableName();
-    return ProjectBundle.message("config.unknown.sdk.local", sdkTypeName, myLocalSdkFix.getPresentableVersionString());
+    return ProjectBundle.message("config.unknown.sdk.local", sdkTypeName, myFix.getPresentableVersionString());
   }
 
   @Override
-  public @Nullable @Nls String getCheckboxActionTooltip() {
-    return SdkListPresenter.presentDetectedSdkPath(myLocalSdkFix.getExistingSdkHome(), 90, 40);
+  public @Nullable @Nls String getActionTooltipText() {
+    return SdkListPresenter.presentDetectedSdkPath(myFix.getExistingSdkHome(), 90, 40);
   }
 
   @Override
-  public @NotNull @Nls String getCheckboxActionText() {
+  public @NotNull @Nls String getActionDetailedText() {
     String sdkTypeName = mySdk.mySdkType.getPresentableName();
-    return ProjectBundle.message("checkbox.text.use.for.invalid.sdk",
+    return ProjectBundle.message("label.text.use.for.invalid.sdk",
                                  sdkTypeName,
-                                 myLocalSdkFix.getPresentableVersionString(),
+                                 myFix.getPresentableVersionString(),
                                  sdkTypeName,
                                  mySdk.mySdk.getName());
   }
@@ -63,11 +58,15 @@ class UnknownInvalidSdkFixLocal implements UnknownSdkFixAction {
   }
 
   private void applyLocalFix(@NotNull Project project) {
-    String sdkFixVersionString = myLocalSdkFix.getVersionString();
-    String sdkHome = myLocalSdkFix.getExistingSdkHome();
+    String sdkFixVersionString = myFix.getVersionString();
+    String sdkHome = myFix.getExistingSdkHome();
 
     mySdk.copySdk(project, sdkFixVersionString, sdkHome);
-    myLocalSdkFix.configureSdk(mySdk.mySdk);
+    myFix.configureSdk(mySdk.mySdk);
   }
 
+  @Override
+  public String toString() {
+    return myFix.toString();
+  }
 }

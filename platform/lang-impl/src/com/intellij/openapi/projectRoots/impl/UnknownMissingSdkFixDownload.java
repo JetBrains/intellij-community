@@ -23,19 +23,14 @@ final class UnknownMissingSdkFixDownload implements UnknownSdkFixAction {
   }
 
   @Override
-  public @NotNull @Nls String getActionKindText() {
-    return ProjectBundle.message("config.unknown.sdk.download.verb");
+  public @NotNull @Nls String getActionShortText() {
+    return ProjectBundle.message("action.text.config.unknown.sdk.download", myFix.getDownloadDescription());
   }
 
   @Override
-  public @NotNull @Nls String getActionText() {
-    return ProjectBundle.message("config.unknown.sdk.download", myFix.getDownloadDescription());
-  }
-
-  @Override
-  public @NotNull @Nls String getCheckboxActionText() {
+  public @NotNull @Nls String getActionDetailedText() {
     String sdkTypeName = mySdk.getSdkType().getPresentableName();
-    return ProjectBundle.message("checkbox.text.download.for.missing.sdk",
+    return ProjectBundle.message("label.text.download.for.missing.sdk",
                                  myFix.getDownloadDescription(),
                                  sdkTypeName,
                                  mySdk.getSdkName()
@@ -60,5 +55,10 @@ final class UnknownMissingSdkFixDownload implements UnknownSdkFixAction {
   @Override
   public void applySuggestionModal(@NotNull ProgressIndicator indicator) {
     createDownloadTask().runBlocking(indicator);
+  }
+
+  @Override
+  public String toString() {
+    return myFix.toString();
   }
 }

@@ -15,14 +15,14 @@ class UnknownMissingSdkFixLocal implements UnknownSdkFixAction {
   private static final Logger LOG = Logger.getInstance(UnknownMissingSdkFixLocal.class);
 
   private @NotNull final String mySdkName;
-  private @NotNull final UnknownSdkLocalSdkFix myLocalSdkFix;
+  private @NotNull final UnknownSdkLocalSdkFix myFix;
   private @NotNull final UnknownSdk mySdk;
 
   UnknownMissingSdkFixLocal(@NotNull String sdkName,
                             @NotNull UnknownSdk sdk,
                             @NotNull UnknownSdkLocalSdkFix fix) {
     mySdkName = sdkName;
-    myLocalSdkFix = fix;
+    myFix = fix;
     mySdk = sdk;
   }
 
@@ -33,7 +33,7 @@ class UnknownMissingSdkFixLocal implements UnknownSdkFixAction {
 
   @NotNull
   UnknownSdkLocalSdkFix getLocalSdkFix() {
-    return myLocalSdkFix;
+    return myFix;
   }
 
   @NotNull
@@ -42,35 +42,30 @@ class UnknownMissingSdkFixLocal implements UnknownSdkFixAction {
   }
 
   @Override
-  public @NotNull @Nls String getActionKindText() {
-    return "TODO";
-  }
-
-  @Override
-  public @NotNull @Nls String getCheckboxActionTooltip() {
+  public @NotNull @Nls String getActionTooltipText() {
     return getUsedSdkPath();
   }
 
   public @NotNull @Nls String getUsedSdkPath() {
-    return SdkListPresenter.presentDetectedSdkPath(myLocalSdkFix.getExistingSdkHome(), 90, 40);
+    return SdkListPresenter.presentDetectedSdkPath(myFix.getExistingSdkHome(), 90, 40);
   }
 
   @Override
-  public @NotNull @Nls String getActionText() {
+  public @NotNull @Nls String getActionShortText() {
     String sdkTypeName = mySdk.getSdkType().getPresentableName();
-    return ProjectBundle.message("config.unknown.sdk.local", sdkTypeName, myLocalSdkFix.getPresentableVersionString());
+    return ProjectBundle.message("config.unknown.sdk.local", sdkTypeName, myFix.getPresentableVersionString());
   }
 
   public @NotNull @Nls String getActionAppliedMessage() {
-    return ProjectBundle.message("notification.text.sdk.usage.is.set.to", mySdkName, myLocalSdkFix.getVersionString());
+    return ProjectBundle.message("notification.text.sdk.usage.is.set.to", mySdkName, myFix.getVersionString());
   }
 
   @Override
-  public @NotNull @Nls String getCheckboxActionText() {
+  public @NotNull @Nls String getActionDetailedText() {
     String sdkTypeName = mySdk.getSdkType().getPresentableName();
-    return ProjectBundle.message("checkbox.text.use.for.unknown.sdk",
+    return ProjectBundle.message("label.text.use.for.unknown.sdk",
                                  sdkTypeName,
-                                 myLocalSdkFix.getPresentableVersionString(),
+                                 myFix.getPresentableVersionString(),
                                  sdkTypeName,
                                  mySdkName);
 
@@ -80,9 +75,9 @@ class UnknownMissingSdkFixLocal implements UnknownSdkFixAction {
   public void applySuggestionAsync() {
     ApplicationManager.getApplication().invokeLater(() -> {
       try {
-        UnknownSdkTracker.applyLocalFix(mySdk, myLocalSdkFix);
+        UnknownSdkTracker.applyLocalFix(mySdk, myFix);
       } catch (Throwable t) {
-        LOG.warn("Failed to configure " + mySdk.getSdkType().getPresentableName() + " " + " for " + mySdk + " for path " + myLocalSdkFix + ". " + t.getMessage(), t);
+        LOG.warn("Failed to configure " + mySdk.getSdkType().getPresentableName() + " " + " for " + mySdk + " for path " + myFix + ". " + t.getMessage(), t);
       }
     });
   }
@@ -90,7 +85,12 @@ class UnknownMissingSdkFixLocal implements UnknownSdkFixAction {
   @Override
   public void applySuggestionModal(@NotNull ProgressIndicator indicator) {
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      UnknownSdkTracker.applyLocalFix(mySdk, myLocalSdkFix);
+      UnknownSdkTracker.applyLocalFix(mySdk, myFix);
     });
+  }
+
+  @Override
+  public String toString() {
+    return myFix.toString();
   }
 }

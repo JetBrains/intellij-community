@@ -22,19 +22,14 @@ class UnknownInvalidSdkFixDownload implements UnknownSdkFixAction {
   }
 
   @Override
-  public @NotNull @Nls String getActionKindText() {
-    return ProjectBundle.message("config.unknown.sdk.download.verb");
+  public @NotNull @Nls String getActionShortText() {
+    return ProjectBundle.message("action.text.config.unknown.sdk.download", myFix.getDownloadDescription());
   }
 
   @Override
-  public @NotNull @Nls String getActionText() {
-    return ProjectBundle.message("config.unknown.sdk.download", myFix.getDownloadDescription());
-  }
-
-  @Override
-  public @NotNull @Nls String getCheckboxActionText() {
+  public @NotNull @Nls String getActionDetailedText() {
     String sdkTypeName = mySdk.mySdkType.getPresentableName();
-    return ProjectBundle.message("checkbox.text.download.for.missing.sdk",
+    return ProjectBundle.message("label.text.download.for.invalid.sdk",
                                  myFix.getDownloadDescription(),
                                  sdkTypeName,
                                  mySdk.mySdk.getName()
@@ -63,5 +58,10 @@ class UnknownInvalidSdkFixDownload implements UnknownSdkFixAction {
         UnknownSdkTracker.getInstance(project).updateUnknownSdksNow();
       }
     );
+  }
+
+  @Override
+  public String toString() {
+    return myFix.toString();
   }
 }

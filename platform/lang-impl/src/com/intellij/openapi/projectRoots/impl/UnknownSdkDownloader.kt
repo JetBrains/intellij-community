@@ -2,6 +2,7 @@
 package com.intellij.openapi.projectRoots.impl
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
@@ -77,9 +78,9 @@ internal class UnknownSdkDownloadTask(
     try {
       val task = fix.createTask(indicator)
       val downloadTracker = SdkDownloadTracker.getInstance()
-      sdk = createSdk.apply(task)
+      sdk = invokeAndWaitIfNeeded { createSdk.apply(task) }
       downloadTracker.configureSdk(sdk, task)
-      onSdkNameReady.consume(sdk)
+      invokeAndWaitIfNeeded { onSdkNameReady.consume(sdk) }
       downloadTracker.downloadSdk(task, listOf(sdk), indicator)
     }
     catch (t: Exception) {
@@ -90,7 +91,7 @@ internal class UnknownSdkDownloadTask(
       }
     }
     finally {
-      onCompleted.consume(sdk)
+      invokeAndWaitIfNeeded { onCompleted.consume(sdk) }
     }
   }
 }

@@ -7,16 +7,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface UnknownSdkFixAction {
-  /**
-   * @return the common text for grouping and naming the action
-   */
-  @NotNull @Nls String getActionKindText();
+  @NotNull @Nls String getActionShortText();
 
-  @NotNull @Nls String getActionText();
+  @NotNull @Nls String getActionDetailedText();
 
-  @NotNull @Nls String getCheckboxActionText();
-
-  default @Nullable @Nls String getCheckboxActionTooltip() {
+  default @Nullable @Nls String getActionTooltipText() {
     return null;
   }
 

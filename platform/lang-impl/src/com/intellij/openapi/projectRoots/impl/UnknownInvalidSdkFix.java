@@ -19,7 +19,7 @@ final class UnknownInvalidSdkFix implements UnknownSdkFix {
   private final @NotNull Project myProject;
   private final @NotNull String mySdkName;
   private final @NotNull UnknownInvalidSdk mySdk;
-  private final @Nullable UnknownSdkFixAction myFixAction;
+  private final @Nullable UnknownSdkFixAction myAction;
 
   UnknownInvalidSdkFix(@NotNull Project project,
                        @NotNull UnknownInvalidSdk invalidSdk,
@@ -27,7 +27,7 @@ final class UnknownInvalidSdkFix implements UnknownSdkFix {
     myProject = project;
     mySdkName = invalidSdk.getSdkName();
     mySdk = invalidSdk;
-    myFixAction = action;
+    myAction = action;
   }
 
   @Override
@@ -42,7 +42,7 @@ final class UnknownInvalidSdkFix implements UnknownSdkFix {
 
   @Override
   public @Nls @NotNull String getConfigureActionText() {
-    return ProjectBundle.message("config.invalid.sdk.configure");
+    return ProjectBundle.message("action.text.config.invalid.sdk.configure");
   }
 
   @Override
@@ -74,13 +74,13 @@ final class UnknownInvalidSdkFix implements UnknownSdkFix {
 
   @Override
   public @Nullable UnknownSdkFixAction getSuggestedFixAction() {
-    return myFixAction;
+    return myAction;
   }
 
   @Override
   public @Nls @NotNull String getNotificationText() {
     String sdkTypeName = mySdk.getSdkType().getPresentableName();
-    return ProjectBundle.message("config.invalid.sdk.notification.text", sdkTypeName, mySdkName);
+    return ProjectBundle.message("notification.text.config.invalid.sdk", sdkTypeName, mySdkName);
   }
 
   @Override
@@ -91,6 +91,6 @@ final class UnknownInvalidSdkFix implements UnknownSdkFix {
 
   @Override
   public String toString() {
-    return "InvalidSdkFixInfo { name: " + mySdkName + "}";
+    return "InvalidSdkFixInfo { name: " + mySdkName + ", " + myAction + "}";
   }
 }

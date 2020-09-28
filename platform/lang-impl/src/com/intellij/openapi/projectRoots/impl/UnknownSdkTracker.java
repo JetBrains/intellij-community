@@ -6,10 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Progressive;
-import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
@@ -67,7 +64,7 @@ public class UnknownSdkTracker {
     }
 
     ProgressManager.getInstance()
-      .run(new Task.Modal(myProject, ProjectBundle.message("progress.title.resolving.sdks"), false) {
+      .run(new Task.Modal(myProject, ProjectBundle.message("progress.title.resolving.sdks"), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           var snapshot = collector.collectSdksBlocking();
@@ -239,8 +236,7 @@ public class UnknownSdkTracker {
                                                            theFixAction));
                }
 
-               List<UnknownSdkFix> explicitProposals = applyAndRemoveLocalFixes(fixProposals, indicator);
-               showStatus.showStatus(explicitProposals);
+               showStatus.showStatus(fixProposals, indicator);
              } catch (Throwable t) {
                if (t instanceof ControlFlowException) {
                  showStatus.showInterruptedStatus();
@@ -254,32 +250,34 @@ public class UnknownSdkTracker {
   }
 
   public interface ShowStatusCallback {
-    void showStatus(@NotNull List<UnknownSdkFix> fixes);
+    void showStatus(@NotNull List<UnknownSdkFix> fixes, @NotNull ProgressIndicator indicator);
 
     default void showInterruptedStatus() {
-      showStatus(Collections.emptyList());
+      showStatus(Collections.emptyList(), new EmptyProgressIndicator());
     }
 
     default void showEmptyStatus() {
-      showStatus(Collections.emptyList());
+      showStatus(Collections.emptyList(), new EmptyProgressIndicator());
     }
   }
 
   private class DefaultShowStatusCallbackAdapter implements ShowStatusCallback {
     @Override
-    public void showStatus(@NotNull List<UnknownSdkFix> fixes) {
+    public void showStatus(@NotNull List<UnknownSdkFix> fixes, @NotNull ProgressIndicator indicator) {
+      fixes = applyAutoFixesAndNotify(fixes, indicator);
       UnknownSdkEditorNotification.getInstance(myProject).showNotifications(fixes);
     }
   }
 
   @NotNull
-  private List<UnknownSdkFix> applyAndRemoveLocalFixes(@NotNull List<UnknownSdkFix> fixes, @NotNull ProgressIndicator indicator) {
+  public List<UnknownSdkFix> applyAutoFixesAndNotify(@NotNull List<UnknownSdkFix> fixes, @NotNull ProgressIndicator indicator) {
     List<UnknownSdkFix> otherFixes = new ArrayList<>();
     List<UnknownMissingSdkFixLocal> localFixes = new ArrayList<>();
 
     for (UnknownSdkFix fix : fixes) {
-      if (fix instanceof UnknownMissingSdkFixLocal) {
-        localFixes.add((UnknownMissingSdkFixLocal)fix);
+      var action = fix.getSuggestedFixAction();
+      if (action instanceof UnknownMissingSdkFixLocal) {
+        localFixes.add((UnknownMissingSdkFixLocal)action);
       } else {
         otherFixes.add(fix);
       }

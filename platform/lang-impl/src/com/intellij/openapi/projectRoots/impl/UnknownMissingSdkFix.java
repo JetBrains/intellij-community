@@ -56,7 +56,7 @@ public class UnknownMissingSdkFix implements UnknownSdkFix {
   @Override
   public @Nls @NotNull String getNotificationText() {
     String sdkTypeName = getSdkType().getPresentableName();
-    return ProjectBundle.message("config.unknown.sdk.notification.text", sdkTypeName, mySdkName);
+    return ProjectBundle.message("notification.text.config.unknown.sdk", sdkTypeName, mySdkName);
   }
 
   @Override
@@ -67,11 +67,11 @@ public class UnknownMissingSdkFix implements UnknownSdkFix {
 
   @Override
   public @Nls @NotNull String getConfigureActionText() {
-    return ProjectBundle.message("config.unknown.sdk.configure");
+    return ProjectBundle.message("action.text.config.unknown.sdk.configure");
   }
 
   @Override
   public String toString() {
-    return "SdkFixInfo { name: " + mySdkName + "}";
+    return "SdkFixInfo { name: " + mySdkName + ", " + myAction + "}";
   }
 }

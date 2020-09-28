@@ -675,20 +675,23 @@ public final class CompileDriver {
       modulesWithoutJdkAssigned.add(module.getName());
     }
 
-    var showDialog = runUnknownSdkCheck && CompilerDriverUnknownSdkTracker
-      .getInstance(myProject)
-      .fixSdkSettings(projectSdkNotSpecified,
-                      scopeModules,
-                      JavaCompilerBundle.message("error.jdk.not.specified.with.fixSuggestion")).getShouldOpenProjectStructureDialog();
+    if (runUnknownSdkCheck) {
+      var result = CompilerDriverUnknownSdkTracker
+        .getInstance(myProject)
+        .fixSdkSettings(projectSdkNotSpecified, scopeModules);
 
-    if (showDialog) {
-      //we need the message with correctly updated JDKs
+      if (result.getShouldOpenProjectStructureDialog()) {
+        result.openProjectStructureDialogIfNeeded();
+        return false;
+      }
+
+      //we do not trust the CompilerDriverUnknownSdkTracker, to extra check has to be done anyways
       return validateJdks(scopeModules, false);
+    } else {
+      if (modulesWithoutJdkAssigned.isEmpty()) return true;
+      showNotSpecifiedError("error.jdk.not.specified", projectSdkNotSpecified, modulesWithoutJdkAssigned, JavaCompilerBundle.message("modules.classpath.title"));
+      return false;
     }
-
-    if (modulesWithoutJdkAssigned.isEmpty()) return false;
-    showNotSpecifiedError("error.jdk.not.specified", projectSdkNotSpecified, modulesWithoutJdkAssigned, JavaCompilerBundle.message("modules.classpath.title"));
-    return true;
   }
 
   private boolean validateOutputs(@NotNull List<Module> scopeModules) {
@@ -716,10 +719,10 @@ public final class CompileDriver {
       }
     }
 
-    if (modulesWithoutOutputPathSpecified.isEmpty()) return false;
+    if (modulesWithoutOutputPathSpecified.isEmpty()) return true;
 
     showNotSpecifiedError("error.output.not.specified", projectOutputNotSpecified, modulesWithoutOutputPathSpecified, DefaultModuleConfigurationEditorFactory.getInstance().getOutputEditorDisplayName());
-    return true;
+    return false;
   }
 
   private boolean validateCyclicDependencies(Module[] scopeModules) {

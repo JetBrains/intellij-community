@@ -1,21 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl
 
-import com.intellij.icons.AllIcons
-import com.intellij.ide.nls.NlsMessages
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
-import com.intellij.openapi.progress.forEachWithProgress
+import com.intellij.openapi.progress.withPushPop
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.impl.UnknownSdkTracker.ShowStatusCallback
+import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.ex.MultiLineLabel
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.Nls
 import javax.swing.Action
@@ -33,61 +30,82 @@ class UnknownSdkModalNotification(
 
   interface Outcome {
     val shouldOpenProjectStructureDialog: Boolean
+    fun openProjectStructureDialogIfNeeded()
+  }
+
+  val noSettingsDialogSuggested = object: Outcome {
+    override val shouldOpenProjectStructureDialog: Boolean = false
+    override fun openProjectStructureDialogIfNeeded() {}
   }
 
   private val OPEN_DIALOG = object : Outcome {
     override val shouldOpenProjectStructureDialog: Boolean = true
-  }
 
-  private val NO_DIALOG = object : Outcome {
-    override val shouldOpenProjectStructureDialog: Boolean = true
+    override fun openProjectStructureDialogIfNeeded() {
+      if (!shouldOpenProjectStructureDialog) return
+      val service = ProjectSettingsService.getInstance(project)
+      service.openProjectSettings()
+    }
   }
 
   interface UnknownSdkModalNotificationHandler : ShowStatusCallback {
     val outcome: Outcome
   }
 
-  fun newModalHandler(@Nls errorMessage: String): UnknownSdkModalNotificationHandler = object : ShowStatusCallback, UnknownSdkModalNotificationHandler {
-    override lateinit var outcome: Outcome
+  fun newModalHandler(@Nls dialogTitle: String,
+                      @Nls detailedMessage: String?
+  ): UnknownSdkModalNotificationHandler = object : ShowStatusCallback, UnknownSdkModalNotificationHandler {
+    override var outcome: Outcome = noSettingsDialogSuggested
 
-    override fun showStatus(actions: List<UnknownSdkFix>, indicator: ProgressIndicator) {
-      //nothing to do, so it's done!
-      if (actions.isEmpty()) {
-        outcome = NO_DIALOG
-        return
-      }
-
-      val actionsWithFix = actions.mapNotNull {
-        val fix = it.suggestedFixAction
-        if (fix != null) it to fix else null
-      }.toMap()
-
-      val actionsWithoutFix = actions.filter { it.suggestedFixAction == null }
-
-      val isOk = actionsWithFix.isNotEmpty() && invokeAndWaitIfNeeded {
-        createConfirmSdkDownloadFixDialog(errorMessage, actionsWithFix, actionsWithoutFix).showAndGet()
-      }
-
-      if (isOk) {
-        val success = applySuggestions(actionsWithFix.values.toList())
-        if (!success) {
-          outcome = OPEN_DIALOG
-        }
-      }
-
-      if (actionsWithoutFix.isNotEmpty()) {
-        outcome = OPEN_DIALOG
-      }
+    override fun showStatus(allActions: List<UnknownSdkFix>, indicator: ProgressIndicator) {
+      outcome = kotlin.runCatching { showStatusImpl(dialogTitle, detailedMessage, allActions, indicator) }.getOrElse { noSettingsDialogSuggested }
     }
   }
 
+  private fun showStatusImpl(@Nls dialogTitle: String,
+                             @Nls detailedMessage: String?,
+                             allActions: List<UnknownSdkFix>,
+                             indicator: ProgressIndicator) : Outcome {
+    if (allActions.isEmpty()) return noSettingsDialogSuggested
+
+    val actions = UnknownSdkTracker
+      .getInstance(project)
+      .applyAutoFixesAndNotify(allActions, indicator)
+
+    val actionsWithFix = actions.mapNotNull { it.suggestedFixAction }
+    val actionsWithoutFix = actions.filter { it.suggestedFixAction == null }
+
+    if (actionsWithFix.isEmpty()) {
+      //nothing to do. We fallback to the default behaviour because there is nothing we can do better
+      return noSettingsDialogSuggested
+    }
+
+    val isOk = invokeAndWaitIfNeeded {
+      createConfirmSdkDownloadFixDialog(dialogTitle, detailedMessage, actionsWithFix, actionsWithoutFix).showAndGet()
+    }
+
+    if (isOk) {
+      val suggestionsApplied = applySuggestions(actionsWithFix, indicator)
+      if (!suggestionsApplied) return OPEN_DIALOG
+    }
+
+    if (actionsWithoutFix.isNotEmpty()) {
+      return OPEN_DIALOG
+    }
+
+    return noSettingsDialogSuggested
+  }
+
   private fun createConfirmSdkDownloadFixDialog(
-    @Nls errorMessage: String,
-    actions: Map<UnknownSdkFix, UnknownSdkFixAction>,
+    @Nls dialogTitle: String,
+    @Nls detailedMessage: String?,
+    actions: List<UnknownSdkFixAction>,
     actionsWithoutFix: List<UnknownSdkFix>
   ) = object : DialogWrapper(project) {
     init {
-      title = ProjectBundle.message("dialog.title.resolving.sdks")
+      require(actions.isNotEmpty()) { "There must be fix suggestions! " }
+
+      title = dialogTitle
       setResizable(false)
       init()
 
@@ -101,17 +119,21 @@ class UnknownSdkModalNotification(
     }
 
     override fun createCenterPanel() = panel {
-      noteRow(errorMessage)
+      detailedMessage?.let {
+        row {
+          label(it)
+        }
+      }
+
+      row {
+        label(ProjectBundle.message("dialog.text.resolving.sdks.suggestions"))
+      }
 
       if (actions.isNotEmpty()) {
-        row {
-          label(ProjectBundle.message("dialog.text.resolving.sdks.suggestions"))
-        }
-
-        for ((_, fix) in actions) {
+        actions.sortedBy { it.actionDetailedText.toLowerCase() }.forEach {
           row(ProjectBundle.message("dialog.section.bullet")) {
-            val label = label(fix.checkboxActionText)
-            fix.checkboxActionTooltip?.let {
+            val label = label(it.actionDetailedText)
+            it.actionTooltipText?.let {
               label.comment(it)
             }
           }
@@ -119,38 +141,35 @@ class UnknownSdkModalNotification(
       }
 
       if (actionsWithoutFix.isNotEmpty()) {
-        val description = ProjectBundle.message(
-          "dialog.text.resolving.sdks.unknowns",
-          NlsMessages.formatAndList(actionsWithoutFix.mapNotNull { it.sdkTypeAndNameText }.toSortedSet()))
-
         row {
-          val label = MultiLineLabel(description)
-          label.icon = AllIcons.General.Warning
-          component(label)
+          label(ProjectBundle.message("dialog.text.resolving.sdks.unknowns"))
+        }
+
+        actionsWithoutFix.sortedBy { it.notificationText.toLowerCase() }.forEach {
+          row(ProjectBundle.message("dialog.section.bullet")) {
+            label(it.notificationText)
+          }
         }
       }
     }
   }
 
-  private fun applySuggestions(suggestions: List<UnknownSdkFixAction>): Boolean {
+  private fun applySuggestions(suggestions: List<UnknownSdkFixAction>, indicator: ProgressIndicator): Boolean {
     if (suggestions.isEmpty()) return true
 
     var isFailed = false
-    object : Task.Modal(project, "Configuring SDKs", true) {
-      override fun run(outerIndicator: ProgressIndicator) {
-        suggestions.forEachWithProgress(outerIndicator) { suggestion, subIndicator ->
-          try {
-            suggestion.applySuggestionModal(subIndicator)
-          }
-          catch (t: Throwable) {
-            isFailed = true
-            if (t is ControlFlowException) return
-            LOG.warn("Failed to apply suggestion $suggestion. ${t.message}", t)
-          }
+    for (suggestion in suggestions) {
+      try {
+        indicator.withPushPop {
+          suggestion.applySuggestionModal(indicator)
         }
       }
-    }.queue()
+      catch (t: Throwable) {
+        isFailed = true
+        if (t is ControlFlowException) break
+        LOG.warn("Failed to apply suggestion $suggestion. ${t.message}", t)
+      }
+    }
     return !isFailed
   }
-
 }
