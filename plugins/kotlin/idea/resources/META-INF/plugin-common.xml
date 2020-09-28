@@ -182,6 +182,8 @@
     <projectService serviceInterface="org.jetbrains.kotlin.idea.caches.resolve.ResolutionAnchorCacheService"
                     serviceImplementation="org.jetbrains.kotlin.idea.caches.resolve.ResolutionAnchorCacheServiceImpl"/>
 
+    <projectService serviceImplementation="org.jetbrains.kotlin.idea.DaemonCodeAnalyzerStatusService"/>
+
     <projectService serviceInterface="org.jetbrains.kotlin.resolve.ResolutionAnchorProvider"
                     serviceImplementation="org.jetbrains.kotlin.idea.caches.resolve.KotlinIdeResolutionAnchorService"/>
 
