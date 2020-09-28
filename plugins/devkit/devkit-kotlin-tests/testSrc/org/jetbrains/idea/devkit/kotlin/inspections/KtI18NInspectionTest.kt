@@ -106,8 +106,8 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
           fun foo(x : X) {
             prop = <warning descr="Hardcoded string literal: \"kotlin setter\"">"kotlin setter"</warning>
             x.foo = <warning descr="Hardcoded string literal: \"java qualified setter\"">"java qualified setter"</warning>
-            foo = "java superclass setter"
-            this.foo = "java superclass qualified setter"
+            foo = <warning descr="Hardcoded string literal: \"java superclass setter\"">"java superclass setter"</warning>
+            this.foo = <warning descr="Hardcoded string literal: \"java superclass qualified setter\"">"java superclass qualified setter"</warning>
           }
         }
     """.trimIndent())
