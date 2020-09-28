@@ -46,15 +46,6 @@ final class InlayModelWindow implements InlayModel {
     return null;
   }
 
-  @Override
-  public @Nullable <T extends EditorCustomElementRenderer> Inlay<T> addAfterLineEndElement(int offset,
-                                                                                           boolean relatesToPrecedingText,
-                                                                                           boolean insertFirst,
-                                                                                           @NotNull T renderer) {
-    logUnsupported();
-    return null;
-  }
-
   @NotNull
   @Override
   public List<Inlay<?>> getInlineElementsInRange(int startOffset, int endOffset) {

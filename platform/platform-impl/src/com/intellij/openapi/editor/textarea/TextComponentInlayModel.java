@@ -40,14 +40,6 @@ final class TextComponentInlayModel implements InlayModel {
     return null;
   }
 
-  @Override
-  public @Nullable <T extends EditorCustomElementRenderer> Inlay<T> addAfterLineEndElement(int offset,
-                                                                                           boolean relatesToPrecedingText,
-                                                                                           boolean insertFirst,
-                                                                                           @NotNull T renderer) {
-    return null;
-  }
-
   @NotNull
   @Override
   public List<Inlay<?>> getInlineElementsInRange(int startOffset, int endOffset) {
