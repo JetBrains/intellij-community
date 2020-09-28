@@ -69,16 +69,23 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="ai.catboost:catboost-prediction:0.24" type="repository">
-        <properties maven-id="ai.catboost:catboost-prediction:0.24" />
+        <properties maven-id="ai.catboost:catboost-prediction:0.24">
+          <exclude>
+            <dependency maven-id="com.google.code.findbugs:jsr305" />
+            <dependency maven-id="org.slf4j:slf4j-api" />
+          </exclude>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/ai/catboost/catboost-prediction/0.24/catboost-prediction-0.24.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/javax/validation/validation-api/1.1.0.Final/validation-api-1.1.0.Final.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/1.7.25/slf4j-api-1.7.25.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/ai/catboost/catboost-common/0.24/catboost-common-0.24.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/catboost/catboost-prediction/0.24/catboost-prediction-0.24-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/javax/validation/validation-api/1.1.0.Final/validation-api-1.1.0.Final-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/catboost/catboost-common/0.24/catboost-common-0.24-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
   </component>
