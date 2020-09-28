@@ -3,16 +3,29 @@ package com.intellij.openapi.fileTypes.impl.associate;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
+import com.intellij.openapi.fileTypes.FileNameMatcher;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.associate.ui.FileTypeAssociationDialog;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class OSAssociateFileTypesUtil {
-  public final static String ENABLE_REG_KEY =  "system.file.type.associations.enabled";
+  public final static String ENABLE_REG_KEY = "system.file.type.associations.enabled";
 
   private static final Logger LOG = Logger.getInstance(OSAssociateFileTypesUtil.class);
 
@@ -55,5 +68,100 @@ public class OSAssociateFileTypesUtil {
     void onSuccess(boolean isOsRestartRequired);
 
     void onFailure(@NotNull @Nls String errorMessage);
+  }
+
+  public static @NotNull List<String> getExtensions(@NotNull FileType fileType) {
+    return ContainerUtil.map(getExtensionMatchers(fileType), matcher -> matcher.getExtension());
+  }
+
+  public static @NotNull List<ExtensionFileNameMatcher> getExtensionMatchers(@NotNull FileType fileType) {
+    return getMatchers(fileType).stream()
+                                .filter(matcher -> matcher instanceof ExtensionFileNameMatcher)
+                                .map(matcher -> (ExtensionFileNameMatcher)matcher).collect(Collectors.toList());
+  }
+
+  public static @NotNull List<FileNameMatcher> getMatchers(@NotNull FileType fileType) {
+    if (fileType instanceof MyFileSubtype) {
+      return Collections.singletonList(((MyFileSubtype)fileType).getMatcher());
+    }
+    else {
+      return FileTypeManager.getInstance().getAssociations(fileType);
+    }
+  }
+
+  public static @NotNull List<FileType> createSubtypes(@NotNull FileType originalType) {
+    List<FileType> subtypes = new ArrayList<>();
+    for (FileNameMatcher matcher : FileTypeManager.getInstance().getAssociations(originalType)) {
+      if (matcher instanceof ExtensionFileNameMatcher) {
+        String name =
+          ((ExtensionFileNameMatcher)matcher).getExtension().equals(originalType.getDefaultExtension())
+          ? originalType.getName()
+          : originalType.getName() + "-" + matcher.getPresentableString().replaceAll("\\*", "x").replaceAll("\\.", "-");
+        subtypes.add(new MyFileSubtype(originalType, matcher, name, matcher.getPresentableString()));
+      }
+    }
+    return subtypes;
+  }
+
+  public static @Nullable FileNameMatcher getSubtypeMatcher(@NotNull FileType fileType) {
+    return fileType instanceof MyFileSubtype ? ((MyFileSubtype)fileType).getMatcher() : null;
+  }
+
+  private static class MyFileSubtype implements FileType {
+    private final          FileType        myOriginalType;
+    private final          FileNameMatcher myMatcher;
+    private final          String          myName;
+    private @NlsSafe final String          myDescription;
+
+    private MyFileSubtype(@NotNull FileType originalType,
+                          @NotNull FileNameMatcher matcher,
+                          @NotNull @NonNls String name,
+                          @NotNull @NonNls String description) {
+      myOriginalType = originalType;
+      myMatcher = matcher;
+      myName = name;
+      myDescription = description;
+    }
+
+    @Override
+    public @NonNls @NotNull String getName() {
+      return myName;
+    }
+
+    @Override
+    public @NlsContexts.Label @NotNull String getDescription() {
+      return myDescription;
+    }
+
+    @Override
+    public @NlsSafe @NotNull String getDefaultExtension() {
+      return myMatcher instanceof ExtensionFileNameMatcher ? ((ExtensionFileNameMatcher)myMatcher).getExtension() :
+             myOriginalType.getDefaultExtension();
+    }
+
+    @Override
+    public @Nullable Icon getIcon() {
+      return myOriginalType.getIcon();
+    }
+
+    @Override
+    public boolean isBinary() {
+      return myOriginalType.isBinary();
+    }
+
+    @Override
+    public boolean isReadOnly() {
+      return myOriginalType.isReadOnly();
+    }
+
+    @Override
+    public @NonNls @Nullable String getCharset(@NotNull VirtualFile file,
+                                               byte @NotNull [] content) {
+      return myOriginalType.getCharset(file, content);
+    }
+
+    private @NotNull FileNameMatcher getMatcher() {
+      return myMatcher;
+    }
   }
 }
