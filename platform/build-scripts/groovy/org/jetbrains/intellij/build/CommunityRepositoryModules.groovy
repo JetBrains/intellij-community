@@ -231,7 +231,7 @@ class CommunityRepositoryModules {
     },
     javaFXPlugin("intellij.javaFX.community"),
     plugin("intellij.terminal") {
-      withResource("resources/.zshrc", "")
+      withResource("resources/.zshenv", "")
       withResource("resources/jediterm-bash.in", "")
       withResource("resources/fish/config.fish", "fish")
     },
