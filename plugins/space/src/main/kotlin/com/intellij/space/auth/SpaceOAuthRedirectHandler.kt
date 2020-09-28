@@ -1,14 +1,19 @@
 package com.intellij.space.auth
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.concurrency.AppExecutorUtil
-import io.ktor.network.selector.ActorSelectorManager
-import io.ktor.network.sockets.ServerSocket
-import io.ktor.network.sockets.aSocket
-import io.ktor.network.sockets.openReadChannel
-import io.ktor.network.sockets.openWriteChannel
-import io.ktor.utils.io.readUTF8Line
-import io.ktor.utils.io.writeStringUtf8
-import kotlinx.coroutines.*
+import io.ktor.application.call
+import io.ktor.http.ContentType
+import io.ktor.request.uri
+import io.ktor.response.respondText
+import io.ktor.routing.get
+import io.ktor.routing.routing
+import io.ktor.server.engine.embeddedServer
+import io.ktor.server.jetty.Jetty
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.asCoroutineDispatcher
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.launch
 import java.io.IOException
@@ -16,51 +21,51 @@ import java.io.IOException
 private val ioDispatcher = AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()
 
 internal suspend fun startRedirectHandling(lifetime: Lifetime, ports: Collection<Int>): SpaceRedirectHandlingInfo? {
-  val redirectUrl = CompletableDeferred<String>()
-  val freePort = occupyAvailablePort(lifetime, ports) { serverSocket ->
-    val socket = serverSocket.accept()
-    launch(lifetime, ioDispatcher) {
-      val response = "<script>close()</script>"
-      val output = socket.openWriteChannel(autoFlush = true)
-      output.writeStringUtf8(
-        """
-        HTTP/1.1 200 OK
-        Content-Type: text/html
-        Content-Length: ${response.length}
-        
-        $response
-      """.trimIndent()
-      )
-    }
-
-    val input = socket.openReadChannel()
-    val line = input.readUTF8Line()!!.substringAfter("/").substringBefore(" ")
-    redirectUrl.complete(line)
-  } ?: return null
-  return SpaceRedirectHandlingInfo(freePort, redirectUrl)
-}
-
-private suspend fun occupyAvailablePort(lifetime: Lifetime, ports: Collection<Int>, withFreePort: suspend (ServerSocket) -> Unit): Int? {
-  val reservedPort = CompletableDeferred<Int?>()
+  val info = CompletableDeferred<SpaceRedirectHandlingInfo?>()
   launch(lifetime, ioDispatcher) {
     for (port in ports.distinct().shuffled()) {
       try {
-        aSocket(ActorSelectorManager(ioDispatcher)).tcp().bind(port = port).use { socket ->
-          reservedPort.complete(port)
-          withFreePort(socket)
-        }
+        val redirectUrl = startAuthServerAsync(lifetime, port)
+        info.complete(SpaceRedirectHandlingInfo(port, redirectUrl))
         break
       }
       catch (e: IOException) {
-        if (reservedPort.isCompleted) {
-          throw e
-        }
         // check next port
       }
     }
-    reservedPort.complete(null)
+    info.complete(null)
   }
-  return reservedPort.await()
+  return info.await()
+}
+
+private fun startAuthServerAsync(lifetime: Lifetime, port: Int): Deferred<String> {
+  val redirectUrl = CompletableDeferred<String>()
+  val server = embeddedServer(Jetty, port = port, host = "localhost") {
+    routing {
+      get("/auth") {
+        call.respondText(
+          "<html><body><script>close()</script></body></html>",
+          contentType = ContentType.Text.Html
+        )
+        redirectUrl.complete(call.request.uri)
+      }
+    }
+  }
+  server.start(wait = false)
+
+  fun stopServer() {
+    ApplicationManager.getApplication().executeOnPooledThread(Runnable {
+      server.stop(1000, 1000)
+    })
+  }
+  lifetime.addOrCallImmediately {
+    stopServer()
+  }
+  redirectUrl.invokeOnCompletion {
+    stopServer()
+  }
+
+  return redirectUrl
 }
 
 internal data class SpaceRedirectHandlingInfo(val port: Int, val redirectUrl: Deferred<String>)
