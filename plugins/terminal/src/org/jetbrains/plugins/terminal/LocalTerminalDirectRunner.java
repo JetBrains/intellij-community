@@ -304,11 +304,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         setLoginShellEnv(envs, loginShell);
       }
       else if (shellName.equals(ZSH_NAME)) {
-        String zdotdir = EnvironmentUtil.getEnvironmentMap().get(ZDOTDIR);
+        String zdotdir = envs.get(ZDOTDIR);
         if (StringUtil.isNotEmpty(zdotdir)) {
           envs.put("_INTELLIJ_ORIGINAL_ZDOTDIR", zdotdir);
         }
-        envs.put(ZDOTDIR, new File(rcFilePath).getParent());
+        envs.put(ZDOTDIR, PathUtil.getParentPath(rcFilePath));
       }
       else if (shellName.equals(FISH_NAME)) {
         String xdgConfig = EnvironmentUtil.getEnvironmentMap().get(XDG_CONFIG_HOME);
