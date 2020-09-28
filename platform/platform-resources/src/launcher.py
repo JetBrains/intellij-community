@@ -129,6 +129,8 @@ def start_new_instance(args):
     if sys.platform == 'darwin':
         if len(args) > 0:
             args.insert(0, '--args')
+        if '--wait' in args:
+            args.insert(0, '-W')
         os.execv('/usr/bin/open', ['open', '-na', RUN_PATH] + args)
     else:
         bin_file = os.path.split(RUN_PATH)[1]
