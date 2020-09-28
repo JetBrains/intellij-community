@@ -4,7 +4,6 @@ package git4idea.push;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.PushSource;
 import git4idea.GitLocalBranch;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class GitPushSource implements PushSource {
@@ -47,8 +46,7 @@ public abstract class GitPushSource implements PushSource {
     }
   }
 
-  @ApiStatus.Internal
-  public static class DetachedHead extends GitPushSource {
+  static class DetachedHead extends GitPushSource {
     @NotNull private final String myRevision;
 
     DetachedHead(@NotNull String revision) {
@@ -65,11 +63,6 @@ public abstract class GitPushSource implements PushSource {
     @Override
     public GitLocalBranch getBranch() {
       throw new IllegalStateException("Push is not allowed from detached HEAD");
-    }
-
-    @NotNull
-    public String getRevision() {
-      return myRevision;
     }
   }
 }
