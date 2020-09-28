@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
-import com.intellij.util.DeprecatedMethodException;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
@@ -33,11 +31,6 @@ public final class WeakValueHashMap<K,V> extends RefValueHashMap<K,V> {
    */
   @Deprecated
   public WeakValueHashMap() {
-    DeprecatedMethodException.report("Use ContainerUtil#createWeakValueMap() instead");
-  }
-
-  WeakValueHashMap(@NotNull TObjectHashingStrategy<K> strategy) {
-    super(strategy);
   }
 
   @Override

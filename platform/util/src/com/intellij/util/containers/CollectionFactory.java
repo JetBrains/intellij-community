@@ -30,29 +30,56 @@ public final class CollectionFactory {
 
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentWeakIdentityMap() {
-    return new ConcurrentWeakHashMap<>(ContainerUtil.identityStrategy());
+    return new ConcurrentWeakHashMap<>(HashingStrategy.identity());
   }
 
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K, V> Map<K, V> createWeakMap() {
-    return ContainerUtil.createWeakMap();
+    //noinspection deprecation
+    return new WeakHashMap<>(4, 0.8f, HashingStrategy.canonical());
+  }
+
+  @Contract(value = "_,_,_ -> new", pure = true)
+  public static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentWeakKeySoftValueIdentityMap(int initialCapacity,
+                                                                                                float loadFactor,
+                                                                                                int concurrencyLevel) {
+    //noinspection deprecation
+    return new ConcurrentWeakKeySoftValueHashMap<>(initialCapacity, loadFactor, concurrencyLevel, HashingStrategy.identity());
+  }
+
+  public static @NotNull <K, V> Map<K, V> createWeakIdentityMap(int initialCapacity, float loadFactor) {
+    //noinspection deprecation
+    return new WeakHashMap<>(initialCapacity, loadFactor, HashingStrategy.identity());
   }
 
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentWeakKeyWeakValueMap() {
-    return ContainerUtil.createConcurrentWeakKeyWeakValueMap(ContainerUtil.canonicalStrategy());
+    return new ConcurrentWeakKeyWeakValueHashMap<>(100, 0.75f, Runtime.getRuntime().availableProcessors(), HashingStrategy.canonical());
+  }
+
+  @Contract(value = " -> new", pure = true)
+  public static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentWeakKeyWeakValueIdentityMap() {
+    return new ConcurrentWeakKeyWeakValueHashMap<>(100, 0.75f, Runtime.getRuntime().availableProcessors(), HashingStrategy.identity());
   }
 
   @Contract(value = "_,_,_ -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentWeakMap(int initialCapacity,
                                                                             float loadFactor,
                                                                             int concurrencyLevel) {
-    return new ConcurrentWeakHashMap<>(initialCapacity, loadFactor, concurrencyLevel, ContainerUtil.canonicalStrategy());
+    return new ConcurrentWeakHashMap<>(initialCapacity, loadFactor, concurrencyLevel, HashingStrategy.canonical());
   }
 
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentWeakKeySoftValueMap() {
-    return ContainerUtil.createConcurrentWeakKeySoftValueMap();
+    return createConcurrentWeakKeySoftValueMap(100, 0.75f, Runtime.getRuntime().availableProcessors());
+  }
+
+  @Contract(value = "_,_,_,-> new", pure = true)
+  public static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentWeakKeySoftValueMap(int initialCapacity,
+                                                                                        float loadFactor,
+                                                                                        int concurrencyLevel) {
+    //noinspection deprecation
+    return new ConcurrentWeakKeySoftValueHashMap<>(initialCapacity, loadFactor, concurrencyLevel, HashingStrategy.canonical());
   }
 
   public static @NotNull <T> Map<CharSequence, T> createCharSequenceMap(boolean caseSensitive, int expectedSize, float loadFactor) {
@@ -95,6 +122,20 @@ public final class CollectionFactory {
     return new Object2ObjectOpenCustomHashMap<>(FastUtilHashingStrategies.getCaseInsensitiveStringStrategy());
   }
 
+  @Contract(value = "_,_,_ -> new", pure = true)
+  static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentSoftKeySoftValueMap(int initialCapacity,
+                                                                                 float loadFactor,
+                                                                                 int concurrencyLevel) {
+    return new ConcurrentSoftKeySoftValueHashMap<>(initialCapacity, loadFactor, concurrencyLevel, HashingStrategy.canonical());
+  }
+
+  @Contract(value = "_,_,_ -> new", pure = true)
+  static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentSoftKeySoftValueIdentityMap(int initialCapacity,
+                                                                                         float loadFactor,
+                                                                                         int concurrencyLevel) {
+    return new ConcurrentSoftKeySoftValueHashMap<>(initialCapacity, loadFactor, concurrencyLevel, HashingStrategy.identity());
+  }
+
   public static @NotNull Set<String> createFilePathSet() {
     if (SystemInfoRt.isFileSystemCaseSensitive) {
       return new HashSet<>();
@@ -128,7 +169,7 @@ public final class CollectionFactory {
 
   public static @NotNull Set<String> createFilePathSet(String @NotNull[] paths, boolean isFileSystemCaseSensitive) {
     if (isFileSystemCaseSensitive) {
-      return ContainerUtil.set(paths);
+      return new HashSet<>(Arrays.asList(paths));
     }
     return new ObjectOpenCustomHashSet<>(paths, FastUtilHashingStrategies.getCaseInsensitiveStringStrategy());
   }
@@ -273,6 +314,11 @@ public final class CollectionFactory {
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K,V> ConcurrentMap<K,V> createConcurrentSoftMap() {
     return new ConcurrentSoftHashMap<>();
+  }
+
+  public static @NotNull <K, V> Map<K, V> createSoftIdentityMap() {
+    //noinspection deprecation
+    return new SoftHashMap<>(HashingStrategy.identity());
   }
 
   public static void trimMap(@NotNull Map<?, ?> map) {
