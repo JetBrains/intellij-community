@@ -22,7 +22,7 @@ internal class IonObjectSerializer {
   val readerBuilder: IonReaderBuilder = IonReaderBuilder.standard().immutable()
 
   // by default only fields (including private)
-  private val propertyCollector = ClearablePropertyCollector(PropertyCollector.COLLECT_PRIVATE_FIELDS or PropertyCollector.COLLECT_FINAL_FIELDS)
+  private val propertyCollector = PropertyCollector(PropertyCollector.COLLECT_PRIVATE_FIELDS or PropertyCollector.COLLECT_FINAL_FIELDS)
 
   internal val bindingProducer = IonBindingProducer(propertyCollector)
 
@@ -115,7 +115,6 @@ internal class IonObjectSerializer {
 
   fun clearBindingCache() {
     bindingProducer.clearBindingCache()
-    propertyCollector.clearSerializationCaches()
   }
 
   private fun doWrite(obj: Any, writer: IonWriter, configuration: WriteConfiguration, originalType: Type?) {
@@ -205,11 +204,5 @@ private fun createIonWriterBuilder(binary: Boolean, out: OutputStream): IonWrite
   return when {
     binary -> binaryWriterBuilder.newWriter(out)
     else -> textWriterBuilder.build(out)
-  }
-}
-
-internal class ClearablePropertyCollector(flags: Byte) : PropertyCollector(flags) {
-  public override fun clearSerializationCaches() {
-    super.clearSerializationCaches()
   }
 }

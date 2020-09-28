@@ -68,7 +68,6 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.exists
 import com.intellij.util.messages.impl.MessageBusEx
-import com.intellij.util.xmlb.BeanBinding
 import org.jetbrains.annotations.NonNls
 import java.awt.Window
 import java.io.File
@@ -85,7 +84,7 @@ import kotlin.collections.component2
 
 object DynamicPlugins {
   private val LOG = logger<DynamicPlugins>()
-  private val GROUP_ID = "Dynamic plugin installation"
+  private const val GROUP_ID = "Dynamic plugin installation"
 
   private val classloadersFromUnloadedPlugins = ContainerUtil.createWeakValueMap<PluginId, PluginClassLoader>()
 
@@ -486,7 +485,6 @@ object DynamicPlugins {
             (project.getServiceIfCreated(CachedValuesManager::class.java) as CachedValuesManagerImpl?)?.clearCachedValues()
           }
           jdomSerializer.clearSerializationCaches()
-          BeanBinding.clearSerializationCaches()
           TypeFactory.defaultInstance().clearCache()
           @Suppress("DEPRECATION")
           com.intellij.openapi.util.DefaultJDOMExternalizer.clearFieldCache()

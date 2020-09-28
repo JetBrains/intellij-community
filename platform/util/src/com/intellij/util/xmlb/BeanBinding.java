@@ -23,7 +23,6 @@ import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Type;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 @ApiStatus.Internal
 public class BeanBinding extends NotNullDeserializeBinding {
@@ -291,16 +290,10 @@ public class BeanBinding extends NotNullDeserializeBinding {
   }
 
   private static final class XmlSerializerPropertyCollector extends PropertyCollector {
-    private final Map<Class<?>, List<MutableAccessor>> accessorCache = new ConcurrentHashMap<>();
-
-    XmlSerializerPropertyCollector() {
-      super(PropertyCollector.COLLECT_ACCESSORS);
-    }
-
-    @Override
-    public @NotNull List<MutableAccessor> collect(@NotNull Class<?> aClass) {
-      return accessorCache.computeIfAbsent(aClass, aClass1 -> {
-        List<MutableAccessor> result = super.collect(aClass1);
+    private final ClassValue<List<MutableAccessor>> accessorCache = new ClassValue<List<MutableAccessor>>() {
+      @Override
+      protected List<MutableAccessor> computeValue(Class<?> aClass) {
+        List<MutableAccessor> result = XmlSerializerPropertyCollector.super.collect(aClass);
         if (result.isEmpty() && !isAssertBindings(aClass)) {
           //noinspection deprecation
           if (JDOMExternalizable.class.isAssignableFrom(aClass)) {
@@ -315,7 +308,16 @@ public class BeanBinding extends NotNullDeserializeBinding {
           LOG.warn("no accessors for " + aClass.getName());
         }
         return result;
-      });
+      }
+    };
+
+    XmlSerializerPropertyCollector() {
+      super(PropertyCollector.COLLECT_ACCESSORS);
+    }
+
+    @Override
+    public @NotNull List<MutableAccessor> collect(@NotNull Class<?> aClass) {
+      return accessorCache.get(aClass);
     }
 
     @Override
@@ -336,12 +338,6 @@ public class BeanBinding extends NotNullDeserializeBinding {
              element.isAnnotationPresent(XMap.class) ||
              element.isAnnotationPresent(XCollection.class) ||
              element.isAnnotationPresent(AbstractCollection.class);
-    }
-
-    @Override
-    public void clearSerializationCaches() {
-      super.clearSerializationCaches();
-      accessorCache.clear();
     }
   }
 
@@ -413,9 +409,5 @@ public class BeanBinding extends NotNullDeserializeBinding {
       return new AttributeBinding(accessor, null);
     }
     return new OptionTagBinding(accessor, optionTag);
-  }
-
-  public static void clearSerializationCaches() {
-    PROPERTY_COLLECTOR.clearSerializationCaches();
   }
 }
