@@ -59,7 +59,7 @@
     <action id="NewElement" class="com.intellij.ide.actions.NewElementAction"/>
 
     <group id="OpenProjectGroup">
-      <group id="NewElementInMenuGroup" class="com.intellij.ide.actions.NewActionGroup" popup="true"/>
+      <group id="NewElementInMenuGroup" class="com.intellij.ide.actions.NewActionGroup" popup="true" searchable="false"/>
       <add-to-group group-id="FileOpenGroup" anchor="first"/>
     </group>
 

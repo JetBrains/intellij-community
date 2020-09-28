@@ -103,6 +103,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private static final String KEY_ATTR_NAME = "key";
   private static final String POPUP_ATTR_NAME = "popup";
   private static final String COMPACT_ATTR_NAME = "compact";
+  private static final String SEARCHABLE_ATTR_NAME = "searchable";
   private static final String SEPARATOR_ELEMENT_NAME = "separator";
   private static final String REFERENCE_ELEMENT_NAME = "reference";
   private static final String ABBREVIATION_ELEMENT_NAME = "abbreviation";
@@ -818,6 +819,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
           ((ActionGroupStub)group).setPopupDefinedInXml(true);
         }
       }
+
+      String searchable = element.getAttributeValue(SEARCHABLE_ATTR_NAME);
+      if (searchable != null) {
+        group.setSearchable(Boolean.parseBoolean(searchable));
+      }
+
       String shortcutOfActionId = element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME);
       if (customClass && shortcutOfActionId != null) {
         KeymapManagerEx.getInstanceEx().bindShortcuts(shortcutOfActionId, id);

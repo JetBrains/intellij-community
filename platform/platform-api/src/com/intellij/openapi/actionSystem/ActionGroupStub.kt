@@ -53,5 +53,6 @@ class ActionGroupStub(override val id: String, val actionClass: String, override
     if (popupDefinedInXml) {
       target.isPopup = isPopup
     }
+    target.isSearchable = isSearchable
   }
 }

@@ -232,6 +232,7 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
     }
 
     JBIterable<ActionWrapper> actionWrappers = actions.unique().filterMap(action -> {
+      if (action instanceof ActionGroup && !((ActionGroup) action).isSearchable()) return null;
       MatchMode mode = myModel.actionMatches(pattern, matcher, action);
       if (mode == MatchMode.NONE) return null;
       return new ActionWrapper(action, myModel.getGroupMapping(action), mode, dataContext, myModel);
