@@ -1,8 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.impl.tooltips.TooltipActionProvider;
@@ -103,7 +99,7 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
     if (action != null || Registry.is("ide.tooltip.show.with.actions")) {
       return new DaemonTooltipWithActionRenderer(text, action, width, action == null ? new Object[]{text} : new Object[]{text, action});
     }
-    
+
     return ErrorStripTooltipRendererProvider.super.calcTooltipRenderer(text, action, width);
   }
 
