@@ -468,7 +468,9 @@ public final class ExternalSystemUtil {
                   contentDescriptor.setActivateToolWindowWhenFailed(reportRefreshError);
                   contentDescriptor.setAutoFocusContent(reportRefreshError);
                   return contentDescriptor;
-                });
+                })
+                .withActions(consoleManager.getCustomActions(project, resolveProjectTask, null))
+                .withContextActions(consoleManager.getCustomContextActions(project, resolveProjectTask, null));
               Filter[] filters = consoleManager.getCustomExecutionFilters(project, resolveProjectTask, null);
               Arrays.stream(filters).forEach(buildDescriptor::withExecutionFilter);
               eventDispatcher.onEvent(id, new StartBuildEventImpl(buildDescriptor, BuildBundle.message("build.event.message.syncing")));
