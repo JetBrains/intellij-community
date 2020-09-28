@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
-import com.intellij.application.options.ReplacePathToMacroMap
-import com.intellij.openapi.application.PathMacros
 import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.openapi.components.PathMacroManager
+import com.intellij.openapi.components.impl.ModulePathMacroManager
+import com.intellij.openapi.components.impl.ProjectPathMacroManager
 import com.intellij.openapi.module.impl.ModulePath
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -25,7 +25,6 @@ import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.jps.model.serialization.PathMacroUtil
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
 import java.nio.file.Path
@@ -457,7 +456,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
 }
 
 class CachingJpsFileContentReader(projectBaseDirUrl: String) : JpsFileContentReader {
-  private val projectPathMacroManager = ProjectPathMacroManagerBridge(JpsPathUtil.urlToPath(projectBaseDirUrl))
+  private val projectPathMacroManager = ProjectPathMacroManager.createInstance({ JpsPathUtil.urlToPath(projectBaseDirUrl) }, null)
   private val fileContentCache = ConcurrentHashMap<String, Map<String, Element>>()
 
   override fun loadComponent(fileUrl: String, componentName: String, customModuleFilePath: String?): Element? {
@@ -482,44 +481,10 @@ class CachingJpsFileContentReader(projectBaseDirUrl: String) : JpsFileContentRea
                               customModuleFilePath: String?): PathMacroManager {
     val path = JpsPathUtil.urlToPath(fileUrl)
     return if (FileUtil.extensionEquals(fileUrl, "iml") || isExternalModuleFile(path)) {
-      ModulePathMacroManagerBridge(PathMacros.getInstance(), customModuleFilePath ?: path)
+      ModulePathMacroManager.createInstance { customModuleFilePath ?: path }
     }
     else {
       projectPathMacroManager
-    }
-  }
-
-  internal class ModulePathMacroManagerBridge(pathMacros: PathMacros, private val moduleFilePath: String) : PathMacroManager(
-    pathMacros) {
-    override fun getExpandMacroMap(): ExpandMacroToPathMap {
-      val result = super.getExpandMacroMap()
-      addFileHierarchyReplacements(
-        result, PathMacroUtil.MODULE_DIR_MACRO_NAME,
-        PathMacroUtil.getModuleDir(moduleFilePath))
-      return result
-    }
-
-    public override fun computeReplacePathMap(): ReplacePathToMacroMap {
-      val result = super.computeReplacePathMap()
-      val modulePath = PathMacroUtil.getModuleDir(moduleFilePath)
-      addFileHierarchyReplacements(
-        result, PathMacroUtil.MODULE_DIR_MACRO_NAME, modulePath,
-        PathMacroUtil.getUserHomePath())
-      return result
-    }
-  }
-
-  internal class ProjectPathMacroManagerBridge(private val projectDirPath: String) : PathMacroManager(PathMacros.getInstance()) {
-    override fun getExpandMacroMap(): ExpandMacroToPathMap {
-      val result = super.getExpandMacroMap()
-      addFileHierarchyReplacements(result, PathMacroUtil.PROJECT_DIR_MACRO_NAME, projectDirPath)
-      return result
-    }
-
-    override fun computeReplacePathMap(): ReplacePathToMacroMap {
-      val result = super.computeReplacePathMap()
-      addFileHierarchyReplacements(result, PathMacroUtil.PROJECT_DIR_MACRO_NAME, projectDirPath, null)
-      return result
     }
   }
 }

@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.components.ExpandMacroToPathMap
+import com.intellij.openapi.components.PathMacroMap
 import com.intellij.openapi.module.impl.ModulePath
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
@@ -21,6 +22,7 @@ interface JpsFileContentReader {
 
 interface JpsFileContentWriter {
   fun saveComponent(fileUrl: String, componentName: String, componentTag: Element?)
+  fun getReplacePathMacroMap(fileUrl: String): PathMacroMap
 }
 
 /**

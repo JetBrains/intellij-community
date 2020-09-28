@@ -2,6 +2,8 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.*
+import com.intellij.openapi.components.impl.ModulePathMacroManager
+import com.intellij.openapi.components.impl.ProjectPathMacroManager
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.project.Project
@@ -16,6 +18,7 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.*
 import org.jdom.Element
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.concurrent.ConcurrentHashMap
+import java.util.function.Supplier
 
 class ProjectStoreBridge(private val project: Project) : ModuleSavingCustomizer {
   override fun createSaveSessionProducerManager(): ProjectSaveSessionProducerManager {
@@ -54,6 +57,16 @@ private class JpsStorageContentWriter(private val session: ProjectWithModulesSav
       else {
         producer?.setState(null, componentName, componentTag)
       }
+    }
+  }
+
+  override fun getReplacePathMacroMap(fileUrl: String): PathMacroMap {
+    val filePath = JpsPathUtil.urlToPath(fileUrl)
+    return if (FileUtil.extensionEquals(filePath, "iml") || isExternalModuleFile(filePath)) {
+      ModulePathMacroManager.createInstance(Supplier { filePath }).replacePathMap
+    }
+    else {
+      ProjectPathMacroManager.getInstance(project).replacePathMap
     }
   }
 }
