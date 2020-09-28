@@ -1303,3 +1303,4 @@ gw.gosu.ij 5.0.0
 com.illuminatedcloud.intellij 1.8.5.7-idea19 1.8.5.5-idea19
 edu.clemson.resolve.jetbrains 0.1.2a
 com.ritesh.intellij.plugin.reviewboard 0.1.4 0.1.3 v0.1.2 0.1.1 0.1.0 0.1.2-beta 0.1.1-beta 0.1.0-beta
+org.jetbrains.visual.programming.ide 1.0-SNAPSHOT

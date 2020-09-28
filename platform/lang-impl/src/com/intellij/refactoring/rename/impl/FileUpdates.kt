@@ -20,7 +20,6 @@ internal class FileUpdates(
   private val filesToRemove: List<VirtualFile>,
   private val documentModifications: List<Pair<RangeMarker, CharSequence>>
 ) {
-
   fun doUpdate() {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
 
@@ -63,7 +62,7 @@ internal class FileUpdates(
     }
 
     for ((path: Path, content: CharSequence) in filesToAdd) {
-      path.write(content, Charsets.UTF_8)
+      path.write(content)
     }
   }
 
