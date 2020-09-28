@@ -19,6 +19,7 @@ import javax.xml.stream.XMLStreamWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -71,10 +72,12 @@ class LinuxMimeTypeUpdater {
   }
 
 
-  static void createMimeFile(@NotNull List<MimeTypeDescription> mimeTypeDescriptions) throws IOException, XMLStreamException {
+  static void createMimeFile(@NotNull List<MimeTypeDescription> mimeTypeDescriptions)
+    throws IOException, XMLStreamException, OSFileAssociationException {
     XMLOutputFactory outputFactory =  XMLOutputFactory.newInstance();
-    final FileWriter fileWriter = new FileWriter(
-      System.getProperty("user.home") + File.separator + LOCAL_MIME_PACKAGES_PATH + File.separator + EXTENSIONS_FILE_NAME);
+    String mimePackagesPath = System.getProperty("user.home") + File.separator + LOCAL_MIME_PACKAGES_PATH;
+    ensureMimePackagesDirExists(mimePackagesPath);
+    final FileWriter fileWriter = new FileWriter(mimePackagesPath + File.separator + EXTENSIONS_FILE_NAME, StandardCharsets.UTF_8);
     XMLStreamWriter writer = outputFactory.createXMLStreamWriter(fileWriter);
     try {
       writer.writeStartDocument("UTF-8", "1.0");
@@ -91,6 +94,15 @@ class LinuxMimeTypeUpdater {
     finally {
       writer.flush();
       writer.close();
+    }
+  }
+
+  private static void ensureMimePackagesDirExists(@NotNull String mimePackagesPath) throws OSFileAssociationException {
+    File packagesDir = new File(mimePackagesPath);
+    if (!packagesDir.exists()) {
+      if (!packagesDir.mkdirs()) {
+        throw new OSFileAssociationException( mimePackagesPath + " directory doesn't exist and can't be created.");
+      }
     }
   }
 
