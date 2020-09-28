@@ -6,6 +6,7 @@ import com.intellij.ide.dnd.DnDDragStartBean
 import com.intellij.ide.dnd.DnDEvent
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -27,6 +28,7 @@ import com.intellij.ui.ClickListener
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.FontUtil
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.isEmpty
 import git4idea.conflicts.getConflictType
 import git4idea.i18n.GitBundle
@@ -50,6 +52,7 @@ import javax.swing.tree.TreePath
 import kotlin.streams.toList
 
 val GIT_FILE_STATUS_NODES_STREAM = DataKey.create<Stream<GitFileStatusNode>>("GitFileStatusNodesStream")
+val GIT_STAGE_TREE = DataKey.create<GitStageTree>("GitStageTree")
 
 abstract class GitStageTree(project: Project, parentDisposable: Disposable) : ChangesTree(project, false, true) {
   private var hoverNode: ChangesBrowserNode<*>? = null
@@ -113,6 +116,7 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
 
   override fun getData(dataId: String): Any? {
     return when {
+      GIT_STAGE_TREE.`is`(dataId) -> this
       GIT_FILE_STATUS_NODES_STREAM.`is`(dataId) -> selectedStatusNodes()
       VcsDataKeys.FILE_PATH_STREAM.`is`(dataId) -> selectedStatusNodes().map { it.filePath }
       VcsDataKeys.VIRTUAL_FILE_STREAM.`is`(dataId) -> selectedStatusNodes().map { it.filePath.virtualFile }.filter { it != null }
@@ -126,10 +130,39 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
   }
 
   fun selectedStatusNodes(): Stream<GitFileStatusNode> {
-    return VcsTreeModelData.selected(this).userObjectsStream()
-      .filter { it is GitFileStatusNode }
-      .map { it as GitFileStatusNode }
+    return VcsTreeModelData.selected(this).userObjectsStream(GitFileStatusNode::class.java)
   }
+
+  fun statusNodesListSelection(preferLimitedContext: Boolean): ListSelection<GitFileStatusNode> {
+    val entries = VcsTreeModelData.selected(this).userObjects(GitFileStatusNode::class.java)
+    if (entries.size > 1) {
+      return ListSelection.createAt(entries, 0)
+    }
+
+    val selected = entries.singleOrNull()
+    val selectedKind = selected?.kind
+
+    val allEntriesData: VcsTreeModelData = when {
+      preferLimitedContext && (selectedKind == NodeKind.UNSTAGED || selectedKind == NodeKind.UNTRACKED) -> {
+        VcsTreeModelData.allUnderTag(this, NodeKind.UNSTAGED)
+      }
+      preferLimitedContext && selectedKind == NodeKind.STAGED -> {
+        VcsTreeModelData.allUnderTag(this, NodeKind.STAGED)
+      }
+      else -> {
+        VcsTreeModelData.all(this)
+      }
+    }
+
+    val allEntries = allEntriesData.userObjects(GitFileStatusNode::class.java)
+    return if (allEntries.size <= entries.size) {
+      ListSelection.createAt(entries, 0)
+    }
+    else {
+      ListSelection.create(allEntries, selected)
+    }
+  }
+
 
   private inner class MyTreeModelBuilder internal constructor(project: Project, grouping: ChangesGroupingPolicyFactory)
     : TreeModelBuilder(project, grouping) {
