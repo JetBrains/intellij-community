@@ -119,7 +119,6 @@ public final class MacOSApplicationProvider {
       Callback impl = new Callback() {
         @SuppressWarnings("unused")
         public void callback(ID self, String selector) {
-          //noinspection SSBasedInspection
           SwingUtilities.invokeLater(() -> {
             ActionManager actionManager = ActionManager.getInstance();
             MouseEvent mouseEvent = new MouseEvent(JOptionPane.getRootFrame(), MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, 0, 0, 1, false);
@@ -188,7 +187,7 @@ public final class MacOSApplicationProvider {
       ID urlTypes = Foundation.invoke(mainBundle, "objectForInfoDictionaryKey:", Foundation.nsString("CFBundleURLTypes"));
       if (urlTypes.equals(ID.NIL)) {
         BuildNumber build = ApplicationInfoImpl.getShadowInstance().getBuild();
-        if (!(build == null || build.isSnapshot())) {
+        if (!build.isSnapshot()) {
           LOG.warn("No URL bundle (CFBundleURLTypes) is defined in the main bundle.\n" +
                    "To be able to open external links, specify protocols in the app layout section of the build file.\n" +
                    "Example: args.urlSchemes = [\"your-protocol\"] will handle following links: your-protocol://open?file=file&line=line");
