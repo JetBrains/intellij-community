@@ -78,12 +78,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   @Nullable
   private static String findRCFile(@NotNull String shellName) {
     String rcfile = null;
-    //noinspection IfCanBeSwitch
     if (BASH_NAME.equals(shellName) || SH_NAME.equals(shellName)) {
       rcfile = "jediterm-bash.in";
     }
     else if (ZSH_NAME.equals(shellName)) {
-      rcfile = ".zshrc";
+      rcfile = ".zshenv";
     }
     else if (FISH_NAME.equals(shellName)) {
       rcfile = "fish/config.fish";
@@ -307,11 +306,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       else if (shellName.equals(ZSH_NAME)) {
         String zdotdir = EnvironmentUtil.getEnvironmentMap().get(ZDOTDIR);
         if (StringUtil.isNotEmpty(zdotdir)) {
-          envs.put("_OLD_ZDOTDIR", zdotdir);
-          File zshRc = new File(FileUtil.expandUserHome(zdotdir), ".zshrc");
-          if (zshRc.exists()) {
-            envs.put(JEDITERM_USER_RCFILE, zshRc.getAbsolutePath());
-          }
+          envs.put("_INTELLIJ_ORIGINAL_ZDOTDIR", zdotdir);
         }
         envs.put(ZDOTDIR, new File(rcFilePath).getParent());
       }
