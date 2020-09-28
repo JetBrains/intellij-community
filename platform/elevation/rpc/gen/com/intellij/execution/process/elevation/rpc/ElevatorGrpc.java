@@ -27,66 +27,66 @@ public final class ElevatorGrpc {
   public static final String SERVICE_NAME = "elevation.rpc.Elevator";
 
   // Static method descriptors that strictly reflect the proto.
-  private static volatile io.grpc.MethodDescriptor<com.intellij.execution.process.elevation.rpc.SpawnRequest,
-      com.intellij.execution.process.elevation.rpc.SpawnReply> getSpawnMethod;
+  private static volatile io.grpc.MethodDescriptor<com.intellij.execution.process.elevation.rpc.CreateProcessRequest,
+      com.intellij.execution.process.elevation.rpc.CreateProcessReply> getCreateProcessMethod;
 
   @io.grpc.stub.annotations.RpcMethod(
-      fullMethodName = SERVICE_NAME + '/' + "Spawn",
-      requestType = com.intellij.execution.process.elevation.rpc.SpawnRequest.class,
-      responseType = com.intellij.execution.process.elevation.rpc.SpawnReply.class,
+      fullMethodName = SERVICE_NAME + '/' + "CreateProcess",
+      requestType = com.intellij.execution.process.elevation.rpc.CreateProcessRequest.class,
+      responseType = com.intellij.execution.process.elevation.rpc.CreateProcessReply.class,
       methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
-  public static io.grpc.MethodDescriptor<com.intellij.execution.process.elevation.rpc.SpawnRequest,
-      com.intellij.execution.process.elevation.rpc.SpawnReply> getSpawnMethod() {
-    io.grpc.MethodDescriptor<com.intellij.execution.process.elevation.rpc.SpawnRequest, com.intellij.execution.process.elevation.rpc.SpawnReply> getSpawnMethod;
-    if ((getSpawnMethod = ElevatorGrpc.getSpawnMethod) == null) {
+  public static io.grpc.MethodDescriptor<com.intellij.execution.process.elevation.rpc.CreateProcessRequest,
+      com.intellij.execution.process.elevation.rpc.CreateProcessReply> getCreateProcessMethod() {
+    io.grpc.MethodDescriptor<com.intellij.execution.process.elevation.rpc.CreateProcessRequest, com.intellij.execution.process.elevation.rpc.CreateProcessReply> getCreateProcessMethod;
+    if ((getCreateProcessMethod = ElevatorGrpc.getCreateProcessMethod) == null) {
       synchronized (ElevatorGrpc.class) {
-        if ((getSpawnMethod = ElevatorGrpc.getSpawnMethod) == null) {
-          ElevatorGrpc.getSpawnMethod = getSpawnMethod =
-              io.grpc.MethodDescriptor.<com.intellij.execution.process.elevation.rpc.SpawnRequest, com.intellij.execution.process.elevation.rpc.SpawnReply>newBuilder()
+        if ((getCreateProcessMethod = ElevatorGrpc.getCreateProcessMethod) == null) {
+          ElevatorGrpc.getCreateProcessMethod = getCreateProcessMethod =
+              io.grpc.MethodDescriptor.<com.intellij.execution.process.elevation.rpc.CreateProcessRequest, com.intellij.execution.process.elevation.rpc.CreateProcessReply>newBuilder()
               .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
-              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "Spawn"))
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "CreateProcess"))
               .setSampledToLocalTracing(true)
               .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
-                  com.intellij.execution.process.elevation.rpc.SpawnRequest.getDefaultInstance()))
+                  com.intellij.execution.process.elevation.rpc.CreateProcessRequest.getDefaultInstance()))
               .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
-                  com.intellij.execution.process.elevation.rpc.SpawnReply.getDefaultInstance()))
-              .setSchemaDescriptor(new ElevatorMethodDescriptorSupplier("Spawn"))
+                  com.intellij.execution.process.elevation.rpc.CreateProcessReply.getDefaultInstance()))
+              .setSchemaDescriptor(new ElevatorMethodDescriptorSupplier("CreateProcess"))
               .build();
         }
       }
     }
-    return getSpawnMethod;
+    return getCreateProcessMethod;
   }
 
-  private static volatile io.grpc.MethodDescriptor<com.intellij.execution.process.elevation.rpc.AwaitRequest,
-      com.intellij.execution.process.elevation.rpc.AwaitReply> getAwaitMethod;
+  private static volatile io.grpc.MethodDescriptor<com.intellij.execution.process.elevation.rpc.AwaitTerminationRequest,
+      com.intellij.execution.process.elevation.rpc.AwaitTerminationReply> getAwaitTerminationMethod;
 
   @io.grpc.stub.annotations.RpcMethod(
-      fullMethodName = SERVICE_NAME + '/' + "Await",
-      requestType = com.intellij.execution.process.elevation.rpc.AwaitRequest.class,
-      responseType = com.intellij.execution.process.elevation.rpc.AwaitReply.class,
+      fullMethodName = SERVICE_NAME + '/' + "AwaitTermination",
+      requestType = com.intellij.execution.process.elevation.rpc.AwaitTerminationRequest.class,
+      responseType = com.intellij.execution.process.elevation.rpc.AwaitTerminationReply.class,
       methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
-  public static io.grpc.MethodDescriptor<com.intellij.execution.process.elevation.rpc.AwaitRequest,
-      com.intellij.execution.process.elevation.rpc.AwaitReply> getAwaitMethod() {
-    io.grpc.MethodDescriptor<com.intellij.execution.process.elevation.rpc.AwaitRequest, com.intellij.execution.process.elevation.rpc.AwaitReply> getAwaitMethod;
-    if ((getAwaitMethod = ElevatorGrpc.getAwaitMethod) == null) {
+  public static io.grpc.MethodDescriptor<com.intellij.execution.process.elevation.rpc.AwaitTerminationRequest,
+      com.intellij.execution.process.elevation.rpc.AwaitTerminationReply> getAwaitTerminationMethod() {
+    io.grpc.MethodDescriptor<com.intellij.execution.process.elevation.rpc.AwaitTerminationRequest, com.intellij.execution.process.elevation.rpc.AwaitTerminationReply> getAwaitTerminationMethod;
+    if ((getAwaitTerminationMethod = ElevatorGrpc.getAwaitTerminationMethod) == null) {
       synchronized (ElevatorGrpc.class) {
-        if ((getAwaitMethod = ElevatorGrpc.getAwaitMethod) == null) {
-          ElevatorGrpc.getAwaitMethod = getAwaitMethod =
-              io.grpc.MethodDescriptor.<com.intellij.execution.process.elevation.rpc.AwaitRequest, com.intellij.execution.process.elevation.rpc.AwaitReply>newBuilder()
+        if ((getAwaitTerminationMethod = ElevatorGrpc.getAwaitTerminationMethod) == null) {
+          ElevatorGrpc.getAwaitTerminationMethod = getAwaitTerminationMethod =
+              io.grpc.MethodDescriptor.<com.intellij.execution.process.elevation.rpc.AwaitTerminationRequest, com.intellij.execution.process.elevation.rpc.AwaitTerminationReply>newBuilder()
               .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
-              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "Await"))
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "AwaitTermination"))
               .setSampledToLocalTracing(true)
               .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
-                  com.intellij.execution.process.elevation.rpc.AwaitRequest.getDefaultInstance()))
+                  com.intellij.execution.process.elevation.rpc.AwaitTerminationRequest.getDefaultInstance()))
               .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
-                  com.intellij.execution.process.elevation.rpc.AwaitReply.getDefaultInstance()))
-              .setSchemaDescriptor(new ElevatorMethodDescriptorSupplier("Await"))
+                  com.intellij.execution.process.elevation.rpc.AwaitTerminationReply.getDefaultInstance()))
+              .setSchemaDescriptor(new ElevatorMethodDescriptorSupplier("AwaitTermination"))
               .build();
         }
       }
     }
-    return getAwaitMethod;
+    return getAwaitTerminationMethod;
   }
 
   /**
@@ -139,34 +139,34 @@ public final class ElevatorGrpc {
 
     /**
      */
-    public void spawn(com.intellij.execution.process.elevation.rpc.SpawnRequest request,
-        io.grpc.stub.StreamObserver<com.intellij.execution.process.elevation.rpc.SpawnReply> responseObserver) {
-      asyncUnimplementedUnaryCall(getSpawnMethod(), responseObserver);
+    public void createProcess(com.intellij.execution.process.elevation.rpc.CreateProcessRequest request,
+        io.grpc.stub.StreamObserver<com.intellij.execution.process.elevation.rpc.CreateProcessReply> responseObserver) {
+      asyncUnimplementedUnaryCall(getCreateProcessMethod(), responseObserver);
     }
 
     /**
      */
-    public void await(com.intellij.execution.process.elevation.rpc.AwaitRequest request,
-        io.grpc.stub.StreamObserver<com.intellij.execution.process.elevation.rpc.AwaitReply> responseObserver) {
-      asyncUnimplementedUnaryCall(getAwaitMethod(), responseObserver);
+    public void awaitTermination(com.intellij.execution.process.elevation.rpc.AwaitTerminationRequest request,
+        io.grpc.stub.StreamObserver<com.intellij.execution.process.elevation.rpc.AwaitTerminationReply> responseObserver) {
+      asyncUnimplementedUnaryCall(getAwaitTerminationMethod(), responseObserver);
     }
 
     @java.lang.Override public final io.grpc.ServerServiceDefinition bindService() {
       return io.grpc.ServerServiceDefinition.builder(getServiceDescriptor())
           .addMethod(
-            getSpawnMethod(),
+            getCreateProcessMethod(),
             asyncUnaryCall(
               new MethodHandlers<
-                com.intellij.execution.process.elevation.rpc.SpawnRequest,
-                com.intellij.execution.process.elevation.rpc.SpawnReply>(
-                  this, METHODID_SPAWN)))
+                com.intellij.execution.process.elevation.rpc.CreateProcessRequest,
+                com.intellij.execution.process.elevation.rpc.CreateProcessReply>(
+                  this, METHODID_CREATE_PROCESS)))
           .addMethod(
-            getAwaitMethod(),
+            getAwaitTerminationMethod(),
             asyncUnaryCall(
               new MethodHandlers<
-                com.intellij.execution.process.elevation.rpc.AwaitRequest,
-                com.intellij.execution.process.elevation.rpc.AwaitReply>(
-                  this, METHODID_AWAIT)))
+                com.intellij.execution.process.elevation.rpc.AwaitTerminationRequest,
+                com.intellij.execution.process.elevation.rpc.AwaitTerminationReply>(
+                  this, METHODID_AWAIT_TERMINATION)))
           .build();
     }
   }
@@ -187,18 +187,18 @@ public final class ElevatorGrpc {
 
     /**
      */
-    public void spawn(com.intellij.execution.process.elevation.rpc.SpawnRequest request,
-        io.grpc.stub.StreamObserver<com.intellij.execution.process.elevation.rpc.SpawnReply> responseObserver) {
+    public void createProcess(com.intellij.execution.process.elevation.rpc.CreateProcessRequest request,
+        io.grpc.stub.StreamObserver<com.intellij.execution.process.elevation.rpc.CreateProcessReply> responseObserver) {
       asyncUnaryCall(
-          getChannel().newCall(getSpawnMethod(), getCallOptions()), request, responseObserver);
+          getChannel().newCall(getCreateProcessMethod(), getCallOptions()), request, responseObserver);
     }
 
     /**
      */
-    public void await(com.intellij.execution.process.elevation.rpc.AwaitRequest request,
-        io.grpc.stub.StreamObserver<com.intellij.execution.process.elevation.rpc.AwaitReply> responseObserver) {
+    public void awaitTermination(com.intellij.execution.process.elevation.rpc.AwaitTerminationRequest request,
+        io.grpc.stub.StreamObserver<com.intellij.execution.process.elevation.rpc.AwaitTerminationReply> responseObserver) {
       asyncUnaryCall(
-          getChannel().newCall(getAwaitMethod(), getCallOptions()), request, responseObserver);
+          getChannel().newCall(getAwaitTerminationMethod(), getCallOptions()), request, responseObserver);
     }
   }
 
@@ -218,16 +218,16 @@ public final class ElevatorGrpc {
 
     /**
      */
-    public com.intellij.execution.process.elevation.rpc.SpawnReply spawn(com.intellij.execution.process.elevation.rpc.SpawnRequest request) {
+    public com.intellij.execution.process.elevation.rpc.CreateProcessReply createProcess(com.intellij.execution.process.elevation.rpc.CreateProcessRequest request) {
       return blockingUnaryCall(
-          getChannel(), getSpawnMethod(), getCallOptions(), request);
+          getChannel(), getCreateProcessMethod(), getCallOptions(), request);
     }
 
     /**
      */
-    public com.intellij.execution.process.elevation.rpc.AwaitReply await(com.intellij.execution.process.elevation.rpc.AwaitRequest request) {
+    public com.intellij.execution.process.elevation.rpc.AwaitTerminationReply awaitTermination(com.intellij.execution.process.elevation.rpc.AwaitTerminationRequest request) {
       return blockingUnaryCall(
-          getChannel(), getAwaitMethod(), getCallOptions(), request);
+          getChannel(), getAwaitTerminationMethod(), getCallOptions(), request);
     }
   }
 
@@ -247,23 +247,23 @@ public final class ElevatorGrpc {
 
     /**
      */
-    public com.google.common.util.concurrent.ListenableFuture<com.intellij.execution.process.elevation.rpc.SpawnReply> spawn(
-        com.intellij.execution.process.elevation.rpc.SpawnRequest request) {
+    public com.google.common.util.concurrent.ListenableFuture<com.intellij.execution.process.elevation.rpc.CreateProcessReply> createProcess(
+        com.intellij.execution.process.elevation.rpc.CreateProcessRequest request) {
       return futureUnaryCall(
-          getChannel().newCall(getSpawnMethod(), getCallOptions()), request);
+          getChannel().newCall(getCreateProcessMethod(), getCallOptions()), request);
     }
 
     /**
      */
-    public com.google.common.util.concurrent.ListenableFuture<com.intellij.execution.process.elevation.rpc.AwaitReply> await(
-        com.intellij.execution.process.elevation.rpc.AwaitRequest request) {
+    public com.google.common.util.concurrent.ListenableFuture<com.intellij.execution.process.elevation.rpc.AwaitTerminationReply> awaitTermination(
+        com.intellij.execution.process.elevation.rpc.AwaitTerminationRequest request) {
       return futureUnaryCall(
-          getChannel().newCall(getAwaitMethod(), getCallOptions()), request);
+          getChannel().newCall(getAwaitTerminationMethod(), getCallOptions()), request);
     }
   }
 
-  private static final int METHODID_SPAWN = 0;
-  private static final int METHODID_AWAIT = 1;
+  private static final int METHODID_CREATE_PROCESS = 0;
+  private static final int METHODID_AWAIT_TERMINATION = 1;
 
   private static final class MethodHandlers<Req, Resp> implements
       io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
@@ -282,13 +282,13 @@ public final class ElevatorGrpc {
     @java.lang.SuppressWarnings("unchecked")
     public void invoke(Req request, io.grpc.stub.StreamObserver<Resp> responseObserver) {
       switch (methodId) {
-        case METHODID_SPAWN:
-          serviceImpl.spawn((com.intellij.execution.process.elevation.rpc.SpawnRequest) request,
-              (io.grpc.stub.StreamObserver<com.intellij.execution.process.elevation.rpc.SpawnReply>) responseObserver);
+        case METHODID_CREATE_PROCESS:
+          serviceImpl.createProcess((com.intellij.execution.process.elevation.rpc.CreateProcessRequest) request,
+              (io.grpc.stub.StreamObserver<com.intellij.execution.process.elevation.rpc.CreateProcessReply>) responseObserver);
           break;
-        case METHODID_AWAIT:
-          serviceImpl.await((com.intellij.execution.process.elevation.rpc.AwaitRequest) request,
-              (io.grpc.stub.StreamObserver<com.intellij.execution.process.elevation.rpc.AwaitReply>) responseObserver);
+        case METHODID_AWAIT_TERMINATION:
+          serviceImpl.awaitTermination((com.intellij.execution.process.elevation.rpc.AwaitTerminationRequest) request,
+              (io.grpc.stub.StreamObserver<com.intellij.execution.process.elevation.rpc.AwaitTerminationReply>) responseObserver);
           break;
         default:
           throw new AssertionError();
@@ -351,8 +351,8 @@ public final class ElevatorGrpc {
         if (result == null) {
           serviceDescriptor = result = io.grpc.ServiceDescriptor.newBuilder(SERVICE_NAME)
               .setSchemaDescriptor(new ElevatorFileDescriptorSupplier())
-              .addMethod(getSpawnMethod())
-              .addMethod(getAwaitMethod())
+              .addMethod(getCreateProcessMethod())
+              .addMethod(getAwaitTerminationMethod())
               .build();
         }
       }

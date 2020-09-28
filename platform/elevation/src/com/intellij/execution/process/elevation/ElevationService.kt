@@ -7,10 +7,10 @@ import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.elevation.daemon.ElevatorDaemonRuntimeClasspath
 import com.intellij.execution.process.elevation.daemon.ElevatorServer
-import com.intellij.execution.process.elevation.rpc.AwaitRequest
+import com.intellij.execution.process.elevation.rpc.AwaitTerminationRequest
 import com.intellij.execution.process.elevation.rpc.CommandLine
+import com.intellij.execution.process.elevation.rpc.CreateProcessRequest
 import com.intellij.execution.process.elevation.rpc.ElevatorGrpcKt.ElevatorCoroutineStub
-import com.intellij.execution.process.elevation.rpc.SpawnRequest
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
@@ -80,9 +80,9 @@ private class ElevatedProcess private constructor(
                elevatorClient: ElevatorClient,
                processBuilder: ProcessBuilder): ElevatedProcess {
       val pid = runBlocking(coroutineScope.coroutineContext) {
-        elevatorClient.spawn(processBuilder.command(),
-                             processBuilder.directory() ?: File(".").normalize(),  // defaults to current working directory
-                             processBuilder.environment())
+        elevatorClient.createProcess(processBuilder.command(),
+                                     processBuilder.directory() ?: File(".").normalize(),  // defaults to current working directory
+                                     processBuilder.environment())
       }
       return ElevatedProcess(coroutineScope, elevatorClient, pid)
     }
@@ -91,7 +91,7 @@ private class ElevatedProcess private constructor(
   private val reaper: Deferred<Int> = async {
     // must be called exactly once;
     // once invoked, the pid is no more valid, and the process must be assumed reaped
-    elevatorClient.await(pid)
+    elevatorClient.awaitTermination(pid)
   }
 
   override fun pid(): Long {
@@ -126,7 +126,7 @@ private class ElevatedProcess private constructor(
 private class ElevatorClient(private val channel: ManagedChannel) : Closeable {
   private val stub: ElevatorCoroutineStub = ElevatorCoroutineStub(channel)
 
-  suspend fun spawn(command: List<String>, workingDir: File, environVars: Map<String, String>): Long {
+  suspend fun createProcess(command: List<String>, workingDir: File, environVars: Map<String, String>): Long {
     val environVarList = environVars.map { (name, value) ->
       CommandLine.EnvironVar.newBuilder()
         .setName(name)
@@ -138,16 +138,16 @@ private class ElevatorClient(private val channel: ManagedChannel) : Closeable {
       .setWorkingDir(workingDir.absolutePath)
       .addAllEnvironVars(environVarList)
       .build()
-    val request = SpawnRequest.newBuilder().setCommandLine(commandLine).build()
-    val response = stub.spawn(request)
+    val request = CreateProcessRequest.newBuilder().setCommandLine(commandLine).build()
+    val response = stub.createProcess(request)
     return response.pid
   }
 
-  suspend fun await(pid: Long): Int {
-    val request = AwaitRequest.newBuilder()
+  suspend fun awaitTermination(pid: Long): Int {
+    val request = AwaitTerminationRequest.newBuilder()
       .setPid(pid)
       .build()
-    val reply = stub.await(request)
+    val reply = stub.awaitTermination(request)
     return reply.exitCode
   }
 

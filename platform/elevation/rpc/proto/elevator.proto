@@ -7,23 +7,23 @@ option java_package = "com.intellij.execution.process.elevation.rpc";
 option java_outer_classname = "ElevatorProto";
 
 service Elevator {
-  rpc Spawn (SpawnRequest) returns (SpawnReply) {}
-  rpc Await (AwaitRequest) returns (AwaitReply) {}
+  rpc CreateProcess (CreateProcessRequest) returns (CreateProcessReply) {}
+  rpc AwaitTermination (AwaitTerminationRequest) returns (AwaitTerminationReply) {}
 }
 
-message SpawnRequest {
+message CreateProcessRequest {
   CommandLine command_line = 1;
 }
 
-message SpawnReply {
+message CreateProcessReply {
   uint64 pid = 1;
 }
 
-message AwaitRequest {
+message AwaitTerminationRequest {
   uint64 pid = 1;
 }
 
-message AwaitReply {
+message AwaitTerminationReply {
   uint32 exit_code = 1;
 }
 

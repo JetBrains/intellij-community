@@ -4,25 +4,25 @@
 package com.intellij.execution.process.elevation.rpc;
 
 /**
- * Protobuf type {@code elevation.rpc.SpawnRequest}
+ * Protobuf type {@code elevation.rpc.CreateProcessRequest}
  */
-public final class SpawnRequest extends
+public final class CreateProcessRequest extends
     com.google.protobuf.GeneratedMessageV3 implements
-    // @@protoc_insertion_point(message_implements:elevation.rpc.SpawnRequest)
-    SpawnRequestOrBuilder {
+    // @@protoc_insertion_point(message_implements:elevation.rpc.CreateProcessRequest)
+    CreateProcessRequestOrBuilder {
 private static final long serialVersionUID = 0L;
-  // Use SpawnRequest.newBuilder() to construct.
-  private SpawnRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+  // Use CreateProcessRequest.newBuilder() to construct.
+  private CreateProcessRequest(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
     super(builder);
   }
-  private SpawnRequest() {
+  private CreateProcessRequest() {
   }
 
   @java.lang.Override
   @SuppressWarnings({"unused"})
   protected java.lang.Object newInstance(
       UnusedPrivateParameter unused) {
-    return new SpawnRequest();
+    return new CreateProcessRequest();
   }
 
   @java.lang.Override
@@ -30,7 +30,7 @@ private static final long serialVersionUID = 0L;
   getUnknownFields() {
     return this.unknownFields;
   }
-  private SpawnRequest(
+  private CreateProcessRequest(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
@@ -82,15 +82,15 @@ private static final long serialVersionUID = 0L;
   }
   public static final com.google.protobuf.Descriptors.Descriptor
       getDescriptor() {
-    return com.intellij.execution.process.elevation.rpc.ElevatorProto.internal_static_elevation_rpc_SpawnRequest_descriptor;
+    return com.intellij.execution.process.elevation.rpc.ElevatorProto.internal_static_elevation_rpc_CreateProcessRequest_descriptor;
   }
 
   @java.lang.Override
   protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internalGetFieldAccessorTable() {
-    return com.intellij.execution.process.elevation.rpc.ElevatorProto.internal_static_elevation_rpc_SpawnRequest_fieldAccessorTable
+    return com.intellij.execution.process.elevation.rpc.ElevatorProto.internal_static_elevation_rpc_CreateProcessRequest_fieldAccessorTable
         .ensureFieldAccessorsInitialized(
-            com.intellij.execution.process.elevation.rpc.SpawnRequest.class, com.intellij.execution.process.elevation.rpc.SpawnRequest.Builder.class);
+            com.intellij.execution.process.elevation.rpc.CreateProcessRequest.class, com.intellij.execution.process.elevation.rpc.CreateProcessRequest.Builder.class);
   }
 
   public static final int COMMAND_LINE_FIELD_NUMBER = 1;
@@ -159,10 +159,10 @@ private static final long serialVersionUID = 0L;
     if (obj == this) {
      return true;
     }
-    if (!(obj instanceof com.intellij.execution.process.elevation.rpc.SpawnRequest)) {
+    if (!(obj instanceof com.intellij.execution.process.elevation.rpc.CreateProcessRequest)) {
       return super.equals(obj);
     }
-    com.intellij.execution.process.elevation.rpc.SpawnRequest other = (com.intellij.execution.process.elevation.rpc.SpawnRequest) obj;
+    com.intellij.execution.process.elevation.rpc.CreateProcessRequest other = (com.intellij.execution.process.elevation.rpc.CreateProcessRequest) obj;
 
     if (hasCommandLine() != other.hasCommandLine()) return false;
     if (hasCommandLine()) {
@@ -189,69 +189,69 @@ private static final long serialVersionUID = 0L;
     return hash;
   }
 
-  public static com.intellij.execution.process.elevation.rpc.SpawnRequest parseFrom(
+  public static com.intellij.execution.process.elevation.rpc.CreateProcessRequest parseFrom(
       java.nio.ByteBuffer data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.intellij.execution.process.elevation.rpc.SpawnRequest parseFrom(
+  public static com.intellij.execution.process.elevation.rpc.CreateProcessRequest parseFrom(
       java.nio.ByteBuffer data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.intellij.execution.process.elevation.rpc.SpawnRequest parseFrom(
+  public static com.intellij.execution.process.elevation.rpc.CreateProcessRequest parseFrom(
       com.google.protobuf.ByteString data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.intellij.execution.process.elevation.rpc.SpawnRequest parseFrom(
+  public static com.intellij.execution.process.elevation.rpc.CreateProcessRequest parseFrom(
       com.google.protobuf.ByteString data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.intellij.execution.process.elevation.rpc.SpawnRequest parseFrom(byte[] data)
+  public static com.intellij.execution.process.elevation.rpc.CreateProcessRequest parseFrom(byte[] data)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data);
   }
-  public static com.intellij.execution.process.elevation.rpc.SpawnRequest parseFrom(
+  public static com.intellij.execution.process.elevation.rpc.CreateProcessRequest parseFrom(
       byte[] data,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws com.google.protobuf.InvalidProtocolBufferException {
     return PARSER.parseFrom(data, extensionRegistry);
   }
-  public static com.intellij.execution.process.elevation.rpc.SpawnRequest parseFrom(java.io.InputStream input)
+  public static com.intellij.execution.process.elevation.rpc.CreateProcessRequest parseFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static com.intellij.execution.process.elevation.rpc.SpawnRequest parseFrom(
+  public static com.intellij.execution.process.elevation.rpc.CreateProcessRequest parseFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input, extensionRegistry);
   }
-  public static com.intellij.execution.process.elevation.rpc.SpawnRequest parseDelimitedFrom(java.io.InputStream input)
+  public static com.intellij.execution.process.elevation.rpc.CreateProcessRequest parseDelimitedFrom(java.io.InputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input);
   }
-  public static com.intellij.execution.process.elevation.rpc.SpawnRequest parseDelimitedFrom(
+  public static com.intellij.execution.process.elevation.rpc.CreateProcessRequest parseDelimitedFrom(
       java.io.InputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
   }
-  public static com.intellij.execution.process.elevation.rpc.SpawnRequest parseFrom(
+  public static com.intellij.execution.process.elevation.rpc.CreateProcessRequest parseFrom(
       com.google.protobuf.CodedInputStream input)
       throws java.io.IOException {
     return com.google.protobuf.GeneratedMessageV3
         .parseWithIOException(PARSER, input);
   }
-  public static com.intellij.execution.process.elevation.rpc.SpawnRequest parseFrom(
+  public static com.intellij.execution.process.elevation.rpc.CreateProcessRequest parseFrom(
       com.google.protobuf.CodedInputStream input,
       com.google.protobuf.ExtensionRegistryLite extensionRegistry)
       throws java.io.IOException {
@@ -264,7 +264,7 @@ private static final long serialVersionUID = 0L;
   public static Builder newBuilder() {
     return DEFAULT_INSTANCE.toBuilder();
   }
-  public static Builder newBuilder(com.intellij.execution.process.elevation.rpc.SpawnRequest prototype) {
+  public static Builder newBuilder(com.intellij.execution.process.elevation.rpc.CreateProcessRequest prototype) {
     return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
   }
   @java.lang.Override
@@ -280,26 +280,26 @@ private static final long serialVersionUID = 0L;
     return builder;
   }
   /**
-   * Protobuf type {@code elevation.rpc.SpawnRequest}
+   * Protobuf type {@code elevation.rpc.CreateProcessRequest}
    */
   public static final class Builder extends
       com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-      // @@protoc_insertion_point(builder_implements:elevation.rpc.SpawnRequest)
-      com.intellij.execution.process.elevation.rpc.SpawnRequestOrBuilder {
+      // @@protoc_insertion_point(builder_implements:elevation.rpc.CreateProcessRequest)
+      com.intellij.execution.process.elevation.rpc.CreateProcessRequestOrBuilder {
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return com.intellij.execution.process.elevation.rpc.ElevatorProto.internal_static_elevation_rpc_SpawnRequest_descriptor;
+      return com.intellij.execution.process.elevation.rpc.ElevatorProto.internal_static_elevation_rpc_CreateProcessRequest_descriptor;
     }
 
     @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return com.intellij.execution.process.elevation.rpc.ElevatorProto.internal_static_elevation_rpc_SpawnRequest_fieldAccessorTable
+      return com.intellij.execution.process.elevation.rpc.ElevatorProto.internal_static_elevation_rpc_CreateProcessRequest_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
-              com.intellij.execution.process.elevation.rpc.SpawnRequest.class, com.intellij.execution.process.elevation.rpc.SpawnRequest.Builder.class);
+              com.intellij.execution.process.elevation.rpc.CreateProcessRequest.class, com.intellij.execution.process.elevation.rpc.CreateProcessRequest.Builder.class);
     }
 
-    // Construct using com.intellij.execution.process.elevation.rpc.SpawnRequest.newBuilder()
+    // Construct using com.intellij.execution.process.elevation.rpc.CreateProcessRequest.newBuilder()
     private Builder() {
       maybeForceBuilderInitialization();
     }
@@ -329,17 +329,17 @@ private static final long serialVersionUID = 0L;
     @java.lang.Override
     public com.google.protobuf.Descriptors.Descriptor
         getDescriptorForType() {
-      return com.intellij.execution.process.elevation.rpc.ElevatorProto.internal_static_elevation_rpc_SpawnRequest_descriptor;
+      return com.intellij.execution.process.elevation.rpc.ElevatorProto.internal_static_elevation_rpc_CreateProcessRequest_descriptor;
     }
 
     @java.lang.Override
-    public com.intellij.execution.process.elevation.rpc.SpawnRequest getDefaultInstanceForType() {
-      return com.intellij.execution.process.elevation.rpc.SpawnRequest.getDefaultInstance();
+    public com.intellij.execution.process.elevation.rpc.CreateProcessRequest getDefaultInstanceForType() {
+      return com.intellij.execution.process.elevation.rpc.CreateProcessRequest.getDefaultInstance();
     }
 
     @java.lang.Override
-    public com.intellij.execution.process.elevation.rpc.SpawnRequest build() {
-      com.intellij.execution.process.elevation.rpc.SpawnRequest result = buildPartial();
+    public com.intellij.execution.process.elevation.rpc.CreateProcessRequest build() {
+      com.intellij.execution.process.elevation.rpc.CreateProcessRequest result = buildPartial();
       if (!result.isInitialized()) {
         throw newUninitializedMessageException(result);
       }
@@ -347,8 +347,8 @@ private static final long serialVersionUID = 0L;
     }
 
     @java.lang.Override
-    public com.intellij.execution.process.elevation.rpc.SpawnRequest buildPartial() {
-      com.intellij.execution.process.elevation.rpc.SpawnRequest result = new com.intellij.execution.process.elevation.rpc.SpawnRequest(this);
+    public com.intellij.execution.process.elevation.rpc.CreateProcessRequest buildPartial() {
+      com.intellij.execution.process.elevation.rpc.CreateProcessRequest result = new com.intellij.execution.process.elevation.rpc.CreateProcessRequest(this);
       if (commandLineBuilder_ == null) {
         result.commandLine_ = commandLine_;
       } else {
@@ -392,16 +392,16 @@ private static final long serialVersionUID = 0L;
     }
     @java.lang.Override
     public Builder mergeFrom(com.google.protobuf.Message other) {
-      if (other instanceof com.intellij.execution.process.elevation.rpc.SpawnRequest) {
-        return mergeFrom((com.intellij.execution.process.elevation.rpc.SpawnRequest)other);
+      if (other instanceof com.intellij.execution.process.elevation.rpc.CreateProcessRequest) {
+        return mergeFrom((com.intellij.execution.process.elevation.rpc.CreateProcessRequest)other);
       } else {
         super.mergeFrom(other);
         return this;
       }
     }
 
-    public Builder mergeFrom(com.intellij.execution.process.elevation.rpc.SpawnRequest other) {
-      if (other == com.intellij.execution.process.elevation.rpc.SpawnRequest.getDefaultInstance()) return this;
+    public Builder mergeFrom(com.intellij.execution.process.elevation.rpc.CreateProcessRequest other) {
+      if (other == com.intellij.execution.process.elevation.rpc.CreateProcessRequest.getDefaultInstance()) return this;
       if (other.hasCommandLine()) {
         mergeCommandLine(other.getCommandLine());
       }
@@ -420,11 +420,11 @@ private static final long serialVersionUID = 0L;
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
-      com.intellij.execution.process.elevation.rpc.SpawnRequest parsedMessage = null;
+      com.intellij.execution.process.elevation.rpc.CreateProcessRequest parsedMessage = null;
       try {
         parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        parsedMessage = (com.intellij.execution.process.elevation.rpc.SpawnRequest) e.getUnfinishedMessage();
+        parsedMessage = (com.intellij.execution.process.elevation.rpc.CreateProcessRequest) e.getUnfinishedMessage();
         throw e.unwrapIOException();
       } finally {
         if (parsedMessage != null) {
@@ -565,41 +565,41 @@ private static final long serialVersionUID = 0L;
     }
 
 
-    // @@protoc_insertion_point(builder_scope:elevation.rpc.SpawnRequest)
+    // @@protoc_insertion_point(builder_scope:elevation.rpc.CreateProcessRequest)
   }
 
-  // @@protoc_insertion_point(class_scope:elevation.rpc.SpawnRequest)
-  private static final com.intellij.execution.process.elevation.rpc.SpawnRequest DEFAULT_INSTANCE;
+  // @@protoc_insertion_point(class_scope:elevation.rpc.CreateProcessRequest)
+  private static final com.intellij.execution.process.elevation.rpc.CreateProcessRequest DEFAULT_INSTANCE;
   static {
-    DEFAULT_INSTANCE = new com.intellij.execution.process.elevation.rpc.SpawnRequest();
+    DEFAULT_INSTANCE = new com.intellij.execution.process.elevation.rpc.CreateProcessRequest();
   }
 
-  public static com.intellij.execution.process.elevation.rpc.SpawnRequest getDefaultInstance() {
+  public static com.intellij.execution.process.elevation.rpc.CreateProcessRequest getDefaultInstance() {
     return DEFAULT_INSTANCE;
   }
 
-  private static final com.google.protobuf.Parser<SpawnRequest>
-      PARSER = new com.google.protobuf.AbstractParser<SpawnRequest>() {
+  private static final com.google.protobuf.Parser<CreateProcessRequest>
+      PARSER = new com.google.protobuf.AbstractParser<CreateProcessRequest>() {
     @java.lang.Override
-    public SpawnRequest parsePartialFrom(
+    public CreateProcessRequest parsePartialFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
-      return new SpawnRequest(input, extensionRegistry);
+      return new CreateProcessRequest(input, extensionRegistry);
     }
   };
 
-  public static com.google.protobuf.Parser<SpawnRequest> parser() {
+  public static com.google.protobuf.Parser<CreateProcessRequest> parser() {
     return PARSER;
   }
 
   @java.lang.Override
-  public com.google.protobuf.Parser<SpawnRequest> getParserForType() {
+  public com.google.protobuf.Parser<CreateProcessRequest> getParserForType() {
     return PARSER;
   }
 
   @java.lang.Override
-  public com.intellij.execution.process.elevation.rpc.SpawnRequest getDefaultInstanceForType() {
+  public com.intellij.execution.process.elevation.rpc.CreateProcessRequest getDefaultInstanceForType() {
     return DEFAULT_INSTANCE;
   }
 

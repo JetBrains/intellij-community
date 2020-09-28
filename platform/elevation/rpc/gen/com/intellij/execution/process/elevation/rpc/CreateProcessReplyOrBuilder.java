@@ -3,8 +3,8 @@
 
 package com.intellij.execution.process.elevation.rpc;
 
-public interface AwaitRequestOrBuilder extends
-    // @@protoc_insertion_point(interface_extends:elevation.rpc.AwaitRequest)
+public interface CreateProcessReplyOrBuilder extends
+    // @@protoc_insertion_point(interface_extends:elevation.rpc.CreateProcessReply)
     com.google.protobuf.MessageOrBuilder {
 
   /**
