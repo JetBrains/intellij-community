@@ -465,7 +465,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
       if (element instanceof NavigationItem) {
         return Optional.ofNullable(((NavigationItem)element).getPresentation())
           .map(presentation -> presentation.getPresentableText())
-          .orElse(super.getElementText(element));
+          .orElseGet(() -> super.getElementText(element));
       }
       return super.getElementText(element);
     }
