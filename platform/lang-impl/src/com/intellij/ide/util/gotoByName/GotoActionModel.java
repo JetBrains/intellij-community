@@ -427,7 +427,8 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   }
 
   protected MatchMode actionMatches(@NotNull String pattern, com.intellij.util.text.Matcher matcher, @NotNull AnAction anAction) {
-    Presentation presentation = anAction.getTemplatePresentation();
+    Presentation presentation = anAction.getTemplatePresentation().clone();
+    anAction.applyTextOverride(ActionPlaces.ACTION_SEARCH, presentation);
     String text = presentation.getText();
     String description = presentation.getDescription();
     if (text != null && matcher.matches(text)) {
@@ -629,6 +630,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     private final DataContext myDataContext;
     private final GotoActionModel myModel;
     private volatile Presentation myPresentation;
+    private final String myActionText;
 
     public ActionWrapper(@NotNull AnAction action,
                          @Nullable GroupMapping groupMapping,
@@ -640,6 +642,14 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       myGroupMapping = groupMapping;
       myDataContext = dataContext;
       myModel = model;
+
+      Presentation presentation = action.getTemplatePresentation().clone();
+      action.applyTextOverride(ActionPlaces.ACTION_SEARCH, presentation);
+      myActionText = presentation.getText();
+    }
+
+    public String getActionText() {
+      return myActionText;
     }
 
     @NotNull
@@ -657,8 +667,8 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       if (compared != 0) return compared;
       Presentation myPresentation = myAction.getTemplatePresentation();
       Presentation oPresentation = o.getAction().getTemplatePresentation();
-      String myText = StringUtil.notNullize(myPresentation.getText());
-      String oText = StringUtil.notNullize(oPresentation.getText());
+      String myText = StringUtil.notNullize(myActionText);
+      String oText = StringUtil.notNullize(o.getActionText());
       int byText = StringUtil.compare(StringUtil.trimEnd(myText, "..."), StringUtil.trimEnd(oText, "..."), true);
       if (byText != 0) return byText;
       int byTextLength = StringUtil.notNullize(myText).length() - StringUtil.notNullize(oText).length();

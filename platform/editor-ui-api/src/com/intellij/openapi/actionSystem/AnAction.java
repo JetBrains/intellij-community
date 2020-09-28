@@ -392,10 +392,15 @@ public abstract class AnAction implements PossiblyDumbAware {
   }
 
   @ApiStatus.Internal
-  public void applyTextOverride(AnActionEvent e) {
-    Supplier<String> override = myActionTextOverrides.get(e.getPlace());
+  public void applyTextOverride(@NotNull AnActionEvent event) {
+    applyTextOverride(event.getPlace(), event.getPresentation());
+  }
+
+  @ApiStatus.Internal
+  public void applyTextOverride(@NotNull String place, @NotNull Presentation presentation) {
+    Supplier<String> override = myActionTextOverrides.get(place);
     if (override != null) {
-      e.getPresentation().setText(override);
+      presentation.setText(override);
     }
   }
 
