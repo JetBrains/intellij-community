@@ -206,9 +206,8 @@ public class SdkDownloadTracker {
                          + myEditableSdks.copy() + ". " + exception.getMessage(), exception);
       }
     };
-
-    tracker.invokeLater(() -> sdks.forEach(pd::configureSdk));
     myPendingTasks.add(pd);
+    tracker.invokeLater(() -> sdks.forEach(pd::configureSdk));
 
     for (Sdk otherSdk : sdks) {
       if (otherSdk == sdk) continue;
