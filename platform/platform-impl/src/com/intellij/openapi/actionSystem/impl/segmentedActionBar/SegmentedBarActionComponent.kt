@@ -109,6 +109,8 @@ open class SegmentedBarActionComponent : AnAction(), CustomComponentAction {
 
         val createToolbarButton = super.createToolbarButton(action, buttonLook, place, presentation, minimumSize)
         createToolbarButton.border = JBUI.Borders.empty(0, 3)
+        createToolbarButton.setLook(buttonLook)
+
         return createToolbarButton
       }
 
@@ -137,6 +139,11 @@ open class SegmentedBarActionComponent : AnAction(), CustomComponentAction {
             add(ACTION_BUTTON_CONSTRAINT, component)
           }
         }
+      }
+
+      override fun paintComponent(g: Graphics) {
+        super.paintComponent(g)
+        painter.paintActionBarBackground(this, g)
       }
 
       override fun paintBorder(g: Graphics) {

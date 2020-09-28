@@ -8,9 +8,17 @@ class RunDebugLabelAction : ToolbarLabelAction() {
   override fun update(e: AnActionEvent) {
     super.update(e)
 
-    e.presentation.isVisible = true
-    e.presentation.isEnabled = true
-    e.presentation.text = "Run|Debug"
+    val active = e.project?.let {
+      RunDebugConfigManager.getInstance(it)?.getState()
+    }?.let {
+      if (it != RunDebugConfigManager.State.DEFAULT) {
+        e.presentation.text = it.toString()
+        true
+      } else false
+    } ?: false
+
+    e.presentation.isEnabledAndVisible = active
+
   }
 }
 

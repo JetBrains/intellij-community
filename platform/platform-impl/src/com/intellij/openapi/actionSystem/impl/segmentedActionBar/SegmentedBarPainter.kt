@@ -83,8 +83,9 @@ internal class SegmentedBarPainter {
   }
 
   fun paintActionButtonBackground(g: Graphics, component: JComponent, state: Int) {
+    if (state == ActionButtonComponent.NORMAL && !component.isBackgroundSet) return
     g.color = when (state) {
-      ActionButtonComponent.NORMAL -> if(component.isBackgroundSet) component.background else JBColor.namedColor("Panel.background", Gray.xCD)
+      ActionButtonComponent.NORMAL -> component.background
       ActionButtonComponent.PUSHED -> JBUI.CurrentTheme.ActionButton.pressedBackground()
       else -> JBUI.CurrentTheme.ActionButton.hoverBackground()
     }
@@ -150,7 +151,7 @@ internal class SegmentedBarPainter {
   }
 
   fun paintActionBarBackground(component: JComponent, g: Graphics) {
-    val bw = DarculaUIUtil.BW.float
+    val bw = 0f
 
     val g2 = g.create() as Graphics2D
     try {

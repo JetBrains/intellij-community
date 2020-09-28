@@ -5,9 +5,10 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.PillActionComponent
+import com.intellij.openapi.project.DumbAware
 import javax.swing.SwingUtilities
 
-class SegmentedRunDebugControlAction : PillActionComponent() {
+class SegmentedRunDebugControlAction : PillActionComponent(), DumbAware {
   init {
     ActionManager.getInstance().getAction("SegmentedRunDebugActionGroup")?.let {
       if(it is ActionGroup) {
@@ -20,6 +21,10 @@ class SegmentedRunDebugControlAction : PillActionComponent() {
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    e.presentation.isVisible = actionGroup != null
+    e.project?.let {
+      RunDebugConfigManager.getInstance(it)?.let { debugConfigManager ->
+        if(debugConfigManager.getState() != RunDebugConfigManager.State.DEFAULT) showPill() else hidePill()
+      }
+    }
   }
 }
