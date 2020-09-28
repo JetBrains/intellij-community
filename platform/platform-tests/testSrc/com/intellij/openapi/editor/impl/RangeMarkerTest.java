@@ -51,6 +51,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
   private PsiToDocumentSynchronizer synchronizer;
   private Document document;
   private PsiFile psiFile;
+  @SuppressWarnings("unused") // to avoid GC
   private FileASTNode fileNode;
 
   @Override
