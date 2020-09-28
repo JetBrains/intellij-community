@@ -1,4 +1,4 @@
-// "Convert to a record" "true"
+// "Convert to a record" "false"
 class <caret>R {
   /**
    * Empty

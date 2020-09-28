@@ -155,6 +155,7 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
         boolean isCanonical = ctorCandidate.myCanonical && throwsOnlyUncheckedExceptions(ctorCandidate.myConstructor);
         if (!isCanonical) return false;
       }
+      if (myFieldAccessors.size() == 0) return false;
       for (var entry : myFieldAccessors.entrySet()) {
         PsiField field = entry.getKey();
         if (!field.hasModifierProperty(FINAL) || field.hasInitializer()) return false;
