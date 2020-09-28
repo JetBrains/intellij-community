@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.android.tools.idea.gradle.dsl;
 
-import com.android.utils.BuildScriptUtil;
 import com.google.common.base.Strings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
@@ -25,14 +24,14 @@ public class GradleUtil {
 
   @Nullable
   public static VirtualFile getGradleSettingsFile(@NotNull File dirPath) {
-    File gradleSettingsFilePath = BuildScriptUtil.findGradleSettingsFile(dirPath);
+    File gradleSettingsFilePath = GradleDslBuildScriptUtil.findGradleSettingsFile(dirPath);
     VirtualFile result = findFileByIoFile(gradleSettingsFilePath, false);
     return (result != null && result.isValid()) ? result : null;
   }
 
   @Nullable
   public static VirtualFile getGradleBuildFile(@NotNull File dirPath) {
-    File gradleBuildFilePath = BuildScriptUtil.findGradleBuildFile(dirPath);
+    File gradleBuildFilePath = GradleDslBuildScriptUtil.findGradleBuildFile(dirPath);
     VirtualFile result = findFileByIoFile(gradleBuildFilePath, false);
     return (result != null && result.isValid()) ? result : null;
   }
