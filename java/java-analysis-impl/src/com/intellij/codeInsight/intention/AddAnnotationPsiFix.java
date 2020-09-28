@@ -329,7 +329,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
     for (String fqn : fqns) {
       PsiAnnotation annotation = AnnotationUtil.findAnnotation(owner, true, fqn);
       if (annotation != null && !AnnotationUtil.isInferredAnnotation(annotation)) {
-        annotation.delete();
+        new CommentTracker().deleteAndRestoreComments(annotation);
       }
     }
   }
