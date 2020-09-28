@@ -62,12 +62,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private static final Logger LOG = Logger.getInstance(FileTypeManagerImpl.class);
 
   // You must update all existing default configurations accordingly
-  private static final int VERSION = 17;
+  private static final int VERSION = 18;
   private static final ThreadLocal<Pair<VirtualFile, FileType>> FILE_TYPE_FIXED_TEMPORARILY = new ThreadLocal<>();
 
   // must be sorted
   @SuppressWarnings("SpellCheckingInspection")
-  static final String DEFAULT_IGNORED = "*.hprof;*.pyc;*.pyo;*.rbc;*.yarb;*~;.DS_Store;.git;.hg;.svn;CVS;__pycache__;_svn;vssver.scc;vssver2.scc;";
+  static final String DEFAULT_IGNORED = "*.pyc;*.pyo;*.rbc;*.yarb;*~;.DS_Store;.git;.hg;.svn;CVS;__pycache__;_svn;vssver.scc;vssver2.scc;";
 
   private final Set<FileType> myDefaultTypes = CollectionFactory.createSmallMemoryFootprintSet();
   private final FileTypeDetectionService myDetectionService;
@@ -861,10 +861,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       addIgnore(".git");
     }
 
-    if (savedVersion < 5) {
-      addIgnore("*.hprof");
-    }
-
     if (savedVersion < 6) {
       addIgnore("_svn");
     }
@@ -902,6 +898,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
     if (savedVersion < 17) {
       addIgnore("*.rbc");
+    }
+
+    if (savedVersion < 18) {
+      // we want .hprof back, we can open it in our profiler
+      unignoreMask("*.hprof");
     }
   }
 
