@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
-import com.intellij.Patches;
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.openapi.diagnostic.Logger;
@@ -41,12 +40,12 @@ import static org.junit.Assert.assertTrue;
 
 public final class IoTestUtil {
   @ReviseWhenPortedToJDK("13")
-  private static final @Nullable Boolean symLinkMode =
-    SystemInfo.isUnix ? Boolean.TRUE : SystemInfo.isWinVistaOrNewer ? canCreateSymlinks() : null;  // `TRUE` == NIO, `FALSE` == "mklink"
+  private static final @Nullable Boolean symLinkMode = SystemInfo.isUnix ? Boolean.TRUE : canCreateSymlinks();  // `TRUE` == NIO, `FALSE` == "mklink"
   public static final boolean isSymLinkCreationSupported = symLinkMode != null;
 
   private IoTestUtil() { }
 
+  @SuppressWarnings("SpellCheckingInspection")
   private static final String[] UNICODE_PARTS = {"Юникоде", "Úñíçødê"};
 
   @Nullable
@@ -101,7 +100,7 @@ public final class IoTestUtil {
   private static File createSymLink(String target, String link, @Nullable Boolean shouldExist) {
     File linkFile = getFullLinkPath(link), targetFile = new File(target);
     try {
-      if (!Patches.JDK_BUG_ID_JDK_8218418) {
+      if (symLinkMode == Boolean.TRUE) {
         Files.createSymbolicLink(linkFile.toPath(), targetFile.toPath());
       }
       else if (Files.isDirectory(targetFile.isAbsolute() ? targetFile.toPath() : linkFile.toPath().getParent().resolve(target))) {
@@ -363,7 +362,7 @@ public final class IoTestUtil {
             return Boolean.TRUE;
           }
           catch (IOException e) {
-            createSymbolicLink(link, target.getFileName());
+            runCommand("cmd", "/C", "mklink", link.toString(), target.getFileName().toString());
             return Boolean.FALSE;
           }
         }
