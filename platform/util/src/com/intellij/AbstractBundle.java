@@ -4,7 +4,6 @@ package com.intellij;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.DefaultBundleService;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.ConcurrentFactoryMap;
 import org.jetbrains.annotations.*;
 
 import java.lang.ref.Reference;
@@ -133,17 +132,16 @@ public abstract class AbstractBundle {
     return bundle;
   }
 
-  private static final Map<ClassLoader, Map<String, ResourceBundle>> ourCache =
-    ConcurrentFactoryMap.createWeakMap(k -> CollectionFactory.createConcurrentSoftValueMap());
-
-  private static final Map<ClassLoader, Map<String, ResourceBundle>> ourDefaultCache =
-    ConcurrentFactoryMap.createWeakMap(k -> CollectionFactory.createConcurrentSoftValueMap());
+  private static final Map<ClassLoader, Map<String, ResourceBundle>> ourCache = CollectionFactory.createConcurrentWeakMap();
+  private static final Map<ClassLoader, Map<String, ResourceBundle>> ourDefaultCache = CollectionFactory.createConcurrentWeakMap();
 
   public @NotNull ResourceBundle getResourceBundle(@NotNull @NonNls String pathToBundle, @NotNull ClassLoader loader) {
-    return getResourceBundle(pathToBundle, loader, DefaultBundleService.isDefaultBundle()? ourDefaultCache.get(loader) : ourCache.get(loader));
+    Map<String, ResourceBundle> cache = (DefaultBundleService.isDefaultBundle() ? ourDefaultCache : ourCache)
+      .computeIfAbsent(loader, __ -> CollectionFactory.createConcurrentSoftValueMap());
+    return getResourceBundle(pathToBundle, loader, cache);
   }
 
-  public ResourceBundle getResourceBundle(@NotNull @NonNls String pathToBundle, @NotNull ClassLoader loader, Map<String, ResourceBundle> map) {
+  private @NotNull ResourceBundle getResourceBundle(@NotNull @NonNls String pathToBundle, @NotNull ClassLoader loader, @NotNull Map<String, ResourceBundle> map) {
     ResourceBundle result = map.get(pathToBundle);
     if (result == null) {
       try {

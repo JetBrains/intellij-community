@@ -2,7 +2,6 @@
 package com.intellij.testFramework;
 
 import com.intellij.openapi.diagnostic.DefaultLogger;
-import com.intellij.util.ArrayUtil;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +27,7 @@ public class LoggedErrorProcessor {
   }
 
   public void processError(String message, Throwable t, String[] details, @NotNull Logger logger) {
-    if (t instanceof TestLoggerAssertionError && message.equals(t.getMessage()) && ArrayUtil.isEmpty(details)) {
+    if (t instanceof TestLoggerAssertionError && message.equals(t.getMessage()) && (details == null || details.length == 0)) {
       throw (TestLoggerAssertionError)t;
     }
 
