@@ -207,7 +207,7 @@ public class SdkDownloadTracker {
       }
     };
 
-    sdks.forEach(pd::configureSdk);
+    tracker.invokeLater(() -> sdks.forEach(pd::configureSdk));
     myPendingTasks.add(pd);
 
     for (Sdk otherSdk : sdks) {
