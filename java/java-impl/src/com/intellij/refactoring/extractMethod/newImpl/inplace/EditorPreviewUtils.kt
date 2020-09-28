@@ -19,9 +19,3 @@ private operator fun IntRange.contains(range: IntRange): Boolean {
 
 val IntRange.length: Int
   get() = last - first + 1
-
-private fun findVisibleLines(visibleArea: Rectangle, lineHeight: Int): IntRange {
-  val startLine = visibleArea.y / lineHeight + 1
-  val lastLine = (visibleArea.y + visibleArea.height) / lineHeight
-  return startLine..lastLine
-}

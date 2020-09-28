@@ -36,7 +36,7 @@ class CodeFragmentPopup(val editor: Editor, val lines: IntRange): Disposable {
   }
 
   private fun createEditorFragment(editor: Editor, lines: IntRange): EditorFragmentComponent {
-    return EditorFragmentComponent.createEditorFragmentComponent(editor, lines.first, lines.last, true, true)
+    return EditorFragmentComponent.createEditorFragmentComponent(editor, lines.first, lines.last + 1, true, true)
   }
 
   fun updateCodePreview() {

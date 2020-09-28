@@ -15,7 +15,6 @@ import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.RangeHighlighter
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
@@ -55,8 +54,9 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
 
   private val extractedRange = enclosingTextRangeOf(extractOptions.elements.first(), extractOptions.elements.last())
 
+  private val previewLines = mutableListOf<IntRange>()
+
   fun prepareCodeForTemplate() {
-    FileEditorManager.getInstance(myProject).selectedEditor!!
     val project = extractOptions.project
     val document = editor.document
 
@@ -83,7 +83,14 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     editor.caretModel.moveToOffset(callExpression.textOffset)
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
     setElementToRename(method)
+
+    val callPreview = findLines(document, enclosingTextRangeOf(callElements.first(), callElements.last()))
+    val methodPreview = findLines(document, method.textRange).trimTail(4)
+    previewLines.add(callPreview.first..callPreview.last)
+    previewLines.add(methodPreview)
   }
+
+  private fun IntRange.trimTail(maxLength: Int) = first until first + minOf(maxLength, length)
 
   override fun performInplaceRefactoring(nameSuggestions: LinkedHashSet<String>?): Boolean {
     ApplicationManager.getApplication().runWriteAction { prepareCodeForTemplate() }
@@ -134,9 +141,7 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     val highlight = HighlightManager.getInstance(myProject).addHighlight(editor, range.range.stripWhitespace(editor.document.text), DiffColors.DIFF_INSERTED)
     Disposer.register(templateState, Disposable { HighlightManager.getInstance(myProject).removeSegmentHighlighter(editor, highlight) })
 
-    val lineRanges = fragmentsToRevert.map { findLines(editor.document, it.range.range) }.map { it.first .. it.last + 1}
-
-    val preview = EditorCodePreview.getActivePreview(editor) ?: EditorPreviewUtils.addPreviewRanges(editor, lineRanges)
+    val preview = EditorCodePreview.getActivePreview(editor) ?: EditorPreviewUtils.addPreviewRanges(editor, previewLines)
     EditorCodePreview.setActivePreview(editor, preview)
     preview.popups.forEach(CodeFragmentPopup::updateCodePreview)
     preview.updateOnDocumentChange = true
