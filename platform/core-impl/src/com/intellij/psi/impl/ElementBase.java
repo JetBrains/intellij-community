@@ -45,21 +45,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     return icon;
   };
 
-  private static final NotNullLazyValue<Icon> VISIBILITY_ICON_PLACEHOLDER = new NotNullLazyValue<Icon>() {
-    @NotNull
-    @Override
-    protected Icon compute() {
-      return IconManager.getInstance().createEmptyIcon(PlatformIcons.PUBLIC_ICON);
-    }
-  };
-
-  public static final NotNullLazyValue<Icon> ICON_PLACEHOLDER = new NotNullLazyValue<Icon>() {
-    @NotNull
-    @Override
-    protected Icon compute() {
-      return AllIcons.Nodes.NodePlaceholder;
-    }
-  };
+  private static final NotNullLazyValue<Icon> VISIBILITY_ICON_PLACEHOLDER = NotNullLazyValue.createValue(() -> IconManager.getInstance().createEmptyIcon(PlatformIcons.PUBLIC_ICON));
 
   @Override
   @Nullable
@@ -78,12 +64,11 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     }
   }
 
-  @Nullable
-  private Icon computeIcon(@Iconable.IconFlags int flags) {
+  private @Nullable Icon computeIcon(@Iconable.IconFlags int flags) {
     PsiElement psiElement = (PsiElement)this;
     if (!psiElement.isValid()) return null;
 
-    if (Registry.is("psi.deferIconLoading")) {
+    if (Registry.is("psi.deferIconLoading", true)) {
       Icon baseIcon = LastComputedIcon.get(psiElement, flags);
       if (baseIcon == null) {
         baseIcon = AstLoadingFilter.disallowTreeLoading(() -> computeBaseIcon(flags));
@@ -94,8 +79,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     return computeIconNow(psiElement, flags);
   }
 
-  @Nullable
-  private static Icon computeIconNow(@NotNull PsiElement element, @Iconable.IconFlags int flags) {
+  private static @Nullable Icon computeIconNow(@NotNull PsiElement element, @Iconable.IconFlags int flags) {
     return AstLoadingFilter.disallowTreeLoading(() -> doComputeIconNow(element, flags));
   }
 
@@ -134,7 +118,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
         }
       }
     }
-    return ICON_PLACEHOLDER.getValue();
+    return AllIcons.Nodes.NodePlaceholder;
   }
 
   public static boolean isNativeFileType(FileType fileType) {
