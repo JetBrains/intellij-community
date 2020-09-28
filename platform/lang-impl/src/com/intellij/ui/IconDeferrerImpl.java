@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.concurrency.SameThreadExecutor;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +32,8 @@ public final class IconDeferrerImpl extends IconDeferrer {
   private final Cache<Object, Icon> iconCache = Caffeine.newBuilder()
     // registry should be not used as at this point of time user registry maybe not yet loaded
     .maximumSize(SystemProperties.getIntProperty("ide.icons.deferrerCacheSize", 1000))
+    // some icon implementations, e.g. ElementBase$ElementIconRequest, requires read action, so, perform cleanup in the requester thread
+    .executor(SameThreadExecutor.INSTANCE)
     .build();
   private final AtomicLong lastClearTimestamp = new AtomicLong();
 
