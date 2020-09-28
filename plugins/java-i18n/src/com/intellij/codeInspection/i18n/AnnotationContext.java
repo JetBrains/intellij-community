@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -245,7 +246,10 @@ final class AnnotationContext {
             var = ObjectUtils.tryCast(((UResolvable)leftOperand).resolve(), PsiModifierListOwner.class);
           }
         }
-        if (var instanceof PsiMethod && PsiType.VOID.equals(((PsiMethod)var).getReturnType())) {
+        if (var != null &&
+            var.getLanguage().isKindOf(JavaLanguage.INSTANCE) &&
+            var instanceof PsiMethod &&
+            PsiType.VOID.equals(((PsiMethod)var).getReturnType())) {
           // If assignment target is Java, it resolves to the setter
           PsiParameter[] parameters = ((PsiMethod)var).getParameterList().getParameters();
           if (parameters.length == 1) {
