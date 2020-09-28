@@ -68,6 +68,14 @@ public class NlsMessages {
   }
 
   /**
+   * @return a collector that collects a stream into the localized string that joins the stream elements using narrow conjunction formatting.
+   * E.g. Stream.of("X", "Y", "Z").collect(joiningNarrowAnd()) will produce "X, Y, Z" in English locale.
+   */
+  public static <T> @NotNull Collector<T, ?, @Nls String> joiningNarrowAnd() {
+    return Collectors.collectingAndThen(Collectors.toList(), NlsMessages::formatNarrowAndList);
+  }
+
+  /**
    * @return a collector that collects a stream into the localized string that joins the stream elements using disjunction formatting.
    * E.g. Stream.of("X", "Y", "Z").collect(joiningAnd()) will produce "X, Y, and Z" in English locale.
    */
