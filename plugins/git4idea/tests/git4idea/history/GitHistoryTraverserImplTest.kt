@@ -45,10 +45,10 @@ class GitHistoryTraverserImplTest : GitSingleRepoTest() {
 
     logData.refreshAndWait(repo, withIndex = true)
 
-    traverser.withIndex(listOf(repo.root)) { indexedRoots ->
+    traverser.addIndexingListener(listOf(repo.root), testRootDisposable) { indexedRoots ->
       val indexedRoot = indexedRoots.single()
       val authorCommitIds = indexedRoot.filterCommits(GitHistoryTraverser.IndexedRoot.TraverseCommitsFilter.Author(author))
-      traverse(indexedRoot.root) { (commitId, _) ->
+      traverser.traverse(indexedRoot.root) { (commitId, _) ->
         if (commitId in authorCommitIds) {
           loadFullDetailsLater(commitId) { details ->
             assertTrue(details.id in authorCommits)
@@ -113,7 +113,7 @@ class GitHistoryTraverserImplTest : GitSingleRepoTest() {
     makeCommit(anotherUser, file)
 
     logData.refreshAndWait(repo, withIndex = true)
-    traverser.withIndex(listOf(repo.root)) { indexedRoots ->
+    traverser.addIndexingListener(listOf(repo.root), testRootDisposable) { indexedRoots ->
       val indexedRoot = indexedRoots.single()
       val authorCommitIds = indexedRoot.filterCommits(GitHistoryTraverser.IndexedRoot.TraverseCommitsFilter.Author(author))
       val fileCommits = indexedRoot.filterCommits(GitHistoryTraverser.IndexedRoot.TraverseCommitsFilter.File(filePath))
@@ -136,7 +136,7 @@ class GitHistoryTraverserImplTest : GitSingleRepoTest() {
     val indexingWaiter = CompletableFuture<GitHistoryTraverser.IndexedRoot>()
     val indexWaiterDisposable = Disposable {}
     var blockExecutedCount = 0
-    traverser.withIndex(listOf(repo.root)) { indexedRoots ->
+    traverser.addIndexingListener(listOf(repo.root), testRootDisposable) { indexedRoots ->
       val indexedRoot = indexedRoots.single()
       blockExecutedCount++
       indexingWaiter.complete(indexedRoot)

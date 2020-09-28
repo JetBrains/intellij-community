@@ -35,11 +35,11 @@ interface GitHistoryTraverser : Disposable {
   )
 
   /**
-   * Subscribe for index finishing and call [block] when given roots are fully indexed.
+   * Subscribe for roots index finishing.
    *
-   * [block] shouldn't execute long running tasks.
+   * [IndexingListener.indexedRootsUpdated] may be called few times with subsets of [roots]
    */
-  fun withIndex(roots: Collection<VirtualFile>, block: GitHistoryTraverser.(Collection<IndexedRoot>) -> Unit)
+  fun addIndexingListener(roots: Collection<VirtualFile>, disposable: Disposable, listener: IndexingListener)
 
   /**
    * Load commit hash.
@@ -123,6 +123,13 @@ interface GitHistoryTraverser : Disposable {
        */
       class File(val file: FilePath) : TraverseCommitsFilter()
     }
+  }
+
+  fun interface IndexingListener {
+    /**
+     * Method shouldn't execute long running tasks.
+     */
+    fun indexedRootsUpdated(roots: Collection<IndexedRoot>)
   }
 
   sealed class StartNode {
