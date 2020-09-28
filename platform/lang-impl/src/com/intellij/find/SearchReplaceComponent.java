@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
@@ -74,6 +75,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
 
   private final Project myProject;
   private final JComponent myTargetComponent;
+  @Nullable private OnePixelSplitter mySplitter;
 
   private final Runnable myCloseAction;
   private final Runnable myReplaceAction;
@@ -206,37 +208,38 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
 
     if (showOnlySearchPanel) {
       add(leftPanel, BorderLayout.CENTER);
-    } else if(maximizeLeftPanelOnResize) {
-      OnePixelSplitter splitter = new OnePixelSplitter(false, 0.33F);
+    } else if (maximizeLeftPanelOnResize){
+      mySplitter = new OnePixelSplitter(false, 0.33F);
       rightPanel.setLayout(new FlowLayout(CENTER, 0 , 0));
       rightPanel.setMinimumSize(new Dimension(mySearchActionsToolbar.getActions().size()
-                                                     * ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width + RIGHT_PANEL_WEST_OFFSET, 0));
-      splitter.setDividerPositionStrategy(Splitter.DividerPositionStrategy.KEEP_SECOND_SIZE);
-      splitter.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
+                                              * ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width + RIGHT_PANEL_WEST_OFFSET, 0));
+      mySplitter.setDividerPositionStrategy(Splitter.DividerPositionStrategy.KEEP_SECOND_SIZE);
+      mySplitter.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
       rightPanel.setBorder(JBUI.Borders.emptyLeft(RIGHT_PANEL_WEST_OFFSET));
-      splitter.setFirstComponent(leftPanel);
-      splitter.setSecondComponent(rightPanel);
-      splitter.setHonorComponentsMinimumSize(true);
-      splitter.setHonorComponentsPreferredSize(false);
-      splitter.setAndLoadSplitterProportionKey("FindSplitterProportion");
-      splitter.setOpaque(false);
-      splitter.getDivider().setOpaque(false);
-      add(splitter, BorderLayout.CENTER);
-    }else{
-      OnePixelSplitter splitter = new OnePixelSplitter(false, .33F);
-      splitter = new OnePixelSplitter(false);
+      mySplitter.setFirstComponent(leftPanel);
+      mySplitter.setSecondComponent(rightPanel);
+      mySplitter.setHonorComponentsMinimumSize(true);
+      mySplitter.setHonorComponentsPreferredSize(false);
+      mySplitter.setAndLoadSplitterProportionKey("FindSplitterProportion");
+      mySplitter.setOpaque(false);
+      mySplitter.getDivider().setOpaque(false);
+      add(mySplitter, BorderLayout.CENTER);
+    } else {
+      mySplitter = new OnePixelSplitter(false, .33F);
       rightPanel.setBorder(JBUI.Borders.emptyLeft(6));
-      splitter.setFirstComponent(leftPanel);
-      splitter.setSecondComponent(rightPanel);
-      splitter.setHonorComponentsMinimumSize(true);
-      splitter.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
-      splitter.setHonorComponentsPreferredSize(true);
-      splitter.setAndLoadSplitterProportionKey("FindSplitterProportion");
-      splitter.setOpaque(false);
-      splitter.getDivider().setOpaque(false);
-      add(splitter, BorderLayout.CENTER);
-      splitter.setDividerPositionStrategy(Splitter.DividerPositionStrategy.KEEP_FIRST_SIZE);
-}
+      mySplitter.setFirstComponent(leftPanel);
+      mySplitter.setSecondComponent(rightPanel);
+      mySplitter.setHonorComponentsMinimumSize(true);
+      mySplitter.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
+      mySplitter.setHonorComponentsPreferredSize(true);
+      mySplitter.setDividerPositionStrategy(Splitter.DividerPositionStrategy.KEEP_FIRST_SIZE);
+      mySplitter.setAndLoadSplitterProportionKey("FindSplitterProportion");
+      mySplitter.setOpaque(false);
+      mySplitter.getDivider().setOpaque(false);
+      add(mySplitter, BorderLayout.CENTER);
+    }
+
+
     update("", "", false, false);
 
     // it's assigned after all action updates so that actions don't get access to uninitialized components
@@ -503,7 +506,20 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       innerTextComponent = ((SearchTextField) outerComponent).getTextEditor();
       innerTextComponent.setBorder(BorderFactory.createEmptyBorder());
     }else{
-      innerTextComponent = new JBTextArea();
+      innerTextComponent = new JBTextArea() {
+        @Override
+        public Dimension getPreferredScrollableViewportSize() {
+          Dimension defaultSize = super.getPreferredScrollableViewportSize();
+          if (mySplitter != null && mySplitter.getSecondComponent() != null && Registry.is("ide.find.expand.search.field.on.typing", true)) {
+            Dimension preferredSize = getPreferredSize();
+            int spaceForLeftPanel = mySplitter.getWidth() - mySplitter.getSecondComponent().getPreferredSize().width - mySplitter.getDividerWidth();
+            int allSearchTextAreaIcons = JBUI.scale(180);
+            int w = spaceForLeftPanel - allSearchTextAreaIcons;
+            return new Dimension(Math.min(Math.max(defaultSize.width, preferredSize.width), w), defaultSize.height);
+          }
+          return defaultSize;
+        }
+      };
       ((JBTextArea)innerTextComponent).setRows(isMultiline() ? 2 : 1);
       ((JBTextArea)innerTextComponent).setColumns(12);
       outerComponent = new SearchTextArea(((JBTextArea)innerTextComponent), search);
