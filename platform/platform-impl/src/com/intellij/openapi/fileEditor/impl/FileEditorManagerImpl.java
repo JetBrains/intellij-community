@@ -669,7 +669,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         return null;
       }
       
-      EditorWindow split = window.split(SwingConstants.VERTICAL, true, file, true);
+      EditorWindow split = active.openInRightSplit(file);
       if (split != null) {
         Ref<Pair<FileEditor[], FileEditorProvider[]>> ref = Ref.create();
         CommandProcessor.getInstance().executeCommand(myProject, () -> {

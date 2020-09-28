@@ -1087,6 +1087,29 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
     }
     return null;
   }
+  
+  @Nullable
+  public EditorWindow openInRightSplit(@NotNull VirtualFile file) {
+    EditorWindow window = getCurrentWindow();
+    
+    if (window == null) {
+      return null;
+    }
+    Container parent = window.myPanel.getParent();
+    if (parent instanceof Splitter) {
+      JComponent component = ((Splitter)parent).getSecondComponent();
+      if (component != window.myPanel) {
+        //reuse
+        EditorWindow rightSplitWindow = findWindowWith(component);
+        if (rightSplitWindow != null) {
+          myManager.openFileWithProviders(file, true, rightSplitWindow);
+          return rightSplitWindow;
+        }
+      }
+    }
+    
+    return window.split(SwingConstants.VERTICAL, true, file, true);
+  }
 
   public static boolean focusDefaultComponentInSplittersIfPresent(@NotNull Project project) {
     JComponent defaultFocusedComponentInEditor = findDefaultComponentInSplitters(project);
