@@ -38,15 +38,23 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
         if (JavaPsiRecordUtil.isCompactConstructor(method)) {
           checkCompact(method);
         }
-        else if (JavaPsiRecordUtil.isExplicitCanonicalConstructor(method)) {
+        else {
           checkCanonical(method);
         }
       }
 
       private void checkCanonical(PsiMethod ctor) {
-        ProblemDescriptor problemDescriptor = createCanonicalCtorProblemDescriptor(ctor, isOnTheFly);
-        if (problemDescriptor != null) {
-          holder.registerProblem(problemDescriptor);
+        ConstructorSimplifier simplifier = createCtorSimplifier(ctor);
+        if (simplifier instanceof CanonicalCtorSimplifier) {
+          PsiIdentifier nameIdentifier = ctor.getNameIdentifier();
+          if (nameIdentifier == null) return;
+          holder.registerProblem(nameIdentifier, JavaBundle.message("inspection.redundant.record.constructor.canonical.message"),
+                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL, simplifier.getQuickFix());
+        }
+        else if (simplifier instanceof CompactCtorSimplifier) {
+          holder.registerProblem(ctor.getParameterList(),
+                                 JavaBundle.message("inspection.redundant.record.constructor.can.be.compact.message"),
+                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL, simplifier.getQuickFix());
         }
       }
 
@@ -78,7 +86,8 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
   }
 
   @Nullable
-  public static ProblemDescriptor createCanonicalCtorProblemDescriptor(@NotNull PsiMethod ctor, boolean isOnTheFly) {
+  public static ConstructorSimplifier createCtorSimplifier(@NotNull PsiMethod ctor) {
+    if (!JavaPsiRecordUtil.isExplicitCanonicalConstructor(ctor)) return null;
     PsiCodeBlock body = ctor.getBody();
     if (body == null) return null;
     PsiIdentifier nameIdentifier = ctor.getNameIdentifier();
@@ -94,21 +103,15 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
     }
     PsiStatement[] statements = body.getStatements();
     int assignedCount = getAssignedComponentsCount(components, parameters, statements);
-    InspectionManager inspectionManager = InspectionManager.getInstance(ctor.getProject());
     if (statements.length == components.length && assignedCount == components.length &&
         ctor.getModifierList().getAnnotations().length == 0 && ctor.getDocComment() == null) {
-      return inspectionManager.createProblemDescriptor(nameIdentifier,
-                                                       JavaBundle.message("inspection.redundant.record.constructor.canonical.message"),
-                                                       new DeleteElementFix(ctor), ProblemHighlightType.LIKE_UNUSED_SYMBOL, isOnTheFly);
+      return new CanonicalCtorSimplifier(ctor);
     }
     if (PsiUtil.findReturnStatements(body).length > 0) return null;
     if (PsiUtil.getLanguageLevel(ctor) != LanguageLevel.JDK_14_PREVIEW && assignedCount != components.length) {
       return null;
     }
-    return inspectionManager.createProblemDescriptor(ctor.getParameterList(),
-                                                     JavaBundle.message("inspection.redundant.record.constructor.can.be.compact.message"),
-                                                     new ConvertToCompactConstructorFix(), ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                                                     isOnTheFly);
+    return new CompactCtorSimplifier();
   }
 
   private static int getAssignedComponentsCount(PsiRecordComponent @NotNull [] components,
@@ -138,7 +141,32 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
     return components.length - unprocessed.size();
   }
 
-  private static class ConvertToCompactConstructorFix implements LocalQuickFix {
+  public interface ConstructorSimplifier {
+    void simplify(@NotNull PsiMethod ctor);
+
+    LocalQuickFix getQuickFix();
+  }
+
+  private static class CanonicalCtorSimplifier implements ConstructorSimplifier {
+    private final PsiMethod myCtor;
+
+    private CanonicalCtorSimplifier(@NotNull PsiMethod ctor) {
+      myCtor = ctor;
+    }
+
+    @Override
+    public void simplify(@NotNull PsiMethod ctor) {
+      DeleteElementFix.deleteElement(myCtor);
+    }
+
+    @Override
+    public LocalQuickFix getQuickFix() {
+      return new DeleteElementFix(myCtor);
+    }
+  }
+
+  private static class CompactCtorSimplifier implements LocalQuickFix, ConstructorSimplifier {
+
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @Override
     public @NotNull String getFamilyName() {
@@ -148,7 +176,14 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiMethod ctor = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiMethod.class);
-      if (ctor == null || !JavaPsiRecordUtil.isExplicitCanonicalConstructor(ctor)) return;
+      if (ctor != null) {
+        simplify(ctor);
+      }
+    }
+
+    @Override
+    public void simplify(@NotNull PsiMethod ctor) {
+      if (!JavaPsiRecordUtil.isExplicitCanonicalConstructor(ctor)) return;
       PsiClass record = ctor.getContainingClass();
       if (record == null) return;
       PsiCodeBlock body = ctor.getBody();
@@ -177,9 +212,14 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
         }
         resultText.append(child.getText());
       }
-      PsiMethod compactCtor = JavaPsiFacade.getElementFactory(project).createMethodFromText(resultText.toString(), ctor);
+      PsiMethod compactCtor = JavaPsiFacade.getElementFactory(record.getProject()).createMethodFromText(resultText.toString(), ctor);
       PsiMethod result = (PsiMethod)ctor.replace(compactCtor);
       ct.insertCommentsBefore(Objects.requireNonNull(Objects.requireNonNull(result.getBody()).getRBrace()));
+    }
+
+    @Override
+    public LocalQuickFix getQuickFix() {
+      return this;
     }
   }
 }

@@ -1,9 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.classCanBeRecord;
 
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.RedundantRecordConstructorInspection;
+import com.intellij.codeInspection.RedundantRecordConstructorInspection.ConstructorSimplifier;
 import com.intellij.codeInspection.classCanBeRecord.ConvertToRecordFix.FieldAccessorCandidate;
 import com.intellij.codeInspection.classCanBeRecord.ConvertToRecordFix.RecordCandidate;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -11,7 +10,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.rename.RenameProcessor;
@@ -231,15 +229,13 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private void tryToCompactCanonicalCtor(@NotNull PsiClass record) {
-    PsiMethod[] ctors = record.getConstructors();
-    if (ctors.length != 1 || !JavaPsiRecordUtil.isExplicitCanonicalConstructor(ctors[0])) return;
-    ProblemDescriptor problemDescriptor = RedundantRecordConstructorInspection.createCanonicalCtorProblemDescriptor(ctors[0], true);
-    if (problemDescriptor == null) return;
-    @SuppressWarnings("unchecked")
-    QuickFix<ProblemDescriptor> firstFix = ArrayUtil.getFirstElement(problemDescriptor.getFixes());
-    if (firstFix != null) {
-      firstFix.applyFix(myProject, problemDescriptor);
+  private static void tryToCompactCanonicalCtor(@NotNull PsiClass record) {
+    PsiMethod canonicalCtor = ArrayUtil.getFirstElement(record.getConstructors());
+    if (canonicalCtor != null) {
+      ConstructorSimplifier ctorSimplifier = RedundantRecordConstructorInspection.createCtorSimplifier(canonicalCtor);
+      if (ctorSimplifier != null) {
+        ctorSimplifier.simplify(canonicalCtor);
+      }
     }
   }
 
