@@ -142,8 +142,7 @@ public final class DeleteHandler {
       }
     }
     else {
-      @SuppressWarnings({"UnresolvedPropertyKey"})
-      String warningMessage = DeleteUtil.generateWarningMessage(IdeBundle.message("prompt.delete.elements"), elements);
+      String warningMessage = DeleteUtil.generateWarningMessage("prompt.delete.elements", elements);
 
       boolean anyDirectories = false;
       String directoryName = null;
