@@ -2376,7 +2376,7 @@ public class UsageViewImpl implements UsageViewEx {
     Usage toSelect = null;
     for (Usage usage : toDelete) {
       Usage next = getNextToSelect(usage);
-      if (!toDelete.contains(next)) {
+      if (next != null && !toDelete.contains(next)) {
         toSelect = next;
         break;
       }
