@@ -37,8 +37,8 @@ class KotlincOutputParser : BuildOutputParser {
 
     val fileExtension = file.extension.toLowerCase()
     if (!file.isFile || (fileExtension != "kt" && fileExtension != "kts" && fileExtension != "java")) {
-      return addMessage(createMessage(reader.parentEventId, getMessageKind(severity), lineWoSeverity.amendNextLinesIfNeeded(reader), line),
-                        consumer)
+      val combinedMessage = lineWoSeverity.amendNextLinesIfNeeded(reader)
+      return addMessage(createMessage(reader.parentEventId, getMessageKind(severity), lineWoSeverity, combinedMessage), consumer)
     }
 
     val lineWoPath = lineWoSeverity.substringAfterAndTrim(colonIndex2)
@@ -86,8 +86,8 @@ class KotlincOutputParser : BuildOutputParser {
       return addMessage(createMessage(reader.parentEventId, getMessageKind(severity), message, details), consumer)
     }
     else {
-      val text = lineWoSeverity.amendNextLinesIfNeeded(reader)
-      return addMessage(createMessage(reader.parentEventId, getMessageKind(severity), text, text), consumer)
+      val combinedMessage = lineWoSeverity.amendNextLinesIfNeeded(reader)
+      return addMessage(createMessage(reader.parentEventId, getMessageKind(severity), lineWoSeverity, combinedMessage), consumer)
     }
   }
 
