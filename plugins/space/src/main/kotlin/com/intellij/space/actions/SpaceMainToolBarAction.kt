@@ -33,13 +33,23 @@ class SpaceMainToolBarAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     val isOnNavBar = e.place == ActionPlaces.NAVIGATION_BAR_TOOLBAR
-    e.presentation.isEnabledAndVisible = isOnNavBar
-    if (!isOnNavBar) return
+    if (!isOnNavBar) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+
+    val connected = space.loginState.value is SpaceLoginState.Connected
+    if (!connected) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    e.presentation.isEnabledAndVisible = true
+
     val avatars = SpaceUserAvatarProvider.getInstance().avatars.value
-    val isConnected = space.workspace.value?.client?.connectionStatus?.value is ConnectionStatus.Connected
+    val isOnline = space.workspace.value?.client?.connectionStatus?.value is ConnectionStatus.Connected
     val isConnecting = space.loginState.value is SpaceLoginState.Connecting
     e.presentation.icon = when {
-      isConnected -> avatars.online
+      isOnline -> avatars.online
       isConnecting -> AnimatedIcon.Default.INSTANCE
       else -> avatars.offline
     }
@@ -121,7 +131,7 @@ class SpaceMainToolBarAction : DumbAwareAction() {
           browseAction(SpaceBundle.message("open.in.browser.open.for.project.action", it.project.name), issuesUrl)
         }.toList())
       }
-      else if (descriptions.size != 0) {
+      else if (descriptions.isNotEmpty()) {
         val p = Navigator.p.project(descriptions.first().key)
 
         menuItems += browseAction(SpaceBundle.message("main.toolbar.code.reviews.action"), p.reviews.absoluteHref(host))
