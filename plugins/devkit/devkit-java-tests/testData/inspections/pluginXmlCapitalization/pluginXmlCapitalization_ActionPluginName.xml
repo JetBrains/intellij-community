@@ -33,7 +33,8 @@
 
     <action id="BundleActionWithConstructor" class="MyAction"/>
 
-    <group id="BundleGroupWithoutAnyKeys"/>
+    <group id="BundleGroupWithoutAnyKeysButItsNotRequired"/>
+    <group id="BundleGroup"/>
     <<warning descr="String 'group lower case description' is not properly capitalized. It should have sentence capitalization"><warning descr="String 'group lower case text' is not properly capitalized. It should have title capitalization">group</warning></warning> id="BundleGroupWrongCasing"/>
 
 

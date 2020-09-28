@@ -70,10 +70,15 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
 
     ActionOrGroup actionOrGroup = overrideText.getParentOfType(ActionOrGroup.class, true);
     assert actionOrGroup != null;
-    String keyPrefix = actionOrGroup instanceof Action ? "action" : "group";
+    String keyPrefix = getKeyPrefix(actionOrGroup);
     final String resourceKey = keyPrefix + "." + actionOrGroup.getId().getStringValue() + "." + overrideText.getPlace().getStringValue() + ".text";
     checkPropertyCapitalization(holder, overrideText, Nls.Capitalization.Title,
                                 resourceKey, true);
+  }
+
+  @NotNull
+  private static String getKeyPrefix(ActionOrGroup actionOrGroup) {
+    return actionOrGroup instanceof Action ? "action" : "group";
   }
 
   private static void checkActionOrGroup(ActionOrGroup actionOrGroup, DomElementAnnotationHolder holder) {
@@ -113,8 +118,9 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
     final Nls.Capitalization capitalization = actionOrGroupText.myCapitalization;
     if (checkCapitalization(holder, genericDomValue, capitalization)) return;
 
+    String keyPrefix = getKeyPrefix(actionOrGroup);
     checkPropertyCapitalization(holder, actionOrGroup, capitalization,
-                                "action." + actionOrGroup.getId().getStringValue() + actionOrGroupText.mySuffix,
+                                keyPrefix + "." + actionOrGroup.getId().getStringValue() + actionOrGroupText.mySuffix,
                                 actionOrGroupText.myRequired.apply(actionOrGroup));
   }
 
