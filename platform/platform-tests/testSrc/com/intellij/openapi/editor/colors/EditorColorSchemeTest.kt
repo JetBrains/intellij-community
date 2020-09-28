@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.colors
 
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
@@ -12,6 +12,7 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
+import kotlinx.coroutines.runBlocking
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -49,7 +50,9 @@ class EditorColorSchemeTest {
 
     (scheme as AbstractColorsScheme).setSaveNeeded(true)
 
-    schemeManagerFactory.save()
+    runBlocking {
+      schemeManagerFactory.save()
+    }
 
     // JAVA_NUMBER is removed - see isParentOverwritingInheritance
     assertThat(removeSchemeMetaInfo(schemeFile.readText())).isEqualTo("""
@@ -93,7 +96,9 @@ class EditorColorSchemeTest {
 
     (scheme as AbstractColorsScheme).setSaveNeeded(true)
 
-    schemeManagerFactory.save()
+    runBlocking {
+      schemeManagerFactory.save()
+    }
 
     // GO_BUILTIN_TYPE_REFERENCE should be removed as it's the same as defined in parent scheme
     assertThat(removeSchemeMetaInfo(schemeFile.readText())).isEqualTo("""
@@ -127,7 +132,9 @@ class EditorColorSchemeTest {
 
     (scheme as AbstractColorsScheme).setSaveNeeded(true)
 
-    schemeManagerFactory.save()
+    runBlocking {
+      schemeManagerFactory.save()
+    }
 
     // GO_BUILTIN_TYPE_REFERENCE should not be removed as it's not the same as defined in foregroundForGoBuiltinTypeReference
     assertThat(removeSchemeMetaInfo(schemeFile.readText())).isEqualTo("""
