@@ -52,6 +52,13 @@
     </action>
 
 
+    <group id="OverrideGroup">
+      <override-text place="GroupViaBundle"/>
+      
+      <<warning descr="String 'override group wrong case' is not properly capitalized. It should have title capitalization">override-text</warning> place="GroupViaBundleWrongCase"/>
+    </group>
+
+
     <!-- separator -->
     <group id="separatorGroup">
       <separator/>

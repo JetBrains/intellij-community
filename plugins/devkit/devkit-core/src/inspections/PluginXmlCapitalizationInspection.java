@@ -68,9 +68,10 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
 
     if (DomUtil.hasXml(overrideText.getUseTextOfPlace())) return;
 
-    Action action = overrideText.getParentOfType(Action.class, true);
-    assert action != null;
-    final String resourceKey = "action." + action.getId().getStringValue() + "." + overrideText.getPlace().getStringValue() + ".text";
+    ActionOrGroup actionOrGroup = overrideText.getParentOfType(ActionOrGroup.class, true);
+    assert actionOrGroup != null;
+    String keyPrefix = actionOrGroup instanceof Action ? "action" : "group";
+    final String resourceKey = keyPrefix + "." + actionOrGroup.getId().getStringValue() + "." + overrideText.getPlace().getStringValue() + ".text";
     checkPropertyCapitalization(holder, overrideText, Nls.Capitalization.Title,
                                 resourceKey, true);
   }

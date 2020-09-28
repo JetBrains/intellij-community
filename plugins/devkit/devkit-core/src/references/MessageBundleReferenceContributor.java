@@ -34,7 +34,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.dom.*;
+import org.jetbrains.idea.devkit.dom.ActionOrGroup;
+import org.jetbrains.idea.devkit.dom.Extension;
+import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.dom.OverrideText;
 import org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import org.jetbrains.idea.devkit.util.PsiUtil;
@@ -203,33 +206,37 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
       CommonProcessors.CollectUniquesProcessor<ActionOrGroup> processor = new CommonProcessors.CollectUniquesProcessor<>();
       if (myIsAction) {
         IdeaPluginRegistrationIndex.processAction(project, myId, scope, processor);
-
-        // action.ActionId.<override-text@place>.text
-        if (processor.getResults().isEmpty()) {
-          String place = StringUtil.substringAfterLast(myId, ".");
-          if (StringUtil.isEmpty(place)) return ResolveResult.EMPTY_ARRAY;
-
-          String idWithoutPlaceSuffix = StringUtil.substringBeforeLast(myId, ".");
-
-          IdeaPluginRegistrationIndex.processActionOrGroup(project, idWithoutPlaceSuffix, scope, processor);
-
-          boolean foundOverrideText = false;
-          for (ActionOrGroup result : processor.getResults()) {
-            for (OverrideText overrideText : result.getOverrideTexts()) {
-              if (place.equals(overrideText.getPlace().getStringValue())) {
-                foundOverrideText = true;
-                break;
-              }
-            }
-          }
-
-          if (!foundOverrideText) {
-            return ResolveResult.EMPTY_ARRAY;
-          }
-        }
       }
       else {
         IdeaPluginRegistrationIndex.processGroup(project, myId, scope, processor);
+      }
+
+      // action|group.ActionId.<override-text@place>.text
+      if (processor.getResults().isEmpty()) {
+        String place = StringUtil.substringAfterLast(myId, ".");
+        if (StringUtil.isEmpty(place)) return ResolveResult.EMPTY_ARRAY;
+
+        String idWithoutPlaceSuffix = StringUtil.substringBeforeLast(myId, ".");
+
+        if (myIsAction) {
+          IdeaPluginRegistrationIndex.processAction(project, idWithoutPlaceSuffix, scope, processor);
+        } else {
+          IdeaPluginRegistrationIndex.processGroup(project, idWithoutPlaceSuffix, scope, processor);
+        }
+
+        boolean foundOverrideText = false;
+        for (ActionOrGroup result : processor.getResults()) {
+          for (OverrideText overrideText : result.getOverrideTexts()) {
+            if (place.equals(overrideText.getPlace().getStringValue())) {
+              foundOverrideText = true;
+              break;
+            }
+          }
+        }
+
+        if (!foundOverrideText) {
+          return ResolveResult.EMPTY_ARRAY;
+        }
       }
 
       final List<PsiElement> psiElements =
