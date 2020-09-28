@@ -5,6 +5,8 @@ import com.intellij.psi.PsiField
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.PsiParameter
+import com.intellij.psi.search.PsiSearchHelper
+import com.intellij.util.SmartList
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
@@ -24,38 +26,42 @@ class AutoFinalTransformationSupport : AstTransformationSupport {
     DISABLED
   }
 
-  private fun getAutoFinalMode(owner: PsiModifierListOwner): AutoFinalMode {
-    require(owner is GrTypeDefinition || owner is GrMethod || owner is GrField)
-    val modifierList = owner.modifierList as? GrModifierList ?: return AutoFinalMode.UNKNOWN
-    val annotations = modifierList.annotations.filter { it.hasQualifiedName(GroovyCommonClassNames.GROOVY_TRANSFORM_AUTO_FINAL) }
-    if (annotations.isEmpty()) return AutoFinalMode.UNKNOWN
-    val hasEnabledAutoFinal = annotations.asSequence()
-      .map { GrAnnotationUtil.inferBooleanAttribute(it, "enabled") }
-      .find { it != null }
-    return when (hasEnabledAutoFinal) {
-      null -> AutoFinalMode.UNKNOWN
-      true -> AutoFinalMode.ENABLED
-      false -> AutoFinalMode.DISABLED
+  companion object {
+    private fun getAutoFinalMode(owner: PsiModifierListOwner): AutoFinalMode {
+      require(owner is GrTypeDefinition || owner is GrMethod || owner is GrField)
+      val modifierList = owner.modifierList as? GrModifierList ?: return AutoFinalMode.UNKNOWN
+      val annotations = modifierList.annotations.filter { it.hasQualifiedName(GroovyCommonClassNames.GROOVY_TRANSFORM_AUTO_FINAL) }
+      if (annotations.isEmpty()) return AutoFinalMode.UNKNOWN
+      val hasEnabledAutoFinal = annotations.asSequence()
+        .map { GrAnnotationUtil.inferBooleanAttribute(it, "enabled") }
+        .find { it != null }
+      return when (hasEnabledAutoFinal) {
+        null -> AutoFinalMode.UNKNOWN
+        true -> AutoFinalMode.ENABLED
+        false -> AutoFinalMode.DISABLED
+      }
+    }
+
+    private fun getInitialAutoFinalMode(context: TransformationContext): AutoFinalMode {
+      var currentClass = context.codeClass
+      while (true) {
+        val autoFinalMode = getAutoFinalMode(currentClass)
+        if (autoFinalMode == AutoFinalMode.UNKNOWN) {
+          currentClass = currentClass.containingClass as? GrTypeDefinition ?: break
+        }
+        else {
+          return autoFinalMode
+        }
+      }
+      return AutoFinalMode.UNKNOWN
     }
   }
 
   override fun applyTransformation(context: TransformationContext) {
+    if (!PsiSearchHelper.getInstance(context.project).hasIdentifierInFile(context.codeClass.containingFile, "AutoFinal")) return
 
-    val autoFinalStack: MutableList<AutoFinalMode> = ArrayList()
-    var currentClass = context.codeClass
-    while (true) {
-      val autoFinalMode = getAutoFinalMode(currentClass)
-      if (autoFinalMode == AutoFinalMode.UNKNOWN) {
-        currentClass = currentClass.containingClass as? GrTypeDefinition ?: break
-      }
-      else {
-        autoFinalStack.add(autoFinalMode)
-        break
-      }
-    }
-    if (autoFinalStack.isEmpty()) {
-      autoFinalStack.add(AutoFinalMode.UNKNOWN)
-    }
+    val autoFinalStack: MutableList<AutoFinalMode> = SmartList()
+    autoFinalStack.add(getInitialAutoFinalMode(context))
 
     context.codeClass.acceptChildren(object : GroovyRecursiveElementVisitor() {
 
