@@ -28,7 +28,6 @@ import com.intellij.ui.ClickListener
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.FontUtil
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.isEmpty
 import git4idea.conflicts.getConflictType
 import git4idea.i18n.GitBundle
@@ -84,7 +83,9 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
   }
 
   internal fun getFirstMatchingOperation(node: ChangesBrowserNode<*>): StagingAreaOperation? {
-    val statusNode = node.userObject as? GitFileStatusNode ?: return null
+    if (node == root) return null
+    val statusNode = VcsTreeModelData.children(node).userObjectsStream(GitFileStatusNode::class.java).findFirst().orElse(null)
+                     ?: return null
     return operations.find { it.matches(statusNode) }
   }
 
@@ -335,7 +336,8 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
       val path: TreePath = getPathIfInsideComponent(event.point) ?: return false
       val node = path.lastPathComponent as? ChangesBrowserNode<*> ?: return false
       getFirstMatchingOperation(node)?.let {
-        performStageOperation(listOf(node.userObject as GitFileStatusNode), it)
+        val nodes = VcsTreeModelData.children(node).userObjects(GitFileStatusNode::class.java)
+        performStageOperation(nodes, it)
       }
       return false
     }
