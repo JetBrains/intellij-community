@@ -12,6 +12,7 @@ import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import org.jdom.Element
 import java.util.*
 
@@ -35,7 +36,7 @@ open class DefaultKeymap {
 
   init {
     val filterKeymaps = !ApplicationManager.getApplication().isHeadlessEnvironment
-                        //&& Registry.`is`("keymap.current.os.only")
+                        && Registry.`is`("keymap.current.os.only")
     val filteredBeans = mutableListOf<BundledKeymapBean>()
 
     var macosParentKeymapFound = false
