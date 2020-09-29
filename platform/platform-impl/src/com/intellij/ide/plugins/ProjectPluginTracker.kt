@@ -4,7 +4,6 @@ package com.intellij.ide.plugins
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -15,11 +14,9 @@ import com.intellij.openapi.project.ProjectManagerListener
   name = "ProjectPluginTracker",
   storages = [Storage(StoragePathMacros.WORKSPACE_FILE)]
 )
-class ProjectPluginTracker(private val project: Project) : PersistentStateComponent<ProjectPluginTracker.Companion.State> {
+class ProjectPluginTracker : PersistentStateComponent<ProjectPluginTracker.Companion.State> {
 
   companion object {
-
-    internal val LOG = logger<ProjectPluginTracker>()
 
     @JvmStatic
     fun getInstance(project: Project): ProjectPluginTracker =
@@ -48,6 +45,32 @@ class ProjectPluginTracker(private val project: Project) : PersistentStateCompon
         }
       }
     }
+
+    private object EnableDisablePluginsListener : ProjectManagerListener {
+
+      override fun projectOpened(project: Project) {
+        val pluginTracker = getInstance(project)
+
+        PluginEnabler.updatePluginEnabledState(
+          project,
+          pluginTracker.getEnabledPlugins(),
+          pluginTracker.getDisabledPlugins(),
+          null
+        )
+      }
+
+      override fun projectClosing(project: Project) {
+        val pluginTracker = getInstance(project)
+        if (pluginTracker.applicationShuttingDown) return
+
+        PluginEnabler.updatePluginEnabledState(
+          project,
+          pluginTracker.getDisabledPlugins(),
+          pluginTracker.getEnabledPlugins(),
+          null
+        )
+      }
+    }
   }
 
   private var state = State()
@@ -55,50 +78,7 @@ class ProjectPluginTracker(private val project: Project) : PersistentStateCompon
 
   init {
     val connection = ApplicationManager.getApplication().messageBus.connect()
-    connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
-
-      override fun projectOpened(project: Project) {
-        if (isNotTargetProject(project)) return
-
-        updatePluginEnabledState(
-          project,
-          "load",
-          getEnabledPlugins(),
-          getDisabledPlugins()
-        )
-      }
-
-      override fun projectClosing(project: Project) {
-        if (applicationShuttingDown ||
-            isNotTargetProject(project)) return
-
-        updatePluginEnabledState(
-          project,
-          "unload",
-          getDisabledPlugins(),
-          getEnabledPlugins()
-        )
-      }
-
-      private fun isNotTargetProject(project: Project) =
-        this@ProjectPluginTracker.project.name != project.name
-
-      private fun updatePluginEnabledState(project: Project,
-                                           projectState: String,
-                                           pluginsToEnable: List<IdeaPluginDescriptor>,
-                                           pluginsToDisable: List<IdeaPluginDescriptor>) {
-        LOG.info("""|Enabling plugins on project $projectState: ${pluginsToEnable.joinIds()}
-                    |Disabling plugins on project $projectState: ${pluginsToDisable.joinIds()}
-                 """.trimMargin())
-
-        PluginEnabler.updatePluginEnabledState(
-          project,
-          pluginsToEnable,
-          pluginsToDisable,
-          null
-        )
-      }
-    })
+    connection.subscribe(ProjectManager.TOPIC, EnableDisablePluginsListener)
 
     connection.subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
       override fun appWillBeClosed(isRestart: Boolean) {
@@ -140,9 +120,6 @@ class ProjectPluginTracker(private val project: Project) : PersistentStateCompon
     .disabledPlugins
     .findPluginById()
 }
-
-private fun List<IdeaPluginDescriptor>.joinIds() =
-  joinToString { it.pluginId.idString }
 
 private fun Set<String>.containsPluginId(descriptor: IdeaPluginDescriptor) =
   contains(descriptor.pluginId.idString)

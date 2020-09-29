@@ -231,14 +231,12 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   private boolean applyEnableDisablePlugins(@Nullable JComponent parentComponent) {
-    List<IdeaPluginDescriptor> pluginDescriptorsToDisable = new ArrayList<>();
-    List<IdeaPluginDescriptor> pluginDescriptorsToEnable = new ArrayList<>();
+    List<IdeaPluginDescriptor> pluginsToEnable = new ArrayList<>();
+    List<IdeaPluginDescriptor> pluginsToDisable = new ArrayList<>();
 
     for (IdeaPluginDescriptor descriptor : getAllPlugins()) {
-      if (myDynamicPluginsToUninstall.contains(descriptor)) {
-        continue;
-      }
-      if (descriptor.isImplementationDetail()) {
+      if (myDynamicPluginsToUninstall.contains(descriptor) ||
+          descriptor.isImplementationDetail()) {
         // implementation detail plugins are never explicitly disabled
         continue;
       }
@@ -249,23 +247,19 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       }
       boolean shouldEnable = isEnabled(pluginId);
       boolean isEnabled = !PluginManagerCore.isDisabled(pluginId);
-      if (shouldEnable != isEnabled) {
-        if (shouldEnable) {
-          pluginDescriptorsToEnable.add(descriptor);
-        }
-        else {
-          pluginDescriptorsToDisable.add(descriptor);
-        }
+      if (shouldEnable && !isEnabled) {
+        pluginsToEnable.add(descriptor);
       }
-      else if (!shouldEnable && myErrorPluginsToDisable.contains(pluginId)) {
-        pluginDescriptorsToDisable.add(descriptor);
+      else if (!shouldEnable &&
+               (isEnabled || myErrorPluginsToDisable.contains(pluginId))) {
+        pluginsToDisable.add(descriptor);
       }
     }
 
     return PluginEnabler.updatePluginEnabledState(
       getProject(),
-      pluginDescriptorsToEnable,
-      pluginDescriptorsToDisable,
+      pluginsToEnable,
+      pluginsToDisable,
       parentComponent
     );
   }

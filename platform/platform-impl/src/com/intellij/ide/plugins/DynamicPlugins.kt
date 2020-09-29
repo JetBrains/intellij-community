@@ -90,8 +90,16 @@ object DynamicPlugins {
 
   @JvmStatic
   @JvmOverloads
-  fun allowLoadUnloadWithoutRestart(descriptor: IdeaPluginDescriptorImpl, baseDescriptor: IdeaPluginDescriptorImpl? = null): Boolean {
-    val reason = checkCanUnloadWithoutRestart(descriptor, baseDescriptor)
+  fun allowLoadUnloadWithoutRestart(
+    descriptor: IdeaPluginDescriptorImpl,
+    baseDescriptor: IdeaPluginDescriptorImpl? = null,
+    context: List<IdeaPluginDescriptorImpl> = emptyList()
+  ): Boolean {
+    val reason = checkCanUnloadWithoutRestart(
+      descriptor,
+      baseDescriptor,
+      context = context,
+    )
     if (reason != null) {
       LOG.info(reason)
     }
@@ -99,9 +107,39 @@ object DynamicPlugins {
   }
 
   @JvmStatic
-  fun allowLoadUnloadAllWithoutRestart(descriptors: List<IdeaPluginDescriptorImpl>): Boolean {
-    return descriptors.all { descriptor ->
-      checkCanUnloadWithoutRestart(descriptor, context = descriptors).also { message -> message?.let { LOG.info(it) } } == null
+  @JvmOverloads
+  fun loadUnloadPlugins(
+    pluginsToEnable: List<IdeaPluginDescriptor>,
+    pluginsToDisable: List<IdeaPluginDescriptor>,
+    project: Project? = null,
+    parentComponent: JComponent? = null,
+    options: UnloadPluginOptions = UnloadPluginOptions().withDisable(true)
+  ): Boolean =
+    loadFullDescriptorsWithoutRestart(pluginsToEnable, true)?.let { descriptorsToEnable ->
+      loadFullDescriptorsWithoutRestart(pluginsToDisable, false)?.let { descriptorsToDisable ->
+        descriptorsToDisable.reversed().all {
+          unloadPluginWithProgress(project, parentComponent, it, options)
+        } &&
+        descriptorsToEnable.all {
+          loadPlugin(it)
+        }
+      }
+    } ?: false
+
+  private fun loadFullDescriptorsWithoutRestart(
+    plugins: List<IdeaPluginDescriptor>,
+    enable: Boolean
+  ): List<IdeaPluginDescriptorImpl>? {
+    val descriptors = plugins
+      .filterIsInstance<IdeaPluginDescriptorImpl>()
+      .filterNot { PluginManagerCore.getLoadedPlugins().contains(it) == enable }
+      .map { PluginDescriptorLoader.loadFullDescriptor(it) }
+
+    return when {
+      descriptors.all {
+        allowLoadUnloadWithoutRestart(it, context = descriptors)
+      } -> PluginManagerCore.getPluginsSortedByDependency(descriptors, true)
+      else -> null
     }
   }
 
@@ -163,7 +201,7 @@ object DynamicPlugins {
         if (pluginClassLoader !is PluginClassLoader && !app.isUnitTestMode) {
           val loader = baseDescriptor ?: descriptor
           return "Plugin ${loader.pluginId} is not unload-safe because of use of ${pluginClassLoader.javaClass.name} as the default class loader. " +
-                   "For example, the IDE is started from the sources with the plugin."
+                 "For example, the IDE is started from the sources with the plugin."
         }
       }
     }
@@ -181,7 +219,7 @@ object DynamicPlugins {
           // if an optional dependency of a plugin extends a non-dynamic EP of that plugin, it shouldn't prevent plugin loading
           if (baseDescriptor != null && descriptor.pluginId != null && !pluginExtensionPoint.isDynamic) {
             return "Plugin ${baseDescriptor.pluginId} is not unload-safe because of use of non-dynamic EP $epName" +
-                     " in optional dependency on it: ${descriptor.pluginId}"
+                   " in optional dependency on it: ${descriptor.pluginId}"
           }
           continue
         }
