@@ -35,6 +35,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -68,7 +69,7 @@ public class ScopeEditorPanel {
   private final Marker myTreeMarker;
   private PackageSet myCurrentScope = null;
   private boolean myIsInUpdate = false;
-  private String myErrorMessage;
+  private @Nls String myErrorMessage;
   private Future<?> myUpdateAlarm = CompletableFuture.completedFuture(null);
 
   private JLabel myCaretPositionLabel;

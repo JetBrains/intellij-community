@@ -16,6 +16,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.impl.CustomScopesAggregator;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -299,7 +301,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     selectNodeInTree(nodeToAdd);
   }
 
-  private void createScope(final boolean isLocal, String title, final PackageSet set) {
+  private void createScope(final boolean isLocal, @NlsContexts.DialogTitle String title, final PackageSet set) {
     NamedScopesHolder holder = isLocal ? myLocalScopesManager : mySharedScopesManager;
     final String newName = Messages.showInputDialog(myTree, IdeBundle.message("add.scope.name.label"), title,
                                                     Messages.getInformationIcon(), createUniqueName(), new InputValidator() {
@@ -407,7 +409,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   private class MyMoveAction extends AnAction {
     private final int myDirection;
 
-    protected MyMoveAction(String text, Icon icon, int direction) {
+    protected MyMoveAction(@NlsActions.ActionText String text, Icon icon, int direction) {
       super(() -> text, icon);
       ShortcutSet shortcutSet = direction < 0 ? CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.UP)
                                               : CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.DOWN);

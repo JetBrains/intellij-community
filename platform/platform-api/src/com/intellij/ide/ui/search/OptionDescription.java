@@ -2,6 +2,7 @@
 package com.intellij.ide.ui.search;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,6 +59,7 @@ public class OptionDescription implements Comparable<OptionDescription> {
     return myGroupName;
   }
 
+  @NlsSafe
   public String getValue() {
     return null;
   }
