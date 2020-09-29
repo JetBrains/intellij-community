@@ -580,20 +580,20 @@ public class GitBranchPopupActions {
       }
     }
 
-    private static class PullArbitraryBranchBaseAction extends DumbAwareAction {
+    private static class PullBranchBaseAction extends DumbAwareAction {
 
       private final Project myProject;
       private final List<? extends GitRepository> myRepositories;
-      private final String myBranchName;
+      private final String myRemoteBranchName;
       private final UpdateMethod myUpdateMethod;
 
-      PullArbitraryBranchBaseAction(@NotNull Project project,
-                                    @NotNull List<? extends GitRepository> repositories,
-                                    @NotNull String branchName,
-                                    UpdateMethod updateMethod) {
+      PullBranchBaseAction(@NotNull Project project,
+                           @NotNull List<? extends GitRepository> repositories,
+                           @NotNull String remoteBranchName,
+                           UpdateMethod updateMethod) {
         myProject = project;
         myRepositories = repositories;
-        myBranchName = branchName;
+        myRemoteBranchName = remoteBranchName;
         myUpdateMethod = updateMethod;
       }
 
@@ -602,10 +602,10 @@ public class GitBranchPopupActions {
         Map<GitRepository, GitBranchPair> map = new LinkedHashMap<>();
 
         for (GitRepository repo : repositories) {
-          GitLocalBranch localBranch = repo.getCurrentBranch();
+          GitLocalBranch currentBranch = repo.getCurrentBranch();
           GitRemoteBranch remoteBranch = repo.getBranches().findRemoteBranch(branchName);
-          if (localBranch != null && remoteBranch != null) {
-            map.put(repo, new GitBranchPair(localBranch, remoteBranch));
+          if (currentBranch != null && remoteBranch != null) {
+            map.put(repo, new GitBranchPair(currentBranch, remoteBranch));
           }
         }
 
@@ -616,13 +616,13 @@ public class GitBranchPopupActions {
       public void actionPerformed(@NotNull AnActionEvent e) {
         new GitUpdateExecutionProcess(myProject,
                                       myRepositories,
-                                      configureTarget(myRepositories, myBranchName),
+                                      configureTarget(myRepositories, myRemoteBranchName),
                                       myUpdateMethod, false)
           .execute();
       }
     }
 
-      private class PullWithMergeAction extends PullArbitraryBranchBaseAction {
+      private static class PullWithMergeAction extends PullBranchBaseAction {
 
         PullWithMergeAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
           super(project, repositories, branchName, UpdateMethod.MERGE);
@@ -631,7 +631,7 @@ public class GitBranchPopupActions {
 
       }
 
-      private class PullWithRebaseAction extends PullArbitraryBranchBaseAction {
+      private static class PullWithRebaseAction extends PullBranchBaseAction {
 
         PullWithRebaseAction(@NotNull Project project, @NotNull List<? extends GitRepository> repositories, @NotNull String branchName) {
           super(project, repositories, branchName, UpdateMethod.REBASE);
@@ -904,14 +904,14 @@ public class GitBranchPopupActions {
 
     private static Map<GitRepository, GitBranchPair> calculateTracking(List<? extends GitRepository> repositories) {
 
-      Map<GitRepository, GitBranchPair> map = new LinkedHashMap<>();
+      Map<GitRepository, GitBranchPair> map = new HashMap<>();
 
       for (GitRepository repo : repositories) {
-        GitLocalBranch localBranch = repo.getCurrentBranch();
-        if (localBranch != null) {
-          GitRemoteBranch trackedBranch = localBranch.findTrackedBranch(repo);
+        GitLocalBranch currentBranch = repo.getCurrentBranch();
+        if (currentBranch != null) {
+          GitRemoteBranch trackedBranch = currentBranch.findTrackedBranch(repo);
           if (trackedBranch != null) {
-            map.put(repo, new GitBranchPair(localBranch, trackedBranch));
+            map.put(repo, new GitBranchPair(currentBranch, trackedBranch));
           }
         }
       }
