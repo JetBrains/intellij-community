@@ -13,7 +13,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -30,19 +29,23 @@ import java.util.function.Supplier;
  *
  * @author Denis Zhdanov
  */
-public abstract class AbstractBundle {
+public class AbstractBundle {
   private static final Logger LOG = Logger.getInstance(AbstractBundle.class);
+
+  private static final Map<ClassLoader, Map<String, ResourceBundle>> ourCache = CollectionFactory.createConcurrentWeakMap();
+  private static final Map<ClassLoader, Map<String, ResourceBundle>> ourDefaultCache = CollectionFactory.createConcurrentWeakMap();
+
   private Reference<ResourceBundle> myBundle;
   private Reference<ResourceBundle> myDefaultBundle;
   private final @NonNls String myPathToBundle;
 
-  protected AbstractBundle(@NonNls @NotNull String pathToBundle) {
+  public AbstractBundle(@NonNls @NotNull String pathToBundle) {
     myPathToBundle = pathToBundle;
   }
 
   @Contract(pure = true)
   public @NotNull @Nls String getMessage(@NotNull @NonNls String key, Object @NotNull ... params) {
-    return message(getResourceBundle(null), key, params);
+    return message(getResourceBundle(getClass().getClassLoader()), key, params);
   }
 
   /**
@@ -87,18 +90,19 @@ public abstract class AbstractBundle {
     else if (!bundle.containsKey(key)) {
       return BundleBase.postprocessValue(bundle, BundleBase.useDefaultValue(bundle, key, defaultValue), params);
     }
-    return BundleBase.messageOrDefault(bundle, key, defaultValue, params);
+    else {
+      return BundleBase.messageOrDefault(bundle, key, defaultValue, params);
+    }
   }
 
   public static @Nls @NotNull String message(@NotNull ResourceBundle bundle, @NotNull @NonNls String key, Object @NotNull ... params) {
-    return BundleBase.message(bundle, key, params);
+    return BundleBase.messageOrDefault(bundle, key, null, params);
   }
 
   public static @Nullable @Nls String messageOrNull(@NotNull ResourceBundle bundle, @NotNull @NonNls String key, Object @NotNull ... params) {
     @SuppressWarnings("HardCodedStringLiteral")
     String value = messageOrDefault(bundle, key, key, params);
-    if (key.equals(value)) return null;
-    return value;
+    return key.equals(value) ? null : value;
   }
 
   public boolean containsKey(@NotNull @NonNls String key) {
@@ -106,56 +110,51 @@ public abstract class AbstractBundle {
   }
 
   public ResourceBundle getResourceBundle() {
-    return getResourceBundle(null);
+    return getResourceBundle(getClass().getClassLoader());
   }
 
   @ApiStatus.Internal
-  @NotNull
-  protected ResourceBundle getResourceBundle(@Nullable ClassLoader classLoader) {
-    final boolean isDefault = DefaultBundleService.isDefaultBundle();
-    return getResourceBundle(
-      classLoader,
-      () -> com.intellij.reference.SoftReference.dereference(isDefault? myDefaultBundle : myBundle),
-      bundle -> {
-        SoftReference<ResourceBundle> ref = new SoftReference<>(bundle);
-        if (isDefault) myDefaultBundle = ref; else myBundle = ref;
-      }
-    );
-  }
-
-  @NotNull
-  private ResourceBundle getResourceBundle(@Nullable ClassLoader classLoader, Supplier<ResourceBundle> bundleProvider, Consumer<ResourceBundle> saveBundle) {
-    ResourceBundle bundle = bundleProvider.get();
+  public final @NotNull ResourceBundle getResourceBundle(@NotNull ClassLoader classLoader) {
+    boolean isDefault = DefaultBundleService.isDefaultBundle();
+    ResourceBundle bundle = com.intellij.reference.SoftReference.dereference(isDefault ? myDefaultBundle : myBundle);
     if (bundle == null) {
-      saveBundle.accept(bundle = getResourceBundle(myPathToBundle, classLoader == null ? getClass().getClassLoader() : classLoader));
+      bundle = resolveResourceBundle(myPathToBundle, classLoader);
+      SoftReference<ResourceBundle> ref = new SoftReference<>(bundle);
+      if (isDefault) {
+        myDefaultBundle = ref;
+      }
+      else {
+        myBundle = ref;
+      }
     }
     return bundle;
   }
 
-  private static final Map<ClassLoader, Map<String, ResourceBundle>> ourCache = CollectionFactory.createConcurrentWeakMap();
-  private static final Map<ClassLoader, Map<String, ResourceBundle>> ourDefaultCache = CollectionFactory.createConcurrentWeakMap();
+  public final @NotNull ResourceBundle getResourceBundle(@NotNull @NonNls String pathToBundle, @NotNull ClassLoader loader) {
+    if (pathToBundle.equals(myPathToBundle)) {
+      return getResourceBundle(loader);
+    }
 
-  public @NotNull ResourceBundle getResourceBundle(@NotNull @NonNls String pathToBundle, @NotNull ClassLoader loader) {
     Map<String, ResourceBundle> cache = (DefaultBundleService.isDefaultBundle() ? ourDefaultCache : ourCache)
       .computeIfAbsent(loader, __ -> CollectionFactory.createConcurrentSoftValueMap());
-    return getResourceBundle(pathToBundle, loader, cache);
-  }
-
-  private @NotNull ResourceBundle getResourceBundle(@NotNull @NonNls String pathToBundle, @NotNull ClassLoader loader, @NotNull Map<String, ResourceBundle> map) {
-    ResourceBundle result = map.get(pathToBundle);
+    ResourceBundle result = cache.get(pathToBundle);
     if (result == null) {
-      try {
-        ResourceBundle.Control control = ResourceBundle.Control.getControl(ResourceBundle.Control.FORMAT_PROPERTIES);
-        result = findBundle(pathToBundle, loader, control);
-      }
-      catch (MissingResourceException e) {
-        LOG.info("Cannot load resource bundle from *.properties file, falling back to slow class loading: " + pathToBundle);
-        ResourceBundle.clearCache(loader);
-        result = ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader);
-      }
-      map.put(pathToBundle, result);
+      result = resolveResourceBundle(pathToBundle, loader);
+      cache.put(pathToBundle, result);
     }
     return result;
+  }
+
+  private @NotNull ResourceBundle resolveResourceBundle(@NotNull String pathToBundle, @NotNull ClassLoader loader) {
+    try {
+      ResourceBundle.Control control = ResourceBundle.Control.getControl(ResourceBundle.Control.FORMAT_PROPERTIES);
+      return findBundle(pathToBundle, loader, control);
+    }
+    catch (MissingResourceException e) {
+      LOG.info("Cannot load resource bundle from *.properties file, falling back to slow class loading: " + pathToBundle);
+      ResourceBundle.clearCache(loader);
+      return ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader);
+    }
   }
 
   protected ResourceBundle findBundle(@NotNull @NonNls String pathToBundle, @NotNull ClassLoader loader, @NotNull ResourceBundle.Control control) {

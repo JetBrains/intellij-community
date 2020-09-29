@@ -8,7 +8,7 @@ import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +51,8 @@ public final class Main {
 
   private static final String AWT_HEADLESS = "java.awt.headless";
   private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
-  private static final String[] NO_ARGS = ArrayUtilRt.EMPTY_STRING_ARRAY;
+  @SuppressWarnings("SSBasedInspection")
+  private static final String[] NO_ARGS = new String[0];
   private static final List<@NonNls String> HEADLESS_COMMANDS = Arrays.asList(
     "ant", "duplocate", "dump-shared-index", "traverseUI", "buildAppcodeCache", "format", "keymap", "update", "inspections", "intentions",
     "rdserver-headless", "thinClient-headless");
@@ -83,7 +84,8 @@ public final class Main {
       System.exit(NO_GRAPHICS);
     }
 
-    if (!SystemInfo.isJavaVersionAtLeast(11)) {
+    // avoid loading of JavaVersion class
+    if (!System.getProperty("java.version", "").startsWith("11.") && JavaVersion.current().compareTo(JavaVersion.compose(11, 0, 0, 0, false)) < 0) {
       showMessage(BootstrapBundle.message("bootstrap.error.title.unsupported.java.version"),
                   BootstrapBundle.message("bootstrap.error.message.cannot.start.under.java.0.java.11.or.later.is.required", SystemInfo.JAVA_RUNTIME_VERSION), true);
       System.exit(UNSUPPORTED_JAVA_VERSION);
@@ -202,7 +204,6 @@ public final class Main {
                   true);
       return false;
     }
-
     return true;
   }
 
@@ -255,35 +256,41 @@ public final class Main {
     stream.println(message);
 
     boolean headless = !hasGraphics || isCommandLine() || GraphicsEnvironment.isHeadless();
-    if (!headless) {
-      try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
-      catch (Throwable ignore) { }
+    if (headless) {
+      return;
+    }
 
-      try {
-        JTextPane textPane = new JTextPane();
-        textPane.setEditable(false);
-        textPane.setText(message.replaceAll("\t", "    "));
-        textPane.setBackground(UIManager.getColor("Panel.background"));
-        textPane.setCaretPosition(0);
-        JScrollPane scrollPane = new JScrollPane(
-          textPane, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.setBorder(null);
+    try {
+      UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+    }
+    catch (Throwable ignore) {
+    }
 
-        int maxHeight = Toolkit.getDefaultToolkit().getScreenSize().height / 2;
-        int maxWidth = Toolkit.getDefaultToolkit().getScreenSize().width / 2;
-        Dimension component = scrollPane.getPreferredSize();
-        if (component.height > maxHeight || component.width > maxWidth) {
-          scrollPane.setPreferredSize(new Dimension(Math.min(maxWidth, component.width), Math.min(maxHeight, component.height)));
-        }
+    try {
+      JTextPane textPane = new JTextPane();
+      textPane.setEditable(false);
+      textPane.setText(message.replaceAll("\t", "    "));
+      textPane.setBackground(UIManager.getColor("Panel.background"));
+      textPane.setCaretPosition(0);
+      JScrollPane scrollPane = new JScrollPane(textPane,
+                                               ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                               ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+      scrollPane.setBorder(null);
 
-        int type = error ? JOptionPane.ERROR_MESSAGE : JOptionPane.WARNING_MESSAGE;
-        JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), scrollPane, title, type);
+      int maxHeight = Toolkit.getDefaultToolkit().getScreenSize().height / 2;
+      int maxWidth = Toolkit.getDefaultToolkit().getScreenSize().width / 2;
+      Dimension component = scrollPane.getPreferredSize();
+      if (component.height > maxHeight || component.width > maxWidth) {
+        scrollPane.setPreferredSize(new Dimension(Math.min(maxWidth, component.width), Math.min(maxHeight, component.height)));
       }
-      catch (Throwable t) {
-        stream.println();
-        stream.println(BootstrapBundle.message("bootstrap.error.title.ui.exception.occurred.on.an.attempt.to.show.the.above.message"));
-        t.printStackTrace(stream);
-      }
+
+      int type = error ? JOptionPane.ERROR_MESSAGE : JOptionPane.WARNING_MESSAGE;
+      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), scrollPane, title, type);
+    }
+    catch (Throwable t) {
+      stream.println();
+      stream.println(BootstrapBundle.message("bootstrap.error.title.ui.exception.occurred.on.an.attempt.to.show.the.above.message"));
+      t.printStackTrace(stream);
     }
   }
 }

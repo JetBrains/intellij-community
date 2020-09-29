@@ -28,7 +28,6 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.wm.impl.X11UiUtil;
@@ -72,17 +71,17 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
-import static com.intellij.diagnostic.LoadingState.LAF_INITIALIZED;
 import static java.nio.file.attribute.PosixFilePermission.*;
 
 @ApiStatus.Internal
 public final class StartupUtil {
-  public static final String IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app";
+  private static final String IDEA_CLASS_BEFORE_APPLICATION_PROPERTY = "idea.class.before.app";
   // See ApplicationImpl.USE_SEPARATE_WRITE_THREAD
-  public static final String USE_SEPARATE_WRITE_THREAD_PROPERTY = "idea.use.separate.write.thread";
+  private static final String USE_SEPARATE_WRITE_THREAD_PROPERTY = "idea.use.separate.write.thread";
 
   private static final String MAGIC_MAC_PATH = "/AppTranslocation/";
 
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private static SocketLock ourSocketLock;
   private static final AtomicBoolean ourSystemPatched = new AtomicBoolean();
 
@@ -178,7 +177,7 @@ public final class StartupUtil {
       @SuppressWarnings("unchecked")
       Class<AppStarter> aClass = (Class<AppStarter>)Class.forName(mainClass);
       subActivity.end();
-      return aClass.newInstance();
+      return aClass.getDeclaredConstructor().newInstance();
     });
 
     activity = activity.endAndStart("log4j configuration");
@@ -331,7 +330,7 @@ public final class StartupUtil {
           }
 
           initUiFuture.complete(null);
-          StartUpMeasurer.setCurrentState(LAF_INITIALIZED);
+          StartUpMeasurer.setCurrentState(LoadingState.LAF_INITIALIZED);
 
           if (Main.isHeadless()) {
             return;
@@ -648,7 +647,7 @@ public final class StartupUtil {
     ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
     String buildDate = new SimpleDateFormat("dd MMM yyyy HH:mm", Locale.US).format(appInfo.getBuildDate().getTime());
     log.info("IDE: " + namesInfo.getFullProductName() + " (build #" + appInfo.getBuild().asString() + ", " + buildDate + ")");
-    log.info("OS: " + SystemInfo.OS_NAME + " (" + SystemInfo.OS_VERSION + ", " + SystemInfo.OS_ARCH + ")");
+    log.info("OS: " + SystemInfoRt.OS_NAME + " (" + SystemInfoRt.OS_VERSION + ", " + System.getProperty("os.arch") + ")");
     log.info("JRE: " + System.getProperty("java.runtime.version", "-") + " (" + System.getProperty("java.vendor", "-") + ")");
     log.info("JVM: " + System.getProperty("java.vm.version", "-") + " (" + System.getProperty("java.vm.name", "-") + ")");
 
@@ -710,7 +709,7 @@ public final class StartupUtil {
     CustomizeIDEWizardStepsProvider provider;
     try {
       Class<?> providerClass = Class.forName(stepsProviderName);
-      provider = (CustomizeIDEWizardStepsProvider)providerClass.newInstance();
+      provider = (CustomizeIDEWizardStepsProvider)providerClass.getDeclaredConstructor().newInstance();
     }
     catch (Throwable e) {
       Main.showMessage(BootstrapBundle.message("bootstrap.error.title.configuration.wizard.failed"), e);
@@ -780,7 +779,7 @@ public final class StartupUtil {
       RepaintManager.setCurrentManager(new AssertiveRepaintManager());
     }
 
-    if (SystemInfo.isXWindow) {
+    if (SystemInfoRt.isXWindow) {
       String wmName = X11UiUtil.getWmName();
       log.info("WM detected: " + wmName);
       if (wmName != null) {

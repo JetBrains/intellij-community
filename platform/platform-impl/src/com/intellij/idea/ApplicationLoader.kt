@@ -47,6 +47,7 @@ import java.util.concurrent.CompletionStage
 import java.util.concurrent.Executor
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicReference
+import java.util.function.BiFunction
 import java.util.function.Function
 import kotlin.system.exitProcess
 
@@ -334,10 +335,10 @@ private fun addActivateAndWindowsCliListeners() {
     ref.get()
   }
 
-  MainRunner.LISTENER = WindowsCommandLineListener { currentDirectory, args ->
+  MainRunner.LISTENER = BiFunction { currentDirectory, args ->
     LOG.info("External Windows command received")
     if (args.isEmpty()) {
-      return@WindowsCommandLineListener 0
+      return@BiFunction 0
     }
 
     val app = ApplicationManager.getApplication()
@@ -358,7 +359,7 @@ private fun addActivateAndWindowsCliListeners() {
   ApplicationManager.getApplication().messageBus.connect().subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
     override fun appWillBeClosed(isRestart: Boolean) {
       StartupUtil.addExternalInstanceListener { CliResult.error(Main.ACTIVATE_DISPOSING, IdeBundle.message("activation.shutting.down")) }
-      MainRunner.LISTENER = WindowsCommandLineListener { _, _ -> Main.ACTIVATE_DISPOSING }
+      MainRunner.LISTENER = BiFunction { _, _ -> Main.ACTIVATE_DISPOSING }
     }
   })
 }
