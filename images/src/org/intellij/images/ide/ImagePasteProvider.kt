@@ -49,10 +49,31 @@ open class ImagePasteProvider : PasteProvider {
 
     val logger = logger<ImagePasteProvider>()
 
+    // Step 1: Obtain image data from the clipboard
+    val imageToPaste = try {
+      pasteContents.getTransferData(imageFlavor)
+    }
+    catch (ioException: IOException) {
+      logger.error("Failed to get data from the clipboard. Data is no longer available. Aborting operation.", ioException)
+      return
+    }.let {
+      when (it) {
+        is MultiResolutionImage -> it.resolutionVariants.firstOrNull()?.toBufferedImage()
+        is BufferedImage -> it
+        is Image -> it.toBufferedImage()
+        else -> null
+      }
+    }
+
+    if (imageToPaste == null) {
+      logger.error("Failed to get data from the clipboard. Nothing to paste. Aborting operation.")
+      return
+    }
+
     runWriteAction {
       val nextAvailableName = VfsUtil.getNextAvailableName(newFileParent, "img", "png")
 
-      // Step 1: Create file
+      // Step 2: Create file
       val imageFile = try {
         newFileParent.createChildData(this, nextAvailableName)
       }
@@ -60,27 +81,6 @@ open class ImagePasteProvider : PasteProvider {
                         logger.error("Failed to create a pasted image file due to I/O error. Aborting operation.", ioException)
                         null
                       } ?: return@runWriteAction
-
-      // Step 2: Obtain image data from the clipboard
-      val imageToPaste = try {
-        pasteContents.getTransferData(imageFlavor)
-      }
-      catch (ioException: IOException) {
-        logger.error("Failed to get data from the clipboard. Data is no longer available. Aborting operation.", ioException)
-        return@runWriteAction
-      }.let {
-        when (it) {
-          is MultiResolutionImage -> it.resolutionVariants.firstOrNull()?.toBufferedImage()
-          is BufferedImage -> it
-          is Image -> it.toBufferedImage()
-          else -> null
-        }
-      }
-
-      if (imageToPaste == null) {
-        logger.error("Failed to get data from the clipboard. Nothing to paste. Aborting operation.")
-        return@runWriteAction
-      }
 
       // Step 3: Save image data to the created file
       try {
