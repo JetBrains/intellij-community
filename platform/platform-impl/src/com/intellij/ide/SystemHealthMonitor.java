@@ -4,7 +4,6 @@ package com.intellij.ide;
 import com.intellij.diagnostic.VMOptions;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.ide.actions.EditCustomVmOptionsAction;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.jna.JnaLoader;
 import com.intellij.notification.*;
@@ -17,7 +16,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.JdkBundle;
 import com.intellij.util.MathUtil;
@@ -32,6 +30,10 @@ import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -41,8 +43,7 @@ import java.util.stream.Stream;
 final class SystemHealthMonitor extends PreloadingActivity {
   private static final Logger LOG = Logger.getInstance(SystemHealthMonitor.class);
 
-  private static final NotificationGroup GROUP =
-    new NotificationGroup("System Health", NotificationDisplayType.STICKY_BALLOON, true, null, null, null, PluginManagerCore.CORE_ID);
+  private static final String DISPLAY_ID = "System Health";
   private static final JavaVersion MIN_RECOMMENDED_JDK = JavaVersion.compose(8, 0, 144, 0, false);
   private static final int MIN_RESERVED_CODE_CACHE_SIZE = 240;
 
@@ -88,18 +89,22 @@ final class SystemHealthMonitor extends PreloadingActivity {
             notification.expire();
 
             String appName = StringUtil.toLowerCase(ApplicationNamesInfo.getInstance().getProductName());
-            File config = new File(PathManager.getConfigPath(),
-                                   appName + (SystemInfo.isWindows ? (SystemInfo.is64Bit ? "64.exe.jdk" : ".exe.jdk") : ".jdk"));
-
-            if (!FileUtil.delete(config)) {
-              LOG.warn("Can't delete JDK configuration file: " + config.getAbsolutePath());
+            String configName = appName + (!SystemInfo.isWindows ? ".jdk" : SystemInfo.is64Bit ? "64.exe.jdk" : ".exe.jdk");
+            Path configFile = Paths.get(PathManager.getConfigPath(), configName);
+            try {
+              Files.deleteIfExists(configFile);
             }
+            catch (IOException x) {
+              LOG.warn("Can't delete JDK configuration file: " + configFile, x);
+            }
+
             ApplicationManager.getApplication().restart();
           }
         };
 
         String current = bootJdk.getBundleVersion().toString();
         if (!SystemInfo.isJetBrainsJvm) current += " by " + SystemInfo.JAVA_VENDOR;
+
         if (outdatedRuntime && validBundledJdk) {
           showNotification("outdated.jre.version.message1", switchAction, current, MIN_RECOMMENDED_JDK);
         }
@@ -181,7 +186,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
 
   private static final class MyNotification extends Notification implements NotificationFullContent {
     MyNotification(@NotNull @NlsContexts.NotificationContent String content) {
-      super(GROUP.getDisplayId(), "", content, NotificationType.WARNING);
+      super(DISPLAY_ID, "", content, NotificationType.WARNING);
     }
   }
 
@@ -244,10 +249,13 @@ final class SystemHealthMonitor extends PreloadingActivity {
                   restart(timeout);
                 }
                 else {
-                  GROUP.createNotification(message, file.getPath(), NotificationType.ERROR, null).whenExpired(() -> {
-                    reported.compareAndSet(true, false);
-                    restart(timeout);
-                  }).notify(null);
+                  NotificationGroupManager.getInstance().getNotificationGroup(DISPLAY_ID)
+                    .createNotification(message, file.getPath(), NotificationType.ERROR, null)
+                    .whenExpired(() -> {
+                      reported.compareAndSet(true, false);
+                      restart(timeout);
+                    })
+                    .notify(null);
                 }
               });
             }
