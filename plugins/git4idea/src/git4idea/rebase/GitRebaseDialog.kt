@@ -101,9 +101,8 @@ internal class GitRebaseDialog(private val project: Project,
   override fun createCenterPanel() = panel
 
   override fun doValidateAll(): List<ValidationInfo> {
-    val result = listOf(::validateNewBase,
+    val result = listOf(::validateUpstream,
                         ::validateOnto,
-                        ::validateUpstream,
                         ::validateRebaseInProgress,
                         ::validateBranch).mapNotNull { it() }
 
@@ -176,18 +175,10 @@ internal class GitRebaseDialog(private val project: Project,
            ?: tags.find(predicate)
   }
 
-  private fun validateNewBase(): ValidationInfo? {
-    val field = if (GitRebaseOption.ONTO in selectedOptions) ontoField else upstreamField
-    if (field.getText().isNullOrEmpty()) {
-      return ValidationInfo(GitBundle.message("rebase.dialog.error.base.not.selected"), field)
-    }
-    return null
-  }
-
   private fun validateUpstream(): ValidationInfo? {
     val upstream = upstreamField.getText()
 
-    if (upstream.isNullOrEmpty()) {
+    if (upstream.isNullOrEmpty() && GitRebaseOption.ROOT !in selectedOptions) {
       return if (GitRebaseOption.ONTO in selectedOptions)
         ValidationInfo(GitBundle.message("rebase.dialog.error.upstream.not.selected"), upstreamField)
       else
@@ -201,7 +192,7 @@ internal class GitRebaseDialog(private val project: Project,
     if (GitRebaseOption.ONTO in selectedOptions) {
       val newBase = ontoField.getText()
 
-      if (newBase.isNullOrEmpty()) {
+      if (newBase.isNullOrEmpty() && GitRebaseOption.ROOT !in selectedOptions) {
         return ValidationInfo(GitBundle.message("rebase.dialog.error.base.not.selected"), ontoField)
       }
 
@@ -211,6 +202,8 @@ internal class GitRebaseDialog(private val project: Project,
   }
 
   private fun isValidRevision(revision: String): Boolean {
+    if (revision.isEmpty()) return true
+
     var result = false
     try {
       val task = ThrowableComputable<GitRevisionNumber, VcsException> { GitRevisionNumber.resolve(project, gitRoot(), revision) }
