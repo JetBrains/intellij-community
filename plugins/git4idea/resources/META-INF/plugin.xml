@@ -262,7 +262,7 @@
     <action id="Git.Stage.AcceptTheirs" class="git4idea.index.actions.GitAcceptTheirsAction"/>
     <action id="Git.Stage.AcceptYours" class="git4idea.index.actions.GitAcceptYoursAction"/>
     <action id="Git.Stage.Merge" class="git4idea.index.actions.GitMergeConflictAction"/>
-    <action id="Git.Stage.ThreeSideDiff" class="git4idea.index.actions.GitStageThreeSideDiffAction" icon="AllIcons.Actions.Stub"/>
+    <action id="Git.Stage.ThreeSideDiff" class="git4idea.index.actions.GitStageThreeSideDiffAction"/>
 
     <action id="Git.Stash.Silently" class="git4idea.index.actions.GitStashSilentlyAction" icon="AllIcons.Vcs.ShelveSilent"/>
 
