@@ -618,8 +618,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       style = VcsCommitStyleFactory.combine(ContainerUtil.append(styles, style));
     }
 
-    if (!selected && myLightSelectionRow == row) {
-      VcsCommitStyle lightSelectionBgStyle = VcsCommitStyleFactory.background(UIUtil.getTableLightSelectionBackground());
+    if (!selected && myMouseHoveredRow == row) {
+      VcsCommitStyle lightSelectionBgStyle = VcsCommitStyleFactory.background(UIUtil.getTableHoverBackground(true));
       style = VcsCommitStyleFactory.combine(Arrays.asList(lightSelectionBgStyle, style));
     }
 
@@ -627,7 +627,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   @Override
-  protected void setRendererBackground(int row, int column, JComponent renderer, Color color, Object property) {
+  protected void setRendererBackground(int row, int column, JComponent renderer, Color color) {
     // do not overwrite renderer background
   }
 

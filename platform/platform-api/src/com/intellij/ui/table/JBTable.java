@@ -11,6 +11,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
@@ -72,7 +73,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   private final Color disabledForeground = JBColor.namedColor("Table.disabledForeground", JBColor.gray);
 
-  protected int myLightSelectionRow = -1;
+  protected int myMouseHoveredRow = -1;
 
   public JBTable() {
     this(new DefaultTableModel());
@@ -116,12 +117,14 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       @Override
       public void mouseMoved(MouseEvent e) {
         if (!isStriped()) {
-          int row = rowAtPoint(e.getPoint());
-          if (myLightSelectionRow != row) {
-            myLightSelectionRow = row;
-            repaint();
-          }
+          updateHoveredRow(rowAtPoint(e.getPoint()));
         }
+      }
+    });
+    addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseExited(MouseEvent e) {
+        updateHoveredRow(-1);
       }
     });
 
@@ -183,6 +186,13 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     myUiUpdating = false;
 
     new MyCellEditorRemover();
+  }
+
+  private void updateHoveredRow(int row) {
+    if (!Boolean.FALSE.equals(getClientProperty(RenderingUtil.PAINT_HOVERED_BACKGROUND)) && myMouseHoveredRow != row) {
+      myMouseHoveredRow = row;
+      repaint();
+    }
   }
 
   protected void onTableChanged(@NotNull TableModelEvent e) {
@@ -656,19 +666,21 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   @NotNull
   @Override
   public Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
+    if (renderer instanceof DefaultTableCellRenderer) {
+      ((DefaultTableCellRenderer)renderer).setBackground(null);
+    }
+
     Component result = super.prepareRenderer(renderer, row, column);
 
     if (result instanceof JComponent) {
       JComponent component = (JComponent)result;
-      if (myLightSelectionRow != row && component.getClientProperty("JBTable.extraBackground") == Boolean.TRUE) {
-        setRendererBackground(row, column, component, getBackground(), null);
+      if (isStriped()) {
+        if (isTableDecorationSupported()) {
+          setRendererBackground(row, column, component, row % 2 == 1 ? getBackground() : UIUtil.getDecoratedRowColor());
+        }
       }
-      if (isTableDecorationSupported() && isStriped()) {
-        final Color bg = row % 2 == 1 ? getBackground() : UIUtil.getDecoratedRowColor();
-        setRendererBackground(row, column, component, bg, null);
-      }
-      if (!isStriped() && myLightSelectionRow == row) {
-        setRendererBackground(row, column, component, UIUtil.getTableLightSelectionBackground(), Boolean.TRUE);
+      else if (myMouseHoveredRow == row) {
+        setRendererBackground(row, column, component, UIUtil.getTableHoverBackground(true));
       }
     }
 
@@ -682,9 +694,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     return result;
   }
 
-  protected void setRendererBackground(int row, int column, JComponent renderer, Color color, Object property) {
+  protected void setRendererBackground(int row, int column, JComponent renderer, Color color) {
     if (!isCellSelected(row, column)) {
-      renderer.putClientProperty("JBTable.extraBackground", property);
       renderer.setOpaque(true);
       renderer.setBackground(color);
       for (Component child : renderer.getComponents()) {

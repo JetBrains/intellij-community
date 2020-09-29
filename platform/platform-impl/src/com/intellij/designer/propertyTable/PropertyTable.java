@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.*;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.UIUtil;
@@ -88,6 +89,8 @@ public abstract class PropertyTable extends JBTable {
     setRowSelectionAllowed(true);
 
     addMouseListener(new MouseTableListener());
+
+    putClientProperty(RenderingUtil.PAINT_HOVERED_BACKGROUND, false);
 
     mySpeedSearch = new TableSpeedSearch(this, (object, cell) -> {
       if (cell.column != 0) return null;

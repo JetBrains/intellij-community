@@ -3141,7 +3141,6 @@ public final class UIUtil {
   private static final Color LIST_BACKGROUND = JBColor.namedColor("List.background", BACKGROUND);
   private static final Color TREE_BACKGROUND = JBColor.namedColor("Tree.background", BACKGROUND);
   private static final Color TABLE_BACKGROUND = JBColor.namedColor("Table.background", BACKGROUND);
-  private static final Color TABLE_LIGHT_BACKGROUND = JBColor.namedColor("Table.lightSelectionBackground", new JBColor(0xE9EEF5, 0x464A4D));
 
   private static final class FocusedSelection {
     private static final Color BACKGROUND = new JBColor(0x3875D6, 0x2F65CA);
@@ -3340,10 +3339,6 @@ public final class UIUtil {
 
   public static @NotNull Color getTableBackground(boolean selected, boolean focused) {
     return !selected ? getTableBackground() : getTableSelectionBackground(focused);
-  }
-
-  public static @NotNull Color getTableLightSelectionBackground() {
-    return TABLE_LIGHT_BACKGROUND;
   }
 
   /**

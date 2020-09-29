@@ -27,6 +27,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.ui.*;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.uiDesigner.ErrorAnalyzer;
@@ -135,6 +136,8 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
 
     myCellRenderer = new MyCompositeTableCellRenderer();
     myCellEditor = new MyCellEditor();
+
+    putClientProperty(RenderingUtil.PAINT_HOVERED_BACKGROUND, false);
 
     addMouseListener(new MouseAdapter() {
       @Override
