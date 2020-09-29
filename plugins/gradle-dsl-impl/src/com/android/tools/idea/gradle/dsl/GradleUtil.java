@@ -16,11 +16,13 @@ import java.io.File;
 import java.util.List;
 import java.util.Objects;
 
-import static com.android.SdkConstants.GRADLE_PATH_SEPARATOR;
 import static com.google.common.base.Splitter.on;
 import static com.intellij.openapi.vfs.VfsUtil.findFileByIoFile;
 
 public class GradleUtil {
+
+  public static final String GRADLE_PATH_SEPARATOR = ":";
+  public static final String FN_GRADLE_PROPERTIES = "gradle.properties";
 
   @Nullable
   public static VirtualFile getGradleSettingsFile(@NotNull File dirPath) {

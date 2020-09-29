@@ -20,6 +20,5 @@
     <orderEntry type="module" module-name="intellij.groovy" />
     <orderEntry type="library" scope="PROVIDED" name="kotlin-plugin-android-compile-deps" level="project" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem" />
-    <orderEntry type="module" module-name="android.sdktools.common" />
   </component>
 </module>

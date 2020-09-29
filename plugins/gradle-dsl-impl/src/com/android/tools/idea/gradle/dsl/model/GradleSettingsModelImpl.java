@@ -15,6 +15,7 @@
  */
 package com.android.tools.idea.gradle.dsl.model;
 
+import static com.android.tools.idea.gradle.dsl.GradleDslBuildScriptUtil.findGradleBuildFile;
 import static com.android.tools.idea.gradle.dsl.GradleUtil.getBaseDirPath;
 import static com.android.tools.idea.gradle.dsl.GradleUtil.getGradleBuildFile;
 import static com.android.tools.idea.gradle.dsl.GradleUtil.getGradleSettingsFile;
@@ -23,7 +24,6 @@ import static com.android.tools.idea.gradle.dsl.model.ext.PropertyUtil.FILE_METH
 import static com.android.tools.idea.gradle.dsl.parser.include.IncludeDslElement.INCLUDE;
 import static com.android.tools.idea.gradle.dsl.parser.settings.ProjectPropertiesDslElement.BUILD_FILE_NAME;
 import static com.android.tools.idea.gradle.dsl.parser.settings.ProjectPropertiesDslElement.PROJECT_DIR;
-import static com.android.utils.BuildScriptUtil.findGradleBuildFile;
 import static com.intellij.openapi.util.io.FileUtil.filesEqual;
 import static com.intellij.openapi.vfs.VfsUtil.findFileByIoFile;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;

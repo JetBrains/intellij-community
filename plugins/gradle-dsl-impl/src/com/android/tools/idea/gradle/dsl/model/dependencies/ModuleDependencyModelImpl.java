@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static com.android.SdkConstants.GRADLE_PATH_SEPARATOR;
+import static com.android.tools.idea.gradle.dsl.GradleUtil.GRADLE_PATH_SEPARATOR;
 import static com.android.tools.idea.gradle.dsl.GradleUtil.getPathSegments;
 
 public final class ModuleDependencyModelImpl extends DependencyModelImpl implements

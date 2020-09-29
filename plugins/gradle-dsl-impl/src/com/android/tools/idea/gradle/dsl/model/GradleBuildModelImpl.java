@@ -15,7 +15,7 @@
  */
 package com.android.tools.idea.gradle.dsl.model;
 
-import static com.android.SdkConstants.FN_GRADLE_PROPERTIES;
+import static com.android.tools.idea.gradle.dsl.GradleUtil.FN_GRADLE_PROPERTIES;
 import static com.android.tools.idea.gradle.dsl.GradleUtil.getBaseDirPath;
 import static com.android.tools.idea.gradle.dsl.GradleUtil.getGradleBuildFile;
 import static com.android.tools.idea.gradle.dsl.parser.android.AndroidDslElement.ANDROID;
