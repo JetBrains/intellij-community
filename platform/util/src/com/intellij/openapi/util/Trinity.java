@@ -27,9 +27,9 @@ public class Trinity<A, B, C> {
   public final C third;
 
   public Trinity(A first, B second, C third) {
-    this.third = third;
     this.first = first;
     this.second = second;
+    this.third = third;
   }
 
   public final A getFirst() {
