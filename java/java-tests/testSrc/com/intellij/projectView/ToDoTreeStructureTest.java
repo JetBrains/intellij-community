@@ -6,6 +6,7 @@ import com.intellij.ide.todo.CurrentFileTodosTreeBuilder;
 import com.intellij.ide.todo.TodoTreeStructure;
 import com.intellij.ide.todo.nodes.TodoItemNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.ProjectViewTestUtil;
@@ -29,7 +30,7 @@ public class ToDoTreeStructureTest extends BaseProjectViewTestCase {
   public void testToDo1() {
     AllTodosTreeBuilder all = new AllTodosTreeBuilder(new Tree(), myProject);
     all.init();
-
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     TodoTreeStructure structure = all.getTodoTreeStructure();
     structure.setFlattenPackages(true);
     ProjectViewTestUtil.assertStructureEqual(structure,
@@ -49,7 +50,7 @@ public class ToDoTreeStructureTest extends BaseProjectViewTestCase {
   public void testToDo() {
     AllTodosTreeBuilder all = new AllTodosTreeBuilder(new Tree(), myProject);
     all.init();
-
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     AbstractTreeStructure structure = all.getTodoTreeStructure();
     ProjectViewTestUtil.assertStructureEqual(structure,
                                              "Root\n" +

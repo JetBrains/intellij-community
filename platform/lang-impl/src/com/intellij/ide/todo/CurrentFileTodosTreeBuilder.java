@@ -54,6 +54,5 @@ public class CurrentFileTodosTreeBuilder extends TodoTreeBuilder {
     CurrentFileTodosTreeStructure treeStructure=(CurrentFileTodosTreeStructure)getTodoTreeStructure();
     treeStructure.setFile(file);
     rebuildCache();
-    updateTree();
   }
 }

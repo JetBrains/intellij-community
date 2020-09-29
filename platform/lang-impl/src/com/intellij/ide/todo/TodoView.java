@@ -266,10 +266,10 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
   }
 
   public void refresh() {
-    Map<TodoPanel, Set<VirtualFile>> files = new HashMap<>();
     ReadAction.nonBlocking(() -> {
+      Map<TodoPanel, Set<VirtualFile>> files = new HashMap<>();
       if (myAllTodos == null) {
-        return;
+        return files;
       }
       for (TodoPanel panel : myPanels) {
         panel.myTodoTreeBuilder.collectFiles(virtualFile -> {
@@ -277,8 +277,9 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
           return true;
         });
       }
+      return files;
     })
-      .finishOnUiThread(ModalityState.NON_MODAL, (__) -> {
+      .finishOnUiThread(ModalityState.NON_MODAL, files -> {
         for (TodoPanel panel : myPanels) {
           panel.rebuildCache(ObjectUtils.notNull(files.get(panel), new HashSet<>()));
           panel.updateTree();
@@ -321,7 +322,6 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
   private JComponent wrapWithDumbModeSpoiler(@NotNull TodoPanel panel) {
     return DumbService.getInstance(myProject).wrapWithSpoiler(panel, () -> ApplicationManager.getApplication().invokeLater(() -> {
       panel.rebuildCache();
-      panel.updateTree();
     }, myProject.getDisposed()), panel);
   }
 }

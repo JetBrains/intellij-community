@@ -10,6 +10,8 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -31,6 +33,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.util.Processor;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -307,13 +310,20 @@ public abstract class TodoTreeBuilder implements Disposable {
     }
   }
 
-  void rebuildCache(){
-    Set<VirtualFile> files = new HashSet<>();
-    collectFiles(virtualFile -> {
-      files.add(virtualFile);
-      return true;
-    });
-    rebuildCache(files);
+  void rebuildCache() {
+    ReadAction.nonBlocking(() -> {
+      Set<VirtualFile> files = new HashSet<>();
+      collectFiles(virtualFile -> {
+        files.add(virtualFile);
+        return true;
+      });
+      return files;
+    }).finishOnUiThread(ModalityState.NON_MODAL, files -> {
+      rebuildCache(files);
+      updateTree();
+    })
+      .inSmartMode(myProject)
+      .submit(NonUrgentExecutor.getInstance());
   }
 
   void collectFiles(Processor<? super VirtualFile> collector) {
@@ -513,7 +523,6 @@ public abstract class TodoTreeBuilder implements Disposable {
       rebuildCache();
     }
     catch (IndexNotReadyException ignored) {}
-    updateTree();
   }
 
   /**
@@ -735,7 +744,6 @@ public abstract class TodoTreeBuilder implements Disposable {
         myModel.getInvoker().invoke(
           () -> ApplicationManager.getApplication().invokeLater(() -> {
             rebuildCache();
-            updateTree();
           })
         );
       }
