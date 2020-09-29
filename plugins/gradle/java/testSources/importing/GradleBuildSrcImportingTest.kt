@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.importing
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VirtualFile
 import junit.framework.AssertionFailedError
 import org.assertj.core.api.Assertions.assertThat
@@ -40,6 +41,21 @@ class GradleBuildSrcImportingTest : GradleImportingTestCase() {
     val moduleLibDeps = getModuleLibDeps("project.buildSrc.test", "Gradle: junit:junit:4.12")
     assertThat(moduleLibDeps).hasSize(1).allSatisfy {
       assertThat(it.libraryLevel).isEqualTo("project")
+    }
+  }
+
+  @Test
+  fun `test explore files after double importing`() {
+    createProjectSubFile("buildSrc/build.gradle", GradleBuildScriptBuilderEx().withJUnit("4.12").generate())
+    importProject("")
+    importProject("")
+
+    assertNoThrowable {
+      ModuleManager.getInstance(myProject).modules.forEach { module ->
+        ModuleRootManager.getInstance(module).orderEntries.forEach { entry ->
+          entry.getFiles(OrderRootType.SOURCES)
+        }
+      }
     }
   }
 
