@@ -1193,6 +1193,14 @@
       <add-to-group group-id="Diff.ViewerToolbar"/>
       <add-to-group group-id="Diff.KeymapGroup" relative-to-action="OpenFileEditorInBlankDiffWindow" anchor="after"/>
     </action>
+    <action id="ToggleThreeSideInBlankDiffWindow" class="com.intellij.diff.actions.BlankToggleThreeSideModeAction">
+      <add-to-group group-id="Diff.EditorPopupMenu" relative-to-action="OpenFileEditorInBlankDiffWindow" anchor="after"/>
+      <add-to-group group-id="Diff.KeymapGroup" relative-to-action="SwapSidesInDiffWindow" anchor="after"/>
+    </action>
+    <action id="SwapThreeWayColorModeInDiffWindow" class="com.intellij.diff.actions.impl.SwapThreeWayColorModeAction">
+      <add-to-group group-id="Diff.ViewerToolbar"/>
+      <add-to-group group-id="Diff.KeymapGroup" relative-to-action="ToggleThreeSideInBlankDiffWindow" anchor="after"/>
+    </action>
 
     <action id="Rerun" class="com.intellij.execution.runners.FakeRerunAction"/>
     <action id="RerunTests" class="com.intellij.execution.runners.RerunTestsAction"/>
