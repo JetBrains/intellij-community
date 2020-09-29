@@ -203,7 +203,7 @@ public class APIWrappers {
   
   @NotNull
   public static <T> T wrap(@NotNull Class<T> ifaceClass, @NotNull final Object wrapper, @NotNull final Class<?> parentToStopSearchAt, @NotNull final T delegateTo) {
-    return ifaceClass.cast(Proxy.newProxyInstance(wrapper.getClass().getClassLoader(), new Class[]{ifaceClass, DelegateAccessor.class}, new InvocationHandler() {
+    return ifaceClass.cast(Proxy.newProxyInstance(wrapper.getClass().getClassLoader(), new Class[]{ifaceClass/*, DelegateAccessor.class*/}, new InvocationHandler() {
       private final Map<Method, Pair<Method, Object>> myCallHandlers = Collections.synchronizedMap(new HashMap<Method, Pair<Method, Object>>());
       @Override
       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
