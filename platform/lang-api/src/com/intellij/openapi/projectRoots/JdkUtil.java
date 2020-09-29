@@ -81,7 +81,7 @@ public final class JdkUtil {
 
   public static @NotNull String suggestJdkName(@NotNull JavaVersion version, @Nullable String vendorPrefix) {
     StringBuilder suggested = new StringBuilder();
-    if (vendorPrefix != null) suggested.append(vendorPrefix).append('-');
+    // if (vendorPrefix != null) suggested.append(vendorPrefix).append('-'); // this breaks some Android Studio tests
     if (version.feature < 9) suggested.append("1.");
     suggested.append(version.feature);
     if (version.ea) suggested.append("-ea");
