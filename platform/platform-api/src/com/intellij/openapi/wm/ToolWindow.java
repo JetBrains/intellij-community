@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerListener;
+import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -226,4 +227,9 @@ public interface ToolWindow extends BusyObject {
   }
 
   void setTitleActions(@NotNull List<AnAction> actions);
+
+  @Nullable
+  default StatusText getEmptyText() {
+    return null;
+  }
 }

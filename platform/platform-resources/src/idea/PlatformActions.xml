@@ -1281,5 +1281,9 @@
     <group id="AnalyzeStacktraceToolbar"/>
     <group id="EditorTabActionGroup"/>
     <action class="com.intellij.ide.actions.EditSourceNotInEditorAction" id="EditSourceNotInEditor"/>
+
+    <group id="ActivateToolWindowActions" searchable="false">
+      <action id="ActivateFindToolWindow" class="com.intellij.find.actions.ActivateFindToolWindowAction"/>
+    </group>
   </actions>
 </idea-plugin>
