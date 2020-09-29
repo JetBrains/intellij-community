@@ -18,6 +18,10 @@ import com.intellij.vcsUtil.VcsUtil
 import git4idea.index.ui.GitFileStatusNode
 import git4idea.index.vfs.GitIndexFileSystemRefresher
 
+class GitAddAction : StagingAreaOperationAction(GitAddOperation)
+class GitResetAction : StagingAreaOperationAction(GitResetOperation)
+class GitRevertAction : StagingAreaOperationAction(GitRevertOperation)
+
 abstract class StagingAreaOperationAction(private val operation: StagingAreaOperation)
   : GitFileStatusNodeAction(operation.actionText, Presentation.NULL_STRING, operation.icon) {
 

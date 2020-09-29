@@ -29,10 +29,6 @@ interface StagingAreaOperation {
   fun processPaths(project: Project, root: VirtualFile, paths: List<FilePath>)
 }
 
-class GitAddAction : StagingAreaOperationAction(GitAddOperation)
-class GitResetAction : StagingAreaOperationAction(GitResetOperation)
-class GitRevertAction : StagingAreaOperationAction(GitRevertOperation)
-
 object GitAddOperation : StagingAreaOperation {
   override val actionText get() = GitBundle.messagePointer("add.action.name")
   override val progressTitle get() = GitBundle.message("add.adding")
