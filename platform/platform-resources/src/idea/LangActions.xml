@@ -771,7 +771,7 @@
       <add-to-group group-id="EditorPopupMenu" relative-to-action="CompareClipboardWithSelection" anchor="before"/>
     </group>
 
-    <group id="EditorTabPopupMenuEx">
+    <group id="EditorTabPopupMenuEx" searchable="false">
       <separator/>
       <reference ref="AssociateWithFileType"/>
       <reference ref="AddToFavorites"/>

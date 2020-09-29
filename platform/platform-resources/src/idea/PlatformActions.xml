@@ -810,11 +810,11 @@
       </group>
       <reference ref="EditorToggleColumnMode"/>
       <separator/>
-      <group id="EditorPopupMenu1"/>
+      <group id="EditorPopupMenu1" searchable="false"/>
       <separator/>
-      <group id="EditorPopupMenu2"/>
+      <group id="EditorPopupMenu2" searchable="false"/>
       <separator/>
-      <group id="EditorPopupMenu3"/>
+      <group id="EditorPopupMenu3" searchable="false"/>
       <separator/>
       <action id="$SearchWeb" class="com.intellij.ide.actions.SearchWebAction"/>
       <separator/>
