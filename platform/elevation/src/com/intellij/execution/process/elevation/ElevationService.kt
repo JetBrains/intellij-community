@@ -124,7 +124,7 @@ private class ElevatedProcess private constructor(
 }
 
 private class ElevatorClient(private val channel: ManagedChannel) : Closeable {
-  private val stub: ElevatorCoroutineStub = ElevatorCoroutineStub(channel)
+  private val stub: ElevatorCoroutineStub = ElevatorCoroutineStub(ClientInterceptors.intercept(channel, LoggingClientInterceptor))
 
   suspend fun createProcess(command: List<String>, workingDir: File, environVars: Map<String, String>): Long {
     val environVarList = environVars.map { (name, value) ->
