@@ -323,6 +323,7 @@ public abstract class TodoTreeBuilder implements Disposable {
       updateTree();
     })
       .inSmartMode(myProject)
+      .expireWith(this)
       .submit(NonUrgentExecutor.getInstance());
   }
 
