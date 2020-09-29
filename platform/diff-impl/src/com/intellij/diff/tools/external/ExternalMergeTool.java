@@ -52,7 +52,7 @@ public final class ExternalMergeTool {
     throws ExecutionException, IOException {
     ExternalDiffSettings settings = ExternalDiffSettings.getInstance();
 
-    ExternalDiffToolUtil.executeMerge(project, settings, (ThreesideMergeRequest)request);
+    ExternalDiffToolUtil.executeMerge(project, settings, (ThreesideMergeRequest)request, null);
   }
 
   public static boolean canShow(@NotNull MergeRequest request) {
