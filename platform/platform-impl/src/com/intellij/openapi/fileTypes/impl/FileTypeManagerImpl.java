@@ -1086,6 +1086,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         map.addContent(hashBangTag);
       }
     }
+    List<FileNameMatcher> removedMappings = myRemovedMappingTracker.getMappingsForFileType(type.getName());
+    // do not store removed mappings which are going to be stored anyway via RemovedMappingTracker.save()
+    defaultAssociations.removeIf(matcher -> removedMappings.contains(matcher));
     myRemovedMappingTracker.saveRemovedMappingsForFileType(map, type.getName(), defaultAssociations, specifyTypeName);
   }
 
@@ -1283,6 +1286,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   public void associate(@NotNull FileType fileType, @NotNull FileNameMatcher matcher, boolean fireChange) {
+    // delete "this matcher is removed from this file type" record
+    myRemovedMappingTracker.removeIf((removedMatcher, removeFileTypeName) -> matcher.equals(removedMatcher) && fileType.getName().equals(removeFileTypeName));
     if (!myPatternsTable.isAssociatedWith(fileType, matcher)) {
       if (fireChange) {
         fireBeforeFileTypesChanged();
