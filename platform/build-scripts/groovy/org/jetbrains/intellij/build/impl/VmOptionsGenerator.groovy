@@ -21,6 +21,8 @@ class VmOptionsGenerator {
       '-Djdk.module.illegalAccess.silent=true',
     ]
 
+  static final String defaultCodeCacheSize = '512m'
+
   static List<String> computeVmOptions(JvmArchitecture arch, boolean isEAP, ProductProperties productProperties) {
     List<String> commonVmOptions
     if (isEAP) {
@@ -36,8 +38,8 @@ class VmOptionsGenerator {
   private static List<String> vmMemoryOptions(JvmArchitecture arch, ProductProperties productProperties) {
     switch (arch) {
       // NOTE: when changing, please review usages of ProductProperties.getCustomJvmMemoryOptionsX64 and synchronize if necessary  
-      case JvmArchitecture.x32: return ['-server', '-Xms128m', '-Xmx512m', '-XX:ReservedCodeCacheSize=240m']
-      case JvmArchitecture.x64: return productProperties.customJvmMemoryOptionsX64?.split(' ')?.toList() ?: ['-Xms128m', '-Xmx750m', '-XX:ReservedCodeCacheSize=240m']
+      case JvmArchitecture.x32: return ['-server', '-Xms128m', '-Xmx512m', '-XX:ReservedCodeCacheSize=' + defaultCodeCacheSize]
+      case JvmArchitecture.x64: return productProperties.customJvmMemoryOptionsX64?.split(' ')?.toList() ?: ['-Xms128m', '-Xmx750m', '-XX:ReservedCodeCacheSize=' + defaultCodeCacheSize]
     }
     throw new AssertionError(arch)
   }
