@@ -51,8 +51,6 @@ public final class ImageValue {
   }
 
   public static final class ImageValueSerializer implements DataType<ImageValue> {
-    private static final long MAX_IMAGE_SIZE = 16 * 1024 * 1024;
-
     @Override
     public ImageValue[] createStorage(int size) {
       return new ImageValue[size];
@@ -87,10 +85,6 @@ public final class ImageValue {
       int actualHeight = IntBitPacker.readVar(buf);
 
       int length = actualWidth * actualHeight * 4;
-      if (length > MAX_IMAGE_SIZE) {
-        throw new IllegalStateException("Size of data is too big: " + length);
-      }
-
       byte[] data = ByteBufUtil.getBytes(buf, buf.readerIndex(), length);
       buf.readerIndex(buf.readerIndex() + length);
       return new ImageValue(data, width, height, actualWidth, actualHeight);
