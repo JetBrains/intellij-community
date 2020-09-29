@@ -19,11 +19,16 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.NlsActions.ActionText;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.codeStyle.WordPrefixMatcher;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.Processor;
@@ -231,13 +236,73 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
       actions = actions.append(provider.getActions(true));
     }
 
+    Set<AnAction> seenActions = new HashSet<>();
     JBIterable<ActionWrapper> actionWrappers = actions.unique().filterMap(action -> {
-      if (action instanceof ActionGroup && !((ActionGroup) action).isSearchable()) return null;
+      seenActions.add(action);
+      if (action instanceof ActionGroup && !((ActionGroup)action).isSearchable()) return null;
       MatchMode mode = myModel.actionMatches(pattern, matcher, action);
       if (mode == MatchMode.NONE) return null;
       return new ActionWrapper(action, myModel.getGroupMapping(action), mode, dataContext, myModel);
     });
+    if (Registry.is("actionSystem.gotoAction.all.toolwindows")) {
+      List<ActionWrapper> toolWindowActions = collectToolWindowQuickActionProviders(pattern, matcher, seenActions);
+      actionWrappers = actionWrappers.append(toolWindowActions);
+    }
     return processItems(pattern, actionWrappers, consumer);
+  }
+
+  @NotNull
+  private List<ActionWrapper> collectToolWindowQuickActionProviders(String pattern, Matcher matcher, Set<AnAction> seenActions) {
+    List<ActionWrapper> result = new ArrayList<>();
+    Project project = myModel.getProject();
+    if (project != null) {
+      ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+      String[] toolWindowIds = toolWindowManager.getToolWindowIds();
+      for (String toolWindowId : toolWindowIds) {
+        ToolWindow toolWindow = toolWindowManager.getToolWindow(toolWindowId);
+        if (toolWindow != null) {
+          if (!toolWindow.isVisible()) continue;
+          ContentManager contentManager = toolWindow.getContentManagerIfCreated();
+          if (contentManager != null) {
+            Content content = contentManager.getSelectedContent();
+            if (content != null) {
+              DataContext dataContext = DataManager.getInstance().getDataContext(content.getComponent());
+              QuickActionProvider provider = QuickActionProvider.KEY.getData(dataContext);
+              if (provider != null) {
+                List<AnAction> providerActions = provider.getActions(true);
+                String title = toolWindow.getTitle();
+                if (StringUtil.isEmpty(title)) title = toolWindow.getStripeTitle();
+                appendActionsFromProvider(pattern, matcher, result, seenActions, providerActions, dataContext, title);
+              }
+            }
+          }
+        }
+      }
+    }
+    return result;
+  }
+
+  private void appendActionsFromProvider(String pattern,
+                                         Matcher matcher,
+                                         List<ActionWrapper> result,
+                                         Set<AnAction> seenActions,
+                                         List<AnAction> providerActions,
+                                         DataContext dataContext,
+                                         @NlsContexts.TabTitle @Nullable String title) {
+    for (AnAction action : providerActions) {
+      if (seenActions.contains(action)) continue;
+      seenActions.add(action);
+      if (action instanceof ActionGroup) {
+        AnAction[] children = ((ActionGroup)action).getChildren(AnActionEvent.createFromDataContext(ActionPlaces.ACTION_SEARCH, null, dataContext));
+        appendActionsFromProvider(pattern, matcher, result, seenActions, Arrays.asList(children), dataContext, title);
+      }
+      else {
+        MatchMode mode = myModel.actionMatches(pattern, matcher, action);
+        if (mode != MatchMode.NONE) {
+          result.add(new ActionWrapper(action, GroupMapping.createFromText(title, true), mode, dataContext, myModel));
+        }
+      }
+    }
   }
 
   public void clearIntentions() {
@@ -256,7 +321,7 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
       .filterMap(intentionText -> {
         ApplyIntentionAction intentionAction = intentionMap.get(intentionText);
         if (myModel.actionMatches(pattern, matcher, intentionAction) == MatchMode.NONE) return null;
-        GroupMapping groupMapping = GroupMapping.createFromText(intentionText);
+        GroupMapping groupMapping = GroupMapping.createFromText(intentionText, false);
         return new ActionWrapper(intentionAction, groupMapping, MatchMode.INTENTION, dataContext, myModel);
       });
     return processItems(pattern, intentions, consumer);

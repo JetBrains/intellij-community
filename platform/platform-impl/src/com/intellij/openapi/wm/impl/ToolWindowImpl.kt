@@ -385,12 +385,10 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   }
 
   override fun getTitle(): String? {
-    EDT.assertIsEdt()
     return contentManager.value.selectedContent?.displayName
   }
 
   override fun getStripeTitle(): String {
-    EDT.assertIsEdt()
     return stripeTitle
   }
 
