@@ -253,8 +253,8 @@ public class PythonSdkUpdaterOld implements StartupActivity.Background {
     final boolean success = update(sdk, sdkModificator, project, ownerComponent);
     if (!success) {
       Messages.showErrorDialog(project,
-                               PyBundle.message("MSG.cant.setup.sdk.$0", getSdkPresentableName(sdk)),
-                               PyBundle.message("MSG.title.bad.sdk"));
+                               PyBundle.message("python.sdk.cannot.setup.sdk", getSdkPresentableName(sdk)),
+                               PyBundle.message("python.sdk.invalid.python.sdk"));
     }
   }
 
