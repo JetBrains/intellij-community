@@ -6,6 +6,8 @@ import junit.framework.TestCase;
 import javax.annotation.processing.Filer;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
+import javax.tools.Diagnostic;
+import javax.tools.DiagnosticListener;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
@@ -15,6 +17,8 @@ public class APIWrappersTest extends TestCase {
     checkMethodSignatures(APIWrappers.ProcessingEnvironmentWrapper.class, ProcessingEnvironment.class);
     checkMethodSignatures(APIWrappers.ProcessorWrapper.class, Processor.class);
     checkMethodSignatures(APIWrappers.FilerWrapper.class, Filer.class);
+    checkMethodSignatures(APIWrappers.DiagnosticWrapper.class, Diagnostic.class);
+    checkMethodSignatures(APIWrappers.DiagnosticListenerWrapper.class, DiagnosticListener.class);
   }
 
   private static <I, W extends APIWrappers.DynamicWrapper<I>> void checkMethodSignatures(Class<W> wrapperClass, Class<I> apiIfaceClass) {

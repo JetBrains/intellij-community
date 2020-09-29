@@ -14,9 +14,7 @@ import javax.lang.model.element.Name;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
-import javax.tools.FileObject;
-import javax.tools.JavaFileManager;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -30,7 +28,12 @@ public class APIWrappers {
     return wrap(Processor.class, new ProcessorWrapper(delegate, fileManager), delegate);
   }
 
-  abstract static class DynamicWrapper<T> {
+  @SuppressWarnings("unchecked")
+  public static <T> DiagnosticListener<T> newDiagnosticListenerWrapper(final DiagnosticListener<T> delegate, @NotNull Iterable<Processor> processors) {
+    return wrap(DiagnosticListener.class, new DiagnosticListenerWrapper<T>(delegate, processors), DynamicWrapper.class, delegate);
+  }
+
+  abstract static class DynamicWrapper<T> implements DelegateAccessor<T> {
 
     private final T myDelegate;
 
@@ -38,9 +41,56 @@ public class APIWrappers {
       myDelegate = delegate;
     }
 
-    protected final T getDelegate() {
+    @Override
+    public final T getDelegate() {
       return myDelegate;
     }
+  }
+
+  @SuppressWarnings("unchecked")
+  static class DiagnosticListenerWrapper<T> extends DynamicWrapper<DiagnosticListener<T>> implements DiagnosticListener<T>{
+    private final Iterable<Pair<String, String>> myNamesPairs;
+
+    DiagnosticListenerWrapper(DiagnosticListener<T> delegate, @NotNull Iterable<Processor> processors) {
+      super(delegate);
+      myNamesPairs = Iterators.filter(Iterators.map(processors, new Function<Processor, Pair<String, String>>() {
+        @Override
+        public Pair<String, String> fun(Processor processor) {
+          return processor instanceof DelegateAccessor<?>? Pair.create(processor.getClass().getName(), ((DelegateAccessor<?>)processor).getDelegate().getClass().getName()) : null;
+        }
+      }), Iterators.<Pair<String, String>>notNullFilter());
+    }
+
+    @Override
+    public void report(Diagnostic<? extends T> diagnostic) {
+      getDelegate().report(wrap(Diagnostic.class, new DiagnosticWrapper<T>((Diagnostic<T>)diagnostic, myNamesPairs), DynamicWrapper.class, diagnostic));
+    }
+  }
+
+  static class DiagnosticWrapper<T> extends DynamicWrapper<Diagnostic<T>> {
+    private final Iterable<Pair<String, String>> myNamesMap;
+
+    DiagnosticWrapper(Diagnostic<T> delegate, Iterable<Pair<String, String>> namesMap) {
+      super(delegate);
+      myNamesMap = namesMap;
+    }
+
+    public String getMessage(Locale locale) {
+      final String message = getDelegate().getMessage(locale);
+      if (message != null) {
+        for (Pair<String, String> pair : myNamesMap) {
+          final String replaced = message.replace(pair.getFirst(), pair.getSecond());
+          if (!message.equals(replaced)) {
+            return replaced;
+          }
+        }
+      }
+      return message;
+    }
+  }
+
+  interface DelegateAccessor<T> {
+    T getDelegate();
   }
 
   static class ProcessorWrapper extends DynamicWrapper<Processor> {
@@ -153,7 +203,7 @@ public class APIWrappers {
   
   @NotNull
   public static <T> T wrap(@NotNull Class<T> ifaceClass, @NotNull final Object wrapper, @NotNull final Class<?> parentToStopSearchAt, @NotNull final T delegateTo) {
-    return ifaceClass.cast(Proxy.newProxyInstance(wrapper.getClass().getClassLoader(), new Class[]{ifaceClass}, new InvocationHandler() {
+    return ifaceClass.cast(Proxy.newProxyInstance(wrapper.getClass().getClassLoader(), new Class[]{ifaceClass, DelegateAccessor.class}, new InvocationHandler() {
       private final Map<Method, Pair<Method, Object>> myCallHandlers = Collections.synchronizedMap(new HashMap<Method, Pair<Method, Object>>());
       @Override
       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -171,19 +221,24 @@ public class APIWrappers {
       private Pair<Method, Object> getCallHandlerMethod(Method method) {
         Pair<Method, Object> pair = myCallHandlers.get(method);
         if (pair == null) {
-          // important: look for implemented methods starting from the actual class
-          Class<?> aClass = wrapper.getClass();
-          while (!(parentToStopSearchAt.equals(aClass) || Object.class.equals(aClass))) {
-            try {
-              pair = Pair.create(aClass.getDeclaredMethod(method.getName(), method.getParameterTypes()), wrapper);
-              break;
-            }
-            catch (NoSuchMethodException e) {
-              aClass = aClass.getSuperclass();
-            }
+          if (DelegateAccessor.class.equals(method.getDeclaringClass())) {
+            pair = Pair.create(method, wrapper);
           }
-          if (pair == null) {
-            pair = Pair.<Method, Object>create(method, delegateTo);
+          else {
+            // important: look for implemented methods starting from the actual class
+            Class<?> aClass = wrapper.getClass();
+            while (!(parentToStopSearchAt.equals(aClass) || Object.class.equals(aClass))) {
+              try {
+                pair = Pair.create(aClass.getDeclaredMethod(method.getName(), method.getParameterTypes()), wrapper);
+                break;
+              }
+              catch (NoSuchMethodException e) {
+                aClass = aClass.getSuperclass();
+              }
+            }
+            if (pair == null) {
+              pair = Pair.<Method, Object>create(method, delegateTo);
+            }
           }
           myCallHandlers.put(method, pair);
         }
