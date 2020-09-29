@@ -20,12 +20,12 @@ import java.io.IOException
 
 private val ioDispatcher = AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()
 
-internal suspend fun startRedirectHandling(lifetime: Lifetime, ports: Collection<Int>): SpaceRedirectHandlingInfo? {
+internal suspend fun startRedirectHandling(lifetime: Lifetime, server: String, ports: Collection<Int>): SpaceRedirectHandlingInfo? {
   val info = CompletableDeferred<SpaceRedirectHandlingInfo?>()
   launch(lifetime, ioDispatcher) {
     for (port in ports.distinct().shuffled()) {
       try {
-        val redirectUrl = startAuthServerAsync(lifetime, port)
+        val redirectUrl = startAuthServerAsync(lifetime, server, port)
         info.complete(SpaceRedirectHandlingInfo(port, redirectUrl))
         break
       }
@@ -38,13 +38,13 @@ internal suspend fun startRedirectHandling(lifetime: Lifetime, ports: Collection
   return info.await()
 }
 
-private fun startAuthServerAsync(lifetime: Lifetime, port: Int): Deferred<String> {
+private fun startAuthServerAsync(lifetime: Lifetime, serverUrl: String, port: Int): Deferred<String> {
   val redirectUrl = CompletableDeferred<String>()
   val server = embeddedServer(Jetty, port = port, host = "localhost") {
     routing {
       get("/auth") {
         call.respondText(
-          "<html><body><script>close()</script></body></html>",
+          createAuthPage(serverUrl),
           contentType = ContentType.Text.Html
         )
         redirectUrl.complete(call.request.uri)
