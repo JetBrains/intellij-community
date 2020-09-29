@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.AfterLineEndInlayImpl;
 import com.intellij.openapi.editor.impl.softwrap.WrapElementIterator;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -26,8 +27,10 @@ public final class WrapElementMeasuringIterator extends WrapElementIterator {
     super(view.getEditor(), startOffset, endOffset);
     myView = view;
     inlineInlays = view.getEditor().getInlayModel().getInlineElementsInRange(startOffset, endOffset);
-    afterLineEndInlays = view.getEditor().getInlayModel().getAfterLineEndElementsInRange(
-      DocumentUtil.getLineStartOffset(startOffset, myDocument), endOffset);
+    afterLineEndInlays = ContainerUtil.filter(
+      view.getEditor().getInlayModel().getAfterLineEndElementsInRange(DocumentUtil.getLineStartOffset(startOffset, myDocument), endOffset),
+      inlay -> ((AfterLineEndInlayImpl)inlay).isSoftWrappable()
+    );
   }
 
   public float getElementEndX(float startX) {
@@ -84,10 +87,6 @@ public final class WrapElementMeasuringIterator extends WrapElementIterator {
     int width = 0;
     while (afterLineEndInlayIndex < afterLineEndInlays.size()) {
       Inlay<?> inlay = afterLineEndInlays.get(afterLineEndInlayIndex);
-      if (inlay instanceof AfterLineEndInlayImpl && !((AfterLineEndInlayImpl)inlay).isSoftWrappable()) {
-        afterLineEndInlayIndex++;
-        continue;
-      }
       int offset = inlay.getOffset();
       if (offset < startOffset || offset > endOffset) break;
       width += inlay.getWidthInPixels();
