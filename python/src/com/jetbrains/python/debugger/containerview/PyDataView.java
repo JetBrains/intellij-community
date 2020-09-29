@@ -22,6 +22,7 @@ import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyDisposable;
 import com.jetbrains.python.console.PydevConsoleCommunication;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugValue;
@@ -158,7 +159,7 @@ public final class PyDataView implements DumbAware {
   }
 
   public void init(@NotNull ToolWindow toolWindow) {
-    myTabs = new JBRunnerTabs(myProject, myProject);
+    myTabs = new JBRunnerTabs(myProject, PyDisposable.getInstance(myProject));
     myTabs.setDataProvider(dataId -> {
       if (PlatformDataKeys.HELP_ID.is(dataId)) {
         return HELP_ID;

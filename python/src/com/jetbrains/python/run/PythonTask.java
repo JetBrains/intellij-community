@@ -31,6 +31,7 @@ import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyDisposable;
 import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -46,7 +47,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * TODO: Use {@link com.jetbrains.python.run.PythonRunner} instead of this class? At already supports rerun and other things
+ * TODO: Use {@link PythonRunner} instead of this class? At already supports rerun and other things
  * Base class for tasks which are run from PyCharm with results displayed in a toolwindow (manage.py, setup.py, Sphinx etc).
  *
  * @author yole
@@ -269,13 +270,13 @@ public class PythonTask {
    */
   private void stopProcessWhenAppClosed(@NotNull ProcessHandler process) {
     Disposable disposable = Disposer.newDisposable();
-    Disposer.register(myModule, disposable);
+    Disposer.register(PyDisposable.getInstance(myModule), disposable);
     process.addProcessListener(new ProcessAdapter() {
       @Override
       public void processTerminated(@NotNull final ProcessEvent event) {
         Disposer.dispose(disposable);
       }
-    }, myModule);
+    }, PyDisposable.getInstance(myModule));
     ApplicationManager.getApplication().getMessageBus().connect(disposable).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appWillBeClosed(boolean isRestart) {

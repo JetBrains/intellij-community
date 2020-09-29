@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
-import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionHelper;
 import com.intellij.execution.Executor;
@@ -73,6 +72,7 @@ import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyDisposable;
 import com.jetbrains.python.console.actions.ShowVarsAction;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.debugger.PyDebugRunner;
@@ -265,7 +265,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
   @Override
   public void run(boolean requestEditorFocus) {
-    TransactionGuard.submitTransaction(myProject, () -> FileDocumentManager.getInstance().saveAllDocuments());
+    TransactionGuard.submitTransaction(PyDisposable.getInstance(myProject), () -> FileDocumentManager.getInstance().saveAllDocuments());
 
     ApplicationManager.getApplication().executeOnPooledThread(
       () -> ProgressManager.getInstance().run(new Task.Backgroundable(myProject, PyBundle.message("connecting.to.console.title"), false) {
@@ -496,15 +496,12 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     TargetEnvironmentRequest targetEnvironmentRequest = targetEnvironmentFactory.createRequest();
     TargetEnvironment.LocalPortBinding ideServerPortBinding = new TargetEnvironment.LocalPortBinding(ideServerPort, null);
     targetEnvironmentRequest.getLocalPortBindings().add(ideServerPortBinding);
-    Function<TargetEnvironment, HostPort> ideServerHostPortOnTarget = new Function<TargetEnvironment, HostPort>() {
-      @Override
-      public HostPort apply(@NotNull TargetEnvironment targetEnvironment) {
-        HostPort targetHostPort = targetEnvironment.getLocalPortBindings().get(ideServerPortBinding);
-        if (targetHostPort == null) {
-          throw new IllegalStateException(MessageFormat.format("Local port binding \"{0}\" must be registered", ideServerPortBinding));
-        }
-        return targetHostPort;
+    Function<TargetEnvironment, HostPort> ideServerHostPortOnTarget = targetEnvironment -> {
+      HostPort targetHostPort = targetEnvironment.getLocalPortBindings().get(ideServerPortBinding);
+      if (targetHostPort == null) {
+        throw new IllegalStateException(MessageFormat.format("Local port binding \"{0}\" must be registered", ideServerPortBinding));
       }
+      return targetHostPort;
     };
 
     VirtualFile projectDir = ProjectUtil.guessProjectDir(myProject);
@@ -768,7 +765,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         protected List<String> getActiveConsoles(@NotNull String consoleTitle) {
           PythonConsoleToolWindow toolWindow = PythonConsoleToolWindow.getInstance(myProject);
           if (toolWindow != null && toolWindow.isInitialized() && toolWindow.getToolWindow() != null) {
-            return Lists.newArrayList(toolWindow.getToolWindow().getContentManager().getContents()).stream().map(c -> c.getDisplayName())
+            return Arrays.stream(toolWindow.getToolWindow().getContentManager().getContents()).map(c -> c.getDisplayName())
               .filter(s -> s.startsWith(myTitle)).collect(Collectors.toList());
           }
           else {
@@ -781,7 +778,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
     final RunContentDescriptor contentDescriptor =
       new RunContentDescriptor(myConsoleView, myProcessHandler, mainPanel, myConsoleInitTitle, null);
-    Disposer.register(myProject, contentDescriptor);
+    Disposer.register(PyDisposable.getInstance(myProject), contentDescriptor);
 
     contentDescriptor.setFocusComputable(() -> myConsoleView.getConsoleEditor().getContentComponent());
     contentDescriptor.setAutoFocusContent(true);
@@ -908,7 +905,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
           }
 
           @Override
-          public void executeWriteAction(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+          public void executeWriteAction(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
             mySplitLineAction.getHandler().execute(editor, caret, dataContext);
             editor.getCaretModel().getCurrentCaret().moveCaretRelatively(0, 1, false, true);
           }
