@@ -4,10 +4,13 @@ package com.intellij.ide.plugins
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.StartupManager
 
 @Service
 @State(
@@ -42,6 +45,26 @@ class ProjectPluginTracker : PersistentStateComponent<ProjectPluginTracker.Compa
         val idString = id.idString
         if (!enabledPlugins.remove(idString)) {
           disabledPlugins.remove(idString)
+        }
+      }
+    }
+
+    class EnableDisablePluginsActivity : StartupActivity {
+
+      init {
+        if (ApplicationManager.getApplication().isUnitTestMode) {
+          throw ExtensionNotApplicableException.INSTANCE
+        }
+      }
+
+      /**
+       * Triggers [ProjectPluginTracker.loadState].
+       *
+       * @param project a project to enable/disable plugins for
+       */
+      override fun runActivity(project: Project) {
+        StartupManager.getInstance(project).runAfterOpened {
+          EnableDisablePluginsListener.projectOpened(project)
         }
       }
     }
