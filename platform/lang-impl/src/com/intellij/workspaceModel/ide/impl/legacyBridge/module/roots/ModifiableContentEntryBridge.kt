@@ -110,8 +110,10 @@ internal class ModifiableContentEntryBridge(
       error("Exclude folder $excludeUrl must be under content entry $contentEntryUrl")
     }
 
-    updateContentEntry {
-      excludedUrls = if (excludedUrls.contains(excludeUrl)) excludedUrls else (excludedUrls + excludeUrl)
+    if (excludeUrl !in currentContentEntry.value.entity.excludedUrls) {
+      updateContentEntry {
+        excludedUrls = excludedUrls + excludeUrl
+      }
     }
 
     return currentContentEntry.value.excludeFolders.firstOrNull {
