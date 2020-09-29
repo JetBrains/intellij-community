@@ -218,7 +218,7 @@ internal class SdkLookupImpl : SdkLookup {
           override fun cancelled() {
             rootProgressIndicator.cancel()
           }
-        }.installToProgress(indicator as ProgressIndicatorEx)
+        }.installToProgressIfPossible(indicator)
 
         val relayToVisibleIndicator: ProgressIndicatorEx = RelayUiToDelegateIndicator(indicator)
         rootProgressIndicator.addStateDelegate(relayToVisibleIndicator)
