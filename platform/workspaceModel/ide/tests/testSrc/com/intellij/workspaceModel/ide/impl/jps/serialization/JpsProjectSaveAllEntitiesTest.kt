@@ -55,7 +55,7 @@ class JpsProjectSaveAllEntitiesTest {
     val serializers = createProjectSerializers(projectDir, virtualFileManager)
     val builder = WorkspaceEntityStorageBuilder.create()
     val jarUrl = virtualFileManager.fromUrl("jar://${projectDir.systemIndependentPath}/lib/foo.jar!/")
-    val libraryRoot = LibraryRoot(jarUrl, LibraryRootTypeId("CLASSES"), LibraryRoot.InclusionOptions.ROOT_ITSELF)
+    val libraryRoot = LibraryRoot(jarUrl, LibraryRootTypeId("CLASSES"))
     val source = JpsProjectEntitiesLoader.createJpsEntitySourceForProjectLibrary(projectDir.asConfigLocation(virtualFileManager))
     builder.addLibraryEntity("foo", LibraryTableId.ProjectLibraryTableId, listOf(libraryRoot), emptyList(), source)
     val storage = builder.toStorage()

@@ -229,8 +229,7 @@ internal class LibraryModifiableModelBridgeImpl(
 
     val root = LibraryRoot(
       url = virtualFileUrl,
-      type = LibraryRootTypeId(rootType.name()),
-      inclusionOptions = LibraryRoot.InclusionOptions.ROOT_ITSELF
+      type = LibraryRootTypeId(rootType.name())
     )
 
     update {

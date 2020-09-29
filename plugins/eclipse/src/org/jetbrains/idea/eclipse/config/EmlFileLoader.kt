@@ -92,11 +92,10 @@ internal class EmlFileLoader(
     val rootsToAdd = ArrayList<LibraryRoot>()
     libTag.getChildren(IdeaSpecificSettings.SRCROOT_ATTR).mapTo(rootsToAdd) {
       LibraryRoot(virtualFileManager.fromUrl(it.getAttributeValue("url")!!),
-                  LibraryRootTypeId(OrderRootType.SOURCES.name()), LibraryRoot.InclusionOptions.ROOT_ITSELF)
+                  LibraryRootTypeId(OrderRootType.SOURCES.name()))
     }
     libTag.getChildren(IdeaSpecificSettings.JAVADOCROOT_ATTR).mapTo(rootsToAdd) {
-      LibraryRoot(virtualFileManager.fromUrl(it.getAttributeValue("url")!!),
-                  LibraryRootTypeId("JAVADOC"), LibraryRoot.InclusionOptions.ROOT_ITSELF)
+      LibraryRoot(virtualFileManager.fromUrl(it.getAttributeValue("url")!!), LibraryRootTypeId("JAVADOC"))
     }
 
     fun updateRoots(tagName: String, rootType: String) {
@@ -105,7 +104,7 @@ internal class EmlFileLoader(
         library.roots.forEach { libRoot ->
           if (libRoot.type.name == rootType && EPathUtil.areUrlsPointTheSame(root, libRoot.url.url)) {
             rootsToRemove.add(libRoot)
-            rootsToAdd.add(LibraryRoot(virtualFileManager.fromUrl(root), LibraryRootTypeId(rootType), LibraryRoot.InclusionOptions.ROOT_ITSELF))
+            rootsToAdd.add(LibraryRoot(virtualFileManager.fromUrl(root), LibraryRootTypeId(rootType)))
           }
         }
       }

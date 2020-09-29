@@ -293,8 +293,7 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
             val junitName = IdeaXml.JUNIT + AbstractEclipseClasspathReader.getPresentableName(path)
             val url = EclipseClasspathReader.getJunitClsUrl(junitName.contains("4"))
             val roots = listOf(LibraryRoot(virtualUrlManager.fromUrl(url),
-                                           LibraryRootTypeId(OrderRootType.CLASSES.name()),
-                                           LibraryRoot.InclusionOptions.ROOT_ITSELF))
+                                           LibraryRootTypeId(OrderRootType.CLASSES.name())))
             val libraryEntity = builder.addLibraryEntity(junitName, LibraryTableId.ModuleLibraryTableId(moduleEntity.persistentId()),
                                                          roots, emptyList(), contentRootEntity.entitySource)
             dependencies.add(ModuleDependencyItem.Exportable.LibraryDependency(libraryEntity.persistentId(), exported,
@@ -344,18 +343,17 @@ class EclipseModuleRootsSerializer : CustomModuleRootsSerializer, StorageManager
                                  relativePathResolver: ModuleRelativePathResolver,
                                  virtualUrlManager: VirtualFileUrlManager): ArrayList<LibraryRoot> {
     val roots = ArrayList<LibraryRoot>()
-    roots.add(LibraryRoot(url, LibraryRootTypeId(OrderRootType.CLASSES.name()), LibraryRoot.InclusionOptions.ROOT_ITSELF))
+    roots.add(LibraryRoot(url, LibraryRootTypeId(OrderRootType.CLASSES.name())))
     if (srcUrl != null) {
-      roots.add(LibraryRoot(srcUrl, LibraryRootTypeId(OrderRootType.SOURCES.name()), LibraryRoot.InclusionOptions.ROOT_ITSELF))
+      roots.add(LibraryRoot(srcUrl, LibraryRootTypeId(OrderRootType.SOURCES.name())))
     }
     if (nativeRoot != null) {
-      roots.add(LibraryRoot(nativeRoot, LibraryRootTypeId("NATIVE"), LibraryRoot.InclusionOptions.ROOT_ITSELF))
+      roots.add(LibraryRoot(nativeRoot, LibraryRootTypeId("NATIVE")))
     }
     entryTag.getChild("attributes")?.getChildren("attribute")
       ?.filter { it.getAttributeValue("name") == EclipseXml.JAVADOC_LOCATION }
       ?.mapTo(roots) {
-        LibraryRoot(convertToJavadocUrl(it.getAttributeValue("value")!!, moduleEntity, relativePathResolver, virtualUrlManager), LibraryRootTypeId("JAVADOC"),
-                    LibraryRoot.InclusionOptions.ROOT_ITSELF)
+        LibraryRoot(convertToJavadocUrl(it.getAttributeValue("value")!!, moduleEntity, relativePathResolver, virtualUrlManager), LibraryRootTypeId("JAVADOC"))
       }
     return roots
   }

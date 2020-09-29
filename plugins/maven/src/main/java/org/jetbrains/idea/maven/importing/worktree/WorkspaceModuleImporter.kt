@@ -93,8 +93,7 @@ class WorkspaceModuleImporter(private val project: Project,
     val roots = ArrayList<LibraryRoot>()
 
     roots.add(LibraryRoot(virtualFileManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, null, null)),
-                          LibraryRootTypeId("CLASSES"),
-                          LibraryRoot.InclusionOptions.ROOT_ITSELF))
+                          LibraryRootTypeId("CLASSES")))
 
     val libraryTableId = LibraryTableId.ModuleLibraryTableId(moduleId = ModuleId(mavenProject.displayName)); //(ModuleId(moduleEntity.name))
 
@@ -132,16 +131,13 @@ class WorkspaceModuleImporter(private val project: Project,
     val roots = ArrayList<LibraryRoot>()
 
     roots.add(LibraryRoot(virtualFileManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, null, null)),
-                          LibraryRootTypeId("CLASSES"),
-                          LibraryRoot.InclusionOptions.ROOT_ITSELF))
+                          LibraryRootTypeId("CLASSES")))
     roots.add(
       LibraryRoot(virtualFileManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, "javadoc", "jar")),
-                  LibraryRootTypeId("JAVADOC"),
-                  LibraryRoot.InclusionOptions.ROOT_ITSELF))
+                  LibraryRootTypeId("JAVADOC")))
     roots.add(
       LibraryRoot(virtualFileManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, "sources", "jar")),
-                  LibraryRootTypeId("SOURCES"),
-                  LibraryRoot.InclusionOptions.ROOT_ITSELF))
+                  LibraryRootTypeId("SOURCES")))
 
     val libraryTableId = LibraryTableId.ProjectLibraryTableId; //(ModuleId(moduleEntity.name))
 

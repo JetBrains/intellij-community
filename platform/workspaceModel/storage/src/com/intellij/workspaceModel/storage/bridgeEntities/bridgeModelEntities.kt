@@ -497,7 +497,7 @@ data class LibraryRootTypeId(val name: String) : Serializable
 data class LibraryRoot(
   val url: VirtualFileUrl,
   val type: LibraryRootTypeId,
-  val inclusionOptions: InclusionOptions
+  val inclusionOptions: InclusionOptions = InclusionOptions.ROOT_ITSELF
 ) : Serializable {
 
   enum class InclusionOptions {
