@@ -20,10 +20,18 @@ import org.jetbrains.annotations.TestOnly;
 
 class ConflictingMappingTracker {
   private static final Logger LOG = Logger.getInstance(ConflictingMappingTracker.class);
-  private static boolean throwOnConflict;
+  enum ConflictPolicy {
+    THROW, LOG_ERROR, IGNORE
+  }
+  private static ConflictPolicy throwOnConflict = ConflictPolicy.LOG_ERROR;
+  private final RemovedMappingTracker myRemovedMappingTracker;
+
+  ConflictingMappingTracker(@NotNull RemovedMappingTracker removedMappingTracker) {
+    myRemovedMappingTracker = removedMappingTracker;
+  }
 
   @TestOnly
-  static void throwOnConflict(boolean doThrow) {
+  static void onConflict(@NotNull ConflictPolicy doThrow) {
     throwOnConflict = doThrow;
   }
 
@@ -41,11 +49,14 @@ class ConflictingMappingTracker {
     String title = FileTypesBundle.message("notification.title.file.type.conflict.found", fileTypeNameOld, fileTypeNameNew);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       AssertionError error = new AssertionError(title + "; matcher: " + matcher);
-      if (throwOnConflict) {
-        throw error;
-      }
-      else {
-        LOG.warn(error);
+      switch(throwOnConflict) {
+        case THROW:
+          throw error;
+        case LOG_ERROR:
+          LOG.error(error);
+          break;
+        case IGNORE:
+          break;
       }
     }
     ApplicationManager.getApplication().invokeLater(() -> {
@@ -58,14 +69,32 @@ class ConflictingMappingTracker {
         title,
         message,
         NotificationType.WARNING, null);
-      notification.addAction(NotificationAction.createSimple(FileTypesBundle.message("notification.content.revert.to", fileTypeNameOld), () -> {
-        if (fileTypeOld != null) {
-          ApplicationManager.getApplication().runWriteAction(() -> FileTypeManager.getInstance().associate(fileTypeOld, matcher));
+      if (fileTypeNew != null) {
+        notification.addAction(NotificationAction.createSimple(FileTypesBundle.message("notification.content.conflict.confirm", fileTypeNameNew), () -> {
+          if (fileTypeOld != null) {
+            // mark as removed from fileTypeOld and associated with fileTypeNew
+            ApplicationManager.getApplication().runWriteAction(() -> {
+              myRemovedMappingTracker.add(matcher, fileTypeNameOld, true);
+              FileTypeManager.getInstance().associate(fileTypeNew, matcher);
+            });
+            notification.expire();
+            String m = FileTypesBundle.message("dialog.message.file.pattern.was.assigned.to", matcher.getPresentableString(), fileTypeNameNew);
+            Messages.showMessageDialog(project, m, FileTypesBundle.message("dialog.title.pattern.reassigned"), Messages.getInformationIcon());
+          }
+        }));
+      }
+      if (fileTypeOld != null) {
+        notification.addAction(NotificationAction.createSimple(FileTypesBundle.message("notification.content.revert.to", fileTypeNameOld), () -> {
+          // mark as removed from fileTypeNew and associated with fileTypeOld
+          ApplicationManager.getApplication().runWriteAction(() -> {
+            myRemovedMappingTracker.add(matcher, fileTypeNameNew, true);
+            FileTypeManager.getInstance().associate(fileTypeOld, matcher);
+          });
           notification.expire();
           String m = FileTypesBundle.message("dialog.message.file.pattern.was.reassigned.back.to", matcher.getPresentableString(), fileTypeNameOld);
           Messages.showMessageDialog(project, m, FileTypesBundle.message("dialog.title.pattern.reassigned"), Messages.getInformationIcon());
-        }
-      }));
+        }));
+      }
       if (fileTypeOld != null && !fileTypeOld.isReadOnly()) {
         notification.addAction(NotificationAction.createSimple(FileTypesBundle.message("notification.content.edit", fileTypeNameOld), () -> editFileType(project, fileTypeOld)));
       }
