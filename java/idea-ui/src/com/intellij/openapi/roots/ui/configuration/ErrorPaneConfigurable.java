@@ -196,6 +196,7 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
     final String text = "[" + JavaUiBundle.message("fix.link.text") + "]";
 
     return new HtmlBuilder().append(description)
+      .append(HtmlChunk.nbsp())
       .append(HtmlChunk.link("http://fix/" + index, text))
       .wrapWith("li");
   }
@@ -209,7 +210,7 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
     final ProjectStructureProblemDescription problemDescription = ((ProjectConfigurationProblem)error).getProblemDescription();
     if (problemDescription.getDescription() != null) return problemDescription.getDescription();
 
-    if (!problemDescription.canShowPlace()) return HtmlChunk.text(problemDescription.getMessage());
+    if (!problemDescription.canShowPlace()) return HtmlChunk.raw(problemDescription.getMessage());
 
     final String message = StringUtil.decapitalize(problemDescription.getMessage());
 
