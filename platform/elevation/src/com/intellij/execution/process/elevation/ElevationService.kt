@@ -11,6 +11,7 @@ import com.intellij.execution.process.elevation.rpc.AwaitTerminationRequest
 import com.intellij.execution.process.elevation.rpc.CommandLine
 import com.intellij.execution.process.elevation.rpc.CreateProcessRequest
 import com.intellij.execution.process.elevation.rpc.ElevatorGrpcKt.ElevatorCoroutineStub
+import com.intellij.execution.process.elevation.rpc.ReleaseRequest
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
@@ -149,6 +150,13 @@ private class ElevatorClient(private val channel: ManagedChannel) : Closeable {
       .build()
     val reply = stub.awaitTermination(request)
     return reply.exitCode
+  }
+
+  suspend fun release(pid: Long) {
+    val request = ReleaseRequest.newBuilder()
+      .setPid(pid)
+      .build()
+    stub.release(request)
   }
 
   override fun close() {

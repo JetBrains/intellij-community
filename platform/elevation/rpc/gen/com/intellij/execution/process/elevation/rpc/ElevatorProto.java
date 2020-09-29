@@ -35,6 +35,11 @@ public final class ElevatorProto {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_elevation_rpc_AwaitTerminationReply_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_elevation_rpc_ReleaseRequest_descriptor;
+  static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_elevation_rpc_ReleaseRequest_fieldAccessorTable;
+  static final com.google.protobuf.Descriptors.Descriptor
     internal_static_elevation_rpc_CommandLine_descriptor;
   static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
@@ -53,27 +58,31 @@ public final class ElevatorProto {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\016elevator.proto\022\relevation.rpc\"H\n\024Creat" +
-      "eProcessRequest\0220\n\014command_line\030\001 \001(\0132\032." +
-      "elevation.rpc.CommandLine\"!\n\022CreateProce" +
-      "ssReply\022\013\n\003pid\030\001 \001(\004\"&\n\027AwaitTermination" +
-      "Request\022\013\n\003pid\030\001 \001(\004\"*\n\025AwaitTermination" +
-      "Reply\022\021\n\texit_code\030\001 \001(\r\"\233\001\n\013CommandLine" +
-      "\022\017\n\007command\030\001 \003(\t\022\023\n\013working_dir\030\002 \001(\t\022;" +
-      "\n\014environ_vars\030\003 \003(\0132%.elevation.rpc.Com" +
-      "mandLine.EnvironVar\032)\n\nEnvironVar\022\014\n\004nam" +
-      "e\030\001 \001(\t\022\r\n\005value\030\002 \001(\t2\311\001\n\010Elevator\022Y\n\rC" +
-      "reateProcess\022#.elevation.rpc.CreateProce" +
-      "ssRequest\032!.elevation.rpc.CreateProcessR" +
-      "eply\"\000\022b\n\020AwaitTermination\022&.elevation.r" +
-      "pc.AwaitTerminationRequest\032$.elevation.r" +
-      "pc.AwaitTerminationReply\"\000B?\n,com.intell" +
-      "ij.execution.process.elevation.rpcB\rElev" +
-      "atorProtoP\001b\006proto3"
+      "\n\016elevator.proto\022\relevation.rpc\032\033google/" +
+      "protobuf/empty.proto\"H\n\024CreateProcessReq" +
+      "uest\0220\n\014command_line\030\001 \001(\0132\032.elevation.r" +
+      "pc.CommandLine\"!\n\022CreateProcessReply\022\013\n\003" +
+      "pid\030\001 \001(\004\"&\n\027AwaitTerminationRequest\022\013\n\003" +
+      "pid\030\001 \001(\004\"*\n\025AwaitTerminationReply\022\021\n\tex" +
+      "it_code\030\001 \001(\r\"\035\n\016ReleaseRequest\022\013\n\003pid\030\001" +
+      " \001(\004\"\233\001\n\013CommandLine\022\017\n\007command\030\001 \003(\t\022\023\n" +
+      "\013working_dir\030\002 \001(\t\022;\n\014environ_vars\030\003 \003(\013" +
+      "2%.elevation.rpc.CommandLine.EnvironVar\032" +
+      ")\n\nEnvironVar\022\014\n\004name\030\001 \001(\t\022\r\n\005value\030\002 \001" +
+      "(\t2\215\002\n\010Elevator\022Y\n\rCreateProcess\022#.eleva" +
+      "tion.rpc.CreateProcessRequest\032!.elevatio" +
+      "n.rpc.CreateProcessReply\"\000\022b\n\020AwaitTermi" +
+      "nation\022&.elevation.rpc.AwaitTerminationR" +
+      "equest\032$.elevation.rpc.AwaitTerminationR" +
+      "eply\"\000\022B\n\007Release\022\035.elevation.rpc.Releas" +
+      "eRequest\032\026.google.protobuf.Empty\"\000B?\n,co" +
+      "m.intellij.execution.process.elevation.r" +
+      "pcB\rElevatorProtoP\001b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
         new com.google.protobuf.Descriptors.FileDescriptor[] {
+          com.google.protobuf.EmptyProto.getDescriptor(),
         });
     internal_static_elevation_rpc_CreateProcessRequest_descriptor =
       getDescriptor().getMessageTypes().get(0);
@@ -99,8 +108,14 @@ public final class ElevatorProto {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_elevation_rpc_AwaitTerminationReply_descriptor,
         new java.lang.String[] { "ExitCode", });
-    internal_static_elevation_rpc_CommandLine_descriptor =
+    internal_static_elevation_rpc_ReleaseRequest_descriptor =
       getDescriptor().getMessageTypes().get(4);
+    internal_static_elevation_rpc_ReleaseRequest_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_elevation_rpc_ReleaseRequest_descriptor,
+        new java.lang.String[] { "Pid", });
+    internal_static_elevation_rpc_CommandLine_descriptor =
+      getDescriptor().getMessageTypes().get(5);
     internal_static_elevation_rpc_CommandLine_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_elevation_rpc_CommandLine_descriptor,
@@ -111,6 +126,7 @@ public final class ElevatorProto {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_elevation_rpc_CommandLine_EnvironVar_descriptor,
         new java.lang.String[] { "Name", "Value", });
+    com.google.protobuf.EmptyProto.getDescriptor();
   }
 
   // @@protoc_insertion_point(outer_class_scope)

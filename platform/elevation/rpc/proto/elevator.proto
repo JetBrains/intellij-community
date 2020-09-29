@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package elevation.rpc;
 
+import "google/protobuf/empty.proto";
+
 option java_multiple_files = true;
 option java_package = "com.intellij.execution.process.elevation.rpc";
 option java_outer_classname = "ElevatorProto";
@@ -9,6 +11,7 @@ option java_outer_classname = "ElevatorProto";
 service Elevator {
   rpc CreateProcess (CreateProcessRequest) returns (CreateProcessReply) {}
   rpc AwaitTermination (AwaitTerminationRequest) returns (AwaitTerminationReply) {}
+  rpc Release (ReleaseRequest) returns (google.protobuf.Empty) {}
 }
 
 message CreateProcessRequest {
@@ -25,6 +28,10 @@ message AwaitTerminationRequest {
 
 message AwaitTerminationReply {
   uint32 exit_code = 1;
+}
+
+message ReleaseRequest {
+  uint64 pid = 1;
 }
 
 message CommandLine {

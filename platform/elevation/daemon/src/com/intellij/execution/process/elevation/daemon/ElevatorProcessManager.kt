@@ -34,18 +34,16 @@ internal class ElevatorProcessManager {
 
   suspend fun awaitTermination(pid: Pid): Int {
     val process = getProcess(pid)
-    requireNotNull(process) { "Unknown PID $pid" }
 
-    try {
-      withContext(Dispatchers.IO) {
-        process.onExit().await()
-      }
-    }
-    finally {
-      unregisterProcess(pid)
+    withContext(Dispatchers.IO) {
+      process.onExit().await()
     }
 
     return process.exitValue()
+  }
+
+  suspend fun release(pid: Pid) {
+    unregisterProcess(pid)
   }
 
   private suspend fun registerProcess(process: Process): Pid {
@@ -58,11 +56,11 @@ internal class ElevatorProcessManager {
     return pid
   }
 
-  // intentionally nullable, because we can't reliably sync with the event when the process exits
-  private suspend fun getProcess(pid: Pid): Process? {
-    return mutex.withLock {
+  private suspend fun getProcess(pid: Pid): Process {
+    val process = mutex.withLock {
       processMap[pid]
     }
+    return requireNotNull(process) { "Unknown PID $pid" }
   }
 
   private suspend fun unregisterProcess(pid: Pid): Process {
