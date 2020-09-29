@@ -16,7 +16,6 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
 import com.intellij.vcsUtil.VcsFileUtil
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.index.ui.GitFileStatusNode
-import git4idea.index.vfs.GitIndexFileSystemRefresher
 
 class GitAddAction : StagingAreaOperationAction(GitAddOperation)
 class GitResetAction : StagingAreaOperationAction(GitResetOperation)
@@ -54,8 +53,8 @@ fun performStageOperation(project: Project, nodes: List<GitFileStatusNode>, oper
 }
 
 fun <T> runProcess(project: Project, @NlsContexts.ProgressTitle title: String, canBeCancelled: Boolean, process: () -> T): T {
-  return ProgressManager.getInstance().runProcessWithProgressSynchronously<T, Exception>(ThrowableComputable { process() },
-                                                                                         title, canBeCancelled, project)
+  return ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable { process() },
+                                                                           title, canBeCancelled, project)
 }
 
 private fun showErrorMessage(project: Project, @NotificationContent messageTitle: String, exceptions: Collection<Exception>) {
