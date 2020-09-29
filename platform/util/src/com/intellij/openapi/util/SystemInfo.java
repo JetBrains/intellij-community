@@ -87,7 +87,9 @@ public final class SystemInfo {
 
   public static final boolean is32Bit = SystemInfoRt.is32Bit;
   public static final boolean is64Bit = SystemInfoRt.is64Bit;
-  public static final boolean isMacIntel64 = isMac && "x86_64".equals(OS_ARCH);
+  public static final boolean isIntel64 = "x86_64".equals(OS_ARCH) || "amd64".equals(OS_ARCH);
+  public static final boolean isArm64 = "aarch64".equals(OS_ARCH) || "arm64".equals(OS_ARCH);
+  public static final boolean isMacIntel64 = isMac && isIntel64;
 
   private static final NotNullLazyValue<Boolean> ourHasXdgOpen = new PathExecLazyValue("xdg-open");
   public static boolean hasXdgOpen() {
