@@ -669,6 +669,30 @@
       "key": "SpeedSearch.foreground"
     },
     {
+      "key": "List.hoverBackground",
+      "description": "A background of a hovered row in a focused list if hover is allowed."
+    },
+    {
+      "key": "List.hoverInactiveBackground",
+      "description": "A background of a hovered row in an unfocused list if hover is allowed."
+    },
+    {
+      "key": "Tree.hoverBackground",
+      "description": "A background of a hovered row in a focused tree if hover is allowed."
+    },
+    {
+      "key": "Tree.hoverInactiveBackground",
+      "description": "A background of a hovered row in an unfocused tree if hover is allowed."
+    },
+    {
+      "key": "Table.hoverBackground",
+      "description": "A background of a hovered row in a focused table if hover is allowed."
+    },
+    {
+      "key": "Table.hoverInactiveBackground",
+      "description": "A background of a hovered row in an unfocused table if hover is allowed."
+    },
+    {
       "key": "Table.lightSelectionBackground",
       "description": "A lighter selection. See Settings | GitHub and the GitHub Pull Requests tool window"
     },
