@@ -11,28 +11,13 @@ import java.awt.Dimension
 import javax.accessibility.Accessible
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
-import javax.swing.JComponent
 import javax.swing.JTree
 import javax.swing.tree.TreeCellRenderer
 
-abstract class ChangesTreeCellRenderer<C : JComponent>(
-  private val textRenderer: ChangesBrowserNodeRenderer,
-  protected val component: C
+abstract class ChangesTreeCellRenderer(
+  protected val textRenderer: ChangesBrowserNodeRenderer
 ) : CellRendererPanel(),
     TreeCellRenderer {
-
-  init {
-    buildLayout()
-  }
-
-  protected abstract fun C.prepare(tree: ChangesTree, node: ChangesBrowserNode<*>, selected: Boolean)
-
-  private fun buildLayout() {
-    layout = BorderLayout()
-
-    add(component, BorderLayout.WEST)
-    add(textRenderer, BorderLayout.CENTER)
-  }
 
   /**
    * Otherwise incorrect node sizes are cached - see [com.intellij.ui.tree.ui.DefaultTreeUI.createNodeDimensions].
@@ -59,16 +44,52 @@ abstract class ChangesTreeCellRenderer<C : JComponent>(
       toolTipText = null
       getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus)
     }
-    component.apply {
-      background = null
-      isOpaque = false
-      prepare(tree, value as ChangesBrowserNode<*>, selected)
-    }
 
     return this
   }
 
   override fun getToolTipText(): String? = textRenderer.toolTipText
+}
+
+class CheckboxTreeCellRenderer(textRenderer: ChangesBrowserNodeRenderer) : ChangesTreeCellRenderer(textRenderer) {
+  private val component = ThreeStateCheckBox()
+
+  init {
+    buildLayout()
+  }
+
+  private fun buildLayout() {
+    layout = BorderLayout()
+
+    add(component, BorderLayout.WEST)
+    add(textRenderer, BorderLayout.CENTER)
+  }
+
+  override fun getTreeCellRendererComponent(tree: JTree,
+                                            value: Any,
+                                            selected: Boolean,
+                                            expanded: Boolean,
+                                            leaf: Boolean,
+                                            row: Int,
+                                            hasFocus: Boolean): Component {
+    val rendererComponent = super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus)
+
+    value as ChangesBrowserNode<*>
+    tree as ChangesTree
+
+    component.apply {
+      background = null
+      isOpaque = false
+
+      isVisible = tree.run { isShowCheckboxes && isInclusionVisible(value) }
+      if (isVisible) {
+        state = tree.getNodeStatus(value)
+        isEnabled = tree.run { isEnabled && isInclusionEnabled(value) }
+      }
+    }
+
+    return rendererComponent
+  }
 
   override fun getAccessibleContext(): AccessibleContext {
     val accessibleComponent = component as? Accessible ?: return super.getAccessibleContext()
@@ -90,17 +111,5 @@ abstract class ChangesTreeCellRenderer<C : JComponent>(
       }
     }
     return accessibleContext
-  }
-}
-
-class CheckboxTreeCellRenderer(textRenderer: ChangesBrowserNodeRenderer) :
-  ChangesTreeCellRenderer<ThreeStateCheckBox>(textRenderer, ThreeStateCheckBox()) {
-
-  override fun ThreeStateCheckBox.prepare(tree: ChangesTree, node: ChangesBrowserNode<*>, seleted: Boolean) {
-    isVisible = tree.run { isShowCheckboxes && isInclusionVisible(node) }
-    if (isVisible) {
-      state = tree.getNodeStatus(node)
-      isEnabled = tree.run { isEnabled && isInclusionEnabled(node) }
-    }
   }
 }

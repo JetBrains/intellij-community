@@ -24,10 +24,14 @@ import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.impl.PlatformVcsPathPresenter
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ClickListener
+import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.ui.components.JBLabel
 import com.intellij.util.FontUtil
 import com.intellij.util.containers.isEmpty
+import com.intellij.util.ui.ColorIcon
+import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.accessibility.AccessibleContextDelegate
+import com.intellij.util.ui.tree.TreeUtil
 import git4idea.conflicts.getConflictType
 import git4idea.i18n.GitBundle
 import git4idea.index.GitFileStatus
@@ -40,12 +44,16 @@ import git4idea.status.GitStagingAreaHolder
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
-import java.awt.Point
-import java.awt.Rectangle
+import java.awt.*
 import java.awt.event.MouseEvent
 import java.awt.event.MouseMotionListener
 import java.util.stream.Stream
+import javax.accessibility.AccessibleContext
+import javax.accessibility.AccessibleRole
+import javax.swing.Icon
 import javax.swing.JComponent
+import javax.swing.JTree
+import javax.swing.SwingConstants
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreePath
 import kotlin.streams.toList
@@ -89,6 +97,7 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
 
   private fun getComponentBounds(path: TreePath, componentWidth: Int): Rectangle? {
     val bounds = getPathBounds(path) ?: return null
+    bounds.setLocation(visibleRect.width + visibleRect.x - componentWidth, bounds.y)
     bounds.setSize(componentWidth, bounds.height)
     return bounds
   }
@@ -175,7 +184,6 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
     }
   }
 
-
   private inner class MyTreeModelBuilder internal constructor(project: Project, grouping: ChangesGroupingPolicyFactory)
     : TreeModelBuilder(project, grouping) {
     private val parentNodes: MutableMap<NodeKind, ChangesBrowserKindNode> = mutableMapOf()
@@ -210,7 +218,8 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
 
       if (ChangesBrowserSpecificFilePathsNode.isManyFiles(allUntrackedStatuses)) {
         ChangesBrowserUntrackedNode(project, allUntrackedStatuses.map { it.path }).also { insertIntoRootNode(it) }
-      } else {
+      }
+      else {
         val unstagedNode = createKindNode(NodeKind.UNSTAGED)
         untrackedFilesMap.forEach { (root, untrackedInRoot) ->
           untrackedInRoot.forEach {
@@ -312,15 +321,42 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
     }
   }
 
-  private class GitStageTreeRenderer(textRenderer: ChangesBrowserNodeRenderer) :
-    ChangesTreeCellRenderer<JBLabel>(textRenderer, JBLabel()) {
+  private class GitStageTreeRenderer(textRenderer: ChangesBrowserNodeRenderer) : ChangesTreeCellRenderer(textRenderer) {
+    private var floatingIcon: FloatingIcon? = null
 
-    override fun JBLabel.prepare(tree: ChangesTree, node: ChangesBrowserNode<*>, selected: Boolean) {
+    init {
+      buildLayout()
+    }
+
+    private fun buildLayout() {
+      layout = BorderLayout()
+      add(textRenderer)
+    }
+
+    override fun paint(g: Graphics) {
+      super.paint(g)
+      floatingIcon?.let {
+        val (icon, location) = it
+        icon.paintIcon(this@GitStageTreeRenderer, g, location, 0)
+      }
+    }
+
+    override fun getTreeCellRendererComponent(tree: JTree,
+                                              value: Any,
+                                              selected: Boolean,
+                                              expanded: Boolean,
+                                              leaf: Boolean,
+                                              row: Int,
+                                              hasFocus: Boolean): Component {
+      val treeCellRendererComponent = super.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus)
+      floatingIcon = prepareIcon(tree as GitStageTree, value as ChangesBrowserNode<*>, row, selected, hasFocus)
+      return treeCellRendererComponent
+    }
+
+    fun prepareIcon(tree: GitStageTree, node: ChangesBrowserNode<*>, row: Int, selected: Boolean, hasFocus: Boolean): FloatingIcon? {
       val hoverData = (tree as? GitStageTree)?.hoverData
-      if (hoverData == null) {
-        isVisible = false
-        icon = null
-        return
+      if (hoverData == null || tree.expandableItemsHandler.expandedItems.isNotEmpty()) {
+        return null
       }
 
       val hovered = hoverData.node == node
@@ -328,19 +364,45 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
         hovered -> hoverData.operation.icon
         selected -> tree.getFirstMatchingOperation(node)?.icon
         else -> null
+      } ?: return null
+
+      val foreground = if (hovered && hoverData.isOverOperationIcon) baseIcon
+                       else IconLoader.getDisabledIcon(baseIcon, this)
+
+      val backgroundColor = if (selected) UIUtil.getTreeBackground(selected, hasFocus)
+                            else tree.getPathBackground(tree.getPathForRow(row), row)
+                                 ?: UIUtil.getTreeBackground(selected, hasFocus)
+      val background = ColorIcon(foreground.iconWidth, tree.getRowHeight(), foreground.iconWidth, tree.getRowHeight(),
+                                 backgroundColor, false)
+
+      val icon = LayeredIcon(2).apply {
+        setIcon(background, 0)
+        setIcon(foreground, 1, SwingConstants.CENTER)
       }
 
-      if (baseIcon == null) {
-        isVisible = false
-        icon = null
-        return
-      }
+      val rowX = TreeUtil.getNodeRowX(tree, row) + tree.insets.left
+      val location = tree.visibleRect.x + tree.visibleRect.width - rowX - icon.iconWidth
 
-      isVisible = true
-      icon = if (hovered && hoverData.isOverOperationIcon) baseIcon
-             else IconLoader.getDisabledIcon(baseIcon, this)
+      return FloatingIcon(icon, location)
+    }
+
+    override fun getAccessibleContext(): AccessibleContext {
+      if (accessibleContext == null) {
+        accessibleContext = object : AccessibleContextDelegate(textRenderer.accessibleContext) {
+          override fun getDelegateParent(): Container? = parent
+
+          override fun getAccessibleRole(): AccessibleRole {
+            // Because of a problem with NVDA we have to make this a LABEL,
+            // or otherwise NVDA will read out the entire tree path, causing confusion.
+            return AccessibleRole.LABEL
+          }
+        }
+      }
+      return accessibleContext
     }
   }
+
+  private data class FloatingIcon(val icon: Icon, val location: Int)
 
   private inner class MyMouseMotionListener : MouseMotionListener {
 
@@ -349,11 +411,13 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
       if (hoverData == null) {
         toolTipText = null
         this@GitStageTree.hoverData = null
+        expandableItemsHandler.isEnabled = true
         return
       }
 
       this@GitStageTree.hoverData = hoverData
       toolTipText = if (hoverData.isOverOperationIcon) hoverData.operation.actionText.get() else null
+      expandableItemsHandler.isEnabled = !hoverData.isOverOperationIcon
     }
 
     override fun mouseDragged(e: MouseEvent?) = Unit
