@@ -54,7 +54,7 @@ import java.util.stream.Stream;
 public final class XmlTagNameSynchronizer implements EditorFactoryListener {
   private static final Key<Boolean> SKIP_COMMAND = Key.create("tag.name.synchronizer.skip.command");
   private static final Logger LOG = Logger.getInstance(XmlTagNameSynchronizer.class);
-  private static final Set<Language> SUPPORTED_LANGUAGES = ContainerUtil.set(HTMLLanguage.INSTANCE,
+  private static final Set<Language> SUPPORTED_LANGUAGES = Set.of(HTMLLanguage.INSTANCE,
                                                                              XMLLanguage.INSTANCE,
                                                                              XHTMLLanguage.INSTANCE);
 

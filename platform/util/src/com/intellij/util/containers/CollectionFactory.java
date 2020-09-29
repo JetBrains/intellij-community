@@ -114,7 +114,7 @@ public final class CollectionFactory {
     return new ObjectOpenCustomHashSet<>(FastUtilHashingStrategies.getCaseInsensitiveStringStrategy());
   }
 
-  public static @NotNull Set<String> createCaseInsensitiveStringSet(@NotNull Set<String> items) {
+  public static @NotNull Set<String> createCaseInsensitiveStringSet(@NotNull Collection<String> items) {
     return new ObjectOpenCustomHashSet<>(items, FastUtilHashingStrategies.getCaseInsensitiveStringStrategy());
   }
 
