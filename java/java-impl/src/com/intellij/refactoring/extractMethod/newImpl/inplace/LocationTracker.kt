@@ -36,6 +36,7 @@ class LocationTracker(private val component: Component): Disposable {
   init {
     tracker.init(client)
     Disposer.register(this, tracker)
+    Disposer.register(this, client)
   }
 
   fun subscribe(locationListener: LocationListener) {
