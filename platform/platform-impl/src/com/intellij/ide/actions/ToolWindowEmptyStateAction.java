@@ -28,12 +28,12 @@ public abstract class ToolWindowEmptyStateAction extends ActivateToolWindowActio
     toolWindow.setAvailable(true);
     StatusText emptyText = toolWindow.getEmptyText();
     if (emptyText != null) {
-      setupEmptyText(emptyText);
+      setupEmptyText(project, emptyText);
     }
     toolWindow.show();
   }
 
-  protected abstract void setupEmptyText(@NotNull StatusText text);
+  protected abstract void setupEmptyText(@NotNull Project project, @NotNull StatusText text);
 
   protected abstract void ensureToolWindowCreated(@NotNull Project project);
 

@@ -105,7 +105,9 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     })
   }
 
-  private fun registerToolWindow(executor: Executor, toolWindowManager: ToolWindowManager): ContentManager {
+  @ApiStatus.Internal
+  fun registerToolWindow(executor: Executor): ContentManager {
+    val toolWindowManager = getToolWindowManager()
     val toolWindowId = executor.toolWindowId
     var toolWindow = toolWindowManager.getToolWindow(toolWindowId)
     if (toolWindow != null) {
@@ -357,7 +359,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       return dashboardManager.dashboardContentManager
     }
     else {
-      return registerToolWindow(executor, getToolWindowManager())
+      return registerToolWindow(executor)
     }
   }
 
