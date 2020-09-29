@@ -25,6 +25,5 @@
         <maven.compiler.target>${COMPILER_LEVEL_TARGET}</maven.compiler.target>
     </properties>
 #end
-
     ${END}
 </project>
