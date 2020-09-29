@@ -25,6 +25,24 @@ internal class SpaceChatItem private constructor(
   @NlsSafe
   val text: String = record.text
 
+  override fun equals(other: Any?): Boolean {
+    if (this === other) {
+      return true
+    }
+
+    if (other !is SpaceChatItem) {
+      return false
+    }
+
+    if (record != other.record) {
+      return false
+    }
+
+    return true
+  }
+
+  override fun hashCode(): Int = record.hashCode()
+
   companion object {
     internal suspend fun ChannelItemRecord.convertToChatItemWithThread(
       lifetime: Lifetime,
@@ -47,22 +65,4 @@ internal class SpaceChatItem private constructor(
 
     internal fun ChannelItemRecord.convertToChatItem(link: String?): SpaceChatItem = SpaceChatItem(this, link)
   }
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) {
-      return true
-    }
-
-    if (other !is SpaceChatItem) {
-      return false
-    }
-
-    if (record != other.record) {
-      return false
-    }
-
-    return true
-  }
-
-  override fun hashCode(): Int = record.hashCode()
 }
