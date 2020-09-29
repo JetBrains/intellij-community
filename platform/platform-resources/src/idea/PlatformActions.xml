@@ -704,19 +704,24 @@
           </group>
           <separator/>
           <action id="ReopenClosedTab" class="com.intellij.openapi.fileEditor.impl.ReopenClosedTabAction"/>
-          <action id="SplitVertically" class="com.intellij.ide.actions.SplitVerticallyAction" icon="AllIcons.Actions.SplitVertically"/>
-          <action id="SplitHorizontally" class="com.intellij.ide.actions.SplitHorizontallyAction" icon="AllIcons.Actions.SplitHorizontally"/>
+          <action id="SplitVertically" class="com.intellij.ide.actions.SplitVerticallyAction" icon="AllIcons.Actions.SplitVertically">
+            <synonym key="action.SplitVertically.synonym"/>
+          </action>
+          <action id="MoveTabRight" class="com.intellij.ide.actions.MoveTabRightAction"/>
+          <action id="SplitHorizontally" class="com.intellij.ide.actions.SplitHorizontallyAction" icon="AllIcons.Actions.SplitHorizontally">
+            <synonym key="action.SplitHorizontally.synonym"/>
+          </action>
+          <action id="MoveTabDown" class="com.intellij.ide.actions.MoveTabDownAction"/>
           <action id="StretchSplitToTop" class="com.intellij.ide.actions.StretchSplitAction$StretchToTop"/>
           <action id="StretchSplitToLeft" class="com.intellij.ide.actions.StretchSplitAction$StretchToLeft"/>
           <action id="StretchSplitToBottom" class="com.intellij.ide.actions.StretchSplitAction$StretchToBottom"/>
           <action id="StretchSplitToRight" class="com.intellij.ide.actions.StretchSplitAction$StretchToRight"/>
-          <action id="MoveTabRight" class="com.intellij.ide.actions.MoveTabRightAction"/>
-          <action id="MoveTabDown" class="com.intellij.ide.actions.MoveTabDownAction"/>
           <action id="ChangeSplitOrientation" class="com.intellij.ide.actions.SplitterAction$ChangeOrientation"/>
           <action id="Unsplit" class="com.intellij.ide.actions.SplitterAction$Unsplit"/>
           <action id="UnsplitAll" class="com.intellij.ide.actions.SplitterAction$UnsplitAll"/>
           <action id="NextSplitter" class="com.intellij.ide.actions.SplitterAction$Goto$Next"/>
           <action id="PrevSplitter" class="com.intellij.ide.actions.SplitterAction$Goto$Previous"/>
+          <separator/>
           <action id="ConfigureEditorTabs" class="com.intellij.ide.actions.ConfigureEditorTabsAction"/>
         </group>
 
@@ -842,12 +847,13 @@
       <reference ref="CopyPaths"/>
       <separator/>
       <reference ref="SplitVertically"/>
-      <reference ref="SplitHorizontally"/>
       <reference ref="MoveTabRight"/>
+      <reference ref="SplitHorizontally"/>
       <reference ref="MoveTabDown"/>
       <action id="MoveEditorToOppositeTabGroup" class="com.intellij.openapi.fileEditor.impl.MoveEditorToOppositeTabGroupAction"/>
       <action id="OpenEditorInOppositeTabGroup" class="com.intellij.openapi.fileEditor.impl.OpenEditorInOppositeTabGroupAction"/>
       <reference ref="ChangeSplitOrientation"/>
+      <separator/>
       <reference ref="PinActiveEditorTab"/>
       <reference ref="ConfigureEditorTabs"/>
       <separator/>
