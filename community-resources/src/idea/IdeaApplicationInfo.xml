@@ -4,7 +4,7 @@
   <version major="2020" minor="3" eap="true" suffix="Snapshot"/>
   <company name="JetBrains s.r.o." url="https://www.jetbrains.com"/>
   <build number="IC-__BUILD__" date="__BUILD_DATE__"/>
-  <logo url="/idea_community_logo.png" textcolor="ffffff" progressColor="ffffff" progressX="117" progressY="280" progressHeight="3" />
+  <logo url="/idea_community_logo.png" textcolor="ffffff" progressColor="ffae00" progressY="397" progressHeight="3" />
   <about url="/idea_community_about.png" foreground="939598" copyrightForeground="939598" linkColor="095fdc" logoX="540" logoY="300" logoW="100" logoH="100"/>
   <icon ico="idea_CE.ico" svg="/idea-ce.svg" svg-small="/idea-ce_16.svg"/>
   <icon-eap svg="/idea-ce-eap.svg" svg-small="/idea-ce-eap_16.svg"/>
