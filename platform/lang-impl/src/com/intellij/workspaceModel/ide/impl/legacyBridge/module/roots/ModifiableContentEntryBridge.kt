@@ -34,10 +34,10 @@ internal class ModifiableContentEntryBridge(
   }
   private val virtualFileManager = VirtualFileUrlManager.getInstance(modifiableRootModel.project)
 
-  private val currentContentEntry = CachedValueImpl<ContentEntryBridge> {
+  private val currentContentEntry = CachedValueImpl {
     val contentEntry = modifiableRootModel.currentModel.contentEntries.firstOrNull { it.url == contentEntryUrl.url } as? ContentEntryBridge
       ?: error("Unable to find content entry in parent modifiable root model by url: $contentEntryUrl")
-    CachedValueProvider.Result.createSingleDependency<ContentEntryBridge>(contentEntry, modifiableRootModel)
+    CachedValueProvider.Result.createSingleDependency(contentEntry, modifiableRootModel)
   }
 
   private fun <P : JpsElement?> addSourceFolder(sourceFolderUrl: VirtualFileUrl, type: JpsModuleSourceRootType<P>, properties: P): SourceFolder {
