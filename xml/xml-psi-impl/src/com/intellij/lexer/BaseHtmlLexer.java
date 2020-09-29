@@ -74,6 +74,8 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
     isWithinTag = (initialState & IS_WITHIN_TAG_STATE) != 0;
     lexerOfCacheBufferSequence = null;
     cachedBufferSequence = null;
+    myHtmlEmbedmentInfo = null;
+    myEmbeddedContentProviders.forEach(provider -> provider.restoreState(null));
     broadcastToken();
   }
 

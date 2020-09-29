@@ -60,8 +60,9 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
     super.start(buffer, startOffset, endOffset, initialState);
 
     if ((initialState & EMBEDDED_LEXER_ON) != 0) {
-      LOG.error(new IllegalStateException("Do not reset HTML Lexer with embedded lexer on"));
+      LOG.error(new IllegalStateException("Do not reset HTML Lexer to a state with embedded lexer on"));
     }
+    embeddedLexer = null;
   }
 
   @Override
