@@ -1,13 +1,17 @@
-<idea-plugin>
+<idea-plugin allow-bundled-update="true">
     <id>com.jetbrains.packagesearch.intellij-plugin</id>
     <name>Package Search</name>
-    <vendor email="package-search-support@jetbrains.com" url="https://www.jetbrains.com">JetBrains</vendor>
+    <vendor>JetBrains</vendor>
 
     <description><![CDATA[
-    Find and manage dependencies for JVM and Kotlin Multiplatform projects.
-
-    Supports Maven and Gradle projects. Please note that Gradle Kotlin build scripts aren’t supported yet.
-    ]]></description>
+Find and manage dependencies for JVM and Kotlin Multiplatform projects.
+<br>
+Supports Maven and Gradle projects.
+<br>
+<a href="https://package-search.jetbrains.com">Package Search on the web</a><br>
+<a href="https://youtrack.jetbrains.com/issues/PKGS">Issue tracker (data, website)</a><br>
+<a href="https://youtrack.jetbrains.com/issues/IDEA?q=Subsystem: {Package Search}">Issue tracker (plugin)</a><br>
+]]></description>
 
     <extensionPoints>
         <extensionPoint qualifiedName="com.intellij.packagesearch.projectModuleOperationProvider"
@@ -25,7 +29,8 @@
                         dynamic="true"/>
     </extensionPoints>
 
-    <idea-version since-build="192.5728.98" until-build="202.*"/>
+    <idea-version since-build="203.3645.34" until-build="203.3645.*"/>
+
     <depends>com.intellij.modules.java</depends>
     <depends optional="true" config-file="plugin-withKotlin.xml">org.jetbrains.kotlin</depends>
     <depends optional="true" config-file="plugin-withGradle.xml">org.jetbrains.plugins.gradle</depends>
@@ -40,7 +45,7 @@
         <search.optionContributor
                 implementation="com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchSearchableOptionContributor"/>
 
-        <projectConfigurable groupId="build" displayName="Package Search"
+        <projectConfigurable groupId="build" key="packagesearch.configuration.title" bundle="messages.packageSearchBundle"
                              id="preferences.packagesearch.PackageSearchGeneralConfigurable"
                              instance="com.jetbrains.packagesearch.intellij.plugin.configuration.ui.PackageSearchGeneralConfigurable"/>
         <projectService
