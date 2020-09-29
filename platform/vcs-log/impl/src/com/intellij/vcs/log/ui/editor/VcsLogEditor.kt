@@ -69,9 +69,7 @@ class VcsLogEditorProvider : FileEditorProvider, DumbAware {
   override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR
 
   override fun disposeEditor(editor: FileEditor) {
-    if (editor.file?.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN) != true) {
-      editor.disposeLogUis()
-    }
+    editor.disposeLogUis()
 
     super.disposeEditor(editor)
   }
