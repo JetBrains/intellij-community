@@ -92,10 +92,10 @@ internal class EmlFileLoader(
     val rootsToAdd = ArrayList<LibraryRoot>()
     libTag.getChildren(IdeaSpecificSettings.SRCROOT_ATTR).mapTo(rootsToAdd) {
       LibraryRoot(virtualFileManager.fromUrl(it.getAttributeValue("url")!!),
-                  LibraryRootTypeId(OrderRootType.SOURCES.name()))
+                  LibraryRootTypeId.SOURCES)
     }
     libTag.getChildren(IdeaSpecificSettings.JAVADOCROOT_ATTR).mapTo(rootsToAdd) {
-      LibraryRoot(virtualFileManager.fromUrl(it.getAttributeValue("url")!!), LibraryRootTypeId("JAVADOC"))
+      LibraryRoot(virtualFileManager.fromUrl(it.getAttributeValue("url")!!), EclipseModuleRootsSerializer.JAVADOC_TYPE)
     }
 
     fun updateRoots(tagName: String, rootType: String) {

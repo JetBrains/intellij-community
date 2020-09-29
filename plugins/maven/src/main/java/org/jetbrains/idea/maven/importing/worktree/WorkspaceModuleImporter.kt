@@ -93,7 +93,7 @@ class WorkspaceModuleImporter(private val project: Project,
     val roots = ArrayList<LibraryRoot>()
 
     roots.add(LibraryRoot(virtualFileManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, null, null)),
-                          LibraryRootTypeId("CLASSES")))
+                          LibraryRootTypeId.COMPILED))
 
     val libraryTableId = LibraryTableId.ModuleLibraryTableId(moduleId = ModuleId(mavenProject.displayName)); //(ModuleId(moduleEntity.name))
 
@@ -131,13 +131,13 @@ class WorkspaceModuleImporter(private val project: Project,
     val roots = ArrayList<LibraryRoot>()
 
     roots.add(LibraryRoot(virtualFileManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, null, null)),
-                          LibraryRootTypeId("CLASSES")))
+                          LibraryRootTypeId.COMPILED))
     roots.add(
       LibraryRoot(virtualFileManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, "javadoc", "jar")),
-                  LibraryRootTypeId("JAVADOC")))
+                  JAVADOC_TYPE))
     roots.add(
       LibraryRoot(virtualFileManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, "sources", "jar")),
-                  LibraryRootTypeId("SOURCES")))
+                  LibraryRootTypeId.SOURCES))
 
     val libraryTableId = LibraryTableId.ProjectLibraryTableId; //(ModuleId(moduleEntity.name))
 
@@ -171,5 +171,9 @@ class WorkspaceModuleImporter(private val project: Project,
     if (MavenConstants.SCOPE_RUNTIME == mavenScope) return ModuleDependencyItem.DependencyScope.RUNTIME
     if (MavenConstants.SCOPE_TEST == mavenScope) return ModuleDependencyItem.DependencyScope.TEST
     return if (MavenConstants.SCOPE_PROVIDED == mavenScope) ModuleDependencyItem.DependencyScope.PROVIDED else ModuleDependencyItem.DependencyScope.COMPILE
+  }
+
+  companion object {
+    internal val JAVADOC_TYPE: LibraryRootTypeId = LibraryRootTypeId("JAVADOC")
   }
 }

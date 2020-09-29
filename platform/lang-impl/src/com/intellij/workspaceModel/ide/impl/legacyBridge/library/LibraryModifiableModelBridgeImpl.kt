@@ -15,6 +15,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl.Companion.toLibraryRootType
 import com.intellij.workspaceModel.ide.legacyBridge.LibraryModifiableModelBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
@@ -140,7 +141,7 @@ internal class LibraryModifiableModelBridgeImpl(
   override fun addJarDirectory(url: String, recursive: Boolean, rootType: OrderRootType) {
     assertModelIsLive()
 
-    val rootTypeId = LibraryRootTypeId(rootType.name())
+    val rootTypeId = rootType.toLibraryRootType()
     val virtualFileUrl = virtualFileManager.fromUrl(url)
     val inclusionOptions = if (recursive) LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT_RECURSIVELY else LibraryRoot.InclusionOptions.ARCHIVES_UNDER_ROOT
 
@@ -229,7 +230,7 @@ internal class LibraryModifiableModelBridgeImpl(
 
     val root = LibraryRoot(
       url = virtualFileUrl,
-      type = LibraryRootTypeId(rootType.name())
+      type = rootType.toLibraryRootType()
     )
 
     update {

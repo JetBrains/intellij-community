@@ -492,7 +492,12 @@ data class LibraryId(val name: String, val tableId: LibraryTableId) : Persistent
     get() = name
 }
 
-data class LibraryRootTypeId(val name: String) : Serializable
+data class LibraryRootTypeId(val name: String) : Serializable {
+  companion object {
+    val COMPILED = LibraryRootTypeId("CLASSES")
+    val SOURCES = LibraryRootTypeId("SOURCES")
+  }
+}
 
 data class LibraryRoot(
   val url: VirtualFileUrl,

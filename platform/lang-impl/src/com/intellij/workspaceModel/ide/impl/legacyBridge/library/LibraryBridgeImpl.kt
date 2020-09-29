@@ -17,6 +17,7 @@ import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.TraceableDisposable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
+import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.workspaceModel.ide.impl.jps.serialization.getLegacyLibraryName
 import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FilePointerProvider
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
@@ -26,6 +27,7 @@ import com.intellij.workspaceModel.storage.VersionedEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRootTypeId
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 
@@ -149,5 +151,15 @@ internal class LibraryBridgeImpl(
 
   fun clearTargetBuilder() {
     targetBuilder = null
+  }
+
+  companion object {
+    private val libraryRootTypes = ConcurrentFactoryMap.createMap<String, LibraryRootTypeId> { LibraryRootTypeId(it) }
+
+    internal fun OrderRootType.toLibraryRootType(): LibraryRootTypeId = when (this) {
+      OrderRootType.CLASSES -> LibraryRootTypeId.COMPILED
+      OrderRootType.SOURCES -> LibraryRootTypeId.SOURCES
+      else -> libraryRootTypes[name()]!!
+    }
   }
 }

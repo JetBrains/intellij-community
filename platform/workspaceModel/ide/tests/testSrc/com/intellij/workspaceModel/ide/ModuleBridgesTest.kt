@@ -407,7 +407,7 @@ class ModuleBridgesTest {
     val moduleLibraryEntity = builder.addLibraryEntity(
       name = "some",
       tableId = LibraryTableId.ModuleLibraryTableId(moduleEntity.persistentId()),
-      roots = listOf(LibraryRoot(tempDir.toVirtualFileUrl(virtualFileManager), LibraryRootTypeId("CLASSES"))),
+      roots = listOf(LibraryRoot(tempDir.toVirtualFileUrl(virtualFileManager), LibraryRootTypeId.COMPILED)),
       excludedRoots = emptyList(),
       source = source
     )
@@ -448,7 +448,7 @@ class ModuleBridgesTest {
     builder.addLibraryEntity(
       name = "my_lib",
       tableId = LibraryTableId.ProjectLibraryTableId,
-      roots = listOf(LibraryRoot(jarUrl, LibraryRootTypeId("CLASSES"))),
+      roots = listOf(LibraryRoot(jarUrl, LibraryRootTypeId.COMPILED)),
       excludedRoots = emptyList(),
       source = JpsProjectEntitiesLoader.createJpsEntitySourceForProjectLibrary(toConfigLocation(iprFile, virtualFileManager))
     )

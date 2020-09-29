@@ -70,7 +70,7 @@ class JpsProjectSaveAfterChangesTest {
   fun `add library`() {
     checkSaveProjectAfterChange("directoryBased/addLibrary", "fileBased/addLibrary") { builder, configLocation ->
       val root = LibraryRoot(virtualFileManager.fromUrl("jar://${JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString)}/lib/junit2.jar!/"),
-                             LibraryRootTypeId("CLASSES"))
+                             LibraryRootTypeId.COMPILED)
       val source = JpsProjectEntitiesLoader.createJpsEntitySourceForProjectLibrary(configLocation)
       builder.addLibraryEntity("junit2", LibraryTableId.ProjectLibraryTableId, listOf(root), emptyList(), source)
     }
@@ -112,7 +112,7 @@ class JpsProjectSaveAfterChangesTest {
     checkSaveProjectAfterChange("directoryBased/modifyLibrary", "fileBased/modifyLibrary") { builder, configLocation ->
       val junitLibrary = builder.entities(LibraryEntity::class.java).first { it.name == "junit" }
       val root = LibraryRoot(virtualFileManager.fromUrl("jar://${JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString)}/lib/junit2.jar!/"),
-                             LibraryRootTypeId("CLASSES"))
+                             LibraryRootTypeId.COMPILED)
       builder.modifyEntity(ModifiableLibraryEntity::class.java, junitLibrary) {
         roots = listOf(root)
       }

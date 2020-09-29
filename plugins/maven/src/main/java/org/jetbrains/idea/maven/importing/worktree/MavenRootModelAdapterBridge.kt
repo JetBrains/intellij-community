@@ -193,7 +193,7 @@ class MavenRootModelAdapterBridge(private val myMavenProject: MavenProject,
     assert(MavenConstants.SCOPE_SYSTEM == artifact.scope) { "Artifact scope should be \"system\"" }
     val roots = ArrayList<LibraryRoot>()
     roots.add(LibraryRoot(virtualFileManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, null, null)),
-                          LibraryRootTypeId("CLASSES")))
+                          LibraryRootTypeId.COMPILED))
 
     val libraryTableId = LibraryTableId.ModuleLibraryTableId(ModuleId(moduleEntity.name))
 
@@ -211,13 +211,13 @@ class MavenRootModelAdapterBridge(private val myMavenProject: MavenProject,
     val roots = ArrayList<LibraryRoot>()
 
     roots.add(LibraryRoot(virtualFileManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, null, null)),
-                          LibraryRootTypeId("CLASSES")))
+                          LibraryRootTypeId.COMPILED))
     roots.add(
       LibraryRoot(virtualFileManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, "javadoc", "jar")),
-                  LibraryRootTypeId("JAVADOC")))
+                  WorkspaceModuleImporter.JAVADOC_TYPE))
     roots.add(
       LibraryRoot(virtualFileManager.fromUrl(MavenModelUtil.getArtifactUrlForClassifierAndExtension(artifact, "sources", "jar")),
-                  LibraryRootTypeId("SOURCES")))
+                  LibraryRootTypeId.SOURCES))
 
     val libraryTableId = LibraryTableId.ProjectLibraryTableId; //(ModuleId(moduleEntity.name))
 
