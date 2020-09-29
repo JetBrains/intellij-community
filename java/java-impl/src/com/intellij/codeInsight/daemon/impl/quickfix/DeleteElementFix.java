@@ -66,11 +66,7 @@ public class DeleteElementFix extends LocalQuickFixAndIntentionActionOnPsiElemen
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    deleteElement(startElement);
-  }
-
-  public static void deleteElement(@NotNull PsiElement psiElement) {
-    new CommentTracker().deleteAndRestoreComments(psiElement);
+    new CommentTracker().deleteAndRestoreComments(startElement);
   }
 
   public static final class DeleteMultiFix implements IntentionAction {
