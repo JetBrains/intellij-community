@@ -33,8 +33,6 @@ public class RedundantUnmodifiableInspection extends AbstractBaseJavaLocalInspec
         if (ExpressionUtils.isVoidContext(call)) return;
         if (COLLECTIONS_UNMODIFIABLE.test(call)) {
           PsiExpression arg = call.getArgumentList().getExpressions()[0];
-          if (arg == null) return;
-
           DfType dfType = CommonDataflow.getDfType(arg);
           if (!Mutability.fromDfType(dfType).isUnmodifiable()) return;
 
