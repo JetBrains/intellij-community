@@ -56,7 +56,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control V",                "$Paste", "Terminal.Paste"},
     { "control alt A",            "ChangesView.AddUnversioned", "Diagram.DeselectAll"},
     { "control alt B",               "GotoImplementation", "org.jetbrains.r.rendering.chunk.RunChunksAboveAction"},
-    { "control alt D",            "Console.TableResult.SetDefault", "org.jetbrains.r.rendering.chunk.InterruptChunkExecutionAction"},
+    { "control alt D",            "Console.TableResult.SetDefault", "org.jetbrains.r.actions.RMarkdownInterruptAction"},
     { "control alt K",            "Git.Commit.And.Push.Executor", "Hg.Commit.And.Push.Executor"},
     { "control alt E",            "Console.History.Browse", "PerforceDirect.Edit", "ToggleFindInSelection"},
     { "control alt DOWN",         "NextOccurence", "Console.TableResult.NextPage"},
