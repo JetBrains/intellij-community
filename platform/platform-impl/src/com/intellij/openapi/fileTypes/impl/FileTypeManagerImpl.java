@@ -68,6 +68,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   // must be sorted
   @SuppressWarnings("SpellCheckingInspection")
   static final String DEFAULT_IGNORED = "*.pyc;*.pyo;*.rbc;*.yarb;*~;.DS_Store;.git;.hg;.svn;CVS;__pycache__;_svn;vssver.scc;vssver2.scc;";
+  @NonNls static final String ELEMENT_EXTENSION_MAP = "extensionMap";
 
   private final Set<FileType> myDefaultTypes = CollectionFactory.createSmallMemoryFootprintSet();
   private final FileTypeDetectionService myDetectionService;
@@ -151,7 +152,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
         fileType.writeExternal(root);
 
-        Element map = new Element(AbstractFileType.ELEMENT_EXTENSION_MAP);
+        Element map = new Element(ELEMENT_EXTENSION_MAP);
         writeExtensionsMap(map, fileType, false);
         if (!map.getChildren().isEmpty()) {
           root.addContent(map);
@@ -301,13 +302,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
               loadFileType(element, true);
             }
           }
-          else if (AbstractFileType.ELEMENT_EXTENSION_MAP.equals(e.getName())) {
+          else if (ELEMENT_EXTENSION_MAP.equals(e.getName())) {
             readGlobalMappings(e, true);
           }
         }
 
         if (PlatformUtils.isIdeaCommunity()) {
-          Element extensionMap = new Element(AbstractFileType.ELEMENT_EXTENSION_MAP);
+          Element extensionMap = new Element(ELEMENT_EXTENSION_MAP);
           extensionMap.addContent(new Element(AbstractFileType.ELEMENT_MAPPING)
                                     .setAttribute(AbstractFileType.ATTRIBUTE_EXT, "jspx")
                                     .setAttribute(AbstractFileType.ATTRIBUTE_TYPE, "XML"));
@@ -392,9 +393,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     writeLock.lock();
     try {
       FileType fileType;
-
-      if (!myPendingFileTypes.containsKey(bean.name)) {
-        fileType = mySchemeManager.findSchemeByName(bean.name);
+      String fileTypeName = bean.name;
+      if (!myPendingFileTypes.containsKey(fileTypeName)) {
+        fileType = mySchemeManager.findSchemeByName(fileTypeName);
         if (fileType != null && !(fileType instanceof AbstractFileType)) {
           return fileType;
         }
@@ -420,8 +421,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         return null;
       }
 
-      if (!fileType.getName().equals(bean.name)) {
-        LOG.error(new PluginException("Incorrect name specified in <fileType>, should be " + fileType.getName() + ", actual " + bean.name,
+      if (!fileType.getName().equals(fileTypeName)) {
+        LOG.error(new PluginException("Incorrect name specified in <fileType>, should be " + fileType.getName() + ", actual " + fileTypeName,
                                       pluginId));
       }
       if (fileType instanceof LanguageFileType) {
@@ -447,7 +448,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
 
       myPendingAssociations.removeAllAssociations(bean);
-      myPendingFileTypes.remove(bean.name);
+      myPendingFileTypes.remove(fileTypeName);
 
       return fileType;
     }
@@ -834,7 +835,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       if (ELEMENT_IGNORE_FILES.equals(element.getName())) {
         myIgnoredPatterns.setIgnoreMasks(StringUtil.notNullize(element.getAttributeValue(ATTRIBUTE_LIST)));
       }
-      else if (AbstractFileType.ELEMENT_EXTENSION_MAP.equals(element.getName())) {
+      else if (ELEMENT_EXTENSION_MAP.equals(element.getName())) {
         readGlobalMappings(element, false);
       }
     }
@@ -1009,7 +1010,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       ignoreFiles = "";
     }
     else {
-      String[] strings = ArrayUtilRt.toStringArray(masks);
+      String[] strings = ArrayUtil.toStringArray(masks);
       Arrays.sort(strings);
       ignoreFiles = StringUtil.join(strings, ";") + ";";
     }
@@ -1019,7 +1020,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       state.addContent(new Element(ELEMENT_IGNORE_FILES).setAttribute(ATTRIBUTE_LIST, ignoreFiles));
     }
 
-    Element map = new Element(AbstractFileType.ELEMENT_EXTENSION_MAP);
+    Element map = new Element(ELEMENT_EXTENSION_MAP);
 
     List<FileType> notExternalizableFileTypes = new ArrayList<>();
     for (FileType type : mySchemeManager.getAllSchemes()) {
@@ -1194,7 +1195,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
     }
     else {
-      Element extensions = typeElement.getChild(AbstractFileType.ELEMENT_EXTENSION_MAP);
+      Element extensions = typeElement.getChild(ELEMENT_EXTENSION_MAP);
       if (extensions != null) {
         for (Pair<FileNameMatcher, String> association : AbstractFileType.readAssociations(extensions)) {
           associate(type, association.getFirst(), false);
