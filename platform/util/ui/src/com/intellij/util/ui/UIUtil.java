@@ -3156,6 +3156,20 @@ public final class UIUtil {
     private static final Color TABLE_BACKGROUND = JBColor.namedColor("Table.selectionInactiveBackground", BACKGROUND);
   }
 
+  private static final class FocusedHover {
+    private static final Color BACKGROUND = new JBColor(0xE9EEF5, 0x464A4D);
+    private static final Color LIST_BACKGROUND = JBColor.namedColor("List.hoverBackground", BACKGROUND);
+    private static final Color TREE_BACKGROUND = JBColor.namedColor("Tree.hoverBackground", BACKGROUND);
+    private static final Color TABLE_BACKGROUND = JBColor.namedColor("Table.hoverBackground", BACKGROUND);
+  }
+
+  private static final class UnfocusedHover {
+    private static final Color BACKGROUND = new JBColor(0xF5F5F5, 0x464A4D);
+    private static final Color LIST_BACKGROUND = JBColor.namedColor("List.hoverInactiveBackground", BACKGROUND);
+    private static final Color TREE_BACKGROUND = JBColor.namedColor("Tree.hoverInactiveBackground", BACKGROUND);
+    private static final Color TABLE_BACKGROUND = JBColor.namedColor("Table.hoverInactiveBackground", BACKGROUND);
+  }
+
 
   // List
 
@@ -3211,6 +3225,11 @@ public final class UIUtil {
   @Deprecated
   public static @NotNull Color getListUnfocusedSelectionBackground() {
     return getListSelectionBackground(false);
+  }
+
+  @ApiStatus.Experimental
+  public static @NotNull Color getListHoverBackground(boolean focused) {
+    return focused ? FocusedHover.LIST_BACKGROUND : UnfocusedHover.LIST_BACKGROUND;
   }
 
   // foreground
@@ -3283,6 +3302,11 @@ public final class UIUtil {
     return getTreeSelectionBackground(false);
   }
 
+  @ApiStatus.Experimental
+  public static @NotNull Color getTreeHoverBackground(boolean focused) {
+    return focused ? FocusedHover.TREE_BACKGROUND : UnfocusedHover.TREE_BACKGROUND;
+  }
+
   // foreground
 
   public static @NotNull Color getTreeForeground() {
@@ -3344,6 +3368,11 @@ public final class UIUtil {
   @Deprecated
   public static @NotNull Color getTableUnfocusedSelectionBackground() {
     return getTableSelectionBackground(false);
+  }
+
+  @ApiStatus.Experimental
+  public static @NotNull Color getTableHoverBackground(boolean focused) {
+    return focused ? FocusedHover.TABLE_BACKGROUND : UnfocusedHover.TABLE_BACKGROUND;
   }
 
   // foreground
