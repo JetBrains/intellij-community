@@ -5,32 +5,24 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.editor.event.VisibleAreaEvent
 import com.intellij.openapi.editor.event.VisibleAreaListener
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Key
 import com.intellij.ui.awt.RelativePoint
-import java.awt.Dimension
 import java.awt.Point
 import java.awt.Rectangle
 
-class EditorCodePreview(val editor: Editor, lines: List<IntRange>): Disposable {
-
-  companion object {
-    private val EDITOR_CODE_PREVIEW = Key<EditorCodePreview>("InplaceMethodExtractor")
-
-    fun getActivePreview(editor: Editor): EditorCodePreview? {
-      return editor.getUserData(EDITOR_CODE_PREVIEW)
-    }
-
-    fun setActivePreview(editor: Editor, preview: EditorCodePreview?) {
-      editor.putUserData(EDITOR_CODE_PREVIEW, preview)
-    }
-  }
+class EditorCodePreview(val editor: Editor): Disposable {
 
   val tracker = LocationTracker(editor.component)
 
-  val popups = lines.map { lineRange -> CodeFragmentPopup(editor, lineRange) }.sortedBy { it.lines.first }
+  var popups: List<CodeFragmentPopup> = emptyList()
+
+  fun addPreview(lines: IntRange, onClick: () -> Unit){
+    val newPopup = CodeFragmentPopup(editor, lines, onClick)
+    Disposer.register(this, newPopup)
+    popups = (popups + newPopup).sortedBy { it.lines.first }
+    popups.forEach(CodeFragmentPopup::updateCodePreview)
+  }
 
   val documentListener = object : DocumentListener {
     override fun documentChanged(event: DocumentEvent) {
@@ -40,7 +32,6 @@ class EditorCodePreview(val editor: Editor, lines: List<IntRange>): Disposable {
 
   override fun dispose() {
     if (updateOnDocumentChange) editor.document.removeDocumentListener(documentListener)
-    setActivePreview(editor, null)
   }
 
   var updateOnDocumentChange: Boolean = false
@@ -55,13 +46,9 @@ class EditorCodePreview(val editor: Editor, lines: List<IntRange>): Disposable {
     }
 
   init {
-    updatePopupPositions()
-    tracker.subscribe {
-      updatePopupPositions()
-    }
-    editor.scrollingModel.addVisibleAreaListener(VisibleAreaListener { updatePopupPositions() }, this)
-    popups.forEach { popup -> Disposer.register(this, popup) }
+    tracker.subscribe { updatePopupPositions() }
     Disposer.register(this, tracker)
+    editor.scrollingModel.addVisibleAreaListener(VisibleAreaListener { updatePopupPositions() }, this)
   }
 
   fun updatePopupPositions() {

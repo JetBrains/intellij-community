@@ -8,16 +8,18 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.injected.changesHandler.range
 import com.intellij.psi.util.PsiTreeUtil
@@ -27,7 +29,6 @@ import com.intellij.refactoring.extractMethod.newImpl.*
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil
-import com.intellij.refactoring.suggested.stripWhitespace
 import com.intellij.util.PsiNavigateUtil
 import com.intellij.util.SmartList
 
@@ -54,7 +55,7 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
 
   private val extractedRange = enclosingTextRangeOf(extractOptions.elements.first(), extractOptions.elements.last())
 
-  private val previewLines = mutableListOf<IntRange>()
+  private lateinit var preview: EditorCodePreview
 
   fun prepareCodeForTemplate() {
     val project = extractOptions.project
@@ -84,10 +85,25 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
     setElementToRename(method)
 
-    val callPreview = findLines(document, enclosingTextRangeOf(callElements.first(), callElements.last()))
-    val methodPreview = findLines(document, method.textRange).trimTail(4)
-    previewLines.add(callPreview.first..callPreview.last)
-    previewLines.add(methodPreview)
+    preview = EditorCodePreview(editor)
+    preview.updateOnDocumentChange = true
+
+    val callLines = findLines(document, enclosingTextRangeOf(callElements.first(), callElements.last()))
+    val callNavigatableRange = document.createGreedyRangeMarker(callExpression.methodExpression.textRange)
+    val file = method.containingFile.virtualFile
+    Disposer.register(preview, Disposable { callNavigatableRange.dispose() })
+    preview.addPreview(callLines) { navigate(project, file, callNavigatableRange.endOffset)}
+
+    val methodLines = findLines(document, method.textRange).trimTail(4)
+    val methodNavigatableRange = document.createGreedyRangeMarker(method.nameIdentifier!!.textRange)
+    Disposer.register(preview, Disposable { methodNavigatableRange.dispose() })
+    preview.addPreview(methodLines) { navigate(project, file, methodNavigatableRange.endOffset) }
+  }
+
+  private fun navigate(project: Project, file: VirtualFile, offset: Int) {
+    val descriptor = OpenFileDescriptor(project, file, offset)
+    descriptor.navigate(true)
+    descriptor.dispose()
   }
 
   private fun IntRange.trimTail(maxLength: Int) = first until first + minOf(maxLength, length)
@@ -137,10 +153,6 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     fragmentsToRevert.forEach { Disposer.register(templateState, it) }
     setActiveExtractor(editor, this)
 
-    val preview = EditorCodePreview.getActivePreview(editor) ?: EditorPreviewUtils.addPreviewRanges(editor, previewLines)
-    EditorCodePreview.setActivePreview(editor, preview)
-    preview.popups.forEach(CodeFragmentPopup::updateCodePreview)
-    preview.updateOnDocumentChange = true
     Disposer.register(templateState, preview)
   }
 
@@ -183,7 +195,6 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
   }
 
   override fun performCleanup() {
-    EditorCodePreview.getActivePreview(editor)?.updateOnDocumentChange = false
     revertState()
   }
 

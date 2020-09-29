@@ -2,12 +2,12 @@
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
 import com.intellij.openapi.editor.Editor
-import java.awt.*
 
 object EditorPreviewUtils {
 
-  fun addPreviewRanges(editor: Editor, lineRanges: List<IntRange>): EditorCodePreview {
-    val preview = EditorCodePreview(editor, lineRanges)
+  fun createPreview(editor: Editor, lineRanges: List<IntRange>): EditorCodePreview {
+    val preview = EditorCodePreview(editor)
+    preview.popups.forEach(CodeFragmentPopup::updateCodePreview)
     return preview
   }
 
