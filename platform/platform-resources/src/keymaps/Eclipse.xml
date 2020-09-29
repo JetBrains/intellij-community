@@ -382,4 +382,8 @@
   </action>
   <action id="Vcs.MoveChangedLinesToChangelist"/>
   <action id="ChangesView.Move"/>
+  <action id="ShowIntentionActions">
+    <keyboard-shortcut first-keystroke="ctrl 1"/>
+  </action>
+  <action id="GotoBookmark1"/>
 </keymap>
