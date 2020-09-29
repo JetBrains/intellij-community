@@ -62,26 +62,31 @@ open class ImagePasteProvider : PasteProvider {
                       } ?: return@runWriteAction
 
       // Step 2: Obtain image data from the clipboard
-      val multiResolutionImage =
-        try {
-          pasteContents.getTransferData(imageFlavor) as MultiResolutionImage
+      val imageToPaste = try {
+        pasteContents.getTransferData(imageFlavor)
+      }
+      catch (ioException: IOException) {
+        logger.error("Failed to get data from the clipboard. Data is no longer available. Aborting operation.", ioException)
+        return@runWriteAction
+      }.let {
+        when (it) {
+          is MultiResolutionImage -> it.resolutionVariants.firstOrNull()?.toBufferedImage()
+          is BufferedImage -> it
+          is Image -> it.toBufferedImage()
+          else -> null
         }
-        catch (ioException: IOException) {
-          logger.error("Failed to get data from the clipboard. Data is no longer available. Aborting operation.", ioException)
-          null
-        }
-        catch (classCastException: ClassCastException) {
-          logger.error("Failed to get data from the clipboard. Data is not a multi-resolution image. Aborting operation.",
-                       classCastException)
-          null
-        } ?: return@runWriteAction
+      }
+
+      if (imageToPaste == null) {
+        logger.error("Failed to get data from the clipboard. Nothing to paste. Aborting operation.")
+        return@runWriteAction
+      }
 
       // Step 3: Save image data to the created file
       try {
-        val first = multiResolutionImage.resolutionVariants.firstOrNull() ?: return@runWriteAction
         imageFile.getOutputStream(this)
           .use {
-            ImageIO.write(first.toBufferedImage(), "png", it)
+            ImageIO.write(imageToPaste, "png", it)
           }
       }
       catch (ioException: IOException) {
