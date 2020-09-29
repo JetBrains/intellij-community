@@ -114,8 +114,8 @@ public final class AppUIUtil {
       return ourMacDocIconSet || (!PlatformUtils.isIntelliJClient() && !PluginManagerCore.isRunningFromSources());
     }
 
-    // todo[tav] 'jbre.win.app.icon.supported' is defined by JBRE, remove when OpenJDK supports it as well
-    return SystemInfoRt.isWindows && Boolean.getBoolean("ide.native.launcher") && Boolean.getBoolean("jbre.win.app.icon.supported");
+    // todo[tav] JBR supports loading icon resource (id=2000) from the exe launcher, remove when OpenJDK supports it as well
+    return SystemInfoRt.isWindows && Boolean.getBoolean("ide.native.launcher") && SystemInfo.isJetBrainsJvm;
   }
 
   public static @NotNull Icon loadSmallApplicationIcon(@NotNull ScaleContext ctx) {
