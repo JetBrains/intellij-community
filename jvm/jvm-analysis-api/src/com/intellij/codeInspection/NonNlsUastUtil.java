@@ -24,6 +24,13 @@ public final class NonNlsUastUtil {
    * @return <code>true</code> if passed element is annotated with {@link org.jetbrains.annotations.NonNls}; <code>false</code> otherwise.
    */
   public static boolean isNonNlsAnnotated(@Nullable UElement element) {
+    if (element instanceof UMethod) {
+      // we have an agreement to consider kotlin property direct annotations instead of forcing to have @get:NonNls or @set:NonNls
+      UVariable uVariable = UastContextKt.toUElement(element.getSourcePsi(), UVariable.class);
+      if (uVariable != null && uVariable.findAnnotation(AnnotationUtil.NON_NLS) != null) {
+        return true;
+      }
+    }
     return element instanceof UAnnotated && ((UAnnotated)element).findAnnotation(AnnotationUtil.NON_NLS) != null;
   }
 

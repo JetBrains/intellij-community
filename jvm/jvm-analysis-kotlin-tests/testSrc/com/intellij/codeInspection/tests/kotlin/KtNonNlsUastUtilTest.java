@@ -38,7 +38,8 @@ public class KtNonNlsUastUtilTest extends JavaCodeInsightFixtureTestCase {
     PsiFile file = myFixture.configureByFile("NonNlsStringLiteral.kt");
     Set<ULiteralExpression> expressions = getUElementsOfTypeFromFile(file, ULiteralExpression.class);
     assertSize(20, expressions); // multiline string literal is processed as 4 string literals
-    expressions.forEach(expression -> assertTrue(isNonNlsStringLiteral(expression)));
+    expressions.forEach(expression -> assertTrue("\"" + expression.getSourcePsi().getText() + "\" should be a NonNls StringLiteral",
+                                                 isNonNlsStringLiteral(expression)));
   }
 
   public void testPlainStringLiterals() {
