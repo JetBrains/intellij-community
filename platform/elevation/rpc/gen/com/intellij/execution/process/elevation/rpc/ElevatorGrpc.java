@@ -89,6 +89,37 @@ public final class ElevatorGrpc {
     return getAwaitTerminationMethod;
   }
 
+  private static volatile io.grpc.MethodDescriptor<com.intellij.execution.process.elevation.rpc.ReleaseRequest,
+      com.google.protobuf.Empty> getReleaseMethod;
+
+  @io.grpc.stub.annotations.RpcMethod(
+      fullMethodName = SERVICE_NAME + '/' + "Release",
+      requestType = com.intellij.execution.process.elevation.rpc.ReleaseRequest.class,
+      responseType = com.google.protobuf.Empty.class,
+      methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
+  public static io.grpc.MethodDescriptor<com.intellij.execution.process.elevation.rpc.ReleaseRequest,
+      com.google.protobuf.Empty> getReleaseMethod() {
+    io.grpc.MethodDescriptor<com.intellij.execution.process.elevation.rpc.ReleaseRequest, com.google.protobuf.Empty> getReleaseMethod;
+    if ((getReleaseMethod = ElevatorGrpc.getReleaseMethod) == null) {
+      synchronized (ElevatorGrpc.class) {
+        if ((getReleaseMethod = ElevatorGrpc.getReleaseMethod) == null) {
+          ElevatorGrpc.getReleaseMethod = getReleaseMethod =
+              io.grpc.MethodDescriptor.<com.intellij.execution.process.elevation.rpc.ReleaseRequest, com.google.protobuf.Empty>newBuilder()
+              .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "Release"))
+              .setSampledToLocalTracing(true)
+              .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  com.intellij.execution.process.elevation.rpc.ReleaseRequest.getDefaultInstance()))
+              .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
+                  com.google.protobuf.Empty.getDefaultInstance()))
+              .setSchemaDescriptor(new ElevatorMethodDescriptorSupplier("Release"))
+              .build();
+        }
+      }
+    }
+    return getReleaseMethod;
+  }
+
   /**
    * Creates a new async stub that supports all call types for the service
    */
@@ -151,6 +182,13 @@ public final class ElevatorGrpc {
       asyncUnimplementedUnaryCall(getAwaitTerminationMethod(), responseObserver);
     }
 
+    /**
+     */
+    public void release(com.intellij.execution.process.elevation.rpc.ReleaseRequest request,
+        io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
+      asyncUnimplementedUnaryCall(getReleaseMethod(), responseObserver);
+    }
+
     @java.lang.Override public final io.grpc.ServerServiceDefinition bindService() {
       return io.grpc.ServerServiceDefinition.builder(getServiceDescriptor())
           .addMethod(
@@ -167,6 +205,13 @@ public final class ElevatorGrpc {
                 com.intellij.execution.process.elevation.rpc.AwaitTerminationRequest,
                 com.intellij.execution.process.elevation.rpc.AwaitTerminationReply>(
                   this, METHODID_AWAIT_TERMINATION)))
+          .addMethod(
+            getReleaseMethod(),
+            asyncUnaryCall(
+              new MethodHandlers<
+                com.intellij.execution.process.elevation.rpc.ReleaseRequest,
+                com.google.protobuf.Empty>(
+                  this, METHODID_RELEASE)))
           .build();
     }
   }
@@ -200,6 +245,14 @@ public final class ElevatorGrpc {
       asyncUnaryCall(
           getChannel().newCall(getAwaitTerminationMethod(), getCallOptions()), request, responseObserver);
     }
+
+    /**
+     */
+    public void release(com.intellij.execution.process.elevation.rpc.ReleaseRequest request,
+        io.grpc.stub.StreamObserver<com.google.protobuf.Empty> responseObserver) {
+      asyncUnaryCall(
+          getChannel().newCall(getReleaseMethod(), getCallOptions()), request, responseObserver);
+    }
   }
 
   /**
@@ -228,6 +281,13 @@ public final class ElevatorGrpc {
     public com.intellij.execution.process.elevation.rpc.AwaitTerminationReply awaitTermination(com.intellij.execution.process.elevation.rpc.AwaitTerminationRequest request) {
       return blockingUnaryCall(
           getChannel(), getAwaitTerminationMethod(), getCallOptions(), request);
+    }
+
+    /**
+     */
+    public com.google.protobuf.Empty release(com.intellij.execution.process.elevation.rpc.ReleaseRequest request) {
+      return blockingUnaryCall(
+          getChannel(), getReleaseMethod(), getCallOptions(), request);
     }
   }
 
@@ -260,10 +320,19 @@ public final class ElevatorGrpc {
       return futureUnaryCall(
           getChannel().newCall(getAwaitTerminationMethod(), getCallOptions()), request);
     }
+
+    /**
+     */
+    public com.google.common.util.concurrent.ListenableFuture<com.google.protobuf.Empty> release(
+        com.intellij.execution.process.elevation.rpc.ReleaseRequest request) {
+      return futureUnaryCall(
+          getChannel().newCall(getReleaseMethod(), getCallOptions()), request);
+    }
   }
 
   private static final int METHODID_CREATE_PROCESS = 0;
   private static final int METHODID_AWAIT_TERMINATION = 1;
+  private static final int METHODID_RELEASE = 2;
 
   private static final class MethodHandlers<Req, Resp> implements
       io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
@@ -289,6 +358,10 @@ public final class ElevatorGrpc {
         case METHODID_AWAIT_TERMINATION:
           serviceImpl.awaitTermination((com.intellij.execution.process.elevation.rpc.AwaitTerminationRequest) request,
               (io.grpc.stub.StreamObserver<com.intellij.execution.process.elevation.rpc.AwaitTerminationReply>) responseObserver);
+          break;
+        case METHODID_RELEASE:
+          serviceImpl.release((com.intellij.execution.process.elevation.rpc.ReleaseRequest) request,
+              (io.grpc.stub.StreamObserver<com.google.protobuf.Empty>) responseObserver);
           break;
         default:
           throw new AssertionError();
@@ -353,6 +426,7 @@ public final class ElevatorGrpc {
               .setSchemaDescriptor(new ElevatorFileDescriptorSupplier())
               .addMethod(getCreateProcessMethod())
               .addMethod(getAwaitTerminationMethod())
+              .addMethod(getReleaseMethod())
               .build();
         }
       }

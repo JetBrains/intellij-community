@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process.elevation.daemon
 
+import com.google.protobuf.Empty
 import com.intellij.execution.process.elevation.rpc.*
 import io.grpc.ServerInterceptors
 import io.grpc.ServerServiceDefinition
@@ -35,6 +36,11 @@ internal class ElevatorServerService : ElevatorGrpcKt.ElevatorCoroutineImplBase(
     return AwaitTerminationReply.newBuilder()
       .setExitCode(exitCode)
       .build()
+  }
+
+  override suspend fun release(request: ReleaseRequest): Empty {
+    processManager.release(request.pid)
+    return Empty.getDefaultInstance()
   }
 
   companion object {

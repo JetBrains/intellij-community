@@ -1,5 +1,6 @@
 package com.intellij.execution.process.elevation.rpc
 
+import com.google.protobuf.Empty
 import com.intellij.execution.process.elevation.rpc.ElevatorGrpc.getServiceDescriptor
 import io.grpc.CallOptions
 import io.grpc.CallOptions.DEFAULT
@@ -39,6 +40,10 @@ object ElevatorGrpcKt {
   val awaitTerminationMethod: MethodDescriptor<AwaitTerminationRequest, AwaitTerminationReply>
     @JvmStatic
     get() = ElevatorGrpc.getAwaitTerminationMethod()
+
+  val releaseMethod: MethodDescriptor<ReleaseRequest, Empty>
+    @JvmStatic
+    get() = ElevatorGrpc.getReleaseMethod()
 
   /**
    * A stub for issuing RPCs to a(n) elevation.rpc.Elevator service as suspending coroutines.
@@ -85,6 +90,23 @@ object ElevatorGrpcKt {
       request,
       callOptions,
       Metadata()
+    )
+    /**
+     * Executes this RPC and returns the response message, suspending until the RPC completes
+     * with [`Status.OK`][Status].  If the RPC completes with another status, a corresponding
+     * [StatusException] is thrown.  If this coroutine is cancelled, the RPC is also cancelled
+     * with the corresponding exception as a cause.
+     *
+     * @param request The request message to send to the server.
+     *
+     * @return The single response from the server.
+     */
+    suspend fun release(request: ReleaseRequest): Empty = unaryRpc(
+      channel,
+      ElevatorGrpc.getReleaseMethod(),
+      request,
+      callOptions,
+      Metadata()
     )}
 
   /**
@@ -122,6 +144,20 @@ object ElevatorGrpcKt {
         throw
         StatusException(UNIMPLEMENTED.withDescription("Method elevation.rpc.Elevator.AwaitTermination is unimplemented"))
 
+    /**
+     * Returns the response to an RPC for elevation.rpc.Elevator.Release.
+     *
+     * If this method fails with a [StatusException], the RPC will fail with the corresponding
+     * [Status].  If this method fails with a [java.util.concurrent.CancellationException], the RPC
+     * will fail
+     * with status `Status.CANCELLED`.  If this method fails for any other reason, the RPC will
+     * fail with `Status.UNKNOWN` with the exception as a cause.
+     *
+     * @param request The request from the client.
+     */
+    open suspend fun release(request: ReleaseRequest): Empty = throw
+        StatusException(UNIMPLEMENTED.withDescription("Method elevation.rpc.Elevator.Release is unimplemented"))
+
     final override fun bindService(): ServerServiceDefinition = builder(getServiceDescriptor())
       .addMethod(unaryServerMethodDefinition(
       context = this.context,
@@ -132,6 +168,11 @@ object ElevatorGrpcKt {
       context = this.context,
       descriptor = ElevatorGrpc.getAwaitTerminationMethod(),
       implementation = ::awaitTermination
+    ))
+      .addMethod(unaryServerMethodDefinition(
+      context = this.context,
+      descriptor = ElevatorGrpc.getReleaseMethod(),
+      implementation = ::release
     )).build()
   }
 }
