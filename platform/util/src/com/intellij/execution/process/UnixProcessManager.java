@@ -47,7 +47,6 @@ public final class UnixProcessManager {
   public static final int SIGABRT = 6;
   public static final int SIGKILL = 9;
   public static final int SIGTERM = 15;
-  public static final int SIGPIPE = getSignalNumber("PIPE");
 
   private UnixProcessManager() { }
 

@@ -150,10 +150,6 @@ final class SystemHealthMonitor extends PreloadingActivity {
           LibC.signal(UnixProcessManager.SIGINT, LibC.Handler.TERMINATE);
           LOG.info("restored ignored INT handler");
         }
-        if (LibC.sigaction(UnixProcessManager.SIGPIPE, Pointer.NULL, sa) == 0 && LibC.SIG_IGN.equals(sa.getPointer(0))) {
-          LibC.signal(UnixProcessManager.SIGPIPE, LibC.Handler.NO_OP);
-          LOG.info("restored ignored PIPE handler");
-        }
       }
       catch (Throwable t) {
         LOG.warn(t);
@@ -286,7 +282,6 @@ final class SystemHealthMonitor extends PreloadingActivity {
       void callback(int sig);
 
       Handler TERMINATE = sig -> System.exit(128 + sig);  // ref: java.lang.Terminator
-      Handler NO_OP = sig -> { };  // no-op handler just unmasks a signal for child processes
     }
 
     static native int sigaction(int sig, Pointer action, Pointer oldAction);
