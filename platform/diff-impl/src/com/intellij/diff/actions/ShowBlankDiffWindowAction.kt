@@ -39,15 +39,25 @@ class ShowBlankDiffWindowAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project
-
-    var defaultText: String? = null
     val editor = e.getData(CommonDataKeys.EDITOR)
-    if (editor != null && editor.selectionModel.hasSelection()) {
-      defaultText = editor.selectionModel.selectedText
-    }
+    val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
 
-    val content1 = createEditableContent(project, StringUtil.notNullize(defaultText))
-    val content2 = createEditableContent(project, "")
+    val content1: DocumentContent
+    val content2: DocumentContent
+
+    if (files != null && files.size == 2) {
+      content1 = createFileContent(project, files[0]) ?: createEditableContent(project)
+      content2 = createFileContent(project, files[1]) ?: createEditableContent(project)
+    }
+    else if (editor != null && editor.selectionModel.hasSelection()) {
+      val defaultText = editor.selectionModel.selectedText ?: ""
+      content1 = createEditableContent(project, defaultText)
+      content2 = createEditableContent(project)
+    }
+    else {
+      content1 = createEditableContent(project)
+      content2 = createEditableContent(project)
+    }
 
     val chain = MutableDiffRequestChain(content1, content2)
     chain.putUserData(DiffUserDataKeysEx.FORCE_DIFF_TOOL, SimpleDiffTool.INSTANCE)
@@ -181,7 +191,7 @@ private class DnDHandler(val viewer: TwosideTextDiffViewer,
   }
 }
 
-private fun createEditableContent(project: Project?, text: String): DocumentContent {
+private fun createEditableContent(project: Project?, text: String = ""): DocumentContent {
   return DiffContentFactoryEx.getInstanceEx().documentContent(project, false).buildFromText(text, false)
 }
 
