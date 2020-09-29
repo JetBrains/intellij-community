@@ -12,6 +12,7 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.lang.JavaVersion
+import com.intellij.util.text.nullize
 import java.util.concurrent.CompletableFuture
 
 class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfiguration>(TYPE_ID) {
@@ -35,28 +36,50 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
     return ServiceManager.getService(JavaLanguageRuntimeUIFactory::class.java).create(config, target)
   }
 
-  override fun createIntrospector(config: JavaLanguageRuntimeConfiguration): Introspector? {
+  override fun findLanguageRuntime(target: TargetEnvironmentConfiguration): JavaLanguageRuntimeConfiguration? {
+    return target.runtimes.findByType<JavaLanguageRuntimeConfiguration>()
+  }
+
+  override fun createIntrospector(config: JavaLanguageRuntimeConfiguration): Introspector<JavaLanguageRuntimeConfiguration>? {
     if (config.homePath.isNotBlank() && config.javaVersionString.isNotBlank()) return null
 
-    return object : Introspector {
-      override fun introspect(subject: Introspectable): CompletableFuture<JavaLanguageRuntimeConfiguration>? {
-        if (config.homePath.isBlank()) {
-          val home = subject.getEnvironmentVariable("JAVA_HOME")
-          home?.let { config.homePath = home }
+    return object : Introspector<JavaLanguageRuntimeConfiguration> {
+      override fun introspect(subject: Introspectable): CompletableFuture<JavaLanguageRuntimeConfiguration> {
+        val javaHomePromise = if (config.homePath.isBlank()) {
+          subject.promiseEnvironmentVariable("JAVA_HOME")
+            .thenApply { acceptJavaHome(it) }
+        }
+        else {
+          Introspector.DONE
         }
 
-        if (config.javaVersionString.isNotBlank()) {
-          return CompletableFuture.completedFuture(config)
+        val versionPromise = if (config.javaVersionString.isBlank()) {
+          subject.promiseExecuteScript("java -version")
+            .thenApply { acceptJavaVersionOutput(it) }
+        }
+        else {
+          Introspector.DONE
         }
 
-        return subject.promiseExecuteScript("java -version")
-          .thenApply { output ->
-            output?.let { StringUtil.splitByLines(output, true) }
-              ?.firstOrNull()
-              ?.let { JavaVersion.parse(it) }
-              ?.let { config.javaVersionString = it.toString() }
-            return@thenApply config
+        return CompletableFuture.allOf(javaHomePromise, versionPromise)
+          .thenApply {
+            config
           }
+      }
+
+      private fun acceptJavaHome(javaHome: String?) {
+        if (config.homePath.isBlank()) {
+          javaHome.nullize(true)?.let {
+            config.homePath = it
+          }
+        }
+      }
+
+      private fun acceptJavaVersionOutput(output: String?) {
+        output?.let { StringUtil.splitByLines(output, true) }
+          ?.firstOrNull()
+          ?.let { JavaVersion.parse(it) }
+          ?.let { config.javaVersionString = it.toString() }
       }
     }
   }

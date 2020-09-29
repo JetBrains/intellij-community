@@ -1,11 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution.target
 
-import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.target.LanguageRuntimeType
 import com.intellij.execution.target.TargetEnvironmentConfiguration
-import com.intellij.execution.target.java.JavaLanguageRuntimeType
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
@@ -35,27 +33,39 @@ class MavenRuntimeType : LanguageRuntimeType<MavenRuntimeTargetConfiguration>(TY
     return MavenRuntimeTargetUI(config, target)
   }
 
-  override fun createIntrospector(config: MavenRuntimeTargetConfiguration): Introspector? {
+  override fun findLanguageRuntime(target: TargetEnvironmentConfiguration): MavenRuntimeTargetConfiguration? {
+    return target.runtimes.findByType<MavenRuntimeTargetConfiguration>()
+  }
+
+  override fun createIntrospector(config: MavenRuntimeTargetConfiguration): Introspector<MavenRuntimeTargetConfiguration>? {
     if (config.homePath.isNotBlank() && config.versionString.isNotBlank()) return null
 
-    return object : Introspector {
-      override fun introspect(subject: Introspectable): CompletableFuture<MavenRuntimeTargetConfiguration>? {
-        if (config.homePath.isBlank()) {
-          val home = subject.getEnvironmentVariable("M2_HOME")
-          home?.let { config.homePath = home }
+    return object : Introspector<MavenRuntimeTargetConfiguration> {
+      override fun introspect(subject: Introspectable): CompletableFuture<MavenRuntimeTargetConfiguration> {
+        val home = if (config.homePath.isBlank()) {
+          subject.promiseEnvironmentVariable("M2_HOME")
+            .thenApply {
+              it?.let { config.homePath = it }
+            }
+        }
+        else {
+          Introspector.DONE
         }
 
-        if (config.versionString.isNotBlank()) {
-          return CompletableFuture.completedFuture(config)
+        val version = if (config.versionString.isBlank()) {
+          subject.promiseExecuteScript("mvn -version")
+            .thenApply { output ->
+              output?.let { StringUtil.splitByLines(output, true) }
+                ?.firstOrNull() // todo more accurate maven version command output parsing
+                ?.let { config.versionString = it }
+            }
+        }
+        else {
+          Introspector.DONE
         }
 
-        return subject.promiseExecuteScript("mvn -version")
-          .thenApply { output ->
-            output?.let { StringUtil.splitByLines(output, true) }
-              ?.firstOrNull() // todo more accurate maven version command output parsing
-              ?.let { config.versionString = it }
-            return@thenApply config
-          }
+        return CompletableFuture.allOf(home, version)
+          .thenApply { config }
       }
     }
   }
@@ -69,10 +79,11 @@ class MavenRuntimeType : LanguageRuntimeType<MavenRuntimeTargetConfiguration>(TY
                                                  RunnerBundle.message("maven.target.execution.project.folder.label"),
                                                  RunnerBundle.message("maven.target.execution.project.folder.description"),
                                                  "/project")
+
     @JvmStatic
     val MAVEN_EXT_CLASS_PATH_VOLUME = VolumeDescriptor(MavenRuntimeType::class.qualifiedName + ":maven.ext.class.path",
-                                                 RunnerBundle.message("maven.target.execution.ext.class.path.folder.label"),
-                                                 RunnerBundle.message("maven.target.execution.ext.class.path.folder.description"),
-                                                 "")
+                                                       RunnerBundle.message("maven.target.execution.ext.class.path.folder.label"),
+                                                       RunnerBundle.message("maven.target.execution.ext.class.path.folder.description"),
+                                                       "")
   }
 }
