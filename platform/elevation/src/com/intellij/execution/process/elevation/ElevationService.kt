@@ -16,16 +16,24 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SystemProperties
+import io.grpc.ClientInterceptors
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import io.grpc.inprocess.InProcessChannelBuilder
 import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineStart.LAZY
 import java.io.Closeable
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
+import java.lang.ref.Cleaner
 import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlin.collections.ArrayList
+import kotlin.coroutines.EmptyCoroutineContext
+
+
+private val SCOPE = CoroutineScope(EmptyCoroutineContext)
 
 private fun startElevatorDaemon(): ElevatorClient {
   val host = if (java.lang.Boolean.getBoolean("java.net.preferIPv6Addresses")) "::1" else "127.0.0.1"
@@ -46,12 +54,12 @@ private fun startElevatorDaemon(): ElevatorClient {
   daemonProcessHandler.startNotify()
 
   val channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext().build()
-  return ElevatorClient(channel)
+  return ElevatorClient(SCOPE, channel)
 }
 
 private fun startLocalElevatorClientForTesting(): ElevatorClient {
   val channel = InProcessChannelBuilder.forName("testing").directExecutor().build()
-  return ElevatorClient(channel)
+  return ElevatorClient(SCOPE, channel)
 }
 
 private fun createElevatorDaemonCommandLine(host: String, port: String): GeneralCommandLine {
@@ -70,49 +78,48 @@ private fun Class<*>.getResourcePath(): String? {
   return FileUtil.toCanonicalPath(PathManager.getResourceRoot(this, "/" + name.replace('.', '/') + ".class"))
 }
 
-private class ElevatedProcess private constructor(
-  coroutineScope: CoroutineScope,
-  private val elevatorClient: ElevatorClient,
-  private val pid: Long
-) : Process(),
-    CoroutineScope by coroutineScope {
+private val CLEANER = Cleaner.create()
+
+private class ElevatedProcess private constructor(private val handle: ElevatedProcessHandle) : Process() {
   companion object {
-    fun create(coroutineScope: CoroutineScope,
-               elevatorClient: ElevatorClient,
+    fun create(elevatorClient: ElevatorClient,
                processBuilder: ProcessBuilder): ElevatedProcess {
-      val pid = runBlocking(coroutineScope.coroutineContext) {
-        elevatorClient.createProcess(processBuilder.command(),
-                                     processBuilder.directory() ?: File(".").normalize(),  // defaults to current working directory
-                                     processBuilder.environment())
+      return create(elevatorClient,
+                    processBuilder.command(),
+                    processBuilder.directory() ?: File(".").normalize(),  // defaults to current working directory
+                    processBuilder.environment())
+    }
+
+    fun create(elevatorClient: ElevatorClient,
+               command: List<String>,
+               workingDir: File,
+               environVars: Map<String, String>): ElevatedProcess {
+      val handle = ElevatedProcessHandle(elevatorClient, command, workingDir, environVars)
+      return ElevatedProcess(handle).also { process ->
+        val cleanable = CLEANER.register(process, handle::close)
+        elevatorClient.registerCleanup(cleanable::clean)
       }
-      return ElevatedProcess(coroutineScope, elevatorClient, pid)
     }
   }
 
-  private val reaper: Deferred<Int> = async {
-    // must be called exactly once;
-    // once invoked, the pid is no more valid, and the process must be assumed reaped
-    elevatorClient.awaitTermination(pid)
+  private val termination: Deferred<Int> = handle.async {
+    handle.rpc {
+      elevatorClient.awaitTermination(pid.await())
+    }
   }
 
-  override fun pid(): Long {
-    return pid
-  }
+  override fun pid(): Long = handle.pid.blockingGet()
 
   override fun getOutputStream(): OutputStream = OutputStream.nullOutputStream()
   override fun getInputStream(): InputStream = InputStream.nullInputStream()
   override fun getErrorStream(): InputStream = InputStream.nullInputStream()
 
-  override fun waitFor(): Int {
-    return runBlocking {
-      reaper.await()
-    }
-  }
+  override fun waitFor(): Int = termination.blockingGet()
 
   override fun exitValue(): Int {
     return try {
       @Suppress("EXPERIMENTAL_API_USAGE")
-      reaper.getCompleted()
+      termination.getCompleted()
     }
     catch (e: IllegalStateException) {
       throw IllegalThreadStateException(e.message)
@@ -124,8 +131,83 @@ private class ElevatedProcess private constructor(
   }
 }
 
-private class ElevatorClient(private val channel: ManagedChannel) : Closeable {
+/**
+ * All remote calls are performed using the provided [ElevatorClient],
+ * and the whole process lifecycle is contained within its coroutine scope.
+ */
+private class ElevatedProcessHandle(
+  val elevatorClient: ElevatorClient,
+  command: List<String>,
+  workingDir: File,
+  environVars: Map<String, String>
+) : CoroutineScope by elevatorClient.childSupervisorScope(),
+    AutoCloseable {
+
+  val pid: Deferred<Long> = async {
+    elevatorClient.createProcess(command, workingDir, environVars)
+  }
+
+  private val cleanupJob = launch(start = LAZY) {
+    // must be called exactly once;
+    // once invoked, the pid is no more valid, and the process must be assumed reaped
+    elevatorClient.release(pid.await())
+  }
+
+  /** Controls all operations except CreateProcess() and Release(). */
+  private val rpcAwaitingJob = SupervisorJob(coroutineContext[Job])
+
+  suspend fun <R> rpc(block: suspend ElevatedProcessHandle.() -> R): R {
+    // This might require a bit of explanation.
+    //
+    // We want to ensure the Release() rpc is not started until any other RPC finishes.
+    // This is achieved by making any RPC from within the outer withContext() coroutine
+    // (a child of 'rpcAwaitingJob', which means the latter can't complete until all its children do).
+    // But at the same time it is desirable to ensure the original caller coroutine still
+    // controls the cancellation of the RPC, that is why the original job is restored as a parent using
+    // the inner withContext().
+    //
+    // In fact, the 'rpcAwaitingJob' never gets cancelled explicitly at all,
+    // only through the parent scope of ElevatedProcessHandle, or finishes using the complete() call in release().
+    // It is only used for this single purpose - to ensure strict ordering relation between any RPC call and
+    // the final Release() call.
+    //
+    // In other words, if there was an RW lock for coroutines, this whole thing would be replaced by
+    // trying to acquire a read lock in this method, and acquiring a write lock in release().
+    val originalJob = currentCoroutineContext()[Job]!!
+    return withContext(rpcAwaitingJob) {
+      withContext(coroutineContext + originalJob) {
+        block()
+      }
+    }
+  }
+
+  /** Once this is invoked, calling any other methods will throw [CancellationException]. */
+  suspend fun release() {
+    try {
+      // let ongoing operations finish gracefully, but don't accept new calls
+      rpcAwaitingJob.complete()
+      rpcAwaitingJob.join()
+    }
+    finally {
+      cleanupJob.join()
+    }
+  }
+
+  override fun close() {
+    runBlocking {
+      release()
+    }
+  }
+}
+
+private class ElevatorClient(
+  coroutineScope: CoroutineScope,
+  private val channel: ManagedChannel
+) : CoroutineScope by coroutineScope.childSupervisorScope(),
+    Closeable {
   private val stub: ElevatorCoroutineStub = ElevatorCoroutineStub(ClientInterceptors.intercept(channel, LoggingClientInterceptor))
+
+  private val cleanupHooks: MutableList<() -> Unit> = Collections.synchronizedList(ArrayList())
 
   suspend fun createProcess(command: List<String>, workingDir: File, environVars: Map<String, String>): Long {
     val environVarList = environVars.map { (name, value) ->
@@ -160,7 +242,17 @@ private class ElevatorClient(private val channel: ManagedChannel) : Closeable {
   }
 
   override fun close() {
-    channel.shutdown().awaitTermination(5, TimeUnit.SECONDS)
+    try {
+      cleanupHooks.forEach { it() }
+    }
+    finally {
+      cancel()
+      channel.shutdown().awaitTermination(5, TimeUnit.SECONDS)
+    }
+  }
+
+  fun registerCleanup(cleanupHook: () -> Unit) {
+    cleanupHooks += cleanupHook
   }
 }
 
@@ -172,8 +264,7 @@ fun main() {
   elevatorServer.start()
 
   startLocalElevatorClientForTesting().use { elevatorClient ->
-    val elevatedProcess = ElevatedProcess.create(GlobalScope,
-                                                 elevatorClient,
+    val elevatedProcess = ElevatedProcess.create(elevatorClient,
                                                  commandLine.toProcessBuilder())
     println("pid: ${elevatedProcess.pid()}")
     println("waitFor: ${elevatedProcess.waitFor()}")
