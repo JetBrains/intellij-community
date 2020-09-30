@@ -99,8 +99,10 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
     executionManager
       .executePreparationTasks(environment, currentState)
       .onSuccess(__ -> {
-        executionManager.startRunProfile(environment, currentState, (ignored) -> {
-          return doExecute(currentState, environment);
+        ApplicationManager.getApplication().invokeLaterOnWriteThread(() -> {
+          executionManager.startRunProfile(environment, currentState, (ignored) -> {
+            return doExecute(currentState, environment);
+          });
         });
       });
   }
