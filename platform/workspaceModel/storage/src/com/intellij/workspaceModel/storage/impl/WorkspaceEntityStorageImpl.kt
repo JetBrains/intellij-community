@@ -719,7 +719,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
           val entity2id = cloneEntity(change.entityData, change.clazz, replaceMap)
           updateEntityRefs(entity2id.second, updatedChildren, updatedParents, initialStorage, initialChangeLogSize, diff)
-          indexes.updateIndices(change.entityData.createPid(), entity2id.second, diff)
+          indexes.updateIndices(change.entityData.createPid(), entity2id.first, diff)
           updateChangeLog {
             it.add(ChangeEntry.AddEntity(entity2id.first, change.clazz, updatedChildren, updatedParents))
           }
@@ -758,7 +758,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
           val existingEntity = this.entityDataById(usedPid)
           if (existingEntity != null) {
             newData.entitySource = existingEntity.entitySource  // Replace entity doesn't modify entitySource
-            indexes.updateIndices(outdatedId, newData.createPid(), diff)
+            indexes.updateIndices(outdatedId, newData, diff)
             updateChangeLog { it.add(ChangeEntry.ReplaceEntity(newData, updatedNewChildren, updatedRemovedChildren, updatedModifiedParents)) }
             replaceEntityWithRefs(newData, outdatedId.clazz, updatedNewChildren, updatedRemovedChildren, updatedModifiedParents, initialStorage, initialChangeLogSize, diff)
           }
@@ -772,8 +772,9 @@ internal class WorkspaceEntityStorageBuilderImpl(
           // We don't modify entity that isn't exist in this version of storage
           val existingEntityData = this.entityDataById(usedPid)
           if (existingEntityData != null) {
-            existingEntityData.entitySource = change.newData.entitySource
-            indexes.updateIndices(outdatedId, usedPid, diff)
+            val newEntitySource = change.newData.entitySource
+            existingEntityData.entitySource = newEntitySource
+            this.indexes.entitySourceIndex.index(usedPid, newEntitySource)
             updateChangeLog { it.add(ChangeEntry.ChangeEntitySource(existingEntityData)) }
           }
         }

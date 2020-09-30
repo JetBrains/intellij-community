@@ -185,13 +185,14 @@ internal class MutableStorageIndexes(
     }
   }
 
-  fun updateIndices(oldEntityId: EntityId, newEntityId: EntityId, builder: AbstractEntityStorage) {
+  fun updateIndices(oldEntityId: EntityId, newEntityData: WorkspaceEntityData<*>, builder: AbstractEntityStorage) {
+    val newEntityId = newEntityData.createPid()
     builder.indexes.virtualFileIndex.getVirtualFileUrlInfoByEntityId(oldEntityId)
       .groupBy({ it.propertyName }, { it.vfu })
       .forEach { (property, vfus) ->
         virtualFileIndex.index(newEntityId, property, vfus)
       }
-    builder.indexes.entitySourceIndex.getEntryById(oldEntityId)?.also { entitySourceIndex.index(newEntityId, it) }
+    entitySourceIndex.index(newEntityId, newEntityData.entitySource)
     builder.indexes.persistentIdIndex.getEntryById(oldEntityId)?.also { persistentIdIndex.index(newEntityId, it) }
   }
 
